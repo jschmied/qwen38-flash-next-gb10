@@ -4,6 +4,16 @@ Can Qwen's Qwen4-architecture preview be made to run on a single GB10 with 128 G
 unified memory? This repo is the working record of finding out — including the parts
 that do not work.
 
+> **Prior art, and the number to beat.** [0xBakeer/qwen38-flash-next-spark](https://github.com/0xBakeer/qwen38-flash-next-spark)
+> already runs this model on a Spark via **llama.cpp**, by pinning the n-gram tensor to the CPU
+> backend and letting mmap serve it from NVMe (`-ot "per_layer_token_embd=CPU" -lm mmap`):
+> 103.7 GiB on disk, ~76.9 GiB resident, **~22 tok/s decode**. That work came first and it works.
+>
+> **This repo takes the vLLM route instead**, for one reason: their setup is limited to
+> `--parallel 1` (concurrent requests crash), and speculative decoding gave them no speedup.
+> Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
+> answer is the better one and this repo will say so.
+
 **Status: in progress.** Weights downloading; the model has not yet been booted. See [notes/log.md](notes/log.md) for the running record.
 
 ## The problem in one table
