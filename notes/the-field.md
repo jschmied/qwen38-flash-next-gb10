@@ -73,3 +73,36 @@ now the first thing to try after the model loads.
 Prior symptoms of the same shape on this box, for whoever picks this up: temperature 1.0
 breaking tool-calling on Qwen3.6-35B-A3B, and `<tool_call>` leaking unparsed when a
 chat-template-file model is served without `jinja=true`. The pattern is not new to this model.
+
+
+## 2026-08-26 21:20 — 0xBakeer corrects their own numbers, and finds the real problem
+
+Three corrections worth carrying, from their `bench/run_bench.py` and `cold_vs_warm.sh`:
+
+1. **97.4 tok/s was one unrepresentative run.** Corrected to **52.6 cold / 74.6 warm** on
+   copy-heavy work. Free-form prose is 22.1 tok/s at 5.8% draft acceptance.
+2. **Speculation does help after all** — the earlier "no speedup" was measured with warming
+   off. With `ngram-mod`, warming the table is worth up to **+42%** on copy-heavy work,
+   because verifying a 50-60 token span touches many n-gram rows at once. Their earlier claim
+   is annotated rather than deleted, which is the right way to do it.
+3. **The page cache does not hold under load.**
+
+   | state | table cached |
+   |---|---|
+   | after the startup warm | 100% |
+   | after a benchmark pass | **0.1%** |
+   | after re-warming, under load | 50% |
+   | dropped caches, re-warmed, box idle | 99% |
+
+   At 262k context the model's own file pages evict the embedding table. A full warm is one
+   sequential 26.8 GiB read (~26 s at ~1.0 GiB/s).
+
+**This is the finding that matters most for the vLLM route here.** The plan was to keep the
+PLE non-resident behind the page cache. Point 3 says that is not a steady state on one box —
+weights and table compete for the same unified pool and the weights win. mmap buys a warm
+start that decays under exactly the load we care about.
+
+It does not kill the idea, but it changes what a solution has to look like: something that
+*pins* a working subset rather than trusting the kernel's eviction policy. Which is also the
+open question about MiaAI's ~11 GB pinned PLE per node — that number now looks less like a
+staging buffer and more like a deliberate hot-set. Reading their `start.sh` moved up the list.
