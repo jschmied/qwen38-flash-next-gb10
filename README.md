@@ -65,6 +65,7 @@ out of resident memory.
 
     scripts/serve-flashnext.sh   first-boot serve config (no speculative decoding)
     scripts/apply-pr53896.sh     overlay the PR's Python files onto a venv
+    notes/the-field.md      who else is running this, and how
     notes/                       reasoning, measurements, dead ends
 
 ## Related upstream work
