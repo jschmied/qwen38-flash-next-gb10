@@ -4,7 +4,7 @@ Can Qwen's Qwen4-architecture preview be made to run on a single GB10 with 128 G
 unified memory? This repo is the working record of finding out — including the parts
 that do not work.
 
-**Status: in progress.** Weights downloading; the model has not yet been booted.
+**Status: in progress.** Weights downloading; the model has not yet been booted. See [notes/log.md](notes/log.md) for the running record.
 
 ## The problem in one table
 
