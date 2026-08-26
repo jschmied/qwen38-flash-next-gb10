@@ -48,3 +48,28 @@ deliberately, not by accident. `low_latency_gemm.py:83` similarly gates a decode
 device capability (10, 3), so that path is simply not taken on GB10.
 
 **Unverified.** Nothing here has been booted yet; this is code reading, not a result.
+
+
+## 2026-08-26 21:18 — the agent `!!!!!!` loop (and why it matters here)
+
+MiaAI documented [sgl-project/sglang#36537](https://github.com/sgl-project/sglang/issues/36537):
+with **thinking on + OpenAI `tools` + `--tool-call-parser qwen3_coder`**, the server emits
+**token ID 0** in a tight loop. This tokenizer decodes 0 as `!`, so the reply becomes
+`!!!!!!…` until `max_tokens`; speculative accept rate falls to 0.00 and disconnected clients
+keep generating. Their workaround is to turn thinking off for those sessions
+(`chat_template_kwargs: {"enable_thinking": false}`), and to cap agent temperature at ≤0.7 —
+a residual loop was seen at 1.0. Without the parser, tool calls leak as `<tool_call>` XML in
+`content` instead of `message.tool_calls`. Their conclusion:
+
+> There is no day-0 flag that gives thinking *and* structured tools together.
+
+**This is the most important open question for this repo.** The justification for a vLLM route
+is agent traffic with concurrency. If thinking and tools cannot coexist, the agent case is
+damaged whatever the stack. What is not yet known is whether the fault is SGLang's tool-call
+parser or the model's chat template — and that is testable here, on a different stack with a
+different parser (`qwen3_xml`). **That test is worth more than a throughput number**, and it is
+now the first thing to try after the model loads.
+
+Prior symptoms of the same shape on this box, for whoever picks this up: temperature 1.0
+breaking tool-calling on Qwen3.6-35B-A3B, and `<tool_call>` leaking unparsed when a
+chat-template-file model is served without `jinja=true`. The pattern is not new to this model.
