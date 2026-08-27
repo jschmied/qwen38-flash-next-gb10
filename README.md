@@ -98,23 +98,46 @@ out of resident memory.
 
 ## Findings so far
 
+- **[Failure modes](notes/failure-modes.md) — read this first if anything is wrong.** Every
+  failure hit here, organised by what you observe, with the signature that distinguishes causes
+  that present identically. Four different things produce "it loads but the output is wrong".
+- **[The full working result](notes/results-radixark-vllm.md)** — 76.6 GiB resident, 17.3 tok/s
+  single-stream, 32.4 tok/s at two concurrent streams.
+- **A one-line gate makes RadixArk NVFP4 load**, contradicting checkpoint tables that list it as
+  incompatible with vLLM. Its PLE is already in the exact FP8 format vLLM implements; only the
+  `isinstance(quant_config, Fp8Config)` check rejects it, because the *body* is NVFP4.
+- **`--cap-add=SYS_PTRACE` is required** for vLLM's official `VLLM_PLE_CPU_OFFLOAD` inside
+  Docker. `rebuild_cuda_tensor` needs `pidfd_getfd`; default seccomp denies it, and the engine
+  dies ten minutes in — after all 206 shards load — with only `Failed core proc(s): {}`.
 - **[No source build is required](notes/why-no-source-build.md).** vLLM PR #53896 changes
   one CUDA kernel signature, and Qwen4 needs the new `sigmoid` value — but that op is
   reached only under speculative decoding. Run without speculation and the stock
   prebuilt kernel is never called. This turns a multi-hour risky build into a file overlay.
-- **CPU offload is useless here.** GB10 shares one 128 GB pool between CPU and GPU, so
-  "offload to host" frees exactly nothing. Upstream's two offload paths (#53899 to host
-  memory, #53908 to a second GPU) both assume hardware this box does not have.
+- **CPU offload does work here — an earlier claim on this page was wrong.** We had reasoned that
+  because GB10 shares one 128 GB pool between CPU and GPU, "offload to host" frees nothing. In
+  practice the served model reports **76.61 GiB** device-consumed with the PLE held by the
+  offload worker, leaving 30.99 GiB for KV. Caveat we are explicit about: this box had a 64 GiB
+  swapfile active during the run, and **we did not measure how much of the PLE was resident
+  versus paged out**. Treat the swapfile as part of the recipe until someone measures it.
 - **The n-gram table is a lookup, not a GEMM**, and is pre-split into 128 shards across
-  10 files — so file-backed `mmap` is the mechanism that could work, letting the kernel
-  hold hot rows and evict the rest. Nobody upstream is building that.
+  10 files — so file-backed `mmap` is a viable mechanism too, letting the kernel
+  hold hot rows and evict the rest.
+- **Compressing the table beats offloading it.**
+  [Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark)
+  re-hashes the PLE trainlessly from 51 GB to **12.8 GB** in about six minutes, and spends the
+  freed ~16 GB on an MTP draft head that roughly doubles decode. Reconstruction cosine is only
+  ~0.50, yet their code benchmark went *up* (12/12 vs 10/12) because the model's own PLE
+  conv+gating filters the retrieved values. That is a better answer to the problem this repo
+  exists to solve, and it is theirs.
 
 ## Layout
 
     scripts/serve-flashnext.sh   first-boot serve config (no speculative decoding)
     scripts/apply-pr53896.sh     overlay the PR's Python files onto a venv
-    notes/the-field.md      who else is running this, and how
-    notes/                       reasoning, measurements, dead ends
+    notes/failure-modes.md       everything that went wrong, by symptom  <- start here
+    notes/results-radixark-vllm.md  the working config and its measurements
+    notes/the-field.md           who else is running this, and how
+    notes/log.md                 running record, including the dead ends
 
 ## Related upstream work
 
