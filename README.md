@@ -14,7 +14,12 @@ that do not work.
 > Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
 > answer is the better one and this repo will say so.
 
-**Status: it loads and serves; output is wrong.** See
+**Status: it loads and serves; output is wrong, and the cause looks environmental.** A
+documented-working single-Spark recipe (blazux) has been replicated here down to the image digest,
+the mmap PLE hook and the cudagraph splitting ops, and still produces garbage — so the difference
+sits below the configuration layer. Reported upstream; see the log.
+
+**Earlier status:** See
 [notes/results-radixark-vllm.md](notes/results-radixark-vllm.md) — the TP=1 hang is confirmed as
 executor selection, RadixArk *does* load (contradicting published tables) with a one-gate patch,
 but generation is garbage and the PLE-vs-body control has not been run.

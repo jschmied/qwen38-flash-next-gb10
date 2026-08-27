@@ -288,3 +288,47 @@ Qwen GDN models used silu. It was ruled out here on the grounds that the op sits
 **Untested, ranked:** (1) drop PLE CPU offload for an mmap gather, (2)
 `--no-enable-prefix-caching`, (3) `VLLM_GDN_DECODE_KERNEL=triton`, (4) PIECEWISE with
 `splitting_ops` rather than `--enforce-eager`.
+
+
+## Replicating a known-good single-Spark recipe — and still failing
+
+[blazux/qwen3.8-Flash-DGX](https://github.com/blazux/qwen3.8-Flash-DGX) is the only documented
+case of `RadixArk/Qwen3.8-Flash-Next-NVFP4` producing coherent output on a **single** GB10. Their
+approach replaces the PLE layer with an mmap gather over the `model-plefp8-*.safetensors` shards
+— the design reasoned out earlier in this repo — and avoids `VLLM_PLE_CPU_OFFLOAD` entirely.
+
+Reproduced here as closely as the artifacts allow: same image digest, their
+`src/vllm_ple_mmap.py` appended to a pristine `ple_layer.py`, their env
+(`VLLM_PLE_MMAP=1`, `VLLM_PLE_MMAP_WORKERS=32`, `VLLM_USE_FLASHINFER_SAMPLER=1`), their flags
+(`--load-format safetensors --no-enable-flashinfer-autotune --no-enable-prefix-caching
+--enable-chunked-prefill`) and their cudagraph configuration (`-cc.cudagraph_mode=PIECEWISE`
+with the 12-entry `splitting_ops` list including `vllm::ple_mmap_lookup`).
+
+Their hook initialises exactly as intended:
+
+    PLE mmap: layer 1, 128 shards, 320001536 rows x 160 B (47.7 GiB on disk), dtype F8_E4M3
+    Model loading took 74.34 GiB memory
+    GPU KV cache size: 364,916 tokens
+
+    "The capital of France is" -> " andufteth,,allwaysas2.logasasas1.myas2 kkl2 IIl1inkl l ul l lllK"
+
+Also tested and eliminated on the way: `VLLM_GDN_DECODE_KERNEL=triton` (OsakaTX's zero-build
+workaround for the sigmoid output gate) and `--no-enable-prefix-caching`, both individually and
+together.
+
+**Conclusion: the difference is environmental, not configurational.** Everything above the driver
+now matches a working instance. Their box is an ASUS GX10; this is a DGX Spark on driver
+`580.173.02` with three GB10 firmware capsules flashed 2026-08-06. Reported, with the driver
+question first: https://github.com/blazux/qwen3.8-Flash-DGX/issues/1
+
+Worth stating plainly: this box serves Qwen3.8-27B coherently every day, so the GPU is not
+generally miscomputing — whatever this is, it is specific to this model's kernels on this
+board/driver combination.
+
+## Method note, for anyone reading this as a debugging record
+
+The wider survey of who already had this working was worth more than the deep dive, and it was
+run **after** twenty hypothesis eliminations rather than before. Two of those eliminations were
+also invalid (`--enforce-eager` does not suppress mamba capture; prefix caching was never
+actually tested), and one published conclusion — "it must be the body" — was refuted by a repo
+that had been serving that same body correctly the whole time. Survey the field first.
