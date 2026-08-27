@@ -14,7 +14,12 @@ that do not work.
 > Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
 > answer is the better one and this repo will say so.
 
-**Status: in progress.** Weights complete (126 GiB). Running on the prebuilt
+**Status: it loads and serves; output is wrong.** See
+[notes/results-radixark-vllm.md](notes/results-radixark-vllm.md) — the TP=1 hang is confirmed as
+executor selection, RadixArk *does* load (contradicting published tables) with a one-gate patch,
+but generation is garbage and the PLE-vs-body control has not been run.
+
+Running on the prebuilt
 `vllm/vllm-openai:qwen38-flash-next` image rather than a PR overlay; next step is testing whether
 `--enforce-eager` avoids the [vllm#53960](https://github.com/vllm-project/vllm/issues/53960)
 PLE-offload deadlock. Not yet booted. See [notes/log.md](notes/log.md) for the running record.
