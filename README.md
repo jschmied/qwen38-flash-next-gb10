@@ -149,6 +149,8 @@ out of resident memory.
     scripts/apply-pr53896.sh     overlay the PR's Python files onto a venv
     notes/failure-modes.md       everything that went wrong, by symptom  <- start here
     notes/load-and-waits.md      where time goes under concurrency (PLE is not the bottleneck)
+    notes/single-stream-limit.md what limits n=1 (BF16 GEMV on unquantized dense weights)
+    notes/fetching-a-slice.md    diffing lfs.sha256 to download 12 GiB instead of 123
     notes/results-radixark-vllm.md  the working config and its measurements
     notes/the-field.md           who else is running this, and how
     notes/log.md                 running record, including the dead ends

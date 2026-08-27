@@ -47,6 +47,44 @@ a different mechanism from vLLM's offload worker; both can be right about their 
 The MoE experts, which are properly NVFP4, cost **0.47 ms/token**. The unquantized dense
 projections cost **87x that**.
 
+## Prior art — we were not first
+
+[hashd1ve/qwen38-flash-next-one-dgx-spark](https://github.com/hashd1ve/qwen38-flash-next-one-dgx-spark)
+published the same diagnosis roughly 16 hours before this note, from a different stack (SGLang):
+
+> "13.5 tok/s without speculation is about 41% of the memory-bandwidth roofline, and the reason is
+> counter-intuitive: it isn't the experts. The '6B active' are the NVFP4 part — roughly 1.2 GB
+> read per token. But the ~3.5B dense parameters (GDN, QSA, mHC, shared expert, embeddings) are
+> still BF16 and are read in full on every token: ~7 GB. So the small half of the model dominates
+> the clock."
+
+Their prescription is ours too — *"quantizing the dense parameters to FP8 would take the ceiling
+from ~33 to ~55 tok/s. That's a requantization project, not a flag."* They did not execute it.
+
+What this note adds is the **kernel-level confirmation** (67% of GPU time in cuBLAS BF16 GEMV,
+from a profile rather than an inference), the **95.5% GPU-busy measurement** that rules out the
+competing round-trip explanation, and the **execution** — finding and serving a checkpoint that
+fixes it.
+
+[starkweatherdigital](https://github.com/starkweatherdigital/qwen3.8-flash-next-nvfp4-recipe)
+independently publishes the identical 10.98 GB figure, but as a size fact rather than a
+bottleneck; they quantize the *PLE* instead (to NVFP4, 28.8 GB) and measure 16.8 tok/s eager /
+24.6 with MTP k=1.
+
+**An unresolved discrepancy worth flagging rather than papering over.** hashd1ve counts 3.5 B
+dense / 7 GB; we count 4.84 B / 9.68 GB. They appear to include embeddings and mHC while
+excluding `lm_head` (0.64 B) and the dense `mlp` (0.66 B), which we count. The roofline follows
+directly from this number — their ~33 tok/s ceiling against our 24.9 — so it should be reconciled
+before either is treated as settled. Ours is derived from the safetensors headers of the specific
+checkpoint we serve, and is reproducible from the census below.
+
+**A genuine tension in the two accounts.** hashd1ve describes their stack as *latency*-bound —
+"at batch 1 a forward is 48 layers of small kernels with the GPU underutilized". Our profile says
+95.5% busy. Their supporting evidence is weak (2.23x scaling at c=4 is the *expected* signature of
+bandwidth-bound decode, not evidence against it), but they place themselves at 41% of roofline
+where we measure ~87%, and both cannot describe the same regime. Different runtimes, so both may
+be locally correct — but anyone reading both should know the claims do not compose.
+
 ## Why: the checkpoint's dtype census
 
 `RadixArk/Qwen3.8-Flash-Next-NVFP4`, read from the safetensors headers:
