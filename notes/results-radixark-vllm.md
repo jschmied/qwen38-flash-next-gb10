@@ -222,3 +222,33 @@ would be invisible with a BF16 PLE. That is the open question.
 06:00 UTC (commit `95dc96d1d012`, in PR #53899) — five lines adding `spawn_ple_offload()` and
 `wait_ple_offload_ready()` to `uniproc_executor.py`. The `--distributed-executor-backend mp`
 workaround remains correct for builds predating it, including the image used here.
+
+
+## The decisive negative: the corruption is invariant
+
+Patched the offload worker to dequantize the fp8 rows itself and hand the GPU a **BF16** buffer,
+making the PLE path structurally identical to the BF16-PLE checkpoint that is known to work.
+
+**The output is byte-identical to every previous run:**
+
+    '  of hasfore, youLr, youyou andlog you P.log youinkinkink lylogroll your...'
+
+The same string appears across: FP8 PLE, BF16 PLE, `FLASHINFER_CUTLASS` MoE, `MARLIN` MoE,
+autotune on and off, async scheduling on and off, MRV1 and MRV2. **The corruption does not vary
+with anything tested**, which rules the PLE out entirely and places the fault upstream of all of
+it. Twenty hypotheses eliminated.
+
+## Where it actually points: the body, and a number worth having
+
+    RadixArk : 125.9 GiB total - 47.7 PLE = 78.2 GiB body
+    Inferact : 170.2 GiB total - 95.4 PLE = 74.9 GiB body
+
+The bodies are **3.3 GiB apart**. The per-expert NVFP4 layout is byte-for-byte identical between
+them (`experts.N.{gate,up,down}_proj.weight` as `U8` with `F8_E4M3` scales plus `F32`
+`weight_scale_2` / `input_scale`), so the divergence is in the **non-expert** part of the body —
+something outside the MoE is quantized differently in the two exports.
+
+Bisecting that is the next step, and it needs a working reference to diff against, which a single
+Spark cannot provide: the model runs neither without the PLE nor with it resident. Reported to
+the maintainer of the working Inferact recipe:
+https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1
