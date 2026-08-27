@@ -94,18 +94,46 @@ batches extremely well.
 Set `--max-num-seqs` at or above your expected concurrency. The default we shipped (2) costs
 **4x aggregate throughput** at c=8 and is the single most expensive misconfiguration we found.
 
-## Why this matters for the field
+## Why this matters for the field — CORRECTED
 
-Every other single-Spark report we know of quotes **single-stream** decode: 22 tok/s
-([0xBakeer](https://github.com/0xBakeer/qwen38-flash-next-spark), llama.cpp), 27
-([Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark),
-SGLang), 28.2 ([dolf3131](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark), vLLM + MTP
-k=2), 31–50 ([paragontasx](https://github.com/paragontasx/qwen38-flash-next-dgx-spark),
-llama.cpp).
+**An earlier version of this section claimed we were the only project measuring aggregate
+throughput, and that llama.cpp builds could not measure it at all. Both were wrong.** A survey of
+the field on 2026-08-27 found **six** single-Spark repos publishing concurrency numbers, and
+llama.cpp serves multiple slots perfectly well — `sxuff` runs `-np 8` (93.9 tok/s aggregate),
+`gitcommit90` runs 10 slots, `paragontasx` publishes c=1/2/4. `--parallel 1` was 0xBakeer's
+*choice*, and they explicitly retracted the "concurrent requests crash" claim we had repeated
+from their earlier README.
 
-Those are the right numbers for one person at a terminal, and on that axis we are **behind** — we
-run 17.1 with no speculation. But if the box serves more than one caller, aggregate is the number
-that matters, and it is an order of magnitude larger. We have not seen it published by anyone, and
-llama.cpp builds cannot produce it at all (`--parallel 1`).
+At matched concurrency **we are behind most of them**, because they speculate and we do not:
 
-Speculative decoding is untried here and is the obvious next lever for the single-stream figure.
+| c | us | Death-By-Tokens | xlzuvekas | mmcsssss | sxuff | gitcommit90 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 17.1 | 24.3 | 27.4 | — | 26.6 | 26.8 |
+| 4 | 44.1 | **96.3** | **72.8** | 52.9 | — | 46.2 |
+| 8 | 87.5 | **157.1** | — | — | 93.9 | — |
+| 48 | **266.8** | not tested | not tested | not tested | not tested | not tested |
+
+What survives the correction: **nobody has measured past c=8 on a single Spark**, and 266.8 tok/s
+remains the highest aggregate published anywhere we can find. What does not survive: any claim of
+leadership at the concurrencies people actually test. Death-By-Tokens does roughly **2x our
+aggregate** at both c=4 and c=8.
+
+The honest summary is narrower and less flattering than what this page said before: we measured
+further out than anyone, on an axis several others were already measuring, and we are mid-table
+where the measurements overlap.
+
+## What the PLE claim does and does not cover
+
+Our result — the offload worker uses 5–24% of one core — is **corroborated independently**:
+`paragontasx` measures the gather itself as "microseconds" for a 48x160 lookup.
+
+But two projects argue the PLE *path* still dominates, by a mechanism our metric cannot see.
+`0xBakeer` and `paragontasx` both attribute **~22 ms of a 36 ms step** (respectively ~29 of 38) to
+fixed, non-bandwidth overhead: the gather is a CPU op followed by a **pageable** host-to-device
+copy, which forces a CUDA-graph break every token. Their evidence that this is not bandwidth is
+sharp — **Q3_K moves 19% fewer bytes and is 14% *slower*** than Q4_K.
+
+Worker CPU% cannot distinguish "the gather is cheap" from "the round-trip around the gather is
+expensive". Both can be true, and on our stack the profiler says the dominant cost is elsewhere
+(see [notes/single-stream-limit.md](single-stream-limit.md)) — but our claim should be read as
+**"the PLE gather is not CPU-bound"**, not as "the PLE path is free".
