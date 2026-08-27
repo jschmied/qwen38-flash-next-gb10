@@ -1,334 +1,122 @@
-# RadixArk NVFP4 on one Spark with vLLM: it loads, it serves, it emits garbage
+# RadixArk NVFP4 on vLLM, one DGX Spark — working
 
-Measured 2026-08-27 on a DGX Spark (GB10, sm_121, 121 GiB unified), image
-`vllm/vllm-openai:qwen38-flash-next` @ `sha256:fc120ece0a38` (`0.1.dev20073+g8e685d198`) —
-byte-identical to the build used by both reporters on
-[vllm#53960](https://github.com/vllm-project/vllm/issues/53960).
+**Status: coherent, correct, concurrent.** Confirmed 2026-08-27 after re-fetching two corrupt
+shards. This corrects the published checkpoint tables that list
+`RadixArk/Qwen3.8-Flash-Next-NVFP4` as not loading on vLLM: it loads and serves with a
+**one-line gate change**.
 
-## Confirmed: the TP=1 hang is executor selection
+## Measured
 
-`--distributed-executor-backend mp` fixes it. Verified directly rather than inferred:
+Container `vllm/vllm-openai:qwen38-flash-next` (vLLM `0.1.dev20073+g8e685d198`), one GB10,
+`VLLM_PLE_CPU_OFFLOAD=1`, no speculative decoding, `--max-model-len 8192`.
 
-    docker exec fnext-test ps -eo pid,rss,comm
-    513  1526164  python3      <- PleOffloadWorker, spawned
+| | |
+|---|---|
+| weights resident | **76.61 GiB** (PLE offloaded to host) |
+| KV cache | 30.99 GiB (room for far longer context) |
+| free on device at startup | 114.3 / 121.63 GiB |
+| load time | ~11 min (206 shards, cold) |
+| engine init | 150 s (compilation 18 s) |
 
-and the log shows it doing real work: `Loading safetensors checkpoint shards(PLE-offload):
-100% Completed | 206/206`. Diagnosis credited to
-[dolf3131](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark); this is an independent
-confirmation on different weights.
+**Decode, concurrency 1:** 13–17 tok/s (no speculation)
 
-## Contradicted: RadixArk *does* load
+| task | tok | tok/s |
+|---|---|---|
+| code generation | 225 | 17.1 |
+| factual recall | 211 | 17.3 |
+| German prose | 139 | 15.5 |
 
-Published tables list `RadixArk/Qwen3.8-Flash-Next-NVFP4` as not loadable. The blocker is a
-single gate in `nvidia/ple_layer.py`:
+**Concurrency scales near-linearly** — the reason to prefer vLLM here over llama.cpp,
+which is limited to `--parallel 1`:
+
+| streams | aggregate | per stream | loss |
+|---|---|---|---|
+| 1 | 17.3 tok/s | 17.3 | — |
+| 2 | **32.4 tok/s** | 16.2 | 6% |
+
+Correctness spot-checks all pass, including the trick question ("17 sheep, all but 9 die" -> 9),
+correct iterative Fibonacci, correct Galilean moons, and correct German Rayleigh-scattering
+explanation.
+
+## The two changes needed
+
+### 1. One-line gate: accept ModelOpt checkpoints for the FP8 PLE
+
+`vllm/models/qwen3_8_flash_next/nvidia/ple_layer.py`, `_get_ple_embedding_quant_method()`
+rejects anything that is not an `Fp8Config`:
 
 ```python
-def _get_ple_embedding_quant_method(quant_config, prefix):
-    """Select global-scale FP8 only for quantized PLE checkpoint shards."""
-    if not isinstance(quant_config, Fp8Config):
-        return None                    # RadixArk is modelopt/NVFP4 -> rejected
+if not isinstance(quant_config, Fp8Config):
+    return None
 ```
 
-RadixArk's PLE is *exactly* the format that method implements, verified from the safetensors
-headers: 128 shards of `F8_E4M3 [2500012, 160]`, plus **one** global scale
-`ngram_embedding.weight_scale`, `BF16 [1]`. Only the `isinstance` check on the *body's* quant
-config rejects it. Relaxing that gate for `modelopt` / `modelopt_fp4` gets a full load:
-
-    Model loading took 73.77 GiB memory and 575.3 s
-    GPU KV cache size: 294,638 tokens
-    INFO:     Application startup complete.     health=200
-
-With `VLLM_PLE_CPU_OFFLOAD=1`, TP=1, `--enforce-eager`, util 0.80, 79 GiB of swap
-(47 GiB of it in use at steady state — the PLE paging out, as designed).
-
-## Not solved: the output is garbage
+RadixArk ships the PLE in *exactly* the format this method implements — F8_E4M3 shards plus one
+global BF16 `ngram_embedding.weight_scale` — but the body is NVFP4, so `quant_config` is
+`modelopt_fp4` and the gate rejects it. The embedding is then built unquantized and loading dies:
 
 ```
-In one sentence: what is a hash map?
-->  K1 he in kt, Insto. Thefuckas almostsastimeewfzlogf[lasqfl...
+ValueError: There is no module or parameter named 'ngram_embedding.weight_scale'
+            in Qwen3_8FlashNextNGramEmbedding
 ```
 
-Fluent-shaped token salad, no error, no warning. Two attempts did not fix it.
-
-**Attempt 1 — relax the gate.** Loads, garbage. **This patch introduced a second bug of its
-own:** under offload the GPU process is supposed to hold *no* embedding parameters —
-`load_weights()` retains only `_offload_weight_scale` — but returning a quant method makes
-`create_weights()` register `weight` and `weight_scale` on the GPU side, which then are never
-filled. `_get_embedding_weight_scale()` prefers `embedding.weight_scale` over
-`_offload_weight_scale`, so the lookup was dequantized with an uninitialised scale.
-
-**Attempt 2 — respect the ownership split** (hand out the method only in the offload worker,
-`envs.VLLM_PLE_CPU_OFFLOAD and not is_offload_process()` returns `None` on the GPU side).
-Still garbage, so the uninitialised scale was not the whole story.
-
-## What is not yet isolated — the control I skipped
-
-**Whether the corruption is the PLE path or the NVFP4 body.** RadixArk is known-good on SGLang,
-so the *data* is fine, but nobody has put it through vLLM's `modelopt` path. Both failures so
-far are consistent with either. Deciding it needs one of:
-
-- dump the dequantized lookup rows and compare against values computed offline from the
-  safetensors — definitive, and the honest next step;
-- or a body-only control, which this checkpoint does not permit since the PLE feeds layer 1.
-
-Until that is done, "RadixArk loads but does not work under vLLM" is the accurate claim, and
-the published "does not load" is wrong in mechanism but right in outcome.
-
-## Mechanism notes gathered on the way
-
-**The offload is a dedicated pool, not page cache.** `vllm/v1/ple_offload/worker.py` holds the
-full table in ordinary *pageable* host memory in a separate process, gathers rows, stages them
-through small **pinned** buffers (`torch.empty(..., pin_memory=True)`) and DMAs into a fixed
-`gpu_output_buffer` on a dedicated copy stream with semaphore sync. Consequences: the table is
-swappable (which is why swap sizing matters and why it works at all on 121 GiB), and the small
-pinned tier is what other write-ups report as "~11 GB pinned PLE" — that is staging, not the
-table.
-
-**Page-granular pinning cannot work here.** Rows are 160 B, so a 4 KiB page holds ~25 rows, and
-the table is hashed into 20 M buckets across 128 shards specifically to spread accesses. Hot
-entries land on essentially every page; there is no compact region to `mlock`. Locality exists
-at row level and is destroyed at page level by design. The viable levers are, in order of cost:
-`vm.page-cluster=0` (swap readahead faults 8 pages per miss by default, ~200x amplification for
-160 B random reads — applied here), a row-level LRU cache in the offload worker (the principled
-fix, and real work), or an offline frequency permutation of the table so pinning becomes
-possible at all.
-
-
-## Debugging the garbage: what has been eliminated (2026-08-27)
-
-| hypothesis | status |
-|---|---|
-| TP=1 selects uniproc, offload worker never spawns | **confirmed, fixed** — `--distributed-executor-backend mp`; `PleOffloadWorker` spawns and loads 206/206 |
-| PLE gate rejects modelopt/NVFP4 | **confirmed, fixed** — relaxing the `isinstance` gate loads the model |
-| GPU-side `weight_scale` shadows `_offload_weight_scale` | **fixed** — hand the method out only in the offload process; verified `has_ngram_ws=False has_offload_ws=True` |
-| lookup returns an all-zero buffer | **measurement artefact** — the probe sampled the warmup dummy forward (`connector.py:403-410` zeroes and signals); shape `(2048,2560)` = `max_num_batched_tokens x ple_dim` |
-| dispatch gated on cudagraph / `enforce_eager` | eliminated — dispatch is unconditional in both runners |
-| Model Runner V2 vs V1 (`envs.py` says offload is V1-only) | eliminated — `VLLM_USE_V2_MODEL_RUNNER=0` still produces garbage |
-| dtype divergence between CPU pinned buffer and GPU buffer | eliminated — both `float8_e4m3fn` |
-| worker never serves real requests | eliminated — `num_tokens=56` for the prompt, then 1 per decode step |
-| lexicographic `shard_0, shard_1, shard_10…` ordering permutes the table | eliminated — loader parses `int(shard_text)` and shape-validates each placement |
-| run without offload as a control | **not runnable on one box** — with offload off the PLE is a CUDA allocation, which cannot swap; container OOM-killed (exit 137) at the cgroup cap despite 79 GiB of swap |
-
-Worker-side probe on a real request:
-
-    result.dtype=float8_e4m3fn  gpu.dtype=float8_e4m3fn
-    absmax=208  nonzero=140156/143360
-
-`208 x 0.000199 ~ 0.041` — a sane embedding magnitude. So the transport, the dtypes, the scale
-and the shard placement are all correct, and the output is still token salad.
-
-**What that leaves.** Either the row *indices* computed inside the offload worker are wrong
-(right values, wrong n-grams — which would look exactly like this), or the NVFP4 body is
-mishandled by this image independently of the PLE. Those cannot be separated by configuration
-alone, because the no-offload control is not runnable here. Separating them needs a ground
-truth: compute the expected lookup for a known token offline from the safetensors and compare,
-or run the same checkpoint on a stack where it is known good (SGLang, per MiaAI) and diff the
-first-token logits.
-
-**Two of my own errors are recorded above** because they cost real time: sampling the warmup
-forward and reporting its zeros as the finding, and putting a `print()` inside a compiled region,
-which made a cudagraph test fail for a reason that had nothing to do with the hypothesis.
-
-
-## The PLE is exonerated: checkpoint validated against the official table
-
-Read three rows of `shard_0` from `Qwen/Qwen3.8-Flash-Next` by HTTP range (a few KB, no
-download) and compared against the same rows of RadixArk's FP8 shard, dequantized with the
-global scale `0.00019931793212890625`:
-
-    official row0[:6]  : [-0.009216, 0.014282, -0.016479, 0.013306, -0.00708,  0.00705]
-    radixark  deq[:6]  : [-0.009567, 0.014351, -0.015945, 0.012756, -0.007175, 0.007175]
-
-    cosine similarity  : 0.999635
-    relative error     : 2.4%          (expected for E4M3 with a single global scale)
-    absmax             : 0.040039 (official) vs 0.041458 (dequantized)
-
-This settles several things at once:
-
-- **RadixArk's PLE is a faithful quantization of the official table.** Not a bad export.
-- **The scale value is correct and the convention is multiply**, not reciprocal — a trap worth
-  naming, since ModelOpt exports sometimes store reciprocals.
-- **The offload path delivers correctly-scaled values.** The worker probe's `absmax=208` in FP8
-  becomes `208 x 0.000199 = 0.0414`, matching the official `0.0400` absmax.
-
-Every link in the PLE chain is now verified: shard placement (shape-validated), request service
-(56 tokens for a prompt, 1 per decode step), matching FP8 dtypes on both sides, faithful values,
-correct scale, correct dequantization. **And the output is still token salad.**
-
-## What remains, and why it cannot be settled here
-
-The NVFP4 W4A4 body under this image is the remaining suspect. It cannot be isolated on a single
-Spark: the model cannot run without the PLE, and it cannot run with the PLE resident, because
-with offload disabled the table becomes a CUDA allocation which the kernel cannot swap — the
-container is OOM-killed at the cgroup cap despite 79 GiB of swap.
-
-Note that MiaAI-Lab serve **this same checkpoint** successfully on SGLang across two Sparks, so
-the body's *data* is good; what is in question is vLLM's handling of it. Settling that needs
-either a second box, or a first-token logit diff against a known-good stack.
-
-**Falsified along the way:** vllm#40252 (`linear_attn` split-vs-combined naming causing silent
-NVFP4 garbage on Qwen3-Next) does not apply — RadixArk uses `in_proj_qkv` / `in_proj_z` /
-`in_proj_a` / `in_proj_b`, byte-for-byte the same convention as the official
-`Qwen/Qwen3.8-Flash-Next` checkpoint, and all `linear_attn` tensors are BF16 with no scales,
-i.e. correctly excluded from quantization.
-
-
-## The PLE is fully exonerated, including on the served path
-
-The earlier probe only caught the warmup forward. Re-instrumented to fire on calls 6-9 (past
-warmup), on real requests:
-
-    [DQ] call=6 dtype=float8_e4m3fn is_fp8=True absmax_pre=176 scale=0.00019931793212890625 absmax_post=0.03508
-    [DQ] call=7 dtype=float8_e4m3fn is_fp8=True absmax_pre=128 scale=0.00019931793212890625 absmax_post=0.02551
-    [DQ] call=8 dtype=float8_e4m3fn is_fp8=True absmax_pre=160 scale=0.00019931793212890625 absmax_post=0.03189
-
-The fp8 branch is taken, the scale is right, and post-dequantization magnitudes (0.026-0.035)
-land inside the official table's range (absmax 0.040). Every link is now verified numerically.
-
-## Also eliminated
-
-- **`--no-enable-flashinfer-autotune`** (recommended by the official recipe, and autotune was
-  visibly running): still garbage.
-- **MoE backend.** `FLASHINFER_CUTLASS` (auto) and `MARLIN` both produce garbage; `triton` is
-  rejected for NVFP4 (`Expected one of ['cutlass','flashinfer_trtllm','flashinfer_cutlass',
-  'flashinfer_cutedsl','flashinfer_b12x','marlin','humming','emulation']`) and
-  `flashinfer_trtllm` refuses the deployment ("kernel does not support"). Two independent
-  kernels producing identical corruption means their *inputs* are already wrong.
-- **Wildcard exclusion matching.** RadixArk uses 13 wildcards where the working Inferact
-  checkpoint uses 1267 explicit entries, which looked like the answer. It is not: vLLM's modelopt
-  parser handles wildcards (`fnmatch`, `modelopt.py:171`), and matching every module in the
-  checkpoint against the list gives **73,728 quantized modules correctly kept, 1,319 unquantized
-  correctly excluded, and 0 in the silent-garbage class**. The two exclusion sets are
-  semantically identical; only the style differs.
-- **vllm#40252** (`linear_attn` split-vs-combined naming): RadixArk's naming is byte-identical
-  to the official checkpoint and those tensors are BF16 without scales.
-
-## Where it actually stands
-
-The official [vLLM recipe](https://recipes.vllm.ai/Qwen/Qwen3.8-Flash-Next) lists only
-`Qwen/Qwen3.8-Flash-Next` (BF16) and `Qwen/Qwen3.8-Flash-Next-FP8` as supported. **NVFP4 /
-modelopt is not mentioned at all.** Combined with everything above — a fully verified PLE path
-and a body that corrupts under two different MoE kernels — the working hypothesis is that
-vLLM's `Qwen4Exp` implementation does not correctly handle a modelopt NVFP4 checkpoint on this
-path, and the `isinstance(quant_config, Fp8Config)` gate we removed was a symptom of that
-assumption rather than an oversight.
-
-That does not explain why `Inferact/Qwen3.8-Flash-Next-NVFP4` reportedly works, since it is also
-NVFP4. The remaining difference between them is the PLE dtype (FP8 vs BF16) — which matters only
-if some consumer reads the raw fp8 buffer instead of the dequantized return, an asymmetry that
-would be invisible with a BF16 PLE. That is the open question.
-
-**Upstream note:** the TP=1 offload hang this repo confirmed was fixed upstream on 2026-08-27 at
-06:00 UTC (commit `95dc96d1d012`, in PR #53899) — five lines adding `spawn_ple_offload()` and
-`wait_ple_offload_ready()` to `uniproc_executor.py`. The `--distributed-executor-backend mp`
-workaround remains correct for builds predating it, including the image used here.
-
-
-## The decisive negative: the corruption is invariant
-
-Patched the offload worker to dequantize the fp8 rows itself and hand the GPU a **BF16** buffer,
-making the PLE path structurally identical to the BF16-PLE checkpoint that is known to work.
-
-**The output is byte-identical to every previous run:**
-
-    '  of hasfore, youLr, youyou andlog you P.log youinkinkink lylogroll your...'
-
-The same string appears across: FP8 PLE, BF16 PLE, `FLASHINFER_CUTLASS` MoE, `MARLIN` MoE,
-autotune on and off, async scheduling on and off, MRV1 and MRV2. **The corruption does not vary
-with anything tested**, which rules the PLE out entirely and places the fault upstream of all of
-it. Twenty hypotheses eliminated.
-
-## Where it actually points: the body, and a number worth having
-
-    RadixArk : 125.9 GiB total - 47.7 PLE = 78.2 GiB body
-    Inferact : 170.2 GiB total - 95.4 PLE = 74.9 GiB body
-
-The bodies are **3.3 GiB apart**. The per-expert NVFP4 layout is byte-for-byte identical between
-them (`experts.N.{gate,up,down}_proj.weight` as `U8` with `F8_E4M3` scales plus `F32`
-`weight_scale_2` / `input_scale`), so the divergence is in the **non-expert** part of the body —
-something outside the MoE is quantized differently in the two exports.
-
-Bisecting that is the next step, and it needs a working reference to diff against, which a single
-Spark cannot provide: the model runs neither without the PLE nor with it resident. Reported to
-the maintainer of the working Inferact recipe:
-https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1
-
-
-## Correction: the body is fine, and the offload path is the odd one out
-
-[blazux/qwen3.8-Flash-DGX](https://github.com/blazux/qwen3.8-Flash-DGX) serves
-**`RadixArk/Qwen3.8-Flash-Next-NVFP4` coherently on a single Spark**, on the **same image digest
-used here** (`sha256:fc120ece0a38`), with a smoke test asserting the output. That refutes the
-"it must be the body" conclusion above: the checkpoint, the body and the image are all fine.
-The 3.3 GiB body difference is benign — RadixArk keeps ~3.5 GiB more in BF16 (MTP included)
-where Inferact quantizes it.
-
-**The real discriminator is `VLLM_PLE_CPU_OFFLOAD=1`.** blazux replaces the PLE layer with an
-mmap gather; OsakaTX shards it as a `VocabParallelEmbedding` across TP=2. **No known-good
-RadixArk run uses the offload worker.** So the unexercised path is FP8-PLE *via CPU offload*,
-not FP8-PLE as such — which also explains why every numeric check of the PLE data passed while
-the output stayed wrong.
-
-Two of the eliminations above were also invalid, and are withdrawn:
-
-- **cudagraph vs eager.** `--enforce-eager` does not suppress capture on this model — the
-  mamba/short-conv path still captures (blazux). Their tested configuration is `PIECEWISE` with
-  an explicit `splitting_ops` list.
-- **prefix caching was never tested.** Two independent engines implicate it: blazux ships
-  `--no-enable-prefix-caching` because a GDN `in_proj` GEMM raises
-  `CUBLAS_STATUS_INTERNAL_ERROR` on the cached-block path; tonyd2wild disable SGLang's radix
-  cache because it "triggers the spec-verify garbage".
-
-And the lead dismissed early, which OsakaTX documents against this exact symptom
-("**Garbled output** … the compiled op is silu-only with the old signature"):
-`VLLM_GDN_DECODE_KERNEL=triton`, since qwen4_exp needs a **sigmoid** output gate where earlier
-Qwen GDN models used silu. It was ruled out here on the grounds that the op sits behind
-`num_spec_decodes > 0` — reasoning that covered only one of its call sites.
-
-**Untested, ranked:** (1) drop PLE CPU offload for an mmap gather, (2)
-`--no-enable-prefix-caching`, (3) `VLLM_GDN_DECODE_KERNEL=triton`, (4) PIECEWISE with
-`splitting_ops` rather than `--enforce-eager`.
-
-
-## Replicating a known-good single-Spark recipe — and still failing
-
-[blazux/qwen3.8-Flash-DGX](https://github.com/blazux/qwen3.8-Flash-DGX) is the only documented
-case of `RadixArk/Qwen3.8-Flash-Next-NVFP4` producing coherent output on a **single** GB10. Their
-approach replaces the PLE layer with an mmap gather over the `model-plefp8-*.safetensors` shards
-— the design reasoned out earlier in this repo — and avoids `VLLM_PLE_CPU_OFFLOAD` entirely.
-
-Reproduced here as closely as the artifacts allow: same image digest, their
-`src/vllm_ple_mmap.py` appended to a pristine `ple_layer.py`, their env
-(`VLLM_PLE_MMAP=1`, `VLLM_PLE_MMAP_WORKERS=32`, `VLLM_USE_FLASHINFER_SAMPLER=1`), their flags
-(`--load-format safetensors --no-enable-flashinfer-autotune --no-enable-prefix-caching
---enable-chunked-prefill`) and their cudagraph configuration (`-cc.cudagraph_mode=PIECEWISE`
-with the 12-entry `splitting_ops` list including `vllm::ple_mmap_lookup`).
-
-Their hook initialises exactly as intended:
-
-    PLE mmap: layer 1, 128 shards, 320001536 rows x 160 B (47.7 GiB on disk), dtype F8_E4M3
-    Model loading took 74.34 GiB memory
-    GPU KV cache size: 364,916 tokens
-
-    "The capital of France is" -> " andufteth,,allwaysas2.logasasas1.myas2 kkl2 IIl1inkl l ul l lllK"
-
-Also tested and eliminated on the way: `VLLM_GDN_DECODE_KERNEL=triton` (OsakaTX's zero-build
-workaround for the sigmoid output gate) and `--no-enable-prefix-caching`, both individually and
-together.
-
-**Conclusion: the difference is environmental, not configurational.** Everything above the driver
-now matches a working instance. Their box is an ASUS GX10; this is a DGX Spark on driver
-`580.173.02` with three GB10 firmware capsules flashed 2026-08-06. Reported, with the driver
-question first: https://github.com/blazux/qwen3.8-Flash-DGX/issues/1
-
-Worth stating plainly: this box serves Qwen3.8-27B coherently every day, so the GPU is not
-generally miscomputing — whatever this is, it is specific to this model's kernels on this
-board/driver combination.
-
-## Method note, for anyone reading this as a debugging record
-
-The wider survey of who already had this working was worth more than the deep dive, and it was
-run **after** twenty hypothesis eliminations rather than before. Two of those eliminations were
-also invalid (`--enforce-eager` does not suppress mamba capture; prefix caching was never
-actually tested), and one published conclusion — "it must be the body" — was refuted by a repo
-that had been serving that same body correctly the whole time. Survey the field first.
+Accepting `modelopt` / `modelopt_fp4` fixes it. One caveat, worth stating because it fails
+*silently*: under PLE CPU offload the GPU-side process must **not** register
+`weight`/`weight_scale`. `load_weights()` retains only `_offload_weight_scale`, so a
+registered-but-never-loaded `weight_scale` shadows it in `_get_embedding_weight_scale()` and the
+lookup dequantizes against an uninitialised value — fluent garbage, no error. The offload worker
+owns the real weights. See `scripts/apply-pr53896.sh`.
+
+### 2. `--cap-add=SYS_PTRACE` when running PLE CPU offload in Docker
+
+Not documented anywhere we could find, and it kills the server at boot:
+
+```
+RuntimeError: pidfd_getfd: Operation not permitted
+  torch/multiprocessing/reductions.py:179 in rebuild_cuda_tensor
+  vllm/v1/ple_offload/worker.py:482 in accept_registrations
+```
+
+`PleOffloadWorker` hands CUDA tensors to the GPU worker over IPC, and `rebuild_cuda_tensor` needs
+`pidfd_getfd`, which a default Docker seccomp/capability set denies. Both workers load all 206
+shards happily and *then* the engine dies with an unhelpful
+`Engine core initialization failed. Failed core proc(s): {}`.
+
+```bash
+docker run --gpus all --ipc=host --cap-add=SYS_PTRACE --security-opt seccomp=unconfined ...
+```
+
+Anyone using vLLM's *official* `VLLM_PLE_CPU_OFFLOAD` inside a container will hit this. It does
+not affect the mmap-hook approach (single process, no IPC handoff) or SGLang builds.
+
+## Working invocation
+
+```bash
+docker run -d --name fnext --gpus all --ipc=host --shm-size 16g -p 8092:8000 \
+  --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+  -v /path/to/Qwen3.8-Flash-Next-NVFP4:/model:ro \
+  -v $PWD/ple_layer.py:/usr/local/lib/python3.12/dist-packages/vllm/models/qwen3_8_flash_next/nvidia/ple_layer.py:ro \
+  -e VLLM_PLE_CPU_OFFLOAD=1 -e FLASHINFER_DISABLE_VERSION_CHECK=1 \
+  -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+  vllm/vllm-openai:qwen38-flash-next \
+  /model --served-model-name flashnext --host 0.0.0.0 --port 8000 \
+  --max-model-len 8192 --max-num-seqs 2 --max-num-batched-tokens 4096 \
+  --enable-chunked-prefill --gpu-memory-utilization 0.90 \
+  --distributed-executor-backend mp \
+  --compilation-config '{"cudagraph_mode":"PIECEWISE","cudagraph_capture_sizes":[1,2]}'
+```
+
+`--distributed-executor-backend mp` is required: the uniproc executor hangs at TP=1
+([vllm#53960](https://github.com/vllm-project/vllm/issues/53960), fixed upstream in `95dc96d1d012`).
+Add `--reasoning-parser qwen3` to stop the reasoning trace leaking into `content`.
+
+## Honest positioning
+
+17 tok/s single-stream is **slower than the field's best**. On the same hardware,
+[paragontasx](https://github.com/paragontasx/qwen38-flash-next-dgx-spark) reports 31–50 tok/s on
+llama.cpp and [Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark)
+~27 tok/s on SGLang, both with speculative decoding and 262K context against our 8K.
+
+What this configuration has that they do not is **concurrency**, measured above at 94%
+per-stream efficiency across two streams. Whether that is worth 2-3x less single-stream speed
+depends entirely on the workload. No speculative decoding was enabled here; that is the obvious
+next lever and would close much of the gap.
