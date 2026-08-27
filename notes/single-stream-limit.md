@@ -78,10 +78,55 @@ methods, same answer.
 If those parameters were NVFP4 (~0.55 B/param including scales) they would cost 2.66 GB and
 9.7 ms/token, projecting **~29.8 tok/s** unspeculated.
 
-This corroborates [dolf3131's](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark)
-parameter accounting from the other direction: they found RadixArk leaves ~2.52 B more parameters
-in BF16 than `Inferact/Qwen3.8-Flash-Next-NVFP4`, and the census shows an `experts` BF16 entry of
-exactly **2,516,582,400**.
+**Correction — the obvious fix is not the Inferact checkpoint.** An earlier version of this note
+said switching to `Inferact/Qwen3.8-Flash-Next-NVFP4` was the largest lever, on the strength of
+[dolf3131's](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark) parameter accounting. A
+remote dtype census (safetensors headers over HTTP range reads, no download) shows Inferact has
+**exactly the same 4.84 B of dense BF16 as RadixArk**, group for group:
+
+| group | RadixArk | Inferact |
+|---|---|---|
+| attn q/k/v/o | BF16 1.72 B | BF16 1.72 B |
+| GDN / linear attn | BF16 1.14 B | BF16 1.14 B |
+| dense mlp | BF16 0.66 B | BF16 0.66 B |
+| lm_head | BF16 0.64 B | BF16 0.64 B |
+| PLE table | **F8_E4M3 51.2 B** | **BF16 51.2 B** |
+| **dense in BF16** | **4.84 B** | **4.84 B** |
+
+The entire 170.2 vs 125.9 GiB difference is the **PLE precision**, not the dense weights.
+Switching would cost 44 GiB and gain nothing on decode. RadixArk is the better of the two for us.
+
+## The checkpoint that does fix it
+
+`lovedheart/Qwen3.8-Flash-Next-NVFP4-FP8` (123.5 GiB — slightly *smaller* than RadixArk)
+quantizes exactly the layers this profile indicts, and keeps the compact FP8 PLE:
+
+| group | RadixArk | lovedheart |
+|---|---|---|
+| attn q/k/v/o | BF16 1.72 B | **F8_E4M3 1.54 B** |
+| GDN / linear attn | BF16 1.14 B | **F8_E4M3 1.13 B** |
+| PLE table | F8_E4M3 51.2 B | F8_E4M3 51.2 B |
+| **dense in BF16** | **4.84 B** | **2.17 B** |
+
+Projected effect, using the same bandwidth model and holding the measured 68% efficiency:
+
+| | GB/token | ceiling | projected |
+|---|---:|---:|---:|
+| RadixArk | 10.98 | 24.9 tok/s | 17.0 measured |
+| lovedheart | 8.31 | 32.9 tok/s | **~22.4** (+32%) |
+
+FP8 rather than NVFP4 for these layers is the right call on quality grounds: measured on this box
+in earlier work, NVFP4 weights sit **4.5x further from BF16 than FP8** (12.1% vs 2.7% relative
+error), and the attention projections are the precision-sensitive part.
+
+Their published evidence: GSM8K **0.9727**, AIME26 pass@1 **0.9875** / majority@8 **1.0**, built
+with ModelOpt 0.46.0 on CUDA 13.0 / torch 2.13.0+cu130 — the same stack we run. `hf_quant_config.json`
+declares `MIXED_PRECISION` through **`quantized_layers`**, which is the field vLLM actually reads;
+declaring it via `config_groups` instead produces a W4A4 kernel with no `input_scale` and silent
+zero-length output. All 208 shards publish `lfs.sha256`, so it can be verified properly.
+
+Untested by us. The remaining 2.17 B (lm_head, dense mlp, shared_expert, misc) is what a local
+re-quant would still have to address.
 
 ## Speculative decoding: measured
 
