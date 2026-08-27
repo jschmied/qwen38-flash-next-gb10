@@ -142,18 +142,52 @@ RuntimeError: pidfd_getfd: Operation not permitted
   vllm/v1/ple_offload/worker.py:482 in accept_registrations
 ```
 
-**Cause.** `PleOffloadWorker` hands CUDA tensors to the GPU worker over IPC. `rebuild_cuda_tensor`
-needs `pidfd_getfd`, which the default Docker seccomp and capability set deny.
+**Cause: `kernel.yama.ptrace_scope = 1`** — the default on Ubuntu and DGX OS. It restricts
+`PTRACE_MODE_ATTACH`, which `pidfd_getfd` requires, to **descendants only**. `PleOffloadWorker`
+and the GPU worker are *siblings* (both children of the engine), so neither may attach to the
+other and the CUDA-IPC tensor handoff is refused.
 
-**Fix.**
+> We first published this as a Docker seccomp restriction. That was wrong, and we only found out
+> by building the same stack **bare metal**, where it failed identically. `CAP_SYS_PTRACE`
+> bypasses yama, which is why the Docker flag fixed it — for the wrong reason. Corrected
+> upstream.
 
-```bash
-docker run --gpus all --ipc=host --cap-add=SYS_PTRACE --security-opt seccomp=unconfined ...
+**Fix, by deployment:**
+
+| deployment | fix |
+|---|---|
+| Docker | `--cap-add=SYS_PTRACE` |
+| bare metal / systemd | `AmbientCapabilities=CAP_SYS_PTRACE` on the unit |
+| bare metal / shell | inherits the login's capabilities; usually already works |
+
+For systemd, `cap_sys_ptrace` in `CapabilityBoundingSet` is **not sufficient** — that only bounds
+what *may* be held. A `User=` service holds no effective capabilities without:
+
+```ini
+[Service]
+AmbientCapabilities=CAP_SYS_PTRACE
 ```
 
-**Undocumented as far as we can tell**, and it will hit anyone taking vLLM's *official*
-`VLLM_PLE_CPU_OFFLOAD` path inside a container. It does **not** affect the mmap-hook approach
-(single process, no IPC handoff) or SGLang builds, which is presumably why it had not surfaced.
+`sysctl -w kernel.yama.ptrace_scope=0` also works but weakens ptrace machine-wide; the ambient
+capability is scoped to one service and is the better answer.
+
+This affects anyone using vLLM's official `VLLM_PLE_CPU_OFFLOAD`, in a container or not. It does
+**not** affect the mmap-hook approach (single process, no IPC handoff).
+
+### B2b. `OSError: Could not load this library: libtorchcodec_image.so` at startup **[us]**
+
+**Signature.** The server dies at import, before loading anything, on a host without system
+ffmpeg.
+
+**Cause.** `vllm/multimodal/video.py` guards the torchcodec import as
+`except (ImportError, RuntimeError)`, but torchcodec raises **`OSError`** when its shared library
+cannot load. `vllm/multimodal/__init__.py` pulls this in unconditionally, so an
+**installed-but-unloadable** torchcodec is strictly worse than an absent one — absence raises
+`ImportError`, which *is* caught and falls back to a `PlaceholderModule`.
+
+**Fix.** Either install system ffmpeg (`apt install ffmpeg`), or **do not install torchcodec**.
+It is genuinely optional — vLLM has `check_torchcodec_available()` — and only video input needs
+it; text and image are unaffected.
 
 ### B3. `ImportError: cannot import name 'checkpoint_has_lm_head'` **[method]**
 
