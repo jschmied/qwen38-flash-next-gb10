@@ -106,3 +106,51 @@ It does not kill the idea, but it changes what a solution has to look like: some
 *pins* a working subset rather than trusting the kernel's eviction policy. Which is also the
 open question about MiaAI's ~11 GB pinned PLE per node — that number now looks less like a
 staging buffer and more like a deliberate hot-set. Reading their `start.sh` moved up the list.
+
+
+## 2026-08-27 — single-box vLLM is not impossible, and there is a specific bug in the way
+
+**Correction to this repo's earlier reasoning.** MiaAI's `start.sh` header says "135 GB of
+weights does not fit one 128 GB Spark", and that was read here as arithmetic ruling out a
+single box. It does not — their figure is for a **PLE-resident** deployment. With
+`VLLM_PLE_CPU_OFFLOAD=1` the resident model is far smaller.
+
+[vllm#53960](https://github.com/vllm-project/vllm/issues/53960) (`jdmays13`) runs precisely the
+configuration this repo targets — `RadixArk/Qwen3.8-Flash-Next-NVFP4`, GB10 sm_121, **TP=1**,
+PLE offloaded — and gets all the way through init:
+
+    [model_runner.py:407]  Model loading took 80.28 GiB memory and 654.0 s
+    [connector.py:231]     PleOffload: registered 1 PleOffloadLayer(s) (ipc:///tmp/...)
+    [kv_cache_utils.py]    GPU KV cache size: 271,610 tokens
+
+80.28 GiB resident, a 271k-token KV cache, FlashInfer autotune complete. Then it **hangs
+permanently at CUDA-graph warmup**, 3/3 reproductions (25, 60, 60 minutes).
+
+### It is not a GB10 problem
+
+`jhsmith409` reproduced it byte-for-byte on a single RTX PRO 6000 Blackwell Max-Q — **sm_120,
+x86_64, 96 GB discrete memory**, `max_model_len=65536`, no speculative decoding. Their summary:
+"It is not sm_121, aarch64, unified memory, or MTP."
+
+### The mechanism the two stacks suggest
+
+    MainThread (100% CPU):     replay (torch/cuda/graphs.py:186)
+                               __call__ (vllm/compilation/cuda_graph.py:360)
+                               warmup_kernels (vllm/v1/worker/gpu/warmup.py:330)
+
+    "ple-offload-dp0" (idle):  get (queue.py:171)   block=True, timeout=None
+                               _request_loop (vllm/v1/ple_offload/connector.py:263)
+
+The offload worker is blocked on an **empty** queue while the main thread spins inside CUDA
+graph replay. That is consistent with a host-side blocking IPC round-trip having been captured
+into a CUDA graph: the graph cannot service it, so the request never reaches the worker and
+both sides wait forever.
+
+**Testable prediction:** `--enforce-eager` (no graph capture) should not hang. If it serves,
+the bug is graph capture of the PLE path, not the offload mechanism — and the workaround is
+available to everyone blocked on this today. That is now the first experiment here, ahead of
+throughput and ahead of any streaming-loader work.
+
+**Also of note:** there is an image `vllm/vllm-openai:qwen38-flash-next`
+(`sha256:fc120ece0a38`, vllm `0.1.dev20073+g8e685d198`) — this path is further along than
+PR #53896 alone suggests.
