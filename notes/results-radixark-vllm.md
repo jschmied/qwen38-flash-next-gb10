@@ -92,3 +92,39 @@ at row level and is destroyed at page level by design. The viable levers are, in
 160 B random reads — applied here), a row-level LRU cache in the offload worker (the principled
 fix, and real work), or an offline frequency permutation of the table so pinning becomes
 possible at all.
+
+
+## Debugging the garbage: what has been eliminated (2026-08-27)
+
+| hypothesis | status |
+|---|---|
+| TP=1 selects uniproc, offload worker never spawns | **confirmed, fixed** — `--distributed-executor-backend mp`; `PleOffloadWorker` spawns and loads 206/206 |
+| PLE gate rejects modelopt/NVFP4 | **confirmed, fixed** — relaxing the `isinstance` gate loads the model |
+| GPU-side `weight_scale` shadows `_offload_weight_scale` | **fixed** — hand the method out only in the offload process; verified `has_ngram_ws=False has_offload_ws=True` |
+| lookup returns an all-zero buffer | **measurement artefact** — the probe sampled the warmup dummy forward (`connector.py:403-410` zeroes and signals); shape `(2048,2560)` = `max_num_batched_tokens x ple_dim` |
+| dispatch gated on cudagraph / `enforce_eager` | eliminated — dispatch is unconditional in both runners |
+| Model Runner V2 vs V1 (`envs.py` says offload is V1-only) | eliminated — `VLLM_USE_V2_MODEL_RUNNER=0` still produces garbage |
+| dtype divergence between CPU pinned buffer and GPU buffer | eliminated — both `float8_e4m3fn` |
+| worker never serves real requests | eliminated — `num_tokens=56` for the prompt, then 1 per decode step |
+| lexicographic `shard_0, shard_1, shard_10…` ordering permutes the table | eliminated — loader parses `int(shard_text)` and shape-validates each placement |
+| run without offload as a control | **not runnable on one box** — with offload off the PLE is a CUDA allocation, which cannot swap; container OOM-killed (exit 137) at the cgroup cap despite 79 GiB of swap |
+
+Worker-side probe on a real request:
+
+    result.dtype=float8_e4m3fn  gpu.dtype=float8_e4m3fn
+    absmax=208  nonzero=140156/143360
+
+`208 x 0.000199 ~ 0.041` — a sane embedding magnitude. So the transport, the dtypes, the scale
+and the shard placement are all correct, and the output is still token salad.
+
+**What that leaves.** Either the row *indices* computed inside the offload worker are wrong
+(right values, wrong n-grams — which would look exactly like this), or the NVFP4 body is
+mishandled by this image independently of the PLE. Those cannot be separated by configuration
+alone, because the no-offload control is not runnable here. Separating them needs a ground
+truth: compute the expected lookup for a known token offline from the safetensors and compare,
+or run the same checkpoint on a stack where it is known good (SGLang, per MiaAI) and diff the
+first-token logits.
+
+**Two of my own errors are recorded above** because they cost real time: sampling the warmup
+forward and reporting its zeros as the finding, and putting a `print()` inside a compiled region,
+which made a cudagraph test fail for a reason that had nothing to do with the hypothesis.
