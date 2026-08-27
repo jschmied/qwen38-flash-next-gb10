@@ -14,11 +14,19 @@ that do not work.
 > Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
 > answer is the better one and this repo will say so.
 
-**Status: working.** `RadixArk/Qwen3.8-Flash-Next-NVFP4` serves coherently on vLLM on one
-GB10 — 76.6 GiB resident with the PLE offloaded to host, **17.3 tok/s** single-stream and
-**32.4 tok/s** across two concurrent streams (6% per-stream loss). Correct on every spot-check.
-Full numbers and the two required changes in
-[notes/results-radixark-vllm.md](notes/results-radixark-vllm.md).
+**Status: working, and it scales.** `RadixArk/Qwen3.8-Flash-Next-NVFP4` serves coherently on
+vLLM on one GB10 — 76.6 GiB resident with the PLE offloaded to host, **17.1 tok/s** single-stream
+and **266.8 tok/s aggregate at 48 concurrent streams** (TTFT 1.6 s, no queueing). Full numbers in
+[notes/results-radixark-vllm.md](notes/results-radixark-vllm.md); the load trace behind the
+concurrency figures is in [notes/load-and-waits.md](notes/load-and-waits.md).
+
+**The PLE offload is not the bottleneck, and swap gets *cheaper* under load.** Traced with
+`/proc` + `/metrics` counters (nothing instrumented): the offload worker never exceeds 24% of one
+core, and major faults per token **fall 4.4x** from c=1 to c=48 — batched tokens share n-gram rows,
+so the marginal token is far cheaper than the first. That is an argument for running this model at
+concurrency rather than a caution against it. Every wait we could observe is a queueing wait
+governed by `--max-num-seqs`; the value we originally shipped (2) costs **4x aggregate throughput**
+at c=8.
 
 Two things are needed, and both are contributions this repo can make to the field:
 
@@ -30,12 +38,17 @@ Two things are needed, and both are contributions this repo can make to the fiel
    `Engine core initialization failed. Failed core proc(s): {}`. Undocumented as far as we can
    tell, and it will hit anyone taking the official offload path in a container.
 
-**Honest positioning:** 17 tok/s single-stream is slower than the field's best on this hardware —
-[paragontasx](https://github.com/paragontasx/qwen38-flash-next-dgx-spark) reports 31–50 tok/s on
-llama.cpp, [Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark)
-~27 tok/s on SGLang, both with speculative decoding and 262K context against our 8K. What this
-path adds is **concurrency**, which llama.cpp cannot do (`--parallel 1`). Speculative decoding is
-the obvious next lever and is not yet enabled here.
+**Honest positioning:** on **single-stream** decode we are behind the field — 17.1 tok/s with no
+speculation, against 22 ([0xBakeer](https://github.com/0xBakeer/qwen38-flash-next-spark),
+llama.cpp), 27 ([Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark),
+SGLang + HashK-PLE), 28.2 ([dolf3131](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark),
+vLLM + MTP k=2) and 31–50 ([paragontasx](https://github.com/paragontasx/qwen38-flash-next-dgx-spark),
+llama.cpp). Speculative decoding is the untried lever here and would close much of that gap.
+
+On **aggregate** throughput the picture inverts: 266.8 tok/s at 48 streams, roughly an order of
+magnitude above any published single-stream figure. We have not seen anyone else measure it, and
+llama.cpp builds cannot (`--parallel 1`). Which number matters depends entirely on whether the box
+serves one caller or several.
 
 ### What cost a day getting here, and the rule that would have prevented it
 
@@ -135,6 +148,7 @@ out of resident memory.
     scripts/serve-flashnext.sh   first-boot serve config (no speculative decoding)
     scripts/apply-pr53896.sh     overlay the PR's Python files onto a venv
     notes/failure-modes.md       everything that went wrong, by symptom  <- start here
+    notes/load-and-waits.md      where time goes under concurrency (PLE is not the bottleneck)
     notes/results-radixark-vllm.md  the working config and its measurements
     notes/the-field.md           who else is running this, and how
     notes/log.md                 running record, including the dead ends
