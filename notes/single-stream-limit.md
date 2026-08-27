@@ -200,10 +200,47 @@ tests single-stream only, where k=2 wins; that result does not transfer to a loa
 little left to recover. On a box serving one user, enable MTP; on a loaded one, raise
 `--max-num-seqs` first.
 
+## The rest of the field, and the floor
+
+A census of 28 Flash-Next checkpoints (safetensors headers over HTTP range reads, nothing
+downloaded), ranked by dense GB/token:
+
+| repo | GiB | dense B | GB/tok | PLE | verdict |
+|---|---:|---:|---:|---|---|
+| `local-inference-lab/…-NVFP4-4p89` | 102.4 | **1.82** | **3.65** | NVFP4 | **unloadable** — see below |
+| `lovedheart/…-FP8-Pruned-RTXPRO-6000` | 114.9 | 2.08 | 4.16 | FP8 | experts pruned 512→448 |
+| **`lovedheart/…-NVFP4-FP8`** | 123.4 | 2.09 | 4.17 | FP8 | **what we use** |
+| `primitive-ai/…-mixed-NVFP4-FP8` | 171.1 | 2.09 | 4.18 | BF16 | too large |
+| `RadixArk/…-NVFP4` | 125.9 | 4.76 | 9.52 | FP8 | what we came from |
+| `Inferact`, `Qwen/FP8`, `*/W4A16`, `AWQ`, … | 168–174 | 4.76 | 9.52 | BF16 | too large, no gain |
+| `Qwen/Qwen3.8-Flash-Next` (BF16 base) | 335.3 | 4.76 | 9.52 | BF16 | — |
+
+Only **one** checkpoint goes further than lovedheart, and it cannot be served. `4p89` quantizes
+attention and GDN to MXFP8, experts to NVFP4, and uniquely `shared_expert` to MXFP8 — but it
+stores the PLE as NVFP4, `U8 [2500012, 80]` with per-shard `F8_E4M3` scales. vLLM's PLE loader
+supports exactly one quantized form, `F8_E4M3 [rows, 160]` plus a single global BF16 scale, and
+`ple_layer.py` validates `expected_shape = (rows, 160)`. It fails loudly
+(`ValueError: Shape mismatch for PLE embedding shard 0`), not silently — but it fails.
+
+**The floor of the published field is 1.82 B / 3.65 GB per token.** Across all 28 repos nobody
+quantizes `lm_head` (0.64 B), the hyper-connection blocks (0.64 B), or the vision tower (0.45 B).
+Those plus ~0.1 B of norms are exactly the 1.82 B that `4p89` reaches. Going below it means
+quantizing the head or the hyper-connections, which nobody has published.
+
+Also worth knowing: **no checkpoint fits a 128 GB box without PLE offload.** The smallest servable
+one is 101.7 GiB, and the PLE table alone is 95.4 GiB at BF16 / 47.7 at FP8 / 26.8 at NVFP4. Any
+size comparison that does not say whether the PLE is offloaded is meaningless.
+
 ## What we would do next
 
-1. **Switch checkpoint.** The 4.84 B of BF16 dense weights is the single largest lever and it is
-   somebody else's solved problem — Inferact quantizes more of it.
-2. Quantize the PLE too (starkweatherdigital: 102.4 -> 28.8 GB; Death-By-Tokens HashK: -> 12.8 GB),
-   freeing memory for KV or a bigger draft head.
-3. `--mamba-cache-mode align` — prefix caching is reportedly inert without it, untested here.
+1. **Measure lovedheart's quality ourselves** — mandatory now that its published metrics turn out
+   to describe a different build.
+2. **`VLLM_GDN_DECODE_KERNEL=triton` is required** with FP8 GDN projections: the default CUDA
+   kernel deterministically hangs the engine at concurrency ~32, with no error — requests simply
+   stall. Reported by `primitive-ai`, who bisected it module class by module class.
+3. **Port `4p89`'s MXFP8 `shared_expert` treatment** onto the lovedheart layout — worth ~0.24 B /
+   0.47 GB per token, and the MXFP8 dispatch already works in our build. The cheapest remaining win.
+4. **Teach `ple_layer.py` the NVFP4 PLE format.** The larger prize: it frees ~21 GiB and unlocks
+   `4p89` outright. A real code change — the per-group scale layout is a decode path, not just a
+   loader tweak.
+5. `--mamba-cache-mode align` — prefix caching is reportedly inert without it, untested here.
