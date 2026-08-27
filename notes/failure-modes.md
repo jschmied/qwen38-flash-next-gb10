@@ -24,6 +24,7 @@ one.
 |---|---|---|
 | A1 | **fluent** sentences, wrong content, invariant to config | corrupt weight shard |
 | A2 | **fluent** garbage, only under PLE CPU offload | shadowed `weight_scale` |
+| A2b | **fluent** garbage from a well-benchmarked checkpoint | `FP8_PB_WO` layers loaded as BF16 |
 | A3 | first token correct, then `!!!!` forever | SM121 kernel emitting NaN |
 | A4 | correct text, but `</think>` leaks into `content` | no reasoning parser |
 
@@ -83,6 +84,66 @@ active, so nothing is registered:
 if envs.VLLM_PLE_CPU_OFFLOAD and not is_offload_process():
     return None
 ```
+
+### A2b. Blockwise-FP8 layers loaded as BF16 — the `FP8_PB_WO` dispatch gap **[us]**
+
+**Signature.** Fluent garbage, whole-checkpoint, from a checkpoint whose published quality metrics
+are excellent. Server starts clean; nothing in the log complains.
+
+**Cause.** ModelOpt `MIXED_PRECISION` checkpoints may declare per-layer
+`quant_algo: "FP8_PB_WO"` — 2D blockwise (128x128) weight-only FP8.
+`ModelOptMixedPrecisionConfig.get_quant_method()` dispatches `FP8`, `NVFP4`, `W4A16_NVFP4` and
+`MXFP8`, then **falls through**:
+
+```python
+if quant_algo == "MXFP8":
+    return ModelOptMxFp8LinearMethod(self.mxfp8_config)
+# Layer not in quantized_layers -- leave unquantized
+return UnquantizedLinearMethod()      # <- FP8_PB_WO lands here
+```
+
+`UnquantizedLinearMethod` then loads the **packed FP8 bytes straight into BF16 parameters**. Every
+value is reinterpreted garbage, and because it is a weight-loading path rather than a kernel
+error, nothing raises.
+
+**Present in vLLM `main`, absent from older snapshots.** Our tree
+(`0.1.dev20073+g8e685d198`) already contains `ModelOptFp8PbWoLinearMethod` — the dispatch branch
+is simply missing from the mixed-precision path. One line restores it:
+
+```python
+if quant_algo == "FP8_PB_WO":
+    return ModelOptFp8PbWoLinearMethod(self.fp8_config)
+```
+
+**Check before serving any mixed-precision checkpoint**, offline, in seconds:
+
+```bash
+python - <<'EOF'
+import re, vllm.model_executor.layers.quantization.modelopt as m
+s = open(m.__file__).read()
+i = s.index("class ModelOptMixedPrecisionConfig"); j = s.index("def get_quant_method", i)
+print(re.findall(r'quant_algo == "([A-Z0-9_]+)"', s[j:j+2600]))
+EOF
+# the list must contain every quant_algo your checkpoint's hf_quant_config.json uses
+```
+
+Then cross-check against the checkpoint:
+
+```bash
+jq -r '.quantization.quantized_layers[].quant_algo' hf_quant_config.json | sort -u
+```
+
+The same gap exists in stock SGLang, where `FP8_PB_WO` likewise falls through to an unquantized
+method — documented by the checkpoint author, which is how we learned to look.
+
+`ModelOptFp8PbWoLinearMethod` also requires **both** dimensions divisible by 128. Verify against
+the checkpoint's own shapes before committing to a download.
+
+**The general rule this belongs to:** a quantization format that a runtime does not recognise is
+far more dangerous than one it rejects. Rejection is an error message; non-recognition is a
+silent reinterpretation of the bytes. Always enumerate what your runtime dispatches and intersect
+it with what your checkpoint declares — this is a ten-second offline check that prevents a
+day-long hunt.
 
 ### A3. flashinfer trtllm-gen decode kernels are SM100-only **[field]**
 

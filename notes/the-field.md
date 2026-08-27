@@ -1,7 +1,13 @@
-# Who else is running this, and how
+> **Superseded, 2026-08-27.** This page opened by saying no other project was a single-box vLLM
+> deployment, "which is the only reason this repo exists". That stopped being true within a day.
+> `starkweatherdigital` and `getrefined` both run vLLM on a Spark, `0xBakeer` added a vLLM recipe
+> alongside their llama.cpp one, and `SirTificate` runs vLLM on 2x RTX PRO 6000. The field went
+> from ~9 projects to ~35 in 48 hours. Treat every count and ranking below as a snapshot.
+>
+> What still distinguishes this repo is narrower and worth stating honestly: a kernel-level
+> profile of where single-stream time actually goes on GB10, concurrency measured past c=8, and
+> the failure-mode catalogue. Not the deployment itself.
 
-As of 2026-08-26, the day of release. None of these is a single-box vLLM deployment,
-which is the only reason this repo exists.
 
 | repo | stack | hardware | result |
 |---|---|---|---|
