@@ -82,3 +82,64 @@ going with vLLM, and it is a thin reason — worth stating plainly rather than d
 
 **Not yet known:** whether the architecture loads at all on sm_121, and whether the
 residency gap can be closed. Nothing has been booted.
+
+---
+
+## 2026-08-27 — Root cause: two corrupt shards in my own download
+
+The garbage was never the model, the quantization, the recipe or the environment. Two of the
+206 safetensors files are **size-correct and byte-corrupt**:
+
+```
+model-bf16-00011.safetensors     dense BF16 body weights
+model-plefp8-00000.safetensors   PLE shards 0-12
+```
+
+Verified against HuggingFace's published `lfs.sha256`: **204 of 206 clean, these 2 bad.**
+
+### How it happened
+
+The download stalled with two files in flight. I checked the file **sizes** against the HF API,
+saw all 418 entries agree, deleted aria2's `.aria2` control files — destroying the resume state
+that would have caught it — and recorded the download as verified. The hashes were in the same
+API response I was already parsing.
+
+### Why it cost a full day
+
+The failure mode is close to perfectly disguised:
+
+- **It loads.** No error, sane shapes, sane dtypes, correct-magnitude activations.
+- **The output is fluent.** Token salad, not NaNs or repetition — it reads like a sampling or
+  template problem.
+- **It is invariant to configuration**, because it is a property of the weights. Every
+  elimination I ran came back clean, and each clean elimination made the wrong conclusion look
+  better supported. That invariance is what made "environmental" the obvious inference.
+- **Corruption in *both* the body and the PLE** defeated my one good control. The body-vs-PLE
+  split was the right experiment; it could not separate them because both were damaged.
+- **It survives naive content checks.** I validated the PLE against the official BF16 table at
+  cosine 0.999635 — sampling row 0, which sat in the intact head of the corrupt file.
+
+### The rule
+
+Verify `lfs.sha256`, not size. Size agreement between a local file and the HF API says only that
+the right number of bytes were allocated — and aria2 preallocates, so a file reaches full size
+the moment it starts.
+
+```bash
+curl -s "https://huggingface.co/api/models/$REPO/tree/main?recursive=true&blobs=true" \
+  | jq -r '.[]|select(.lfs)|"\(.lfs.sha256)  \(.path)"' > SHA256SUMS
+sha256sum -c SHA256SUMS
+```
+
+### Retracted
+
+- [blazux#1](https://github.com/blazux/qwen3.8-Flash-DGX/issues/1) — I asked them a driver /
+  firmware question about a fault that was mine. Their recipe and mmap hook are fine.
+- [dolf3131#1](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1) — I asked for a
+  `*.self_attn.*` exclusion control on a premise that no longer stands. Their `group_size`
+  elimination and their parameter accounting for the 3.3 GiB RadixArk/Inferact gap are
+  independent of my failure and still hold.
+
+Re-fetching the two files. Next entry reports whether RadixArk then serves coherently under the
+one-gate patch — which is the part of the earlier report that still matters, since it would turn
+the published "loads but emits garbage" table line into "works with a one-line change".

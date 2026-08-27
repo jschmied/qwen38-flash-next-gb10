@@ -14,20 +14,43 @@ that do not work.
 > Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
 > answer is the better one and this repo will say so.
 
-**Status: it loads and serves; output is wrong, and the cause looks environmental.** A
-documented-working single-Spark recipe (blazux) has been replicated here down to the image digest,
-the mmap PLE hook and the cudagraph splitting ops, and still produces garbage — so the difference
-sits below the configuration layer. Reported upstream; see the log.
+**Status: the garbage was my checkpoint, not the model, the recipe or the environment.**
+Two of my 206 safetensors files were **size-correct and byte-corrupt** —
+`model-bf16-00011.safetensors` (dense BF16 body weights) and `model-plefp8-00000.safetensors`
+(PLE shards 0-12). They are exactly the two files still being written when my download stalled.
+I compared file **sizes** against the HF API, saw 418/418 agree, deleted aria2's `.aria2` control
+files, and called the download verified. HuggingFace publishes `lfs.sha256` in the same API
+response I was already parsing, and I did not use it. Re-fetching now; this page will say plainly
+whether it then serves.
 
-**Earlier status:** See
-[notes/results-radixark-vllm.md](notes/results-radixark-vllm.md) — the TP=1 hang is confirmed as
-executor selection, RadixArk *does* load (contradicting published tables) with a one-gate patch,
-but generation is garbage and the PLE-vs-body control has not been run.
+Everything below that reads as a finding about the model, the quantization or the driver was
+reasoning on top of corrupt weights, and the eliminations it reports are worth nothing. The two
+upstream issues I opened on the strength of it have been retracted
+([blazux#1](https://github.com/blazux/qwen3.8-Flash-DGX/issues/1),
+[dolf3131#1](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1)).
 
-Running on the prebuilt
-`vllm/vllm-openai:qwen38-flash-next` image rather than a PR overlay; next step is testing whether
-`--enforce-eager` avoids the [vllm#53960](https://github.com/vllm-project/vllm/issues/53960)
-PLE-offload deadlock. Not yet booted. See [notes/log.md](notes/log.md) for the running record.
+### The one thing here worth another reader's time
+
+**Verify `lfs.sha256`, not file size.** A size-correct corrupt shard is close to invisible: it
+loads without error, reports sane tensor shapes and dtypes, produces activations of correct
+magnitude, and yields *fluent* token salad. Because it is a property of the weights, the garbage
+is **invariant to every configuration change you can think of** — which reads exactly like an
+environmental or kernel fault and sends you hunting through cudagraph modes, executors, attention
+backends and driver versions. I eliminated more than twenty hypotheses that way, and each clean
+elimination made the wrong conclusion look better supported.
+
+It also survives a naive content check. I validated the PLE against the official BF16 table and
+got cosine **0.999635** — but I sampled row 0, which lived in the intact head of the corrupt
+file, and took that as proof the checkpoint was sound.
+
+```bash
+# what I should have run, and now do (HF publishes the hashes; use them)
+curl -s "https://huggingface.co/api/models/$REPO/tree/main?recursive=true&blobs=true" \
+  | jq -r '.[]|select(.lfs)|"\(.lfs.sha256)  \(.path)"' > SHA256SUMS
+sha256sum -c SHA256SUMS
+```
+
+Final tally on this checkpoint: **204 of 206 files clean, 2 corrupt.**
 
 ## The problem in one table
 
