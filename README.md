@@ -14,43 +14,55 @@ that do not work.
 > Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
 > answer is the better one and this repo will say so.
 
-**Status: the garbage was my checkpoint, not the model, the recipe or the environment.**
-Two of my 206 safetensors files were **size-correct and byte-corrupt** —
-`model-bf16-00011.safetensors` (dense BF16 body weights) and `model-plefp8-00000.safetensors`
-(PLE shards 0-12). They are exactly the two files still being written when my download stalled.
-I compared file **sizes** against the HF API, saw 418/418 agree, deleted aria2's `.aria2` control
-files, and called the download verified. HuggingFace publishes `lfs.sha256` in the same API
-response I was already parsing, and I did not use it. Re-fetching now; this page will say plainly
-whether it then serves.
+**Status: working.** `RadixArk/Qwen3.8-Flash-Next-NVFP4` serves coherently on vLLM on one
+GB10 — 76.6 GiB resident with the PLE offloaded to host, **17.3 tok/s** single-stream and
+**32.4 tok/s** across two concurrent streams (6% per-stream loss). Correct on every spot-check.
+Full numbers and the two required changes in
+[notes/results-radixark-vllm.md](notes/results-radixark-vllm.md).
 
-Everything below that reads as a finding about the model, the quantization or the driver was
-reasoning on top of corrupt weights, and the eliminations it reports are worth nothing. The two
-upstream issues I opened on the strength of it have been retracted
-([blazux#1](https://github.com/blazux/qwen3.8-Flash-DGX/issues/1),
-[dolf3131#1](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1)).
+Two things are needed, and both are contributions this repo can make to the field:
 
-### The one thing here worth another reader's time
+1. **A one-line gate change** so the FP8 PLE is accepted on a ModelOpt/NVFP4 body. This corrects
+   published checkpoint tables that list RadixArk as not loading on vLLM — it does.
+2. **`--cap-add=SYS_PTRACE`** when running vLLM's official `VLLM_PLE_CPU_OFFLOAD` in Docker.
+   `rebuild_cuda_tensor` needs `pidfd_getfd`; default seccomp denies it, and the engine dies
+   *after* both workers load all 206 shards with only
+   `Engine core initialization failed. Failed core proc(s): {}`. Undocumented as far as we can
+   tell, and it will hit anyone taking the official offload path in a container.
 
-**Verify `lfs.sha256`, not file size.** A size-correct corrupt shard is close to invisible: it
-loads without error, reports sane tensor shapes and dtypes, produces activations of correct
-magnitude, and yields *fluent* token salad. Because it is a property of the weights, the garbage
-is **invariant to every configuration change you can think of** — which reads exactly like an
-environmental or kernel fault and sends you hunting through cudagraph modes, executors, attention
-backends and driver versions. I eliminated more than twenty hypotheses that way, and each clean
-elimination made the wrong conclusion look better supported.
+**Honest positioning:** 17 tok/s single-stream is slower than the field's best on this hardware —
+[paragontasx](https://github.com/paragontasx/qwen38-flash-next-dgx-spark) reports 31–50 tok/s on
+llama.cpp, [Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark)
+~27 tok/s on SGLang, both with speculative decoding and 262K context against our 8K. What this
+path adds is **concurrency**, which llama.cpp cannot do (`--parallel 1`). Speculative decoding is
+the obvious next lever and is not yet enabled here.
 
-It also survives a naive content check. I validated the PLE against the official BF16 table and
-got cosine **0.999635** — but I sampled row 0, which lived in the intact head of the corrupt
-file, and took that as proof the checkpoint was sound.
+### What cost a day getting here, and the rule that would have prevented it
+
+The output was fluent garbage until the very end. The cause was **two of my own 206 files:
+size-correct and byte-corrupt** — `model-bf16-00011.safetensors` (dense BF16 body) and
+`model-plefp8-00000.safetensors` (PLE shards 0-12), the two still being written when my download
+stalled. I compared **sizes** against the HF API, saw 418/418 agree, deleted aria2's `.aria2`
+control files, and called it verified. `lfs.sha256` was in the same API response.
+
+**Verify `lfs.sha256`, not file size.** A size-correct corrupt shard loads without error, reports
+sane shapes and dtypes, produces correct-magnitude activations, and yields *fluent* token salad.
+Because it is a property of the weights, the garbage is **invariant to every configuration change
+you can think of** — which reads exactly like an environmental or kernel fault. I eliminated
+twenty-odd hypotheses that way and each clean elimination made the wrong conclusion look better
+supported. It also survives naive content checks: I validated the PLE against the official BF16
+table at cosine 0.999635, sampling row 0 — inside the intact head of the corrupt file.
 
 ```bash
-# what I should have run, and now do (HF publishes the hashes; use them)
 curl -s "https://huggingface.co/api/models/$REPO/tree/main?recursive=true&blobs=true" \
   | jq -r '.[]|select(.lfs)|"\(.lfs.sha256)  \(.path)"' > SHA256SUMS
 sha256sum -c SHA256SUMS
 ```
 
-Final tally on this checkpoint: **204 of 206 files clean, 2 corrupt.**
+Final tally: **204 of 206 clean, 2 corrupt.** Two upstream issues opened on the strength of the
+wrong conclusion have been retracted
+([blazux#1](https://github.com/blazux/qwen3.8-Flash-DGX/issues/1),
+[dolf3131#1](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1)).
 
 ## The problem in one table
 
