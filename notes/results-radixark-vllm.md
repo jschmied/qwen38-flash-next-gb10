@@ -171,3 +171,54 @@ NVFP4 garbage on Qwen3-Next) does not apply — RadixArk uses `in_proj_qkv` / `i
 `in_proj_a` / `in_proj_b`, byte-for-byte the same convention as the official
 `Qwen/Qwen3.8-Flash-Next` checkpoint, and all `linear_attn` tensors are BF16 with no scales,
 i.e. correctly excluded from quantization.
+
+
+## The PLE is fully exonerated, including on the served path
+
+The earlier probe only caught the warmup forward. Re-instrumented to fire on calls 6-9 (past
+warmup), on real requests:
+
+    [DQ] call=6 dtype=float8_e4m3fn is_fp8=True absmax_pre=176 scale=0.00019931793212890625 absmax_post=0.03508
+    [DQ] call=7 dtype=float8_e4m3fn is_fp8=True absmax_pre=128 scale=0.00019931793212890625 absmax_post=0.02551
+    [DQ] call=8 dtype=float8_e4m3fn is_fp8=True absmax_pre=160 scale=0.00019931793212890625 absmax_post=0.03189
+
+The fp8 branch is taken, the scale is right, and post-dequantization magnitudes (0.026-0.035)
+land inside the official table's range (absmax 0.040). Every link is now verified numerically.
+
+## Also eliminated
+
+- **`--no-enable-flashinfer-autotune`** (recommended by the official recipe, and autotune was
+  visibly running): still garbage.
+- **MoE backend.** `FLASHINFER_CUTLASS` (auto) and `MARLIN` both produce garbage; `triton` is
+  rejected for NVFP4 (`Expected one of ['cutlass','flashinfer_trtllm','flashinfer_cutlass',
+  'flashinfer_cutedsl','flashinfer_b12x','marlin','humming','emulation']`) and
+  `flashinfer_trtllm` refuses the deployment ("kernel does not support"). Two independent
+  kernels producing identical corruption means their *inputs* are already wrong.
+- **Wildcard exclusion matching.** RadixArk uses 13 wildcards where the working Inferact
+  checkpoint uses 1267 explicit entries, which looked like the answer. It is not: vLLM's modelopt
+  parser handles wildcards (`fnmatch`, `modelopt.py:171`), and matching every module in the
+  checkpoint against the list gives **73,728 quantized modules correctly kept, 1,319 unquantized
+  correctly excluded, and 0 in the silent-garbage class**. The two exclusion sets are
+  semantically identical; only the style differs.
+- **vllm#40252** (`linear_attn` split-vs-combined naming): RadixArk's naming is byte-identical
+  to the official checkpoint and those tensors are BF16 without scales.
+
+## Where it actually stands
+
+The official [vLLM recipe](https://recipes.vllm.ai/Qwen/Qwen3.8-Flash-Next) lists only
+`Qwen/Qwen3.8-Flash-Next` (BF16) and `Qwen/Qwen3.8-Flash-Next-FP8` as supported. **NVFP4 /
+modelopt is not mentioned at all.** Combined with everything above — a fully verified PLE path
+and a body that corrupts under two different MoE kernels — the working hypothesis is that
+vLLM's `Qwen4Exp` implementation does not correctly handle a modelopt NVFP4 checkpoint on this
+path, and the `isinstance(quant_config, Fp8Config)` gate we removed was a symptom of that
+assumption rather than an oversight.
+
+That does not explain why `Inferact/Qwen3.8-Flash-Next-NVFP4` reportedly works, since it is also
+NVFP4. The remaining difference between them is the PLE dtype (FP8 vs BF16) — which matters only
+if some consumer reads the raw fp8 buffer instead of the dequantized return, an asymmetry that
+would be invisible with a BF16 PLE. That is the open question.
+
+**Upstream note:** the TP=1 offload hang this repo confirmed was fixed upstream on 2026-08-27 at
+06:00 UTC (commit `95dc96d1d012`, in PR #53899) — five lines adding `spawn_ple_offload()` and
+`wait_ple_offload_ready()` to `uniproc_executor.py`. The `--distributed-executor-backend mp`
+workaround remains correct for builds predating it, including the image used here.
