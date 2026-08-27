@@ -128,3 +128,46 @@ first-token logits.
 **Two of my own errors are recorded above** because they cost real time: sampling the warmup
 forward and reporting its zeros as the finding, and putting a `print()` inside a compiled region,
 which made a cudagraph test fail for a reason that had nothing to do with the hypothesis.
+
+
+## The PLE is exonerated: checkpoint validated against the official table
+
+Read three rows of `shard_0` from `Qwen/Qwen3.8-Flash-Next` by HTTP range (a few KB, no
+download) and compared against the same rows of RadixArk's FP8 shard, dequantized with the
+global scale `0.00019931793212890625`:
+
+    official row0[:6]  : [-0.009216, 0.014282, -0.016479, 0.013306, -0.00708,  0.00705]
+    radixark  deq[:6]  : [-0.009567, 0.014351, -0.015945, 0.012756, -0.007175, 0.007175]
+
+    cosine similarity  : 0.999635
+    relative error     : 2.4%          (expected for E4M3 with a single global scale)
+    absmax             : 0.040039 (official) vs 0.041458 (dequantized)
+
+This settles several things at once:
+
+- **RadixArk's PLE is a faithful quantization of the official table.** Not a bad export.
+- **The scale value is correct and the convention is multiply**, not reciprocal — a trap worth
+  naming, since ModelOpt exports sometimes store reciprocals.
+- **The offload path delivers correctly-scaled values.** The worker probe's `absmax=208` in FP8
+  becomes `208 x 0.000199 = 0.0414`, matching the official `0.0400` absmax.
+
+Every link in the PLE chain is now verified: shard placement (shape-validated), request service
+(56 tokens for a prompt, 1 per decode step), matching FP8 dtypes on both sides, faithful values,
+correct scale, correct dequantization. **And the output is still token salad.**
+
+## What remains, and why it cannot be settled here
+
+The NVFP4 W4A4 body under this image is the remaining suspect. It cannot be isolated on a single
+Spark: the model cannot run without the PLE, and it cannot run with the PLE resident, because
+with offload disabled the table becomes a CUDA allocation which the kernel cannot swap — the
+container is OOM-killed at the cgroup cap despite 79 GiB of swap.
+
+Note that MiaAI-Lab serve **this same checkpoint** successfully on SGLang across two Sparks, so
+the body's *data* is good; what is in question is vLLM's handling of it. Settling that needs
+either a second box, or a first-token logit diff against a known-good stack.
+
+**Falsified along the way:** vllm#40252 (`linear_attn` split-vs-combined naming causing silent
+NVFP4 garbage on Qwen3-Next) does not apply — RadixArk uses `in_proj_qkv` / `in_proj_z` /
+`in_proj_a` / `in_proj_b`, byte-for-byte the same convention as the official
+`Qwen/Qwen3.8-Flash-Next` checkpoint, and all `linear_attn` tensors are BF16 with no scales,
+i.e. correctly excluded from quantization.
