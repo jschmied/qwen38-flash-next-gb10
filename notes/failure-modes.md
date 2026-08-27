@@ -315,6 +315,36 @@ Use `logging`.
 
 See A1. Row 0 of a corrupt file is very often intact, because truncation damages the tail.
 
+### D4b. Published quality metrics copied between checkpoint variants **[field]**
+
+**Signature.** A model card carries `gsm8k_metrics.json` / `aime26_metrics.json` with strong
+scores, and you use them to choose between variants.
+
+**Check the hash, not the score.** Across four HuggingFace repos — a plain NVFP4 build, an FP8
+dense-quantized fork of it, and a 512→448 expert-**pruned** variant — those files are
+byte-identical:
+
+```
+gsm8k  sha256 88766f7e…  score 0.9727  latency_seconds 829.4909560070373
+aime26 sha256 eb4acd8c…  score 0.9875  latency_seconds 11196.289524045998
+```
+
+Identical latency to ten decimal places across models with different weights is not a coincidence,
+and the `model` field inside the files names the *original* build. A pruned model reporting its
+unpruned parent's numbers is the tell.
+
+**How to check, in seconds:**
+
+```bash
+for r in RepoA RepoB; do
+  curl -sL "https://huggingface.co/$r/resolve/main/gsm8k_metrics.json" | sha256sum
+done   # identical hashes across differing weights = copied, not measured
+```
+
+Also read the `model` / `base_url` fields inside — they frequently name a different checkpoint
+than the repo you found them in. Treat any metric you did not generate as provenance, not
+evidence, and re-measure on your own workload.
+
 ### D4. `usage.prompt_tokens_details.cached_tokens` is inert **[us, prior]**
 
 It reports 0 even on confirmed prefix-cache hits. Measure `vllm:prefix_cache_hits_total` deltas

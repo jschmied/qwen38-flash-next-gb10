@@ -157,11 +157,20 @@ FP8 rather than NVFP4 for these layers is the right call on quality grounds: mea
 in earlier work, NVFP4 weights sit **4.5x further from BF16 than FP8** (12.1% vs 2.7% relative
 error), and the attention projections are the precision-sensitive part.
 
-Their published evidence: GSM8K **0.9727**, AIME26 pass@1 **0.9875** / majority@8 **1.0**, built
-with ModelOpt 0.46.0 on CUDA 13.0 / torch 2.13.0+cu130 — the same stack we run. `hf_quant_config.json`
-declares `MIXED_PRECISION` through **`quantized_layers`**, which is the field vLLM actually reads;
-declaring it via `config_groups` instead produces a W4A4 kernel with no `input_scale` and silent
-zero-length output. All 208 shards publish `lfs.sha256`, so it can be verified properly.
+**Their published quality metrics do not describe this build — do not rely on them (and we
+briefly did).** `gsm8k_metrics.json` and `aime26_metrics.json` are **byte-identical**
+(sha256 `88766f7e…` / `eb4acd8c…`) across lovedheart's FP8 build, `RadixArk`'s plain NVFP4 build,
+and lovedheart's *pruned* 512→448 variant — the same `latency_seconds` to ten decimal places. The
+`model` field inside them says `qwen38next-nvfp4` / `qwen38next-nvfp4-plefp8`, i.e. they were
+measured on the **unquantized-dense** build. A pruned model shipping its unpruned parent's numbers
+settles it.
+
+So GSM8K 0.9727 / AIME26 0.9875 are real numbers for *RadixArk*, and say nothing about the FP8
+conversion. **This checkpoint has no published quality evidence**, which makes our own measurement
+mandatory rather than confirmatory. What it does have is process evidence: `fp8_quant_report.csv`
+gives per-tensor `mean_rel_err` of 0.0225–0.0227 across all 156 quantized tensors, and
+`conversion_environment.json` pins ModelOpt 0.46.0 / CUDA 13.0 / torch 2.13.0+cu130 — the stack we
+run. That is a plausible conversion, not a validated one.
 
 Untested by us. The remaining 2.17 B (lm_head, dense mlp, shared_expert, misc) is what a local
 re-quant would still have to address.
