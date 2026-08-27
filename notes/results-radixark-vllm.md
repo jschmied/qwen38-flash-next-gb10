@@ -252,3 +252,39 @@ Bisecting that is the next step, and it needs a working reference to diff agains
 Spark cannot provide: the model runs neither without the PLE nor with it resident. Reported to
 the maintainer of the working Inferact recipe:
 https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1
+
+
+## Correction: the body is fine, and the offload path is the odd one out
+
+[blazux/qwen3.8-Flash-DGX](https://github.com/blazux/qwen3.8-Flash-DGX) serves
+**`RadixArk/Qwen3.8-Flash-Next-NVFP4` coherently on a single Spark**, on the **same image digest
+used here** (`sha256:fc120ece0a38`), with a smoke test asserting the output. That refutes the
+"it must be the body" conclusion above: the checkpoint, the body and the image are all fine.
+The 3.3 GiB body difference is benign — RadixArk keeps ~3.5 GiB more in BF16 (MTP included)
+where Inferact quantizes it.
+
+**The real discriminator is `VLLM_PLE_CPU_OFFLOAD=1`.** blazux replaces the PLE layer with an
+mmap gather; OsakaTX shards it as a `VocabParallelEmbedding` across TP=2. **No known-good
+RadixArk run uses the offload worker.** So the unexercised path is FP8-PLE *via CPU offload*,
+not FP8-PLE as such — which also explains why every numeric check of the PLE data passed while
+the output stayed wrong.
+
+Two of the eliminations above were also invalid, and are withdrawn:
+
+- **cudagraph vs eager.** `--enforce-eager` does not suppress capture on this model — the
+  mamba/short-conv path still captures (blazux). Their tested configuration is `PIECEWISE` with
+  an explicit `splitting_ops` list.
+- **prefix caching was never tested.** Two independent engines implicate it: blazux ships
+  `--no-enable-prefix-caching` because a GDN `in_proj` GEMM raises
+  `CUBLAS_STATUS_INTERNAL_ERROR` on the cached-block path; tonyd2wild disable SGLang's radix
+  cache because it "triggers the spec-verify garbage".
+
+And the lead dismissed early, which OsakaTX documents against this exact symptom
+("**Garbled output** … the compiled op is silu-only with the old signature"):
+`VLLM_GDN_DECODE_KERNEL=triton`, since qwen4_exp needs a **sigmoid** output gate where earlier
+Qwen GDN models used silu. It was ruled out here on the grounds that the op sits behind
+`num_spec_decodes > 0` — reasoning that covered only one of its call sites.
+
+**Untested, ranked:** (1) drop PLE CPU offload for an mmap gather, (2)
+`--no-enable-prefix-caching`, (3) `VLLM_GDN_DECODE_KERNEL=triton`, (4) PIECEWISE with
+`splitting_ops` rather than `--enforce-eager`.
