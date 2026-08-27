@@ -200,6 +200,71 @@ tests single-stream only, where k=2 wins; that result does not transfer to a loa
 little left to recover. On a box serving one user, enable MTP; on a loaded one, raise
 `--max-num-seqs` first.
 
+## Correction: per-token reads, not total dense params
+
+Our earlier figures (4.84 B / 9.68 GB for RadixArk, 2.17 B / 4.33 GB for lovedheart) counted
+**all** dense BF16 params. Three groups are not read on a text-decode token, and including them
+inflates the roofline:
+
+| group | B params | read per token? |
+|---|---:|---|
+| vision tower | 0.449 | **no** — only with an image |
+| `embed_tokens` | 0.636 | one row, not the matrix |
+| MTP drafter | 0.091 | only when speculating |
+| experts left in BF16 | 2.517 | sparse, 10 of 512 |
+
+Corrected per-token BF16 remaining after lovedheart: **1.638 B = 3.28 GB/token**, and the full
+budget is 3.28 + 2.67 (FP8 dense) + 1.30 (active NVFP4 experts) = **7.25 GB/token**, a ceiling of
+**37.7 tok/s** rather than the 32.9 stated earlier.
+
+This probably accounts for much of the discrepancy with hashd1ve's 3.5 B — a per-token-read count
+is the correct one, and ours was not.
+
+## What is left, and whether it is quality-critical
+
+| group | GB/token | share | format | risk |
+|---|---:|---:|---|---|
+| hyper-connections | 1.28 | 39% | FP8 | **unknown — nobody has done it** |
+| `lm_head` | 1.27 | 39% | FP8 | **low — we run an FP8 head in prod** |
+| `shared_expert` | 0.47 | 14% | MXFP8 | low — `4p89` does exactly this |
+| other dense + PLE proj | 0.26 | 8% | FP8 | small, unexamined |
+| vision tower / embed / norms | 0 | — | — | **no speed gain at all** |
+
+**`lm_head` is not quality-critical at FP8 — but it is at NVFP4.** We measured this directly on
+the sibling Qwen3.8-27B: a RadixArk **NVFP4** head cost **2.4% worse NLL** (8 of 8 chunks) and was
+declined for production, while the **FP8** head we run in prod is loss-neutral. The layer is
+precision-sensitive; the *format* is what decides it. That makes this the highest-confidence
+lever here, and it is worth 1.27 GB/token.
+
+**The hyper-connections are the real experiment.** `attn_hyper_connection.input_mix_weight_{down,up}`
+is a low-rank mixing of residual streams, applied at every one of 48 layers with `hc_count: 4`.
+Structurally they behave like routers or gates: small tensors whose error compounds through the
+whole depth, which is exactly the class practitioners habitually keep in high precision. Nobody
+across 28 published checkpoints has quantized them. They are also the single largest remaining
+item. Highest value per unit of unknown — and the one worth spending a careful NLL-divergence
+measurement on rather than a smoke test.
+
+**Not worth touching for speed:** the vision tower (0.449 B) is never read during text decode, so
+quantizing it buys resident memory and zero throughput; `embed_tokens` contributes one row per
+token; norms are 1.2 M params in total and genuinely precision-critical. Quantizing the MTP
+drafter would degrade acceptance, costing more than it saves.
+
+### Two combinations worth running
+
+| | GB/token | ceiling | vs lovedheart |
+|---|---:|---:|---:|
+| lovedheart as-is | 7.25 | 37.7 | — |
+| **conservative:** `lm_head` FP8 + `shared_expert` MXFP8 | 5.51 | 49.6 | **1.32x** |
+| **full:** + hyper-connections FP8 | 4.23 | 64.6 | **1.71x** |
+
+The conservative pair carries evidence for both halves and needs no new science. The full
+combination is the one that would put a single Spark past every published number, and it hinges
+entirely on whether the hyper-connections tolerate FP8 — which is a measurable question, not a
+matter of opinion.
+
+Format choice matters more than layer choice: FP8 sits **2.3%** from BF16 by mean relative error,
+NVFP4 **12.1%** — 4.5x further — measured on this box in earlier work.
+
 ## The rest of the field, and the floor
 
 A census of 28 Flash-Next checkpoints (safetensors headers over HTTP range reads, nothing
