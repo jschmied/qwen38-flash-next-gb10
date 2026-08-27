@@ -2,6 +2,39 @@
 
 Newest first. Each entry records what was tried, what happened, and what it ruled out.
 
+## 2026-08-27 — the overlay is abandoned; the target is now a specific deadlock
+
+**Weights complete** (126 GiB, 206/206 safetensors).
+
+**The Python overlay approach is dead.** PR #53899 (which is a strict superset of #53896 —
+every file, plus the five `vllm/v1/ple_offload/` modules) has a branch that is inconsistent
+with itself: `config/model.py` imports `checkpoint_has_lm_head`, which exists on current
+`main` but **not** in that branch's own `transformers_utils/config.py`. GitHub reports the PR
+`CONFLICTING`, and reconstructing it would mean guessing which main commit each of 85 files
+expects. Not worth it when a built image exists.
+
+**Switched to `vllm/vllm-openai:qwen38-flash-next`.** Verified identical to what both reporters
+on vllm#53960 used:
+
+    digest  sha256:fc120ece0a388cc0aa1caad4a9f1cd92113484ab7ec2fd0efadd62585be05bf8
+    vllm    0.1.dev20073+g8e685d198
+
+That matters more than convenience: a result on the same build cannot be waved away as a
+different-build artefact. It does mean running a container on a box whose serving stack is
+otherwise bare-metal — scoped to this experiment; production is untouched.
+
+**The experiment.** `TP=1`, `VLLM_PLE_CPU_OFFLOAD=1`, **`--enforce-eager`**. The two py-spy
+dumps on #53960 show the offload worker idle on an empty queue while the main thread spins in
+CUDA-graph `replay`, which reads as a blocking host round-trip captured inside a graph. If that
+is the mechanism, disabling graph capture avoids it.
+
+- **Serves** → the fault is graph capture of the PLE path, not the offload mechanism, and there
+  is a workaround available today for everyone blocked on it.
+- **Still hangs** → the offload mechanism itself is at fault and `--enforce-eager` is eliminated.
+
+Both outcomes get reported to #53960. Nobody has publicly tried this yet (checked before
+starting, per the rule this project now follows: check the field before anything expensive).
+
 ## 2026-08-26 (later) — someone got there first, by another road
 
 [0xBakeer/qwen38-flash-next-spark](https://github.com/0xBakeer/qwen38-flash-next-spark)

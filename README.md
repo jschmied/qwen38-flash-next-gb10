@@ -14,7 +14,10 @@ that do not work.
 > Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
 > answer is the better one and this repo will say so.
 
-**Status: in progress.** Weights downloading; the model has not yet been booted. See [notes/log.md](notes/log.md) for the running record.
+**Status: in progress.** Weights complete (126 GiB). Running on the prebuilt
+`vllm/vllm-openai:qwen38-flash-next` image rather than a PR overlay; next step is testing whether
+`--enforce-eager` avoids the [vllm#53960](https://github.com/vllm-project/vllm/issues/53960)
+PLE-offload deadlock. Not yet booted. See [notes/log.md](notes/log.md) for the running record.
 
 ## The problem in one table
 
