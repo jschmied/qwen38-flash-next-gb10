@@ -36,32 +36,56 @@ this was the only quality evidence available.
 The bandwidth model predicted +32% at c=1; we measured +39% (and +71% with MTP). Close enough to
 confirm the mechanism.
 
-## The two optimizations are substitutes, not complements
+## Substitutes or complements depends on where the layer sits
 
-MTP was worth **+67%** on RadixArk. On this checkpoint it is worth **+23%**, and above c=4 it is a
-**net loss**:
+Our first version of this page said flatly that quantization and speculation are **substitutes**.
+That is true for the *dense projections* and false for `lm_head`, and the difference is
+instructive.
+
+**Dense projections vs MTP — substitutes.** Both amortize the same per-token weight read.
 
 | | c=1 | c=8 |
 |---|---|---|
-| MTP on RadixArk | 17.1 → 28.5 (**+67%**) | 87.5 → 89.0 (+2%) |
-| MTP on FP8-mixed | 23.7 → 29.2 (**+23%**) | 105.5 → 98.8 (**−6%**) |
+| MTP on RadixArk (dense BF16) | 17.1 → 28.5 (**+67%**) | 87.5 → 89.0 (+2%) |
+| MTP on lovedheart (dense FP8) | 23.7 → 29.2 (**+23%**) | 105.5 → 98.8 (**−6%**) |
 
-Both levers attack the same cost — the per-token weight read. Speculation amortizes it across
-drafted tokens; the checkpoint shrinks it. Having shrunk the read by ~25%, there is proportionally
-less for speculation to recover, while its compute cost for drafting and verification is
-unchanged. Past c=4 that cost exceeds the saving.
+Shrink the read and there is less for speculation to recover, while its drafting cost is
+unchanged — so past c≈4 it becomes a net loss.
 
-**So the right configuration depends on load**, and stacking every optimization is wrong:
+**`lm_head` vs MTP — complements.**
 
-| workload | configuration | result |
+| | c=1 | c=16 |
 |---|---|---|
-| single user | FP8-mixed **+ MTP k=2** | 29.2 tok/s |
-| c ≤ 4 | FP8-mixed **+ MTP k=2** | 51–69 tok/s |
-| c ≥ 8 | FP8-mixed, **speculation off** | 105–156 tok/s |
+| MTP on lovedheart (`lm_head` BF16) | 23.7 → 29.2 (**+23%**) | 156.0 → 139.6 (−10%) |
+| MTP on fp8head (`lm_head` FP8) | 26.1 → **36.3** (**+40%**) | 156.0 → **167.8** (**+8%**) |
 
-Acceptance on this checkpoint: 68.4% / 46.7% at positions 0–1, mean accepted length 2.15 —
-essentially unchanged from RadixArk's 2.16 under load, so the shrinking benefit is *not* the
-drafter getting worse. It is the target getting cheaper.
+Quantizing the head made speculation *more* valuable, and flipped it from a net loss at c=16 to a
+net gain. **The reason is position in the speculative loop**: MTP evaluates `lm_head` once per
+draft token *plus* verification, so at k=2 the head is on the critical path ~3× per step, while
+the dense projections are read once per step either way. Halving the head therefore pays k+1
+times over. Acceptance is unchanged (mean accepted length 2.21 vs 2.15), so this is pure speed,
+not better drafting.
+
+**The general rule:** a quantization lever composes with speculation when the layer is evaluated
+per *draft token*, and competes with it when the layer is read per *step*. That is worth checking
+before assuming either.
+
+## Current best
+
+| c | tok/s | per stream | TTFT |
+|---:|---:|---:|---:|
+| 1 | **36.3** | 36.3 | 0.22 s |
+| 2 | 52.3 | 26.1 | 0.32 s |
+| 4 | 73.0 | 18.3 | 0.41 s |
+| 8 | 115.8 | 14.5 | 0.49 s |
+| 16 | **167.8** | 10.5 | 0.89 s |
+
+`lovedheart` + our `lm_head` quantization + MTP k=2, DeepGEMM off, PLE CPU offload.
+**17.1 → 36.3 tok/s single-stream, 2.12x from where the day started.**
+
+Caveat on cross-project comparison: the best published single-Spark free-form figure we know of is
+34.8 (Death-By-Tokens, SGLang + HashK PLE + NEXTN k=3). Our 36.3 is on a different harness and a
+different prompt mix, so treat it as *comparable*, not as a like-for-like win.
 
 ## Getting it to load: six defects
 
