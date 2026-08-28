@@ -75,6 +75,20 @@ Our fix attaches a plain copy loader to the scale parameters, **with an explicit
 correct, but above that the scale needs sharding in *block* space (`rows // block_n`), and
 silently mis-sharding it would yield wrong logits rather than an error.
 
+## There are two `lm_head` construction sites, not one
+
+`mtp.py` builds its own `ParallelLMHead`, also without `quant_config`. With speculation enabled the
+MTP module consumes the same quantized tensors and fails identically:
+
+```
+ValueError: There is no module or parameter named 'lm_head.weight_scale_inv'
+            in Qwen3_8FlashNextMTP
+```
+
+Worth stating plainly how we found it: we measured the `lm_head` result **without speculation**, so
+the second site never ran. The configuration that validated the change was not the configuration we
+serve. If you patch this, patch both — and re-run the validation under the flags you actually use.
+
 ## Doing it yourself
 
 `scripts/quant_lmhead.py` builds the variant. Two things to get right:
