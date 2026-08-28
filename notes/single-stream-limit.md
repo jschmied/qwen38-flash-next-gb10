@@ -244,6 +244,19 @@ across 28 published checkpoints has quantized them. They are also the single lar
 item. Highest value per unit of unknown — and the one worth spending a careful NLL-divergence
 measurement on rather than a smoke test.
 
+**Correction (2026-08-28): `shared_expert` is not uncontested — we misread the field.** An
+earlier version of this note said nobody had quantized it. That was a false negative from matching
+the substring `shared_expert` against ignore-list entries, which hits `shared_expert_gate` — a
+different, much smaller tensor. Verified from headers, at least four checkpoints quantize the 48
+main `mlp.shared_expert.{gate,up,down}_proj`: `tcclaviger/…-MXFP4-FP8` (MXFP4,
+`weight_packed U8 [2560,320]`), `lvkaokao/…-MXFP4-Mixed-CT-AutoRound` (MXFP8 W8A8-dynamic),
+`textclf/…-TQ-4bit`, and `local-inference-lab/…-4p89` (MXFP8 g32), the last predating our work.
+
+None of them publishes a measurement of what it buys, so the *measured* delta is still unclaimed —
+but the claim to drop is "nobody has done it". **`lm_head` and the hyper-connections do survive
+the recheck**: `lm_head` is BF16 in every checkpoint including those four, and every quant config
+excludes `*hyper_connection*` (one has 298 such entries).
+
 **Not worth touching for speed:** the vision tower (0.449 B) is never read during text decode, so
 quantizing it buys resident memory and zero throughput; `embed_tokens` contributes one row per
 token; norms are 1.2 M params in total and genuinely precision-critical. Quantizing the MTP
