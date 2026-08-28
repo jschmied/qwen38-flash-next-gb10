@@ -70,3 +70,51 @@ the code consumes.
 
 `input_mix_weight_up` is a plain `ReplicatedLinear`, unfused, `(10240, 320)` — quantizable at
 (128, 64). That is 97 tensors and **0.66 GB/token**, half the hyper-connection total.
+
+## The plumbing works. The result is still negative.
+
+The per-layer block size loads, and vLLM's kernel selection adapts by itself — the log shows
+**both** kernels chosen in one model:
+
+```
+Selected CutlassFp8BlockScaledMMKernel for ModelOptFp8PbWoLinearMethod   <- the 128x128 layers
+Selected TritonFp8BlockScaledMMKernel  for ModelOptFp8PbWoLinearMethod   <- the (128, 64) layers
+```
+
+Cutlass declines the non-square block and Triton takes it, automatically. That confirms the whole
+argument: the general kernel was always there, and only the constant stood in front of it.
+
+And it is **still not worth shipping**:
+
+| c | `lm_head` build | + hyper-connection `_up` | |
+|---:|---:|---:|---|
+| 1 | **36.3** | 35.0 | **−3.6%** |
+| 2 | 52.3 | 55.5 | +6.1% |
+| 4 | 73.0 | 76.1 | +4.2% |
+| 8 | **115.8** | 113.8 | −1.7% |
+| NLL/token | **0.9628** | 0.9713 | +0.88% worse |
+
+**Slower at c=1 while removing 0.66 GB/token.** The kernel selection explains it: those layers went
+from a BF16 cuBLAS GEMV to a Triton FP8 blockwise GEMM. We removed bytes and simultaneously moved
+to a kernel that is slower for `(10240, 320)` at M=1 — cuBLAS has had a long time to optimise
+skinny BF16 GEMV, and the Triton blockwise path has not.
+
+**Removing bytes is not sufficient. You also have to land on a kernel that is at least as good.**
+This is the third measurement in a row where the roofline over-predicted, and the third distinct
+reason:
+
+| lever | predicted | measured | why it missed |
+|---|---|---|---|
+| `shared_expert` | ~+8% | +1.9% | small matmul, latency-bound not bandwidth-bound |
+| hyper-connection `_up` | ~+13% | **−3.6%** | forced onto a slower kernel |
+| `lm_head` | ~+10% | +11% | large matrix, genuinely bandwidth-bound — the model held |
+
+The roofline holds where the matrices are large and the kernel does not change. Both caveats matter
+and neither is visible in the arithmetic.
+
+## What is worth sending upstream anyway
+
+The constant is still wrong, independent of our result. `_WEIGHT_BLOCK_SIZE = (128, 128)` blocks
+layers that the Triton kernel handles fine, on every GPU. Whether a given layer *benefits* is a
+separate question that can only be answered by measuring — which is impossible while the constant
+refuses to let anyone try.
