@@ -351,6 +351,44 @@ Worth noting what this is *not*: `dolf3131`'s skinny-GEMM work targets exactly t
 (`(320, 10240)` at M=1, 2.20x, invoked ~97 times per forward) but that is a **kernel** optimisation
 on the BF16 weights, orthogonal to quantizing them. Both are available.
 
+### Attempted and failed: MXFP8 hyper-connections on sm_121
+
+We built it. The quantization itself was clean — 194 tensors, round-trip **2.2519%** (the FP8
+floor, as predicted), `quant_config` threaded through `GatedResidual` to all three projections,
+399 quantized layers, and the offline gate confirmed every axis resolved to `MXFP8` before boot.
+
+It fails at the **kernel**, not the checkpoint:
+
+```
+ValueError: Problem size is not supported for mm_mxfp8
+  flashinfer/utils.py:1402  <- backend-specific requirement, not the common check
+```
+
+`flashinfer`'s `_cutlass_gemm_mxfp8_requirement` has an SM12x branch:
+
+```python
+if is_sm12x_supported(a.device):
+    # SM120/121 CUTLASS MXFP8 only supports 1D swizzled scales (layout_128x4)
+    if use_8x4_sf_layout:                            return False
+    if a_descale.ndim != 1 or b_descale.ndim != 1:   return False
+    if a.shape[1] % 32 != 0 or b.shape[1] % 32 != 0: return False
+```
+
+so on GB10 the MXFP8 path is narrower than on SM100, and the `heuristic_func` falls through to
+cudnn or to nothing. vLLM's own loader asserts the checkpoint scale is **2-D unswizzled** and
+swizzles it itself, so the checkpoint format we produced is the one vLLM wants — the gap is between
+that and what the SM12x CUTLASS kernel will accept for these particular shapes.
+
+**Worth knowing before anyone repeats it:** even had it loaded, the MXFP8 comment in
+`process_weights_after_loading` notes that "the emulation kernel may dequant the weight to BF16 at
+load time" — an emulation fallback would give **no** bandwidth saving at all, which is the entire
+point. Verify which kernel is selected before trusting an MXFP8 win on this hardware.
+
+So the hyper-connections remain unquantized here, now for a third reason on top of the two above:
+**no MXFP8 kernel on sm_121 accepts these shapes.** The remaining routes are NVFP4 group-16 (a
+different kernel with different constraints, untested) or `dolf3131`'s skinny-GEMM, which speeds up
+the same shapes in BF16 and sidesteps quantization entirely.
+
 ## What we would do next
 
 1. **Measure lovedheart's quality ourselves** — mandatory now that its published metrics turn out
