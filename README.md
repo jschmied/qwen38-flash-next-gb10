@@ -152,6 +152,7 @@ out of resident memory.
     notes/single-stream-limit.md what limits n=1 (BF16 GEMV on unquantized dense weights)
     notes/fetching-a-slice.md    diffing lfs.sha256 to download 12 GiB instead of 123
     notes/fp8-mixed-checkpoint.md the +71% checkpoint switch, and why MTP stops paying
+    notes/quantizing-lm-head.md   +11% free, and the three blockers that stopped everyone
     notes/results-radixark-vllm.md  the working config and its measurements
     notes/the-field.md           who else is running this, and how
     notes/log.md                 running record, including the dead ends
