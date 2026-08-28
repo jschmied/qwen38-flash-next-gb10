@@ -309,6 +309,48 @@ Also worth knowing: **no checkpoint fits a 128 GB box without PLE offload.** The
 one is 101.7 GiB, and the PLE table alone is 95.4 GiB at BF16 / 47.7 at FP8 / 26.8 at NVFP4. Any
 size comparison that does not say whether the PLE is offloaded is meaningless.
 
+## Why the hyper-connections are unquantized: two blockers, one shared with `lm_head`
+
+They are the largest remaining item — **0.66 B params, 1.32 GB/token**, in 398 tensors — and every
+published checkpoint excludes them (one config has 298 `*hyper_connection*` ignore entries). Two
+independent reasons, and the first is the same pattern that blocked `lm_head`:
+
+**1. The model hardcodes `quant_config=None`.** `hyperconnection.py` builds them as real
+`ReplicatedLinear` / `MergedColumnParallelLinear` modules — so they *could* be quantized — but
+passes `quant_config=None` explicitly at three sites (lines 102, 113, 122):
+
+```python
+self.input_mix_weight_down = ReplicatedLinear(
+    self.hyper_hidden_size, self.lora_rank,
+    bias=False, params_dtype=config.params_dtype,
+    quant_config=None,                      # <- hardcoded opt-out
+    prefix=maybe_prefix(prefix, "input_mix_weight_down"),
+)
+```
+
+Together with `model.py`'s `ParallelLMHead`, that is **four hardcoded opt-outs** in this model, and
+they account for both axes the field has left untouched. A checkpoint can declare these layers all
+it likes; the model never asks.
+
+**2. The shapes are not blockwise-FP8 eligible.** They are `(320, 10240)` and `(10240, 320)`, and
+`ModelOptFp8PbWoLinearMethod` requires **both** dimensions divisible by 128 — `320 % 128 = 64`. So
+the scheme the rest of this checkpoint uses cannot express them at all:
+
+| scheme | 320 divisible? |
+|---|---|
+| FP8_PB_WO (blockwise 128) | **no** — 320 % 128 = 64 |
+| MXFP8 (group 32) | yes |
+| NVFP4 (group 16) | yes |
+| FP8 per-tensor / per-channel | yes |
+
+So quantizing them is a two-part change: pass `quant_config`, **and** pick a scheme with a group
+size that divides 320. MXFP8 is the natural choice — our build already dispatches it, and it is what
+`4p89` uses elsewhere. `disable_tp=True` on these layers means TP sharding is not a complication.
+
+Worth noting what this is *not*: `dolf3131`'s skinny-GEMM work targets exactly these shapes
+(`(320, 10240)` at M=1, 2.20x, invoked ~97 times per forward) but that is a **kernel** optimisation
+on the BF16 weights, orthogonal to quantizing them. Both are available.
+
 ## What we would do next
 
 1. **Measure lovedheart's quality ourselves** — mandatory now that its published metrics turn out
