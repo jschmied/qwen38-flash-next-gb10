@@ -1,0 +1,69 @@
+--- /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/models/qwen3_8_flash_next/common/qsa_cache.py.pre-fuseddraft	2026-08-29 00:07:09.389100096 +0200
++++ /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/models/qwen3_8_flash_next/common/qsa_cache.py.fuseddraft-attempt	2026-08-29 00:26:32.202861718 +0200
+@@ -577,6 +577,8 @@
+     ) -> None:
+         super().__init__(kv_cache_spec, layer_names, vllm_config, device)
+         self.is_circular_buffer = isinstance(kv_cache_spec, CircularBufferSpec)
++        # Set by build(); reused by update_draft_decode_metadata().
++        self._draft_common_metadata: CommonAttentionMetadata | None = None
+         if isinstance(kv_cache_spec, MLAAttentionSpec):
+             self.compress_ratio = kv_cache_spec.compress_ratio
+         else:
+@@ -637,6 +639,7 @@
+             k_work_metadata_buffer=k_work_metadata if build_k_work else None,
+             request_capacity=request_capacity,
+         )
++        self._draft_common_metadata = common_attn_metadata
+         return QSAForwardMetadata(
+             block_table=common_attn_metadata.block_table_tensor,
+             slot_mapping=slot_mapping,
+@@ -650,6 +653,49 @@
+             compress_ratio=self.compress_ratio,
+         )
+ 
++    # Fused multi-step draft decode. QSA metadata IS position-dependent --
++    # logical_positions derive from seq_lens -- so unlike TritonAttention this
++    # cannot be a no-op. But every position-dependent field is produced by the
++    # same kernel build() already runs, writing into the same persistent
++    # buffers the live metadata points at. Between draft steps the speculator
++    # advances positions/seq_lens IN PLACE in input_buffers
++    # (_update_draft_inputs_kernel, ADVANCE_DRAFT_POSITIONS=True), and both the
++    # metadata and the cached CommonAttentionMetadata hold views onto those
++    # buffers -- so re-running the kernel recomputes the advanced positions
++    # without rebuilding any metadata objects or per-layer slot-mapping dicts.
++    supports_draft_decode_metadata_update: ClassVar[bool] = True
++
++    def update_draft_decode_metadata(self, metadata: QSAForwardMetadata) -> None:
++        common = self._draft_common_metadata
++        if common is None:
++            return
++        num_tokens = metadata.num_actual_tokens
++        if num_tokens == 0:
++            return
++        build_k_work = not self.is_circular_buffer and self.compress_ratio != 1
++        k_work_metadata = self.k_work_metadata_buffer
++        request_capacity = None
++        if build_k_work:
++            num_requests = common.query_start_loc.shape[0] - 1
++            request_capacity = self.request_capacity
++            max_num_work = (
++                num_tokens + (self.compress_ratio - 1) * num_requests
++            ) // self.compress_ratio
++            k_work_metadata = self.k_work_metadata_buffer[:max_num_work]
++        build_qsa_metadata(
++            common,
++            self.token_to_req_buffer,
++            self.logical_positions_buffer,
++            self.slot_mapping_buffer,
++            storage_block_size=self.storage_block_size,
++            compress_ratio=self.compress_ratio,
++            circular_buffer_size=(
++                self.kv_cache_spec.block_size if self.is_circular_buffer else 0
++            ),
++            k_work_metadata_buffer=k_work_metadata if build_k_work else None,
++            request_capacity=request_capacity,
++        )
++
+ 
+ class QSAStateBackend(AttentionBackend):
+     """Key-only dummy backend for out-of-band BF16 QSA side-cache operations."""
