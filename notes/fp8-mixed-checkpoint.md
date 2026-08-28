@@ -89,6 +89,34 @@ Caveat on cross-project comparison: the best published single-Spark free-form fi
 34.8 (Death-By-Tokens, SGLang + HashK PLE + NEXTN k=3). Our 36.3 is on a different harness and a
 different prompt mix, so treat it as *comparable*, not as a like-for-like win.
 
+## A prediction that failed: k=3 does not become optimal
+
+Having found that `lm_head` quantization **compounds** with speculation, we predicted deeper
+speculation would now pay — the head is evaluated once per draft token, so with a cheaper head each
+extra draft token should cost less. On `RadixArk` k=3 lost to k=2 at c=1 (27.4 vs 28.5); we expected
+that to flip.
+
+It did not.
+
+| c | MTP k=2 | MTP k=3 |
+|---:|---:|---:|
+| 1 | **36.3** | 31.9 |
+| 2 | 52.3 | **52.7** |
+| 4 | **73.0** | 71.5 |
+| 8 | **115.8** | 111.3 |
+
+k=3 drafts *better* — mean accepted length 2.50 against k=2's 2.21, with per-position acceptance
+70.9 / 46.8 / 32.5% — and is still slower.
+
+**The error in the reasoning:** we treated the head as if it dominated the marginal cost of a draft
+token. It does not. Each additional draft token also runs a full MTP transformer layer, and
+verification widens across k+1 positions; the head is one term among several. Halving it raises the
+*value* of speculation at a fixed k (+23% → +40%) without changing the *slope* enough to move the
+optimum.
+
+So the compose/compete rule survives, but a second, weaker claim we might have drawn from it —
+"therefore speculate deeper" — does not. **k=2 remains optimal on this build.**
+
 ## Getting it to load: six defects
 
 Five were silent or misleading. Full detail in [failure-modes.md](failure-modes.md); the short
