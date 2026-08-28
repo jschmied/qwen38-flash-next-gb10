@@ -1,5 +1,7 @@
 # RadixArk NVFP4 on vLLM, one DGX Spark — working
 
+> **Repo deleted 2026-08-28.** `Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark` now 404s. Its figures (34.8 tok/s free-form, 157.1 aggregate at c=8) and its HashK PLE compression are cited below and in other notes; they are no longer verifiable at source. Treat them as recorded-but-unverifiable rather than deleting them — they informed real decisions here.
+
 **Status: coherent, correct, concurrent.** Confirmed 2026-08-27 after re-fetching two corrupt
 shards. This corrects the published checkpoint tables that list
 `RadixArk/Qwen3.8-Flash-Next-NVFP4` as not loading on vLLM: it loads and serves with a

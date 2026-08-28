@@ -1,5 +1,7 @@
 # Failure modes: Qwen3.8-Flash-Next on a single GB10
 
+> **Repo deleted 2026-08-28.** `Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark` now 404s. Its figures (34.8 tok/s free-form, 157.1 aggregate at c=8) and its HashK PLE compression are cited below and in other notes; they are no longer verifiable at source. Treat them as recorded-but-unverifiable rather than deleting them — they informed real decisions here.
+
 Everything that went wrong getting this model to serve on one DGX Spark, organised by **what you
 observe** — because that is how you arrive here. Each entry gives the signature, the cause, the
 fix, and how to tell it apart from the ones that look identical.

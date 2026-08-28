@@ -1,5 +1,7 @@
 # Switching to a dense-quantized checkpoint: +71% single-stream
 
+> **Repo deleted 2026-08-28.** `Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark` now 404s. Its figures (34.8 tok/s free-form, 157.1 aggregate at c=8) and its HashK PLE compression are cited below and in other notes; they are no longer verifiable at source. Treat them as recorded-but-unverifiable rather than deleting them — they informed real decisions here.
+
 `lovedheart/Qwen3.8-Flash-Next-NVFP4-FP8` quantizes the attention and GDN projections that
 [the profile](single-stream-limit.md) indicts, and keeps the compact FP8 PLE. It is strictly
 better than `RadixArk/Qwen3.8-Flash-Next-NVFP4` on every axis we measured — faster, smaller, and
