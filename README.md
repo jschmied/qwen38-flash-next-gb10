@@ -155,6 +155,7 @@ out of resident memory.
     notes/quantizing-lm-head.md   +11% free, and the three blockers that stopped everyone
     notes/choosing-a-quant-scheme.md how to pick a scheme when plumbing, not quality, decides
     notes/ple-access-pattern.md   why the biggest object in the checkpoint is a small cost
+    notes/quantizing-shared-expert.md a lever that measures worse than it models -- and why
     notes/results-radixark-vllm.md  the working config and its measurements
     notes/the-field.md           who else is running this, and how
     notes/log.md                 running record, including the dead ends
