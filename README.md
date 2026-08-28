@@ -156,6 +156,7 @@ out of resident memory.
     notes/choosing-a-quant-scheme.md how to pick a scheme when plumbing, not quality, decides
     notes/ple-access-pattern.md   why the biggest object in the checkpoint is a small cost
     notes/quantizing-shared-expert.md a lever that measures worse than it models -- and why
+    notes/block-size-is-not-a-kernel-limit.md a constant, not a kernel, blocks a whole layer class
     notes/results-radixark-vllm.md  the working config and its measurements
     notes/the-field.md           who else is running this, and how
     notes/log.md                 running record, including the dead ends
