@@ -419,3 +419,15 @@ Before you conclude *anything* about a model, quantization, or kernel on this ha
 3. Discard the first forward passes before reading any instrumented tensor.
 4. For cache or speed claims, use at least three requests and read `/metrics`, not `usage`.
 5. If a symptom is invariant to every configuration you change, go back to step 1.
+
+## The Flash-Next server is on :8092, not :8080
+
+`serve-fnext.sh` binds `--port 8092`. The rest of the fleet is on :8080, so every health check
+and bench invocation written from muscle memory hits the wrong port and returns `000` — a
+*connection* failure, which looks identical to "still warming up" in a readiness loop.
+
+This burned two 25-minute monitors and one benchmark run that reported "NEVER READY" against a
+server that had been serving for ten minutes. `curl` returning `000` rather than `401`/`404` is
+the tell: nothing is listening there at all.
+
+Check `ss -ltn | grep 809` before concluding a startup has stalled.
