@@ -137,3 +137,38 @@ Worker CPU% cannot distinguish "the gather is cheap" from "the round-trip around
 expensive". Both can be true, and on our stack the profiler says the dominant cost is elsewhere
 (see [notes/single-stream-limit.md](single-stream-limit.md)) — but our claim should be read as
 **"the PLE gather is not CPU-bound"**, not as "the PLE path is free".
+
+## A measurement caveat: GB10 parks decode below max clock
+
+Flagged by [starkweatherdigital](https://github.com/starkweatherdigital/qwen3.8-flash-next-nvfp4-recipe)
+and confirmed here. During sustained decode:
+
+```
+idle          2405 MHz
+decode        2411-2522 MHz        (max 3003 MHz)
+```
+
+So bandwidth-bound decode runs at **~82% of peak SM clock**, and GB10's DVFS will not raise it —
+the workload never presents enough compute demand. Reported elsewhere in the field that
+`nvidia-smi -lgc 2800,3003` moves this by 0.07%, i.e. not at all.
+
+**What this does and does not invalidate.** Every comparison on this page is between runs measured
+the same way on the same box, and the clock is stable within ~4% across them, so the *relative*
+numbers hold. What it does affect is comparing our absolute tok/s against a project that locked or
+reported clocks differently. Anyone quoting a single decode figure for this model on GB10 should
+log `clocks.sm` beside it.
+
+## Not yet tried: prefix caching
+
+`--enable-prefix-caching` is **not** a free win on this model and the field disagrees about why.
+[dolf3131](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark) reports it inert without
+`--mamba-cache-mode align` (0 hits in 813 queries) and useful with it — TTFT 5.41 s to 1.01 s on a
+third identical request. blazux and 0xBakeer report it *corrupting* output on GB10 via a GDN
+kernel bug. starkweatherdigital reports it **crashing** the day-one tree and fixes it by porting
+two unmerged upstream PRs (vllm#48375, vllm#53142), warning that "the failure mode passes uniform
+tests" — i.e. a naive A/B will not catch it.
+
+Three projects, three different behaviours, so this is unresolved rather than solved. Given our
+own history with cache measurement (`usage.cached_tokens` is inert; the cache does not hit until
+the *second* repetition), we would want the metrics-based methodology and the two patches together
+before trusting any result here.
