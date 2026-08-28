@@ -431,3 +431,28 @@ server that had been serving for ten minutes. `curl` returning `000` rather than
 the tell: nothing is listening there at all.
 
 Check `ss -ltn | grep 809` before concluding a startup has stalled.
+
+## `..` in a curl path strips one segment, it does not climb to the root
+
+A health probe written as `$URL/../models` where `$URL` ends in `/v1/chat/completions` does **not**
+resolve to `/v1/models`. curl normalizes it to **`/v1/chat/models`** — `..` removes the last
+segment (`completions`), leaving `/v1/chat/`, and `models` is appended there. That 404s forever.
+
+```
+$ curl -v 'http://127.0.0.1:8092/v1/chat/completions/../models'
+> GET /v1/chat/models HTTP/1.1     # not /v1/models
+```
+
+This ran two 20-minute benchmark arms against a **healthy** server and reported both as
+"never ready". The failure is silent and indistinguishable from a slow start, because a
+readiness loop cannot tell a 404 from a server that has not finished loading unless it
+looks at the code — and this loop only tested `= 200`.
+
+Write health URLs out in full. Never construct them relationally. If a readiness loop times
+out, `curl -v` the exact URL it used before concluding anything about the server.
+
+## Startup is dominated by weight loading, not compile
+
+`Loading weights took 556.07 seconds` — 9.3 minutes, against 44 s of torch.compile with cache
+hits. Every restart in an A/B costs ~11 minutes wall before the first request. Size readiness
+windows at 30 minutes, and prefer arms that avoid a restart.
