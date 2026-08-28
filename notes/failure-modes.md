@@ -186,6 +186,43 @@ then built unquantized, and loading dies on the scale it never expected to see.
 **Consequence for the field:** RadixArk NVFP4 **does** load on vLLM. Checkpoint tables listing it
 as incompatible are wrong; it needs a one-line change.
 
+### B1b. DeepGEMM faults on sm_121 with blockwise-FP8 weights **[us + field]**
+
+**Signature.** The engine dies during the startup profile run, before serving anything:
+
+```
+torch.AcceleratorError: CUDA error: unspecified launch failure
+RuntimeError: CUDA driver error (deepgemm-src/.../jit/handle.hpp:154): 719 CUDA_ERROR_LAUNCH_FAILED
+  vllm/utils/deep_gemm.py:464 in fp8_gemm_nt
+  vllm/v1/worker/gpu/model_runner.py:854 in profile_run
+```
+
+**Workaround that works today:** `VLLM_USE_DEEP_GEMM=0`, which falls back to
+`CutlassFp8BlockScaledMMKernel`. Everything we measured is on that fallback, so our decode figures
+may be a floor rather than a ceiling.
+
+**Cause — our first published explanation was wrong.** We reported it as a too-coarse capability
+gate (`support_deep_gemm()` accepts the whole `120` family, and GB10 is sm_121) and filed
+[vllm#54125](https://github.com/vllm-project/vllm/issues/54125) on that basis. `jahnclawdmonet`
+ran it down on the same hardware and found an **attribute-name mismatch**: this class stores its
+kernel as `self.w8a8_block_fp8_linear`, while `process_weights_after_loading` guards on
+`hasattr(self, "fp8_linear")` — the name every *other* method in that file uses. The guard never
+fires, so the kernel's own weight post-processing (**UE8M0 requantization and int32 packing of the
+block scales**) is silently skipped.
+
+We verified the mismatch in our tree (assignment at line 784, guard at 824) and fixed it. **It did
+not resolve the crash**, which is informative: the failure is at
+`_fp8_gemm_nt_impl(..., disable_ue8m0_cast=not use_ue8m0, ...)`. On sm_121
+`is_deep_gemm_e8m0_used()` returns True through the same family-120 check, so vLLM selects an
+**E8M0 kernel variant whose scale format the checkpoint does not supply** — plain FP32 block
+scales. Restoring the guard cannot retroactively convert scales that were never written in that
+format.
+
+So the accurate statement is narrower than either of the first two: the gate is not obviously
+wrong, the attribute bug is real but not sufficient on its own, and the operative mismatch is
+between the **E8M0 kernel variant selected on sm_121** and the scale format of a checkpoint
+produced elsewhere.
+
 ### B2. `pidfd_getfd: Operation not permitted` in the PLE offload worker **[us]**
 
 **Signature.** Both workers load all 206 shards successfully — this takes ~10 minutes — and
