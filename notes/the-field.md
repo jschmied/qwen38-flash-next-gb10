@@ -353,3 +353,74 @@ Two independent confirmations of our own choices: YSLAB's MTP depth sweep 0–10
   GB10's 99 KiB/block, so all 36 GDN layers take small-tile kernels; `101376` gives +20% decode.
   **Checked and does not apply to us** — `fla` is not installed and vLLM reads 101376 correctly
   (verified: it agrees with Triton).
+
+## 2026-08-29 (evening) — two more serious players, and three claims of the field's that do not hold
+
+### styles01/sparkrun-recipes — ahead of us on serving config
+
+<https://github.com/styles01/sparkrun-recipes> (63★, pushed daily). DGX Spark recipes with real
+patch files, not just write-ups.
+
+**Their Flash-Next vLLM runbook had two settings our launcher was missing:**
+`--enable-auto-tool-choice --tool-call-parser qwen3_coder` and `--max-model-len 262144`. We were
+serving with neither. Reading their runbook is what closed both gaps.
+
+Worth taking: **`patch_int8_lmhead_v3.py`** — INT8 W8A16 head via a batched GEMV inside
+`LogitsProcessor._get_logits`, **3.35 ms vs 8.8 ms at B=1**, argmax-exact, and it *frees* the dead
+BF16 weight (~1.4 GiB) into the KV pool. Their own hard-won note matches our finding from the
+other side: *"the v2 B>4 loop was what made spec decode SLOWER"* — they hit the head↔speculation
+interaction too. Also packages blazux's `patch_fla_shmem.py` (the 102400→101376 constant), which
+we checked and ruled out for our path.
+
+We opened <https://github.com/styles01/sparkrun-recipes/issues/2> with the noise floor, the
+hyper-connection null and the lm_head×speculation numbers, plus the tool-parser measurement below.
+
+### alesha-pro/qwen38-flash-next-4x3090 — the best validation contract in the field
+
+<https://github.com/alesha-pro/qwen38-flash-next-4x3090>. W4A16 + FP8 PLE + **calibrated FP8 QSA
+KV** on 4×3090. Ampere, so W4A16 is forced and the quant choice does not transfer — but two things
+do.
+
+**The KV lever.** Their patch map is explicit about what FP8 QSA KV costs: dtype/scale plumbing, an
+FP8 decode kernel, and **calibrated scales that are mandatory — "no scale=1 fallback"** — mounted
+only for `KV_CACHE_DTYPE=fp8*`, with BF16 KV preserved as a rollback. Their 12 QSA layers match our
+architecture exactly. This roughly doubles the KV pool and matters now that we serve 32k rather
+than 8k.
+
+**Their validation contract, worth copying verbatim:**
+- verify all 12 QSA layers *log* calibrated K/V scales — no assuming the calibration loaded;
+- **no fallback to scale 1.0**;
+- record exact-match separately from semantic equivalence;
+- **do not label top-N KLD as full-vocabulary KLD** (our divergence harness should carry this);
+- *"No eager mode, no language-model-only mode and no graph disablement are valid capacity
+  workarounds."*
+
+Also a rule to add to our offline gate: **"shared-expert gate repair — build-time restore to BF16;
+mandatory."** Our `shared_expert_gate` is unquantized, so we comply — by inheritance, not by check.
+
+### Three field claims that did not survive checking
+
+- **"GMU 0.72+ hard-freezes the Spark" — refuted.** Traced second-hand to a 0.76 figure. A
+  22-attempt UMA-freeze runbook records 0.88 → watchdog kill, 0.85 → watchdog kill, and **0.70 →
+  full host freeze, the worst outcome of the set**. Nine configs span 0.60–0.90. The mechanism is
+  an allocator staircase in `ModelOptNvFp4FusedMoE.process_weights_after_loading` plus absolute
+  free MemAvailable at launch (~110 GiB needed against a ~107 GiB spike), not the ratio —
+  **lowering utilization does not fix it**. We run 0.90.
+- **NVFP4 KV is closed.** Two independent GB10 measurements: 12.13 vs 19.78 tok/s, and 48.1 vs
+  54.1 against fp8+MTP, plus a structural MTP-acceptance penalty, plus silent failure
+  (vllm#43562). Keep one thing from it: **accept-length pinned at maximum is a corruption
+  signature, not health** — one case read 3.00/3 while GSM8K scored 0/10. Cheap to add to our
+  harness.
+- **The FlashInfer AOT prebake is unnecessary for us.** The mechanism is real (`is_aot` is
+  `aot_path.exists()`; a copy to `aot_path` stops ninja forever), but `flashinfer-jit-cache`
+  already ships **960 prebuilt `.so`, 2.2 GB**, and our startup shows **zero ninja invocations**.
+  It is a post-driver-upgrade recovery procedure, not a fix to run now. ⚠️ FlashInfer **0.6.18
+  drops SM121a cubins** from the aarch64 cu130 jit-cache wheel — do not bump that package
+  casually; we are on 0.6.17.
+
+### Settled by us: the tool-parser question the field calls contested
+
+`qwen3_xml` vs `qwen3_coder` was open with no published tool-call accuracy either way. Measured:
+**32/32** across temps 0.2 / 0.6 / 1.0 / default, correct function name every time. And the
+contest is nominal — in this build `vllm/tool_parsers/__init__.py` maps both names to the same
+`Qwen3EngineToolParser`.
