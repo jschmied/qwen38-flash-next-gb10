@@ -1,0 +1,45 @@
+events: 2322409
+
+GPU kernel time total: 3,602.6 ms across 145,824 launches
+
+kernel                                                                   ms     %    calls  us/call
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cu   1160.2 32.2%     5643    205.6
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17Gr    531.8 14.8%     2640    201.4
+void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf    467.3 13.0%    12307     38.0
+void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf    432.3 12.0%    10432     41.4
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17Gr    264.0  7.3%     2640    100.0
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17Gr     59.6  1.7%       48   1240.9
+void fused_moe::run_global<fused_moe::Fused_Moe_Kernel_sm80<cutlas     58.2  1.6%       55   1058.0
+fused_sigmoid_gating_delta_rule_update_kernel                          56.4  1.6%     1980     28.5
+std::enable_if<!(false), void>::type internal::gemvx::kernel<int,      46.7  1.3%     3021     15.5
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17Gr     29.4  0.8%       48    613.2
+std::enable_if<!(false), void>::type internal::gemvx::kernel<int,      29.3  0.8%      171    171.4
+_ZN7cutlass6KernelINS_4gemm6kernel9MoeFCGemmINS1_11threadblock13Mm     26.9  0.7%       55    488.4
+void tensorrt_llm::kernels::cutlass_kernels::finalizeMoeRoutingKer     24.2  0.7%     2754      8.8
+void tensorrt_llm::kernels::cutlass_kernels::blockExpertPrefixSumK     20.5  0.6%     2850      7.2
+void fused_moe::run_global<fused_moe::Fused_Moe_Kernel_sm80<cutlas     18.3  0.5%       57    321.5
+void vllm::moe::topkGating<16, 512, 4, 16, 32, int, __nv_bfloat16,     17.9  0.5%     2850      6.3
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17Gr     16.9  0.5%       48    352.0
+_qsa_sparse_paged_gqa_splitk_kernel                                    16.6  0.5%      798     20.7
+void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel     16.3  0.5%     2905      5.6
+void cublasLt::splitKreduce_kernel<32, 16, int, __nv_bfloat16, __n     16.2  0.5%     9243      1.8
+void at::native::tensor_kernel_scan_innermost_dim<float, std::plus     14.9  0.4%       55    270.8
+_hc_combine_norm_kernel                                                14.4  0.4%     5643      2.6
+void at::native::vectorized_elementwise_kernel<4, at::native::sigm     14.2  0.4%     2850      5.0
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__     13.6  0.4%     2736      5.0
+
+=== wmma_bf16 ===
+  grid=(8, 80, 1) block=(32, 1, 1)  x5656
+  grid=(8, 3, 9) block=(32, 1, 1)  x5600
+  grid=(8, 20, 1) block=(32, 1, 1)  x3024
+  grid=(8, 4, 8) block=(32, 1, 1)  x2744
+  grid=(8, 10, 1) block=(32, 1, 1)  x2744
+  grid=(8, 1, 1) block=(32, 1, 1)  x2016
+
+=== moe_sm80 ===
+  grid=(48, 1, 1) block=(128, 1, 1)  x57
+  grid=(96, 1, 1) block=(128, 1, 1)  x57
+
+=== MoeFCGemm ===
+  grid=(48, 1, 1) block=(128, 1, 1)  x113
+  grid=(96, 1, 1) block=(128, 1, 1)  x1
