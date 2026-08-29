@@ -142,7 +142,7 @@ c=16** — each sequence pulls its own ten of 512 while the dense path amortizes
 
 | | |
 |---|---|
-| [#53896](https://github.com/vllm-project/vllm/pull/53896) | `[Model] Support Qwen3.8-Flash-Next` — the only place this code exists; **not on `main`**, not in any release |
+| [#53896](https://github.com/vllm-project/vllm/pull/53896) | `[Model] Support Qwen3.8-Flash-Next` — the only place the **vLLM** implementation exists; **not on `main`**, not in any release. (llama.cpp's own support is a separate implementation and *did* merge — ggml-org/llama.cpp#27742, master, 2026-08-27.) |
 | [#50617](https://github.com/vllm-project/vllm/pull/50617) | fixes the `FP8_PER_CHANNEL_PER_TOKEN` dispatch gap we hit; we added our load-failure evidence rather than opening a duplicate |
 | [#53899](https://github.com/vllm-project/vllm/pull/53899) | PLE offload to host memory |
 | [#52816](https://github.com/vllm-project/vllm/pull/52816) | DFlash2 — **merged** 2026-08-21 |

@@ -12,7 +12,7 @@
 | repo | stack | hardware | result |
 |---|---|---|---|
 | [MiaAI-Lab/…-Dual-DGX-Sparks](https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Dual-DGX-Sparks) | SGLang TP2, NVFP4 | **2×** Spark, ConnectX-7 200 Gb RoCEv2 | **64 tok/s** single-stream, 117 aggregate @ c=2 (NEXTN 3/1/4) |
-| [0xBakeer/qwen38-flash-next-spark](https://github.com/0xBakeer/qwen38-flash-next-spark) | llama.cpp, mmap tensor pinning | 1× Spark | ~22 tok/s, `--parallel 1` |
+| [0xBakeer/qwen38-flash-next-spark](https://github.com/0xBakeer/qwen38-flash-next-spark) | llama.cpp, mmap tensor pinning | 1× Spark | ~22 tok/s (measured `--parallel 1`) |
 | [lendome/llama.cpp-qwen4exp](https://github.com/lendome/llama.cpp-qwen4exp) | llama.cpp + PR #27742 | — | build recipe |
 | [hocestnonsatis/qwen3.8-flash-next-16gb](https://github.com/hocestnonsatis/qwen3.8-flash-next-16gb) | llama.cpp UD-IQ1_S | 16 GB VRAM | extreme-quant route |
 
@@ -490,3 +490,18 @@ published blocker.** Demoted from "biggest lever" to "watch #36497 / #36556 / #3
 
 Incidental corroboration from #36545's launch line: it runs `--fp4-gemm-backend flashinfer_cutlass`,
 consistent with the SM120/121 CUTLASS SMEM-overflow workaround noted above.
+
+## 2026-08-30 — two corrections to this file's own field table
+
+- **llama.cpp's qwen4exp support merged** (ggml-org/llama.cpp#27742, master, 2026-08-27, merge
+  `6c84c7d`), and it subsumed both of 0xBakeer's patches: master now implements `can_reuse()` on
+  `llm_graph_input_qsa` and `llm_graph_input_ple` itself, and bounds quantizer staging in slabs by
+  `max_buf_size` — a more general fix than the PLE-specific one. They verified this the right way,
+  with `git apply --check` against master rather than by assuming.
+  For us this only re-scopes a sentence: **#53896 is the only place the *vLLM* implementation
+  exists**, which remains true; llama.cpp is a separate implementation and is now merged.
+- **"`--parallel 1`" in our table read as a limitation, and is not one.** 0xBakeer withdrew the
+  "concurrent requests abort the server" claim on 2026-08-27 after a reader showed eight
+  simultaneous requests all returning 200 — they queue, they do not crash — and has since run
+  `--parallel 2` end-to-end. The single-stream figure is what their *harness* does, not a ceiling.
+  Corrected in the table above.
