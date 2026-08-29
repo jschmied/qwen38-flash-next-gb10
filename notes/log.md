@@ -295,8 +295,18 @@ Only `max_num_seqs` changed; same checkpoint (FP8 head), MTP k=2, 8192 ctx, 4000
 
 Both moves are inside the 6.9% noise floor. **~100 tok/s at c=16 is a real bandwidth ceiling**, and
 c=32 buys +10% aggregate for 4× the TTFT — not a trade worth making for agent work, where we rank
-by TTFT. 0xBakeer's result does not transfer; the likely reason is that their baseline cap was low
-enough to bind (ours was already at the knee).
+by TTFT. 0xBakeer's result does not transfer, and **their own repo now confirms why**: their SEQS A/B raised
+the default from **2 to 16** (0xBakeer#2, restated in #14). Our null result is the *continuation* of
+that same curve past its knee — 2 → 16 is a real 1.2–2.7× win, 16 → 64 is nothing. Both hold.
+
+**Independent corroboration of the ceiling.** Their corrected comparison table states the vLLM
+recipe at `SEQS=16` serves **96–109 tok/s aggregate** with TTFT under 2.7 s. We measure 97–102 at
+c=16 and 110 at c=32 on a different checkpoint, different speculation setting and different prompt
+lengths. Two independent vLLM configurations landing on the same ~100 tok/s is much better evidence
+that this is a bandwidth ceiling than either measurement alone.
+
+(Their TTFT is far better than our 5.9–10.7 s at c=16, but the prompt lengths are not stated as
+comparable — ours are 4000 tokens — so no conclusion is drawn from that difference.)
 
 **Left open by this:** an old uncapped run recorded 266.8 tok/s at c=48, far above the 110 here. The
 configurations differ in more than concurrency — most importantly MTP was off — and aggregate swings
