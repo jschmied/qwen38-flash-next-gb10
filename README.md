@@ -1,81 +1,80 @@
 # Qwen3.8-Flash-Next on a DGX Spark (GB10)
 
-Can Qwen's Qwen4-architecture preview be made to run on a single GB10 with 128 GB of
-unified memory? This repo is the working record of finding out — including the parts
-that do not work.
+Can Qwen's Qwen4-architecture preview be made to run well on a single GB10 with 128 GB of
+unified memory? This repo is the working record — including, deliberately, the parts that do not
+work and the claims of our own we had to withdraw.
 
-> **Prior art, and the number to beat.** [0xBakeer/qwen38-flash-next-spark](https://github.com/0xBakeer/qwen38-flash-next-spark)
-> already runs this model on a Spark via **llama.cpp**, by pinning the n-gram tensor to the CPU
-> backend and letting mmap serve it from NVMe (`-ot "per_layer_token_embd=CPU" -lm mmap`):
-> 103.7 GiB on disk, ~76.9 GiB resident, **~22 tok/s decode**. That work came first and it works.
->
-> **This repo takes the vLLM route instead**, for one reason: their setup is limited to
-> `--parallel 1` (concurrent requests crash), and speculative decoding gave them no speedup.
-> Concurrency and prefix caching are what vLLM would add. If that does not pan out, their
-> answer is the better one and this repo will say so.
+**Status: working, fast, and usable.** `17.1 → 36.5 tok/s` single-stream on one box, via three
+measured levers. The model serves 262K-capable context, tool calls, and vision.
 
-**Status: working, and it scales.** `RadixArk/Qwen3.8-Flash-Next-NVFP4` serves coherently on
-vLLM on one GB10 — 76.6 GiB resident with the PLE offloaded to host, **17.1 tok/s** single-stream
-and **266.8 tok/s aggregate at 48 concurrent streams** (TTFT 1.6 s, no queueing). Full numbers in
-[notes/results-radixark-vllm.md](notes/results-radixark-vllm.md); the load trace behind the
-concurrency figures is in [notes/load-and-waits.md](notes/load-and-waits.md).
+| lever | single-stream | note |
+| --- | --- | --- |
+| `RadixArk/…-NVFP4` as published | 17.1 | dense projections left in BF16 |
+| + dense projections FP8 (lovedheart) | 23.7 | same size, +39% |
+| + `lm_head` FP8 (ours, first on GPU for this model) | 26.1 | no measurable quality cost |
+| + MTP k=2 | **36.5** | +35%; the head lever **doubles** under speculation |
 
-**The PLE offload is not the bottleneck, and swap gets *cheaper* under load.** Traced with
-`/proc` + `/metrics` counters (nothing instrumented): the offload worker never exceeds 24% of one
-core, and major faults per token **fall 4.4x** from c=1 to c=48 — batched tokens share n-gram rows,
-so the marginal token is far cheaper than the first. That is an argument for running this model at
-concurrency rather than a caution against it. Every wait we could observe is a queueing wait
-governed by `--max-num-seqs`; the value we originally shipped (2) costs **4x aggregate throughput**
-at c=8.
+Aggregate: **266.8 tok/s at 48 concurrent streams**. Which number matters depends entirely on
+whether the box serves one caller or several — see
+[agentic speed is TTFT-bound](notes/speculation-on-flash-next.md).
 
-Two things are needed, and both are contributions this repo can make to the field:
+## Start here
 
-1. **A one-line gate change** so the FP8 PLE is accepted on a ModelOpt/NVFP4 body. This corrects
-   published checkpoint tables that list RadixArk as not loading on vLLM — it does.
-2. **`--cap-add=SYS_PTRACE`** when running vLLM's official `VLLM_PLE_CPU_OFFLOAD` in Docker.
-   `rebuild_cuda_tensor` needs `pidfd_getfd`; default seccomp denies it, and the engine dies
-   *after* both workers load all 206 shards with only
-   `Engine core initialization failed. Failed core proc(s): {}`. Undocumented as far as we can
-   tell, and it will hit anyone taking the official offload path in a container.
+- **[Failure modes](notes/failure-modes.md)** — every failure hit here, organised by what you
+  *observe*. Four different causes produce "it loads but the output is wrong".
+- **[TODO](notes/TODO.md)** — what is open, ranked, and just as importantly **what is closed and
+  why**, so nobody re-opens a dead end on a plausible hunch.
+- **[The field](notes/the-field.md)** — who else runs this, what they measured, and which of
+  their claims (and ours) did not survive checking.
 
-**Honest positioning:** on **single-stream** decode we are behind the field — 17.1 tok/s with no
-speculation, against 22 ([0xBakeer](https://github.com/0xBakeer/qwen38-flash-next-spark),
-llama.cpp), 27 ([Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark),
-SGLang + HashK-PLE), 28.2 ([dolf3131](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark),
-vLLM + MTP k=2) and 31–50 ([paragontasx](https://github.com/paragontasx/qwen38-flash-next-dgx-spark),
-llama.cpp). Speculative decoding is the untried lever here and would close much of that gap.
+## Two things that decide whether the model is *usable*, and no speed test can see
 
-On **aggregate** throughput the picture inverts: 266.8 tok/s at 48 streams, roughly an order of
-magnitude above any published single-stream figure. We have not seen anyone else measure it, and
-llama.cpp builds cannot (`--parallel 1`). Which number matters depends entirely on whether the box
-serves one caller or several.
+Found on 2026-08-29, after a full day of throughput work:
 
-### What cost a day getting here, and the rule that would have prevented it
+- **Tool calling was rejected outright.** Our launcher set `--reasoning-parser qwen3` and nothing
+  else, so every request carrying `tools` returned **HTTP 400**. Fixed with
+  `--enable-auto-tool-choice --tool-call-parser qwen3_xml`; now **32/32** across temperatures
+  0.2 / 0.6 / 1.0 / default. [Write-up](notes/tool-calling-was-off.md).
+- **`--max-model-len 8192` could not hold the model's own reasoning.** A code task emitted 31,115
+  characters of thinking before 12,931 of content. 8192 was chosen for benchmarking and was never
+  going to serve real work.
 
-The output was fluent garbage until the very end. The cause was **two of my own 206 files:
-size-correct and byte-corrupt** — `model-bf16-00011.safetensors` (dense BF16 body) and
-`model-plefp8-00000.safetensors` (PLE shards 0-12), the two still being written when my download
-stalled. I compared **sizes** against the HF API, saw 418/418 agree, deleted aria2's `.aria2`
-control files, and called it verified. `lfs.sha256` was in the same API response.
+Neither is visible to throughput, acceptance, NLL, divergence or coherence tests, because none of
+those sends a `tools` field or a long generation. **A serving config has capabilities, not just
+speed** — probe both before benchmarking a new recipe.
 
-**Verify `lfs.sha256`, not file size.** A size-correct corrupt shard loads without error, reports
-sane shapes and dtypes, produces correct-magnitude activations, and yields *fluent* token salad.
-Because it is a property of the weights, the garbage is **invariant to every configuration change
-you can think of** — which reads exactly like an environmental or kernel fault. I eliminated
-twenty-odd hypotheses that way and each clean elimination made the wrong conclusion look better
-supported. It also survives naive content checks: I validated the PLE against the official BF16
-table at cosine 0.999635, sampling row 0 — inside the intact head of the corrupt file.
+## What we would not try again
 
-```bash
-curl -s "https://huggingface.co/api/models/$REPO/tree/main?recursive=true&blobs=true" \
-  | jq -r '.[]|select(.lfs)|"\(.lfs.sha256)  \(.path)"' > SHA256SUMS
-sha256sum -c SHA256SUMS
-```
+The most useful half of this repo. Each of these looked like a lever and measured null, with the
+mechanism understood rather than shrugged at:
 
-Final tally: **204 of 206 clean, 2 corrupt.** Two upstream issues opened on the strength of the
-wrong conclusion have been retracted
-([blazux#1](https://github.com/blazux/qwen3.8-Flash-DGX/issues/1),
-[dolf3131#1](https://github.com/dolf3131/qwen3.8-flash-next-dgx-spark/issues/1)).
+- **Hyper-connection quantization or kernels.** 27% of decode GPU time, three interventions
+  (blockwise FP8, the CUTE-DSL skinny GEMM, per-channel FP8), all null. They are **latency-bound
+  at ~78% of roofline** — a quarter of decode time because there are ~102,000 of them, not because
+  any one is expensive. Corroborated independently three ways.
+  [Why](notes/why-the-hyper-connections-do-not-respond.md).
+- **NVFP4 KV cache** — closed by two independent GB10 measurements plus a structural
+  MTP-acceptance penalty, and it fails silently.
+- **Lowering `gpu-memory-utilization` to avoid host freezes** — refuted; 0.70 is the worst
+  recorded outcome. The cause is absolute free memory at launch, not the ratio.
+
+## Method, earned the hard way
+
+- **The noise floor is 6.9%** (six identical runs: 34.7–37.1 tok/s). **Nothing under ~10% is
+  callable from a single run.** This cost us a published claim — "k=2 is the MTP optimum" compared
+  a single k=3 run against the *top* of k=2's own spread. Withdrawn.
+- **Verify `lfs.sha256`, not file size.** Two size-correct, byte-corrupt shards produced *fluent
+  garbage* invariant to every configuration change, and cost a full day plus two retracted
+  upstream issues. `aria2` preallocates, so a file reaches full size the moment it starts.
+- **Verify the lever is real at the shape level before building anything.**
+  [`tools/shapebench.py`](tools/shapebench.py) takes two minutes and would have pre-empted a
+  checkpoint build, four failed server starts and three six-run A/B arms.
+- **Prove a kernel actually ran.** Log first-sight dispatch keys inside the op — a call-count
+  threshold never fires under cudagraph replay. We peeled back *four* layers of "installed but not
+  running" before one measurement meant anything.
+- **Clear `VLLM_CACHE_ROOT` + `TORCHINDUCTOR_CACHE_DIR`** when benchmarking a source-level patch;
+  a stale compiled graph silently replays your unpatched code. (Config flags *are* hashed
+  correctly — we checked before filing.)
 
 ## The problem in one table
 
@@ -86,16 +85,10 @@ wrong conclusion have been retracted
 | `RadixArk/Qwen3.8-Flash-Next-NVFP4` | **125.9 GiB** |
 | **usable on this box** | **~117 GiB** |
 
-The NVFP4 build is the only one in range, and it is still ~9 GiB too large. It splits
-cleanly, which is what makes the attempt worth making:
-
-| component | files | size |
-|---|---|---|
-| main model (experts NVFP4 + some BF16) | 196 | **78.2 GiB** |
-| PLE / n-gram table, already FP8 | 10 × `model-plefp8-*` | **47.7 GiB** |
-
-The main model alone fits comfortably. Everything hinges on keeping the n-gram table
-out of resident memory.
+It splits cleanly, which is what makes the attempt work: main model 78.2 GiB (196 files), PLE
+n-gram table 47.7 GiB (10 files, already FP8). Everything hinges on keeping the n-gram table out
+of resident memory — and **the PLE offload is not the bottleneck**: major faults per token *fall
+4.4×* from c=1 to c=48, because batched tokens share n-gram rows.
 
 ## What the model is
 
@@ -104,70 +97,58 @@ out of resident memory.
 - 48 layers, hidden 2560, **512 experts / 10 active**, `moe_intermediate 640`
 - 24 Q heads / 2 KV heads, head_dim 256, **262144** native context
 - `layer_types`: 3 × `linear_attention` + 1 × `full_attention`, repeating (GDN hybrid)
-- n-gram: `ngram_size 3`, `ngram_vocab_size_base 20_000_000`, `split_ngram_parts 128`
-  → 20e6 × 2560 = **51.2B** parameters, attached at layer 1 as
-  `layers.1.ple.ple_embedding.ngram_embedding.shard_0…127`
-- `output_gate_type = sigmoid` — this one matters, see below
+- n-gram: 20 M × 2560 = **51.2 B** parameters, 128 shards, attached at layer 1
+- **MTP: 1 layer**, "trained with multi-steps" — so k>1 reuses it autoregressively. Qwen publish
+  no recommended k; **k=2 is optimal**, confirmed by the architecture, our own k=3 arm, and an
+  independent 0–10 sweep.
 
-## Findings so far
-
-- **[Failure modes](notes/failure-modes.md) — read this first if anything is wrong.** Every
-  failure hit here, organised by what you observe, with the signature that distinguishes causes
-  that present identically. Four different things produce "it loads but the output is wrong".
-- **[The full working result](notes/results-radixark-vllm.md)** — 76.6 GiB resident, 17.3 tok/s
-  single-stream, 32.4 tok/s at two concurrent streams.
-- **A one-line gate makes RadixArk NVFP4 load**, contradicting checkpoint tables that list it as
-  incompatible with vLLM. Its PLE is already in the exact FP8 format vLLM implements; only the
-  `isinstance(quant_config, Fp8Config)` check rejects it, because the *body* is NVFP4.
-- **`--cap-add=SYS_PTRACE` is required** for vLLM's official `VLLM_PLE_CPU_OFFLOAD` inside
-  Docker. `rebuild_cuda_tensor` needs `pidfd_getfd`; default seccomp denies it, and the engine
-  dies ten minutes in — after all 206 shards load — with only `Failed core proc(s): {}`.
-- **[No source build is required](notes/why-no-source-build.md).** vLLM PR #53896 changes
-  one CUDA kernel signature, and Qwen4 needs the new `sigmoid` value — but that op is
-  reached only under speculative decoding. Run without speculation and the stock
-  prebuilt kernel is never called. This turns a multi-hour risky build into a file overlay.
-- **CPU offload does work here — an earlier claim on this page was wrong.** We had reasoned that
-  because GB10 shares one 128 GB pool between CPU and GPU, "offload to host" frees nothing. In
-  practice the served model reports **76.61 GiB** device-consumed with the PLE held by the
-  offload worker, leaving 30.99 GiB for KV. Caveat we are explicit about: this box had a 64 GiB
-  swapfile active during the run, and **we did not measure how much of the PLE was resident
-  versus paged out**. Treat the swapfile as part of the recipe until someone measures it.
-- **The n-gram table is a lookup, not a GEMM**, and is pre-split into 128 shards across
-  10 files — so file-backed `mmap` is a viable mechanism too, letting the kernel
-  hold hot rows and evict the rest.
-- **Compressing the table beats offloading it.**
-  [Death-By-Tokens](https://github.com/Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark)
-  re-hashes the PLE trainlessly from 51 GB to **12.8 GB** in about six minutes, and spends the
-  freed ~16 GB on an MTP draft head that roughly doubles decode. Reconstruction cosine is only
-  ~0.50, yet their code benchmark went *up* (12/12 vs 10/12) because the model's own PLE
-  conv+gating filters the retrieved values. That is a better answer to the problem this repo
-  exists to solve, and it is theirs.
+Per-token byte budget (decode, `fp8head`): GDN 1.95 GiB, experts 1.24, hyper-connections 1.19,
+QSA 0.59, `lm_head` 0.59, shared_expert 0.44. **The experts are 20% of it at c=1 and ~80% at
+c=16** — each sequence pulls its own ten of 512 while the dense path amortizes.
 
 ## Layout
 
-    scripts/serve-flashnext.sh   first-boot serve config (no speculative decoding)
-    scripts/apply-pr53896.sh     overlay the PR's Python files onto a venv
+    scripts/serve-flashnext.sh   serve config
+    tools/shapebench.py          per-shape FP8-vs-BF16 timing, L2 defeated, roofline printed
+    patches/                     local vLLM patches + the upstream series
     notes/failure-modes.md       everything that went wrong, by symptom  <- start here
-    notes/load-and-waits.md      where time goes under concurrency (PLE is not the bottleneck)
-    notes/single-stream-limit.md what limits n=1 (BF16 GEMV on unquantized dense weights)
-    notes/fetching-a-slice.md    diffing lfs.sha256 to download 12 GiB instead of 123
-    notes/fp8-mixed-checkpoint.md the +71% checkpoint switch, and why MTP stops paying
-    notes/quantizing-lm-head.md   +11% free, and the three blockers that stopped everyone
-    notes/choosing-a-quant-scheme.md how to pick a scheme when plumbing, not quality, decides
-    notes/ple-access-pattern.md   why the biggest object in the checkpoint is a small cost
-    notes/quantizing-shared-expert.md a lever that measures worse than it models -- and why
-    notes/block-size-is-not-a-kernel-limit.md a constant, not a kernel, blocks a whole layer class
-    notes/results-radixark-vllm.md  the working config and its measurements
-    notes/the-field.md           who else is running this, and how
+    notes/TODO.md                open work, and what is closed with reasons
+    notes/the-field.md           who else runs this, and which claims held up
     notes/log.md                 running record, including the dead ends
 
-## Related upstream work
+    notes/tool-calling-was-off.md            HTTP 400 on every agent request, and the fix
+    notes/speculation-on-flash-next.md       what MTP is worth, and what limits it
+    notes/why-the-hyper-connections-do-not-respond.md   27% of GPU time, zero to give
+    notes/where-the-gpu-time-goes.md         the decode-only kernel profile
+    notes/skinny-gemm-on-sm121.md            four blockers, and a null at the end
+    notes/the-prefill-decode-confound.md     an explanation of ours that testing refuted
+    notes/quantizing-lm-head.md              +11% off, +19.1% under MTP, three blockers
+    notes/fp8-mixed-checkpoint.md            the +39% checkpoint switch
+    notes/moe-backend-axis.md                why the MoE kernel axis is closed while MTP is on
+    notes/upstream-branch.md                 the patch series and where it can go
+    notes/single-stream-limit.md             what limits n=1
+    notes/load-and-waits.md                  where time goes under concurrency
+    notes/ple-access-pattern.md              why the biggest object is a small cost
+    notes/fetching-a-slice.md                diffing lfs.sha256 to download 12 GiB, not 123
+    notes/choosing-a-quant-scheme.md         picking a scheme when plumbing decides
+    notes/quantizing-shared-expert.md        a lever that measures worse than it models
+    notes/block-size-is-not-a-kernel-limit.md  a constant, not a kernel, blocks a layer class
+    notes/why-no-source-build.md             a file overlay instead of a multi-hour build
+
+## Upstream
 
 | | |
 |---|---|
-| #53896 | `[Model] Support Qwen3.8-Flash-Next` — 111 files, unreviewed |
-| #53899 | PLE-Offload (to host memory) |
-| #53908 | auxiliary-GPU offloading for the N-gram / PLE table |
-| #53909 | `Add qwen4 fuse op` |
+| [#53896](https://github.com/vllm-project/vllm/pull/53896) | `[Model] Support Qwen3.8-Flash-Next` — the only place this code exists; **not on `main`**, not in any release |
+| [#50617](https://github.com/vllm-project/vllm/pull/50617) | fixes the `FP8_PER_CHANNEL_PER_TOKEN` dispatch gap we hit; we added our load-failure evidence rather than opening a duplicate |
+| [#53899](https://github.com/vllm-project/vllm/pull/53899) | PLE offload to host memory |
+| [#52816](https://github.com/vllm-project/vllm/pull/52816) | DFlash2 — **merged** 2026-08-21 |
+| [our branch](https://github.com/jschmied/vllm/tree/gb10-sm121-fixes) | three commits on #53896's head: `quant_config` through `GatedResidual`, `quant_config` on both `ParallelLMHead` sites, and the dispatch fix |
+
+Two contributions from earlier that still stand: a **one-line gate change** so the FP8 PLE is
+accepted on an NVFP4 body (correcting checkpoint tables that list RadixArk as not loading — it
+does), and **`--cap-add=SYS_PTRACE`** for `VLLM_PLE_CPU_OFFLOAD` in Docker, where
+`rebuild_cuda_tensor` needs `pidfd_getfd` and the engine otherwise dies ten minutes in with only
+`Failed core proc(s): {}`.
 
 Hardware: NVIDIA DGX Spark, GB10, sm_121, 128 GB unified, aarch64.
