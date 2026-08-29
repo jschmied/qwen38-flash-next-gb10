@@ -160,3 +160,34 @@ throughput and ahead of any streaming-loader work.
 **Also of note:** there is an image `vllm/vllm-openai:qwen38-flash-next`
 (`sha256:fc120ece0a38`, vllm `0.1.dev20073+g8e685d198`) — this path is further along than
 PR #53896 alone suggests.
+
+## 2026-08-29 05:09 — 0xBakeer corrects five more claims; none of ours depend on them
+
+Their commit "Fix five claims a review pass caught, one of them an arithmetic error" retracts:
+a stale `1.26x` MTP-on-prose figure repeated in four files next to the `27.8 -> 32.2 = 1.16x`
+that disproves it; a "12% prefill falloff" that conflated endpoints (2%) with the peak at 20k
+(11%); a "~4 min to read 128k" that assumed a flat ~540 tok/s prefill against their own cold
+measurements of 448 at 40k and 253 at 161k; a `recipes/README` entry listing "vLLM at MTP=0"
+among configurations they had not actually run; and a decode-table caption implying uniform
+residency.
+
+**We cite none of these.** Our references to them are the ~22 tok/s llama.cpp figure and the
+inference-atlas 33.6 tok/s `serve-single-i256-o256-v1` run, neither of which was corrected.
+
+**The asymmetry worth noting:** they now state plainly that they never ran their own MTP-off
+A/B, and that the in-engine `1.6x` circulating for this model is upstream's, not theirs. We ran
+that A/B on 2026-08-29 (`speculation-on-flash-next.md`):
+
+| | c=1 decode | c=16 aggregate |
+| --- | --- | --- |
+| MTP off | 26.4 | 96.6 |
+| MTP k=2 | 38.0 | 99.1 |
+| gain | **1.44x** | **+2.6%** |
+
+Same box, same checkpoint, same harness, both arms the same day, conditions stated
+(i4000/o512, `--max-num-seqs 16`). As far as we can tell this is the only first-party MTP-off
+A/B published for Flash-Next on a single GB10. It is not comparable to their 1.16x — different
+engine, different quantization, different drafter — and the two should not be averaged.
+
+Their failure modes are ours: a stale number surviving next to the data that refutes it, and a
+rate extrapolated flat across a range where it is not. Both bit us this week too.
