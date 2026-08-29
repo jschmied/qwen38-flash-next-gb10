@@ -72,3 +72,11 @@ Anything measured-and-closed lives in its own note, not here.
   free at c=1 and should get worse as the batch saturates bandwidth. Same inputs, one A/B. Raised by
   the SEQS negative result (`log.md`, 2026-08-30) — do **not** compare against the old 266.8 tok/s
   c=48 row, which differs in more than concurrency.
+
+- **FP8 KV — re-scoped, and check the dtype gate first.** sgl#36797 measures fp8_e4m3 KV as
+  ~speed-neutral against bf16 on SM121, so the win is **context/concurrency headroom, not tok/s**.
+  sgl#36545 shows fp8 KV + QSA asserting on **BF16 q vs FP8 k** in another stack. Read vLLM's QSA
+  decode dtype handling before any build — ten minutes against a multi-hour detour.
+- **SGLang — watch, do not attempt.** sgl#36558 reports Flash-Next *unservable* on SM121 (QSA
+  decode resolver gates on `is_sm100_supported()`); base support sgl#36497 and the resolver fix
+  sgl#36556 are both unmerged. Revisit when #36556 lands.

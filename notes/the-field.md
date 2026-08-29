@@ -453,3 +453,40 @@ Three findings that survived a second, file-level pass and bear on our build:
 - **Provenance note:** the first pass over these repos asserted specifics for three of them without
   reading the files. Those entries were rewritten above against the sources. The lesson is the one
   already in this file — *a repo's file tree is not a finding*.
+
+### SGLang, checked before recommending it (2026-08-30)
+
+Written up because it reverses a recommendation made an hour earlier in conversation: SGLang looked
+like the largest unexplored lever for this model (MiaAI-Lab's 64 tok/s is on it; on a *different*
+model our SGLang+DSpark path beat vLLM+MTP by 12% with 28% lower TTFT). The upstream tracker says
+otherwise.
+
+- **[sgl#36558] QSA decode has no working kernel path on SM121 — "Qwen3.8-Flash-Next unservable"**,
+  open since 2026-08-26. `_resolve_trtllm_sparse_decode()` rejects GB10 on an
+  `is_sm100_supported()` gate; classic FA2 is absent and has no Blackwell kernels; the resolver
+  falls through to the flash-attn-4 CuTe interface, which fails to compile for this GPU. Every
+  launch config crashes at first decode or during decode graph capture.
+  The reporter verified the flashinfer trtllm sparse decode **kernel itself runs correctly on
+  SM121** (`max_abs_diff` 4.70e-04). So this is a **gate, not a kernel** — the same shape as the
+  four layers of "installed but not running" we peeled back on the skinny GEMM.
+- Base support ([sgl#36497] *Introduce Qwen 3.8 Flash Next*) and the SM120/121 QSA resolver fix
+  ([sgl#36556]) are both **still open**. There is no released SGLang that serves this model on GB10.
+
+**Conclusion: SGLang is not a stack we can switch to, it is a build-from-unmerged-PRs project with a
+published blocker.** Demoted from "biggest lever" to "watch #36497 / #36556 / #36558".
+
+### Two SGLang issues that do bear on our KV plan
+
+- **[sgl#36797] NVFP4 KV regresses Qwen4Exp decode ~29% on SM121 vs fp8_e4m3.** Measured 44.0 tok/s
+  (nvfp4) against **56.8–58.6 (fp8_e4m3)** and 54–59 (bf16), same weights, 2× Spark TP=2. Third
+  independent confirmation that NVFP4 KV is closed — and note what it says about the alternative:
+  **fp8 and bf16 are roughly speed-neutral.** The case for FP8 KV here is **pool size, i.e. context
+  and concurrency headroom, not decode rate.** We should stop pitching it as a throughput lever.
+- **[sgl#36545] fp8_e4m3 KV + QSA crashes**: the QSA FA4 decode call receives **BF16 queries with
+  FP8 K/V** and asserts that all three dtypes match. On SM120, on the same RadixArk weights.
+  This is precisely the plumbing alesha-pro's FP8-QSA-KV suggestion needs, failing in another
+  stack. **Check vLLM's QSA decode dtype handling before building anything** — it is the same
+  attention design, and this is a ten-minute source read against a multi-hour build.
+
+Incidental corroboration from #36545's launch line: it runs `--fp4-gemm-backend flashinfer_cutlass`,
+consistent with the SM120/121 CUTLASS SMEM-overflow workaround noted above.
