@@ -143,3 +143,77 @@ sha256sum -c SHA256SUMS
 Re-fetching the two files. Next entry reports whether RadixArk then serves coherently under the
 one-gate patch — which is the part of the earlier report that still matters, since it would turn
 the published "loads but emits garbage" table line into "works with a one-line change".
+
+## 2026-08-29 — a day of nulls, and the measurement that explained them
+
+Chased the largest item in the decode profile — **25–27% of GPU time in
+`cutlass_80_wmma_tensorop_bf16`**, the BF16 hyper-connection GEMMs, Ampere-generation kernels on a
+Blackwell part. Three interventions, all null against a **measured 6.9% noise floor** (six
+identical runs: 34.7–37.1 tok/s, mean 35.68, sd 0.84):
+
+| attempt | what changed | result |
+| --- | --- | --- |
+| blockwise FP8 (`FP8_PB_WO`) | precision | slower |
+| CUTE-DSL skinny GEMM, gate + M=3 entry | kernel, fused down projection | 35.92 vs 36.45 |
+| per-channel FP8, 96 `_up` projections | half the bytes **and** the faster kernel | 36.05 vs 36.45 |
+
+### Four layers of "installed but not running"
+
+Each presented identically — a null inside the noise floor — and each was only visible after
+clearing the one above it:
+
+1. **arch gate** — `enable_qwen38next_low_latency_gemm` returns early unless `_is_sm103()`
+2. **plan table keyed by exact M** — `plan.get(x.shape[0])`, a miss falls to `F.linear` silently
+3. **cudagraph replay** — the custom op's Python body runs only at capture, so a call-count log
+   never fires, and the M that matters is the **capture size**, not the token count
+4. **a stale compiled graph** — three six-run arms agreed to 0.2% because they were *one cached
+   graph*, not three arms
+
+Stopping at any of the first three would have published "the skinny GEMM does not help on GB10",
+confidently and wrongly.
+
+### The explanation, which took two minutes and should have come first
+
+Per-shape microbenchmark (`tools/shapebench.py`), L2 defeated by rotating ~300 MB of weights,
+every timing printed against its roofline:
+
+| shape | M=1 BF16 | M=1 FP8 | speedup | roofline |
+| --- | --- | --- | --- | --- |
+| (10240, 320) hyper up | 30.8 us | 26.1 us | 1.18x | 24.0 us |
+| (336, 10240) hyper down | 37.0 us | 41.5 us | **0.89x** | 25.2 us |
+| (10240, 2560) GDN in_proj | 307 us | 126.7 us | 2.42x | 192 us |
+
+These GEMMs run at **~78% of roofline already** — latency-bound, not bandwidth-bound. They are a
+quarter of decode time because there are **~102,000 of them** (~200 per forward), not because any
+one is expensive. FP8 saves ~4 us/call on `up` and *loses* 6–9 us/call on `down`, so the halves
+cancel: predicted ~1.3%, measured −1.1% ± 3.0%. **The nulls were the correct answer.**
+
+### Two things I published and withdrew the same day
+
+- **"The profile was prefill-contaminated."** Plausible — the trace was 16k prefill vs 2k decode
+  tokens — but a decode-only re-profile gave the same ranking (fp8 34.5 vs 32.2, wmma 26.6 vs
+  25.0, MoE 22.2 vs 22.1). Refuted by testing it.
+- **"The torch.compile cache key omits kernel selection."** Checked before filing:
+  `KernelConfig.compute_hash()` *is* wired in at `vllm/config/vllm.py:506`. What is not hashed is
+  an edit to vLLM's own source, which is expected. Would have been a wrong report.
+
+### Upstream
+
+- **[vllm#54367](https://github.com/vllm-project/vllm/pull/54367)** — opened against `main`:
+  `FP8_PER_CHANNEL_PER_TOKEN` is defined but has no branch in the `MIXED_PRECISION` dispatch, so
+  the layer falls through to unquantized and the checkpoint fails to load. Fix + unit test.
+- **[branch `gb10-sm121-fixes`](https://github.com/jschmied/vllm/tree/gb10-sm121-fixes)** — three
+  commits on #53896's head; commented there about `GatedResidual` hardcoding `quant_config=None`
+  while its own docstring claims dispatch works.
+- **[0xBakeer#6](https://github.com/0xBakeer/qwen38-flash-next-spark/issues/6)** landed and closed
+  with attribution; our noise floor and MTP-off A/B are in his docs, credited.
+- Answered `Chinmayrawat15` on #54097 — his `Exception`-catching generalisation is better than the
+  `OSError` enumeration I proposed, and I declined the follow-up he offered.
+
+### The rule
+
+**Verify the lever is real at the shape level before building anything.** Ranking by profile is
+necessary and not sufficient: a layer can be a quarter of GPU time and still have nothing to give,
+because share of time and headroom are different quantities. The microbenchmark that settled this
+costs two minutes with the server stopped, and would have pre-empted a checkpoint build, four
+failed server starts and three six-run A/B arms.
