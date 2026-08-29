@@ -217,3 +217,64 @@ necessary and not sufficient: a layer can be a quarter of GPU time and still hav
 because share of time and headroom are different quantities. The microbenchmark that settled this
 costs two minutes with the server stopped, and would have pre-empted a checkpoint build, four
 failed server starts and three six-run A/B arms.
+
+## 2026-08-29 (evening) — two capability defects the whole benchmark suite was blind to
+
+Everything above this line measured speed. The evening found two things that decide whether the
+model is *usable*, and neither was visible to any speed test.
+
+### Tool calling was rejected outright
+
+`serve-fnext.sh` set `--reasoning-parser qwen3` and nothing else. Every request carrying `tools`
+returned **HTTP 400**:
+
+```
+"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set
+```
+
+An omission, not a decision — both Laguna launchers already set theirs. Fixed with
+`--enable-auto-tool-choice --tool-call-parser qwen3_xml`; now **32/32** across temps 0.2 / 0.6 /
+1.0 / default, correct function name every time. Full write-up in `tool-calling-was-off.md`.
+
+### The context window could not hold the model's own reasoning
+
+`--max-model-len 8192`, chosen for throughput benchmarking, rejected a code task asking for 26k
+output tokens. Raised to 32768, at which point the same task ran: **31,115 characters of reasoning
+before 12,931 characters of content.** 8192 was never going to serve real work.
+
+**Both were invisible to throughput, acceptance, NLL, divergence and coherence tests, because none
+of those sends a `tools` field or a long generation.** A serving config has capabilities, not just
+speed.
+
+### Task A (Go): FAIL, genuinely
+
+At vendor sampling (1.0 / 0.95 / 20, from `generation_config.json`) with
+`reasoning_effort=medium`. Both blocks extracted cleanly, file complete, zero stray fences — and
+it does not compile:
+
+```go
+func isExpired(e *entry[_, _]) bool     // cannot use _ as value or type
+```
+
+`_` is not a valid type argument; the helper needed to be generic. One line fails the build while
+the cache implementation and a 313-line test file are structurally sound. **N=1 at temperature
+1.0** — provisional, and our own scorecard has two rows that were wrong until re-run.
+
+Three settings had to be right first, each of which would otherwise have produced a fake failure:
+`:8092` not `:8080`; vendor sampling rather than the generic `0.7/0.95/40` fallback; and
+`reasoning_effort=medium`, since the template defaults to `xhigh` which spends the whole budget in
+`<think>`.
+
+### lm_head under speculation, measured properly
+
+The +11% was measured with speculation **off** while production runs MTP k=2, and the drafter has
+no head of its own (`mtp.shared_head.head.` → `lm_head.`). Matched A/B:
+
+| | BF16 head | FP8 head |
+| --- | --- | --- |
+| decode tok/s | 30.60 | **36.45** |
+| acceptance | **60.3%** | 56.6% |
+
+The FP8 head **does** cost draft quality (−3.7 pp) and wins **+19.1%** anyway. The gain nearly
+doubles versus speculation-off, confirming the compounding argument by measurement. Published
+"+11%" needs qualifying as speculation-off.
