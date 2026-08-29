@@ -1,4 +1,4 @@
-From df9ab8bfd74bc7fff6f53d421c34c85b79f700fc Mon Sep 17 00:00:00 2001
+From 7965acb54ba09fb158f8bfa122e99d8366fe1e14 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?J=C3=BCrgen=20Schmied?= <juergenschmied70@gmail.com>
 Date: Sat, 29 Aug 2026 13:09:59 +0200
 Subject: [PATCH 3/3] [Model][Qwen4-Exp] Pass quant_config to ParallelLMHead

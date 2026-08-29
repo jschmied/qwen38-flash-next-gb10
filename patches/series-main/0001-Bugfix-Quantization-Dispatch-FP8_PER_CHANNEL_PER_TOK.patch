@@ -1,0 +1,49 @@
+From fe0a04eb7e016613d59389b554c1c07f6f6dc967 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?J=C3=BCrgen=20Schmied?= <juergenschmied70@gmail.com>
+Date: Sat, 29 Aug 2026 18:21:30 +0200
+Subject: [PATCH] [Bugfix][Quantization] Dispatch FP8_PER_CHANNEL_PER_TOKEN in
+ ModelOpt MIXED_PRECISION
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+ModelOptFp8PcPtLinearMethod is defined and FP8_PER_CHANNEL_PER_TOKEN is a
+recognised quant_algo, but ModelOptMixedPrecisionConfig.get_quant_method
+has no branch for it. The algo resolves from quantized_layers, matches
+none of FP8 / NVFP4 / W4A16_NVFP4 / MXFP8 / FP8_PB_WO, and falls through
+to UnquantizedLinearMethod.
+
+The layer then never registers weight_scale, so a checkpoint carrying one
+fails to load:
+
+  ValueError: There is no module or parameter named
+  'layers.0.attn_hyper_connection.input_mix_weight_up.weight_scale' in
+  ...  The available parameters belonging to ... (ReplicatedLinear) are:
+  {'...input_mix_weight_up.weight'}
+
+Per-channel FP8 is the only usable FP8 scheme for shapes that fail
+128-divisibility, since FP8_PB_WO requires both dims divisible by 128.
+It also slices cleanly across a fused MergedColumnParallelLinear, which a
+blockwise scale cannot when a shard is narrower than the block.
+
+Signed-off-by: Jürgen Schmied <juergenschmied70@gmail.com>
+---
+ vllm/model_executor/layers/quantization/modelopt.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/vllm/model_executor/layers/quantization/modelopt.py b/vllm/model_executor/layers/quantization/modelopt.py
+index 241a7c8ad..307a337c4 100644
+--- a/vllm/model_executor/layers/quantization/modelopt.py
++++ b/vllm/model_executor/layers/quantization/modelopt.py
+@@ -2418,6 +2418,8 @@ class ModelOptMixedPrecisionConfig(ModelOptQuantConfigBase):
+                 return ModelOptNvFp4W4A16LinearMethod(self.w4a16_nvfp4_config)
+             if quant_algo == "MXFP8":
+                 return ModelOptMxFp8LinearMethod(self.mxfp8_config)
++            if quant_algo == "FP8_PER_CHANNEL_PER_TOKEN":
++                return ModelOptFp8PcPtLinearMethod(self.fp8_config)
+             # Layer not in quantized_layers — leave unquantized
+             return UnquantizedLinearMethod()
+ 
+-- 
+2.43.0
+

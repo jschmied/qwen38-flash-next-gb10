@@ -14,9 +14,18 @@ written against a tree with no upstream identity, and the PR has since renamed t
 `qwen3_8_flash_next` → `qwen4_exp` and the dict `QWEN38NEXT_GEMM_PLANS` →
 `QWEN4_EXP_GEMM_PLANS`.
 
-## Branch
+## Two branches, two targets
 
-`gb10-sm121-fixes`, branched from PR #53896 head `82399a9`, in `~/vllm-fork`. Three commits,
+**`fix-modelopt-pcpt-dispatch`** — off `upstream/main`, ONE commit, 2 insertions. The
+`FP8_PER_CHANNEL_PER_TOKEN` dispatch gap **exists on main**, independently of Flash-Next:
+`ModelOptFp8PcPtLinearMethod` is defined there and the algo string appears five times, but
+`ModelOptMixedPrecisionConfig.get_quant_method` has no branch for it. This one is a normal
+upstream bugfix PR against main — it does not need the Flash-Next PR to land. Exported to
+`patches/series-main/`.
+
+## Branch (Flash-Next specific)
+
+`gb10-sm121-fixes`, rebased onto PR #53896 head **`91a6b555`** (was `82399a9`; the PR went CONFLICTING → MERGEABLE on 2026-08-29 and none of its new commits touch our four files), in `~/vllm-fork`. Three commits,
 12 insertions. Exported to `patches/series-pr53896/` and verified to apply cleanly to a pristine
 PR head with `git am --3way`.
 
@@ -48,8 +57,14 @@ The branch carries `.github/workflows/` from the PR head; our token has
 
 ```
 gh auth refresh -h github.com -s workflow     # interactive, needs a browser
-cd ~/vllm-fork && git push -u origin gb10-sm121-fixes
+cd ~/vllm-fork
+git push -u origin fix-modelopt-pcpt-dispatch   # -> PR against main
+git push -u origin gb10-sm121-fixes             # -> for the #53896 thread
 ```
+
+Both branches hit the same rejection, and neither is our doing: our fork is behind
+`upstream/main`, so any branch based on current upstream carries main's `.github/workflows/`
+files as new, and the token has `admin:public_key, gist, read:org, repo` without `workflow`.
 
 Until then the series in `patches/series-pr53896/` is the portable form — it applies to the PR
 head with `git am --3way` and needs no fork access.

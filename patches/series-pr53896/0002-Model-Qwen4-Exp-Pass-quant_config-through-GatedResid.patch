@@ -1,4 +1,4 @@
-From fc8a530dc277fcc5bed0094ac9ff71b1429c8b95 Mon Sep 17 00:00:00 2001
+From 42bf4157298488ac5bd5c78180af38ea672e5c5e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?J=C3=BCrgen=20Schmied?= <juergenschmied70@gmail.com>
 Date: Sat, 29 Aug 2026 13:09:25 +0200
 Subject: [PATCH 2/3] [Model][Qwen4-Exp] Pass quant_config through
