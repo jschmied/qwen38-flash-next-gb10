@@ -236,7 +236,9 @@ k=3 yields **2.471 tokens per iteration against k=2's 2.133** (+15.8%) with no t
 
 ### Reported back: 0xBakeer/qwen38-flash-next-spark#6
 
-Posted 2026-08-29: <https://github.com/0xBakeer/qwen38-flash-next-spark/issues/6>
+Posted 2026-08-29: <https://github.com/0xBakeer/qwen38-flash-next-spark/issues/6> —
+**landed and closed the same day** (commit `b80625a`, "Land the findings from #6 with
+third-party attribution"), credited in their `CREDITS.md`.
 
 Three items, scoped deliberately narrow because most of what we know is about a checkpoint we
 built ourselves and nobody else has:
@@ -254,3 +256,26 @@ that TTFT variance is uncharacterised so the -30% there is indicative only.
 
 Deliberately **not** sent: the hyper-connection profile and the `fp8head` results. Both depend on
 a local checkpoint and belong here, not in their repo.
+
+
+### Outcome of #6 — how they handled it
+
+Worth recording as a model of what to do with an unreproducible external report.
+
+**Verified independently, adopted as theirs:** the profiler finding, all three parts — they
+checked `envs.py` for the absent `VLLM_TORCH_PROFILER_DIR`, quoted the exact gate at
+`entrypoints/serve/profile/api_router.py:40`, and confirmed `--profiler-config` is accepted
+where `--torch-profiler-dir` is not. The systemd `Environment=` quote-stripping trap went into
+their known-issues list.
+
+**Not verified, attributed rather than adopted:** the 6.9% noise floor and the MTP-off A/B.
+Their reasoning is one we should copy — our checkpoint is a local NVFP4-FP8 build with a
+requantized `lm_head` that their repo cannot rerun, so the docs carry it as *our* claim on
+*our* stack, and the platform-wide reading is conditional: "if their numbers hold".
+
+They also added an endpoint-versus-spread section, calling it "the fourth way to measure this
+wrong", and used **our own withdrawn k=2-optimum claim** as its worked example. The retraction
+travelled further than the result did.
+
+Lesson for our own reports: send the negative and the withdrawn alongside the positive. It was
+the part they could use without rerunning anything.
