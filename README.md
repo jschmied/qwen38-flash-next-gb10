@@ -14,8 +14,11 @@ measured levers. The model serves 262K-capable context, tool calls, and vision.
 | + `lm_head` FP8 (ours, first on GPU for this model) | 26.1 | no measurable quality cost |
 | + MTP k=2 | **36.5** | +35%; the head lever **doubles** under speculation |
 
-Aggregate: **266.8 tok/s at 48 concurrent streams**. Which number matters depends entirely on
-whether the box serves one caller or several — see
+Aggregate is a **different config and not comparable to the row above it**: the 266.8 tok/s at 48
+streams in [load and waits](notes/load-and-waits.md) was measured on the *baseline* checkpoint
+(its c=1 row is the 17.1 above), MTP off, with short prompts. On the shipped config with
+4000-token inputs we measure **~100 tok/s at c=16 and 110 at c=32**, and c=32 costs 30.7 s TTFT.
+Which number matters depends on whether the box serves one caller or several — see
 [agentic speed is TTFT-bound](notes/speculation-on-flash-next.md).
 
 ## Start here
