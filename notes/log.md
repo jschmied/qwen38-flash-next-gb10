@@ -278,3 +278,29 @@ no head of its own (`mtp.shared_head.head.` → `lm_head.`). Matched A/B:
 The FP8 head **does** cost draft quality (−3.7 pp) and wins **+19.1%** anyway. The gain nearly
 doubles versus speculation-off, confirming the compounding argument by measurement. Published
 "+11%" needs qualifying as speculation-off.
+
+## 2026-08-30 — `--max-num-seqs` 16 → 64: no effect (negative result)
+
+0xBakeer published a SEQS A/B showing 1.2–2.7× on loaded rows, and every concurrency number we had
+was taken at **c=16 against a cap of exactly 16** — so the cap bound precisely where we measured,
+and our flat ~100 tok/s aggregate was suspect as an artifact rather than a ceiling. It isn't.
+
+Only `max_num_seqs` changed; same checkpoint (FP8 head), MTP k=2, 8192 ctx, 4000-token inputs.
+
+| | SEQS=16 | SEQS=64 |
+|---|---|---|
+| c=1 decode tok/s | 36.45 ± 1.04 | 36.83 (+1.1%) |
+| c=16 aggregate | 99.1 / 101.5 / 100.1 | 97.2 / 101.4 / 100.7 (−0.3%) |
+| c=32 aggregate | not reachable | 110.1, TTFT **30.7 s** |
+
+Both moves are inside the 6.9% noise floor. **~100 tok/s at c=16 is a real bandwidth ceiling**, and
+c=32 buys +10% aggregate for 4× the TTFT — not a trade worth making for agent work, where we rank
+by TTFT. 0xBakeer's result does not transfer; the likely reason is that their baseline cap was low
+enough to bind (ours was already at the knee).
+
+**Left open by this:** an old uncapped run recorded 266.8 tok/s at c=48, far above the 110 here. The
+configurations differ in more than concurrency — most importantly MTP was off — and aggregate swings
+2.6× with prompt length, so the two are **not comparable** and no conclusion is drawn. The real
+question it raises is worth a clean test: **does MTP k=2 cost aggregate throughput under load?**
+Speculation spends compute on rejected drafts, which is cheap at c=1 and expensive when the batch is
+already saturating bandwidth. One A/B at c=16 and c=32, MTP on vs off, same inputs.

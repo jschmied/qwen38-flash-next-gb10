@@ -67,3 +67,8 @@ Anything measured-and-closed lives in its own note, not here.
 - **Clear `VLLM_CACHE_ROOT` + `TORCHINDUCTOR_CACHE_DIR`** when benchmarking a source-level patch;
   a stale graph replays unpatched code. (Config flags *are* hashed correctly — checked.)
 - **Noise floor is 6.9%** (n=6). Nothing under ~10% is callable from single runs.
+
+- **MTP on/off under load.** Does k=2 cost aggregate throughput at c=16/c=32? Speculation is nearly
+  free at c=1 and should get worse as the batch saturates bandwidth. Same inputs, one A/B. Raised by
+  the SEQS negative result (`log.md`, 2026-08-30) — do **not** compare against the old 266.8 tok/s
+  c=48 row, which differs in more than concurrency.
