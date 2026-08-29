@@ -191,3 +191,45 @@ engine, different quantization, different drafter — and the two should not be 
 
 Their failure modes are ours: a stale number surviving next to the data that refutes it, and a
 rate extrapolated flat across a range where it is not. Both bit us this week too.
+
+## 2026-08-29 06:19 — 0xBakeer establishes a noise floor, and it invalidates a claim of ours
+
+"Turn WARM off by default, and record what the warm actually achieves (#3)". Residency set
+deliberately and verified with `mincore(2)` before each run:
+
+| residency at start | aggregate tok/s | per-request p50 | tpot p50 |
+| --- | --- | --- | --- |
+| 0.06% | 37.43 | 39.72 | 25.18 ms |
+| 0.06% | 34.99 | 36.39 | 27.48 ms |
+| 25.88% | 34.12 | 35.57 | 28.11 ms |
+
+**Two identical cold runs differ by 6.5%.** The warm result sits inside that spread. Their
+conclusion is the important sentence: *"nothing below roughly 10% is callable from single runs —
+which is the regime both the original +42% and its retraction were working in."* Our previous
+field note carries that `+42%`; it is now retracted along with its retraction.
+
+Three further findings:
+
+- The warmer cannot reach the 79% residency the old table claimed — from 0.06% it reads all
+  26.8 GiB at 1.01 GiB/s and lands at **25.9%**, because after the model load takes its share of
+  a 121 GiB box the page cache has nowhere to put the rest.
+- **A warm performed before the server starts is discarded entirely**: 18% established with
+  nothing mapping the file reads back as 0.06% once `llama-server` has loaded.
+- **Intermediate residency is not a holdable state**: 18% before startup → 0.06%, 18% after
+  startup → 11.43%, 58% → 100%, and `fadvise` cannot go below 28% while the server maps the file.
+  "Two careful measurements disagreed — both were sampling a moving target."
+
+Also, unrelated to speed and worth knowing: **vision works in the vLLM recipe and cannot work in
+the GGUF one at all** — 333 vision tensors present and 0.967 on their image eval, against a GGUF
+with none.
+
+### What this costs us
+
+We published **"k=2 is the optimum, and k=3 is already past it (36.8 against 38.0 at c=1)"**.
+Our own k=2 measurements span **36.2–38.0** on identical settings, so 36.8 sits *inside* the k=2
+range — the claim compares k=3 against the high end of k=2's spread, which is the same
+endpoint-vs-spread error they just retracted. See `speculation-on-flash-next.md` for the
+corrected wording and our own measured noise floor.
+
+What survives is the counter-based result, which is not a timing and is far more precise:
+k=3 yields **2.471 tokens per iteration against k=2's 2.133** (+15.8%) with no throughput gain.
