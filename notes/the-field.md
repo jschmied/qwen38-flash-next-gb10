@@ -400,15 +400,21 @@ mandatory."** Our `shared_expert_gate` is unquantized, so we comply — by inher
 
 ### Three field claims that did not survive checking
 
-- **"GMU 0.72+ hard-freezes the Spark" — refuted.** Traced second-hand to a 0.76 figure. A
-  22-attempt UMA-freeze runbook records 0.88 → watchdog kill, 0.85 → watchdog kill, and **0.70 →
-  full host freeze, the worst outcome of the set**. Nine configs span 0.60–0.90. The mechanism is
-  an allocator staircase in `ModelOptNvFp4FusedMoE.process_weights_after_loading` plus absolute
-  free MemAvailable at launch (~110 GiB needed against a ~107 GiB spike), not the ratio —
-  **lowering utilization does not fix it**. We run 0.90.
+- **"GMU 0.72+ hard-freezes the Spark" — refuted, but re-scoped after a source check.** Traced
+  second-hand to a 0.76 figure. The UMA-freeze runbook does record 0.88 → watchdog kill, 0.85 →
+  watchdog kill, and **0.70 → full host freeze, the worst outcome of the set**, and it opens
+  *"Status: diagnostic runbook. No fix is claimed."* Two corrections to what we wrote first: it is
+  a **dual-node Ray + expert-parallel** startup, not a single GB10; and the mechanism it gives is
+  that utilization bounds only weights+activations+KV, while the growth is in **Ray's object store
+  (~30% of host memory by default), Ray GCS/dashboard, EP all-to-all buffers, and page cache from
+  reading ~100 GB of shards** — none of which the ratio touches. Our earlier "allocator staircase
+  in `ModelOptNvFp4FusedMoE.process_weights_after_loading`, ~110 GiB needed against a ~107 GiB
+  spike" was not in the source and is withdrawn.
+  The one single-node datapoint worth having is a TP=1 preset comment: **0.90 swap-thrashes during
+  weight load + torch.compile; 0.80 is stable.** That is about load and compile headroom, not KV
+  sizing — and it is the only part of this that bears on us, because we run **0.90 at TP=1**.
 - **NVFP4 KV is closed.** Two independent GB10 measurements: 12.13 vs 19.78 tok/s, and 48.1 vs
-  54.1 against fp8+MTP, plus a structural MTP-acceptance penalty, plus silent failure
-  (vllm#43562). Keep one thing from it: **accept-length pinned at maximum is a corruption
+  54.1 against fp8+MTP, plus a structural MTP-acceptance penalty, plus silent failure. Keep one thing from it: **accept-length pinned at maximum is a corruption
   signature, not health** — one case read 3.00/3 while GSM8K scored 0/10. Cheap to add to our
   harness.
 - **The FlashInfer AOT prebake is unnecessary for us.** The mechanism is real (`is_aot` is
@@ -424,3 +430,26 @@ mandatory."** Our `shared_expert_gate` is unquantized, so we comply — by inher
 **32/32** across temps 0.2 / 0.6 / 1.0 / default, correct function name every time. And the
 contest is nominal — in this build `vllm/tool_parsers/__init__.py` maps both names to the same
 `Qwen3EngineToolParser`.
+
+### Verified arch facts from the patch-repo sweep (2026-08-30)
+
+Three findings that survived a second, file-level pass and bear on our build:
+
+- **SM120 and SM121 have 99 KiB (101,376 B) shared memory per block, not the 228 KiB "Blackwell"
+  figure** — that is SM100/B200 only (CUTLASS maintainer, NVIDIA/cutlass#3144). CUTLASS's
+  `StageCountAutoCarveout` assumes the larger budget, picks ~6 stages, and overflows on the
+  Pingpong schedule. It surfaces as a **device-side assert at `nvfp4_blockwise_moe.cuh:78`**, which
+  is the next `cudaMallocAsync` sync point and *not* the root-cause line.
+  **Runtime workaround, no patch: pick the `flashinfer_cutlass` MoE backend.** `triton` and
+  `cutlass` both hit the path; `flashinfer_cutlass` avoids it. Relevant if we ever revisit
+  `--moe-backend` (the b12x axis is closed for a different reason: our MTP drafter's MoE is
+  unquantized).
+- **Arch flags fail silently, three different ways, in three different repos.** sm_121-only
+  `NVCC_GENCODE` (missing sm_120) makes `EFFICIENT_ATTENTION` SDPA return output **12–27× off a CPU
+  reference** with no NaN, no warning — fix is `TORCH_CUDA_ARCH_LIST="12.0;12.1"`. A
+  `CUDA_SUPPORTED_ARCHS` list ending at `12.0` clamps `12.1a` down before the FP4 family match.
+  NVFP4's `cvt.e2m1x2` needs `sm_121a`, not plain `sm_121`. We set `CUTE_DSL_ARCH=sm_121a` and
+  `TORCH_CUDA_ARCH_LIST=12.1a`; worth a look if we ever compile our own torch.
+- **Provenance note:** the first pass over these repos asserted specifics for three of them without
+  reading the files. Those entries were rewritten above against the sources. The lesson is the one
+  already in this file — *a repo's file tree is not a finding*.
