@@ -279,3 +279,77 @@ travelled further than the result did.
 
 Lesson for our own reports: send the negative and the withdrawn alongside the positive. It was
 the part they could use without rerunning anything.
+
+## 2026-08-29 (afternoon) — the field independently reached our null, three ways
+
+Swept the field after our own three interventions on the hyper-connections all measured null.
+**Every one of our conclusions was reached independently by someone else, and one of them used our
+exact shape.** That is worth more than the result itself: it means the null is a property of the
+layer, not of our method.
+
+**dolf3131 measured `(10240, 320)` at M=1 and got the same nothing** — by kernel selection rather
+than precision. From `scripts/patch-skinny-gemm-tp1.py`: 1.70x at M=1 in microbenchmark, *"no
+difference end to end"* (13.86 against a 13.95–14.09 band). Their two methodological findings are
+worth more than the number:
+
+- **Their microbenchmark is L2-resident and lies by ~2.5x.** Any candidate timing below
+  `N*K*2 / 273 GB/s` is measuring cache. We had already built that guard into
+  `tools/shapebench.py` independently.
+- **A large ratio on a small weight is nothing.** Four tuning rounds won 1.3–2.3x each in
+  isolation and moved end-to-end by 0.0–0.4%.
+- Trap that cost them a sweep: the kernel needs `K % (block_size * vector_width) == 0`, so
+  **K=320 has no valid config above `vector_width=2`** — omitting widths 1–2 makes the shape look
+  unsupported.
+
+**hn7305 quantized the hyper-connections and shipped it disabled.**
+`hn7305/Qwen3.8-Flash-Next-NVFP4-Spark` implements it and records it as **measured net-negative** —
+NVFP4 rather than FP8, same axis, a stronger verdict than ours. No published checkpoint quantizes
+these layers: MESHIVEAI excludes them with 97 patterns, Saren with `-:.*hyper_connection.*`.
+
+**b12x keeps the operator in BF16 on purpose.** Its `nvidia.gb10.48sm` profile pins
+`norm.hyperconnection` to `dtype: bfloat16, backend: cutedsl, hidden_size: 2560, lowrank: 320` —
+our exact geometry — while its GB10 `gemm.block_fp8_linear` coverage is `in_features: 2560` only.
+There is no FP8 branch for K=320 anywhere in that profile. **The win they pursue is fusion, not
+precision**, which is exactly where our own measurement landed.
+
+**Upstream's fix for this operator is a better BF16 kernel, and it is gated off our hardware.**
+FlashInfer PR #4266 (merged) adds a Blackwell CuTeDSL BF16 split-K GEMM: 1.463x at M=1 for
+N=256/K=8192. SGLang uses it for HyperConnection Mix at M<=16 — 12.36 -> 6.03 us, +7.6% end-to-end
+— but it is **SM100-only**, so sm_120 and sm_121 fall back to a persistent Triton Mix whose own
+rationale is *"at these sizes every kernel is latency-bound, so the win comes from kernel count,
+not bandwidth."* Note split-K is useless at K=320 regardless.
+
+### The lever the field is actually using, and we already have it
+
+blazux A/B'd the one that matters on a single GB10: **NVFP4 25.7 -> hybrid blockwise-fp8 30.8
+tok/s (+20%)**, quality unchanged (45/51 both ways), resident 84 -> 77 GiB. That is quantizing the
+~15 GiB BF16 **dense side path** — GDN `in_proj`/`out_proj`, QSA `q/k/v/o`, shared experts. It is
+the highest-confidence number in the field because it is a controlled A/B rather than a headline.
+
+**That is our `fp8head`.** Same lever, banked days ago as +39%. Notably his fp8 rewrite covers 300
+tensors and **excludes the hyper-connections and `lm_head`** — the two things we went after are
+the two the whole field leaves alone.
+
+### Where we stand on speed
+
+Nothing in 0xBakeer's atlas beats us: his best GB10 vLLM single-stream is **30.96 output / 33.43
+decode-p50** against our 36.5. Four public claims exceed ours, all speculation-heavy single runs
+with real caveats — hn7305 48–60 (crashes past ~130k ctx, KV pool non-deterministic), Saren ~49
+(best-of-two), YSLAB 44.23 (denominator includes hidden reasoning tokens), hashd1ve 41.5 (~20-token
+prompts; **27.3 at 8k, 24.7 at 128k**, i.e. below us at real context).
+
+Two independent confirmations of our own choices: YSLAB's MTP depth sweep 0–10 finds **MTP=2 wins**
+(44.23, 73.7% acceptance; acceptance collapses from depth 5), and hashd1ve finds single-stream
+**latency-bound, not bandwidth-bound** (C1 42.8 / C2 53.2 / C4 95.2 aggregate).
+
+### Leads worth checking against our own build
+
+- **hn7305's qkv fusion scale bug.** SGLang fuses q/k/v and takes
+  `alpha = input_scale.max() * weight_scale_2.max()`, silently over-dequantizing every member with
+  a smaller scale. **Cosine similarity cannot detect it** — uniform magnitude error, direction
+  unchanged. Cost when present: GSM8K 0.850 vs 0.965, accept length 1.013 vs 2.559. Our checks
+  would not have caught this.
+- **blazux's sm_121 kernel misselection** in `flash-linear-attention`: `DEFAULT = 102400` against
+  GB10's 99 KiB/block, so all 36 GDN layers take small-tile kernels; `101376` gives +20% decode.
+  **Checked and does not apply to us** — `fla` is not installed and vLLM reads 101376 correctly
+  (verified: it agrees with Triton).
