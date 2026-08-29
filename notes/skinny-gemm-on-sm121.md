@@ -42,16 +42,23 @@ capture time. Corollary: the M that matters is the **cudagraph capture size**, n
 count. We measured decode M ∈ {1,2,4,8} — batches are padded — so an M=3 entry we added for
 "MTP k=2 → 1+k tokens" was aimed at a number that never occurs.
 
-**4. The torch.compile cache key does not include the quant_method swap.** ⚠️ **This is the one
-worth carrying elsewhere.** A graph compiled before a kernel patch is replayed after it, so the
-patched kernel never runs and the benchmark shows nothing. It silently invalidated **three
-six-run arms** here — stock, gate-only and gate+M=3 agreed to within 0.2% because they were the
-same cached graph, not three arms. Same shape as `[[spec-compile-cache-key-omits-nspec]]`
-(`num_speculative_tokens` absent from `compute_hash`), so it is a pattern in that hashing code.
+**4. A stale compiled graph replayed our pre-patch code.** We patched `_is_sm103()` in
+site-packages; the previously-compiled graph was reused and the patch did nothing. Three six-run
+arms — stock, gate-only, gate+M=3 — agreed to within 0.2% because they were **the same cached
+graph**, not three arms.
 
-**Any local kernel patch must be benchmarked from an empty `VLLM_CACHE_ROOT` +
-`TORCHINDUCTOR_CACHE_DIR`.** Note `serve-fnext.sh` *unconditionally exports* both, so a systemd
-`Environment=` override is ignored — clear the directories instead.
+⚠️ **Originally written up here as a vLLM defect. It is not, and we verified that before filing
+anything.** `KernelConfig.compute_hash()` *is* wired into the cache key at
+`vllm/config/vllm.py:506`, so `--moe-backend`, `--linear-backend` and friends **do** invalidate
+the compiled artifact correctly. What is not hashed — and cannot be — is an edit to vLLM's own
+source. That is expected behaviour, not a bug, and it is unlike
+`[[spec-compile-cache-key-omits-nspec]]`, where a genuine *config field* was missing from the
+hash.
+
+**The operational rule stands even though the bug does not:** benchmarking a kernel patch made by
+editing site-packages requires an empty `VLLM_CACHE_ROOT` + `TORCHINDUCTOR_CACHE_DIR`. Note
+`serve-fnext.sh` *unconditionally exports* both, so a systemd `Environment=` override is ignored —
+clear the directories instead.
 
 ## How to prove a kernel actually ran
 
