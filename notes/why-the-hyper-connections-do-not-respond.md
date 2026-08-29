@@ -79,3 +79,38 @@ Reverted: 8 graphs pushed memory to 120/121 GB with 0 available, for no return.
 Both regimes were already characterised: c=1 latency-bound and already captured, c=16
 bandwidth-bound. Deriving the expected effect from existing measurements before spending a run is
 the cheaper half of this discipline, and it is the half we keep skipping.
+
+## Addendum 2: the FP8 lm_head under speculation — measured, and it compounds
+
+The `lm_head` FP8 gain was originally measured with **speculation off** (+10.1%, 26.1 vs 23.7).
+Production runs MTP k=2, and the drafter has **no head of its own** — `mtp.shared_head.head.`
+remaps to `lm_head.`, so every draft token is sampled through the quantized head. That raises a
+question the original measurement could not answer: does a degraded head spoil drafts?
+
+Matched A/B, same code, MTP k=2, c=1, i4000/o512:
+
+| | fp8mix (BF16 head) | fp8head (FP8 head) |
+| --- | --- | --- |
+| decode tok/s | 30.60 (n=4) | **36.45** (n=6, sd 1.04) |
+| acceptance | **60.3%** (1.207/draft) | 56.6% (1.133/draft) |
+
+**Both effects are real and they point opposite ways.** The FP8 head does cost draft quality —
+3.7 pp of acceptance, 6.1% relative. It wins **+19.1%** regardless.
+
+**And the gain nearly doubles under speculation: +10.1% off, +19.1% on.** That is the compounding
+argument confirmed by measurement rather than asserted — the head is read once per *draft* token
+as well as once per step, so quantizing it saves more when more draft tokens are produced, and
+that outweighs the drafts it spoils.
+
+Two consequences:
+
+- The published "+11%" must be qualified as **speculation-off**. With MTP k=2 the figure is
+  **+19.1%**, which is the number that matters for how we actually serve.
+- It does **not** explain our acceptance sitting below YSLAB's 73.7% at the same k: even with a
+  BF16 head we reach only 60.3%. That gap is workload or configuration, and our bench is
+  deliberately hostile (unpredictable continuation of random real-corpus slices).
+
+Qwen's own card gives **no recommended k** — only "MTP: 1 layer, trained with multi-steps",
+matching `mtp_num_hidden_layers: 1` and the single `mtp.layers.0` in the weights. So k>1 reuses
+one layer autoregressively. k=2 as the optimum is confirmed three independent ways: the
+architecture, our own k=3 arm, and YSLAB's 0–10 sweep.
