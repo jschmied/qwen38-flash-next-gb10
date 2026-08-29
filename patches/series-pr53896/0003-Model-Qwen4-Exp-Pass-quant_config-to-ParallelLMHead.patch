@@ -1,0 +1,53 @@
+From df9ab8bfd74bc7fff6f53d421c34c85b79f700fc Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?J=C3=BCrgen=20Schmied?= <juergenschmied70@gmail.com>
+Date: Sat, 29 Aug 2026 13:09:59 +0200
+Subject: [PATCH 3/3] [Model][Qwen4-Exp] Pass quant_config to ParallelLMHead
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Both lm_head constructions omit quant_config, so a quantized head is
+loaded unquantized no matter what the checkpoint says. On GB10 (sm_121)
+quantizing lm_head to FP8 measured +11% single-stream decode at no
+measurable quality cost -- it is read once per decoded token and, under
+MTP, once per draft token as well, so it is one of the few levers that
+compounds with speculation rather than competing with it.
+
+mtp.py uses self.quant_config rather than the target's: the drafter
+resolves its own config via get_draft_quant_config(), and the two differ
+whenever the drafter is excluded from quantization (config.json 'ignore'
+carrying 'mtp.*' is the common case).
+
+Signed-off-by: Jürgen Schmied <juergenschmied70@gmail.com>
+---
+ vllm/models/qwen4_exp/nvidia/model.py | 1 +
+ vllm/models/qwen4_exp/nvidia/mtp.py   | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/vllm/models/qwen4_exp/nvidia/model.py b/vllm/models/qwen4_exp/nvidia/model.py
+index 4ab5552d6..152289a96 100644
+--- a/vllm/models/qwen4_exp/nvidia/model.py
++++ b/vllm/models/qwen4_exp/nvidia/model.py
+@@ -640,6 +640,7 @@ class Qwen4ExpForCausalLM(
+             config.vocab_size,
+             config.hidden_size,
+             prefix=maybe_prefix(prefix, "lm_head"),
++            quant_config=self.quant_config,
+         )
+         self.logits_processor = LogitsProcessor(config.vocab_size)
+         self.make_empty_intermediate_tensors = (
+diff --git a/vllm/models/qwen4_exp/nvidia/mtp.py b/vllm/models/qwen4_exp/nvidia/mtp.py
+index 5a77448ec..4b0ed623a 100644
+--- a/vllm/models/qwen4_exp/nvidia/mtp.py
++++ b/vllm/models/qwen4_exp/nvidia/mtp.py
+@@ -405,6 +405,7 @@ class Qwen4ExpMTP(nn.Module, SupportsPP, Qwen4ExpMixtureOfExperts):
+                     config.vocab_size,
+                     config.hidden_size,
+                     prefix=maybe_prefix(prefix, "lm_head"),
++                    quant_config=self.quant_config,
+                 )
+         else:
+             self.lm_head = PPMissingLayer()
+-- 
+2.43.0
+

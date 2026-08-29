@@ -1,0 +1,105 @@
+From fc8a530dc277fcc5bed0094ac9ff71b1429c8b95 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?J=C3=BCrgen=20Schmied?= <juergenschmied70@gmail.com>
+Date: Sat, 29 Aug 2026 13:09:25 +0200
+Subject: [PATCH 2/3] [Model][Qwen4-Exp] Pass quant_config through
+ GatedResidual
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+GatedResidual hardcodes quant_config=None on all three of its projections,
+so the hyper-connection linears are always unquantized regardless of the
+checkpoint. Its own docstring says the opposite: that these 'are vLLM
+Linear modules ... so GEMM dispatch (e.g. the low-latency skinny GEMM)
+applies through the standard quant_method mechanism'. It cannot, because
+quant_method is only ever UnquantizedLinearMethod here.
+
+On Qwen3.8-Flash-Next these layers are not marginal: profiling a GB10
+(sm_121) at c=1 puts 25% of decode GPU time in the BF16 hyper-connection
+GEMMs, which land on cutlass_80_wmma_tensorop_bf16 -- Ampere-generation
+kernels -- because no other path is reachable for them.
+
+The mixer site takes vllm_config.quant_config, since quant_config is not
+in scope in that constructor.
+
+Signed-off-by: Jürgen Schmied <juergenschmied70@gmail.com>
+---
+ vllm/models/qwen4_exp/nvidia/hyperconnection.py | 8 +++++---
+ vllm/models/qwen4_exp/nvidia/model.py           | 3 +++
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/vllm/models/qwen4_exp/nvidia/hyperconnection.py b/vllm/models/qwen4_exp/nvidia/hyperconnection.py
+index 8ca503d21..f8fe5d5b6 100644
+--- a/vllm/models/qwen4_exp/nvidia/hyperconnection.py
++++ b/vllm/models/qwen4_exp/nvidia/hyperconnection.py
+@@ -25,6 +25,7 @@ Typical usage inside a transformer decoder layer::
+ import torch
+ from torch import nn
+ 
++from vllm.model_executor.layers.quantization import QuantizationConfig
+ from vllm.model_executor.layers.linear import (
+     MergedColumnParallelLinear,
+     ReplicatedLinear,
+@@ -67,6 +68,7 @@ class GatedResidual(nn.Module):
+         config: HyperConnectionConfig,
+         use_combine: bool = True,
+         prefix: str = "",
++        quant_config: QuantizationConfig | None = None,
+     ) -> None:
+         super().__init__()
+         self.config = config
+@@ -99,7 +101,7 @@ class GatedResidual(nn.Module):
+                 + ([self.pad_size] if self.pad_size else []),
+                 bias=False,
+                 params_dtype=config.params_dtype,
+-                quant_config=None,
++                quant_config=quant_config,
+                 prefix=maybe_prefix(prefix, "input_mix_weight_down_block_inject"),
+                 return_bias=False,
+                 disable_tp=True,
+@@ -110,7 +112,7 @@ class GatedResidual(nn.Module):
+                 self.lora_rank,
+                 bias=False,
+                 params_dtype=config.params_dtype,
+-                quant_config=None,
++                quant_config=quant_config,
+                 prefix=maybe_prefix(prefix, "input_mix_weight_down"),
+                 return_bias=False,
+             )
+@@ -119,7 +121,7 @@ class GatedResidual(nn.Module):
+             self.hyper_hidden_size,
+             bias=False,
+             params_dtype=config.params_dtype,
+-            quant_config=None,
++            quant_config=quant_config,
+             prefix=maybe_prefix(prefix, "input_mix_weight_up"),
+             return_bias=False,
+         )
+diff --git a/vllm/models/qwen4_exp/nvidia/model.py b/vllm/models/qwen4_exp/nvidia/model.py
+index 688621201..4ab5552d6 100644
+--- a/vllm/models/qwen4_exp/nvidia/model.py
++++ b/vllm/models/qwen4_exp/nvidia/model.py
+@@ -265,10 +265,12 @@ class Qwen4ExpDecoderLayer(nn.Module):
+         self.attn_hyper_connection = GatedResidual(
+             hc_config,
+             prefix=maybe_prefix(prefix, "attn_hyper_connection"),
++            quant_config=quant_config,
+         )
+         self.mlp_hyper_connection = GatedResidual(
+             hc_config,
+             prefix=maybe_prefix(prefix, "mlp_hyper_connection"),
++            quant_config=quant_config,
+         )
+ 
+     def forward(
+@@ -442,6 +444,7 @@ class Qwen4ExpModel(nn.Module):
+                 hc_config,
+                 use_combine=False,
+                 prefix=maybe_prefix(prefix, "hyper_connection_mixer"),
++                quant_config=vllm_config.quant_config,
+             )
+         else:
+             self.hyper_connection_mixer = None
+-- 
+2.43.0
+

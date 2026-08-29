@@ -1,0 +1,45 @@
+From 74223ffbda0c5e09a89b5fe854fe1ba48a4c9acc Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?J=C3=BCrgen=20Schmied?= <juergenschmied70@gmail.com>
+Date: Sat, 29 Aug 2026 13:08:13 +0200
+Subject: [PATCH 1/3] [Quantization] Dispatch FP8_PER_CHANNEL_PER_TOKEN in
+ MIXED_PRECISION
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+ModelOptFp8PcPtLinearMethod is defined but unreachable through
+ModelOptMixedPrecisionConfig.get_quant_method: the algo resolves from
+quantized_layers, matches no branch, and falls through to
+UnquantizedLinearMethod. The layer then never registers weight_scale and
+the checkpoint fails to load with 'no module or parameter named
+...weight_scale'.
+
+This matters for shapes that blockwise FP8 cannot take. FP8_PB_WO needs
+both dims divisible by 128; Qwen3.8-Flash-Next hyper-connections are
+(320, 10240), (10240, 320) and (4, 10240), so out%128 is 64 or 4 and
+in%128 is 64 -- every one falls off the fast CUTLASS blockwise kernel.
+Per-output-channel scales carry no block constraint and also slice
+cleanly across a fused MergedColumnParallelLinear, which a blockwise
+scale cannot when one shard is 4 wide.
+
+Signed-off-by: Jürgen Schmied <juergenschmied70@gmail.com>
+---
+ vllm/model_executor/layers/quantization/modelopt.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/vllm/model_executor/layers/quantization/modelopt.py b/vllm/model_executor/layers/quantization/modelopt.py
+index 241a7c8ad..307a337c4 100644
+--- a/vllm/model_executor/layers/quantization/modelopt.py
++++ b/vllm/model_executor/layers/quantization/modelopt.py
+@@ -2418,6 +2418,8 @@ class ModelOptMixedPrecisionConfig(ModelOptQuantConfigBase):
+                 return ModelOptNvFp4W4A16LinearMethod(self.w4a16_nvfp4_config)
+             if quant_algo == "MXFP8":
+                 return ModelOptMxFp8LinearMethod(self.mxfp8_config)
++            if quant_algo == "FP8_PER_CHANNEL_PER_TOKEN":
++                return ModelOptFp8PcPtLinearMethod(self.fp8_config)
+             # Layer not in quantized_layers — leave unquantized
+             return UnquantizedLinearMethod()
+ 
+-- 
+2.43.0
+
