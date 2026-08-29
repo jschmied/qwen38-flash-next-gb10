@@ -51,3 +51,31 @@ This microbenchmark should have come first. It costs about two minutes with the 
 and it would have pre-empted a checkpoint build, four failed server starts, and three six-run
 A/B arms. Rank by profile, then **verify the lever is real at the shape level before building
 anything.**
+
+## Addendum: cudagraph capture sizes — a gate we set ourselves, also null
+
+`serve-fnext.sh` pins `cudagraph_capture_sizes` to `[1,2,4,8]`; vLLM would have defaulted our
+config to `min(max_num_seqs * (1+k) * 2, 512)` = **96**. A c=16 decode batch is
+`16 * (1+2)` = **48 tokens**, so c=16 decode had never run as a captured graph, while c=1
+(batch 3) always had.
+
+Raised to `[1,2,4,8,16,24,32,48]`, verified applied (`max_cudagraph_capture_size: 48`, 8 graphs
+captured instead of 4):
+
+| | new | control | delta |
+| --- | --- | --- | --- |
+| c=16 aggregate | 99.2 | 100.1 | −0.8% |
+| c=1 decode | 35.43 | 36.45 | −2.8% (inside the control's own sd of 1.04) |
+
+**Null, and predictable from our own byte analysis.** Capturing graphs removes kernel-launch
+overhead, which only pays when latency-bound. At c=16 the experts are ~80% of per-step bytes —
+each sequence pulls its own ten of 512 while the dense path amortizes — so the regime is
+bandwidth-bound and there is no launch overhead left to remove. At c=1 the batch was already
+captured, so there was nothing to gain there either.
+
+Reverted: 8 graphs pushed memory to 120/121 GB with 0 available, for no return.
+
+**The prediction was available before the experiment** and would have saved a ~40-minute run.
+Both regimes were already characterised: c=1 latency-bound and already captured, c=16
+bandwidth-bound. Deriving the expected effect from existing measurements before spending a run is
+the cheaper half of this discipline, and it is the half we keep skipping.
