@@ -1,0 +1,94 @@
+--- /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/models/qwen3_8_flash_next/nvidia/low_latency_gemm.py.pre-sm121	2026-08-29 08:54:23.988681272 +0200
++++ /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/models/qwen3_8_flash_next/nvidia/low_latency_gemm.py	2026-08-29 10:46:48.600150596 +0200
+@@ -73,6 +73,12 @@
+     (336, 10240): {
+         1: SkinnyGemmConfig(1, 128, 1, static_k=10240),
+         2: SkinnyGemmConfig(2, 128, 1, static_k=10240),
++        # PATCH (jschmied 2026-08-29): no M=3 entry upstream. With MTP k=2 the
++        # target model's verify pass runs at M = 1 + k = 3, so plan.get(3)
++        # returns None and all 98 hyper-connection layers silently fall back to
++        # F.linear -- the kernel only ever fires on the 1-layer drafter at M=1.
++        # Interpolated from the M=2 entry; static_k retained as in 1/2/4.
++        3: SkinnyGemmConfig(3, 128, 1, static_k=10240),
+         4: SkinnyGemmConfig(4, 128, 2, static_k=10240),
+         8: SkinnyGemmConfig(8, 128, 1, k_unroll=4),
+     },
+@@ -80,7 +86,13 @@
+ 
+ 
+ def _is_sm103() -> bool:
+-    return current_platform.is_device_capability((10, 3))
++    # PATCH (jschmied 2026-08-29): upstream gates the CUTE-DSL skinny GEMM to
++    # sm_103 only. The kernel is fine on GB10/sm_121 -- shape_dynamic_skinny_gemm
++    # .is_available() is True there and results match F.linear. Without this the
++    # BF16 hyper-connection GEMMs fall through to cuBLAS and land on
++    # cutlass_80_wmma_tensorop_bf16 (Ampere-generation), which our profile puts
++    # at 25% of all GPU time. Diagnosis independently by dolf3131.
++    return current_platform.is_device_capability((10, 3))  # ARM A: stock gate
+ 
+ 
+ def _is_packed_row_major(tensor: torch.Tensor) -> bool:
+@@ -125,14 +137,32 @@
+     pass
+ 
+ 
++_DISPATCH: dict = {}
++_DISPATCH_N = [0]
++
++
+ def _qwen38next_low_latency_gemm(x: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+     plan = QWEN38NEXT_GEMM_PLANS.get((weight.shape[0], weight.shape[1]))
+     config = None if plan is None else plan.get(x.shape[0])
+-    if (
++    ok = (
+         config is not None
+         and _runtime_ok(x, weight)
+         and shape_dynamic_skinny_gemm.is_available()
+-    ):
++    )
++    # PATCH (jschmied): count real dispatch. Distinguishes "kernel does not help"
++    # from "kernel never ran" -- the plans are keyed by exact M and a padded or
++    # unexpected token count silently falls through to F.linear.
++    k = (tuple(weight.shape), int(x.shape[0]), "KERNEL" if ok else
++         ("no-config" if config is None else "runtime-reject"))
++    # Log each distinct (shape, M, outcome) the FIRST time it is seen. Under
++    # PIECEWISE cudagraphs this Python body runs only during capture/warmup --
++    # replay bypasses it entirely -- so a call-count threshold never fires and
++    # the capture-time decision is what the replayed graph does forever.
++    if k not in _DISPATCH:
++        logger.info("SKINNY-DISPATCH new: shape=%s M=%s -> %s", k[0], k[1], k[2])
++    _DISPATCH[k] = _DISPATCH.get(k, 0) + 1
++    _DISPATCH_N[0] += 1
++    if ok:
+         return shape_dynamic_skinny_gemm(x, weight, config)
+     return torch.nn.functional.linear(x, weight)
+ 
+@@ -150,6 +180,13 @@
+ )
+ 
+ 
++from vllm.logger import init_logger
++
++logger = init_logger(__name__)
++
++_SWAPPED: list = []
++
++
+ def enable_qwen38next_low_latency_gemm(
+     module: nn.Module,
+     dtype: torch.dtype,
+@@ -182,6 +219,14 @@
+         else:
+             child.quant_method = Qwen38NextLowLatencyEmbeddingMethod()
+         warmup_configs.update(plan.values())
++        _SWAPPED.append((type(child).__name__, tuple(weight.shape)))
++
++    import collections as _c
++    logger.info(
++        "SKINNY-GEMM: swapped %d layers -> %s",
++        len(_SWAPPED),
++        dict(_c.Counter(shape for _, shape in _SWAPPED)),
++    )
+ 
+     if warmup_configs:
+         shape_dynamic_skinny_gemm.request_warmup_configs(dtype, warmup_configs)
