@@ -1,4 +1,18 @@
-# Ranked on prefill, measured on decode — one error, three nulls
+# ~~Ranked on prefill, measured on decode~~ — REFUTED by a decode-only profile
+
+> **This note's central claim is wrong and is kept for the record.** A decode-only re-profile
+> (12-token prompt, 600 generated tokens, warmed) produced essentially the same ranking as the
+> mixed one: FP8 blockwise 34.5% (was 32.2%), BF16 wmma 26.6% (was 25.0%), MoE grouped 22.2%
+> (was 22.1%). The hyper-connections really are ~27% of *decode* GPU time. The prefill
+> contamination was a plausible mechanism that testing did not support.
+>
+> The three nulls remain unexplained. What is ruled out: mis-ranked layers, an idle GPU
+> (89.8% busy on the decode trace), and non-dispatching kernels (verified at the call site).
+> Live hypothesis: FP8 does not speed up *these particular shapes* —
+> `(10240, 320)` at M<=8 through `scaled_mm`, where K=320 is small enough that halving bytes may
+> buy nothing against a warp-level BF16 WMMA that is already latency-bound. Measurable per shape
+> offline; not yet measured.
+
 
 ## What happened
 
