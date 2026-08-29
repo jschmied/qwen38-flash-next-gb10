@@ -233,3 +233,24 @@ corrected wording and our own measured noise floor.
 
 What survives is the counter-based result, which is not a timing and is far more precise:
 k=3 yields **2.471 tokens per iteration against k=2's 2.133** (+15.8%) with no throughput gain.
+
+### Reported back: 0xBakeer/qwen38-flash-next-spark#6
+
+Posted 2026-08-29: <https://github.com/0xBakeer/qwen38-flash-next-spark/issues/6>
+
+Three items, scoped deliberately narrow because most of what we know is about a checkpoint we
+built ourselves and nobody else has:
+
+1. **Their 6.5% noise floor replicated at 6.9% on vLLM** — different engine, quantization and
+   drafter, same hardware. Lets them state it as a property of the box rather than of llama.cpp.
+2. **The MTP-off A/B their `recipes/vllm-longctx/README.md` says was never run**: 26.4 -> 35.7,
+   +35% at c=1, not measurable at c=16.
+3. `VLLM_TORCH_PROFILER_DIR` is inert in this build; profiling needs `--profiler-config`.
+
+Led with the caveat that none of it is comparable to their llama.cpp numbers — they have just
+spent two commits cleaning up exactly that conflation. Included our own withdrawn "k=2 is the
+optimum" claim as an instance of the endpoint-versus-spread error they retracted, and flagged
+that TTFT variance is uncharacterised so the -30% there is indicative only.
+
+Deliberately **not** sent: the hyper-connection profile and the `fp8head` results. Both depend on
+a local checkpoint and belong here, not in their repo.
