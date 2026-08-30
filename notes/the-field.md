@@ -441,9 +441,20 @@ Three findings that survived a second, file-level pass and bear on our build:
   Pingpong schedule. It surfaces as a **device-side assert at `nvfp4_blockwise_moe.cuh:78`**, which
   is the next `cudaMallocAsync` sync point and *not* the root-cause line.
   **Runtime workaround, no patch: pick the `flashinfer_cutlass` MoE backend.** `triton` and
-  `cutlass` both hit the path; `flashinfer_cutlass` avoids it. Relevant if we ever revisit
-  `--moe-backend` (the b12x axis is closed for a different reason: our MTP drafter's MoE is
-  unquantized).
+  `cutlass` both hit the path; `flashinfer_cutlass` avoids it.
+  ⚠️ **We already run it — this was written as if it were an untried lever, and it is not.**
+  `moe_backend='auto'` resolves to `FLASHINFER_CUTLASS` on this box and always has:
+
+  ```
+  [nvfp4.py:291] Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend out of potential backends:
+    ['FLASHINFER_TRTLLM', 'FLASHINFER_CUTEDSL', 'FLASHINFER_CUTEDSL_BATCHED',
+     'FLASHINFER_CUTLASS', 'VLLM_CUTLASS', 'MARLIN', 'HUMMING', 'EMULATION']
+  ```
+
+  The unquantized MoE of the MTP drafter resolves to `FlashInfer CUTLASS` too. So the SMEM
+  overflow is a hazard we were never exposed to, which is why the `nvfp4_blockwise_moe.cuh:78`
+  assert has never appeared here. The fact is still worth holding — it explains a **non-event**,
+  and it would bite immediately if anyone forced `--moe-backend triton`.
 - **Arch flags fail silently, three different ways, in three different repos.** sm_121-only
   `NVCC_GENCODE` (missing sm_120) makes `EFFICIENT_ATTENTION` SDPA return output **12–27× off a CPU
   reference** with no NaN, no warning — fix is `TORCH_CUDA_ARCH_LIST="12.0;12.1"`. A
@@ -505,3 +516,19 @@ consistent with the SM120/121 CUTLASS SMEM-overflow workaround noted above.
   simultaneous requests all returning 200 — they queue, they do not crash — and has since run
   `--parallel 2` end-to-end. The single-stream figure is what their *harness* does, not a ceiling.
   Corrected in the table above.
+
+### The MoE-backend axis, closed properly (2026-08-30)
+
+Prompted by being asked why `flashinfer_cutlass` was untried. It wasn't — see above. Full state:
+
+| backend | status |
+| --- | --- |
+| `FLASHINFER_CUTLASS` | **what AUTO picks, and what every measurement here has used** |
+| `flashinfer_b12x` | rejected — `not supported for unquantized MoE`; the MTP drafter's MoE is unquantized and `--moe-backend` is global. With MTP off it faults with an IMA |
+| `triton`, `cutlass` | known to hit the SM120/121 CUTLASS SMEM overflow (99 KiB budget vs the 228 KiB assumption) |
+| `FLASHINFER_TRTLLM`, `FLASHINFER_CUTEDSL[_BATCHED]`, `VLLM_CUTLASS`, `MARLIN`, `HUMMING` | untried, **and no field evidence favours any of them on sm_121** |
+
+Field check found nothing evaluating NVFP4 MoE backend choice on sm_121 beyond vllm#47982 (a
+`flashinfer_b12x` bug at `dp_size>1`, not our configuration). So the remaining backends are cheap
+to sweep but have **no prior suggesting a win** — this is a "no reason to expect anything" axis, not
+a promising one, and it should not be ranked above prefill/TTFT work.
