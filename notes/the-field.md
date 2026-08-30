@@ -724,3 +724,62 @@ Requests 1 and 2 had *zero* cache hits and still differed from each other.
   used the repeat to bound noise as well. That is the same class of trap as our unified-memory
   contention rule: never measure while the machine is doing something else, and check residency
   rather than assuming it.
+
+## 2026-08-30 — veloGB10's kernels: three ideas worth stealing
+
+`sf-stav/veloGB10` is a Rust + hand-written-PTX engine for GB10 (no Python, no framework). It does
+**not** support Flash-Next — no QSA, no PLE, no hyper-connections, no `qwen4` arch — and its README
+lists Qwen3.5/3.6/3.8 plus Tencent Hy3. But `kernels/` is public and instructive.
+
+⚠️ **Method note first:** GitHub's code search returns **0 hits** for `moe`, `mtp`, `dflash` and
+`nvfp4` in this repo, all of which are demonstrably present (`src/dflash2/round.rs`, 407 local
+matches for nvfp4). It is not indexed. A shallow clone plus `grep` disagreed with the API on every
+term. **Do not use code search as evidence of absence.**
+
+### 1. The "lossless-MTP contract" — a discipline vLLM does not have
+
+From `gqa_attn_splitk_k8v4`:
+
+> *SAME split structure, SAME reduction order, SAME merge — the **lossless-MTP contract** (decode ==
+> verify col-0, every split produces the same fp32 score for a (kvh, pos)).*
+
+They engineer the decode path and the speculative-verify path to produce **bit-identical** scores,
+by holding the reduction order fixed across both. That is the exact failure mode we documented from
+the other side: vLLM's speculation verifies K+1 positions in one forward, a different GEMM shape
+than decoding one, so reduction order differs and a near-tie argmax can flip
+([[temp0-not-reproducible-under-load]]). Their answer is to make the shapes agree by construction.
+
+Two honest caveats: this is about *speculation losslessness*, not run-to-run determinism, which is a
+different property; and our own divergence persists with MTP **off**, so this contract would not fix
+what we measured. It is still the right idea and we have no equivalent.
+
+The same discipline shows up in `gdn_rollback_b`: *"PURE BYTE COPY: no arithmetic, so it is
+bit-identical to the dtod memcpys by construction."*
+
+### 2. Asymmetric KV precision — int8 K, 4-bit V
+
+`GB10_KV_K8V4=1` runs **int8 K with q4 V** (20 B K + 12 B V per 16 elements), with matching
+attention kernels (`gqa_attn_splitk_k8v4`, `write_kv_b_k8v4`, `compact_kv_k8v4`). There is also
+`GB10_KV_TQ=1`, a **3.5-bit TurboQuant** KV, and a `b=3` K variant.
+
+The asymmetry is the interesting part: K feeds `QK^T` where error propagates through the softmax,
+V is averaged where error partly cancels — so K gets 8 bits and V gets 4. vLLM offers no such split
+for this architecture, and its QSA backend refuses anything but `auto`/`bfloat16` KV outright. Worth
+holding onto: our "NVFP4 KV is closed" conclusion is about a *symmetric* 4-bit cache, and says
+nothing about an asymmetric one.
+
+### 3. Kernel-level golden validation
+
+`--probe-tq` validates the TurboQuant kernels against reference goldens before any of it is trusted.
+Combined with 0xBakeer's output hashes and DJLougen's locked hashes, that is three independent
+projects validating at three different layers — kernel, output, and build provenance — while we
+validate at none of them automatically.
+
+### What Flash-Next support would actually need there
+
+Present already: **GDN** (`gdn_chunk_prefill_b`, `gdn_prep_b`, `delta_step`, `conv1d_*`), **MoE**
+(`moe_router_topk_sigmoid_b`, `moe_experts_fp4_b`, grouped/folded combines), **NVFP4 GEMM**,
+**DFlash2 + speculation**, **prefix cache**. Missing: **QSA**, **PLE + host offload**,
+**hyper-connections**. So it is decomposable rather than a rewrite — but the PLE is a subsystem
+(51.2 B params in host RAM, per-token gather) rather than a kernel, and their `src/dsv4_cpu.rs`
+shows the house pattern is CPU reference first, then kernel, validated against it.
