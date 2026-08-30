@@ -700,3 +700,27 @@ Not necessarily a contradiction, and worth stating before it gets read as one:
 
 What our result does settle, independently of the cause: **the prefix cache is not the source.**
 Requests 1 and 2 had *zero* cache hits and still differed from each other.
+
+## 2026-08-30 — slots are not `--max-num-seqs`, and a third external prefill number
+
+0xBakeer#19 moves their llama.cpp default from `--parallel 1` to `2`: 1.24× on a c=16 workload,
+1.30× on c=8, single-stream decode unchanged, `prefill-32k` unchanged at 0.3%.
+
+**Two things to take, and one not to.**
+
+- **Do not read it as our SEQS result being wrong.** They spell out why the knobs differ:
+  *"llama.cpp divides `--ctx-size` across slots"* — 1 slot gives 262,144 context per request, 2
+  slots gives 131,072. Their parallelism is bought with context. vLLM's `--max-num-seqs` does not
+  work that way: the KV pool is shared dynamically and `--max-model-len` stays per-request. So their
+  1.24–1.30× and our null at 16→64 are answers to different questions, and neither transfers.
+- **A third external prefill datapoint at 32k: 1,481 tok/s**, on their patched llama.cpp build. That
+  is well above the 415 tok/s the other llama.cpp repo reports at the same depth, which is itself a
+  useful reminder that "llama.cpp prefill on GB10" is not one number. Ours measured
+  **2,368 (MTP) / 2,136 (no MTP)** on the same depth, so we remain ahead of both, by ~1.6× against
+  the faster of them.
+- **Method worth noting:** their first one-slot run started at **0.06%** page-cache residency
+  straight after a restart, against its two-slot twin's **72.22%** — a confound the same size as the
+  effect they were measuring. They caught it, repeated warm (75.26%), got 36.40 against 36.98, and
+  used the repeat to bound noise as well. That is the same class of trap as our unified-memory
+  contention rule: never measure while the machine is doing something else, and check residency
+  rather than assuming it.
