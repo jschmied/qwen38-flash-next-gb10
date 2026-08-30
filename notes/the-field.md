@@ -532,3 +532,54 @@ Field check found nothing evaluating NVFP4 MoE backend choice on sm_121 beyond v
 `flashinfer_b12x` bug at `dp_size>1`, not our configuration). So the remaining backends are cheap
 to sweep but have **no prior suggesting a win** — this is a "no reason to expect anything" axis, not
 a promising one, and it should not be ranked above prefill/TTFT work.
+## 2026-08-30 — DJLougen/Qwen3.8-Flash-Next-One-DGX-Spark
+
+New entrant, created 2026-08-26, one GB10, llama.cpp lane populated and **vLLM/SGLang lanes
+deliberately empty**: *"SGLang and vLLM stay fail-closed until someone lands measured Spark evidence
+in those directories."* That is an open invitation we can answer — we have exactly that evidence.
+
+**Their kernel result is real work.** A 54 KB QSA patch (fused `ggml_get_rows_mean` + RMS weighting,
+`__ldg` half2/float4 loads on lightning WMMA, compact FA gather at `topk=2048`, indexer Q padded
+4→8 so lightning hits WMMA, PDL) roughly **doubles long-context decode**:
+
+| ctx | unpatched | patched |
+|---:|---:|---:|
+| 65,536 | 11.35 | **18.73** |
+| 229,859 | 5.60 | **11.55** (2.06×, TTFT flat at ~1,200 s) |
+
+They also publish what they *reverted* — 8-warp MMVQ, 4-head lightning inner loop, dirty-block skip
+for indexer K — which is the half most repos omit.
+
+### The number that matters to us: prefill
+
+Their cold depth curve gives **370–416 tok/s prefill** (32,627 tokens in 78.68 s ≈ 415 tok/s at
+32k). Our TTFT at 32k is ~100 s, i.e. roughly **320 tok/s**. Different stack, different quant
+(`UD-IQ4_XS` vs our NVFP4 + FP8), so this is **not** a like-for-like comparison and no ranking is
+claimed — but prefill/TTFT is our top open lever, and this is the first external number suggesting
+the ceiling is above where we sit. Worth a controlled look.
+
+### Three findings that corroborate or caution ours
+
+- **`mtp.*` tensors are BF16 even in an FP8-tagged repo** — their converter logs show all 31 as
+  `torch.bfloat16`. We found the same when building our checkpoint (`mtp.*` stays in `ignore`).
+  Independent confirmation of a thing that is easy to get wrong silently.
+- **Acceptance is batch-size dependent, and can take the output with it.** Same binary, draft and
+  prompt: at `-b 512 -ub 128` → 33.3% accept; at `-b 2048 -ub 512` → **3.7% accept and the target
+  output diverges**. Different stack, but it is a direct warning about our own acceptance-gap item
+  (ours 56.6% against 73.7% and now their 75.6% at n-max 3): an acceptance number is only meaningful
+  next to its batch geometry.
+- **Speculation loses at long context.** `draft-mtp` on their QSA tree at 229k: 10.2 tok/s at 43%
+  accept, *slower than the same kernels running plain autoregressive*. And MTP costs prefill at
+  depth — 8.4% and 6.7% below unpatched at 16k and 32k. Our own queued "does MTP cost throughput
+  under load" question is the concurrency-axis twin of this.
+
+### Method worth stealing
+
+**They lock output hashes before making a speed claim** (`2689367b205c16ce` at 4k,
+`8547299278d81f66` at 64k/128k), and label every row that used a different protocol as
+not-comparable. That is precisely the guard that would have caught our corrupt-shard episode, where
+size-correct byte-corrupt shards produced fluent garbage invariant to every config change. We
+verify checksums on *weights*; they verify hashes on *outputs*. We should do both.
+
+They also record 0xBakeer's CUDA-graph-reuse patch as **rejected — it segfaulted** — while their own
+tree reuses graphs (304 at 64k, 563 at 128k, 958 at 229k) by other means.
