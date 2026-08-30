@@ -152,3 +152,38 @@ midpoints is exact and reduces the whole build to seconds.
 user**, so it passed. An offline gate exists to catch what a server start would catch, and it can
 only do that if it reads under the identity the server actually runs as. Preflighting
 `sudo -u llm head -c 8 <shard>` costs nothing and replaces a nine-minute failure.
+
+### The config key must use the RUNTIME layer index, not the checkpoint's
+
+First serve attempt died after 630 s with:
+
+```
+AttributeError: Layer mtp.layers.48.mlp.experts has no parameter 'w2_weight_scale'
+  for checkpoint weight 'mtp.layers.48.mlp.experts.0.down_proj.weight_scale'
+```
+
+**`mtp.layers.48`, not `mtp.layers.0`.** The MTP module is remapped past the body's 48 layers by
+`mtp_start_layer_idx` — the same remapping `mtp.py` applies to ignored layers through
+`_remap_ignored_layers`. The shipped `exclude_modules` entry is the wildcard `mtp.*`, which matches
+any index; the exact key `mtp.layers.0.mlp.experts` we added matches **none**. So
+`_resolve_quant_algo` returned `None`, `FusedMoE` was built **unquantized** with no scale
+parameters, and the loader then arrived with `weight_scale` tensors it had nowhere to put.
+
+Fix is config-only — the 4,608 quantized tensors were correct throughout. Declare **both** indices
+(or a wildcard):
+
+```python
+for i in (0, 48):
+    ql[f'mtp.layers.{i}.mlp.experts'] = {'quant_algo': 'W4A16_NVFP4'}
+```
+
+**The gate failed the same way twice in one session, for the same reason.** It verified
+`mtp.layers.0` because that is what the *checkpoint* calls the layer, and earlier it opened tensors
+as the *building* user rather than the serving one. Both times it asked the question the builder
+would ask instead of the question the consumer asks. A gate is only worth its runtime if it queries
+the way the runtime queries: **resolve the remapped name, and read as the serving uid.**
+
+One consolation: this failure mode is *loud*. An unquantized layer meeting quantized weights raises
+immediately. The inverse — dropping `input_scale` while the algo stays `NVFP4` — produces zero
+characters of output with no error at all, which is why the W4A4 path deserves more caution than
+this one did.
