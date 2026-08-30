@@ -258,3 +258,43 @@ reproducible; **its cause is once again unknown.**
 What still stands from that investigation: the config *does* resolve correctly offline for both the
 checkpoint name and the remapped runtime name, and `W4A16_NVFP4` *does* have a `RoutedExperts`
 method (`modelopt.py:2565`). Whatever is wrong sits between those two facts.
+
+### Root cause: the checkpoint carries TWO quantization configs
+
+The `w2_weight_scale` failure was never a vLLM bug. This checkpoint has **two** quantization
+declarations, and the runtime reads the one we were not editing:
+
+| | `hf_quant_config.json` | `config.json → quantization_config` |
+|---|---|---|
+| what we edited | ✅ | ✗ |
+| **what the runtime reads** | ✗ | ✅ |
+| `mtp` in `quantized_layers` | present | **absent** |
+| `mtp.*` in exclusions | removed | **still there** |
+
+So the drafter's experts were simultaneously *excluded* and *undeclared*: `_resolve_quant_algo`
+returned `None`, `FusedMoE` was built unquantized, and the loader then arrived with `weight_scale`
+tensors that had no home.
+
+Confirmed with a probe on `get_quant_method` that ran **to completion** rather than being stopped
+early:
+
+```
+96 x  prefix='language_model.model.layers.X.mlp.experts'  cls=RoutedExperts  algo='NVFP4'
+ 1 x  prefix='mtp.layers.48.mlp.experts'                  cls=RoutedExperts  algo=None      <-- here
+```
+
+The drafter *does* reach the mixed-precision config, and the layer *is* a `RoutedExperts` — both of
+my earlier hypotheses were wrong, and the probe settled it in one run.
+
+**Two lessons, both about the gate rather than the model.**
+
+1. **Gate the file the runtime reads.** Our offline gate loaded `hf_quant_config.json` and passed
+   perfectly against a file nothing consults. That is the third variant of the same mistake in one
+   session — after reading as the *building* user instead of the serving one, and resolving the
+   *checkpoint's* layer index instead of the runtime's remapped one. The gate kept asking the
+   builder's question.
+2. **`exclude_modules` can exist and be empty while `ignore` holds the real list.** A first fix that
+   did `key = 'exclude_modules' if 'exclude_modules' in q else 'ignore'` picked the empty list and
+   reported a satisfying `0 -> 0` while `mtp.*` sat untouched under `ignore`. **Strip both keys
+   unconditionally.** This was only caught because `_resolve_quant_algo` does not consult exclusions,
+   so a passing resolve could not have proven them clear — checking anyway is what surfaced it.
