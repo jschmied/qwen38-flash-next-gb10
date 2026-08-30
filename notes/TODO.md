@@ -13,6 +13,21 @@ Anything measured-and-closed lives in its own note, not here.
   host*. arm64 has **no** Java/JS eval images, so there is no fallback. When it returns: tunnel
   must cross ports (`-R 8080:127.0.0.1:8092`), and `--model openai/flashnext`.
 
+## Closed since this file was written (2026-08-30)
+
+- **`--max-num-seqs` 16 → 64** — null (−0.3% at c=16, +1.1% at c=1, both inside the 6.9% noise
+  floor). ~100 tok/s at c=16 is a real bandwidth ceiling, independently corroborated by 0xBakeer's
+  vLLM recipe landing at 96–109. Their 1.2–2.7× came from a baseline of **2** slots, not 16.
+- **MoE backend axis** — `moe_backend='auto'` already resolves to `FLASHINFER_CUTLASS` here and
+  always has, so it was never an untried lever; `b12x` is rejected; `triton`/`cutlass` hit the
+  SM120/121 SMEM overflow. The five remaining backends have no field evidence favouring them.
+- **vllm#53960 PLE deadlock** — fixed upstream by `4e8b849b8d97`, backported into our venv,
+  verified serving at no cost. We could not reproduce the hang and said so upstream.
+- **SGLang as a stack switch** — blocked: sgl#36558 reports Flash-Next unservable on SM121, and
+  both the base support (#36497) and the resolver fix (#36556) are unmerged. `is_sm120_supported()`
+  gates on **major 12**, so #36556 does cover GB10 — the blocker is that it has not landed, and it
+  carries no GB10 verification.
+
 ## Worth doing, in order
 
 1. **Repeat Task A (Go), n≥4.** Current result is FAIL at N=1 on one generics error
