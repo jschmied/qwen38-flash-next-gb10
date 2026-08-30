@@ -8,7 +8,7 @@ MTP k=2, PLE CPU offload, `--max-model-len 262144`. KV dtype the only variable b
 | GPU KV cache | 1,077,542 tok | **1,853,358** | **×1.72** |
 | max concurrency @262k/req | 4.11× | **7.07×** | ×1.72 |
 | needle-in-a-haystack, 5 depths | — | **5/5** | |
-| decode, c=1, 4k input | 37.0 / 36.0 | 34.6 / 34.3 | −5.6%, see below |
+| decode, c=1, 4k input (n=6) | 36.28 mean | **37.22 mean** | **+2.6% — no regression** |
 
 ## This reverses our own closure from the same morning
 
@@ -53,12 +53,26 @@ the read path plausibly explains the small dip.
 **What it buys is admission, not latency.** At 262k tokens per request, concurrent capacity goes
 from ~4 to ~7 requests before a queue forms. That is a serving-capacity change.
 
-## The open number
+## The number that was open, and the false pattern in it
 
-Decode came in **−5.6%** — inside the 6.9% noise floor, but **both** fp8 runs sat below **both**
-bf16 runs, which is a direction rather than scatter. n=2 per arm cannot separate those. An n=6
-per-arm rerun at 4k input is running; the RFC's "no regression" was measured at 100k context, a
-different regime.
+At n=2 per arm decode read **−5.6%**, and — the part that made it look real — **both** fp8 runs sat
+below **both** bf16 runs. That is a direction rather than scatter, so I reported it upstream as
+unresolved rather than dismissing it.
+
+**At n=6 per arm it disappears and the sign flips:**
+
+| | n | mean | median | min–max | sd |
+|---|---:|---:|---:|---:|---:|
+| bf16 | 6 | 36.28 | 36.60 | 34.0–38.7 | 1.66 |
+| fp8_e4m3 | 6 | **37.22** | 36.25 | 35.7–41.2 | 2.10 |
+
+**+2.6%**, ranges overlapping, **0 of 6** fp8 runs below the bf16 range. With sd ≈ 1.7–2.1 on a ~36
+tok/s mean, two samples per arm cannot resolve 5% — and "both below both" is exactly the pattern
+two samples produce by chance about a quarter of the time. The caveat is withdrawn upstream.
+
+**The rule this reinforces, from our own README:** nothing under ~10% is callable from a single run.
+The failure here was subtler than ignoring that — I *did* hedge, but I let an ordering pattern in
+four data points carry information it could not carry.
 
 Quality was checked as **retrieval**, not text identity, deliberately: temperature 0 is not
 reproducible on this model ([[temp0-nondeterminism]] — five identical requests give five distinct
