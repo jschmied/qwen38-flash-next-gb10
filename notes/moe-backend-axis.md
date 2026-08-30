@@ -298,3 +298,34 @@ my earlier hypotheses were wrong, and the probe settled it in one run.
    reported a satisfying `0 -> 0` while `mtp.*` sat untouched under `ignore`. **Strip both keys
    unconditionally.** This was only caught because `_resolve_quant_algo` does not consult exclusions,
    so a passing resolve could not have proven them clear — checking anyway is what surfaced it.
+
+### ⚠️ Editing a hardlinked file corrupted the production checkpoint
+
+The build hardlinks 205 of 206 shards **and every small file, including `config.json`**. Editing
+`w4a16mtp/config.json` in place therefore rewrote **`fp8head/config.json` — the same inode**:
+
+```
+25169287  links=2  qwen38-flash-next-fp8head/config.json
+25169287  links=2  qwen38-flash-next-w4a16mtp/config.json
+```
+
+For a while the production checkpoint declared `mtp.layers.{0,48}.mlp.experts` as `W4A16_NVFP4`
+while its actual `mtp` weights are BF16 stacked — it would have failed to start with the same
+missing-scale error, and the cause would have looked like corruption of a checkpoint nobody had
+touched.
+
+Restored by copying to break the link, then reverting exactly the two edits (drop the mtp
+`quantized_layers` keys, restore `mtp.*` and `model.mtp.*` to `ignore`). Verified: separate inodes,
+`links=1` each, `fp8head` clean.
+
+**Rules this earns:**
+
+- **A hardlink-based build makes every small file shared.** Cheap for shards; a trap for anything
+  editable. Either copy the config files instead of linking them, or `stat` the link count and break
+  it before the first write.
+- **Check `st_nlink` before editing anything inside a derived checkpoint.** One `stat` would have
+  caught this before the write rather than after.
+- The build now runs **as the `llm` user** from `/opt/llm/build/`, which fixes the earlier
+  `0600 root:root` problem at the source rather than with a follow-up `chown`. Note the scratchpad
+  is `drwx------ jschmied`, so an `llm`-owned build can neither read scripts nor write logs there —
+  the first attempt failed instantly with `Keine Berechtigung`.
