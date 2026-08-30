@@ -1,0 +1,66 @@
+# FP8 KV on the QSA path: measured, corroborated, and what it is actually worth
+
+Measured 2026-08-30 on one GB10, vLLM `0.1.dev20073+g8e685d198`, FP8-head checkpoint, TP=1,
+MTP k=2, PLE CPU offload, `--max-model-len 262144`. KV dtype the only variable between arms.
+
+| | bf16 | fp8_e4m3 | |
+|---|---:|---:|---|
+| GPU KV cache | 1,077,542 tok | **1,853,358** | **×1.72** |
+| max concurrency @262k/req | 4.11× | **7.07×** | ×1.72 |
+| needle-in-a-haystack, 5 depths | — | **5/5** | |
+| decode, c=1, 4k input | 37.0 / 36.0 | 34.6 / 34.3 | −5.6%, see below |
+
+## This reverses our own closure from the same morning
+
+Earlier today this was closed as **"unsupported, not unmeasured"** — vLLM's QSA backend declares
+`supported_kv_cache_dtypes = ["auto", "bfloat16"]` and enforces it in four places, so `fp8_e4m3` is
+rejected at config time.
+
+That was accurate about *stock* vLLM and **wrong as a verdict on feasibility**. The guards were
+guarding an **unimplemented read path**, not a hardware limit, and vllm#54426 published a working
+17-hunk patch the same day. *"The code refuses it"* and *"it cannot work"* are different claims, and
+the four guard citations invited the second reading.
+
+## Corroboration, and why the ratio matters more than the totals
+
+The RFC author measured on their own GB10 and asked for a second machine. Ours:
+
+| | their box | ours |
+|---|---:|---:|
+| KV pool | 780,638 → 1,399,848 | 1,077,542 → 1,853,358 |
+| ratio | ×1.79 | **×1.72** |
+
+Absolute numbers differ ~38% because the checkpoints differ — ours has FP8 dense projections and an
+FP8 `lm_head`, leaving more unified memory for KV. **The ratio reproducing while the totals do not
+is the stronger result**: the effect scales with whatever KV budget a checkpoint leaves, rather than
+matching one machine's figure by coincidence.
+
+## There is no speed gain, and there was never going to be
+
+Three independent lines agree:
+
+1. **Predicted.** sgl#36797 measures fp8_e4m3 at 56.8–58.6 tok/s against bf16's 54–59 on SM121 —
+   speed-neutral.
+2. **Mechanism.** QSA is *sparse*: with `indexer_budget = 2048` the model attends over a top-k
+   selection, not the whole cache, so KV bandwidth is not the decode bottleneck.
+3. **Our own depth curve proves it independently** — decode is flat at 26.8 → 27.1 tok/s across a
+   15× context increase ([[depth-curve]]). If reading the cache were the constraint, decode would
+   fall with depth. It does not.
+
+Halving the precision of something that is not the bottleneck buys nothing, and the added dequant on
+the read path plausibly explains the small dip.
+
+**What it buys is admission, not latency.** At 262k tokens per request, concurrent capacity goes
+from ~4 to ~7 requests before a queue forms. That is a serving-capacity change.
+
+## The open number
+
+Decode came in **−5.6%** — inside the 6.9% noise floor, but **both** fp8 runs sat below **both**
+bf16 runs, which is a direction rather than scatter. n=2 per arm cannot separate those. An n=6
+per-arm rerun at 4k input is running; the RFC's "no regression" was measured at 100k context, a
+different regime.
+
+Quality was checked as **retrieval**, not text identity, deliberately: temperature 0 is not
+reproducible on this model ([[temp0-nondeterminism]] — five identical requests give five distinct
+outputs from ~30 tokens on), so an identity-based check would be meaningless while retrieval is
+unaffected. The two findings from today serve each other.
