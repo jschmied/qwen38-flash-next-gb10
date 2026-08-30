@@ -187,3 +187,37 @@ One consolation: this failure mode is *loud*. An unquantized layer meeting quant
 immediately. The inverse — dropping `input_scale` while the algo stays `NVFP4` — produces zero
 characters of output with no error at all, which is why the W4A4 path deserves more caution than
 this one did.
+
+### Why no config key works: the drafter never reaches the mixed-precision config
+
+Instrumented `ModelOptMixedPrecisionConfig.get_quant_method` to print prefix, layer class and
+resolved algo for every expert layer. One server start settles it:
+
+```
+96 lines, all:  prefix='language_model.model.layers.X.mlp.experts'  cls=RoutedExperts  algo='NVFP4'
+ 0 lines:       prefix='mtp.…'
+```
+
+**The drafter's expert layer never reaches that class at all.** So no `quantized_layers` key can
+help — not `mtp.layers.0`, not `mtp.layers.48`, not a wildcard. The drafter is served by a
+*separate* quant-config object built by `get_draft_quant_config`
+(`model_executor/models/utils.py:883`) from the draft model config, and `mtp.py:115-141` mutates
+only that object's `ignored_layers` / `exclude_modules` — **never its `quantized_layers`**.
+
+Consequences, and they reshape the item:
+
+- A drafter sharing the target's `hf_quant_config.json` can only be **excluded** or take whatever
+  single algo that config path yields. Declaring a *different* scheme for it (our W4A16 plan) has
+  no route through the shared file.
+- So the two remaining options are: give the drafter **its own directory** with its own
+  `hf_quant_config.json` pointed at by `speculative_config.model`, or quantize it to the **same**
+  scheme the body uses (NVFP4 W4A4), which needs `input_scale` and therefore calibration.
+- The 4,608-tensor checkpoint is **not wasted** — the weights are correct and verified, and they are
+  the right weights for the separate-directory route. What is wrong is only where the declaration
+  lives.
+
+Incidental find while instrumenting: `modelopt.py` carried a **leftover debug `print`** in
+`get_quant_method` from our earlier lm_head work, firing on every `lm_head` construction, plus two
+undocumented backups (`.prepbwo`, `.pre-pcpt`). Removed. Together with the `mtp.py` patch and the
+PLE backport, the serving venv holds at least four local modifications that no reinstall preserves —
+worth an inventory rather than discovering them one at a time mid-debug.
