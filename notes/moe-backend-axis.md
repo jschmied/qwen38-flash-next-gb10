@@ -386,3 +386,33 @@ production checkpoint** (see above).
 and each cost a ~12-minute server start to disprove. The two that actually resolved things came from
 **instrumenting** `get_quant_method` and from **reading the consumer's code path**. When two config
 edits fail identically, stop editing and instrument.
+
+## The b12x axis, closed for good — and for a different reason than before
+
+With the drafter quantized, `--moe-backend flashinfer_b12x` was run explicitly:
+
+| | before (BF16 drafter) | now (W4A16 drafter) |
+|---|---|---|
+| `not supported for unquantized MoE` | raised, 10.5 min in | **0 occurrences** |
+| backend selected | never reached | **`FLASHINFER_B12X`**, both workers |
+| outcome | config-time rejection | **`Triton Error [CUDA]: illegal memory access`**, 730 s |
+
+So the unlock worked exactly as intended — and the kernel behind it does not run on this hardware.
+
+The fault surfaces at `_hc_combine` inside Triton's `_init_handles` / `load_binary`, i.e. during a
+kernel **load**, which is the signature of a context already poisoned by an earlier async fault;
+`_hc_combine` is simply the next kernel to be JIT-loaded. That is the **same signature** we recorded
+for b12x with MTP off, so the b12x MoE path faults on sm_121 for this model regardless of the
+drafter.
+
+**Final state of the item, both halves answered:**
+
+- **Memory win: real and free.** 3.37 GiB back, c=1 decode 37.47 mean against a 36.45 ± 1.04
+  reference. Ship it if the space is wanted.
+- **Backend win: unobtainable.** b12x is now *selectable* and *faults*. Nothing further to try here
+  without an upstream kernel fix, and `auto` already picks `FLASHINFER_CUTLASS` for the body, which
+  works.
+
+The item entered the day ranked first on the belief that the drafter was blocking a faster kernel.
+It was blocking it — and the kernel is broken anyway. Both facts had to be established separately,
+and only the second one closes the axis.
