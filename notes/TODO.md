@@ -113,7 +113,20 @@ Anything measured-and-closed lives in its own note, not here.
   the SEQS negative result (`log.md`, 2026-08-30) — do **not** compare against the old 266.8 tok/s
   c=48 row, which differs in more than concurrency.
 
-- ~~**FP8 KV**~~ — **CLOSED 2026-08-30, unsupported.** vLLM's QSA backend declares
+- **FP8 KV — REOPENED the same day.** vllm#54426 (RFC, 2026-08-30) publishes a **working patch**
+  against our exact build, measured on **one GB10**: KV pool 780,638 → **1,399,848** tokens (×1.79),
+  max concurrency at 262k/req 2.98× → **5.34×**, needle-in-a-haystack **5/5**, decode 32.0 tok/s at
+  100k with no regression. Their diagnosis: *"only the read side of the QSA Triton kernels was
+  missing."* They ask for corroboration — *"a single machine is thin evidence"* — and we are the
+  obvious second machine: same GB10, same build, and we reached the opposite conclusion from the
+  guards alone.
+  **Our closure below was right about stock vLLM and wrong as a verdict on feasibility.** The four
+  guards are real; they were guarding an unimplemented read path, not a hardware limit. Corroborating
+  or refuting this is now the highest-value open item — it is someone else's patch, our hardware, and
+  a number (×1.79 KV pool) that would matter more to us than anything measured today.
+
+- ~~**FP8 KV**~~ — ~~CLOSED 2026-08-30, unsupported~~ (superseded by the entry above; the guard
+  citations below remain accurate for stock vLLM). vLLM's QSA backend declares
   `supported_dtypes = [torch.bfloat16]` and
   `supported_kv_cache_dtypes = ["auto", "bfloat16"]` (`vllm/models/qwen3_8_flash_next/nvidia/qsa.py:69-70`)
   and enforces it in four places — the config check at `:107` and `:186`, the runtime check
