@@ -329,3 +329,60 @@ Restored by copying to break the link, then reverting exactly the two edits (dro
   `0600 root:root` problem at the source rather than with a follow-up `chown`. Note the scratchpad
   is `drwx------ jschmied`, so an `llm`-owned build can neither read scripts nor write logs there —
   the first attempt failed instantly with `Keine Berechtigung`.
+
+## 2026-08-30 — the quantized drafter works: 3.37 GiB free, no measurable cost
+
+`qwen38-flash-next-w4a16b` serves.
+
+| | result |
+|---|---|
+| loads and serves | **yes**, 790 s |
+| c=1 decode | **38.0 / 36.8 / 37.6**, mean **37.47** tok/s |
+| reference (BF16 drafter) | 36.45 ± 1.04 |
+| TTFT | 1.72 / 1.61 / 1.77 s |
+| memory saved | **3.37 GiB** |
+| gate/up scale warning | none |
+
+**The drafter's 8.98% weight error costs nothing measurable at c=1** — mean is *above* the
+reference, comfortably inside the 6.9% noise floor. That matches the argument made before building:
+the target verifies every drafted token, so drafter weight error surfaces as acceptance rate, and
+here not enough of it to move single-stream decode.
+
+### vLLM selects the MoE backend PER LAYER GROUP, not globally
+
+```
+Worker           -> 'MARLIN'              NvFp4 MoE backend    <- the drafter (W4A16)
+PleOffloadWorker -> 'FLASHINFER_CUTLASS'  NvFp4 MoE backend    <- the body (W4A4)
+```
+
+Two different backends in one server. So the premise this whole item rested on — *"one unquantized
+MoE layer in the drafter vetoes the kernel choice for all 48 quantized layers"* — is only true while
+the drafter is **unquantized**. Once it is quantized it simply takes its own backend, and
+`modelopt.py:2291` routes W4A16 NVFP4 routed experts to Marlin exactly as predicted. vLLM says so
+plainly: *"Your GPU does not have native support for FP4 computation … Weight-only FP4 compression
+will be used leveraging the Marlin kernel."*
+
+At c=1 that costs nothing measurable — the drafter is small enough that its kernel choice does not
+move single-stream decode.
+
+### What it took: four causes, three of them mine
+
+The `w2_weight_scale` failure had **four** distinct causes, eliminated one at a time, and only one
+was a vLLM behaviour:
+
+1. **Wrong config key** — `mtp.layers.0` where the runtime remaps to `mtp.layers.48`.
+2. **Wrong file** — the runtime reads `config.json`'s embedded `quantization_config`, not
+   `hf_quant_config.json`. The gate passed against a file nothing consults.
+3. **Half-fixed exclusions** — `exclude_modules` existed but was empty while `ignore` held the real
+   `mtp.*` entries; an `if key in q else` picked the empty one and reported a satisfying `0 -> 0`.
+4. **Split gate/up `weight_scale_2`** — vLLM only *warns* and takes `[:, 0]` for both halves, so
+   separate scales are silently discarded. Caught by reading `process_weights_after_loading`, not by
+   a benchmark; it would have served happily with ~29% error on every up-projection weight.
+
+Plus one self-inflicted incident along the way: editing the hardlinked `config.json` **corrupted the
+production checkpoint** (see above).
+
+**The lesson that would have saved the most time:** three of those four were diagnosed by *reading*
+and each cost a ~12-minute server start to disprove. The two that actually resolved things came from
+**instrumenting** `get_quant_method` and from **reading the consumer's code path**. When two config
+edits fail identically, stop editing and instrument.
