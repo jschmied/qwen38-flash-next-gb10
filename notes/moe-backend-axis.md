@@ -108,3 +108,47 @@ activation scale and **zero characters of output, silently**.
 
 **Status: the memory win is cheap and safe; the backend win is not the same build.** Unblocked and
 ready to build either way, but the choice is a real one and worth making deliberately.
+
+## 2026-08-30 — the W4A16 drafter checkpoint, built
+
+`qwen38-flash-next-w4a16mtp`. Built in **12 s**: 205 shards hardlinked, one rewritten, 512 experts →
+4,608 per-expert tensors, **3.37 GiB saved** (122.83 → 119.46 GiB).
+
+### Getting the quantizer right, and one wrong verdict of my own
+
+The NVFP4 convention was **derived from the checkpoint's own body tensors** rather than assumed:
+low nibble first, 16-element blocks along the last dim,
+`value = LUT[code] * block_scale(e4m3) * weight_scale_2`.
+
+The validation took three attempts and produced one false alarm worth recording:
+
+1. Forward-quantizing a BF16 drafter tensor gave **9.0% rel L1** — looked alarming.
+2. An idempotence test (re-quantize an already-NVFP4-representable tensor) reported **2.54%** and I
+   called the convention wrong. **The test was wrong.** It let `weight_scale_2` float, which changes
+   the block-scale grid, so exact representability was destroyed by construction.
+3. Holding `ws2` fixed: **rel L1 exactly 0.000000%**, scales bit-identical, and the only differing
+   codes are the sign-magnitude ±0 alias, which dequantizes identically. Convention confirmed.
+
+So the **9.0% is NVFP4's genuine intrinsic error on BF16 weights**, not a bug. And it matters less
+here than anywhere else in the model: the drafter only *proposes* tokens and the target verifies
+every one, so drafter weight error costs **acceptance rate, not correctness**. The drafter is the
+safest place in this model to quantize hard, and the risk of this build is that it is slower, never
+that it is wrong.
+
+Encoder note: the codebook `argmin` allocates 16× the tensor. `torch.bucketize` on the e2m1
+midpoints is exact and reduces the whole build to seconds.
+
+### Two traps hit, both already in our own notes
+
+- **`sudo -S` cannot coexist with any stdin redirect.** `printf pw | sudo -S patch -p1 < file` feeds
+  the *patch file* to sudo as the password. Use `patch -i`, or write the script to a file.
+- **`safe_open` reports permission-denied as `FileNotFoundError`.** The build ran under
+  `systemd-run` *without* `--uid`, so it ran as root and `save_file` wrote `0600 root:root`; the
+  server runs as `llm` and died after **520 s** with
+  `No such file or directory: …/model-w4a16-mtp.safetensors` — on a file the gate had just opened
+  successfully.
+
+**The gate's real defect was narrower than the chown.** It opened every tensor **as the building
+user**, so it passed. An offline gate exists to catch what a server start would catch, and it can
+only do that if it reads under the identity the server actually runs as. Preflighting
+`sudo -u llm head -c 8 <shard>` costs nothing and replaces a nine-minute failure.
