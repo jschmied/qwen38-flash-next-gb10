@@ -75,6 +75,13 @@ mechanism understood rather than shrugged at:
 - **Prove a kernel actually ran.** Log first-sight dispatch keys inside the op — a call-count
   threshold never fires under cudagraph replay. We peeled back *four* layers of "installed but not
   running" before one measurement meant anything.
+- **An all-empty cell is not a comparison.** Twice in one session a determinism test reported
+  outputs as *identical* when every response was the empty string — the model was still inside
+  `<think>` and the token budget ran out, so five empty strings hashed the same and the check
+  passed vacuously. A comparison must assert that it compared something: print the character
+  counts, and refuse the verdict when the cell is empty. The second occurrence is the instructive
+  one — the guard had already been written into the previous script, and **a guard does not travel
+  to the next script you write**. It belongs in the harness, not in one copy of it.
 - **Clear `VLLM_CACHE_ROOT` + `TORCHINDUCTOR_CACHE_DIR`** when benchmarking a source-level patch;
   a stale compiled graph silently replays your unpatched code. (Config flags *are* hashed
   correctly — we checked before filing.)
