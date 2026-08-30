@@ -48,6 +48,38 @@ This is a hypothesis with a clean structural argument, not a measured cause. Tes
 logging the routing decisions for the same token position across runs and checking whether the
 selected expert set differs — worth doing, and not done yet.
 
+## The FP8 `lm_head` is not the cause — controlled and refuted
+
+Logprob *differences* at a position land on an exact 1/16 grid (`-33/8`, `-27/4`, `-113/16`), while
+the raw values are full precision. That looked like an FP8-head signature, and it suggested a clean
+story: coarse logits → exact top-2 ties → order-dependent argmax.
+
+**Both halves of that were wrong, and the checkpoint pair proves it.** `fp8mix` and `fp8head` differ
+in exactly one thing — BF16 versus `FP8_PB_WO` head — with `FP8_PB_WO` dense projections in both:
+
+| | fp8head (FP8 head) | fp8mix (BF16 head) |
+|---|---|---|
+| pos-0 logprob differences | −33/8, −27/4, −113/16, −117/16 | −29/8, −27/4, −115/16, −29/4 |
+| distinct of 5 at 32 tok | 3 | **5** |
+| distinct of 5 at 128 / 512 / 2000 | 5 / 5 / 5 | **5 / 5 / 5** |
+
+1. **The grid is BF16 resolution, not FP8.** A BF16 significand gives ULP `2^-4 = 1/16` for values
+   in `[8,16)`, which is where these logits sit. The grid appears identically with an unquantized
+   head, and `fp8mix` even shows an exact **three-way tie** (`' '`, `'.'`, `'3'` all at
+   `-10.187644004821777`). Ties are a normal consequence of BF16 logits.
+2. **Determinism does not return with a BF16 head.** Five distinct outputs of five at every length.
+
+So the FP8 `lm_head` is exonerated: it neither creates the grid nor the divergence. Its cost remains
+what we measured — **+19% under speculation, no measurable quality cost** — and reproducibility is
+not a hidden price it charges.
+
+**What survives:** divergence is present with an FP8 head *and* a BF16 head, with speculation on
+*and* off, with cache hits *and* none, at c=1 sequential. It is intrinsic to this model on this
+stack. MoE routing remains the leading structural candidate purely because it is the difference
+between this model and the dense 27B that *is* reproducible — but that is an argument from structure,
+not a measurement, and the head hypothesis just showed how far a plausible structural argument can
+be from the truth.
+
 ## Operational consequences
 
 - **No text-identity test on this model.** Regression suites, eval harnesses and any A/B that
