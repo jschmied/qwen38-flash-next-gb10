@@ -848,3 +848,17 @@ With build-sha stamping (0xBakeer#17) and output hashing (DJLougen), that is **t
 provenance mechanisms** the field runs and we do not: what built it, what it produced, and which
 defaults were in force. The cheapest of the three for us is this one — it is a `CHANGELOG.md` and a
 rule, not tooling.
+
+**Follow-up (0xBakeer#23): the exposure statement now includes us, and `main` after the merge.**
+Their #20 said "upstream vLLM is not affected — `CircularBufferSpec` does not exist there", true of
+`main` and misleading about vLLM. The class is added by **vllm#53896 itself**, to
+`vllm/v1/kv_cache_interface.py` — a core file, not a model-local one — and the same PR touches both
+consumers, `v1/core/sched/scheduler.py` and `v1/worker/gpu/model_states/mamba_hybrid.py`. So the
+small KV group and the code that mishandles it arrive together, and reach `main` when #53896 merges.
+**Our build is #53896-based**, which is why our own tree has the class and resolves capacity 8 — so
+this is our exposure too, not someone else's. They are filing on that branch.
+
+Worth noting as a pattern: this is the **third successive narrowing of the same claim** in two days
+— "a GB10 GDN kernel bug" → "the alignment means the mismatch never arises" → "upstream is not
+affected" — each retracted by its own author after checking. The claims got smaller and truer every
+time, which is what a repo that publishes its reasoning looks like from outside.
