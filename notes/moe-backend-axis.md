@@ -458,3 +458,41 @@ the same scenario passes 48/48 on the default non-b12x backend.
 
 So the b12x MoE path has a known, unfixed memory-safety bug upstream. Ours is not a GB10-specific
 misconfiguration.
+
+### `SpeculativeConfig.moe_backend` is honoured on V1 and ignored on V2 — measured
+
+Ran the documented configuration on the **unmodified** `fp8head` checkpoint:
+
+```
+--moe-backend flashinfer_b12x
+--speculative-config '{"method":"mtp","num_speculative_tokens":2,"moe_backend":"flashinfer_cutlass"}'
+```
+
+The engine **accepted and logged it** —
+`speculative_config: {'method': 'mtp', 'num_speculative_tokens': 2, 'moe_backend': 'flashinfer_cutlass'}`
+— and then failed at 570 s with the original error:
+
+```
+ValueError: moe_backend='flashinfer_b12x' is not supported for unquantized MoE.
+```
+
+**Where it is read, and where it is not:**
+
+| path | reads `spec_cfg.moe_backend`? |
+|---|---|
+| `v1/spec_decode/llm_base_proposer.py:1295-1300` | **yes** |
+| `v1/worker/gpu/spec_decode/*` (V2 runner) | **no** — the string appears nowhere |
+| `models/qwen3_8_flash_next/nvidia/mtp.py` | **no** |
+
+So the field works for models routed through the V1 proposer and is **silently inert** for
+Qwen3.8-Flash-Next, which runs the V2 model-runner MTP path — and #53896's newest commit
+(`fb97542ccc`, today) is *"Limit Qwen3.8-Flash-Next to model runner V2"*, pinning this model to the
+path that ignores it.
+
+**Why this matters beyond us.** vllm#51960 proposes amending the unquantized-MoE error message to
+point users at exactly this field. If that lands as written, users of any V2-runner model will be
+directed to a config option that is accepted, echoed back in the engine config, and does nothing —
+a worse failure than the current message, because it looks like it worked.
+
+That is worth reporting, and it is a **measured** result rather than a code reading: the config was
+verified present in the engine's own log before the run failed.
