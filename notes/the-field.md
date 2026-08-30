@@ -656,3 +656,47 @@ upstream between 2026-08-26 and 08-29. That is their container repo rather than 
 transfer — but *"prefix caching is inert below 1600 tokens on this model"* is a **build-scoped**
 claim, and we published it today. Ours is anchored to a named sha, which is the right side of that
 line, but the anchor has to stay attached to the claim.
+
+## 2026-08-30 — prefix caching measured properly, on vLLM, by someone else
+
+0xBakeer#18 turns prefix caching on by default after finding the stated reason for disabling it
+("a GB10 GDN kernel bug") had **no source anywhere in their repo**. Measured correctness first,
+then benefit, on a shared-prefix workload at c=16:
+
+| | caching off | caching on |
+|---|---:|---:|
+| aggregate decode | 46.50 tok/s | **81.79** (1.76×) |
+| TTFT p50 | 5.86 s | **2.55 s** |
+| wall clock | 1,020.9 s | **573.7 s** |
+
+Hit rate 66.5% over the run; `eval-format-v1` scored **30/30** with caching on, matching the
+cache-free cell.
+
+**Independent confirmation of our block-size finding.** Their hits land "on 1,600-token block
+boundaries" — the same number we derived from `Setting attention block size to 1600 tokens`. Two
+different setups, same boundary. It also held with the community image's `block_size` patch
+**reverted** to what vLLM `main` carries, so the boundary is not an artifact of that patch.
+
+**A caveat of theirs that we should keep applying to ourselves:** *"Every prefill figure published
+in this repository was measured cache-free… the 30,728 tok/s is a cache-assisted number on a
+workload built from shared prefixes — not a prefill speed."* Our own depth curve is safe here, and
+checked rather than assumed: `bench_client_real.py`'s `make_prompt()` builds a unique prompt per
+request (random corpus slice plus a `[req uid random]` header) expressly to bust the cache. So
+`depth-curve.md` is a cache-free curve and comparable to cache-free numbers only.
+
+### An open tension with our own determinism result
+
+They report **three identical temperature-0 requests over an 8.6k prompt returning byte-identical
+answers**, with real cache hits behind calls 2 and 3. We ran eight identical temperature-0 requests
+and got **eight distinct outputs**. Same runtime family, same hardware, same 1,600-token boundary.
+
+Not necessarily a contradiction, and worth stating before it gets read as one:
+
+- **We run MTP k=2; their cell is speculation-free.** That is the leading candidate and is being
+  measured now against an MTP-off server.
+- **Generation length differs by an order of magnitude.** Their answers are short; ours ran to
+  ~3,000 completion tokens (4,283–6,714 characters). Divergence probability compounds with length,
+  so three short answers agreeing does not establish that three long ones would.
+
+What our result does settle, independently of the cause: **the prefix cache is not the source.**
+Requests 1 and 2 had *zero* cache hits and still differed from each other.
