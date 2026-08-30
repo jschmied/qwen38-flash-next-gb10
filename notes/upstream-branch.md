@@ -114,3 +114,21 @@ Backups: `connector.py.pre-4e8b849`, `model_runner.py.pre-4e8b849` beside the or
 
 ⚠️ Applying it: `printf pw | sudo -S patch -p1 < file` **feeds the patch file to sudo as the
 password** — the redirect beats the pipe. Use `patch -d DIR -p1 -i FILE`.
+
+## Branch drift since our build (checked 2026-08-30)
+
+#53896 head is now `11564b8869ea`. The commit itself is **CI-only** — two buildkite YAMLs and one
+test — but checking it surfaced drift that matters more than the commit:
+
+- **The package was renamed: `vllm/models/qwen3_8_flash_next/` → `vllm/models/qwen4_exp/`.**
+  Every source path we cite is therefore build-specific. In particular the FP8-KV closure in
+  `TODO.md` cites `vllm/models/qwen3_8_flash_next/nvidia/qsa.py:69-70`; on a current build that file
+  is `vllm/models/qwen4_exp/nvidia/qsa.py`. The *finding* is unaffected — the guards are the same —
+  but a reader on a newer build cannot find the file by the path we published.
+- **`37c7110fa619` refactored the NGram helpers**, +108/−73 across `{amd,nvidia}/ple_layer.py`. That
+  is in the branch but **not** in our `0.1.dev20073+g8e685d198` build, and our hand-applied
+  `4e8b849b8d97` is against the older layout. Anyone upgrading should expect the backport not to
+  apply cleanly, and should re-check whether it is still needed at all.
+- **`vllm/v1/ple_offload/` does not exist on #53896's branch.** It belongs to #53899. Our venv is a
+  preview build combining the two PRs, which is worth stating whenever we quote a path from it —
+  neither PR alone reproduces our tree.
