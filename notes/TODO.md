@@ -30,6 +30,31 @@ Anything measured-and-closed lives in its own note, not here.
 
 ## Worth doing, in order
 
+0. **Quantize the drafter's MoE — reopens b12x and frees ~3.6 GiB.** The one lever that pays
+   twice. `config.json`'s `ignore` contains `mtp.*`, so `mtp.layers.0.mlp.experts.{gate_up,down}_proj`
+   (2 tensors, **4.86 GiB BF16**) carry no scales while the body's 294,912 expert tensors all do.
+   Because `--moe-backend` is global, that single unquantized layer vetoes the kernel choice for all
+   48 quantized layers — `map_unquantized_backend` raises instead of falling back
+   (`fused_moe/oracle/unquantized.py:166`), **10.5 minutes in**, after weight load and
+   `torch.compile` rather than at config parse.
+   Both b12x halves are present in this venv (`has_flashinfer_b12x_gemm()` and
+   `has_flashinfer_b12x_moe()` return `True`), and the path is known to work on this hardware —
+   `CUTE_DSL_ARCH=sm_121a` exists in the launcher *because* it was required for the b12x path on the
+   27B. So this is blocked by **our checkpoint**, not by the backend or the GPU.
+   **Build traps, all previously paid for:**
+   - `quant_algo: MIXED_PRECISION` reads **`quantized_layers`, not `config_groups`** — editing the
+     latter looks right, changes nothing, and fails silently.
+   - A layer left in `ignore` is caught earlier by `is_layer_excluded` and served unquantized, so
+     `mtp.*` must come **out of `ignore`** as well as gaining a `quantized_layers` entry.
+   - Gate the result offline with `ModelOptMixedPrecisionConfig.from_config` +
+     `_resolve_quant_algo(...)` before any server starts (~10 s, no GPU).
+   - Passthrough tensors must match BF16 exactly; scan every rank.
+   Expected payoff: ~3.6 GiB resident back, plus the full MoE backend set (`flashinfer_b12x`,
+   `flashinfer_trtllm`, `flashinfer_cutedsl`) becomes selectable for a real A/B against the
+   `FLASHINFER_CUTLASS` that `auto` picks today.
+   ⚠️ Separately: native **`b12x`** (for `--linear-backend b12x`) is a *different package* and is
+   **not installed in any venv** — do not conflate the two.
+
 1. **Repeat Task A (Go), n≥4.** Current result is FAIL at N=1 on one generics error
    (`entry[_, _]`), at temperature 1.0. Our own scorecard has two rows that were wrong until
    re-run. A 2/4 or 3/4 is worth far more than one FAIL. Then Task B (Java) for the pair.
