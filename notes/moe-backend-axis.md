@@ -22,6 +22,9 @@ So: a better FP4 MoE kernel is the largest untouched lever *at load*.
 
 ## Three blockers, all real
 
+⚠️ **"Global" is wrong — see the 2026-08-30 correction at the end of this file.**
+`SpeculativeConfig.moe_backend` sets the drafter's backend independently.
+
 **1. `--moe-backend` is global; this checkpoint is not.** `config.json`'s `ignore` contains
 `mtp.*`, so `mtp.layers.0.mlp.experts.{gate_up,down}_proj` carry no scales (2 tensors, 4.86 GiB
 BF16) while the body's 294,912 expert tensors are all scaled. One unquantized MoE layer in the
@@ -416,3 +419,42 @@ drafter.
 The item entered the day ranked first on the belief that the drafter was blocking a faster kernel.
 It was blocking it — and the kernel is broken anyway. Both facts had to be established separately,
 and only the second one closes the axis.
+
+## 2026-08-30 — correction: `--moe-backend` is NOT global
+
+This file has claimed since August that *"`--moe-backend` is global; one unquantized MoE layer in the
+drafter vetoes the kernel choice for all 48 quantized layers."* **The first half is false**, and it
+is the reason this item sat at rank 0 for weeks.
+
+`SpeculativeConfig.moe_backend` (`vllm/config/speculative.py:118`) sets the **drafter's** backend
+independently. Its docstring names our exact situation:
+
+> *"MoE backend to use for the draft model. When `None`, the draft model … drafter and generator
+> require different MoE kernels (e.g. quantized generator with unquantized drafter)."*
+
+So the supported configuration was always:
+
+```
+--moe-backend flashinfer_b12x --speculative-config '{"method":"mtp","num_speculative_tokens":2,"moe_backend":"flashinfer_cutlass"}'
+```
+
+No checkpoint rebuild, no re-quantisation, no 4,608 tensors. Found via **vllm#51960**, whose author
+reports the identical trap — *"I spent a while concluding the configuration was impossible before
+finding that field"* — and proposes adding one sentence to the error message, which is exactly what
+would have saved both of us.
+
+**What this costs and does not cost us.** The W4A16 drafter build is still worth 3.37 GiB at no
+measurable decode cost, so it is not wasted — but it was the expensive route to a problem with a
+documented one-line answer, and the error message we trusted (*"Expected one of [...]"*) reads as
+*this combination is unsupported* when it is merely *this flag is the wrong one*.
+
+### And our b12x fault is already reported upstream
+
+**vllm#50189** (open since 2026-07-28): *"Xid 31 MMU fault (illegal write) with flashinfer_b12x MoE
+backend under concurrent chunked prefill"*, SM120, `Qwen3.5-122B-A10B-NVFP4`. Their scoping is
+precise and matches ours being a load-time/JIT-surfaced fault rather than an OOM: light traffic
+clean, single prefills to 208k clean, vision clean — **only concurrent chunked prefill faults**, and
+the same scenario passes 48/48 on the default non-b12x backend.
+
+So the b12x MoE path has a known, unfixed memory-safety bug upstream. Ours is not a GB10-specific
+misconfiguration.
