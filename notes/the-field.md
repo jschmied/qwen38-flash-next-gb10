@@ -825,3 +825,26 @@ identical calls; #20 withdraws it after reading the class out of their own image
 using output identity as the observable for a bug that does not change output on the path the test
 takes.
 
+
+## 2026-08-30 — "a release is a measurement epoch, not an API contract"
+
+0xBakeer#21 versions their recipes on a rule worth copying verbatim: **MAJOR** = a recipe added or
+removed, or the measurement basis changes; **MINOR** = a shipped default changes, *your numbers
+move*; **PATCH** = docs and corrections, numbers do not move. Every changelog entry leads with a
+**"Defaults that changed"** table — was, now, and what it costs. Their trigger was two defaults
+flipping in one day with nothing in the repo letting a reader tell which configuration a published
+figure belonged to.
+
+**This is our problem too, and we hit it twice today.** The `266.8 tok/s` headline belonged to the
+baseline checkpoint, not the shipped one. A prefill figure was borrowed from the 27B and applied to
+Flash-Next. Both are the same failure: *a number outliving the configuration it was measured on.*
+
+And our defaults have moved repeatedly — MTP k=2 confirmed as the optimum, `--max-num-seqs` shown to
+be non-binding, `--max-model-len` guidance raised 8192 → 32768, prefix caching understood as
+inert below the attention block, and `4e8b849b8d97` hand-applied to the serving venv. Anyone reading
+a figure in this repo has no marker telling them which of those were in force.
+
+With build-sha stamping (0xBakeer#17) and output hashing (DJLougen), that is **three independent
+provenance mechanisms** the field runs and we do not: what built it, what it produced, and which
+defaults were in force. The cheapest of the three for us is this one — it is a `CHANGELOG.md` and a
+rule, not tooling.
