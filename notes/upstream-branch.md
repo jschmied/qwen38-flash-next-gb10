@@ -68,3 +68,49 @@ files as new, and the token has `admin:public_key, gist, read:org, repo` without
 
 Until then the series in `patches/series-pr53896/` is the portable form — it applies to the PR
 head with `git am --3way` and needs no fork access.
+
+## Backported into our venv: `4e8b849b8d97` (PLE offload event pool)
+
+Applied 2026-08-30 to `/opt/llm/runtime/vllm-venv-fnext`. **This is a venv-local edit and will be
+silently reverted by any reinstall or upgrade of vLLM in that venv** — the same way the FP8 oracle
+shim was lost on every upgrade. If a future start begins hanging at `warmup_kernels`, check this
+first.
+
+**What it fixes.** The shipped `0.1.dev20073+g8e685d198` tree allocates **one**
+`_input_ready_event` and **one** `_d2h_done_event` per connector, on a stated assumption that only
+one request is ever outstanding:
+
+```python
+# PLE rejects DBO, and each forward consumes its output before the
+# next launch, so one pending request is sufficient.
+self._request_queue = queue.Queue(maxsize=1)
+```
+
+Under async scheduling that is false — `max_concurrent_batches == 2`, the request thread pops
+immediately so the queue is empty while request #1 is still staging, and `_launch(#2)` re-records
+the *same* event behind forward #1's PLE semaphore wait. The offload thread then waits on a record
+the model stream cannot reach until it sends request #1, while the main thread's device-wide
+`torch.accelerator.synchronize()` at the end of `warmup_kernels` waits on the D2H stream. Deadlock,
+with no transfer needing to be slow. Upstream replaces the shared events with a per-request pool
+sized `max_concurrent_batches`, drops `_d2h_stream` and its cross-stream `wait_event`, and issues
+the staging copies on the model stream.
+
+**Why we applied it even though we never hung.** We are on the racy path — V2 Model Runner, async
+scheduling on (it is the default; `"mtp"` is inside `EagleModelTypes` so speculation does *not*
+disable it, and `mp` reports `supports_async_scheduling() == True`), so two batches in flight. Four
+independent reporters on this code hang at startup and we do not. We were winning a race, not
+avoiding one. See vllm#53960.
+
+**Verification, in this order:**
+
+1. The patched module is what actually imports — checked by `inspect.getsource`, not by trusting a
+   `.pyc`: `_input_ready_event` absent, `_d2h_event_pool` present, `_PendingPleOffloadRequest`
+   present.
+2. It serves: ready in 680 s, PLE worker registers and reaches `Busy-loop started`.
+3. It costs nothing: c=1 decode **38.1 / 36.5 / 34.8** against a 36.45 ± 1.04 reference
+   (noise floor 6.9%).
+
+Backups: `connector.py.pre-4e8b849`, `model_runner.py.pre-4e8b849` beside the originals.
+
+⚠️ Applying it: `printf pw | sudo -S patch -p1 < file` **feeds the patch file to sudo as the
+password** — the redirect beats the pipe. Use `patch -d DIR -p1 -i FILE`.
