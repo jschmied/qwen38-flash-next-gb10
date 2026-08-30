@@ -198,6 +198,8 @@ resolved algo for every expert layer. One server start settles it:
  0 lines:       prefix='mtp.…'
 ```
 
+⚠️ **This conclusion was wrong — see the correction below.**
+
 **The drafter's expert layer never reaches that class at all.** So no `quantized_layers` key can
 help — not `mtp.layers.0`, not `mtp.layers.48`, not a wildcard. The drafter is served by a
 *separate* quant-config object built by `get_draft_quant_config`
@@ -221,3 +223,38 @@ Incidental find while instrumenting: `modelopt.py` carried a **leftover debug `p
 undocumented backups (`.prepbwo`, `.pre-pcpt`). Removed. Together with the `mtp.py` patch and the
 PLE backport, the serving venv holds at least four local modifications that no reinstall preserves —
 worth an inventory rather than discovering them one at a time mid-debug.
+
+### Correction: the probe was terminated before the drafter was built
+
+The "zero `mtp.*` lines" reading above does **not** support its conclusion, and the conclusion is
+withdrawn.
+
+**Two independent problems with it.**
+
+1. **The probe run was stopped too early.** Its wait loop broke as soon as *body* expert lines
+   appeared, slept 20 s, and killed the server. The MTP drafter is constructed **after** the main
+   model, so the absence of `mtp.*` lines is most likely an artifact of stopping first — absence of
+   evidence produced by ending the observation early, which is the same mistake as the two-request
+   prefix-cache probe.
+2. **The mechanism it proposed does not exist.** `config/speculative.py:798-810` shows that for
+   `method == "mtp"` the draft config *does* inherit the target's quantization:
+
+   ```python
+   if self.method == "mtp":
+       ...
+       if not self.quantization:
+           self.quantization = self.target_model_config.quantization
+   ```
+
+   and that value is passed to the draft `ModelConfig` at line 955. So `get_draft_quant_config`
+   should return a mixed-precision config, not `None`, and the claim that the drafter is "served by a
+   separate config object that never sees `quantized_layers`" has no support.
+
+**Consequence for the fix under test:** the `draft_quant_config is None` fallback patched into
+`mtp.py` is then a **no-op** for this configuration, and the run should fail exactly as before. That
+is a real prediction and the running A/B will settle it. The `w2_weight_scale` failure is genuine and
+reproducible; **its cause is once again unknown.**
+
+What still stands from that investigation: the config *does* resolve correctly offline for both the
+checkpoint name and the remapped runtime name, and `W4A16_NVFP4` *does* have a `RoutedExperts`
+method (`modelopt.py:2565`). Whatever is wrong sits between those two facts.
