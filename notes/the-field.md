@@ -553,10 +553,16 @@ for indexer K — which is the half most repos omit.
 ### The number that matters to us: prefill
 
 Their cold depth curve gives **370–416 tok/s prefill** (32,627 tokens in 78.68 s ≈ 415 tok/s at
-32k). Our TTFT at 32k is ~100 s, i.e. roughly **320 tok/s**. Different stack, different quant
-(`UD-IQ4_XS` vs our NVFP4 + FP8), so this is **not** a like-for-like comparison and no ranking is
-claimed — but prefill/TTFT is our top open lever, and this is the first external number suggesting
-the ceiling is above where we sit. Worth a controlled look.
+32k).
+
+⚠️ **Correction, same day.** This entry originally continued *"our TTFT at 32k is ~100 s, i.e.
+roughly 320 tok/s"* and concluded they were ahead of us on prefill. **That number is not ours.** It
+was carried over from the Qwen3.8-**27B** work (`~100 s at 32k`) and applied to Flash-Next, which is
+a different model on a different stack. **We have never measured Flash-Next prefill at 32k.** What
+we have measured is 4000-token inputs at c=1: TTFT **1.691–1.941 s**, i.e. roughly
+**2,100–2,350 tok/s** — so the claim that we were behind was manufactured out of a borrowed figure,
+and is withdrawn. Depths still differ, so no ranking against their 32k number is claimed either.
+Measuring our own depth curve is the way to settle it.
 
 ### Three findings that corroborate or caution ours
 
@@ -583,3 +589,44 @@ verify checksums on *weights*; they verify hashes on *outputs*. We should do bot
 
 They also record 0xBakeer's CUDA-graph-reuse patch as **rejected — it segfaulted** — while their own
 tree reuses graphs (304 at 64k, 563 at 128k, 958 at 229k) by other means.
+
+## 2026-08-30 — spark-arena.com, and the most comparable external run yet
+
+**A new field resource:** <https://spark-arena.com> is a DGX Spark benchmark leaderboard with
+per-submission recipes and a raw CSV endpoint (`/api/benchmarks/<id>/raw`). Worth watching; the page
+is a Next.js app, so the data lives in the RSC payload or that CSV, not in the rendered HTML.
+
+**Submission `e9307821`** (Raymond, single Spark, TP=1) is the closest thing to a like-for-like
+comparison we have found: **same runtime (vLLM), same hardware, same model family.**
+
+- Model: `provsalt/Qwen3.8-Flash-Next-NVFP4-PLE-NVFP4` — **the PLE table itself in NVFP4**
+- Container `ghcr.io/provsalt/qwen3.8-flash-ple-nvfp4@sha256:a357fa93…`
+- `VLLM_PLE_CPU_OFFLOAD=1`, `VLLM_PLE_OFFLOAD_READY_TIMEOUT=900`,
+  **`VLLM_PLUGINS=qwen38_nvfp4_ple`**
+- `--max-model-len 262144`, `--gpu-memory-utilization 0.9`, MTP **k=3**,
+  `--mm-encoder-tp-mode data`, `--reasoning-parser qwen3 --tool-call-parser qwen3_xml
+  --enable-auto-tool-choice`
+- Notably **no `--distributed-executor-backend mp`** and no `--max-num-batched-tokens`
+
+| depth d4096, c=1 | theirs | ours |
+| --- | ---: | ---: |
+| decode tok/s (`tg128`) | 16.2 | **36.5** |
+| prefill tok/s (`ctx_pp`) | 1,261 | **~2,100–2,350** (4000-tok input, TTFT 1.69–1.94 s) |
+
+We are roughly **2.2× on decode and ~1.7–1.9× on prefill** at comparable depth. The likely reason is
+the part of our stack that is not in theirs: FP8 dense projections and an FP8 `lm_head`. Their
+checkpoint is the published NVFP4, which leaves the dense projections in BF16 — the exact +39% lever
+from our own ladder.
+
+**Three things to take from it anyway:**
+
+1. **An NVFP4 PLE table exists, ships, and loads** — via a vLLM plugin (`VLLM_PLUGINS=qwen38_nvfp4_ple`)
+   and a public container. NVFP4 PLE is ~26.8 GiB against the ~47.7 we run at FP8, so this is ~21 GiB
+   of unified memory back. We had the size on our map but no working checkpoint; now there is one.
+2. **Their prefill is remarkably flat with depth** — `ctx_pp` sits between 1,231 and 1,600 tok/s from
+   d4096 all the way to d100000, while *decode* decays hard (16.2 → 1.5 at c=10/d100k). If that
+   flatness is real it is a useful target shape for our own depth curve, which we have never
+   measured.
+3. **They run PLE offload without the `mp` executor**, with a 900 s ready timeout instead. Either
+   their build carries the uniproc fix, or the timeout papers over the startup race. Worth knowing
+   before we tell anyone `mp` is mandatory.
