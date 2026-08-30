@@ -5,13 +5,13 @@ Measured 2026-08-30. One GB10, vLLM `0.1.dev20073+g8e685d198`, FP8-head checkpoi
 tokens. Prefill tok/s is derived as `depth / TTFT` so it is directly comparable to the published
 curves it is set against below.
 
-| depth | TTFT | prefill tok/s | decode tok/s |
-|---:|---:|---:|---:|
-| 4,000 | 1.884 s | 2,123 | 37.9 |
-| 8,000 | 3.699 s | 2,163 | 40.8 |
-| 16,000 | 6.915 s | 2,314 | 41.2 |
-| 32,000 | 13.511 s | 2,368 | 41.4 |
-| 60,000 | 29.949 s | 2,003 | 41.7 |
+| depth | TTFT (MTP k=2) | prefill | decode | TTFT (MTP off) | prefill | decode | MTP decode gain |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 4,000 | 1.884 s | 2,123 | 37.9 | 1.902 s | 2,103 | 26.8 | **+41%** |
+| 8,000 | 3.699 s | 2,163 | 40.8 | 3.361 s | 2,380 | 26.8 | **+52%** |
+| 16,000 | 6.915 s | 2,314 | 41.2 | 7.644 s | 2,093 | 26.8 | **+54%** |
+| 32,000 | 13.511 s | 2,368 | 41.4 | 14.981 s | 2,136 | 26.9 | **+54%** |
+| 60,000 | 29.949 s | 2,003 | 41.7 | 25.636 s | 2,341 | 27.1 | **+54%** |
 
 ## Why this note exists
 
@@ -22,14 +22,29 @@ belonged to this model. **Measuring it took one sweep.**
 
 ## What it says
 
-**Prefill is flat, and it is fast.** 2,000–2,370 tok/s across a 15× span of context. The dip at
-60k (2,003) is the only departure and is within the run-to-run spread we see elsewhere.
+**Decode is depth-independent, and that is the headline.** With speculation off it moves from
+**26.8 to 27.1 tok/s across a 15× span of context** — 1.1%, far inside the 6.9% noise floor. For a
+dense-attention model decode falls with context because attention work grows with every token
+retained. Here it does not move at all. That is exactly what QSA's top-k selection predicts: once
+the sparse budget binds, the attention work per decoded token stops growing. This is the first
+direct evidence of it on our own hardware, and the MTP-off arm is the clean demonstration because
+it has no speculation dynamics on top.
 
-**Decode does not decay with depth.** 37.9 at 4k against 41.7 at 60k. The rise is barely outside
-our 6.9% noise floor, so the honest reading is **flat**, not rising — but flat is itself the
-result. For a dense-attention model decode falls with context; here it does not, which is what
-QSA's top-k selection should produce, since the attention work per decoded token stops growing
-once the sparse budget binds. This is the first evidence we have for that on our own hardware.
+**Prefill is flat and is unaffected by speculation.** 2,003–2,380 tok/s across both arms with no
+systematic separation (means: 2,194 with MTP, 2,211 without). Whatever ordering the individual rows
+suggest is run-to-run spread, not an effect.
+
+**MTP is a ~1.54× decode win that does not erode with depth.** +41% at 4k, then flat at +52–54%
+from 8k out to 60k. It costs nothing at prefill.
+
+### This contradicts a field caution, and the contradiction is worth stating
+
+A llama.cpp recipe reports `draft-mtp` running *slower* than plain autoregressive at 229k on their
+QSA kernels, and costing 8.4% / 6.7% of prefill at 16k / 32k. **Neither reproduces here.** Our MTP
+advantage is flat to 60k and our prefill is untouched. Different runtime, different kernels, and
+their fastest arm is a hand-patched QSA path we do not have — so both results can be true. But the
+caution does not transfer to this stack, and we should not have carried it into our own planning
+without measuring, which is what this sweep was for.
 
 ## Against the field, with the caveats attached
 
@@ -49,6 +64,9 @@ NVFP4 checkpoint leaves the dense projections in BF16 and they are read on every
 ## Consequence: prefill is not our top lever
 
 It was ranked first on the strength of the borrowed number. With the curve measured, **prefill is
-already strong and flat**, and TTFT at realistic agent depths (1.9 s at 4k, 6.9 s at 16k) is not
-where the time goes. The ranking moves to the drafter-MoE quantization, which is worth ~3.6 GiB and
-reopens three MoE backends.
+already strong, flat, and speculation-neutral**, and TTFT at realistic agent depths (1.9 s at 4k,
+6.9 s at 16k) is not where the time goes. The ranking moves to the drafter-MoE quantization, which
+is worth ~3.6 GiB and reopens three MoE backends.
+
+**And MTP stays on at every depth.** The one configuration question this sweep might have reopened —
+whether to drop speculation for long-context work — is settled in the other direction.
