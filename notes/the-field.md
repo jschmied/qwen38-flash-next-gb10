@@ -783,3 +783,45 @@ Present already: **GDN** (`gdn_chunk_prefill_b`, `gdn_prep_b`, `delta_step`, `co
 **hyper-connections**. So it is decomposable rather than a rewrite — but the PLE is a subsystem
 (51.2 B params in host RAM, per-token gather) rather than a kernel, and their `src/dsv4_cpu.rs`
 shows the house pattern is CPU reference first, then kernel, validated against it.
+
+## 2026-08-30 — a third KV group, and a caveat on our own prefix-cache claim
+
+0xBakeer#20 retracts their own earlier explanation and supplies the piece we both missed. The page
+alignment we observed (`Setting attention block size to 1600 tokens…`) covers **attention and
+Mamba only**. There is a **third** KV group: the QSA raw-key ring, a `CircularBufferSpec` whose
+block *is* its ring capacity.
+
+**Verified in our own tree, not taken on report** (`models/qwen3_8_flash_next/common/qsa_cache.py`,
+confirmed byte-identical to its `.pre-fuseddraft` backup, so we are on stock code):
+
+```python
+span     = self.compress_ratio + vllm_config.num_speculative_tokens
+capacity = self.compress_ratio * cdiv(span, self.compress_ratio)
+assert self.cache_config.block_size % capacity == 0
+```
+
+Our `indexer_compress_ratio = 4`, MTP k=2 → **capacity 8**. And `v1/engine/core.py:321` sets
+`cache_config.block_size = min(g.kv_cache_spec.block_size for g in kv_cache_groups)` over **all**
+groups — `generate_scheduler_kv_cache_config` only flattens `UniformTypeKVCacheSpecs`, it does not
+drop the ring. So after that line `cache_config.block_size` is plausibly **8**, not 1,600.
+
+### What this does and does not change for us
+
+- **Our measurements stand.** `prefix_cache_hits_total` moving in units of 1,600, zero hits on a
+  ~1,400-token prompt, hits from the third repeat on ~5,700 — that is the *attention group's* block
+  and is unaffected.
+- **Our wording needs a caveat.** "vLLM raises the attention block size to 1600" is right; treating
+  1,600 as *the* block size is not. There are three groups, and `cache_config.block_size` is the
+  minimum over them — a different number, and the one a caller gets when they ask the config.
+- **We may be exposed to the split bug after all**, and our tests could not have seen it.
+  0xBakeer's argument is the useful half: with the mismatch, a cold request rarely ends a chunk on a
+  1,600 boundary, so it publishes no Mamba block; the repeat takes an attention-only hit and
+  recomputes recurrent state from scratch — correct output, no guard hit. Reaching the zero-state
+  restore needs a Mamba block published first, which is **scheduling-dependent**. So "identical
+  outputs across N repeats" was never going to clear this, theirs or ours.
+
+**Their retraction is the model to copy.** #16 concluded "nothing depends on that patch" from three
+identical calls; #20 withdraws it after reading the class out of their own image. The failure was
+using output identity as the observable for a bug that does not change output on the path the test
+takes.
+
