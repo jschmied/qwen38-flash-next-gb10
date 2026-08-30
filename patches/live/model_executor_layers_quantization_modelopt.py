@@ -2485,10 +2485,6 @@ class ModelOptMixedPrecisionConfig(ModelOptQuantConfigBase):
         self, layer: torch.nn.Module, prefix: str
     ) -> "QuantizeMethodBase | None":
         """Return quantize-method based on layer."""
-        import sys as _s
-        if "lm_head" in prefix:
-            print(f"PROBE-ENTRY prefix={prefix!r} cls={type(layer).__name__}",
-                  file=_s.stderr, flush=True)
         # KV-cache quantization
         if isinstance(layer, Attention):
             if self.kv_cache_quant_method:

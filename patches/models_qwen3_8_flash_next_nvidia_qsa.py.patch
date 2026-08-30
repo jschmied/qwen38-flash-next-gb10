@@ -1,0 +1,109 @@
+--- a/vllm/models/qwen3_8_flash_next/nvidia/qsa.py
++++ b/vllm/models/qwen3_8_flash_next/nvidia/qsa.py
+@@ -67,7 +67,12 @@
+     """FullAttentionSpec backend used by the merged QSA owner."""
+ 
+     supported_dtypes: ClassVar[list[torch.dtype]] = [torch.bfloat16]
+-    supported_kv_cache_dtypes: ClassVar[list[CacheDType]] = ["auto", "bfloat16"]
++    supported_kv_cache_dtypes: ClassVar[list[CacheDType]] = [
++        "auto",
++        "bfloat16",
++        "fp8",
++        "fp8_e4m3",
++    ]
+ 
+     @staticmethod
+     def get_name() -> str:
+@@ -97,16 +102,32 @@
+     supports_pcp: bool = False
+ 
+     def __init__(self, *args, **kwargs) -> None:
++        # FlashAttentionImpl rejects a quantised cache because ITS kernels
++        # cannot read it on this device. QSA does not use them: it calls
++        # qsa_sparse_paged_attention (Triton) and only inherits the
++        # surrounding plumbing. Neutralise the dtype for the parent init,
++        # then restore it.
++        _fp8 = ("fp8", "fp8_e4m3")
++        _real_kv_dtype = None
++        if kwargs.get("kv_cache_dtype") in _fp8:
++            _real_kv_dtype = kwargs["kv_cache_dtype"]
++            kwargs["kv_cache_dtype"] = "auto"
++        elif len(args) > 6 and args[6] in _fp8:
++            _real_kv_dtype = args[6]
++            args = args[:6] + ("auto",) + args[7:]
+         super().__init__(*args, **kwargs)
++        if _real_kv_dtype is not None:
++            self.kv_cache_dtype = _real_kv_dtype
+         if not is_flash_attn_varlen_func_available():
+             raise NotImplementedError("Qwen3.8-Flash-Next QSA requires FlashAttention")
+         if self.dcp_world_size != 1:
+             raise NotImplementedError(
+                 "Qwen3.8-Flash-Next QSA does not support decode context parallelism"
+             )
+-        if self.kv_cache_dtype not in ("auto", "bfloat16"):
++        if self.kv_cache_dtype not in ("auto", "bfloat16", "fp8", "fp8_e4m3"):
+             raise NotImplementedError(
+-                "Qwen3.8-Flash-Next QSA requires a BF16 main KV cache"
++                f"Qwen3.8-Flash-Next QSA: {self.kv_cache_dtype} is not supported "
++                "(bf16 and fp8_e4m3 are)"
+             )
+         self.supports_quant_query_input = False
+ 
+@@ -144,8 +165,21 @@
+         key_cache, value_cache = kv_cache.transpose(1, 2).split(self.head_size, dim=-1)
+         key_cache = canonicalize_singleton_dim_strides(key_cache)
+         value_cache = canonicalize_singleton_dim_strides(value_cache)
+-        if key_cache.dtype != torch.bfloat16 or query.dtype != torch.bfloat16:
+-            raise NotImplementedError("Qwen3.8-Flash-Next QSA requires BF16 Q/K/V")
++        # uint8 holds the raw bytes of an fp8 cache: REINTERPRET them, do not
++        # convert (same step triton_attn.py takes for unified attention).
++        if key_cache.dtype == torch.uint8:
++            key_cache = key_cache.view(torch.float8_e4m3fn)
++            value_cache = value_cache.view(torch.float8_e4m3fn)
++        if query.dtype != torch.bfloat16:
++            raise NotImplementedError("Qwen3.8-Flash-Next QSA requires a BF16 query")
++        if key_cache.dtype not in (
++            torch.bfloat16,
++            torch.float8_e4m3fn,
++            torch.uint8,
++        ):
++            raise NotImplementedError(
++                f"Qwen3.8-Flash-Next QSA: cache dtype {key_cache.dtype} is not supported"
++            )
+ 
+         from .ops.qsa import qsa_sparse_paged_attention
+ 
+@@ -183,9 +217,10 @@
+             raise ValueError("Qwen3.8-Flash-Next QSA requires a paged KV cache")
+         if model_config.dtype != torch.bfloat16:
+             raise NotImplementedError("Qwen3.8-Flash-Next QSA currently requires BF16")
+-        if cache_config.cache_dtype not in ("auto", "bfloat16"):
++        if cache_config.cache_dtype not in ("auto", "bfloat16", "fp8", "fp8_e4m3"):
+             raise NotImplementedError(
+-                "Qwen3.8-Flash-Next QSA requires a BF16 main KV cache"
++                f"Qwen3.8-Flash-Next QSA: cache_dtype {cache_config.cache_dtype} "
++                "is not supported (bf16 and fp8_e4m3 are)"
+             )
+         if getattr(quant_config, "kv_cache_scheme", None) is not None:
+             raise NotImplementedError(
+@@ -286,9 +321,18 @@
+         self.kv_cache_torch_dtype = kv_cache_dtype_str_to_dtype(
+             self.kv_cache_dtype, model_config
+         )
+-        if self.kv_cache_torch_dtype != torch.bfloat16:
++        if self.kv_cache_torch_dtype not in (
++            torch.bfloat16,
++            torch.float8_e4m3fn,
++            # vLLM ALLOCATES the quantised cache as uint8: raw bytes,
++            # reinterpreted as fp8 right before the kernel (see the
++            # `.view()` in `forward_qsa`). Rejecting uint8 rejected the
++            # only storage the core produces.
++            torch.uint8,
++        ):
+             raise NotImplementedError(
+-                "Qwen3.8-Flash-Next QSA requires BF16 cache storage"
++                f"Qwen3.8-Flash-Next QSA: storage dtype {self.kv_cache_torch_dtype} "
++                "is not supported"
+             )
+         self.kv_sharing_target_layer_name = None
+         self.kv_cache = torch.tensor([])

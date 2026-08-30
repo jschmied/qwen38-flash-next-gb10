@@ -1,0 +1,46 @@
+--- a/vllm/models/qwen3_8_flash_next/nvidia/model.py
++++ b/vllm/models/qwen3_8_flash_next/nvidia/model.py
+@@ -262,10 +262,12 @@
+         self.attn_hyper_connection = GatedResidual(
+             hc_config,
+             prefix=maybe_prefix(prefix, "attn_hyper_connection"),
++            quant_config=quant_config,
+         )
+         self.mlp_hyper_connection = GatedResidual(
+             hc_config,
+             prefix=maybe_prefix(prefix, "mlp_hyper_connection"),
++            quant_config=quant_config,
+         )
+ 
+     def forward(
+@@ -434,6 +436,7 @@
+                 hc_config,
+                 use_combine=False,
+                 prefix=maybe_prefix(prefix, "hyper_connection_mixer"),
++                quant_config=vllm_config.quant_config,
+             )
+         else:
+             self.hyper_connection_mixer = None
+@@ -622,9 +625,22 @@
+         self.model = Qwen3_8FlashNextModel(
+             vllm_config=vllm_config, prefix=maybe_prefix(prefix, "model")
+         )
++        # PATCH (jschmied 2026-08-28): pass quant_config so a quantized lm_head
++        # is actually honoured. Without it VocabParallelEmbedding.__init__ sees
++        # quant_config=None and installs UnquantizedEmbeddingMethod
++        # unconditionally, so a checkpoint declaring lm_head in
++        # `quantized_layers` loads only `lm_head.weight` and then dies on the
++        # missing scale tensor. The quant config resolves the layer correctly --
++        # it is simply never consulted. This is why no GPU checkpoint of this
++        # model quantizes lm_head: the model code cannot use one.
++        import sys as _sys
++        print(f"PROBE lmhead quant_config={self.quant_config!r} "
++              f"type={type(self.quant_config).__name__} "
++              f"prefix={maybe_prefix(prefix, 'lm_head')!r}", file=_sys.stderr, flush=True)
+         self.lm_head = ParallelLMHead(
+             config.vocab_size,
+             config.hidden_size,
++            quant_config=self.quant_config,
+             prefix=maybe_prefix(prefix, "lm_head"),
+         )
+         self.logits_processor = LogitsProcessor(config.vocab_size)

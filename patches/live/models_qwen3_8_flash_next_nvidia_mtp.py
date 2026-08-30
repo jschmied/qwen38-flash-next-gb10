@@ -113,6 +113,20 @@ def _make_draft_vllm_config(
         raise ValueError("speculative_config.draft_model_config must be set")
 
     draft_quant_config = get_draft_quant_config(vllm_config)
+    # PATCH (jschmied 2026-08-30): same shape as the lm_head fix below. When the
+    # draft ModelConfig carries no `quantization` field, _get_quantization_config
+    # returns None (config/vllm.py:753) and EVERY drafter layer -- including the
+    # MoE experts -- is built unquantized inside set_current_vllm_config, so a
+    # quantized drafter checkpoint fails with
+    #   "Layer mtp.layers.N.mlp.experts has no parameter 'w2_weight_scale'".
+    # Fall back to the target's config, which is the same file for an
+    # in-checkpoint MTP drafter.
+    # DEEP COPY, not a reference: configure_quant_config() and the two setattr
+    # calls below mutate this object (remapping ignored layers by +48). Sharing
+    # the target's instance would remap the BODY's exclusions in place.
+    if draft_quant_config is None and vllm_config.quant_config is not None:
+        import copy as _copy
+        draft_quant_config = _copy.deepcopy(vllm_config.quant_config)
 
     # inject packed and ignored modules to the quantization config of draft model
     if draft_quant_config is not None:
