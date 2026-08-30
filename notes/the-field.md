@@ -630,3 +630,29 @@ from our own ladder.
 3. **They run PLE offload without the `mp` executor**, with a 900 s ready timeout instead. Either
    their build carries the uniproc fix, or the timeout papers over the startup race. Worth knowing
    before we tell anyone `mp` is mandatory.
+
+### Provenance discipline, from two directions (2026-08-30)
+
+Two competitors independently converged on the same gap, from opposite ends:
+
+- **0xBakeer stamps the build into the artifact.** `setup.sh` labels the image with the upstream
+  repo/ref/sha and `serve.sh` prints the sha in its startup banner, because `UPSTREAM_REF` defaults
+  to `main` and *"two people building a week apart get materially different servers and neither can
+  tell which one they have."* Images predating the change report
+  `unknown (image predates the build label)` rather than an empty string — a nice touch, since a
+  blank field reads as "no drift" when it means "unknown".
+- **DJLougen hashes the output before claiming a speed.** Output hashes are locked
+  (`2689367b205c16ce`, `8547299278d81f66`) before any tok/s figure is quoted.
+
+**Where we stand.** Our pinned `0.1.dev20073+g8e685d198` already embeds the git sha, and the recipe
+`run.sh` refuses to start on a mismatch — so the *input* side is covered, commit-precisely. What we
+do not do is record that sha beside each measurement, or hash outputs at all. Both are cheap and
+both would have caught real incidents here: the corrupt-shard day (fluent garbage, invariant to
+every config change) and the venv-copy shebang trap (eight measurement arms invalidated because the
+binary was not the one we thought).
+
+**And a caution we should apply to ourselves:** they report prefix-caching behaviour changing
+upstream between 2026-08-26 and 08-29. That is their container repo rather than vLLM, so it does not
+transfer — but *"prefix caching is inert below 1600 tokens on this model"* is a **build-scoped**
+claim, and we published it today. Ours is anchored to a named sha, which is the right side of that
+line, but the anchor has to stay attached to the claim.
