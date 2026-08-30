@@ -88,10 +88,16 @@ Anything measured-and-closed lives in its own note, not here.
   the SEQS negative result (`log.md`, 2026-08-30) — do **not** compare against the old 266.8 tok/s
   c=48 row, which differs in more than concurrency.
 
-- **FP8 KV — re-scoped, and check the dtype gate first.** sgl#36797 measures fp8_e4m3 KV as
-  ~speed-neutral against bf16 on SM121, so the win is **context/concurrency headroom, not tok/s**.
-  sgl#36545 shows fp8 KV + QSA asserting on **BF16 q vs FP8 k** in another stack. Read vLLM's QSA
-  decode dtype handling before any build — ten minutes against a multi-hour detour.
+- ~~**FP8 KV**~~ — **CLOSED 2026-08-30, unsupported.** vLLM's QSA backend declares
+  `supported_dtypes = [torch.bfloat16]` and
+  `supported_kv_cache_dtypes = ["auto", "bfloat16"]` (`vllm/models/qwen3_8_flash_next/nvidia/qsa.py:69-70`)
+  and enforces it in four places — the config check at `:107` and `:186`, the runtime check
+  `if key_cache.dtype != torch.bfloat16 or query.dtype != torch.bfloat16` at `:147`, and
+  `:289`. There is also a guard at `:190` rejecting any `quant_config.kv_cache_scheme`.
+  So FP8 KV on this model is **rejected at config time**, not merely unmeasured; sgl#36545's
+  BF16-q-vs-FP8-k assert is the same constraint surfacing in SGLang. The ten-minute source read
+  cost nothing and replaced a multi-hour build. sgl#36797's finding still stands and is now moot
+  for us: fp8 was only ever worth **pool size, not throughput**.
 - **SGLang — watch, do not attempt.** sgl#36558 reports Flash-Next *unservable* on SM121 (QSA
   decode resolver gates on `is_sm100_supported()`); base support sgl#36497 and the resolver fix
   sgl#36556 are both unmerged. Revisit when #36556 lands.
