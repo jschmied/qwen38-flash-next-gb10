@@ -9,6 +9,7 @@ meaningfully.
 |---|---|---|
 | `v1/ple_offload/connector.py` | per-request D2H event pool instead of one shared `_input_ready_event` | **upstream** `4e8b849b8d97`, backported |
 | `v1/worker/gpu/model_runner.py` | call-site change for the above | upstream, same commit |
+| `models/…/common/qsa_cache.py` | widen the QSA raw-key ring to the next legal capacity instead of asserting — unlocks `num_speculative_tokens` 5..8 | ours |
 | `models/…/nvidia/qsa.py` | fp8_e4m3 KV on the QSA path — advertises the dtypes | **community**, vllm#54426 gist |
 | `models/…/nvidia/ops/qsa.py` | the read side of the same (the part that was missing) | community, same gist |
 | `models/…/nvidia/mtp.py` | `quant_config` on the MTP `ParallelLMHead`; draft-config fallback (deep-copied) | ours |
@@ -20,6 +21,11 @@ meaningfully.
 `model.py` passes `quant_config=` at all three `GatedResidual` call sites, and upstream's
 `__init__` signature is `(config, use_combine=True, prefix="")`. Applying `model.py` alone
 is a `TypeError` at model construction, not a subtle degradation.
+
+**The ring-widening patch needs its `logger` import.** `qsa_cache.py` has no module logger
+upstream, and the widening branch is only reachable at n=5..8 — so a missing import would
+`NameError` exactly when the patch is doing its job, and pass every test at a legal depth.
+`apply.sh` asserts the import is present.
 
 ## Why this file exists
 

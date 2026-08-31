@@ -27,6 +27,7 @@ PATCHES=(
     models_qwen3_8_flash_next_nvidia_hyperconnection.py.patch
     models_qwen3_8_flash_next_nvidia_model.py.patch
     models_qwen3_8_flash_next_nvidia_mtp.py.patch
+    models_qwen3_8_flash_next_common_qsa_cache.py.patch
     models_qwen3_8_flash_next_nvidia_qsa.py.patch
     models_qwen3_8_flash_next_nvidia_ops_qsa.py.patch
     model_executor_layers_quantization_modelopt.py.patch
@@ -58,6 +59,7 @@ done
     "$SP/vllm/models/qwen3_8_flash_next/nvidia/mtp.py" \
     "$SP/vllm/models/qwen3_8_flash_next/nvidia/model.py" \
     "$SP/vllm/models/qwen3_8_flash_next/nvidia/hyperconnection.py" \
+    "$SP/vllm/models/qwen3_8_flash_next/common/qsa_cache.py" \
     "$SP/vllm/model_executor/layers/quantization/modelopt.py" <<'PYEOF'
 import sys
 bad = 0
@@ -79,4 +81,7 @@ grep -A4 supported_kv_cache_dtypes "$SP/vllm/models/qwen3_8_flash_next/nvidia/qs
 grep -q "quant_config=quant_config" "$SP/vllm/models/qwen3_8_flash_next/nvidia/hyperconnection.py" \
     && echo "  check: hyper-connections receive quant_config" \
     || { echo "  WARN: GatedResidual still hardcodes quant_config=None -- model.py will TypeError" >&2; fail=1; }
+grep -q "logger = init_logger" "$SP/vllm/models/qwen3_8_flash_next/common/qsa_cache.py" \
+    && echo "  check: qsa_cache logger defined (ring-widening path)" \
+    || { echo "  WARN: ring-widening branch would NameError on logger" >&2; fail=1; }
 exit $fail

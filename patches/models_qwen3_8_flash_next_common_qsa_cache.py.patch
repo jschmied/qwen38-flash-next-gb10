@@ -1,0 +1,44 @@
+--- a/vllm/models/qwen3_8_flash_next/common/qsa_cache.py
++++ b/vllm/models/qwen3_8_flash_next/common/qsa_cache.py
+@@ -22,10 +22,13 @@
+ from torch import nn
+ 
+ from vllm.config import CacheConfig, VllmConfig
++from vllm.logger import init_logger
+ from vllm.config.cache import CacheDType
+ from vllm.model_executor.layers.attention_layer_base import AttentionLayerBase
+ from vllm.platforms import current_platform
+ from vllm.triton_utils import HAS_TRITON, tl, triton
++
++logger = init_logger(__name__)
+ from vllm.utils.math_utils import cdiv
+ from vllm.v1.attention.backend import (
+     AttentionBackend,
+@@ -778,6 +781,27 @@
+         # overwrite a committed key the next step needs to close the group.
+         span = self.compress_ratio + vllm_config.num_speculative_tokens
+         capacity = self.compress_ratio * cdiv(span, self.compress_ratio)
++        # PATCH (jschmied 2026-08-31): the divisibility requirement is one-sided.
++        # Per the comment above, a ring NARROWER than `span` is unsafe -- a rejected
++        # draft row would overwrite a committed key. A WIDER ring is merely slack.
++        # Upstream asserts instead of widening, which makes whole bands of
++        # num_speculative_tokens unreachable for no functional reason: with
++        # compress_ratio 4 and block_size 848, n=5..8 all want capacity 12, and
++        # 848 = 2^4 * 53 has no factor 3. Widening to the next multiple of
++        # compress_ratio that divides block_size keeps the safety property (>= span),
++        # joins the LCM cleanly, and costs a few rows of a 1-head raw-key ring.
++        block_size = self.cache_config.block_size
++        if block_size % capacity:
++            widened = capacity
++            while block_size % widened and widened <= block_size:
++                widened += self.compress_ratio
++            if block_size % widened == 0:
++                logger.warning_once(
++                    "QSA ring capacity %d does not divide the attention block "
++                    "size %d; widening to %d (safe: ring must be >= span %d).",
++                    capacity, block_size, widened, span,
++                )
++                capacity = widened
+         assert self.cache_config.block_size % capacity == 0, (
+             f"QSA ring capacity {capacity} must divide the attention block "
+             f"size {self.cache_config.block_size}"
