@@ -15,7 +15,7 @@ meaningfully.
 | `models/…/nvidia/mtp.py` | `quant_config` on the MTP `ParallelLMHead`; draft-config fallback (deep-copied) | ours |
 | `models/…/nvidia/hyperconnection.py` | widens `GatedResidual.__init__` to accept `quant_config` and threads it into all three projections (upstream hardcodes `None`) | ours |
 | `models/…/nvidia/model.py` | `quant_config` on the body `ParallelLMHead`; passes `quant_config=` to all three `GatedResidual` sites | ours |
-| `model_executor/layers/quantization/modelopt.py` | `FP8_PB_WO` + per-channel/per-token dispatch | ours; upstream equivalent in vllm#50617 |
+| `model_executor/layers/quantization/modelopt.py` | `FP8_PB_WO` + per-channel/per-token dispatch | ours; upstream equivalent in vllm#50617. Regenerated 2026-09-01 after removing a leftover `PROBE (temporary)` warning that the patch itself carried |
 
 **Order matters, and `apply.sh` hardcodes it.** `hyperconnection.py` must precede `model.py`:
 `model.py` passes `quant_config=` at all three `GatedResidual` call sites, and upstream's
@@ -32,6 +32,18 @@ upstream, and the widening branch is only reachable at n=5..8 — so a missing i
 Four of these were discovered only by accident during debugging — a stray `print` in
 `get_quant_method` was still firing in production. A patched venv with no manifest is a
 machine nobody can rebuild.
+
+### Debug code removed 2026-09-01
+
+Two blocks were still live in the venv and had to go: a `PROBE (temporary)` `logger.warning` in
+`modelopt.py` firing on every `lm_head` prefix, and — worse — a per-forward `_dq_calls` counter in
+`ple_layer.py` whose calls 6-9 ran `.abs().max().item()` and `(_e != 0).sum().item()`, i.e. **device
+syncs on the hot path**. Removing the first invalidated this patch's own hunk, so it was regenerated.
+
+**Grep before trusting any benchmark**, not after — this is the second occurrence:
+
+    grep -rnE "PROBE|_dq_calls|# temporary" $SP/vllm/models/qwen3_8_flash_next/ \
+        $SP/vllm/model_executor/layers/quantization/modelopt.py
 
 ## Verify after applying
 

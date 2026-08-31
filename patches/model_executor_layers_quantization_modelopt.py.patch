@@ -179,20 +179,15 @@
  
      def apply(
          self,
-@@ -2386,6 +2498,12 @@
+@@ -2386,7 +2498,6 @@
              return None
  
          quant_algo = self._resolve_quant_algo(prefix)
-+        if "lm_head" in prefix:  # PROBE (temporary)
-+            from vllm.model_executor.layers.linear import LinearBase as _LB
-+            from vllm.model_executor.layers.vocab_parallel_embedding import ParallelLMHead as _PLH
-+            logger.warning("PROBE-RESOLVED prefix=%r cls=%s algo=%r excl=%s isLB=%s isPLH=%s",
-+                        prefix, type(layer).__name__, quant_algo,
-+                        self.is_layer_excluded(prefix), isinstance(layer,_LB), isinstance(layer,_PLH))
- 
+-
          if isinstance(layer, (LinearBase, ParallelLMHead)):
              if quant_algo == "FP8":
-@@ -2396,6 +2514,36 @@
+                 return ModelOptFp8LinearMethod(self.fp8_config)
+@@ -2396,6 +2507,36 @@
                  return ModelOptNvFp4W4A16LinearMethod(self.w4a16_nvfp4_config)
              if quant_algo == "MXFP8":
                  return ModelOptMxFp8LinearMethod(self.mxfp8_config)
