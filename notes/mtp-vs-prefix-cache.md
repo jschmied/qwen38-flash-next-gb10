@@ -200,17 +200,27 @@ before and provably does not now, but that line should be visible before this go
 **And then n=6 loses to no speculation at all on agent work.** Same harness, same checkpoint, same
 batch 4096 / maxlen 32768:
 
-| | decode | TTFT | agent loop, 8 turns |
+| | decode @4k | TTFT @4k | agent loop, 8 turns |
 | --- | --- | --- | --- |
 | no speculation | 27.0 tok/s | 1.60 s | **1.94 s/turn** |
-| MTP n=6 | 35.2 tok/s (+30%) | 2.63 s (+65%) | 2.70 s/turn (**+39% worse**) |
+| MTP n=6, run 1 | 35.2 tok/s | 2.63 s | 2.70 s/turn |
+| MTP n=6, run 2 | 38.8 tok/s | 2.35 s | 2.13 s/turn |
 
-+39% is far outside the 6.9% decode noise floor. The decode column and the agent column point in
-opposite directions, which is the whole thesis of [[agentic-speed-is-ttft-bound]] showing up in one
-arm: deeper speculation buys decode and pays in TTFT, and a ~130-token turn cannot amortise the
-prefix block it costs.
+⚠️ **Read the direction, not the magnitude.** Those two rows are the *same configuration* measured
+twice: decode spans 35.2-38.8 (10%) and the agent loop 2.13-2.70 s/turn (21%). The 6.9% noise floor
+in these notes is a **decode** figure and does not transfer to the agent loop, which we had never
+characterised for variance at all. A first write-up of this arm quoted "+39% per turn" off run 1
+alone; run 2 makes that unsupportable.
 
-**So the 9..12 band is not the speed lever it looked like this morning.** It is a decode-benchmark
-lever and an agent-work regression. Still worth one arm if long single-shot generation ever matters
+What survives both samples: MTP n=6 is **slower per agent turn than no speculation** while being
+faster at decode. That is [[agentic-speed-is-ttft-bound]] in one arm — deeper speculation buys
+decode and pays in TTFT, and a ~130-token turn cannot amortise the prefix block it costs. The size
+of the penalty is not established; n>=4 arms per cell would be needed for that.
+
+At 28k context the same config gives **TTFT 12.3 s** against 2.35 s at 4k. The depth term dwarfs
+every speculation effect measured here.
+
+**So the 9..12 band is not the speed lever it looked like this morning** — on this evidence it is a
+decode-benchmark lever and an agent-work regression, though "how much" is not established. Still worth one arm if long single-shot generation ever matters
 here — break-even is ~68 output tokens — but it should not be swept on the strength of the
 formula alone. Measuring n=6 cost one server start and closed the whole band for agent use.
