@@ -137,7 +137,13 @@ c=16** — each sequence pulls its own ten of 512 while the dense path amortizes
     notes/the-prefill-decode-confound.md     an explanation of ours that testing refuted
     notes/quantizing-lm-head.md              +11% off, +19.1% under MTP, three blockers
     notes/fp8-mixed-checkpoint.md            the +39% checkpoint switch
-    notes/moe-backend-axis.md                why the MoE kernel axis is closed while MTP is on
+    notes/moe-backend-axis.md                the MoE axis, closed -- and what it cost to close
+    notes/depth-curve.md                     prefill AND decode are flat to 60k; the QSA signature
+    notes/mtp-vs-prefix-cache.md             MTP costs one cache block; the ~68-token break-even
+    notes/fp8-kv.md                          x1.72 KV pool, NIAH 5/5, and no speed gain
+    notes/temp0-nondeterminism.md            temperature 0 is not reproducible on this model
+    notes/results-radixark-vllm.md           the published checkpoint as shipped
+    notes/fused-draft-decode-for-qsa.md      a fused draft-decode attempt, and why it was reverted
     notes/upstream-branch.md                 the patch series and where it can go
     notes/single-stream-limit.md             what limits n=1
     notes/load-and-waits.md                  where time goes under concurrency
