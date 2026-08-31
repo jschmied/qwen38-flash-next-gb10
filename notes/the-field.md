@@ -862,3 +862,20 @@ Worth noting as a pattern: this is the **third successive narrowing of the same 
 — "a GB10 GDN kernel bug" → "the alignment means the mismatch never arises" → "upstream is not
 affected" — each retracted by its own author after checking. The claims got smaller and truer every
 time, which is what a repo that publishes its reasoning looks like from outside.
+
+## 2026-08-31 — MiaAI-Lab documents the empty-content trap, with a better diagnostic than ours
+
+Their README now carries the caveat we hit twice in one session:
+
+> *"this is a reasoning model and thinking consumes `max_tokens` first — if `content` is empty with
+> `finish_reason: "length"`, just raise `max_tokens` (2–4k covers most image QA);
+> `chat_template_kwargs.thinking_budget` is **not** honored by this build."*
+
+**They give the direct signal and we did not have one.** We detected empty content by counting
+characters *after* the run, which let a determinism probe report five empty strings as "identical"
+twice. `finish_reason: "length"` distinguishes *"the model finished and said little"* from *"the
+budget ran out inside `<think>`"* at the moment it happens — a one-field check that turns a vacuous
+comparison into a loud one. Adopt it in every probe.
+
+Also worth having: **`thinking_budget` is not honored** in this build, so the only working lever is
+`reasoning_effort` (`low` / `medium` / `high`), which is what we have been using.
