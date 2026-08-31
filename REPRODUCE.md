@@ -34,6 +34,14 @@ tool calling, on one GB10 with 128 GB unified memory.
   not just vLLM. vllm#54313 bumped vLLM's pin to 0.6.18 on 2026-08-30, so **re-pin 0.6.17 after any
   vLLM change**.
 
+  If you are ever forced onto 0.6.18, it is survivable but do it deliberately: flashinfer#3170's
+  audit notes `compute_120f` covers both CC 12.0 and 12.1, and the arch-specific `sm_121a`
+  requirement applies **only to sparse MMA** (`mma.sp .kind::mxf4nvf4`) — which this model does not
+  use; our `mxf4nvf4` references are dense `tcgen05.mma` in the NVFP4 MoE mainloop. So the loss is
+  bounded. Warm the JIT cache **at a low `--gpu-memory-utilization` first**, with `MAX_JOBS=2` and
+  `FLASHINFER_NVCC_THREADS=1` set (both are already in the launcher). A cold JIT rebuild at
+  util 0.90 is how this box was taken down once.
+
 ---
 
 ## 1. Weights

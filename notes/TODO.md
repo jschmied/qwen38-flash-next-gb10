@@ -86,3 +86,24 @@ a large download; ask before starting.
   parse the file the runtime parses. Ours passed three times while the server failed.
 - **When two config edits fail identically, stop editing and instrument.**
 - **`max_tokens` is a ceiling, not a target.** Use `ignore_eos` to force a generation length.
+
+## The MTP depth sweep was cut short by a misread constraint (2026-08-31)
+
+`k=5` hard-fails with `QSA ring capacity 12 must divide the attention block size 848`, and we
+recorded that as an upper bound. It is not one. From `qsa_cache.py:778-783`:
+
+    span     = compress_ratio + n
+    capacity = compress_ratio * cdiv(span, compress_ratio)
+    assert block_size % capacity == 0
+
+With `compress_ratio = 4` and `block_size = 848` that makes **n = 0..4 and 9..12 legal, n = 5..8
+illegal** — a hole, not a ceiling. (At `block_size = 1600`, 13..16 open up as well.)
+
+We swept k = 1, 2, 3 and called k=2 optimal. **k=4 was never tried, and the entire 9..12 band was
+never tried.** Since decode here is bytes-per-token-bound and speculation is the only remaining way
+to get more tokens per weight read, a deeper band that we wrongly believed illegal is the most
+concrete untested speed lever we have.
+
+Caveat before spending a night on it: acceptance falls with depth, and on other models in this
+fleet the curve is an inverted U that turns over by n≈3-4. The 9..12 band is worth **one** arm to
+see whether acceptance has collapsed, not a full sweep on spec.
