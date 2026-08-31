@@ -103,9 +103,17 @@ run k=1 on this model.
 | 16k | 2,146 | **2,413** | 2,153 |
 | 32k | **2,223** | 2,124 | 2,094 |
 
-+9.9% at 4k and +12.4% at 16k — the band agent work lives in — while 16384 is no better than 4096
-anywhere. Gains sit just above the 6.9% noise floor at n=1, so this is *adopt after one confirmation*
-rather than settled.
++9.9% at 4k and +12.4% at 16k at n=1 — but **this did not survive confirmation and is withdrawn**.
+
+**Refuted at n=3** (8k input, same box, same day): 4096 mean **2,212** tok/s against 8192's
+**2,005**, with a within-arm spread of **1,633–2,367** — a 45% range in a single configuration. The
+setting stays at 4096.
+
+**The transferable finding is the variance itself.** Our 6.9% noise floor is a *decode* figure;
+prefill at 8k swings **±20%** run to run. Every single-run prefill number we have quoted carries
+that, and `depth-curve.md` is smooth because its points are three-request medians rather than
+because prefill is stable. Hedging this as *adopt after one confirmation* is the only reason it
+never reached the shipped config.
 
 ### An unplanned control worth noting
 
