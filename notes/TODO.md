@@ -33,7 +33,8 @@ Anything measured-and-closed lives in its own note, not here.
 0. **Quantize the drafter's MoE — reopens b12x and frees ~3.6 GiB.** The one lever that pays
    twice. `config.json`'s `ignore` contains `mtp.*`, so `mtp.layers.0.mlp.experts.{gate_up,down}_proj`
    (2 tensors, **4.86 GiB BF16**) carry no scales while the body's 294,912 expert tensors all do.
-   Because `--moe-backend` is global, that single unquantized layer vetoes the kernel choice for all
+   Because `--moe-backend` was believed global (**it is not** — `SpeculativeConfig.moe_backend`
+   sets the drafter's independently), that single unquantized layer appeared to veto the choice for all
    48 quantized layers — `map_unquantized_backend` raises instead of falling back
    (`fused_moe/oracle/unquantized.py:166`), **10.5 minutes in**, after weight load and
    `torch.compile` rather than at config parse.

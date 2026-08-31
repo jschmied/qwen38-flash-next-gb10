@@ -509,8 +509,10 @@ consistent with the SM120/121 CUTLASS SMEM-overflow workaround noted above.
   `llm_graph_input_qsa` and `llm_graph_input_ple` itself, and bounds quantizer staging in slabs by
   `max_buf_size` — a more general fix than the PLE-specific one. They verified this the right way,
   with `git apply --check` against master rather than by assuming.
-  For us this only re-scopes a sentence: **#53896 is the only place the *vLLM* implementation
-  exists**, which remains true; llama.cpp is a separate implementation and is now merged.
+  For us this only re-scoped a sentence at the time. ⚠️ **Both are now moot: vllm#53896 itself
+  merged 2026-08-31 05:57**, so the vLLM implementation is on `main` too — and the package was
+  renamed `qwen3_8_flash_next` → `qwen4_exp` before merge, which means every source path cited
+  anywhere in these notes is from the pre-merge build.
 - **"`--parallel 1`" in our table read as a limitation, and is not one.** 0xBakeer withdrew the
   "concurrent requests abort the server" claim on 2026-08-27 after a reader showed eight
   simultaneous requests all returning 200 — they queue, they do not crash — and has since run
@@ -524,7 +526,7 @@ Prompted by being asked why `flashinfer_cutlass` was untried. It wasn't — see 
 | backend | status |
 | --- | --- |
 | `FLASHINFER_CUTLASS` | **what AUTO picks, and what every measurement here has used** |
-| `flashinfer_b12x` | rejected — `not supported for unquantized MoE`; the MTP drafter's MoE is unquantized and `--moe-backend` is global. With MTP off it faults with an IMA |
+| `flashinfer_b12x` | rejected at the time — `not supported for unquantized MoE`. ⚠️ The reason given here (*"`--moe-backend` is global"*) is **wrong**: `SpeculativeConfig.moe_backend` sets the drafter's backend independently. The real blocker is that b12x faults with an illegal memory access on sm_121 (vllm#50189) |
 | `triton`, `cutlass` | known to hit the SM120/121 CUTLASS SMEM overflow (99 KiB budget vs the 228 KiB assumption) |
 | `FLASHINFER_TRTLLM`, `FLASHINFER_CUTEDSL[_BATCHED]`, `VLLM_CUTLASS`, `MARLIN`, `HUMMING` | untried, **and no field evidence favours any of them on sm_121** |
 

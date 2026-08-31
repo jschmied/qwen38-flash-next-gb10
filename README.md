@@ -63,8 +63,11 @@ mechanism understood rather than shrugged at:
 
 ## Method, earned the hard way
 
-- **The noise floor is 6.9%** (six identical runs: 34.7–37.1 tok/s). **Nothing under ~10% is
-  callable from a single run.** This cost us a published claim — "k=2 is the MTP optimum" compared
+- **The noise floor is 6.9% — for *decode*** (six identical runs: 34.7–37.1 tok/s). **Nothing under
+  ~10% is callable from a single run.** ⚠️ **Prefill is far noisier: ±20%.** Three runs of one
+  configuration at 8k input spanned 1,633–2,367 tok/s, a 45% range. A prefill claim needs n≥3 and a
+  wider bar than a decode claim; treating the 6.9% figure as general is what produced a withdrawn
+  batch-size finding on 2026-08-31. This cost us a published claim — "k=2 is the MTP optimum" compared
   a single k=3 run against the *top* of k=2's own spread. Withdrawn.
 - **Verify `lfs.sha256`, not file size.** Two size-correct, byte-corrupt shards produced *fluent
   garbage* invariant to every configuration change, and cost a full day plus two retracted
