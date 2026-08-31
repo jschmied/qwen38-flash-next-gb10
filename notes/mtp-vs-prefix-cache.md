@@ -125,3 +125,39 @@ particular quantity*, and not for the decode numbers beside it.
 
 Decode also reproduced the QSA signature to three significant figures on a different day and batch
 size: k=0 reads **26.9 / 26.9 / 26.9** across 4k/16k/32k.
+
+## The threshold, confirmed by prediction (2026-08-31, 06:02–06:40)
+
+The earlier agent-loop runs only ever sampled *one side* of the break-even, and a first attempt to
+test the other side was invalid: raising `max_tokens` from 130 to 400 changed nothing, because the
+prompt says *"briefly"* and the model generated **45 tokens** either way. **`max_tokens` is a
+ceiling, not a target.** Redone with `ignore_eos` forcing the length, and every turn recording its
+actual `completion_tokens`:
+
+| forced turn length | MTP k=2 | MTP off | |
+|---:|---:|---:|---|
+| **30 tokens** | 19.4 s (2.42/turn) | **16.0 s** (2.00/turn) | no-MTP **+17.5%** |
+| **400 tokens** | **92.6 s** (11.57/turn) | 122.2 s (15.27/turn) | MTP **+24.2%** |
+
+**The reversal is real**, and solving `advantage(t) = a·t − b` from the two points recovers the model
+that predicted it:
+
+| | predicted from the code | measured |
+|---|---:|---:|
+| decode saving `a` | 0.01331 s/tok (`1/26.9 − 1/41.9`) | **0.01114** |
+| fixed block cost `b` | 0.667 s (`1600 / 2400 tok/s`) | **0.754** |
+| break-even | ~50 tokens | **68 tokens** |
+
+Both coefficients within ~15% of values derived *before* the measurement, from
+`scheduler.py:397` and the depth curve. That is what separates this from the three claims withdrawn
+the same night — those were patterns found in data and rationalised afterwards; this one predicted a
+regime it had not seen.
+
+## The rule
+
+> **Run MTP k=2 when turns exceed ~68 output tokens. Disable it below that.**
+
+Not a compromise setting — a threshold, with both sides measured and a mechanism that explains why
+it sits where it does. Practically: ordinary generation is far above it, and terse tool-calling
+loops are below it. Never k=1 (dominated). The shipped default stays **MTP k=2**, which is correct
+for everything except short-turn agent work.
