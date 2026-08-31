@@ -9,12 +9,20 @@
 > the failure-mode catalogue. Not the deployment itself.
 
 
-| repo | stack | hardware | result |
+## Who is in the field, and what each is worth reading for
+
+| project | stack | hardware | read it for |
 |---|---|---|---|
-| [MiaAI-Lab/…-Dual-DGX-Sparks](https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Dual-DGX-Sparks) | SGLang TP2, NVFP4 | **2×** Spark, ConnectX-7 200 Gb RoCEv2 | **64 tok/s** single-stream, 117 aggregate @ c=2 (NEXTN 3/1/4) |
-| [0xBakeer/qwen38-flash-next-spark](https://github.com/0xBakeer/qwen38-flash-next-spark) | llama.cpp, mmap tensor pinning | 1× Spark | ~22 tok/s (measured `--parallel 1`) |
-| [lendome/llama.cpp-qwen4exp](https://github.com/lendome/llama.cpp-qwen4exp) | llama.cpp + PR #27742 | — | build recipe |
-| [hocestnonsatis/qwen3.8-flash-next-16gb](https://github.com/hocestnonsatis/qwen3.8-flash-next-16gb) | llama.cpp UD-IQ1_S | 16 GB VRAM | extreme-quant route |
+| [MiaAI-Lab](https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Dual-DGX-Sparks) | SGLang TP2, NVFP4 | **2×** Spark | 64 tok/s single-stream; the `!!!!!!` tool-call loop; the `finish_reason: "length"` diagnostic |
+| [0xBakeer](https://github.com/0xBakeer/qwen38-flash-next-spark) | llama.cpp **and** vLLM | 1× Spark | prefix caching 1.76×; the 1,600-block boundary; build-sha stamping; three self-retractions |
+| [DJLougen](https://github.com/DJLougen/Qwen3.8-Flash-Next-One-DGX-Spark) | llama.cpp + QSA patch | 1× Spark | QSA kernels doubling long-context decode; output-hash locking; PLE residency **no-win** |
+| [spark-arena `e9307821`](https://spark-arena.com) | vLLM, NVFP4 PLE | 1× Spark | the most comparable external run; an NVFP4 PLE checkpoint that loads |
+| [veloGB10](https://github.com/sf-stav/veloGB10) | Rust + hand-written PTX | 1× Spark | the *lossless-MTP contract*; asymmetric int8-K/q4-V cache; **no Flash-Next support** |
+| [blazux](https://github.com/blazux/qwen3.8-Flash-DGX) | vLLM container | 1× Spark | the image most of the field builds from |
+
+Cross-cutting method the field runs and we did not: **build-sha stamping** (0xBakeer),
+**output-hash locking** (DJLougen), **kernel goldens** (veloGB10), and **release-as-measurement-epoch**
+versioning. See the 2026-08-30 entries.
 
 ## What the dual-Spark deployment shows
 
@@ -69,7 +77,7 @@ a residual loop was seen at 1.0. Without the parser, tool calls leak as `<tool_c
 
 > There is no day-0 flag that gives thinking *and* structured tools together.
 
-**This is the most important open question for this repo.** The justification for a vLLM route
+⚠️ **Settled since (2026-08-29): 32/32 tool calls across temperatures with `--enable-auto-tool-choice --tool-call-parser qwen3_xml`, thinking on.** The framing below — that this was the most important open question for this repo — was true when written and is not now. The justification for a vLLM route
 is agent traffic with concurrency. If thinking and tools cannot coexist, the agent case is
 damaged whatever the stack. What is not yet known is whether the fault is SGLang's tool-call
 parser or the model's chat template — and that is testable here, on a different stack with a
