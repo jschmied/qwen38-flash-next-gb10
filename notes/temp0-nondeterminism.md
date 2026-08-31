@@ -93,3 +93,32 @@ be from the truth.
   length we tested. Their checkpoint differs from ours (no FP8 dense projections, no FP8
   `lm_head`), so the comparison is not controlled — but it does mean "temp 0 is stable on this
   model" is a **checkpoint-scoped** claim, not a model-scoped one.
+
+## The `indexer_budget` hypothesis — someone else's, and it does not hold here (2026-08-31)
+
+vllm#54521 reports the same symptom on the same build and proposes a mechanism we had not
+considered: greedy decoding deterministic **below** `indexer_budget` and non-deterministic above,
+because QSA switches from dense attention to top-k selection at that point. Every probe of ours had
+used ~5,700-token prompts — above the budget — so it would have explained our results neatly.
+
+**It does not survive a controlled test here.** Five identical requests per cell, `ignore_eos`
+forcing generation length, `indexer_budget = 2048`:
+
+| prompt_tokens | vs budget | MTP k=2 | MTP off |
+|---:|---|---|---|
+| 582 | **below** | 3 of 5 | **3 of 5** |
+| 1,142 | **below** | 3 of 5 | **4 of 5** |
+| 1,982 | near | 5 of 5 | 4 of 5 |
+| 3,102 | above | 4 of 5 | 2 of 5 |
+| 5,622 | above | 3 of 5 | 3 of 5 |
+
+Divergence at 582 prompt tokens, under a third of the budget, and it survives disabling speculation
+— which was the obvious confound since we normally run MTP k=2.
+
+**So the count of eliminated hypotheses is now four:** prefix cache, speculation, the FP8 `lm_head`
+(single-variable control), and the QSA top-k threshold. Reported on #54521 with the two differences
+that could still explain the disagreement — our derived checkpoint versus their stock one, and our
+patched tree — plus an offer to run any cell they want on this hardware.
+
+**Mechanism: still open.** That is the honest state, and it has been the honest state for two days
+while four plausible explanations were each measured and discarded.
