@@ -149,7 +149,7 @@ c=16** — each sequence pulls its own ten of 512 while the dense path amortizes
 
 | | |
 |---|---|
-| [#53896](https://github.com/vllm-project/vllm/pull/53896) | `[Model] Support Qwen3.8-Flash-Next` — the only place the **vLLM** implementation exists; **not on `main`**, not in any release. (llama.cpp's own support is a separate implementation and *did* merge — ggml-org/llama.cpp#27742, master, 2026-08-27.) |
+| [#53896](https://github.com/vllm-project/vllm/pull/53896) | `[Model] Support Qwen3.8-Flash-Next` — **MERGED 2026-08-31**. Was for weeks the only place the vLLM implementation existed; it is now on `main`, though not yet in a tagged release. Note the package was renamed `qwen3_8_flash_next` → `qwen4_exp` before merge, so every source path we cite is from the pre-merge build. |
 | [#50617](https://github.com/vllm-project/vllm/pull/50617) | fixes the `FP8_PER_CHANNEL_PER_TOKEN` dispatch gap we hit; we added our load-failure evidence rather than opening a duplicate |
 | [#53899](https://github.com/vllm-project/vllm/pull/53899) | PLE offload to host memory. Carries `4e8b849b8d97`, the per-request event-pool fix for the [#53960](https://github.com/vllm-project/vllm/issues/53960) startup deadlock — **backported into our venv** ([notes](notes/upstream-branch.md)) |
 | [#53960](https://github.com/vllm-project/vllm/issues/53960) | PLE offload deadlocks at warmup (4 reporters). We could not reproduce it and posted the mechanism, the fix pointer and a negative control |
