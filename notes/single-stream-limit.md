@@ -1,5 +1,10 @@
 # What limits single-stream decode
 
+> **Scope: baseline-checkpoint era.** Every tok/s figure below (17.0 measured, 24.9 and 22.4
+> projected) is from `RadixArk/…-NVFP4` as published, before FP8 dense projections, the FP8
+> `lm_head` and MTP. **Current single-stream is 37–41 tok/s** — see `depth-curve.md`. The *analysis*
+> of what limited decode still holds and is why those levers were chosen; the numbers are history.
+
 **Answer: two-thirds of it is cuBLAS BF16 matrix-vector kernels, running on the ~4.84B dense
 parameters the RadixArk checkpoint leaves unquantized.** The GPU is busy, not stalled. The fix is
 a more completely quantized checkpoint, not a scheduling or CUDA-graph change.

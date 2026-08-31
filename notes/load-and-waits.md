@@ -1,5 +1,11 @@
 # Where the time goes under load
 
+> **Scope: baseline checkpoint, short prompts, MTP off.** The 266.8 tok/s at c=48 below is not
+> comparable to any current figure — its own c=1 row is 17.1 tok/s. On the shipped config with
+> 4000-token inputs we measure ~100 tok/s at c=16 and 110 at c=32, and `--max-num-seqs` was later
+> shown not to be the binding constraint. Read this for the *shape* of concurrency scaling, not for
+> levels.
+
 > **Repo deleted 2026-08-28.** `Death-By-Tokens/Qwen3.8-Flash-Next-180B-on-ONE-DGX-Spark` now 404s. Its figures (34.8 tok/s free-form, 157.1 aggregate at c=8) and its HashK PLE compression are cited below and in other notes; they are no longer verifiable at source. Treat them as recorded-but-unverifiable rather than deleting them — they informed real decisions here.
 
 Traced on 2026-08-27, bare-metal venv, `RadixArk/Qwen3.8-Flash-Next-NVFP4`,
