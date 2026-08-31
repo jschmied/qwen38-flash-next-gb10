@@ -85,3 +85,46 @@ tight arms. One hypothesis does not cover both.
 **Discriminating arm, prediction fixed in advance:** n=7 has span 11 → capacity 12. If its block
 size is divisible by 12 the ring stays at 12 and this predicts **~70**; if the widening fires it
 runs 16 and this predicts **~32**. Read the widening line from the log *before* the `ms/tok`.
+
+
+## n=7 refutes the capacity story for the third time (2026-09-01)
+
+n=7 runs a **widened capacity-16** ring — block 1648, `1648 % 12 = 4`, so the patch fires. The
+prediction was written down before the arm: capacity 16 ⇒ ~32 ms/tok. **It measured 57.18.**
+
+Capacity 16 now spans 31.9 (n=5), 37.2 (n=9) and 57.2 (n=7). Capacity explains nothing, and three
+capacity-shaped hypotheses have now been proposed and measured wrong:
+
+1. "capacity 8 is bad, 16 is good" — refuted by k=4 (capacity 8, fast).
+2. "capacity 12 is pathological" — refuted by n=7 (capacity 16, slow).
+3. "the curve is a smooth U with a minimum at n=5" — refuted by n=6 sitting between two fast points
+   at 2.3× their cost.
+
+## The curve, quiet box, and no mechanism
+
+| depth | ms/tok | arms | capacity |
+| --- | ---: | :---: | ---: |
+| k=2 | 48.6 | 3 | 8 |
+| **k=3** | **32.5** | 1 | 8 |
+| **k=4** | **31.7** | 2 | 8 |
+| **n=5** | **31.9** | 2 | 16 |
+| n=6 | 73.5 | 2 | 12 |
+| n=7 | 57.2 | 1 | 16 |
+| n=9 | 37.2 | 1 | 16 |
+
+**Non-monotonic, no capacity pattern, no mechanism identified.** Decode does not predict it either:
+n=6 has among the best deep decode (36-43) and the worst per-turn cost; n=7 has the worst 4k decode
+(30.3) and is mid-table per turn.
+
+**Usable result without a mechanism: run k=3, k=4 or n=5 (~32 ms/tok).** Everything else measured is
+worse, k=2 and n=6 substantially so.
+
+**And this settles the patch honestly.** k=3 and k=4 reach the same ~32 with **no widening at all**
+(capacity 8, native). So the ring-widening patch is **permissive, not beneficial** — which is what
+[vllm#54552](https://github.com/vllm-project/vllm/issues/54552) already claims. No amendment needed;
+the hope that it was secretly a performance fix does not survive n=7.
+
+**Open, and the honest next step:** acceptance rate is not instrumented. Every measurement here is
+wall-clock. A depth curve that is erratic in wall-clock but smooth in accepted-tokens-per-step would
+explain everything, and that is one metric away — but it needs the engine's own spec-decode counters,
+not another timing arm.
