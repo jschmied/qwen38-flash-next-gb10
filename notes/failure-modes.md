@@ -456,3 +456,48 @@ out, `curl -v` the exact URL it used before concluding anything about the server
 `Loading weights took 556.07 seconds` — 9.3 minutes, against 44 s of torch.compile with cache
 hits. Every restart in an A/B costs ~11 minutes wall before the first request. Size readiness
 windows at 30 minutes, and prefer arms that avoid a restart.
+
+## "The arms disagree, and I cannot tell which one to believe"
+
+Three distinct harness defects produced this on 2026-08-31, all invisible in the results file.
+
+### The metric timed unequal work
+
+`agentloop.py` sent `max_tokens: 130` with no `ignore_eos` and never recorded
+`completion_tokens`. **`max_tokens` is a ceiling, not a target**, so each arm was timed on however
+many tokens the model happened to emit — an arm whose turns stopped at 40 tokens beat one whose
+turns ran to 130 with no difference in speed.
+
+**Symptom:** identical configs spanning 36% (1.94 then 1.43 s/turn), while decode on the same arms
+was reproducible to 1%. **Tell:** the noise is in one column only.
+**Fix:** `ignore_eos`, record per-turn tokens, refuse the verdict unless the total is exactly
+`turns × max_tokens`, and report `ms/tok`. **Validate the fix**: `ms/tok` must agree with
+`1000/decode_tps` from an independent benchmark — it now does, to ~1%, and the reproducibility
+went from 36% to **0.4%**.
+
+### Benchmarks serialized by unit name instead of by resource
+
+Each queued wave waited on a *named* systemd unit (`wave3` waits for `wave2`, …). That holds only
+while nothing is ever stopped. Stopping one unit made the next fall through **immediately** and
+load a second vLLM server onto a busy GPU.
+
+**Symptom:** an arm whose last turns step off a flat plateau (5.2-5.8 s, then 7.5 s), or arms dying
+with *"Free memory on device is less than desired GPU memory utilization"*. **Tell:** compare the
+arm's turn timings against the wall-clock of the next log file's creation.
+**Fix:** wait for the **resource**, not the unit — no `vllm` process and no arm unit — or better,
+run every arm from a single unit, which cannot race itself. Cost of learning this: one contaminated
+arm, five dead arms, ~30 minutes of GPU time.
+
+### Checks that cannot fail
+
+- `sudo -n -u llm test -r FILE` reports "cannot read" when it merely lacks a password. It produced
+  a confident wrong diagnosis of a permission problem that did not exist.
+- `cmd | head -3 || echo clean` never prints `clean`: `head` exits 0. A secret scan written this way
+  passes unconditionally.
+- A filtered monitor goes **silent** when a run dies unexpectedly, and silence reads as "still
+  running". Heartbeats must report **unconditionally**, and should assert the invariant — ours now
+  prints a warning if more than one vLLM server is alive.
+
+The thread joining all three: **a guard written in a note does not travel to the next script.** Each
+of these was already documented here before it recurred. Put the assertion in the tool
+(`tools/agentloop.py`), not in the prose.
