@@ -107,3 +107,35 @@ concrete untested speed lever we have.
 Caveat before spending a night on it: acceptance falls with depth, and on other models in this
 fleet the curve is an inverted U that turns over by n≈3-4. The 9..12 band is worth **one** arm to
 see whether acceptance has collapsed, not a full sweep on spec.
+
+## Queued experiment: quantize the PLE table (2026-08-31)
+
+**Why it outranks the speed levers.** The PLE n-gram table is **51.2 GB FP8 of a ~135 GB
+checkpoint** on a 128 GB box. At NVFP4 it would be ~25.6 GB — which does not make the CPU-offload
+path *faster*, it potentially makes the whole 1,400-line offload subsystem **unnecessary**. That is
+a structural simplification, not a tuning win, and it removes our single largest source of local
+patches and startup fragility ([[fnext-venv-ple-backport]] exists only because of offload).
+
+**vLLM cannot do this today, verified in our tree.** `modelopt.py` `get_quant_method` dispatches on
+`(LinearBase, ParallelLMHead)`, then `RoutedExperts`, then `return None`. `ParallelLMHead` is a
+*subclass* of `VocabParallelEmbedding`, so a **plain embedding never matches any branch** — there is
+no embedding-quantization path at all. SGLang has `ModelOptNvFp4EmbeddingMethod`.
+
+**Do not build a checkpoint first.** `starkweatherdigital` already published an NVFP4 PLE
+(102.4 → 28.80 GB, same E2M1 + per-16 FP8-block-scale layout as the experts) behind a ~130-line
+loader patch and `VLLM_PLE_NVFP4=1`. Testing theirs is hours; building ours is days.
+
+**Order of work, cheapest disqualifier first:**
+1. **Cosine against BF16 on the PLE table, offline, no server.** Our FP8 PLE matches BF16 at
+   0.999635. NVFP4 on a table that feeds *every* layer is a far larger step than FP8 was, and this
+   is the measurement that kills the idea cheaply if it is going to die.
+2. Only if that holds: load their checkpoint, confirm it serves without the offload worker.
+3. Only then: quality gate (NIAH is not sufficient — it passed at 71.85 ms/tok, it cannot see
+   degradation), then decode/TTFT/ms-tok against the current config.
+
+⚠️ NIAH cannot gate this. Thirteen consecutive 5/5 passes across every config today, including the
+worst-performing one, means it discriminates nothing. A PLE quality regression needs a real
+comparison — logprob divergence or a task score — before any number is believed.
+
+Related: [[speculation-costs-kv-pool]] (the other place block geometry eats memory),
+[[evidence-standard]].
