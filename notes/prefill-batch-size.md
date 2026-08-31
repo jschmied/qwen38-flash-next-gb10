@@ -1,49 +1,41 @@
-# Prefill batch size: the TTFT half holds, the agent-loop half was measured wrong
+# Prefill batch size: the default was already right
 
-Measured 2026-08-31, one server start per batch value, no speculation, `fp8head`,
-`max-model-len 32768`, c=1. TTFT cells are medians of 6 requests.
+Measured 2026-08-31, one server start per arm, no speculation, `fp8head`,
+`max-model-len 32768`, c=1. TTFT cells are medians of 6 requests; `ms/tok` is the fixed-work
+agent loop (`tools/agentloop.py`).
 
-| batch | TTFT @4k | TTFT @28k | decode |
-| ---: | ---: | ---: | ---: |
-| 2048 | 1.95 s | 14.01 s | 26.8 |
-| 4096 (prod default) | 1.60–1.68 s | 11.96 s | 27.0 |
-| 8192 | 1.99 s | 11.78 s | 27.0 |
-| 16384 | 1.83 s | **10.41 s** | 26.9 |
+| batch | TTFT @28k (samples) | mean | ms/tok |
+| ---: | --- | ---: | --- |
+| 2048 | 13.04 / 13.08 / 13.74 | 13.3 | 43.46 / 43.92 |
+| **4096 (prod default)** | 11.62 / 11.73 / 11.96 | **11.77** | 43.37 / 43.64 / 43.80 |
+| 8192 | 11.78 | 11.78 | — |
+| 16384 | 10.41 / 13.64 / 11.57 | 11.87 | **45.52 / 45.41** |
 
-**Deep TTFT improves monotonically, 26% across the range**, and decode is untouched. At 4k batch
-size does nothing (1.83–1.99, inside noise) — a 4000-token prompt is one chunk at every size
-≥4096. The effect is purely how many chunks a long prompt is cut into: 4 at 16384 against 14 at
-2048. This part stands.
+**Conclusion: keep 4096.** Going below it costs ~13% deep TTFT. Going above it buys nothing and
+costs ~4.5% per agent turn. Decode is flat at 26.7-27.3 everywhere.
 
-The curve is not smooth. The drops are 2048→4096 (−15%) and 8192→16384 (−12%), with 4096→8192
-nearly flat (−1.5%). **Our 4096 default already captures most of the available deep-TTFT gain**;
-going to 16384 buys a further 13%, not the ~20% first estimated off an interpolated 4096 point.
+At 4k, batch size does nothing at all (1.60-2.13 across every setting) — a 4000-token prompt is one
+chunk at any size ≥ 4096.
 
-## ⚠️ The agent-loop column has been withdrawn — the harness measured unequal work
+## ⚠️ An earlier version of this note recommended 16384. That was wrong.
 
-An earlier version of this note reported an agent loop degrading 37% monotonically with batch size
-(1.63 → 2.17 → 2.23 s/turn) and called the trade **established**. That is retracted.
+The first 16384 arm measured **10.41 s** at 28k, which with tight 4096 and 2048 arms either side
+produced a clean monotonic trend. It was called *established* and *"the one result today I'd act on
+unreserved"*, and shipped to the published page.
 
-`agentloop.py` sent `max_tokens: 130` with **no `ignore_eos`** and never recorded
-`completion_tokens`. `max_tokens` is a **ceiling, not a target**, so each arm was timed on however
-many tokens the model happened to emit. A run whose turns stop at 40 tokens beats one whose turns
-run to 130 with no difference in speed at all.
+Replication broke it: the next two arms gave **13.64** and **11.57**. Batch 16384's deep TTFT spans
+**31%** where 4096 spans 3% — the 10.41 was the low end of a noisy distribution, not a trend point.
+Engine config was byte-identical across those arms (KV pool 1,011,875, block 800, concurrency
+30.88×), so this is not the vllm#54122 compile-cache effect; the configuration is simply noisier at
+that batch size.
 
-The tell arrived on replication: the **no-speculation baseline at batch 4096 gave 1.94 s/turn and
-then 1.43 s/turn** — a 36% spread on the same configuration, as large as the entire "trend". Every
-agent-loop comparison made that day rests on this harness, so all of them go with it:
+**The reasoning error is worth more than the result.** Three tight arms each at 2048 and 4096
+convinced me the *metric* was stable, so I trusted single points at 8192 and 16384. Stability at one
+configuration does not transfer to another — noise is a property of the (metric, configuration)
+pair, not of the metric. Every setting needs its own replication before it joins a trend.
 
-- "ngram n=4 beats no-speculation (1.71 vs 1.94)" — **withdrawn**
-- "suffix and MTP are worse than baseline (2.13 vs 1.94)" — **withdrawn**
-- "batch size trades deep TTFT against agent latency" — **withdrawn**; only the TTFT half survives
+The `ms/tok` column is the counter-example that makes the point: at 16384 it reproduces to 0.2%
+(45.52 / 45.41) while TTFT at the same setting spans 31%. Same arms, same server, two metrics with
+completely different stability.
 
-This is the same defect this repo already documents under "an all-empty cell is not a comparison":
-a measurement that does not assert what it compared. The guard existed in the notes and was not in
-the harness. **A guard does not travel to the next script you write** — it has to be in the tool.
-
-**Fixed:** `ignore_eos: True` pins the work at 8 × 130 tokens, per-turn token counts are recorded,
-and the summary prints `ms/tok` plus a loud `!! UNEQUAL WORK` flag if the total is not exactly
-1,040. Re-running the comparisons on the fixed harness is the open item.
-
-Related: [[agentic-speed-is-ttft-bound]] — still supported by the TTFT column, which is where the
-depth cost actually lives, and which this defect does not touch.
+Related: [[which-drafter-for-agent-work]], [[speculation-costs-kv-pool]].
