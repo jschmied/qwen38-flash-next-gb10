@@ -174,6 +174,23 @@ the code's own comment says a ring narrower than `span` lets a rejected draft ro
 committed key, so wider is merely slack. Widening 12 -> 16 instead of asserting unlocks the band;
 see `patches/models_qwen3_8_flash_next_common_qsa_cache.py.patch`.
 
+**This is not a GB10 quirk.** I first read it as one, because our 848 comes from the hybrid-group
+LCM and looks exotic. It isn't: `n = 5..8` all give capacity 12, which needs a factor of 3, and no
+power-of-two block size has one — so the band is unreachable for **every user of this model on
+every GPU**, and the assert is still on `main`.
+
+| block_size | blocked n |
+| --- | --- |
+| 16 / 32 / 64 / 128 / 256 / 512 / 1024 / 2048 | 5, 6, 7, 8, 13, 14, 15, 16 |
+| 848 (ours) | 5, 6, 7, 8, 13, 14, 15, 16 |
+| 1600 | 5, 6, 7, 8 |
+
+Reported upstream as [vllm#54552](https://github.com/vllm-project/vllm/issues/54552), including
+both caveats against our own case: the unobserved warning, and the fact that the band we unlocked
+is a regression *for our workload* while a SGLang DGX Spark report measures accepted length
+3.95 -> 7.12 from a wider draft window on code completion. Reachable and measurable is the claim;
+better is not.
+
 Verified rather than assumed: pre-patch, capacity 12 hard-failed for **two different drafters**
 (ngram n=5 at 12:01, suffix n=5 at 12:22), so `block_size 848` is stable across methods. Post-patch,
 `SpeculativeConfig(method='mtp', num_spec_tokens=6)` serves. ⚠️ The widening `warning_once` never
