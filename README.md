@@ -113,9 +113,12 @@ of resident memory — and **the PLE offload is not the bottleneck**: major faul
 - 24 Q heads / 2 KV heads, head_dim 256, **262144** native context
 - `layer_types`: 3 × `linear_attention` + 1 × `full_attention`, repeating (GDN hybrid)
 - n-gram: 20 M × 2560 = **51.2 B** parameters, 128 shards, attached at layer 1
-- **MTP: 1 layer**, "trained with multi-steps" — so k>1 reuses it autoregressively. Qwen publish
-  no recommended k; **k=2 is optimal**, confirmed by the architecture, our own k=3 arm, and an
-  independent 0–10 sweep.
+- **MTP: 1 layer**, "trained with multi-steps" — so k>1 reuses it autoregressively. Qwen publish no
+  recommended k; the official vLLM recipe specifies **3**. We previously called **k=2 optimal** on
+  decode evidence — **that is withdrawn**: on a fixed-work agent loop k=2 is the *worst*
+  configuration measured here (48.6 ms/tok over 3 arms, against 43.6 for no speculation at all),
+  while **n=5 is the best** at 31.9. Decode and per-turn latency rank the depths in opposite orders.
+  See [which drafter for agent work](notes/which-drafter-for-agent-work.md).
 
 Per-token byte budget (decode, `fp8head`): GDN 1.95 GiB, experts 1.24, hyper-connections 1.19,
 QSA 0.59, `lm_head` 0.59, shared_expert 0.44. **The experts are 20% of it at c=1 and ~80% at
