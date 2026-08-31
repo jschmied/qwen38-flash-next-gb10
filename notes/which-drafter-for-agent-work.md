@@ -44,21 +44,23 @@ moves (848 vs 800), so it keeps its cache and most of its pool.
 Every arm above uses prose-like prompts. Re-run with an edit-shaped loop — each turn returns the
 same function with one identifier changed, so most output tokens already exist in the context:
 
-| config | generic ms/tok | edit-shaped ms/tok | gain from repetition |
-| --- | ---: | ---: | ---: |
-| **ngram_gpu n=4** | 33.82 | **26.18** | **−23%** |
-| ngram n=4 | 33.3 | 29.27 | −12% |
-| MTP k=2 | 47.75 | 36.85 | −23% |
-| no speculation | 43.5 | 43.80 | 0% |
+| config | generic ms/tok | edit-shaped ms/tok | arms (gen/edit) |
+| --- | ---: | ---: | :---: |
+| ngram_gpu n=4 | 33.82 | **27.4** (26.18, 28.61) | 1 / 2 |
+| ngram n=4 | 33.3 (33.26, 33.39) | **28.9** (29.27, 28.51) | 2 / 2 |
+| MTP k=2 | 48.6 | 36.9 | 3 / 1 |
+| no speculation | 43.5 (43.37, 43.64, 43.80) | 43.6 (43.80, 43.37) | 3 / 2 |
 
-**`ngram_gpu` is the fastest configuration measured on this box for agent work** — 26.18 ms/tok,
-40% better than no speculation and 29% better than MTP k=2.
+**ngram's advantage is larger on edit-shaped work: −34% against −23% on prose.** The baseline is
+identical across the two workloads (43.5 vs 43.6), so the whole difference is the drafter matching
+more of its output against the context — the mechanism isolated, not inferred. Real agent turns sit
+closer to the edit-shaped end, so **−34% is the figure to expect**.
 
-⚠️ **On prose, `ngram_gpu` looked like a clean null** (33.82 against ngram's 33.3) and was written
-up here as one: "CPU-side matching was never the bottleneck, so there was nothing to reclaim." That
-was true of prose and false in general. With edit-shaped context there are far more candidate
-matches to search, so finding a draft *does* cost something — and that is exactly the cost moving to
-the GPU removes. A single-workload benchmark would have filed the fastest config as "no benefit".
+⚠️ **`ngram_gpu` is NOT measurably better than `ngram`.** An earlier version of this note called it
+"the fastest configuration measured" and quoted an 11% edge on edit-shaped work, off one arm each.
+With two arms each the gap is 5% with **overlapping ranges** (26.18-28.61 against 28.51-29.27). On
+prose they were already equal (33.82 vs 33.3). Under [[evidence-standard]] that is a tie.
+**Recommendation: use `ngram`; the GPU variant buys nothing measurable here.**
 
 **The baseline does not move** (43.80 vs 43.5), which isolates the effect: without a drafter,
 repetitive output is no faster than prose, because decode speed does not care what the tokens are.
