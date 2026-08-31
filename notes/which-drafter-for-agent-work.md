@@ -44,14 +44,29 @@ moves (848 vs 800), so it keeps its cache and most of its pool.
 Every arm above uses prose-like prompts. Re-run with an edit-shaped loop — each turn returns the
 same function with one identifier changed, so most output tokens already exist in the context:
 
-| workload | no speculation | ngram n=4 | gain |
+| config | generic ms/tok | edit-shaped ms/tok | gain from repetition |
 | --- | ---: | ---: | ---: |
-| generic (prose-like) | 43.5 | 33.3 | −23% |
-| edit-shaped | 43.80 | **29.27** | **−33%** |
+| **ngram_gpu n=4** | 33.82 | **26.18** | **−23%** |
+| ngram n=4 | 33.3 | 29.27 | −12% |
+| MTP k=2 | 47.75 | 36.85 | −23% |
+| no speculation | 43.5 | 43.80 | 0% |
+
+**`ngram_gpu` is the fastest configuration measured on this box for agent work** — 26.18 ms/tok,
+40% better than no speculation and 29% better than MTP k=2.
+
+⚠️ **On prose, `ngram_gpu` looked like a clean null** (33.82 against ngram's 33.3) and was written
+up here as one: "CPU-side matching was never the bottleneck, so there was nothing to reclaim." That
+was true of prose and false in general. With edit-shaped context there are far more candidate
+matches to search, so finding a draft *does* cost something — and that is exactly the cost moving to
+the GPU removes. A single-workload benchmark would have filed the fastest config as "no benefit".
 
 **The baseline does not move** (43.80 vs 43.5), which isolates the effect: without a drafter,
 repetitive output is no faster than prose, because decode speed does not care what the tokens are.
-The whole 12% improvement is ngram finding more of its draft already present in the context.
+Every drafter gains; only the baseline is flat.
+
+**MTP k=2's anomaly is prose-specific.** On edit-shaped work it behaves sanely at 36.85 — better
+than baseline, as a drafter should be. It is only on generic prompts that it lands *worse than no
+speculation at all* (47.75 vs 43.5), which remains unexplained and is under replication.
 
 Real agent turns — quoting a file back, re-emitting a function with a small change — sit closer to
 this end than to prose, so **−33% is the more representative figure** for agent use.
