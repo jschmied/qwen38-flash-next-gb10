@@ -510,8 +510,13 @@ n=5 (31.81 / 31.97) and no-spec (43.37 / 43.64 / 43.80) replicate to under 1%. S
 harness and not the box drifting — the same code takes one of two paths depending on the server
 start.
 
-**First candidate, and it is our own instrumentation.** Two debug blocks were still live in the
-production venv:
+⚠️ **RESOLVED — it was not the instrumentation.** The cause was research subagents running on the
+same box, evicting the page cache the PLE gather depends on; see
+[[read-only-is-not-load-free]]. A quiet re-run of the same config returned 31.47 against the
+contaminated 57.61. The debug blocks below are still real and should still be removed, but they are
+not the explanation.
+
+**First candidate (superseded).** Two debug blocks were still live in the production venv:
 
 - `models/…/nvidia/ple_layer.py:669` — `self._dq_calls = getattr(self, "_dq_calls", 0) + 1` on
   **every PLE forward**, and on calls 6-9 `_e.abs().max().item()` and `(_e != 0).sum().item()`:
