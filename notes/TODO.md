@@ -139,3 +139,40 @@ comparison — logprob divergence or a task score — before any number is belie
 
 Related: [[speculation-costs-kv-pool]] (the other place block geometry eats memory),
 [[evidence-standard]].
+
+## Later: is vllm#48162 mergeable onto our branch — and would it do anything?
+
+**The mergeability test is the easy half and the wrong question to start with.**
+
+#48162 ("[Attention] Batch-level prefill/decode attention backend routing", +2037/−78, 38 files,
+open since 2026-07-09) adds `--attention-decode-backend` / `--attention-prefill-backend`. Merging it
+onto our tree is a mechanical question worth an afternoon.
+
+**But it would be inert for us as things stand.** `nvidia/qsa.py:341` hard-wires
+`self.attn_backend = Qwen3_8FlashNextQSAFlashAttentionBackend`, returned verbatim by
+`get_attn_backend()`. vLLM's own comment: *"models that hard-wire their backend never consult it"*
+(`attn_utils.py:190`). Our 12 QSA layers are the only full-attention layers in the model, so the
+flag reaches nothing.
+
+**The real prerequisite: what would we switch decode TO?** We have exactly one QSA implementation.
+A per-phase selector with one option per phase does nothing. Candidates, both problematic:
+
+- **FlashInfer block-sparse decode** — `trtllm_batch_decode_with_kv_cache(...,
+  enable_block_sparse_attention=True)` is already in our 0.6.17, takes per-KV-head page indices, and
+  sgl#36558's reporter verified the kernel numerically correct on SM121 (max abs diff 4.70e-04).
+  ⚠️ But `decode.py:3260` selects trtllm-gen only when `capability[0] == 10`, so GB10 (major 12)
+  auto-selects `xqa` and block-sparse then raises; and our own [[failure-modes]] records trtllm-gen
+  decode kernels **silently emitting garbage on SM121** (`!!!!` forever after a correct first
+  token). Two field reports directly contradict each other. Gate on numerics against the current
+  kernel, never on "it started".
+- **sglang#36845's Triton QSA kernel** — closed separately: 0.5% of GPU kernel time here, and it
+  expects flat packed varlen KV where we page.
+
+**Order if this is ever picked up:** (1) establish that a second decode backend exists and is
+numerically correct on sm_121 — that is the whole risk; (2) un-hardwire `qsa.py:341`; (3) only then
+care whether #48162 merges. Doing it in the reverse order spends the effort before learning there is
+nothing to select between.
+
+⚠️ **It also fights tonight's other lever.** `attn_utils.py:174-176` takes the **minimum** cudagraph
+support across an attention group, so adding a weaker second backend would silently downgrade our
+capture mode — the opposite of what the hyper-connection work is trying to do.
