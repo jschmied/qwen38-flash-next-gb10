@@ -39,6 +39,28 @@ moves (848 vs 800), so it keeps its cache and most of its pool.
 - **k=2 is confirmed the MTP optimum.** It beats n=6 on *both* decode and TTFT, so the deep band is
   not merely unnecessary, it is worse ([[mtp-vs-prefix-cache]]).
 
+## The advantage grows on edit-shaped work
+
+Every arm above uses prose-like prompts. Re-run with an edit-shaped loop — each turn returns the
+same function with one identifier changed, so most output tokens already exist in the context:
+
+| workload | no speculation | ngram n=4 | gain |
+| --- | ---: | ---: | ---: |
+| generic (prose-like) | 43.5 | 33.3 | −23% |
+| edit-shaped | 43.80 | **29.27** | **−33%** |
+
+**The baseline does not move** (43.80 vs 43.5), which isolates the effect: without a drafter,
+repetitive output is no faster than prose, because decode speed does not care what the tokens are.
+The whole 12% improvement is ngram finding more of its draft already present in the context.
+
+Real agent turns — quoting a file back, re-emitting a function with a small change — sit closer to
+this end than to prose, so **−33% is the more representative figure** for agent use.
+
+It is much smaller than the field's llama.cpp numbers (3.8× on copy-heavy Python). Two plausible
+reasons: our probe renames one identifier rather than echoing verbatim, and vLLM's `ngram` may
+draft less aggressively than the `ngram-mod` variant measured there. Both are testable; neither is
+tested.
+
 ## Caveats
 
 - ngram n=2 arms, MTP k=2 n=1 clean (its first arm was contaminated by a probe run against the same
@@ -46,8 +68,6 @@ moves (848 vs 800), so it keeps its cache and most of its pool.
   which is what the clean arm measured).
 - **The arms do not share an allocation unit** — block sizes 800 / 848 / 1600 — and block size is
   the prefix-cache hash unit, so some of the gap is cache geometry rather than drafter quality.
-- All prompts are prose-shaped. `ngram` feeds on repetition, and an edit-shaped workload should
-  favour it further; the field measures 88.5 vs 27.8 tok/s on this box from task shape alone. An
-  edit-shaped comparison is queued.
+- The edit-shaped comparison is n=1 per config; the generic one is n=2-3.
 - This is the third independent confirmation of [[agentic-speed-is-ttft-bound]] on this hardware,
   and the first on a metric that survives replication.
