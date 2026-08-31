@@ -120,5 +120,67 @@ Divergence at 582 prompt tokens, under a third of the budget, and it survives di
 that could still explain the disagreement — our derived checkpoint versus their stock one, and our
 patched tree — plus an offer to run any cell they want on this hardware.
 
-**Mechanism: still open.** That is the honest state, and it has been the honest state for two days
-while four plausible explanations were each measured and discarded.
+## A fifth candidate, and this one has code behind it (2026-08-31, later)
+
+Not ours — it came out of a sweep of upstream issues, and it is the first candidate that explains
+*every* observation rather than being merely consistent with some of them.
+
+**On sm_121 we never run the cooperative top-k.** `nvidia/ops/qsa.py:804-813` selects the kernel:
+
+```python
+use_cooperative_topk = (
+    current_platform.has_device_capability(90)
+    and not current_platform.is_device_capability_family(120)
+)
+... use_cooperative_topk ... else torch.ops._C.persistent_topk
+```
+
+`is_device_capability_family(120)` is `(cap // 10) == (capability // 10)`, so it matches **all of
+12.x**, GB10 included. Verified on the box:
+
+    capability                      : DeviceCapability(major=12, minor=1)
+    has_device_capability(90)       : True
+    is_device_capability_family(120): True
+    => use_cooperative_topk         : False
+
+So every request here takes `torch.ops._C.persistent_topk` — and that is the op of **vllm#51782**,
+which reports it **silently returns wrong values** when many row elements share one coarse
+histogram bin. The report is specific in ways that matter: the error is **data-dependent, not
+shape-dependent**; there are no `-1` slots and no duplicate indices, so it is invisible to every
+structural check; and a third dispatch path (`histogram_2048_topk`, tie buffer `DBUF = 3708`) is
+active for `seq_len <= 8192` — **below** `indexer_budget`.
+
+That last detail is the one that matters, because it is exactly the regime where we measured
+divergence and #54521's model predicted none. It also fits what the eliminations left standing: a
+data-dependent kernel fault is invisible to a prefix-cache control, survives MTP-off, is unaffected
+by the `lm_head` dtype, and has nothing to do with the top-k *threshold* — only with the top-k
+*kernel*. @Leonccaa reports the same on #51782 for this model at ≥4K context, diverging from
+token 2.
+
+**Status: candidate, not conclusion.** We have not demonstrated the wrong values ourselves. The
+discriminating test is to compare `persistent_topk`'s output against a reference top-k on the same
+inputs — a correctness test, not a determinism test, which is a different harness from anything
+here. Until that runs, this is a well-supported hypothesis with a verified selection path, and the
+mechanism is still formally open.
+
+**What it would mean if it holds:** #54521 is a duplicate of #51782 scoped to sm_121 by the
+family-120 exclusion, and the sub-budget divergence we reported is the evidence separating them.
+
+## The family-gate pattern is the real lesson
+
+This is the third capability-*family* check to bite this box, and they all fail the same way —
+`major`-level or family-level tests that treat sm_121 as something it is not:
+
+| gate | where | consequence |
+|---|---|---|
+| `is_device_capability_family(120)` excludes 12.x from cooperative top-k | `nvidia/ops/qsa.py:804` | forced onto the buggy `persistent_topk` — above |
+| `is_arch_support_pdl()` is `major >= 9` | `platforms/cuda.py:712` | PDL used in `_build_qsa_metadata_kernel`; the dependent kernel waits forever → the >8k hangs of vllm#53960 |
+| `support_deep_gemm()` accepts the whole 120 family | — | DeepGEMM reported supported on sm_121, then faults (vllm#54125). We already set `VLLM_USE_DEEP_GEMM=0` |
+
+Two of the three are conservative-but-wrong and one is permissive-but-wrong, so there is no safe
+direction to guess in. **A capability family is not a capability**, and on this hardware that
+distinction has produced a silent correctness bug, a deadlock, and a fault.
+
+**Mechanism: still open, but no longer without a suspect.** Four explanations were measured and
+discarded; the fifth arrived with a verified dispatch path and a matching upstream report, and now
+needs a correctness harness rather than another determinism run.
