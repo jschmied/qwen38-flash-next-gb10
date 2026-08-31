@@ -161,3 +161,39 @@ Not a compromise setting — a threshold, with both sides measured and a mechani
 it sits where it does. Practically: ordinary generation is far above it, and terse tool-calling
 loops are below it. Never k=1 (dominated). The shipped default stays **MTP k=2**, which is correct
 for everything except short-turn agent work.
+
+## The 5..8 band is now reachable — and n=6 is worse than no speculation (2026-08-31)
+
+Two separate findings, and the second undercuts the reason for wanting the first.
+
+**The depth limit was a misread constraint.** `k=5` fails with `QSA ring capacity 12 must divide
+the attention block size 848`, and we had recorded that as a ceiling. It is a hole:
+`capacity = compress_ratio * cdiv(compress_ratio + n, compress_ratio)`, so n=0..4 and n=9..12 are
+legal and only 5..8 are not (848 = 2^4 * 53 has no factor 3). The requirement is also **one-sided** —
+the code's own comment says a ring narrower than `span` lets a rejected draft row overwrite a
+committed key, so wider is merely slack. Widening 12 -> 16 instead of asserting unlocks the band;
+see `patches/models_qwen3_8_flash_next_common_qsa_cache.py.patch`.
+
+Verified rather than assumed: pre-patch, capacity 12 hard-failed for **two different drafters**
+(ngram n=5 at 12:01, suffix n=5 at 12:22), so `block_size 848` is stable across methods. Post-patch,
+`SpeculativeConfig(method='mtp', num_spec_tokens=6)` serves. ⚠️ The widening `warning_once` never
+appeared in the log — the branch either ran silently or was deduplicated. The assert provably fired
+before and provably does not now, but that line should be visible before this goes upstream.
+
+**And then n=6 loses to no speculation at all on agent work.** Same harness, same checkpoint, same
+batch 4096 / maxlen 32768:
+
+| | decode | TTFT | agent loop, 8 turns |
+| --- | --- | --- | --- |
+| no speculation | 27.0 tok/s | 1.60 s | **1.94 s/turn** |
+| MTP n=6 | 35.2 tok/s (+30%) | 2.63 s (+65%) | 2.70 s/turn (**+39% worse**) |
+
++39% is far outside the 6.9% decode noise floor. The decode column and the agent column point in
+opposite directions, which is the whole thesis of [[agentic-speed-is-ttft-bound]] showing up in one
+arm: deeper speculation buys decode and pays in TTFT, and a ~130-token turn cannot amortise the
+prefix block it costs.
+
+**So the 9..12 band is not the speed lever it looked like this morning.** It is a decode-benchmark
+lever and an agent-work regression. Still worth one arm if long single-shot generation ever matters
+here — break-even is ~68 output tokens — but it should not be swept on the strength of the
+formula alone. Measuring n=6 cost one server start and closed the whole band for agent use.
