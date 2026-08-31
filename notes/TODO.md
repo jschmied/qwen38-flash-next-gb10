@@ -1,142 +1,88 @@
 # Open work, ranked
 
-Written 2026-08-30. Each item says what it is, what it is worth, and what would settle it.
-Anything measured-and-closed lives in its own note, not here.
+Rewritten 2026-08-31. Anything measured-and-closed lives in its own note; this file says only what
+is open, what is blocked, and what is settled enough not to revisit.
+
+## Open, in order
+
+1. **Corroborate or refute vllm#54521's `indexer_budget` model.** They report greedy decoding
+   deterministic *below* `indexer_budget` (2048) and non-deterministic above, because QSA switches
+   to top-k selection — which would explain our own unexplained non-determinism. **Our first run
+   contradicts them:** divergence at 582 and 1,142 prompt tokens, both well below the budget. But we
+   run MTP k=2 and their repro does not, so the decisive cell is MTP-off below the budget. In
+   flight. Either outcome is worth reporting; the issue has no comments.
+2. **Quality scorecard: repeat Task A (Go), n≥4, then Task B (Java).** Current result is a single
+   FAIL at temperature 1.0 on one generics error (`entry[_, _]`). Two rows of our scorecard were
+   wrong until re-run; a 2/4 or 3/4 is worth far more than one FAIL.
+3. **DFlash2 re-measure.** vllm#52816 merged 2026-08-21. Use merged main, **not** the abandoned
+   0.27.1 port (−5.7% decode, −0.24 accept length).
+4. **Acceptance gap** — ours 56.6% at k=2 against 73.7% and 75.6% reported elsewhere. ⚠️ Re-scoped:
+   DJLougen measured acceptance collapsing 33.3% → 3.7% on **batch geometry alone**, with the output
+   diverging. An acceptance number without its batch geometry may not be comparable at all, so
+   settle the geometry before chasing the gap.
+5. **MTP under concurrent load** (c=16/c=32). Nearly free at c=1; should worsen as the batch
+   saturates bandwidth. Single-stream and agent-loop behaviour are now both measured — this is the
+   remaining axis.
+6. **INT8 `lm_head`** (styles01's `patch_int8_lmhead_v3.py`) against our FP8 blockwise. 3.35 ms vs
+   8.8 ms at B=1 reported, argmax-exact, frees ~1.4 GiB. Their patch targets 0.25.1 paths, so
+   porting is real work and the payoff is unmeasured.
+
+**Needs a decision, not a measurement:** the **NVFP4 PLE checkpoint** (`provsalt/…-PLE-NVFP4` plus
+the `qwen38_nvfp4_ple` plugin) is ~26.8 GiB against our 47.7 at FP8 — roughly **21 GiB back**. It is
+a large download; ask before starting.
 
 ## Blocked on someone else
 
-- **Push `gb10-sm121-fixes` / open its PR.** Branch is rebased onto vllm#53896 head `91a6b555`,
-  three commits, pushed to <https://github.com/jschmied/vllm/tree/gb10-sm121-fixes>. Its code
-  exists only on the PR branch, so it cannot target `main`; the route is the comment already on
-  #53896. Nothing to do until that PR moves.
-- **SWE-bench Multilingual-28 (Go/Java).** Needs the x86 box `10.0.0.8` — currently *no route to
-  host*. arm64 has **no** Java/JS eval images, so there is no fallback. When it returns: tunnel
-  must cross ports (`-R 8080:127.0.0.1:8092`), and `--model openai/flashnext`.
+- **`gb10-sm121-fixes`** — ⚠️ **unblocked as of 2026-08-31**: #53896 merged, so these three commits
+  can now target `main` instead of a PR branch. They need rebasing onto the post-merge tree, where
+  the package is `qwen4_exp`.
+- **SWE-bench Multilingual-28 (Go/Java)** — needs the x86 box `10.0.0.8`, currently *no route to
+  host*. arm64 has no Java/JS eval images, so there is no local fallback. When it returns: the
+  tunnel must cross ports (`-R 8080:127.0.0.1:8092`), and `--model openai/flashnext`.
+- **SGLang** — sgl#36558 reports Flash-Next unservable on SM121; base support (#36497) and the
+  SM120/121 resolver fix (#36556) are both unmerged. `is_sm120_supported()` gates on **major 12**, so
+  #36556 *does* cover GB10 — the blocker is only that it has not landed. Watch, do not attempt.
 
-## Closed since this file was written (2026-08-30)
+## Settled — do not re-open without new evidence
 
-- **`--max-num-seqs` 16 → 64** — null (−0.3% at c=16, +1.1% at c=1, both inside the 6.9% noise
-  floor). ~100 tok/s at c=16 is a real bandwidth ceiling, independently corroborated by 0xBakeer's
-  vLLM recipe landing at 96–109. Their 1.2–2.7× came from a baseline of **2** slots, not 16.
-- **MoE backend axis** — `moe_backend='auto'` already resolves to `FLASHINFER_CUTLASS` here and
-  always has, so it was never an untried lever; `b12x` is rejected; `triton`/`cutlass` hit the
-  SM120/121 SMEM overflow. The five remaining backends have no field evidence favouring them.
-- **vllm#53960 PLE deadlock** — fixed upstream by `4e8b849b8d97`, backported into our venv,
-  verified serving at no cost. We could not reproduce the hang and said so upstream.
-- **SGLang as a stack switch** — blocked: sgl#36558 reports Flash-Next unservable on SM121, and
-  both the base support (#36497) and the resolver fix (#36556) are unmerged. `is_sm120_supported()`
-  gates on **major 12**, so #36556 does cover GB10 — the blocker is that it has not landed, and it
-  carries no GB10 verification.
-
-## Worth doing, in order
-
-0. **Quantize the drafter's MoE — reopens b12x and frees ~3.6 GiB.** The one lever that pays
-   twice. `config.json`'s `ignore` contains `mtp.*`, so `mtp.layers.0.mlp.experts.{gate_up,down}_proj`
-   (2 tensors, **4.86 GiB BF16**) carry no scales while the body's 294,912 expert tensors all do.
-   Because `--moe-backend` was believed global (**it is not** — `SpeculativeConfig.moe_backend`
-   sets the drafter's independently), that single unquantized layer appeared to veto the choice for all
-   48 quantized layers — `map_unquantized_backend` raises instead of falling back
-   (`fused_moe/oracle/unquantized.py:166`), **10.5 minutes in**, after weight load and
-   `torch.compile` rather than at config parse.
-   Both b12x halves are present in this venv (`has_flashinfer_b12x_gemm()` and
-   `has_flashinfer_b12x_moe()` return `True`), and the path is known to work on this hardware —
-   `CUTE_DSL_ARCH=sm_121a` exists in the launcher *because* it was required for the b12x path on the
-   27B. So this is blocked by **our checkpoint**, not by the backend or the GPU.
-   **Build traps, all previously paid for:**
-   - `quant_algo: MIXED_PRECISION` reads **`quantized_layers`, not `config_groups`** — editing the
-     latter looks right, changes nothing, and fails silently.
-   - A layer left in `ignore` is caught earlier by `is_layer_excluded` and served unquantized, so
-     `mtp.*` must come **out of `ignore`** as well as gaining a `quantized_layers` entry.
-   - Gate the result offline with `ModelOptMixedPrecisionConfig.from_config` +
-     `_resolve_quant_algo(...)` before any server starts (~10 s, no GPU).
-   - Passthrough tensors must match BF16 exactly; scan every rank.
-   Expected payoff: ~3.6 GiB resident back, plus the full MoE backend set (`flashinfer_b12x`,
-   `flashinfer_trtllm`, `flashinfer_cutedsl`) becomes selectable for a real A/B against the
-   `FLASHINFER_CUTLASS` that `auto` picks today.
-   ⚠️ Separately: native **`b12x`** (for `--linear-backend b12x`) is a *different package* and is
-   **not installed in any venv** — do not conflate the two.
-
-1. **Repeat Task A (Go), n≥4.** Current result is FAIL at N=1 on one generics error
-   (`entry[_, _]`), at temperature 1.0. Our own scorecard has two rows that were wrong until
-   re-run. A 2/4 or 3/4 is worth far more than one FAIL. Then Task B (Java) for the pair.
-2. **FP8 QSA KV** (from `alesha-pro/qwen38-flash-next-4x3090`). Roughly doubles the KV pool, which
-   now matters at 32k context. Needs: QSA dtype/scale plumbing, an FP8 decode kernel, and
-   **calibrated scales — no scale=1 fallback**. Not upstream (deferred post-merge on #53896), so
-   it is a fork decision. Verify all 12 QSA layers *log* their scales.
-3. **DFlash2 re-measure.** vllm#52816 merged 2026-08-21 (`b389ac29`), which unblocks the queued
-   comparison. Use the merged main, not the abandoned 0.27.1 port (that one loses 5.7% decode and
-   0.24 accept length).
-4. **INT8 lm_head** (from `styles01`, `patch_int8_lmhead_v3.py`). 3.35 ms vs 8.8 ms at B=1,
-   argmax-exact, frees ~1.4 GiB. Ours is FP8 blockwise at +19.1% under MTP. Whether INT8 beats it
-   is unmeasured; the patch targets vLLM 0.25.1 paths so porting is real work.
-5. **Acceptance gap.** Ours is 56.6% at k=2 where YSLAB report 73.7% on the same architecture.
-   Not explained by the FP8 head (BF16 head only reaches 60.3%). Most likely workload — our bench
-   continues random real-corpus slices, deliberately unpredictable. Settle with an easier prompt
-   set; acceptance is the one lever that scales throughput without touching bytes or kernels.
+- **Hyper-connections** — three interventions, all null, mechanism understood (latency-bound at ~78%
+  of roofline across ~102k calls). Corroborated three ways.
+- **NVFP4 KV** — three independent GB10 measurements, plus a structural MTP-acceptance penalty, plus
+  silent failure. (**FP8** KV is different and now shipped-capable: ×1.72 pool, see `fp8-kv.md`.)
+- **MTP k=1** — strictly dominated. Same one-block cache cost as k=2 for +31% decode instead of
+  +56%. Never use it.
+- **`--max-num-batched-tokens` 8192** — reversed at n=3; the apparent +10–12% was prefill noise.
+  Stays at 4096.
+- **`--max-num-seqs` 16 → 64** — null. ~100 tok/s at c=16 is a real bandwidth ceiling,
+  independently corroborated at 96–109.
+- **MoE backend axis** — `auto` already picks `FLASHINFER_CUTLASS`; b12x is selectable once the
+  drafter is quantized and then faults (vllm#50189). See `moe-backend-axis.md`.
+- **FlashInfer AOT prebake** — the jit-cache wheel already ships 960 `.so`; we invoke ninja zero
+  times. ⚠️ **Do not bump flashinfer past 0.6.17** — 0.6.18 drops SM121a cubins from the aarch64
+  cu130 wheel.
+- **Lowering `gpu-memory-utilization`** — refuted; 0.70 was the worst recorded outcome, and the
+  runbook it came from is dual-node Ray+EP where the growth is in pools utilization does not bound.
+- **The sm_121 gate on the CUTE-DSL skinny GEMM** — null with stock configs (36.45 → 35.92).
 
 ## Cheap, do alongside anything
 
-- **Add to the offline gate**: shared-expert *gate* must stay BF16 (alesha-pro's rule; we comply by
-  inheritance, not by check).
-- **Add to the bench harness**: accept-length pinned at maximum is a **corruption signature**, not
-  health — one field case read 3.00/3 while GSM8K scored 0/10. We already read the counters.
-- **Carry the KLD caveat**: our divergence harness must not label top-N KLD as full-vocabulary KLD.
-
-## Do not spend time on
-
-- **Hyper-connection quantization or kernels** — three interventions, all null, mechanism
-  understood (latency-bound at ~78% of roofline; ~102k calls). Corroborated three ways
-  independently. See `why-the-hyper-connections-do-not-respond.md`.
-- **NVFP4 KV** — closed by two independent GB10 measurements plus a structural MTP-acceptance
-  penalty, and it fails silently.
-- **FlashInfer AOT prebake** — `flashinfer-jit-cache` already ships 960 prebuilt `.so`; we invoke
-  ninja zero times. Keep it as a post-driver-upgrade recovery procedure only. **Do not bump
-  flashinfer past 0.6.17** — 0.6.18 drops SM121a cubins from the aarch64 cu130 wheel.
-- **Lowering `gpu-memory-utilization` to avoid freezes** — refuted; 0.70 is the worst recorded
-  outcome. The cause is absolute free memory at launch, not the ratio.
-- **The sm_121 gate on the CUTE-DSL skinny GEMM** — measured null with stock configs
-  (36.45 → 35.92). dolf3131 got +6.9% only with hand-swept TP=1 configs.
+- **Gate**: shared-expert *gate* must stay BF16 — we comply by inheritance, not by check.
+- **Harness**: accept-length pinned at maximum is a **corruption signature**, not health (one field
+  case read 3.00/3 while GSM8K scored 0/10).
+- **Harness**: detect empty content by **`finish_reason: "length"`**, not by counting characters
+  afterwards — that let a determinism probe call five empty strings "identical", twice.
+- **Carry the KLD caveat**: top-N KLD is not full-vocabulary KLD.
 
 ## Standing rules earned the hard way
 
-- **Profile the regime you will measure**, and **verify the lever is real at the shape level before
-  building anything** (`tools/shapebench.py`, two minutes).
-- **A serving config has capabilities, not just speed.** Probe tool calls and a long generation
-  before benchmarking a new recipe. Both of tonight's defects were invisible to every speed test.
-- **Prove a kernel ran** — log first-sight dispatch keys inside the op. A call-count threshold
-  never fires under cudagraph replay.
-- **Clear `VLLM_CACHE_ROOT` + `TORCHINDUCTOR_CACHE_DIR`** when benchmarking a source-level patch;
-  a stale graph replays unpatched code. (Config flags *are* hashed correctly — checked.)
-- **Noise floor is 6.9%** (n=6). Nothing under ~10% is callable from single runs.
-
-- **MTP on/off under load.** Does k=2 cost aggregate throughput at c=16/c=32? Speculation is nearly
-  free at c=1 and should get worse as the batch saturates bandwidth. Same inputs, one A/B. Raised by
-  the SEQS negative result (`log.md`, 2026-08-30) — do **not** compare against the old 266.8 tok/s
-  c=48 row, which differs in more than concurrency.
-
-- **FP8 KV — REOPENED the same day.** vllm#54426 (RFC, 2026-08-30) publishes a **working patch**
-  against our exact build, measured on **one GB10**: KV pool 780,638 → **1,399,848** tokens (×1.79),
-  max concurrency at 262k/req 2.98× → **5.34×**, needle-in-a-haystack **5/5**, decode 32.0 tok/s at
-  100k with no regression. Their diagnosis: *"only the read side of the QSA Triton kernels was
-  missing."* They ask for corroboration — *"a single machine is thin evidence"* — and we are the
-  obvious second machine: same GB10, same build, and we reached the opposite conclusion from the
-  guards alone.
-  **Our closure below was right about stock vLLM and wrong as a verdict on feasibility.** The four
-  guards are real; they were guarding an unimplemented read path, not a hardware limit. Corroborating
-  or refuting this is now the highest-value open item — it is someone else's patch, our hardware, and
-  a number (×1.79 KV pool) that would matter more to us than anything measured today.
-
-- ~~**FP8 KV**~~ — ~~CLOSED 2026-08-30, unsupported~~ (superseded by the entry above; the guard
-  citations below remain accurate for stock vLLM). vLLM's QSA backend declares
-  `supported_dtypes = [torch.bfloat16]` and
-  `supported_kv_cache_dtypes = ["auto", "bfloat16"]` (`vllm/models/qwen3_8_flash_next/nvidia/qsa.py:69-70`)
-  and enforces it in four places — the config check at `:107` and `:186`, the runtime check
-  `if key_cache.dtype != torch.bfloat16 or query.dtype != torch.bfloat16` at `:147`, and
-  `:289`. There is also a guard at `:190` rejecting any `quant_config.kv_cache_scheme`.
-  So FP8 KV on this model is **rejected at config time**, not merely unmeasured; sgl#36545's
-  BF16-q-vs-FP8-k assert is the same constraint surfacing in SGLang. The ten-minute source read
-  cost nothing and replaced a multi-hour build. sgl#36797's finding still stands and is now moot
-  for us: fp8 was only ever worth **pool size, not throughput**.
-- **SGLang — watch, do not attempt.** sgl#36558 reports Flash-Next *unservable* on SM121 (QSA
-  decode resolver gates on `is_sm100_supported()`); base support sgl#36497 and the resolver fix
-  sgl#36556 are both unmerged. Revisit when #36556 lands.
+- **Noise floor 6.9% — for *decode*.** ⚠️ **Prefill is ±20%** (1,633–2,367 tok/s within one
+  configuration). A prefill claim needs n≥3 and a wider bar.
+- **Verify the lever at the shape level before building** (`tools/shapebench.py`, two minutes).
+- **A serving config has capabilities, not just speed** — probe tool calls and a long generation
+  before benchmarking a recipe.
+- **Prove a kernel ran**; a call-count threshold never fires under cudagraph replay.
+- **Clear `VLLM_CACHE_ROOT` + `TORCHINDUCTOR_CACHE_DIR`** for source-level patches.
+- **A gate must ask the consumer's question** — resolve the runtime's name, read as the serving uid,
+  parse the file the runtime parses. Ours passed three times while the server failed.
+- **When two config edits fail identically, stop editing and instrument.**
+- **`max_tokens` is a ceiling, not a target.** Use `ignore_eos` to force a generation length.
