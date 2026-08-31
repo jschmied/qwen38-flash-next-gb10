@@ -46,3 +46,42 @@ started with, and neither is explained by anything measured so far.
 The field is silent here — nobody else reports agent-loop latency on this model, and the one public
 ring-width A/B (hashd1ve, SGLang) confounds width with depth, comparing ring-4-at-depth-4 against
 ring-8-at-depth-8.
+
+
+## Quiet-box re-measurement (2026-08-31, after the contamination was found)
+
+Five arms between 20:18 and 21:36 were invalidated by research subagents running on the same box
+([[read-only-is-not-load-free]]). Re-run quiet:
+
+| depth | ring capacity | quiet ms/tok | note |
+| --- | ---: | ---: | --- |
+| k=2 | 8 | 48.6 (n=3) | all three pre-date the contamination |
+| k=3 | 8 | 32.48 | 21:05, between agent windows |
+| k=4 | 8 | 31.93, **31.47** | both quiet; the 38.96/57.61 arms were contaminated |
+| n=5 | **16** (widened) | 31.81, 31.97 | |
+| **n=6** | **12** | **72.32** | quiet — **confirms the contaminated 71.85** |
+| n=9 | 16 | 37.23 | |
+
+⚠️ **Correction:** after finding the contamination I guessed n=6's results were "probably artifacts
+too". They are not. A quiet arm returned 72.32 against the contaminated 71.85 — **n=6 is genuinely
+2.3× slower than its immediate neighbours.** Contamination inflated k=4; it did not create n=6.
+
+## The capacity hypothesis, in the only form that still fits
+
+Refuted twice already (k=4 and k=3 both share capacity 8 with k=2 and are fast). But n=6 is the
+**only configuration on a capacity-12 ring**, and it is the slowest thing measured:
+
+- capacity **8** → 48.6 (k=2), 32.5 (k=3), 31.7 (k=4)
+- capacity **12** → **72.3** (n=6), alone
+- capacity **16** → 31.9 (n=5), 37.2 (n=9)
+
+If capacity 12 is pathological, it also explains why our widening patch makes n=5 the *best* config
+(12 → 16) while n=6, whose block size happens to be divisible by 12, keeps the bad ring natively and
+is the worst. That would make the patch a **performance** fix at the depths where it fires.
+
+**k=2 remains a separate anomaly** — capacity 8, same as the fast k=3 and k=4, yet 48.6 across three
+tight arms. One hypothesis does not cover both.
+
+**Discriminating arm, prediction fixed in advance:** n=7 has span 11 → capacity 12. If its block
+size is divisible by 12 the ring stays at 12 and this predicts **~70**; if the widening fires it
+runs 16 and this predicts **~32**. Read the widening line from the log *before* the `ms/tok`.
