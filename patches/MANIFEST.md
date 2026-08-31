@@ -12,8 +12,14 @@ meaningfully.
 | `models/…/nvidia/qsa.py` | fp8_e4m3 KV on the QSA path — advertises the dtypes | **community**, vllm#54426 gist |
 | `models/…/nvidia/ops/qsa.py` | the read side of the same (the part that was missing) | community, same gist |
 | `models/…/nvidia/mtp.py` | `quant_config` on the MTP `ParallelLMHead`; draft-config fallback (deep-copied) | ours |
-| `models/…/nvidia/model.py` | `quant_config` on the body `ParallelLMHead` | ours |
+| `models/…/nvidia/hyperconnection.py` | widens `GatedResidual.__init__` to accept `quant_config` and threads it into all three projections (upstream hardcodes `None`) | ours |
+| `models/…/nvidia/model.py` | `quant_config` on the body `ParallelLMHead`; passes `quant_config=` to all three `GatedResidual` sites | ours |
 | `model_executor/layers/quantization/modelopt.py` | `FP8_PB_WO` + per-channel/per-token dispatch | ours; upstream equivalent in vllm#50617 |
+
+**Order matters, and `apply.sh` hardcodes it.** `hyperconnection.py` must precede `model.py`:
+`model.py` passes `quant_config=` at all three `GatedResidual` call sites, and upstream's
+`__init__` signature is `(config, use_combine=True, prefix="")`. Applying `model.py` alone
+is a `TypeError` at model construction, not a subtle degradation.
 
 ## Why this file exists
 
@@ -32,6 +38,21 @@ Then check the two that fail silently rather than loudly:
 - `grep -c _input_ready_event .../v1/ple_offload/connector.py` → **0** (shared event gone)
 - `grep -A3 supported_kv_cache_dtypes .../nvidia/qsa.py` → must list `fp8_e4m3`
 
+`apply.sh` now asserts both of those plus `quant_config=quant_config` in `hyperconnection.py`,
+and compile-checks all eight files.
+
+### Two defects fixed 2026-08-31, both found by an audit rather than by a failure
+
+1. **`hyperconnection.py` was missing from the bundle entirely** while being live on the box —
+   so the published bundle could not reproduce the machine, and would `TypeError` for anyone
+   applying it. This is the exact failure the manifest exists to prevent, recurring one directory
+   down.
+2. **The compile check never ran.** It used `py_compile`, which writes a `.pyc` beside the source
+   regardless of `PYTHONDONTWRITEBYTECODE`; against this venv's root-owned `__pycache__` that
+   raises `PermissionError`. Chained with `&&`, a permission error and a real syntax error were
+   equally silent. It now uses in-process `compile()`, writes nothing, and was negative-controlled
+   against a deliberately broken file before being trusted.
+
 ## How this relates to `live/` and `series-*/`
 
 - **`live/`** — full copies of each modified file, a *snapshot* of the box. It is the older
@@ -41,6 +62,8 @@ Then check the two that fail silently rather than loudly:
   before. Diffs rather than copies, so re-applying after a vLLM upgrade merges with upstream changes
   instead of clobbering them, and `apply.sh` is idempotent and reports `applied` / `already` /
   `FAILED` per file.
+- **`experimental/`** — patches that are *not* applied and not part of the live config. They live
+  in a subdirectory precisely so the loop cannot pick them up; see its README.
 - **`series-main/`, `series-pr53896/`** — git-format-patch series for our *upstream contributions*,
   a different purpose from either of the above.
 

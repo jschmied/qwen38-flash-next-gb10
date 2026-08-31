@@ -1,0 +1,45 @@
+--- a/vllm/models/qwen3_8_flash_next/nvidia/hyperconnection.py
++++ b/vllm/models/qwen3_8_flash_next/nvidia/hyperconnection.py
+@@ -67,7 +67,15 @@
+         config: HyperConnectionConfig,
+         use_combine: bool = True,
+         prefix: str = "",
++        quant_config=None,
+     ) -> None:
++        # PATCH (jschmied 2026-08-28): accept a quant_config. Upstream hardcodes
++        # quant_config=None on all three projections below, so the
++        # hyper-connections are unquantizable regardless of what the checkpoint
++        # declares -- the same opt-out pattern as ParallelLMHead in model.py.
++        # Note the shapes are (320, 10240): 320 % 128 = 64, so FP8_PB_WO cannot
++        # express them. MXFP8 (group 32 along K) can, and registers no
++        # input_scale, so there is no uninitialised activation scale to go wrong.
+         super().__init__()
+         self.config = config
+         self.lora_rank = config.hc_lowrank
+@@ -99,7 +107,7 @@
+                 + ([self.pad_size] if self.pad_size else []),
+                 bias=False,
+                 params_dtype=config.params_dtype,
+-                quant_config=None,
++                quant_config=quant_config,
+                 prefix=maybe_prefix(prefix, "input_mix_weight_down_block_inject"),
+                 return_bias=False,
+                 disable_tp=True,
+@@ -110,7 +118,7 @@
+                 self.lora_rank,
+                 bias=False,
+                 params_dtype=config.params_dtype,
+-                quant_config=None,
++                quant_config=quant_config,
+                 prefix=maybe_prefix(prefix, "input_mix_weight_down"),
+                 return_bias=False,
+             )
+@@ -119,7 +127,7 @@
+             self.hyper_hidden_size,
+             bias=False,
+             params_dtype=config.params_dtype,
+-            quant_config=None,
++            quant_config=quant_config,
+             prefix=maybe_prefix(prefix, "input_mix_weight_up"),
+             return_bias=False,
+         )

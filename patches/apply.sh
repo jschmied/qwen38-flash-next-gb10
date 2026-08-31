@@ -16,9 +16,25 @@ if [ "$ver" != "$EXPECT" ] && [ "${ALLOW_OTHER_VERSION:-0}" != "1" ]; then
     echo "       qwen3_8_flash_next -> qwen4_exp and refactored ple_layer.py." >&2
     exit 2
 fi
+# Explicit, ordered list -- NOT a glob. Two reasons:
+#  1. hyperconnection.py MUST precede model.py: model.py passes quant_config= to
+#     GatedResidual, whose upstream __init__ does not accept it. Applying model.py
+#     alone is a TypeError at model construction.
+#  2. a glob also picks up experimental/ leftovers and fails on a healthy tree.
+PATCHES=(
+    v1_ple_offload_connector.py.patch
+    v1_worker_gpu_model_runner.py.patch
+    models_qwen3_8_flash_next_nvidia_hyperconnection.py.patch
+    models_qwen3_8_flash_next_nvidia_model.py.patch
+    models_qwen3_8_flash_next_nvidia_mtp.py.patch
+    models_qwen3_8_flash_next_nvidia_qsa.py.patch
+    models_qwen3_8_flash_next_nvidia_ops_qsa.py.patch
+    model_executor_layers_quantization_modelopt.py.patch
+)
 fail=0
-for p in "$HERE"/*.patch; do
-    n=$(basename "$p")
+for n in "${PATCHES[@]}"; do
+    p="$HERE/$n"
+    [ -f "$p" ] || { echo "  MISSING  $n" >&2; fail=1; continue; }
     if patch -d "$SP" -p1 --forward --dry-run -i "$p" >/dev/null 2>&1; then
         patch -d "$SP" -p1 --forward -i "$p" >/dev/null && echo "  applied  $n"
     elif patch -d "$SP" -p1 --reverse --dry-run -i "$p" >/dev/null 2>&1; then
@@ -30,14 +46,29 @@ done
 # Compile-check rather than import: the model modules are circular by design and
 # only resolve when vLLM loads them through the package, so a bare import of
 # nvidia/qsa.py raises ImportError on a perfectly good tree.
-PYTHONDONTWRITEBYTECODE=1 "$VENV/bin/python" -m py_compile \
+# compile() in-process, NOT py_compile: py_compile writes a .pyc beside the source
+# regardless of PYTHONDONTWRITEBYTECODE, so as a non-root user it dies on the venv's
+# root-owned __pycache__ -- and because it was chained with &&, a genuine syntax error
+# was indistinguishable from that permission error. Both were silent. (2026-08-31)
+"$VENV/bin/python" - \
     "$SP/vllm/v1/ple_offload/connector.py" \
     "$SP/vllm/v1/worker/gpu/model_runner.py" \
     "$SP/vllm/models/qwen3_8_flash_next/nvidia/qsa.py" \
     "$SP/vllm/models/qwen3_8_flash_next/nvidia/ops/qsa.py" \
     "$SP/vllm/models/qwen3_8_flash_next/nvidia/mtp.py" \
     "$SP/vllm/models/qwen3_8_flash_next/nvidia/model.py" \
-    "$SP/vllm/model_executor/layers/quantization/modelopt.py" && echo "  compile check: OK"
+    "$SP/vllm/models/qwen3_8_flash_next/nvidia/hyperconnection.py" \
+    "$SP/vllm/model_executor/layers/quantization/modelopt.py" <<'PYEOF'
+import sys
+bad = 0
+for f in sys.argv[1:]:
+    try:
+        compile(open(f).read(), f, "exec")
+    except SyntaxError as e:
+        print(f"  COMPILE FAIL {f}:{e.lineno}: {e.msg}", file=sys.stderr); bad = 1
+sys.exit(bad)
+PYEOF
+if [ $? -eq 0 ]; then echo "  compile check: OK"; else echo "  compile check: FAILED" >&2; fail=1; fi
 # the two that fail SILENTLY rather than loudly
 grep -q "_input_ready_event" "$SP/vllm/v1/ple_offload/connector.py" \
     && { echo "  WARN: shared _input_ready_event still present (PLE patch not applied)" >&2; fail=1; } \
@@ -45,4 +76,7 @@ grep -q "_input_ready_event" "$SP/vllm/v1/ple_offload/connector.py" \
 grep -A4 supported_kv_cache_dtypes "$SP/vllm/models/qwen3_8_flash_next/nvidia/qsa.py" | grep -q fp8_e4m3 \
     && echo "  check: fp8_e4m3 KV advertised" \
     || { echo "  WARN: fp8 KV patch not applied" >&2; fail=1; }
+grep -q "quant_config=quant_config" "$SP/vllm/models/qwen3_8_flash_next/nvidia/hyperconnection.py" \
+    && echo "  check: hyper-connections receive quant_config" \
+    || { echo "  WARN: GatedResidual still hardcodes quant_config=None -- model.py will TypeError" >&2; fail=1; }
 exit $fail
