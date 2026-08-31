@@ -62,3 +62,58 @@ consistent with our standing TTFT/decode break-even near ~2,000 output tokens.
 n=1 per arm, and 1.8 s over 18 s is close enough to the noise floor to demand repetition. Rounds 2
 and 3 are queued, alternating arms. **The shipped config still runs MTP k=2** and will keep doing so
 until this survives n=3.
+
+## Overnight program: the cost is fixed, and k=1 is dominated
+
+Five arms, each measuring a cache-free depth curve (unique prompts) and cache behaviour across five
+prompt lengths (four identical requests each).
+
+### The MTP cache cost is a fixed ~1,600 tokens — one block — at every length
+
+| prompt | k=2 | k=1 | k=0 | deficit vs k=0 | as % of k=0 |
+|---:|---:|---:|---:|---:|---:|
+| ~2k | 1,600 | 1,584 | 3,200 | 1,600 | **50.0%** |
+| ~4k | 4,800 | 4,752 | 7,200 | 2,400 | 33.3% |
+| ~8k | 12,800 | 12,672 | 14,400 | 1,600 | 11.1% |
+| ~16k | 27,200 | 26,928 | 28,800 | 1,600 | **5.6%** |
+| ~32k | 56,000 | 57,024 | 58,400 | 2,400 | **4.1%** |
+
+Absolute cost flat, relative cost collapsing with length — exactly what `scheduler.py:397` predicts.
+The occasional 2,400 is block alignment of that particular prompt, not a different effect.
+
+**So above ~8k there is barely a trade at all:** MTP buys +56% decode for ~5% of the cache. Below
+~4k it is genuinely expensive.
+
+### k=1 is strictly dominated — delete it from the option space
+
+| | cache cost | decode vs k=0 |
+|---|---:|---:|
+| k=2 | 1,600 | **+56%** |
+| k=1 | 1,584 | +31% |
+
+The back-off is `if self.use_eagle:` — unconditional on `k` — so k=1 pays the **same block** (the
+16-token difference is prompt alignment) for **half the decode gain**. There is never a reason to
+run k=1 on this model.
+
+### Prefill: `--max-num-batched-tokens` 8192 beats our shipped 4096
+
+| depth | 4096 (shipped) | **8192** | 16384 |
+|---:|---:|---:|---:|
+| 4k | 2,189 | **2,405** | 2,278 |
+| 16k | 2,146 | **2,413** | 2,153 |
+| 32k | **2,223** | 2,124 | 2,094 |
+
++9.9% at 4k and +12.4% at 16k — the band agent work lives in — while 16384 is no better than 4096
+anywhere. Gains sit just above the 6.9% noise floor at n=1, so this is *adopt after one confirmation*
+rather than settled.
+
+### An unplanned control worth noting
+
+Steady-state cache hits were **identical across three independent server starts** (1,600 / 4,800 /
+12,800 / 27,200 / 56,000 at the five lengths, for all three batch sizes). Only the transient varies.
+That means the cache measurement has essentially no run-to-run variance, so the k=0 deficit above is
+a real effect and not scatter — which is what makes a one-run-per-cell design defensible *for this
+particular quantity*, and not for the decode numbers beside it.
+
+Decode also reproduced the QSA signature to three significant figures on a different day and batch
+size: k=0 reads **26.9 / 26.9 / 26.9** across 4k/16k/32k.
