@@ -501,3 +501,37 @@ arm, five dead arms, ~30 minutes of GPU time.
 The thread joining all three: **a guard written in a note does not travel to the next script.** Each
 of these was already documented here before it recurred. Put the assertion in the tool
 (`tools/agentloop.py`), not in the prose.
+
+## "The same config gives two different answers, run to run"
+
+Observed 2026-08-31: `ms/tok` for a fixed configuration clusters into two modes, ~32 and ~48+.
+k=3 measured 32.48 then 49.08 (51% apart); k=4 gave 31.93 / 38.96; n=6 gave 52.11 / 71.85. Meanwhile
+n=5 (31.81 / 31.97) and no-spec (43.37 / 43.64 / 43.80) replicate to under 1%. So it is not the
+harness and not the box drifting — the same code takes one of two paths depending on the server
+start.
+
+**First candidate, and it is our own instrumentation.** Two debug blocks were still live in the
+production venv:
+
+- `models/…/nvidia/ple_layer.py:669` — `self._dq_calls = getattr(self, "_dq_calls", 0) + 1` on
+  **every PLE forward**, and on calls 6-9 `_e.abs().max().item()` and `(_e != 0).sum().item()`:
+  **device syncs on the hot path**, plus a Python attribute mutation inside a region that may be
+  compiled.
+- `model_executor/layers/quantization/modelopt.py:2501` — `# PROBE (temporary)` `logger.warning`
+  firing for every `lm_head` prefix.
+
+A per-forward attribute mutation on a `torch.compile`d path can force a graph break or a guard
+failure, and *whether* it does can depend on when compilation happened relative to those calls —
+which is a mechanism that produces a per-start coin flip. **Candidate, not established:** it has not
+been shown that this code sits inside a compiled region here.
+
+**Test, in order:** finish the running queue (changing the code mid-run makes the remaining arms
+incomparable), remove both blocks, then re-run the matched pair that showed both modes — k=3, twice.
+If the bimodality disappears, a large part of the depth analysis was measuring instrumentation.
+
+This is the second time in one session that debug code left in the tree has mattered, and the patch
+MANIFEST already records a *first* occurrence — *"a stray `print` in `get_quant_method` was still
+firing in production"*. **Grep the venv for probes before trusting a benchmark**, not after:
+
+    grep -rnE "PROBE|_dq_calls|# temporary|\.item\(\)" $SP/vllm/models/qwen3_8_flash_next/ \
+        $SP/vllm/model_executor/layers/quantization/modelopt.py
