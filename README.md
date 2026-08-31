@@ -23,6 +23,8 @@ Which number matters depends on whether the box serves one caller or several —
 
 ## Start here
 
+- **[REPRODUCE.md](REPRODUCE.md)** — the recipe: weights, patches, serve config, and what to check
+  before you trust a number. Start here if you want it *running* rather than explained.
 - **[Failure modes](notes/failure-modes.md)** — every failure hit here, organised by what you
   *observe*. Four different causes produce "it loads but the output is wrong".
 - **[TODO](notes/TODO.md)** — what is open, ranked, and just as importantly **what is closed and
@@ -121,6 +123,7 @@ c=16** — each sequence pulls its own ten of 512 while the dense path amortizes
 
 ## Layout
 
+    REPRODUCE.md                 the recipe, start to finish  <- start here to build it
     scripts/serve-flashnext.sh   serve config
     tools/shapebench.py          per-shape FP8-vs-BF16 timing, L2 defeated, roofline printed
     patches/                     local vLLM patches + the upstream series
