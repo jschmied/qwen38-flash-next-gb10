@@ -63,3 +63,49 @@ the same build hits 55.3%, so 0.0% on a 60-token prompt is the expected conseque
 
 Measured 2026-09-01. Related: `prefill-divergence.md`, `batch-invariance-unavailable.md`,
 vllm#54173, vllm#47861 (closed; only its scheduler half merged via #51113).
+
+
+## Cross-start determinism (2026-09-01, replication)
+
+`NOPFX_a` and `NOPFX_b` — two independent server starts, prefix cache off, `mtp 5`, batch 4096 —
+both return **`lp = -1.512270331`, `sig = 2f6838f50ba0`, three times each**. Six requests, two
+starts, one answer.
+
+So with the prefix cache off the model is deterministic **within a start AND across starts**. No
+startup state, no allocation history, and no warm-up path affects the result.
+
+| condition | behaviour |
+| --- | --- |
+| prefix cache **off** | deterministic within a start *and* across starts (6 requests / 2 starts) |
+| prefix cache **on** | 3 distinct of 3, every arm, every config |
+
+**This retires the address/allocation-layout hypothesis.** The eager-vs-graphs spread suggested
+behaviour might vary with allocator churn; that would still produce cross-start variation with the
+cache off. It does not. `runtime_determinism.py`'s churn variant is therefore a lower-value check
+than it looked.
+
+Note: with `max_tokens=1` these arms are prefill-only, so although `mtp 5` is configured,
+speculation never engages (`ACCEPT NOPFX_*-post: no draft tokens recorded`). That line is expected,
+not a broken drafter.
+
+## The QSA top-k implementation changes the ANSWER, not just its stability
+
+`F_noprefix` and `NOPFX_a` differ in exactly one parameter — `VLLM_QSA_TORCH_TOPK` — and are
+otherwise identical (`mtp 5`, batch 4096, `--no-enable-prefix-caching`, same prompt):
+
+| arm | QSA top-k | top token | logprob | probability |
+| --- | --- | --- | ---: | ---: |
+| `F_noprefix` | `torch.topk` | `'#'` | -0.2308 | 0.79 |
+| `NOPFX_a/b` | stock `persistent_topk` | `'The'` | -1.5123 | 0.22 |
+
+**Different top token, not merely a different confidence.** The pattern holds across the whole
+set: every arm with `torch.topk` on lands in -0.16..-0.39 (`P_ctl`, `P_nospec`, `F_noprefix`);
+every arm with it off lands in -0.95..-1.69 (`BISECT`, `BISECT2`, `NOPFX_*`).
+
+So substituting `torch.topk` is a **behavioural** change, not just a determinism fix — which
+matters for anyone weighing it as a workaround for vllm#54521.
+
+**Not established: which is correct.** A difference gives no direction. `tools/determinism/
+topk_boundary.py` is the test — it checks `persistent_topk` against `torch.topk` as an oracle on
+inputs with known-correct answers, including a +inf sentinel beyond `visible_blocks` that turns a
+read-past-the-bound into a returned index you can read off directly. Needs seconds of idle GPU.
