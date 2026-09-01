@@ -36,7 +36,15 @@ def _install_layer_hashes(model):
     def _mk(name):
         def hook(_mod, _inp, out):
             o = out[0] if isinstance(out, (tuple, list)) and out else out
-            _log.warning("LAYERHASH pass=%d %s %s", getattr(model, "_lh_pass", -1), name, _h(o))
+            h1 = _h(o)
+            # v3: hash ONLY the first row too, and log the shape. GENBIS showed decode passes with
+            # identical OUTPUT but differing full-tensor hashes at layers 1+: the hook was hashing
+            # rows beyond the real token (num_actual_tokens=num_tokens_padded in the model runner).
+            # row0 isolates the real token of a single-sequence decode.
+            r0 = _h(o[:1]) if isinstance(o, torch.Tensor) and o.dim() >= 1 and o.shape[0] > 0 else "n/a"
+            shp = tuple(o.shape) if isinstance(o, torch.Tensor) else None
+            _log.warning("LAYERHASH pass=%d %s %s row0=%s shape=%s",
+                         getattr(model, "_lh_pass", -1), name, h1, r0, shp)
         return hook
 
     n = 0
