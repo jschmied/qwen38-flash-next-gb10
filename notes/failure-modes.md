@@ -515,6 +515,28 @@ Delivered value checked: `FN_EXTRA=[--mamba-cache-mode all]`, wordcount=2.
 inside the value, never through `${var:+...}`. And a 10-second death with an empty log is a
 launcher failure, not a model failure — read `systemd-run`'s own stderr, not the arm log.
 
+### An experiment hook left unconditional ran in every arm for a day **[method]**
+
+**Signature.** `qsa.py:839 blocks.sort(dim=1).values  # vllm#54521 determinism fix` — added as one
+of three top-k experiment hooks, but unlike the other two it was **not env-gated**. Every arm from
+that point ran a non-stock top-k path, and `torch.topk` vs stock then compared *sort+torch* against
+*sort+persistent*, not the two kernels. When `visible < k` (the 60-token probe) the sort can move
+uninitialised padding below the real indices where the expansion kernel reads it. Whether that is
+what produced the `'#'` vs `'The'` top-token split is now `topk_boundary.py` T5/T6.
+
+**How it was found.** Not from memory — the audit that caught it diffs every `vllm/**/*.py` against
+the sha256 in pip's `RECORD`, then greps the differing files for
+`EXPERIMENT|PROBE|DIAGNOSTIC|_dq_calls|# temporary|\.item\(\)`. Ten files differed; seven were
+deliberate patches, three edits were unwanted (the sort, two inert hooks, and a bare `print("PROBE
+lmhead ...")` in `model.py` left over from the lm_head work). `tools/determinism/cleanup_hooks.py`
+removes them from a known backup and verifies the result differs from stock only in FP8-KV lines.
+
+**Rules.**
+- Every experiment hook is env-gated, no exceptions. An unconditional "fix" is a config change.
+- Before any batch, run the RECORD diff. Backups beside sources (`*.py.pre*`) are a *list of edits
+  made*, not proof they were reverted.
+- A "clean" venv claim needs the diff output, not the word.
+
 ### Checks that cannot fail
 
 - `sudo -n -u llm test -r FILE` reports "cannot read" when it merely lacks a password. It produced
