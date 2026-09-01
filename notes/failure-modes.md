@@ -510,11 +510,20 @@ n=5 (31.81 / 31.97) and no-spec (43.37 / 43.64 / 43.80) replicate to under 1%. S
 harness and not the box drifting — the same code takes one of two paths depending on the server
 start.
 
-⚠️ **RESOLVED — it was not the instrumentation.** The cause was research subagents running on the
-same box, evicting the page cache the PLE gather depends on; see
-[[read-only-is-not-load-free]]. A quiet re-run of the same config returned 31.47 against the
-contaminated 57.61. The debug blocks below are still real and should still be removed, but they are
-not the explanation.
+⚠️ **RESOLVED — it was BOTH, and they hit different configs.** First read: the instrumentation.
+Then: research subagents evicting the page cache ([[read-only-is-not-load-free]]), confirmed by a
+quiet re-run returning 31.47 against a contaminated 57.61 — and I wrote here that the debug code was
+*not* the explanation. **That correction was itself too broad.** After the debug blocks were removed
+on 2026-09-01, **n=6 measured 33.3 ms/tok against 73.5 on a quiet box with them present** — a 2.2×
+effect from our own instrumentation, on that config.
+
+So: **subagent contamination inflated k=4 and friends; the debug counter cost n=6 a factor of two.**
+Two independent self-inflicted effects, overlapping in time, each mistaken for the other and each
+briefly mistaken for a property of the model. Why the counter hit n=6 and not k=3/k=4/n=5 — which
+measured ~32 *with* it present — is unexplained; a per-forward attribute mutation on a compiled path
+can change guard/recompile behaviour per graph, but that is a hypothesis.
+
+**Consequence: every depth number collected before 2026-09-01 is suspect** and is being re-measured.
 
 **First candidate (superseded).** Two debug blocks were still live in the production venv:
 
