@@ -203,6 +203,21 @@ confidence each item deserves, plus what was refuted along the way.
     Oracle test note: `persistent_topk` accepts only k in {512, 1024, 2048}; the test's default
     k=16 was wrong and it is re-queued at the production k=512 (`oracle` unit, after `rerun`).
 
+14. **Cache off + speculation off: a 4-token generation is DETERMINISTIC** (`GENBIS`, eager,
+    identical signature x3, every prefill pass identical at every hooked module). The only
+    generation-side divergence measured with the cache off (`F_noprefix` NOFB, 1040 tokens) had
+    speculation ON, so the generation-side source may be spec-dependent (H3) rather than a
+    separate base-path defect. Still to separate: length (4 vs 1040) from speculation.
+
+15. **Instrument flaw #2: the layer hook hashes non-semantic rows in decode.** In `GENBIS` the
+    first decode pass of each request — same layer-0 hash, same token, same state — shows
+    layers 1+ DIFFERING while the OUTPUT is identical. Real differences cannot vanish before the
+    logits, so the hook is hashing padded/stale rows beyond the single real token.
+    **Consequence:** "first differing layer" from any DECODE pass is unsafe. Prefill-pass claims
+    (`BISECT`, where the output also diverged) still show that divergence exists, but "first at
+    layer 1" is only as good as the hook. Fix built (v3: row0 hash + shape) and queued as
+    `GENBIS2` after the oracle; prediction: row0 identical, full differs.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
