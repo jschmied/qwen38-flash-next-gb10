@@ -537,6 +537,28 @@ removes them from a known backup and verifies the result differs from stock only
   made*, not proof they were reverted.
 - A "clean" venv claim needs the diff output, not the word.
 
+### A scratchpad file named like a stdlib module broke `import torch` **[method]**
+
+**Signature.** `RuntimeError: generic_type: cannot initialize type "GradBucket": an object with
+that name is already defined`, raised from `torch/__init__.py` at `_C._initExtension`, on a plain
+`import torch`. Works from `/`, fails from the scratchpad. `python -P` (safe path) fixes it.
+
+**Cause.** Python prepends the *script's directory* to `sys.path`. A scratchpad entry named `trace`
+shadowed stdlib `trace`, which torch imports during initialisation; the shadow re-entered torch
+init and `_C` was initialised twice. A stray partial vLLM checkout (`vllm/`, 490 files, left by a
+research subagent) was a second shadow in waiting. Cost: the oracle test crashed in the `quick`
+batch and had to be re-queued.
+
+**Finding it.** Not by guessing names: enumerate every scratchpad entry and ask
+`importlib.util.find_spec(name)` in a clean interpreter; anything that resolves to a real module
+outside the scratchpad is a shadow. One collision among 221 names.
+
+**Rules.**
+- Run every instrument with `PYTHONSAFEPATH=1` (or `python -P`). The runners now export it.
+- Never name a scratch file after a module. `trace`, `types`, `test`, `token`, `code`, `io`,
+  `select`, `signal`, `profile`, `queue`, `random`, `secrets` are all one typo from this.
+- "Works from another directory" is the tell; check `sys.path[0]` before anything deeper.
+
 ### Checks that cannot fail
 
 - `sudo -n -u llm test -r FILE` reports "cannot read" when it merely lacks a password. It produced
