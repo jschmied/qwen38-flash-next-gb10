@@ -488,6 +488,33 @@ arm's turn timings against the wall-clock of the next log file's creation.
 run every arm from a single unit, which cannot race itself. Cost of learning this: one contaminated
 arm, five dead arms, ~30 minutes of GPU time.
 
+### systemd `Environment=` splits on spaces — 7 arms lost in one batch **[method]**
+
+**Signature.** An arm dies in ~10 s with an **empty** log. `systemd-run` reports
+`Failed to find executable all: No such file or directory`.
+
+**Cause.** `${10:+--property=Environment=FN_EXTRA=${10}}` is unquoted, so bash word-splits a value
+like `--mamba-cache-mode all` into two argv entries; `systemd-run` then takes `all` as the start of
+the command. `serve-fnext.sh` never runs, hence the empty log. This is the same gotcha already
+recorded for `Environment=` quoting, met from the other side.
+
+**Cost.** `GENBIS` plus all six `M_all_*` / `M_align_*` arms on 2026-09-01 — the whole
+`mamba_cache_mode` separation and the decode-side bisection — ~1.5 h of queue time, discovered
+only because the watchdog read the death cause instead of the verdict line.
+
+**Fix, verified with a non-GPU unit before re-running anything:** build the property as ONE argv
+entry with systemd-level quoting inside the value:
+
+    EXTRA_PROP=()
+    [ -n "${10:-}" ] && EXTRA_PROP=(--property="Environment=\"FN_EXTRA=${10}\"")
+    systemd-run ... ${EXTRA_PROP[@]+"${EXTRA_PROP[@]}"} ...
+
+Delivered value checked: `FN_EXTRA=[--mamba-cache-mode all]`, wordcount=2.
+
+**Rule.** Any `Environment=` value that can contain a space goes through an array with quoting
+inside the value, never through `${var:+...}`. And a 10-second death with an empty log is a
+launcher failure, not a model failure — read `systemd-run`'s own stderr, not the arm log.
+
 ### Checks that cannot fail
 
 - `sudo -n -u llm test -r FILE` reports "cannot read" when it merely lacks a password. It produced
