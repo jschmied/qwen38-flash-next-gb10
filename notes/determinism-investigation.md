@@ -191,8 +191,10 @@ confidence each item deserves, plus what was refuted along the way.
     state-dependent path.
 
 13. **The prefill divergence is NOT a race.** `LAUNCHBLOCK` (cache on, `CUDA_LAUNCH_BLOCKING=1`,
-    delivered via the same `$12` slot verified for `SYNC`; load visibly slower, consistent with
-    blocking): 3 distinct of 3. With findings 10 and 12 that closes the race family — postprocess
+    delivered via the same `$12` slot verified for `SYNC` — that mechanism is the sole basis; an
+    earlier "load visibly slower" corroboration was checked and withdrawn: arm spacing was
+    13/14/13 min, no slowdown, which is expected since launch blocking slows execution, not
+    I/O-bound loading): 3 distinct of 3. With findings 10 and 12 that closes the race family — postprocess
     sync, single batch in flight, serialised launches — all three leave it diverging. **The source
     is a deterministic-but-state-dependent path**: something the align machinery does that depends
     on state carried between requests, not on timing. This fits the per-start bias (finding 9,
