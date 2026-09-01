@@ -84,7 +84,26 @@ confidence each item deserves, plus what was refuted along the way.
      22), so a boundary is *a* trigger, not the only one.
    - Timing follows: collapsed turns ~7-9 s, healthy turns ~3-4 s.
 
-   **n=1.** Whether the lock-in position (~7th block) replicates is what `DEG_b`/`DEG_c` decide;
+   **DEG_b (n=2) — two of the three claims above did not survive it:**
+
+   | | DEG_a | DEG_b |
+   | --- | --- | --- |
+   | block crossings on a collapsed turn | 4 of 4 | **1 of 4** (turns 6, 18, 28 healthy at 4.26 / 3.82 / 4.48) |
+   | per-turn distribution (healthy / collapsed / mid) | 18 / 22 / 0 | 21 / 16 / 3 |
+   | recoveries | 7 | 7 |
+   | last healthy turn | 27 | 37 |
+
+   - **Replicated: the per-turn coin flip.** Sharply bimodal, almost no mid values, ~40-55% of
+     turns collapsed, seven recoveries each. This is the robust finding.
+   - **Refuted: block-boundary triggering.** DEG_a's 4-of-4 was coincidence.
+   - **Lock-in weakened to n=1.** DEG_a's 13 consecutive collapsed turns is p~1e-4 under a fair
+     coin, so probably real; DEG_b's last healthy turn is 37, leaving 3 collapsed at the end,
+     which is what chance looks like. Not replicated within 40 turns.
+
+   Raw tables: `notes/data/DEG_a-per-turn.txt`, `DEG_b-per-turn.txt`. `DEG_c` and the
+   `DEG_nospec` control still to come; the control must stay flat.
+
+   (earlier n=1 text:) **n=1.** Whether the lock-in position (~7th block) replicates is what `DEG_b`/`DEG_c` decide;
    `DEG_nospec` is the control that must stay flat.
 
    *(earlier text, from 8-turn arms, kept for the record)*
