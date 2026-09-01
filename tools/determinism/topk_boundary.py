@@ -62,6 +62,7 @@ for vis in [K, K + 1, 31, 32, 33, 63, 64, 65, 127, 128, 129, 255, 256, 257,
     if vis > COLS or vis < K:
         continue
     visible = torch.full((rows,), vis, dtype=torch.int32, device=dev)
+    before = len(fails)
 
     # T1 sentinel: +inf beyond the boundary. Any index >= vis means it read too far.
     lg = torch.randn(rows, COLS, dtype=torch.float32, device=dev)
@@ -98,6 +99,8 @@ for vis in [K, K + 1, 31, 32, 33, 63, 64, 65, 127, 128, 129, 255, 256, 257,
             fails.append(f"vis={vis} row{r}: T4 disagrees with torch.topk "
                          f"missing={sorted(miss)[:4]} extra={sorted(extra)[:4]}")
             break
+    if len(fails) == before:
+        print(f"    vis={vis:>5}: T1-T4 PASS")
 
 # T5/T6: the UNDERFILLED case (visible < k), which is our 60-token probe (~15 visible, k=512).
 # T5: what does persistent_topk WRITE into slots >= visible? Pre-fill `blocks` with a sentinel;
