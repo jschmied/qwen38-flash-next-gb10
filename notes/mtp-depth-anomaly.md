@@ -1,5 +1,52 @@
 # MTP k=2 is anomalously slow, and it is not the ring capacity
 
+> **Re-founded 2026-09-01 on 66 pooled arms.** The conclusion in the title survives and is now on
+> much firmer evidence, but **the reasoning below it was wrong**, and every single-arm number in
+> the original table must be read as one draw from a wide distribution. Read this header first.
+
+## What 66 arms say
+
+MTP throughput is **not reproducible across restarts**: same binary, same flags, same prompts,
+worst within-config spread **1.83×** (`MTP4`: 31.5 → 57.6). no-spec (1.10×) and ngram (1.09×) are
+reproducible, so this is confined to the MTP path, not the box or the harness. Details and the
+consequences for earlier comparisons are in `failure-modes.md`.
+
+That makes the **mean** of a few MTP arms close to meaningless. What is stable is the **floor** —
+the best a config reaches over repeated starts:
+
+| config | arms | min | median | max |
+| --- | ---: | ---: | ---: | ---: |
+| ngram | 3 | 28.5 | 29.3 | 33.8 |
+| mtp n=4 | 4 | **31.5** | 35.4 | 57.6 |
+| mtp n=6 | 11 | **31.7** | 52.7 | 74.7 |
+| mtp n=5 | 17 | **31.8** | 58.4 | 68.8 |
+| mtp n=3 | 2 | **32.5** | 40.8 | 49.1 |
+| no speculation | 12 | 42.8 | 43.7 | 47.7 |
+| **mtp n=2** | 4 | **47.8** | 49.1 | 77.5 |
+| mtp n=7 | 2 | 56.7 | 56.9 | 57.2 |
+
+**The k=2 result is now stronger, not weaker.** All 4 `MTP2` arms are ≥ 47.8; all 12 no-spec arms
+are ≤ 47.7. The ranges do **not overlap**. So "k=2 is the only configuration slower than no
+speculation at all" holds on 16 arms with clean separation, where it previously rested on 3 vs 3.
+
+**But the mechanism claimed below is not what the data shows.** n=3, 4, 5 and 6 all reach a floor
+of ~31.5–32.5; k=2 never does, in any of 4 starts. So k=2 is not "slow on average" — it **never
+reaches the fast regime the other depths can reach**. Any explanation has to account for a missing
+regime, not a shifted mean.
+
+**Unresolved, explicitly:** n=7 has only 2 arms, both ~57, which is exactly what an unlucky pair of
+starts looks like given a 1.83× spread — it is **not** evidence that n=7 is bad. The old "n=9
+degrades to 37.2" is a single arm and means nothing. Both need ≥3 starts before anyone quotes them.
+
+**Method rule:** never quote an MTP timing from one start. Three starts minimum, report the range,
+and treat any gap under 2× as unresolved unless the ranges separate.
+
+---
+
+*Everything below predates the pooled analysis and is kept for the record. Its per-depth numbers are
+single draws; its capacity reasoning was refuted three times before the real cause — restart
+instability — was identified.*
+
 Fixed-work agent loop (`tools/agentloop.py`, 8 × 130 tokens, `ms/tok`), `fp8head`, batch 4096, c=1.
 
 | depth | QSA ring capacity | ms/tok | arms |

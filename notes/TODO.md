@@ -176,3 +176,13 @@ nothing to select between.
 ⚠️ **It also fights tonight's other lever.** `attn_utils.py:174-176` takes the **minimum** cudagraph
 support across an attention group, so adding a weaker second backend would silently downgrade our
 capture mode — the opposite of what the hyper-connection work is trying to do.
+
+- **Batch invariance is unavailable on this architecture** (`notes/batch-invariance-unavailable.md`):
+  no mamba/GDN backend implements `supports_batch_invariance()`, and 36/48 layers are linear
+  attention. Worth raising upstream as a gap once the determinism root cause is known.
+- **Layer bisection** (`layerhash_patch.py`, queued as unit `bisect`): first differing layer over
+  three identical prefills. layers 0-1 same + 2 onward differing implicates the PLE; layer 0
+  already differing puts it below the model (embeddings / first GEMM / CUDA).
+- **Acceptance correlation** (queued as unit `accepcorr`): 5 starts of MTP n=5 pairing `ms/tok`
+  with `mean_accept_len`, to test whether acceptance is the channel turning divergence into a
+  1.83x throughput spread. See `prefill-divergence.md`.

@@ -510,6 +510,54 @@ n=5 (31.81 / 31.97) and no-spec (43.37 / 43.64 / 43.80) replicate to under 1%. S
 harness and not the box drifting — the same code takes one of two paths depending on the server
 start.
 
+⚠️ **SUPERSEDED a third time — there is no n=6 anomaly. MTP is unstable at every depth.**
+
+The earlier readings (instrumentation → subagent page-cache contamination → "it was both") were all
+attempts to explain why *n=6 specifically* was slow. Pooling all 66 recorded arms on 2026-09-01
+shows the premise was wrong. Grouping by drafter and measuring the spread **within one config
+across identical restarts**:
+
+| drafter | repeated configs | worst within-config spread | overall range (ms/tok) |
+| --- | --- | --- | --- |
+| no-spec | 5 | **1.10×** (four of five are 1.00–1.01×) | 42.8 – 47.7 |
+| ngram / ngram_gpu | 2 | **1.09×** | 28.5 – 33.8 |
+| **mtp** | 5 | **1.83×** | **31.5 – 77.5** |
+
+Per-config, MTP: `MTP2` 47.8→77.5 (1.62×), `MTP3` 32.5→49.1 (1.51×), `MTP4` 31.5→57.6 (1.83×),
+`MTP6` 52.1→74.7 (1.43×), `MTP7` 56.7→57.2 (1.01×). The flip is **per server start** — the same
+binary, flags and prompts land in a fast regime or a slow one, and `MTP7` shows it can land the
+same way twice, so a 2-sample agreement proves nothing.
+
+**Consequences, all of them ours to own:**
+
+1. **The n=6 attribution is withdrawn.** The "2.2× from debug code" (33.3 vs 73.5) was two n=1
+   samples of a quantity whose own within-config spread reaches 1.83×. The debug blocks were real
+   and worth removing, but the effect attributed to them is **not established** and never was.
+2. **Every MTP comparison at n≤3 is underpowered.** The sort-fix, row-cap and `torch.topk` arms
+   (`P1` 1.84×, `P2` 1.39×, `R192` 1.95×, `TG` 1.76×) sit on an instrument with ~1.8× noise. None
+   of them could resolve an effect smaller than about 2×. Their *categorical* results
+   (3 distinct outputs of 3) are unaffected — that is a text-identity test, not a timing one.
+3. **The stable configs are stable.** no-spec at 43.4–43.8 across four starts, ngram at 28.5–29.3,
+   `B16384` at 45.4/45.5, `CG_PIECE` at 43.6/43.8. So this is not box-wide noise, not thermal,
+   and not the harness — those would move every arm. It is confined to the MTP path.
+
+**What it points at.** MTP adds a drafter forward and a rejection sampler that no-spec and ngram do
+not have, and `ms/tok` was already shown to be governed by mean accepted length. So the likely
+reading is that **MTP acceptance itself varies per start**. That is consistent with — and may be
+the same defect as — the per-request prefill divergence found by the logit probe on 2026-09-01
+(`notes/…` determinism thread): if the drafter's own forward pass is affected, acceptance moves,
+and `ms/tok` follows.
+
+**Not yet established:** that the timing instability and the text divergence are one defect. They
+are correlated in mechanism and were found in the same week; that is a hypothesis, not a result.
+
+**Method rule this cost us:** never report an MTP timing from a single start. Minimum three starts
+per config, report the range, and treat any difference under 2× as unresolved.
+
+---
+
+Previous reading, kept for the record:
+
 ⚠️ **RESOLVED — it was BOTH, and they hit different configs.** First read: the instrumentation.
 Then: research subagents evicting the page cache ([[read-only-is-not-load-free]]), confirmed by a
 quiet re-run returning 31.47 against a contaminated 57.61 — and I wrote here that the debug code was
