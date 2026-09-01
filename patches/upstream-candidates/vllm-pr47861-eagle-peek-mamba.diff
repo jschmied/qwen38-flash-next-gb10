@@ -1,0 +1,208 @@
+diff --git a/tests/v1/core/test_prefix_caching.py b/tests/v1/core/test_prefix_caching.py
+index 6246a2332901..b5cd4072830a 100644
+--- a/tests/v1/core/test_prefix_caching.py
++++ b/tests/v1/core/test_prefix_caching.py
+@@ -1024,6 +1024,47 @@ def test_prefill_hybrid_model_mamba_align():
+     manager.free(req0)
+ 
+ 
++def test_hybrid_mamba_eagle_does_not_reuse_lookahead_state():
++    block_size = 16
++    manager = make_kv_cache_manager(
++        _make_hybrid_kv_cache_config(block_size, 100, ["full", "mamba_align"]),
++        max_model_len=8192,
++        enable_caching=True,
++        hash_block_size=block_size,
++        use_eagle=True,
++    )
++
++    token_ids = [i for i in range(4) for _ in range(block_size)] + [4] * 7
++
++    req0 = make_request("0", token_ids, block_size, sha256)
++    computed_blocks, num_computed_tokens = manager.get_computed_blocks(req0)
++    assert num_computed_tokens == 0
++    blocks = manager.allocate_slots(
++        req0, len(token_ids), num_computed_tokens, computed_blocks
++    )
++    assert blocks is not None
++    manager.free(req0)
++
++    req1 = make_request("1", token_ids, block_size, sha256)
++    computed_blocks, num_computed_tokens = manager.get_computed_blocks(req1)
++
++    assert num_computed_tokens == 3 * block_size
++    assert [len(blocks) for blocks in computed_blocks.blocks] == [3, 3]
++
++
++def test_mamba_align_prefill_split_keeps_intermediate_chunks_aligned():
++    block_size = 16
++    request = make_request("0", [0] * (block_size + 7), block_size, sha256)
++    stub = SimpleNamespace(
++        cache_config=SimpleNamespace(block_size=block_size),
++        use_eagle=True,
++    )
++
++    assert Scheduler._mamba_block_aligned_split(stub, request, 5) == 0
++    assert Scheduler._mamba_block_aligned_split(stub, request, block_size + 3) == 1
++    assert Scheduler._mamba_block_aligned_split(stub, request, block_size + 7) == 2
++
++
+ def test_hybrid_cache_mamba_align_shared_prefix_detection():
+     """Test shared prefix detection heuristic for mamba align cache mode
+ 
+diff --git a/vllm/v1/core/kv_cache_coordinator.py b/vllm/v1/core/kv_cache_coordinator.py
+index 5829e553f982..414a9a0c7f2b 100644
+--- a/vllm/v1/core/kv_cache_coordinator.py
++++ b/vllm/v1/core/kv_cache_coordinator.py
+@@ -689,8 +689,9 @@ def _get_block_hashes(kv_cache_spec: KVCacheSpec) -> BlockHashList:
+                         curr_hit_length // spec.block_size * spec.block_size
+                     )
+                     continue
+-
+-                drop_eagle_block = use_eagle and idx not in eagle_verified
++                
++                can_eagle_peek = use_eagle and spec.supports_eagle_cache_peek
++                drop_eagle_block = can_eagle_peek and idx not in eagle_verified
+ 
+                 _max_length = curr_hit_length
+                 if drop_eagle_block:
+@@ -713,7 +714,7 @@ def _get_block_hashes(kv_cache_spec: KVCacheSpec) -> BlockHashList:
+                 elif _new_hit_length < curr_hit_length:
+                     # length shrunk; invalidate previous eagle verifications
+                     eagle_verified.clear()
+-                curr_hit_length = _new_hit_length
++                curr_hit_length = min(curr_hit_length, _new_hit_length)
+                 for group_id, blocks in zip(group_ids, hit_blocks):
+                     hit_blocks_by_group[group_id] = blocks
+ 
+diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
+index 018f9c34d4ce..e664e740bf96 100644
+--- a/vllm/v1/core/sched/scheduler.py
++++ b/vllm/v1/core/sched/scheduler.py
+@@ -30,6 +30,7 @@
+ from vllm.multimodal import MULTIMODAL_REGISTRY, MultiModalRegistry
+ from vllm.multimodal.encoder_budget import MultiModalBudget
+ from vllm.multimodal.utils import get_mm_features_in_window
++from vllm.utils.math_utils import round_down
+ from vllm.v1.core.encoder_cache_manager import (
+     EncoderCacheManager,
+     EncoderDecoderCacheManager,
+@@ -348,49 +349,46 @@ def _mamba_block_aligned_split(
+             + num_new_local_computed_tokens
+             + num_external_computed_tokens
+         )
+-        # Perform block-aligned splitting at prefill phase, including:
+-        # * non-resumed requests: num_computed_tokens < num_prompt_tokens + 0
+-        # * resumed requests: num_computed_tokens < (
+-        #                       num_prompt_tokens + num_output_tokens
+-        #                     )
+-        # NOTE: Use `request.num_tokens - 1` to bypass normal decoding.
+-        if num_computed_tokens < max(request.num_prompt_tokens, request.num_tokens - 1):
+-            # To enable block-aligned caching of the Mamba state, `num_new_tokens`
+-            # must be a multiple of `block_size`.
+-            # As an exception, if `num_new_tokens` is less than `block_size`, the
+-            # state is simply not cached, requiring no special handling.
+-            # Additionally, when Eagle mode is enabled, FullAttn prunes the last
+-            # matching block. To prevent this from causing a Mamba cache miss, the
+-            # last chunk must be not smaller than `block_size`.
++
++        # Apply block-aligned splitting during prefill. In mamba_cache_mode="align",
++        # a cached Mamba block at position p represents the recurrent state after
++        # exactly (p + 1) * block_size tokens. Therefore every non-final prefill
++        # chunk must end on a Mamba block boundary; otherwise the block hash would
++        # describe a different token offset than the state stored in the block.
++        #
++        # The final prefill chunk may end unaligned because that tail is not reused
++        # as a boundary state for prefix-cache hits.
++        prefill_end = max(request.num_prompt_tokens, request.num_tokens - 1)
++        if num_computed_tokens < prefill_end:
+             block_size = self.cache_config.block_size
+-            last_cache_position = request.num_tokens - request.num_tokens % block_size
+-            # eagle prune
++
++            # Last boundary that may be cached/reused for this request. With EAGLE,
++            # full-attention cache lookup can drop the last matched block, so keep
++            # the Mamba reusable boundary one block earlier to preserve alignment
++            # between full-attention KV blocks and Mamba/GDN state blocks.
++            last_cache_position = round_down(request.num_tokens, block_size)
+             if self.use_eagle:
+                 last_cache_position = max(last_cache_position - block_size, 0)
+-            num_computed_tokens_after_sched = num_computed_tokens + num_new_tokens
+-            if num_computed_tokens_after_sched < last_cache_position:
+-                # align to block_size
+-                num_new_tokens = num_new_tokens // block_size * block_size
+-            elif (
+-                num_computed_tokens
+-                < last_cache_position
+-                < num_computed_tokens_after_sched
+-            ):
+-                # force to cache the last chunk
+-                num_new_tokens = last_cache_position - num_computed_tokens
+-            else:
+-                # prefill the last few tokens
+-                pass
+ 
+-            # Marconi cache admission optimization:
+-            # cache common prefixes by scheduling num_new_tokens = common prefix length
++            chunk_end = num_computed_tokens + num_new_tokens
++
++            # Marconi cache admission optimization: stop at the uncached common
++            # prefix so requests can share it. Apply this as an end-position cap
++            # before block alignment, the optimization cannot reintroduce an
++            # unaligned intermediate Mamba state.
+             if (
+                 num_uncached_common_prefix_tokens >= block_size
+                 and num_new_tokens > num_uncached_common_prefix_tokens
+             ):
+-                num_new_tokens = num_uncached_common_prefix_tokens
+-                # keep alignment to block_size
+-                num_new_tokens = num_new_tokens // block_size * block_size
++                chunk_end = num_computed_tokens + num_uncached_common_prefix_tokens
++
++            if num_computed_tokens < last_cache_position:
++                chunk_end = min(round_down(chunk_end, block_size), last_cache_position)
++            elif chunk_end < prefill_end:
++                chunk_end = round_down(chunk_end, block_size)
++
++            num_new_tokens = max(chunk_end - num_computed_tokens, 0)
++
+         return num_new_tokens
+ 
+     def schedule(self, throttle_prefills: bool = False) -> SchedulerOutput:
+diff --git a/vllm/v1/kv_cache_interface.py b/vllm/v1/kv_cache_interface.py
+index 323b1e763a52..679561133370 100644
+--- a/vllm/v1/kv_cache_interface.py
++++ b/vllm/v1/kv_cache_interface.py
+@@ -322,6 +322,10 @@ def real_page_size_bytes(self) -> int:
+         return (
+             self.block_size * self.num_kv_heads * last_dim * get_dtype_size(self.dtype)
+         )
++    
++    @property
++    def supports_eagle_cache_peek(self) -> bool:
++        return True
+ 
+ 
+ def _apply_alignment_padding(spec: MLAAttentionSpec | SlidingWindowMLASpec):
+@@ -375,6 +379,10 @@ def __post_init__(self):
+     @property
+     def storage_block_size(self) -> int:
+         return self.block_size // self.compress_ratio
++    
++    @property
++    def supports_eagle_cache_peek(self) -> bool:
++        return False
+ 
+     @property
+     def real_page_size_bytes(self) -> int:
+@@ -523,6 +531,10 @@ def __post_init__(self):
+         if self.head_size_v is None:
+             object.__setattr__(self, "head_size_v", self.head_size)
+ 
++    @property
++    def supports_eagle_cache_peek(self) -> bool:
++        return True
++
+     @property
+     def real_page_size_bytes(self) -> int:
+         # Mirror ``FullAttentionSpec.real_page_size_bytes`` for NVFP4 KV cache.
