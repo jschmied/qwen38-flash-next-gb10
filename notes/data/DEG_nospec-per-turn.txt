@@ -1,0 +1,49 @@
+=== DEG_nospec  batch=4096  23:22 ===
+
+    graphs: capture_lines=1 compile_lines=5 enforce_eager=0
+  DEG_nospec: 40 turns x 130 tokens, per-turn acceptance deltas
+  turn       s   tok  gen_cum  prompt accept_len    rate
+     1    9.09   130      130    7503        nan    nan%
+     2    6.52   130      260    7626        nan    nan%
+     3    5.33   130      390    7782        nan    nan%
+     4    5.39   130      520    7933        nan    nan%
+     5    5.37   130      650    8078        nan    nan%
+     6    6.06   130      780    8221        nan    nan%
+     7    5.08   130      910    8344        nan    nan%
+     8    5.13   130     1040    8500        nan    nan%
+     9    5.24   130     1170    8654        nan    nan%
+    10    5.30   130     1300    8785        nan    nan%
+    11    5.47   130     1430    8913        nan    nan%
+    12    5.06   130     1560    9066        nan    nan%
+    13    5.15   130     1690    9223        nan    nan%
+    14    5.17   130     1820    9353        nan    nan%
+    15    5.23   130     1950    9489        nan    nan%
+    16    5.29   130     2080    9615        nan    nan%
+    17    5.46   130     2210    9772        nan    nan%
+    18    5.21   130     2340    9910        nan    nan%
+    19    5.15   130     2470   10060        nan    nan%
+    20    5.26   130     2600   10203        nan    nan%
+    21    5.24   130     2730   10360        nan    nan%
+    22    5.37   130     2860   10517        nan    nan%
+    23    5.56   130     2990   10670        nan    nan%
+    24    5.14   130     3120   10826        nan    nan%
+    25    5.17   130     3250   10976        nan    nan%
+    26    5.27   130     3380   11125        nan    nan%
+    27    5.35   130     3510   11275        nan    nan%
+    28    5.89   130     3640   11425        nan    nan%
+    29    5.15   130     3770   11575        nan    nan%
+    30    5.20   130     3900   11725        nan    nan%
+    31    5.20   130     4030   11864        nan    nan%
+    32    5.35   130     4160   12015        nan    nan%
+    33    5.47   130     4290   12172        nan    nan%
+    34    5.14   130     4420   12322        nan    nan%
+    35    5.20   130     4550   12469        nan    nan%
+    36    5.26   130     4680   12619        nan    nan%
+    37    5.31   130     4810   12769        nan    nan%
+    38    5.06   130     4940   12919        nan    nan%
+    39    5.12   130     5070   13070        nan    nan%
+    40    5.19   130     5200   13222        nan    nan%
+
+  too few turns with acceptance data (spec off, or counters absent)
+  ACCEPT DEG_nospec-post: no draft tokens recorded (spec off, or counters absent)
+== ALL DONE ==

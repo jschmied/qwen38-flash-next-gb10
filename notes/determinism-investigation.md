@@ -116,8 +116,22 @@ confidence each item deserves, plus what was refuted along the way.
    - **Lock-in unresolved, 1 of 3.** DEG_a's 13-run is p~4e-4 even at its 55% bias, but three
      40-turn arms are many windows. Not established; not excluded.
 
-   Raw tables: `notes/data/DEG_{a,b,c}-per-turn.txt`. `DEG_nospec` (the control) is next and
-   must stay flat — if it flips too, the acceptance mechanism is wrong.
+   **DEG_nospec — the control is FLAT; the acceptance mechanism holds.** Per-turn seconds,
+   turn 1 dropped (cold prefill):
+
+   | arm | mean s/turn | max/min | CV | <5 s | >6.5 s | between |
+   | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+   | DEG_a (MTP) | 6.14 | 3.10x | 0.37 | 17 | 19 | 3 |
+   | DEG_b (MTP) | 5.60 | 2.86x | 0.38 | 22 | 13 | 4 |
+   | DEG_c (MTP) | 4.30 | 2.67x | 0.29 | 33 | 3 | 3 |
+   | **DEG_nospec** | **5.32** | **1.29x** | **0.05** | 0 | 1 | **38** |
+
+   Without a drafter, 38 of 39 turns sit in 5.06-5.56 s (the outlier is turn 2's warm-up tail);
+   the MTP arms are bimodal with almost nothing in the middle. **The flip lives entirely in
+   speculative acceptance; the base decode path is steady.** This retires the alternative reading
+   that something degrades regardless of the drafter.
+
+   Raw tables: `notes/data/DEG_{a,b,c,nospec}-per-turn.txt`.
 
    (earlier n=1 text:) **n=1.** Whether the lock-in position (~7th block) replicates is what `DEG_b`/`DEG_c` decide;
    `DEG_nospec` is the control that must stay flat.
