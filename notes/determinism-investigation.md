@@ -70,7 +70,26 @@ confidence each item deserves, plus what was refuted along the way.
    of its draft work, and the no-spec reference is 43.5 ms/tok — so the collapsed arms are
    **worse than not speculating at all** while the healthy ones are ~26% better.
 
-9. **The regime is per-TURN, not per-start, and the transition is one-way.** Per-turn timings,
+9. **The regime is per-TURN — and, CORRECTED, it is NOT one-way early on.** A 40-turn run
+   (`DEG_a`, per-turn acceptance deltas, raw table in `notes/data/DEG_a-per-turn.txt`) shows:
+
+   - **Turns 1-27: a per-turn coin flip.** Acceptance alternates between ~4.5 (healthy) and ~1.4
+     (collapsed) and **recovers repeatedly** — turns 3, 10, 13, 16, 18, 23 all bounce back after
+     a collapsed turn. The earlier "no arm recovers" claim came from 8-turn windows too short to
+     see a recovery; it is withdrawn.
+   - **Turn 28 onward: locked at 1.2-2.1 for 13 consecutive turns.** That part IS one-way.
+   - **Every attention-block-boundary crossing (1616 tokens) coincides with a collapsed turn,
+     3 of 3**: prompt crosses 5x1616 at turn 5 (2.41), 6x1616 at turn 17 (1.59), 7x1616 at
+     turn 28 (2.08, then lock-in). Collapses also occur off-boundary (turns 2, 8, 9, 11, 12, 15,
+     22), so a boundary is *a* trigger, not the only one.
+   - Timing follows: collapsed turns ~7-9 s, healthy turns ~3-4 s.
+
+   **n=1.** Whether the lock-in position (~7th block) replicates is what `DEG_b`/`DEG_c` decide;
+   `DEG_nospec` is the control that must stay flat.
+
+   *(earlier text, from 8-turn arms, kept for the record)*
+
+9-old. **The regime is per-TURN, not per-start, and the transition is one-way.** Per-turn timings,
    comparing turns 2-4 against 6-8 within each run:
 
    | arm | early | late | ratio |
