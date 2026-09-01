@@ -27,7 +27,7 @@ Usage: python topk_boundary.py [rows] [k]
 import sys, torch
 
 rows = int(sys.argv[1]) if len(sys.argv) > 1 else 8
-K = int(sys.argv[2]) if len(sys.argv) > 2 else 16
+K = int(sys.argv[2]) if len(sys.argv) > 2 else 512  # persistent_topk accepts only 512/1024/2048
 
 import vllm  # noqa: F401
 from vllm.models.qwen3_8_flash_next.nvidia.ops import qsa as _qsa

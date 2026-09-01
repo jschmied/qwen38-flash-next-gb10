@@ -190,6 +190,17 @@ confidence each item deserves, plus what was refuted along the way.
     prefill source is not a launch-ordering race at all but a deterministic-yet-scheduler- or
     state-dependent path.
 
+13. **The prefill divergence is NOT a race.** `LAUNCHBLOCK` (cache on, `CUDA_LAUNCH_BLOCKING=1`,
+    delivered via the same `$12` slot verified for `SYNC`; load visibly slower, consistent with
+    blocking): 3 distinct of 3. With findings 10 and 12 that closes the race family — postprocess
+    sync, single batch in flight, serialised launches — all three leave it diverging. **The source
+    is a deterministic-but-state-dependent path**: something the align machinery does that depends
+    on state carried between requests, not on timing. This fits the per-start bias (finding 9,
+    12-55%) far better than any race did, since a race gives the same bias every start.
+
+    Oracle test note: `persistent_topk` accepts only k in {512, 1024, 2048}; the test's default
+    k=16 was wrong and it is re-queued at the production k=512 (`oracle` unit, after `rerun`).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
