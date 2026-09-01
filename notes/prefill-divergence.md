@@ -93,6 +93,50 @@ attention kind is not the difference. Layer 1 is the **only** layer carrying the
 
 Sub-bisection queued (`bisect2.sh`, hooks every submodule of layer 1) to separate them.
 
+## SUB-BISECTION (bisect2) — and a flaw in the instrument
+
+Hooking every submodule of layer 1, real group [8,10,12] (identical `layers.0` output):
+
+| identical across 3 passes | differs across 3 passes |
+| --- | --- |
+| `ple.ple_embedding` | `ple.norm_query`, `ple.norm_conv` |
+| `ple.key_proj` | `linear_attn.in_proj_qkvz`, `linear_attn.in_proj_ba` |
+| `ple.value_proj` | `attn_hyper_connection.input_mix_weight_*` |
+| | `linear_attn.chunk_gated_delta_rule`, mlp/MoE, everything downstream |
+
+**Everything derived from the PLE table is bit-identical; everything derived from the hidden state
+differs.** That is a clean split and it holds across all three passes.
+
+### The flaw it exposed
+
+`in_proj_qkvz` is a plain GEMM on layer 1's input. **A projection cannot differ if its input is
+identical.** So layer 1's input is NOT identical, even though `layers.0`'s output hash is.
+
+The cause is architectural: this model uses **hyperconnections** (`attn_hyper_connection`,
+`mlp_hyper_connection`, `GatedResidual`), which carry **multiple residual streams** between layers.
+Hashing a layer's returned tensor captures one stream. Two passes can agree on that tensor and
+still disagree on the rest of the carried state, which the next layer mixes in.
+
+**Therefore this claim, made earlier and committed, is too strong:**
+
+> ~~"Layer 0 is bit-identical. Embeddings, the first GEMM, layer 0's GDN attention and its MLP are
+> all deterministic on identical input."~~
+
+The correct statement is **"layer 0's OUTPUT TENSOR is bit-identical."** The divergence may enter
+earlier, in a stream the hook never observed. What the bisection establishes is *the first hooked
+module that differs*, which is not the same as where divergence starts. The weakening also partly
+restores the CUDA/driver hypothesis, which the earlier phrasing had pushed down.
+
+Not leaned on: the profiling passes [1,2] (zero inputs) show `chunk_gated_delta_rule` differing on
+its own, but with zero inputs most modules emit degenerate values and hashes collide across
+unrelated modules (`80a3721188` recurs everywhere), so that is suggestive at best.
+
+### The fix
+
+Hash the **hyperconnection streams** themselves — the residual tensors carried between layers —
+not each layer's return value. Only that gives a fingerprint strong enough to pin the input, and
+without it every layer-level bisection on this architecture will keep answering "layer 1".
+
 ## What it does not rule out
 
 The PLE host gather, the embedding lookup, the dense GEMMs, the MoE router, or the CUDA/FlashInfer

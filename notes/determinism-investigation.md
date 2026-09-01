@@ -22,7 +22,17 @@ confidence each item deserves, plus what was refuted along the way.
    gives 3 distinct outputs of 3. So there are **two** paths, not one. Not established: whether
    they share a cause.
 
-4. **Divergence enters at layer 1.** Hashing every decoder layer over repeated identical prefills,
+4. **Divergence enters at layer 1** — with an important caveat added later by the sub-bisection:
+   the fingerprint used to group passes (a layer's output tensor) is **too weak on this
+   architecture**, because hyperconnections carry multiple residual streams between layers. Layer
+   1's `in_proj_qkvz` differs while `layers.0`'s output is identical, and a plain GEMM cannot do
+   that unless its input differs. So read this as "the first HOOKED module that differs", not
+   "where divergence starts". Everything PLE-table-derived is identical; everything
+   hidden-state-derived differs. See `prefill-divergence.md`.
+
+   *(original finding as measured)*
+
+4b. **Divergence enters at layer 1.** Hashing every decoder layer over repeated identical prefills,
    with passes grouped by their **layer-0 hash** so like meets like: `layers.0` identical x3,
    `layers.1.ple.ple_embedding` identical x3, `layers.1` differs. Replicated in two independent
    groups of three passes. Layer 1 is the only layer carrying the PLE; layers 0-2 are all
