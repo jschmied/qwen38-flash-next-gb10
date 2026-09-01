@@ -100,8 +100,24 @@ confidence each item deserves, plus what was refuted along the way.
      coin, so probably real; DEG_b's last healthy turn is 37, leaving 3 collapsed at the end,
      which is what chance looks like. Not replicated within 40 turns.
 
-   Raw tables: `notes/data/DEG_a-per-turn.txt`, `DEG_b-per-turn.txt`. `DEG_c` and the
-   `DEG_nospec` control still to come; the control must stay flat.
+   **DEG_c (n=3) — the three-arm picture:**
+
+   | arm | healthy | collapsed | collapse rate | recoveries | longest collapsed run | crossings collapsed |
+   | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+   | DEG_a | 18 | 22 | **55%** | 7 | 13 | 4/4 |
+   | DEG_b | 21 | 16 | **40%** | 7 | 3 | 1/4 |
+   | DEG_c | 32 | 5 | **12%** | 4 | 2 | 0/4 |
+
+   - **Replicated 3/3: the per-turn bimodal flip, with recovery every time.**
+   - **New: the flip's BIAS is per-start** — 12% to 55% collapse rate across identical starts. So a
+     per-start component exists on top of the per-turn flips. This is exactly why 8-turn arms
+     spread 1.83x: they sample both.
+   - **Block boundaries refuted**: 5 of 12 crossings collapsed vs a 36% base rate.
+   - **Lock-in unresolved, 1 of 3.** DEG_a's 13-run is p~4e-4 even at its 55% bias, but three
+     40-turn arms are many windows. Not established; not excluded.
+
+   Raw tables: `notes/data/DEG_{a,b,c}-per-turn.txt`. `DEG_nospec` (the control) is next and
+   must stay flat — if it flips too, the acceptance mechanism is wrong.
 
    (earlier n=1 text:) **n=1.** Whether the lock-in position (~7th block) replicates is what `DEG_b`/`DEG_c` decide;
    `DEG_nospec` is the control that must stay flat.
