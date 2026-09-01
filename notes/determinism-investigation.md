@@ -218,6 +218,20 @@ confidence each item deserves, plus what was refuted along the way.
     layer 1" is only as good as the hook. Fix built (v3: row0 hash + shape) and queued as
     `GENBIS2` after the oracle; prediction: row0 identical, full differs.
 
+16. **`mamba_cache_mode=all` diverges exactly like `align`** — `M_all_a/b/c`, cache on, mode
+    verified in the log (`mamba_cache_mode': 'all'`): 3 distinct of 3 in all three arms. As
+    vllm#54173 reported and finding 13 implied, the state-dependent path is in machinery
+    **common to both checkpoint policies**, not in `align`'s last-token-of-scheduler-step rule.
+    `M_align_*` follows as the explicit control.
+
+    **Scatter, not offset.** On the cleaned venv the cache-off reference (`GENBIS`, -0.2566) sits
+    inside the cache-on range (`SYNC` -0.247..-0.595, `M_all` -0.345..-0.756, all `'#'`). So
+    cache-on is *nondeterministic around* the uncached answer rather than *systematically
+    displaced* from it — the reproducibility defect, not (on this probe) a quality offset.
+    Caveat: `GENBIS` is eager + spec-off, the cache-on arms are graphs + MTP; the exactly-matched
+    cache-off reference (`NOPFX_*`) was sort-corrupted and must be re-run clean before this is
+    quoted as more than indicative.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
