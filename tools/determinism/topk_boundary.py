@@ -99,6 +99,38 @@ for vis in [K, K + 1, 31, 32, 33, 63, 64, 65, 127, 128, 129, 255, 256, 257,
                          f"missing={sorted(miss)[:4]} extra={sorted(extra)[:4]}")
             break
 
+# T5/T6: the UNDERFILLED case (visible < k), which is our 60-token probe (~15 visible, k=512).
+# T5: what does persistent_topk WRITE into slots >= visible? Pre-fill `blocks` with a sentinel;
+#     untouched sentinel = kernel leaves them (so they hold torch.empty garbage in production).
+# T6: the blocks.sort() hook added on 2026-09-01 (vllm#54521 "determinism fix", NOT in the stock
+#     file) is applied to the whole row. If padding is garbage, sorting can move garbage BELOW the
+#     real indices, and the expansion kernel then reads garbage from slots 0..visible-1.
+#     This would make the '#' vs 'The' top-token difference OUR bug, not the kernel's.
+print("  === underfilled case: visible < k (the probe's regime) ===")
+for vis in (15, 60, 200):
+    visible = torch.full((rows,), vis, dtype=torch.int32, device=dev)
+    lg = torch.randn(rows, COLS, dtype=torch.float32, device=dev)
+    lg[:, vis:] = float("inf")
+    SENT = 2_000_000_000
+    blocks = torch.full((rows, K), SENT, dtype=torch.int32, device=dev)
+    ws = torch.empty((WS,), dtype=torch.uint8, device=dev)
+    op(lg, visible, blocks, ws, K, COLS); torch.cuda.synchronize()
+    pad = blocks[:, vis:]
+    untouched = int((pad == SENT).sum()); total = pad.numel()
+    valid_ok = bool(((blocks[:, :vis] >= 0) & (blocks[:, :vis] < vis)).all())
+    print(f"    vis={vis:>3} k={K}: valid slots in-range={valid_ok}  padding untouched={untouched}/{total}"
+          + ("  <- kernel LEAVES padding; production holds torch.empty garbage there" if untouched == total
+             else f"  padding written with e.g. {sorted(set(pad[0].tolist()))[:4]}"))
+    # T6: simulate production: garbage padding + the sort hook
+    garbage = blocks.clone(); garbage[:, vis:] = torch.randint(-5, 3, (rows, K - vis), device=dev, dtype=torch.int32)
+    sorted_ = garbage.sort(dim=1).values
+    head_ok = bool(((sorted_[:, :vis] >= 0) & (sorted_[:, :vis] < vis)).all())
+    real = set(range(vis)); got = set(sorted_[0, :vis].tolist())
+    print(f"           with garbage padding + .sort(): first {vis} slots still the real set = {got == real}"
+          + ("" if got == real else f"  <- SORT MIXES GARBAGE IN: {sorted(got - real)[:5]} replaced {sorted(real - got)[:5]}"))
+    if not head_ok or got != real:
+        fails.append(f"vis={vis}: T6 the blocks.sort() hook corrupts the valid range when padding is garbage")
+
 print("  === results ===")
 if not fails:
     print("  all boundary tests PASS: no off-by-one at either end, no read past visible_blocks,")
