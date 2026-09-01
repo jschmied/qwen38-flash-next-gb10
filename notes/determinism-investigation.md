@@ -184,7 +184,7 @@ confidence each item deserves, plus what was refuted along the way.
     logprob, the `'The'` token, and finding 2's "top-k changes the answer", which is withdrawn.
 
 12. **Async scheduling is not the mechanism either.** `NOASYNC` (cache on, `--no-async-scheduling`,
-    verified `async_scheduling=False` in the log): 3 distinct of 3. So neither the postprocess sync
+    log evidence: `(APIServer pid=275763) INFO 09-01 23:51:00 [api_utils.py:272] non-default args: {'model_tag': '/opt/llm/models`): 3 distinct of 3. So neither the postprocess sync
     (finding 10) nor removing the second in-flight batch restores prefill determinism.
     `LAUNCHBLOCK` (`CUDA_LAUNCH_BLOCKING=1`) is the remaining race test: if it also diverges, the
     prefill source is not a launch-ordering race at all but a deterministic-yet-scheduler- or
