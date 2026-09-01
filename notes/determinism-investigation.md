@@ -169,8 +169,8 @@ confidence each item deserves, plus what was refuted along the way.
     (sort removed, stock `persistent_topk`), `SYNC` gives `'#'` in the -0.25..-0.59 band — the same
     band as every `torch.topk` arm. Only arms with `persistent_topk` **plus the sort** gave `'The'`
     at -1.51. Mechanism: when `visible < k` (the 60-token probe: ~15 of 512 slots), the kernel
-    leaves slots >= visible untouched, so they hold `torch.empty` garbage; sorting the whole row
-    moved garbage below the real indices, where the expansion kernel reads them. `torch.topk`'s
+    fills slots >= visible with **-1** (corrected by the oracle test, finding 18 — not `torch.empty`
+    garbage); sorting the whole row moved those -1s below the real indices, where the expansion kernel reads them. `torch.topk`'s
     padding is all >= visible, so it was immune. T5/T6 in `topk_boundary.py` will confirm.
 
     **Which earlier arms are affected**: every underfilled probe that ran `persistent_topk` with
@@ -231,6 +231,31 @@ confidence each item deserves, plus what was refuted along the way.
     Caveat: `GENBIS` is eager + spec-off, the cache-on arms are graphs + MTP; the exactly-matched
     cache-off reference (`NOPFX_*`) was sort-corrupted and must be re-run clean before this is
     quoted as more than indicative.
+
+17. **`mamba_cache_mode` is irrelevant to the divergence.** `M_align_a/b/c` (the explicit control):
+    3 distinct of 3 in all three. With finding 16 that is **6 of 6 arms diverging across both
+    checkpoint policies**. The state-dependent path is in machinery common to both.
+
+18. **Oracle test at the production k=512 (`persistent_topk` on sm_121):**
+    - **T1-T4: no failure at any of 11 swept sizes >= 512** (512, 513, 1023-1025, 4095-4097,
+      8447-8449) — no read past `visible_blocks`, first and last valid index selected, and the
+      selected SET matches `torch.topk`. Two caveats: the test printed only failures, so this is a
+      silence-is-pass result (fixed: it now prints per-size PASS); and a set comparison cannot see
+      the *value* error vllm#54521 reports at ~8448, so that is neither confirmed nor refuted.
+    - **T5 corrects my mechanism**: the kernel does NOT leave padding as `torch.empty` garbage — it
+      writes **-1** into every slot >= visible (0 untouched of 3976/3616/2496). The sort hook then
+      moved those -1s *below* the real indices, so the expansion kernel read block index -1 for the
+      first `visible` slots. That is **deterministic** garbage, which is exactly why `NOPFX_*` was
+      stable-but-wrong (`'The'`, -1.51, six identical requests): a deterministic corruption, not a
+      random one. Finding 11 stands; its "torch.empty garbage" wording is replaced by "-1 fill".
+    - T6 (simulated garbage + sort) fails at vis 15/60/200 as predicted; the real case is simpler
+      and worse than the simulation.
+
+19. **The CUDA/PyTorch runtime is not the source.** `runtime_determinism.py`, idle GPU: bf16 GEMM
+    (4096x2560x10240 and 1-row decode shape), fp32 8192^2 reduction, SDPA 24h x 4096, top-k with
+    ties — **all bit-identical over 5 runs, including with allocator churn between runs.** A bound,
+    not a proof (5 runs), but consistent with cross-start determinism (finding on `NOPFX`): the
+    divergence lives above the runtime, in vLLM's own kernels or model code.
 
 ## Independent corroboration
 
