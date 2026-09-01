@@ -158,6 +158,31 @@ confidence each item deserves, plus what was refuted along the way.
    intermediate aggregate, then restored at per-turn granularity. The unit of analysis was the
    error, not the data.
 
+10. **H1 is dead for the prefill divergence: a forced sync after the align postprocess does not
+    restore determinism.** `SYNC` arm (cache on, `VLLM_ALIGN_SYNC=1`, `torch.cuda.synchronize()`
+    inserted after `postprocess_mamba_align_gpu`): 3 distinct of 3, lp -0.247 / -0.400 / -0.595.
+    Env delivery verified: the `$12` slot builds one argv entry by the same path every `FN_*`
+    variable takes, and those are honoured in the same log. Caveat kept honest: the patch had no
+    log line, so "fired" rests on the delivery mechanism, not a positive trace.
+
+11. **The `'#'` vs `'The'` top-token split was MY sort hook, not the kernels.** On the cleaned venv
+    (sort removed, stock `persistent_topk`), `SYNC` gives `'#'` in the -0.25..-0.59 band — the same
+    band as every `torch.topk` arm. Only arms with `persistent_topk` **plus the sort** gave `'The'`
+    at -1.51. Mechanism: when `visible < k` (the 60-token probe: ~15 of 512 slots), the kernel
+    leaves slots >= visible untouched, so they hold `torch.empty` garbage; sorting the whole row
+    moved garbage below the real indices, where the expansion kernel reads them. `torch.topk`'s
+    padding is all >= visible, so it was immune. T5/T6 in `topk_boundary.py` will confirm.
+
+    **Which earlier arms are affected**: every underfilled probe that ran `persistent_topk` with
+    the sort — `NOPFX_a/b/c`, `BISECT`, `BISECT2` (the `'The'` / -1.x band). NOT affected: arms
+    with `torch.topk` (`P_ctl`, `P_nospec`, `F_noprefix`, `G_*`), and NOT the agent-loop /
+    `degrade` arms (an 8k+ prompt gives ~2000 visible blocks > k=512, so no padding exists).
+
+    **Which conclusions survive**: all the categorical ones. "1 distinct of 3" is still
+    deterministic and "3 of 3" still diverges whatever the token; the layer-1 bisection is still
+    a divergence. What is retracted is any *value* quoted from a sort-affected arm — the -1.51
+    logprob, the `'The'` token, and finding 2's "top-k changes the answer", which is withdrawn.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

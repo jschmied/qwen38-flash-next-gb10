@@ -90,6 +90,11 @@ not a broken drafter.
 
 ## The QSA top-k implementation changes the ANSWER, not just its stability
 
+> **WITHDRAWN 2026-09-01 (late).** The split below was caused by an unconditional `blocks.sort()`
+> experiment hook interacting with uninitialised padding when `visible < k`, not by the kernels.
+> On the cleaned venv, stock `persistent_topk` gives `'#'` in the same band as `torch.topk`. See
+> `determinism-investigation.md` finding 11. The section is kept so the retraction is legible.
+
 `F_noprefix` and `NOPFX_a` differ in exactly one parameter — `VLLM_QSA_TORCH_TOPK` — and are
 otherwise identical (`mtp 5`, batch 4096, `--no-enable-prefix-caching`, same prompt):
 
