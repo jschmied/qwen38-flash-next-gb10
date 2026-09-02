@@ -784,6 +784,21 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     zeroing does not remove the draw. Ring inheritance is out; the code-trace's rank-1
     candidate for bug B does not hold. Raw: `notes/data/mtpring.txt`.
 
+48. **Not a timing race.** `MTPRACE`, `CUDA_LAUNCH_BLOCKING=1` verified on the units (every kernel
+    launch serialised), MTP n=5, unpatched align path:
+
+    | arm | pattern | healthy |
+    | --- | --- | --- |
+| RACE_a | `FFFFFFFF` | 8/8 |
+| RACE_b | `ssssssFs` | 1/8 |
+| RACEEAGER_a | `FFFFFFFF` | 8/8 |
+| RACEEAGER_b | `ssFsssss` | 1/8 |
+
+    The per-request draw survives full serialisation, with and without CUDA graphs. Bug B is not an
+    ordering problem between kernels. Raw: `notes/data/mtprace.txt`. Remaining for bug B: the
+    drafter's own computation (top-k tie behaviour, input-slot binding) — `MTPDH` bisects inside
+    the drafter next.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

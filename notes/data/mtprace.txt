@@ -1,0 +1,56 @@
+preflight OK 16:56
+=== RACE_a  batch=4096  16:56 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  RACE_a turn 1:   8.49 s   130 tok  hits+       0  acc= 60.6% len=4.03  pos=0/0/0/0/0  ( 65.3 ms/tok)
+  RACE_a turn 2:   4.76 s   130 tok  hits+    4848  acc= 63.2% len=4.16  pos=0/0/0/0/0  ( 36.6 ms/tok)
+  RACE_a turn 3:   4.58 s   130 tok  hits+    4848  acc= 69.3% len=4.47  pos=0/0/0/0/0  ( 35.2 ms/tok)
+  RACE_a turn 4:   4.90 s   130 tok  hits+    4848  acc= 58.2% len=3.91  pos=0/0/0/0/0  ( 37.7 ms/tok)
+  RACE_a turn 5:   4.53 s   130 tok  hits+    4848  acc= 72.9% len=4.64  pos=0/0/0/0/0  ( 34.8 ms/tok)
+  RACE_a turn 6:   5.26 s   130 tok  hits+    4848  acc= 61.9% len=4.09  pos=0/0/0/0/0  ( 40.4 ms/tok)
+  RACE_a turn 7:   4.51 s   130 tok  hits+    6464  acc= 62.5% len=4.12  pos=0/0/0/0/0  ( 34.7 ms/tok)
+  RACE_a turn 8:   4.51 s   130 tok  hits+    6464  acc= 62.5% len=4.12  pos=0/0/0/0/0  ( 34.7 ms/tok)
+  RACE_a TOTAL 41.5 s over 8 turns  (5.19 s/turn)  1040 tok  39.92 ms/tok
+  ACCEPT RACE_a-post: drafts=251 draft_tok=1255 accepted=799 rate=63.7%  mean_accept_len=4.18
+=== RACE_b  batch=4096  17:08 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  RACE_b turn 1:  14.09 s   130 tok  hits+       0  acc=  6.1% len=1.30  pos=0/0/0/0/0  (108.4 ms/tok)
+  RACE_b turn 2:   9.20 s   130 tok  hits+    4848  acc= 12.3% len=1.62  pos=0/0/0/0/0  ( 70.8 ms/tok)
+  RACE_b turn 3:  11.61 s   130 tok  hits+    4848  acc=  4.3% len=1.22  pos=0/0/0/0/0  ( 89.3 ms/tok)
+  RACE_b turn 4:   9.69 s   130 tok  hits+    4848  acc= 10.0% len=1.50  pos=0/0/0/0/0  ( 74.5 ms/tok)
+  RACE_b turn 5:  11.81 s   130 tok  hits+    4848  acc=  3.7% len=1.18  pos=0/0/0/0/0  ( 90.8 ms/tok)
+  RACE_b turn 6:  10.21 s   130 tok  hits+    4848  acc=  9.7% len=1.48  pos=0/0/0/0/0  ( 78.5 ms/tok)
+  RACE_b turn 7:   5.25 s   130 tok  hits+    6464  acc= 47.7% len=3.38  pos=0/0/0/0/0  ( 40.4 ms/tok)
+  RACE_b turn 8:  10.19 s   130 tok  hits+    6464  acc=  7.6% len=1.38  pos=0/0/0/0/0  ( 78.4 ms/tok)
+  RACE_b TOTAL 82.0 s over 8 turns  (10.26 s/turn)  1040 tok  78.89 ms/tok
+  ACCEPT RACE_b-post: drafts=702 draft_tok=3510 accepted=337 rate=9.6%  mean_accept_len=1.48
+=== RACEEAGER_a  batch=4096  17:21 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=0 compile_lines=4 enforce_eager=0
+  RACEEAGER_a turn 1:  11.34 s   130 tok  hits+       0  acc= 63.9% len=4.19  pos=0/0/0/0/0  ( 87.3 ms/tok)
+  RACEEAGER_a turn 2:   6.20 s   130 tok  hits+    4848  acc= 69.3% len=4.47  pos=0/0/0/0/0  ( 47.7 ms/tok)
+  RACEEAGER_a turn 3:   5.70 s   130 tok  hits+    4848  acc= 69.3% len=4.47  pos=0/0/0/0/0  ( 43.9 ms/tok)
+  RACEEAGER_a turn 4:   6.19 s   130 tok  hits+    4848  acc= 58.8% len=3.94  pos=0/0/0/0/0  ( 47.6 ms/tok)
+  RACEEAGER_a turn 5:   7.28 s   130 tok  hits+    4848  acc= 63.2% len=4.16  pos=0/0/0/0/0  ( 56.0 ms/tok)
+  RACEEAGER_a turn 6:   6.37 s   130 tok  hits+    4848  acc= 64.5% len=4.23  pos=0/0/0/0/0  ( 49.0 ms/tok)
+  RACEEAGER_a turn 7:   5.66 s   130 tok  hits+    6464  acc= 63.1% len=4.16  pos=0/0/0/0/0  ( 43.5 ms/tok)
+  RACEEAGER_a turn 8:   6.03 s   130 tok  hits+    6464  acc= 57.1% len=3.85  pos=0/0/0/0/0  ( 46.4 ms/tok)
+  RACEEAGER_a TOTAL 54.8 s over 8 turns  (6.85 s/turn)  1040 tok  52.68 ms/tok
+  ACCEPT RACEEAGER_a-post: drafts=252 draft_tok=1260 accepted=800 rate=63.5%  mean_accept_len=4.17
+=== RACEEAGER_b  batch=4096  17:34 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=0 compile_lines=4 enforce_eager=0
+  RACEEAGER_b turn 1:  17.79 s   130 tok  hits+       0  acc=  4.3% len=1.22  pos=0/0/0/0/0  (136.9 ms/tok)
+  RACEEAGER_b turn 2:  12.65 s   130 tok  hits+    4848  acc= 12.0% len=1.60  pos=0/0/0/0/0  ( 97.3 ms/tok)
+  RACEEAGER_b turn 3:   5.90 s   130 tok  hits+    4848  acc= 66.5% len=4.32  pos=0/0/0/0/0  ( 45.4 ms/tok)
+  RACEEAGER_b turn 4:  16.80 s   130 tok  hits+    4848  acc=  2.1% len=1.10  pos=0/0/0/0/0  (129.3 ms/tok)
+  RACEEAGER_b turn 5:   7.77 s   130 tok  hits+    4848  acc= 39.1% len=2.96  pos=0/0/0/0/0  ( 59.8 ms/tok)
+  RACEEAGER_b turn 6:  14.47 s   130 tok  hits+    4848  acc=  7.2% len=1.36  pos=0/0/0/0/0  (111.3 ms/tok)
+  RACEEAGER_b turn 7:   9.69 s   130 tok  hits+    6464  acc= 20.9% len=2.05  pos=0/0/0/0/0  ( 74.6 ms/tok)
+  RACEEAGER_b turn 8:  14.14 s   130 tok  hits+    6464  acc=  6.6% len=1.33  pos=0/0/0/0/0  (108.8 ms/tok)
+  RACEEAGER_b TOTAL 99.2 s over 8 turns  (12.40 s/turn)  1040 tok  95.40 ms/tok
+  ACCEPT RACEEAGER_b-post: drafts=638 draft_tok=3190 accepted=409 rate=12.8%  mean_accept_len=1.64
+    RACE_a config: cudagraph_mode': <CUDAGraphMode.PIECEWISE: 1>
+    RACEEAGER_a config: cudagraph_mode': <CUDAGraphMode.NONE: 0>
+== ALL DONE ==
