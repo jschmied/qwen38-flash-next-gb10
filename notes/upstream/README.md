@@ -43,3 +43,5 @@ Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer boj
 - Local venv patches (FP8 KV for GDN, PLE-offload backport, hyperconnection/lm_head edits) are
   disclosed in one line; none touches the MoE call path, and the `emulation` control runs through
   the same patched build.
+
+5. 2026-09-02 evening: acceptance-effect comment POSTED on vllm#53142, one-liners on #54076 and #53798 (finding 46).
