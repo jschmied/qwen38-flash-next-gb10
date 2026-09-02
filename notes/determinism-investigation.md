@@ -376,6 +376,46 @@ confidence each item deserves, plus what was refuted along the way.
     27B does not, attributed then to MoE routing ties. Next arm: hash every submodule of layer 0
     at decode step 1 — `mlp.gate` (router), `mlp.experts`, `mlp.shared_expert`, the HC ops.
 
+26. **ROOT CAUSE, component level: `mlp.experts` — the fused MoE expert kernel — is
+    nondeterministic at small M.** `LAYER0SUB` arm (cache off, spec off, eager, triton; v3 row0
+    hashes on all 18 layer-0 submodules, 106 modules hooked; raw in
+    `notes/data/LAYER0SUB-run.txt`), three identical requests:
+
+    | layer-0 submodule (forward order) | prefill (M=55) | decode 1 (M=1) | decode 2 |
+    | --- | --- | --- | --- |
+    | attn_hyper_connection.* | identical | identical | identical |
+    | linear_attn.in_proj_qkvz / in_proj_ba / norm / out_proj / linear_attn | identical | identical | identical |
+    | mlp_hyper_connection.* | identical | identical | identical |
+    | **mlp.gate** (router logits) | identical | **identical** | identical |
+    | mlp.shared_expert (+gate, gate_up, act, down) | identical | identical | identical |
+    | **mlp.experts** | identical | **DIFFERS** | DIFFERS |
+    | mlp | identical | DIFFERS | DIFFERS |
+
+    - **Routing is excluded**: `mlp.gate` is bit-identical, so the same experts are selected with
+      the same weights; the *expert computation/combine* differs. Not routing ties.
+    - **Everything upstream of the experts is deterministic at M=1** — GDN, hyperconnections,
+      shared expert — so this is the kernel, not its inputs.
+    - **Shape-dependent**: identical at M=55, divergent at M=1. The signature of a small-M code
+      path with a nondeterministic reduction (atomic-add combine or split-K).
+
+    **What this unifies:**
+    - decode always runs M=1 → diverges from step 1 (findings 20, 21, 24, 25)
+    - cache-off prefill is one 55-token pass → deterministic, within and across starts
+    - `LAUNCHBLOCK` negative: intra-kernel atomics are indifferent to launch order (finding 13)
+    - `runtime_determinism.py` clean: it never ran the MoE kernel (finding 19)
+    - layer 0's GDN state identical, its return identical, its *deferred HC block output*
+      different (finding 25): the MoE output is exactly what the deferred block output carries
+    - the fused cuda GDN op diverging at prefill (finding 23) is a *separate* nondeterminism in
+      a different kernel — the only result this does not absorb
+    - **cache-ON prefill divergence, hypothesis**: `_mamba_block_aligned_split` splits the prefill
+      into block-aligned chunks; small chunks put the MoE on its small-M path. Testable: the same
+      submodule arm with the cache on (`LAYER0SUB_CON`, launched) — `mlp.experts` first again,
+      and a chunked prefill in the log, would close it.
+
+    **Not yet established**: which MoE backend/kernel (see the log line in this commit), and the
+    per-start bias of the acceptance flip (finding 9) — atomics give per-execution noise, not a
+    per-start tilt, so something else still contributes there.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
