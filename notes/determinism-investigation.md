@@ -743,6 +743,30 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     new upstream CI test #54893, which asserts that equality on its hardware). Raw:
     `notes/data/mtpq2.txt`, reference texts `notes/data/mtpq2-ref.json`.
 
+46. **Bug A confirmed and split: the align-mode state SEED (#53798) carries most of the effect;
+    the chunk SPLIT (#54076) helps too.** `MTPFIX3`, MTP n=5, prefix cache on:
+
+    | arm | pattern | healthy |
+    | --- | --- | --- |
+| ALIGNFIX_d | `FFFFFFFF` | 8/8 |
+| ALIGNFIX_e | `FFFFFFFF` | 8/8 |
+| ALIGNFIX_f | `FFFFFFFF` | 8/8 |
+| SEEDONLY_a | `FFFFFFFF` | 8/8 |
+| SEEDONLY_b | `FFFFFFss` | 6/8 |
+| SPLITONLY_a | `FsFFFFFF` | 7/8 |
+| SPLITONLY_b | `FFFFFFFF` | 8/8 |
+
+    Totals: both patches, 7 starts + 3 replay passes, **63/72 healthy (88 %)**; seed-only
+    14/16; split-only see table; unpatched 42/96 (44 %), and 3 of 15 unpatched starts were 8/8
+    against 5 of 7 patched. Past the three-run bar for a rate change. Mechanism, from the code:
+    on this build `cache_config.block_size` is the QSA ring's capacity (16), so a resumed request's
+    running mamba state index was seeded as `(num_computed − 1) // 16` instead of `// 1616` —
+    pointing the align precopy at the wrong block-table column, i.e. another request's (or a
+    stale) GDN state. With MTP every agent turn is a resume, and the drafter's inputs come from a
+    target running on a wrong state until the next checkpoint realigns it — the per-turn draw.
+    Not an elimination: 9 broken turns remain under both patches (bug B, per request, also present
+    with the cache off where the seed path is never taken). Raw: `notes/data/mtpfix3.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

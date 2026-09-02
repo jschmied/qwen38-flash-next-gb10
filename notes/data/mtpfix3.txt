@@ -1,0 +1,102 @@
+preflight OK 14:23
+  align patches INSTALLED: both (split refs=8, seed refs=2)
+=== ALIGNFIX_d  batch=4096  14:23 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  ALIGNFIX_d turn 1:   6.95 s   130 tok  hits+       0  acc= 63.7% len=4.19  pos=0/0/0/0/0  ( 53.5 ms/tok)
+  ALIGNFIX_d turn 2:   3.96 s   130 tok  hits+    4848  acc= 72.9% len=4.64  pos=0/0/0/0/0  ( 30.4 ms/tok)
+  ALIGNFIX_d turn 3:   4.14 s   130 tok  hits+    4848  acc= 66.7% len=4.33  pos=0/0/0/0/0  ( 31.9 ms/tok)
+  ALIGNFIX_d turn 4:   4.35 s   130 tok  hits+    4848  acc= 67.3% len=4.37  pos=0/0/0/0/0  ( 33.5 ms/tok)
+  ALIGNFIX_d turn 5:   4.49 s   130 tok  hits+    4848  acc= 58.8% len=3.94  pos=0/0/0/0/0  ( 34.6 ms/tok)
+  ALIGNFIX_d turn 6:   3.92 s   130 tok  hits+    6464  acc= 56.5% len=3.82  pos=0/0/0/0/0  ( 30.2 ms/tok)
+  ALIGNFIX_d turn 7:   3.60 s   130 tok  hits+    6464  acc= 71.7% len=4.59  pos=0/0/0/0/0  ( 27.7 ms/tok)
+  ALIGNFIX_d turn 8:   3.69 s   130 tok  hits+    6464  acc= 67.3% len=4.37  pos=0/0/0/0/0  ( 28.4 ms/tok)
+  ALIGNFIX_d TOTAL 35.1 s over 8 turns  (4.39 s/turn)  1040 tok  33.75 ms/tok
+  ACCEPT ALIGNFIX_d-post: drafts=247 draft_tok=1235 accepted=806 rate=65.3%  mean_accept_len=4.26
+=== ALIGNFIX_e  batch=4096  14:35 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  ALIGNFIX_e turn 1:   7.08 s   130 tok  hits+       0  acc= 50.8% len=3.54  pos=0/0/0/0/0  ( 54.4 ms/tok)
+  ALIGNFIX_e turn 2:   5.12 s   130 tok  hits+    4848  acc= 47.2% len=3.36  pos=0/0/0/0/0  ( 39.4 ms/tok)
+  ALIGNFIX_e turn 3:   3.81 s   130 tok  hits+    4848  acc= 71.7% len=4.59  pos=0/0/0/0/0  ( 29.3 ms/tok)
+  ALIGNFIX_e turn 4:   3.53 s   130 tok  hits+    4848  acc= 83.2% len=5.16  pos=0/0/0/0/0  ( 27.2 ms/tok)
+  ALIGNFIX_e turn 5:   3.68 s   130 tok  hits+    4848  acc= 83.1% len=5.15  pos=0/0/0/0/0  ( 28.3 ms/tok)
+  ALIGNFIX_e turn 6:   3.03 s   130 tok  hits+    6464  acc= 84.8% len=5.24  pos=0/0/0/0/0  ( 23.3 ms/tok)
+  ALIGNFIX_e turn 7:   3.33 s   130 tok  hits+    6464  acc= 82.3% len=5.12  pos=0/0/0/0/0  ( 25.6 ms/tok)
+  ALIGNFIX_e turn 8:   3.30 s   130 tok  hits+    6464  acc= 79.2% len=4.96  pos=0/0/0/0/0  ( 25.4 ms/tok)
+  ALIGNFIX_e TOTAL 32.9 s over 8 turns  (4.11 s/turn)  1040 tok  31.61 ms/tok
+  ACCEPT ALIGNFIX_e-post: drafts=233 draft_tok=1165 accepted=818 rate=70.2%  mean_accept_len=4.51
+=== ALIGNFIX_f  batch=4096  14:48 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  ALIGNFIX_f turn 1:   6.57 s   130 tok  hits+       0  acc= 65.8% len=4.29  pos=0/0/0/0/0  ( 50.6 ms/tok)
+  ALIGNFIX_f turn 2:   3.87 s   130 tok  hits+    4848  acc= 73.6% len=4.68  pos=0/0/0/0/0  ( 29.7 ms/tok)
+  ALIGNFIX_f turn 3:   3.96 s   130 tok  hits+    4848  acc= 71.0% len=4.55  pos=0/0/0/0/0  ( 30.5 ms/tok)
+  ALIGNFIX_f turn 4:   4.01 s   130 tok  hits+    4848  acc= 70.3% len=4.52  pos=0/0/0/0/0  ( 30.8 ms/tok)
+  ALIGNFIX_f turn 5:   4.88 s   130 tok  hits+    4848  acc= 47.9% len=3.39  pos=0/0/0/0/0  ( 37.5 ms/tok)
+  ALIGNFIX_f turn 6:   3.60 s   130 tok  hits+    6464  acc= 66.5% len=4.32  pos=0/0/0/0/0  ( 27.7 ms/tok)
+  ALIGNFIX_f turn 7:   3.50 s   130 tok  hits+    6464  acc= 71.0% len=4.55  pos=0/0/0/0/0  ( 26.9 ms/tok)
+  ALIGNFIX_f turn 8:   3.73 s   130 tok  hits+    6464  acc= 63.9% len=4.19  pos=0/0/0/0/0  ( 28.7 ms/tok)
+  ALIGNFIX_f TOTAL 34.1 s over 8 turns  (4.26 s/turn)  1040 tok  32.80 ms/tok
+  ACCEPT ALIGNFIX_f-post: drafts=246 draft_tok=1230 accepted=806 rate=65.5%  mean_accept_len=4.28
+  reverted scheduler.py
+  reverted mamba_hybrid.py
+  align patches INSTALLED: seed (split refs=0, seed refs=2)
+=== SEEDONLY_a  batch=4096  15:01 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  SEEDONLY_a turn 1:   5.87 s   130 tok  hits+       0  acc= 72.1% len=4.61  pos=0/0/0/0/0  ( 45.2 ms/tok)
+  SEEDONLY_a turn 2:   3.87 s   130 tok  hits+    4848  acc= 77.0% len=4.85  pos=0/0/0/0/0  ( 29.8 ms/tok)
+  SEEDONLY_a turn 3:   3.90 s   130 tok  hits+    4848  acc= 68.7% len=4.43  pos=0/0/0/0/0  ( 30.0 ms/tok)
+  SEEDONLY_a turn 4:   4.28 s   130 tok  hits+    4848  acc= 56.5% len=3.82  pos=0/0/0/0/0  ( 32.9 ms/tok)
+  SEEDONLY_a turn 5:   3.85 s   130 tok  hits+    4848  acc= 72.1% len=4.61  pos=0/0/0/0/0  ( 29.6 ms/tok)
+  SEEDONLY_a turn 6:   4.45 s   130 tok  hits+    4848  acc= 61.2% len=4.06  pos=0/0/0/0/0  ( 34.2 ms/tok)
+  SEEDONLY_a turn 7:   3.60 s   130 tok  hits+    6464  acc= 60.6% len=4.03  pos=0/0/0/0/0  ( 27.7 ms/tok)
+  SEEDONLY_a turn 8:   3.92 s   130 tok  hits+    6464  acc= 63.7% len=4.19  pos=0/0/0/0/0  ( 30.2 ms/tok)
+  SEEDONLY_a TOTAL 33.8 s over 8 turns  (4.22 s/turn)  1040 tok  32.45 ms/tok
+  ACCEPT SEEDONLY_a-post: drafts=244 draft_tok=1220 accepted=805 rate=66.0%  mean_accept_len=4.30
+=== SEEDONLY_b  batch=4096  15:13 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  SEEDONLY_b turn 1:   6.47 s   130 tok  hits+       0  acc= 62.5% len=4.12  pos=0/0/0/0/0  ( 49.8 ms/tok)
+  SEEDONLY_b turn 2:   3.90 s   130 tok  hits+    4848  acc= 71.7% len=4.59  pos=0/0/0/0/0  ( 30.0 ms/tok)
+  SEEDONLY_b turn 3:   3.89 s   130 tok  hits+    4848  acc= 66.7% len=4.33  pos=0/0/0/0/0  ( 29.9 ms/tok)
+  SEEDONLY_b turn 4:   4.39 s   130 tok  hits+    4848  acc= 56.6% len=3.83  pos=0/0/0/0/0  ( 33.8 ms/tok)
+  SEEDONLY_b turn 5:   4.25 s   130 tok  hits+    4848  acc= 55.9% len=3.79  pos=0/0/0/0/0  ( 32.7 ms/tok)
+  SEEDONLY_b turn 6:   4.51 s   130 tok  hits+    4848  acc= 61.2% len=4.06  pos=0/0/0/0/0  ( 34.7 ms/tok)
+  SEEDONLY_b turn 7:   8.15 s   130 tok  hits+    6464  acc=  7.4% len=1.37  pos=0/0/0/0/0  ( 62.7 ms/tok)
+  SEEDONLY_b turn 8:   8.26 s   130 tok  hits+    6464  acc=  7.7% len=1.39  pos=0/0/0/0/0  ( 63.5 ms/tok)
+  SEEDONLY_b TOTAL 43.8 s over 8 turns  (5.48 s/turn)  1040 tok  42.13 ms/tok
+  ACCEPT SEEDONLY_b-post: drafts=380 draft_tok=1900 accepted=670 rate=35.3%  mean_accept_len=2.76
+  reverted scheduler.py
+  reverted mamba_hybrid.py
+  align patches INSTALLED: split (split refs=8, seed refs=0)
+=== SPLITONLY_a  batch=4096  15:26 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  SPLITONLY_a turn 1:   7.41 s   130 tok  hits+       0  acc= 42.4% len=3.12  pos=0/0/0/0/0  ( 57.0 ms/tok)
+  SPLITONLY_a turn 2:   4.96 s   130 tok  hits+    4848  acc= 39.1% len=2.95  pos=0/0/0/0/0  ( 38.2 ms/tok)
+  SPLITONLY_a turn 3:   4.70 s   130 tok  hits+    4848  acc= 43.9% len=3.20  pos=0/0/0/0/0  ( 36.2 ms/tok)
+  SPLITONLY_a turn 4:   5.05 s   130 tok  hits+    4848  acc= 41.9% len=3.10  pos=0/0/0/0/0  ( 38.8 ms/tok)
+  SPLITONLY_a turn 5:   4.12 s   130 tok  hits+    4848  acc= 63.2% len=4.16  pos=0/0/0/0/0  ( 31.7 ms/tok)
+  SPLITONLY_a turn 6:   5.41 s   130 tok  hits+    4848  acc= 41.4% len=3.07  pos=0/0/0/0/0  ( 41.6 ms/tok)
+  SPLITONLY_a turn 7:   3.58 s   130 tok  hits+    6464  acc= 66.7% len=4.33  pos=0/0/0/0/0  ( 27.5 ms/tok)
+  SPLITONLY_a turn 8:   3.84 s   130 tok  hits+    6464  acc= 62.5% len=4.12  pos=0/0/0/0/0  ( 29.5 ms/tok)
+  SPLITONLY_a TOTAL 39.1 s over 8 turns  (4.88 s/turn)  1040 tok  37.55 ms/tok
+  ACCEPT SPLITONLY_a-post: drafts=305 draft_tok=1525 accepted=740 rate=48.5%  mean_accept_len=3.43
+=== SPLITONLY_b  batch=4096  15:38 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  SPLITONLY_b turn 1:   6.99 s   130 tok  hits+       0  acc= 66.5% len=4.32  pos=0/0/0/0/0  ( 53.8 ms/tok)
+  SPLITONLY_b turn 2:   4.33 s   130 tok  hits+    4848  acc= 72.1% len=4.61  pos=0/0/0/0/0  ( 33.3 ms/tok)
+  SPLITONLY_b turn 3:   4.00 s   130 tok  hits+    4848  acc= 67.3% len=4.37  pos=0/0/0/0/0  ( 30.8 ms/tok)
+  SPLITONLY_b turn 4:   4.10 s   130 tok  hits+    4848  acc= 66.5% len=4.32  pos=0/0/0/0/0  ( 31.5 ms/tok)
+  SPLITONLY_b turn 5:   3.90 s   130 tok  hits+    4848  acc= 72.4% len=4.62  pos=0/0/0/0/0  ( 30.0 ms/tok)
+  SPLITONLY_b turn 6:   4.11 s   130 tok  hits+    4848  acc= 69.0% len=4.45  pos=0/0/0/0/0  ( 31.6 ms/tok)
+  SPLITONLY_b turn 7:   3.66 s   130 tok  hits+    6464  acc= 66.5% len=4.32  pos=0/0/0/0/0  ( 28.2 ms/tok)
+  SPLITONLY_b turn 8:   3.54 s   130 tok  hits+    6464  acc= 68.0% len=4.40  pos=0/0/0/0/0  ( 27.2 ms/tok)
+  SPLITONLY_b TOTAL 34.6 s over 8 turns  (4.33 s/turn)  1040 tok  33.30 ms/tok
+  ACCEPT SPLITONLY_b-post: drafts=239 draft_tok=1195 accepted=818 rate=68.5%  mean_accept_len=4.42
+  reverted scheduler.py
+  reverted mamba_hybrid.py
+== ALL DONE ==
