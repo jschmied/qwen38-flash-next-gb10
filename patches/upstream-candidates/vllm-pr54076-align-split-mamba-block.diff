@@ -55,7 +55,7 @@
          # The last block-aligned position whose state can be cached. With
          # Eagle, FullAttn prunes the last matching block, so back off one
          # block to avoid a Mamba cache miss.
-@@ -419,9 +449,18 @@
+@@ -419,9 +449,17 @@
              else 0
          )
          stops = (
@@ -70,10 +70,9 @@
 +            # state). Stop unconditionally even when the start is aligned —
 +            # reachable whenever the token budget exceeds one block. Exempt:
 +            # internal checkpointing materializes the interior states itself,
-+            # so an aligned start may span blocks in that mode.
-+            0
-+            if use_internal_checkpoint and start % block_size == 0
-+            else next_block_boundary,
++            # so an aligned start may span blocks in that mode (this build
++            # has no internal checkpointing: stop unconditionally).
++            next_block_boundary,
              # Never run past the last cacheable block boundary mid-chunk.
              last_cache_position,
              # Fine-grained hits: the prompt's partial-tail entry can only be
