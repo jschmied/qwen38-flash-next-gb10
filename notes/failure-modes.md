@@ -562,6 +562,26 @@ interpreter what it loaded; do not reason about what it might.
   `test`, `token`, `code`, `io`, `select`, `signal`, `profile`, `queue`, `random`, `secrets`.
 - "Works from another directory" is the tell. Then `-v`, not guesswork.
 
+### A stray installer line survived six script derivations **[method]**
+
+**Signature.** An arm's output shows `layer-hash diagnostic INSTALLED` followed by `already
+installed`; the installed hook is the *narrow* one, and the widened submodule hook never takes.
+
+**Cause.** Every runner was derived by replacing text between a header anchor and `ALL DONE`. A
+`$PYBIN $S/layerhash_patch.py` install (with its "(BISECTION…)" echo) from the original
+`bisect.sh` sat *above* the first anchor and was inherited unchanged by rerun → gdncuda →
+statehash → plehash → layer0sub. It installed the narrow hook first; the intended installer saw
+the marker and skipped. For arms that didn't set `VLLM_LAYER_HASH` it was inert; for `LAYER0SUB`
+it silently substituted the wrong instrument. Cost: one 13-minute arm, caught by counting hooked
+modules (49, the narrow count) rather than trusting "INSTALLED".
+
+**Rules.**
+- Derive runners from a clean template, not by chained text replacement; or diff the head of every
+  derived script against its parent before launch.
+- Every instrument arm must log *what it hooked* (module count / names), and the analysis must
+  check that count against the expectation before reading a single hash.
+- A patch installer that finds its marker already present must say **which version** is there.
+
 ### Checks that cannot fail
 
 - `sudo -n -u llm test -r FILE` reports "cannot read" when it merely lacks a password. It produced
