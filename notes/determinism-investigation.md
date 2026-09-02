@@ -290,6 +290,16 @@ confidence each item deserves, plus what was refuted along the way.
     `VLLM_GDN_DECODE_KERNEL=cuda` vs the `triton` we run (chosen because cuda hung at c~32; c=1
     is safe) — separates "the decode kernel" from "the state handoff".
 
+22. **`GDNCUDA_a` was a triton replicate, not the cuda test.** Its log reads `GDN decode kernel:
+    triton`; the runner lineage it came from never had the `$12` env slot, so
+    `VLLM_GDN_DECODE_KERNEL=cuda` was silently dropped as an extra positional. Delivery itself was
+    re-verified end-to-end on a non-GPU unit (two `Environment=` properties arrive intact and the
+    launcher's `${VAR:-triton}` keeps `cuda`). `quick.sh` did have the slot, so `SYNC`'s
+    `VLLM_ALIGN_SYNC=1` was delivered and finding 10 stands. As a replicate it is still useful:
+    **n=2 for "cache off + spec off: prefill identical, decode step 1 diverges"** (finding 21).
+    Slot wired; the cuda arms re-launched. Rule added to the runner: a `$12` value must show up in
+    the arm's log or the arm does not count.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
