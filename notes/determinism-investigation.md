@@ -460,7 +460,11 @@ confidence each item deserves, plus what was refuted along the way.
     architecture cannot run (finding 7); its default path diverges. Neither is a mitigation.
     `cutlass` (`VLLM_CUTLASS`, verified loaded) **crashes at engine init** on sm_121 —
     `Triton Error [CUDA]: an illegal memory access was encountered` — so it is unusable here, not
-    merely nondeterministic. `triton`, `triton_unfused` follow (`moeab2`). `vllm_cutlass` was an invalid CLI
+    merely nondeterministic. `triton` / `triton_unfused` are **rejected** at init — `not supported for NvFP4 MoE`. The
+    selectable NvFP4 set is `cutlass`, `flashinfer_trtllm`, `flashinfer_cutlass`, `flashinfer_cutedsl`,
+    `flashinfer_b12x`, `marlin`, `humming`, `emulation`; with trtllm (SM121 garbage bug) and
+    cutedsl/b12x (vetoed on this checkpoint) excluded, **every serving-grade backend is measured
+    and none is deterministic**. `emulation` (dequantised) runs as a control (`moeab3`). `vllm_cutlass` was an invalid CLI
     name (the choice is `cutlass`) and died at argparse — corrected.
 
 29. **Upstream cousin: [flashinfer#3957](https://github.com/flashinfer-ai/flashinfer/issues/3957)**

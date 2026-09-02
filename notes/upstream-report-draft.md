@@ -45,7 +45,13 @@ suspected atomic scatter-add finalize) suggests cross-call state.
 | `marlin` | differs | differs |
 | `humming` | differs | differs |
 | `cutlass` (`VLLM_CUTLASS`) | **crashes at init** — `Triton Error [CUDA]: an illegal memory access was encountered` | — |
-| `triton`, `triton_unfused` | *pending* | *pending* |
+| `triton`, `triton_unfused` | **rejected** — `not supported for NvFP4 MoE` | — |
+| `emulation` (dequantised control) | *pending* | *pending* |
+
+The selectable NvFP4 set on this build is `cutlass`, `flashinfer_trtllm`, `flashinfer_cutlass`,
+`flashinfer_cutedsl`, `flashinfer_b12x`, `marlin`, `humming`, `emulation`. `flashinfer_trtllm` has a
+known SM121 silent-garbage bug and `flashinfer_cutedsl`/`b12x` are vetoed on this checkpoint by the
+unquantised drafter MoE, so every serving-grade backend is now measured.
 
 `VLLM_BATCH_INVARIANT=1` cannot be used: no mamba/linear-attention backend implements
 `supports_batch_invariance()` and 36/48 layers are linear attention.
