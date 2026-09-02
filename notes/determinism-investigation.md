@@ -779,9 +779,9 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     ```
 
     Same block id draws both states (RINGID_b: block 4 → s, s, F; block 28 → s, s). With zeroing,
-    starts a and b were 8/8 and c was 1/8 (`ssssssFs`-class, 67 ms/tok) — 2 of 3 all-healthy is
-    within the unpatched luck (3 of 15) and one broken start with zeroed rings is an existence
-    proof that zeroing does not remove the draw. Ring inheritance is out; the code-trace's rank-1
+    starts were 7/8, 8/8 and 1/8 (c: 67 ms/tok) — the two good starts are within the unpatched
+    luck (3 of 15 all-healthy) and the 1/8 start with zeroed rings is an existence proof that
+    zeroing does not remove the draw. Ring inheritance is out; the code-trace's rank-1
     candidate for bug B does not hold. Raw: `notes/data/mtpring.txt`.
 
 ## Independent corroboration
