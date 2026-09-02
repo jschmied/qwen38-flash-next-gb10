@@ -1,0 +1,59 @@
+preflight OK 02:45
+(does vllm#54521's sort fix stabilise acceptance and latency?)
+(BISECTION: which layer first differs on an identical prefill?)
+  already installed
+  state-hash INSTALLED (inert unless VLLM_STATE_HASH=1)
+=== STATEHASH  batch=4096  02:52 ===
+
+    graphs: capture_lines=0 compile_lines=2 enforce_eager=1
+  LOGIT STATEHASH req1 per-token: 355fed8e4652 78305b547754 8d7be8780cef 647a8d0cefa0
+  LOGIT STATEHASH req1: top='#' lp=-0.2565585971 sig=261b37d1b73b
+  LOGIT STATEHASH req2 per-token: 355fed8e4652 6e12ee8bc206 19166578992f 3b9027e99186
+  LOGIT STATEHASH req2: top='#' lp=-0.2565585971 sig=8341f26e1374
+  LOGIT STATEHASH req3 per-token: 355fed8e4652 fe051c87ced2 f530a03ea90d 056681c31dd1
+  LOGIT STATEHASH req3: top='#' lp=-0.2565585971 sig=bdec25ef25ee
+  LOGIT STATEHASH PER-TOKEN: prefill identical; first divergent token = 2 (decode step 1)
+  LOGIT STATEHASH RESULT: 3 distinct of 3  -> PREFILL DIVERGES (source is upstream of the decode loop)
+  ACCEPT STATEHASH-post: no draft tokens recorded (spec off, or counters absent)
+STATEHASH armed on layers 0 and 1
+STATEHASH armed on layers 0 and 1
+STATEHASH armed on layers 0 and 1
+STATEHASH pass=1 layer=language_model.model.layers.0.linear_attn kind=none (no slot in metadata)
+STATEHASH pass=1 layer=language_model.model.layers.1.linear_attn kind=none (no slot in metadata)
+STATEHASH pass=2 layer=language_model.model.layers.0.linear_attn kind=prefill slots=[0, 0, 0, 0] ssm=152ba99dbaf6 conv=92fd45c62bf2 ssm_shape=(48, 128, 128)
+STATEHASH pass=2 layer=language_model.model.layers.1.linear_attn kind=prefill slots=[0, 0, 0, 0] ssm=152ba99dbaf6 conv=92fd45c62bf2 ssm_shape=(48, 128, 128)
+STATEHASH pass=3 layer=language_model.model.layers.0.linear_attn kind=prefill slots=[3, 9, 15, 21] ssm=03751369cada conv=a135a5d945bb ssm_shape=(48, 128, 128)
+STATEHASH pass=3 layer=language_model.model.layers.1.linear_attn kind=prefill slots=[4, 10, 16, 22] ssm=ac2f5d9e46b9 conv=96a10c165a97 ssm_shape=(48, 128, 128)
+STATEHASH pass=4 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3, 9, 15, 21] ssm=74b70fe7e183 conv=eb7dac926119 ssm_shape=(48, 128, 128)
+STATEHASH pass=4 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4, 10, 16, 22] ssm=9703d04670db conv=52e40143785c ssm_shape=(48, 128, 128)
+STATEHASH pass=5 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3, 9] ssm=a437028b3918 conv=c4ba4271fe1f ssm_shape=(48, 128, 128)
+STATEHASH pass=5 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4, 10] ssm=184e7fd990ce conv=0c39c08617de ssm_shape=(48, 128, 128)
+STATEHASH pass=6 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3] ssm=a01b51ba3afe conv=8e290399fa9d ssm_shape=(48, 128, 128)
+STATEHASH pass=6 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4] ssm=aa5c938aac51 conv=7ce9e1227300 ssm_shape=(48, 128, 128)
+STATEHASH armed on layers 0 and 1
+STATEHASH pass=7 layer=language_model.model.layers.0.linear_attn kind=prefill slots=[3] ssm=920cbd9e08e5 conv=45e360478297 ssm_shape=(48, 128, 128)
+STATEHASH pass=7 layer=language_model.model.layers.1.linear_attn kind=prefill slots=[4] ssm=4cdbe4af7c0b conv=528899b05f2a ssm_shape=(48, 128, 128)
+STATEHASH pass=8 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3] ssm=cb54101b5790 conv=7287120f35a3 ssm_shape=(48, 128, 128)
+STATEHASH pass=8 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4] ssm=4c90ca6149a1 conv=ed99a54e33a2 ssm_shape=(48, 128, 128)
+STATEHASH pass=9 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3] ssm=28ed7e578e9c conv=33679b5d8a3b ssm_shape=(48, 128, 128)
+STATEHASH pass=9 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4] ssm=f013231609db conv=15af3d8f83d4 ssm_shape=(48, 128, 128)
+STATEHASH pass=10 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3] ssm=f646f242d147 conv=4fb03ca8ef4d ssm_shape=(48, 128, 128)
+STATEHASH pass=10 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4] ssm=aec4cdf3d0d2 conv=3f715925dc53 ssm_shape=(48, 128, 128)
+STATEHASH pass=11 layer=language_model.model.layers.0.linear_attn kind=prefill slots=[4] ssm=920cbd9e08e5 conv=45e360478297 ssm_shape=(48, 128, 128)
+STATEHASH pass=11 layer=language_model.model.layers.1.linear_attn kind=prefill slots=[3] ssm=4cdbe4af7c0b conv=528899b05f2a ssm_shape=(48, 128, 128)
+STATEHASH pass=12 layer=language_model.model.layers.0.linear_attn kind=decode slots=[4] ssm=cb54101b5790 conv=7287120f35a3 ssm_shape=(48, 128, 128)
+STATEHASH pass=12 layer=language_model.model.layers.1.linear_attn kind=decode slots=[3] ssm=61e201527959 conv=f2ce69865429 ssm_shape=(48, 128, 128)
+STATEHASH pass=13 layer=language_model.model.layers.0.linear_attn kind=decode slots=[4] ssm=28ed7e578e9c conv=33679b5d8a3b ssm_shape=(48, 128, 128)
+STATEHASH pass=13 layer=language_model.model.layers.1.linear_attn kind=decode slots=[3] ssm=45d7c2fb1b72 conv=9a0192dc5e3d ssm_shape=(48, 128, 128)
+STATEHASH pass=14 layer=language_model.model.layers.0.linear_attn kind=decode slots=[4] ssm=f646f242d147 conv=4fb03ca8ef4d ssm_shape=(48, 128, 128)
+STATEHASH pass=14 layer=language_model.model.layers.1.linear_attn kind=decode slots=[3] ssm=5f7ed687d382 conv=fe36cd625d5e ssm_shape=(48, 128, 128)
+STATEHASH pass=15 layer=language_model.model.layers.0.linear_attn kind=prefill slots=[3] ssm=920cbd9e08e5 conv=45e360478297 ssm_shape=(48, 128, 128)
+STATEHASH pass=15 layer=language_model.model.layers.1.linear_attn kind=prefill slots=[4] ssm=4cdbe4af7c0b conv=528899b05f2a ssm_shape=(48, 128, 128)
+STATEHASH pass=16 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3] ssm=cb54101b5790 conv=7287120f35a3 ssm_shape=(48, 128, 128)
+STATEHASH pass=16 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4] ssm=05dfad12faef conv=9ccfd9273cc9 ssm_shape=(48, 128, 128)
+STATEHASH pass=17 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3] ssm=28ed7e578e9c conv=33679b5d8a3b ssm_shape=(48, 128, 128)
+STATEHASH pass=17 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4] ssm=cb2fd2665e33 conv=aba484f59762 ssm_shape=(48, 128, 128)
+STATEHASH pass=18 layer=language_model.model.layers.0.linear_attn kind=decode slots=[3] ssm=f646f242d147 conv=4fb03ca8ef4d ssm_shape=(48, 128, 128)
+STATEHASH pass=18 layer=language_model.model.layers.1.linear_attn kind=decode slots=[4] ssm=a8eb37bb2b5c conv=ea0c8e83a812 ssm_shape=(48, 128, 128)
+  state-hash REMOVED
+== ALL DONE ==

@@ -319,6 +319,34 @@ confidence each item deserves, plus what was refuted along the way.
     step 1 are now the narrowest suspect**, and the next instrument is to hash the GDN state
     tensors directly at those two points.
 
+24. **THE STATE HASHES SPLIT IT: layer 0 is deterministic through decode; layer 1 diverges at
+    decode step 1; the only structural difference is the PLE.** `STATEHASH` arm (cache off, spec
+    off, eager, triton; hook hashes conv+SSM state at the request's slot after each GDN forward;
+    raw in `notes/data/STATEHASH-run.txt`):
+
+    | | prefill state | decode step 1 | step 2 | step 3 |
+    | --- | --- | --- | --- | --- |
+    | layer 0 (GDN) | identical x3 | **identical** | identical | identical |
+    | layer 1 (GDN + PLE) | identical x3 | **DIFFERS** | differs | differs |
+
+    - **The state write at the end of prefill (`qwen_gdn_linear_attn.py:1520`) is deterministic**
+      in both layers — the earlier "state handoff" suspicion is narrowed away from the write.
+    - **Layer 0's decode is fully deterministic**: same GDN kernel, same state shape
+      `(48,128,128)`, same slot ids in play, three requests, three decode steps, all identical.
+      So the triton decode kernel is not nondeterministic on its own.
+    - **Layer 1 diverges at decode step 1** on a state that was identical one step earlier. Layer 1
+      is layer 0 plus the PLE (`nvidia/model.py:296`, `hidden_states = hidden_states + self.ple(…)`),
+      which runs in a **CPU-offload subprocess with an async connector** — the very component
+      hand-patched for an event-pool race (`4e8b849`).
+    - Consistent with the very first bisection ("layer 1 first differs"): there the PLE *lookup*
+      hashed identical, but only in **prefill** passes; the PLE's **decode-step** output was never
+      hashed. The sampled token feeding decode step 1 is identical (token 1 `355fed8e` x3), so the
+      n-gram context is identical too — a differing PLE output at step 1 would be the offload
+      machinery, not the model.
+
+    **Next, and decisive**: hash the PLE's return value and layer 1's GDN input at decode step 1
+    (with the double-hash race detector), across three identical requests.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
