@@ -514,6 +514,19 @@ confidence each item deserves, plus what was refuted along the way.
     cache on / cache on + MTP n=5, per-token probe; prediction: all tokens identical in all three.
     If it holds, the cost to measure is finalize-only, which should be far below emulation's +17%.
 
+32. **First fix attempt died in FlashInfer, not in the model.** With `use_fused_finalize=False`
+    alone, engine init failed: `Check failed: … Invalid gemm2 profile id: 50`. The in-process
+    autotuner enumerates tactics from the runner's `get_gemm1/2_tactic_count()` and then the C++
+    runner rejects the chosen GEMM2 id — Python's tactic table and the non-fused runner's disagree.
+    (The shipped `tuning_configs` are B200/GB200-only, so this is not a stale on-disk cache.)
+    FlashInfer's own bypass: `profile_ids=[-1, -1]` — "keeps the default tactic" — and the code
+    special-cases `-1` throughout. **Patch v2** passes both, env-gated; validated install/remove on
+    a copy; single arm `DETFIN2` running (cache off, spec off, eager). If it *starts*, the
+    non-fused path works on this build with default tactics; if all 4 tokens are then identical,
+    the fix is confirmed and the remaining questions are its cost and whether tuned tactics can be
+    restored for it. Reportable upstream on its own: `use_fused_finalize=False` cannot be used
+    with the autotuner on sm_121 in this FlashInfer.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
