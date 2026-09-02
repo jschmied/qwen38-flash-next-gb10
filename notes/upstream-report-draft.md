@@ -88,8 +88,10 @@ returning `use_fused_finalize` and the other tactic-table-changing flags (same s
    (`tools/determinism/fusedfinalize_patch.py`, env-gated on `VLLM_MOE_DET_FINALIZE=1`).
 2. FlashInfer: `MoERunner.get_cache_key_extras()` (`tools/determinism/moe_cachekey_patch.py`).
 
-Validation of the complete fix against the shared default cache, in all three serving shapes, and
-its cost, is running (`DETFIN5`).
+**Validated** against the shared default cache in all three serving shapes — cache off; prefix cache
+on (52+3 chunked prefill); prefix cache on + MTP n=5 — all 4 tokens identical across 3 requests
+each, backend `FLASHINFER_CUTLASS` verified per arm. **Cost: +3.6% decode** (45.50 vs 43.92 ms/tok
+on an 8-turn agent loop, c=1, no speculation; emulation was +17%).
 
 ## Consequences observed
 

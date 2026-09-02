@@ -608,6 +608,12 @@ confidence each item deserves, plus what was refuted along the way.
     in this investigation is now bit-reproducible on the fast kernel. Cost measurement
     (`DETCOST`, 8-turn agent loop) running.
 
+38. **The fix costs +3.6% decode.** `DETCOST` (8-turn agent loop, 130 tok/turn, c=1, no spec,
+    cache on, both patches, backend verified): **45.50 ms/tok** vs 43.92 fused (12-arm reference
+    42.8-47.7) vs 51.38 emulation. n=1, but no-spec arms reproduce to ~1.10x, and 45.50 sits
+    inside the fused reference band's upper half. Only the finalize changes — the expert GEMMs stay
+    tuned — which is why it lands far below emulation's +17%. TTFT and concurrency unmeasured.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
