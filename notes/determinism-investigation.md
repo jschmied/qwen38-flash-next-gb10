@@ -539,6 +539,17 @@ confidence each item deserves, plus what was refuted along the way.
     defects belong in the upstream report: the atomic finalize's nondeterminism (documented, but
     the default and the only working path) and the broken opt-out.
 
+    **Mechanism, from the shipped JIT source**
+    (`flashinfer/data/csrc/fused_moe/cutlass_backend/flashinfer_cutlass_fused_moe_binding.cu:866-869`):
+    the GEMM2 check is skipped when `id2 == -1`. Our `profile_ids=[-1,-1]` therefore never reached
+    it — FlashInfer's Python side substitutes a concrete id derived from
+    `get_gemm2_tactic_count()` (core.py:414), which evidently reports the *fused* runner's table
+    size while the C++ runner built with `use_fused_finalize=False` checks against its own,
+    shorter `mGemm2TacticCount`. **A local fix is feasible** (source is shipped, JIT rebuilds) but it
+    is a FlashInfer binding fix — make the tactic-count getters honour `mUseFusedFinalize`, or
+    pass the caller's `-1` through untouched — plus a JIT-cache rebuild on sm_121 (see
+    [[flashinfer-jit-oom-after-driver-upgrade]] for the OOM guard). Not attempted tonight.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
