@@ -813,6 +813,23 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     same instrument with the align patches installed (DH2) and with the cache off (DH3). Raw:
     `notes/data/fnext-DH_a.log.txt`; report: `tools/determinism/drafthash_report.py`.
 
+50. **The nondeterminism enters at the prefill chunk boundary, not at the resume.** `MTPDH2`:
+    - `DH2_a` (align patches ON, cache on): eight prefill chunks starting at the cached position
+      4848, same token — eight distinct row-0 hidden states. The resumed state is different on
+      every request even with the align fix.
+    - `DH3_a` (cache OFF, no resume at all): chunk 1 (4096 tokens at position 0) has the **same**
+      row-0 hidden hash on every request of every pass (`8cb2cf5b4a15`); chunk 2 (same tokens, at
+      position 4096) has a **different** hash every time.
+    So with the deterministic MoE the first chunk of a prefill is bit-reproducible and the second
+    is not: whatever carries state across the chunk boundary (GDN/conv/PLE running state written
+    at the end of chunk 1, read at the start of chunk 2) delivers a different state each time. That
+    is consistent with every fact about bug B: per request (every prefill draws anew), prompt-
+    independent, not a config knob, not a race between launches, not the ring, text mostly
+    robust (45) but the drafter's input differs (49). Bug A (46) is the same class at the cache
+    boundary — the seed/split fix made it *rarer*, not exact. `MTPDH3` next: one-chunk prefill
+    (`--max-num-batched-tokens 8192`) vs four chunks (2048), hashing also the last row of each
+    chunk (kernel-internal vs handoff). Raw: `notes/data/fnext-DH2_a.log.txt`, `fnext-DH3_a.log.txt` (when done).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

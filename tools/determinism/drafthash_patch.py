@@ -56,10 +56,10 @@ def _dh_forward(self, input_ids, positions, hidden_states=None, *args, **kwargs)
             self._dh_turn += 1; self._dh_call = 0; self._dh_budget = 7
         if self._dh_budget > 0:
             self._dh_call += 1
-            _log.warning("DRAFTHASH turn=%d call=%d INPUT ntok=%d ids=%s pos=%s hid_row0=%s",
+            _log.warning("DRAFTHASH turn=%d call=%d INPUT ntok=%d ids=%s pos=%s hid_row0=%s hid_rowN=%s",
                          self._dh_turn, self._dh_call, nt,
                          input_ids[:3].tolist() if input_ids is not None else None,
-                         positions[:1].tolist(), self._dh_h(hidden_states[:1]))
+                         positions[:1].tolist(), self._dh_h(hidden_states[:1]), self._dh_h(hidden_states[-1:]))
         out = _DH_ORIG_FORWARD(self, input_ids, positions, hidden_states, *args, **kwargs)
         if self._dh_budget > 0:
             o = out[0] if isinstance(out, tuple) else out
