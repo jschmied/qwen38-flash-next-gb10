@@ -24,6 +24,7 @@ n = int(sys.argv[2]) if len(sys.argv) > 2 else 3
 # which survives --no-enable-prefix-caching and is therefore NOT the prefill defect.
 mx = int(sys.argv[3]) if len(sys.argv) > 3 else 1
 sigs, tops = [], []
+_all_persig = []
 for i in range(n):
     body = json.dumps({
         "model": "flashnext", "temperature": 0, "max_tokens": mx, "logprobs": True,
@@ -53,10 +54,19 @@ for i in range(n):
     sigs.append(sig); tops.append(top)
     if len(persig) > 1:
         print(f"  LOGIT {label} req{i+1} per-token: " + " ".join(persig), flush=True)
+    _all_persig.append(persig)
     best = top[0] if top else {}
     print(f"  LOGIT {label} req{i+1}: top={best.get('token')!r} lp={best.get('logprob'):.10g} sig={sig}", flush=True)
 
 u = len(set(sigs))
+if _all_persig and len({len(x) for x in _all_persig}) == 1 and len(_all_persig[0]) > 1:
+    first = next((k for k in range(len(_all_persig[0])) if len({x[k] for x in _all_persig}) > 1), None)
+    if first is None:
+        print(f"  LOGIT {label} PER-TOKEN: all {len(_all_persig[0])} tokens identical across {len(_all_persig)} requests", flush=True)
+    elif first == 0:
+        print(f"  LOGIT {label} PER-TOKEN: token 1 (prefill) already differs", flush=True)
+    else:
+        print(f"  LOGIT {label} PER-TOKEN: prefill identical; first divergent token = {first+1} (decode step {first})", flush=True)
 if u:
     print(f"  LOGIT {label} RESULT: {u} distinct of {len(sigs)}  -> " +
           ("PREFILL DIVERGES (source is upstream of the decode loop)" if u > 1
