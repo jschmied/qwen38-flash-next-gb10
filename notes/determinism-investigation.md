@@ -720,6 +720,29 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     a `ssFFsFss` `sssFssss` `ssFsFsss`, b `ssFssFss` `ssssFssF` `sssFssss` — 6 of 48 healthy,
     the lowest rate of any start so far. Raw: `notes/data/mtpq.txt`.
 
+45. **The broken state does not corrupt the target's text — the defect is in the drafter.** `MTPQ2`:
+    a no-spec reference conversation with the deterministic MoE, then MTP n=5 (same deterministic
+    MoE) replaying the reference prompts, 2 starts × 3 passes, first divergent character vs the
+    reference per turn (ref lengths 1351/1154/1428/610/1351/1233/1365/584):
+
+    | | t1 | t2 | t3 | t4 | t5 | t6 | t7 | t8 |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    | a p1 `sFsssFss` | 56 | 194 | 142 | 15 | = | 44 | 15 | 15 |
+    | a p2 `sssssFFF` | 56 | 93 | 142 | 15 | 84 | 15 | 44 | 15 |
+    | a p3 `ssssssss` | 56 | 986 | 142 | 15 | 84 | 33 | 104 | 15 |
+    | b p1 `Fsssssss` | 127 | 878 | 142 | 15 | 1279 | 33 | 104 | 15 |
+    | b p2 `sssssssF` | 56 | 150 | 142 | 77 | = | 140 | 44 | 15 |
+    | b p3 `FssssFFs` | 56 | 34 | 142 | 15 | 79 | 140 | 44 | 15 |
+
+    The fork position is a property of the turn (56, 142, 15, 15 recur in every pass whatever the
+    state), i.e. near-ties in the reference where MTP's verify shapes tip the argmax; a broken turn
+    reproduced the reference exactly twice (a/p1 t5, b/p2 t5) and stayed with it to char 1279 once.
+    Healthy and broken turns fork at the same places. So the broken state changes how many drafts
+    the target accepts, not what the target says: the drafter is wrong, the target is not. Also:
+    even with a bit-deterministic MoE, MTP output is not greedy-equivalent on this stack (cf. the
+    new upstream CI test #54893, which asserts that equality on its hardware). Raw:
+    `notes/data/mtpq2.txt`, reference texts `notes/data/mtpq2-ref.json`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
