@@ -550,6 +550,23 @@ confidence each item deserves, plus what was refuted along the way.
     pass the caller's `-1` through untouched — plus a JIT-cache rebuild on sm_121 (see
     [[flashinfer-jit-oom-after-driver-upgrade]] for the OOM guard). Not attempted tonight.
 
+34. **The non-fused runner is fine; a persisted autotune cache was feeding it fused-runner ids.**
+    Direct probe of the sm_121 JIT module (`tools/determinism/tactic_probe.py`, run as `llm`,
+    dtype trio bf16 / int64 / bf16 per `isNvfp4Quant()`):
+
+    | `use_fused_finalize` | GEMM1 | GEMM2 | valid GEMM2 ids |
+    | --- | ---: | ---: | --- |
+    | True | 20 | 40 | 20-59 |
+    | False | 20 | 20 | 20-39 |
+
+    The failing ids 48 and 50 lie only in the *fused* range. With tuning skipped they could not
+    come from a sweep, and the C++ skips the check for `-1`, so they came from a **cached** tactic:
+    vLLM persists FlashInfer autotune results (`VLLM_FLASHINFER_AUTOTUNE_CACHE_DIR`), earlier fused
+    arms wrote entries for these shapes, and the cache key omits `use_fused_finalize`. Finding 33's
+    "getter" hypothesis is withdrawn; the defect is the cache key. **Fix attempt 4** (`DETFIN4`):
+    non-fused finalize with a fresh, empty cache dir and tuning enabled. Reportable: the autotune
+    cache key must include `use_fused_finalize` (or the runner's tactic-table identity).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
