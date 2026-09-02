@@ -800,6 +800,19 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     drafter's own computation (top-k tie behaviour, input-slot binding) — `MTPDH` bisects inside
     the drafter next.
 
+49. **Bug A seen from inside: after a prefix-cache resume the target's hidden state is not
+    reproducible, even with the deterministic MoE.** `MTPDH` / `DH_a` (unpatched align path, det
+    finalize, `--enforce-eager`, MTP n=5, identical prompts × 3 passes; `tools/determinism/
+    drafthash_patch.py` hashes the drafter's input hidden state and 31 submodule outputs on each
+    turn's draft-prefill call and the six draft calls after it). Pass 2 vs pass 3 (same cache
+    state, same tokens): the drafter's **INPUT** — the target's multi-stream hidden state for the
+    first token of the resumed chunk — already differs on all 8 turns, so every module after it
+    differs too and nothing inside the drafter can be bisected on this build. The text survives
+    (45) but the numerics do not; that is the align seed/split defect (46) delivering a different
+    GDN state on every resume. Bisection of bug B needs a reproducible input: `MTPDH2` runs the
+    same instrument with the align patches installed (DH2) and with the cache off (DH3). Raw:
+    `notes/data/fnext-DH_a.log.txt`; report: `tools/determinism/drafthash_report.py`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
