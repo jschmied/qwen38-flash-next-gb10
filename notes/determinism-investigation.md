@@ -689,6 +689,26 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     is left is what the request is *given*: its KV/ring blocks and its slot, or timing. Raw in
     `notes/data/mtpfix2.txt` (copied when the run ends).
 
+43. **The align PRs (#54076 + #53798) are the first thing that moves the rate — signal, not yet
+    a result.** `MTPFIX2`, both patches installed (adapted to this build: `MambaSpec` import, no
+    internal-checkpoint mode), MTP n=5, prefix cache on:
+
+    | arm | healthy turns | pattern |
+    | --- | --- | --- |
+    | ALIGNFIX_a | 2/8 | `sFsFssss` |
+    | ALIGNFIX_b | 8/8 | `FFFFFFFF` |
+    | ALIGNFIX_c | 7/8 | `FFFFFsFF` |
+    | ALIGNFIX_replay pass 1/2/3 (one start, identical prompts) | 8/8, 7/8, 7/8 | `FFFFFFFF` `FsFFFFFF` `sFFFFFFF` |
+
+    39 of 48 turns healthy (81 %) against 42 of 96 (44 %) unpatched, over 4 starts. Not an
+    elimination (c, and two replay passes, each had a broken turn), and 4 starts of a variable
+    that came up 8/8 healthy in 3 of 15 unpatched starts is not proof of a rate change — the
+    user's standard: no call from three runs. Two things it cannot be, if it holds: the resume
+    path alone (NOCACHE removed it and stayed at 14/24), so the effect would sit in what else the
+    patch changes — prefill chunk ends at every 1616 boundary (chunks ≤1616 instead of ≤4096) and
+    the state seed for resumed requests. `MTPFIX3` (3 more starts of both, then seed-only ×2,
+    split-only ×2) is queued to confirm and separate. Raw: `notes/data/mtpfix2.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

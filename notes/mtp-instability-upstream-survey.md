@@ -1,5 +1,10 @@
 # MTP acceptance instability — upstream survey (2026-09-02)
 
+> **Superseded in part the same day.** Rank 1's mechanism (stale state on *resume*) cannot be the
+> whole story: `NOCACHE` (no resume at all) still flips (finding 41). The PRs it names do move the
+> rate, though (finding 43) — through what they change besides the resume path. Rank 2 (shape-
+> bucketed tactic) is dead: identical prompts draw differently within one start (finding 42).
+
 Symptom: MTP n=5 acceptance bimodal per start (9 / 66 / 26 %) and per turn, with a
 bit-deterministic target (finding 40). Survey of vllm / flashinfer / sglang threads, ranked by
 fit. P = proven in the thread, S = speculated.
