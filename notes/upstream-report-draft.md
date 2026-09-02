@@ -44,7 +44,8 @@ suspected atomic scatter-add finalize) suggests cross-call state.
 | `flashinfer_cutlass` (auto) | identical | differs |
 | `marlin` | differs | differs |
 | `humming` | differs | differs |
-| `cutlass`, `triton`, `triton_unfused` | *pending* | *pending* |
+| `cutlass` (`VLLM_CUTLASS`) | **crashes at init** — `Triton Error [CUDA]: an illegal memory access was encountered` | — |
+| `triton`, `triton_unfused` | *pending* | *pending* |
 
 `VLLM_BATCH_INVARIANT=1` cannot be used: no mamba/linear-attention backend implements
 `supports_batch_invariance()` and 36/48 layers are linear attention.

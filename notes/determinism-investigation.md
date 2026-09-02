@@ -458,7 +458,9 @@ confidence each item deserves, plus what was refuted along the way.
     speed on other models), so prefill nondeterminism is expected. Humming declares
     `_supports_batch_invariance`, but that path needs `VLLM_BATCH_INVARIANT=1`, which this
     architecture cannot run (finding 7); its default path diverges. Neither is a mitigation.
-    `cutlass`, `triton`, `triton_unfused` follow (`moeab2`). `vllm_cutlass` was an invalid CLI
+    `cutlass` (`VLLM_CUTLASS`, verified loaded) **crashes at engine init** on sm_121 —
+    `Triton Error [CUDA]: an illegal memory access was encountered` — so it is unusable here, not
+    merely nondeterministic. `triton`, `triton_unfused` follow (`moeab2`). `vllm_cutlass` was an invalid CLI
     name (the choice is `cutlass`) and died at argparse — corrected.
 
 29. **Upstream cousin: [flashinfer#3957](https://github.com/flashinfer-ai/flashinfer/issues/3957)**
