@@ -420,6 +420,30 @@ confidence each item deserves, plus what was refuted along the way.
     per-start bias of the acceptance flip (finding 9) — atomics give per-execution noise, not a
     per-start tilt, so something else still contributes there.
 
+27. **CACHE-ON PREFILL DIVERGENCE IS THE SAME KERNEL: the prefill is chunked 52+3, and
+    `mlp.experts` is the first differing module in BOTH chunks.** `LAYER0SUB_CON` (prefix cache
+    ON, otherwise identical to `LAYER0SUB`; raw in `notes/data/LAYER0SUB_CON-run.txt`):
+
+    - **Shapes prove the chunking**: cache off, each request's prefill is one `(55, 10240)` pass;
+      cache on, it is `(52, 10240)` then `(3, 10240)` — a block-aligned split leaving a 3-token
+      tail (`_mamba_block_aligned_split`; the log confirms chunked prefill enabled).
+    - **Per submodule, full-tensor hash across 3 requests**, both chunks: every hyperconnection
+      mix, the entire GDN chain, `mlp.gate`, the shared expert — identical. `mlp.experts` —
+      **DIFFERS**. In the 52-token chunk *and* the 3-token tail.
+
+    **Revision to finding 26's mechanism**: it is not simply "small M". `mlp.experts` differs at
+    M=52, M=3 and M=1, yet the cache-off single pass at M=55 is bit-identical across six
+    independent arms. What the FlashInfer CUTLASS NVFP4 MoE does differently at 52 vs 55 is open
+    (kernel-config selection by M? padding rows via `num_tokens_padded`? a workspace not
+    re-zeroed between chunks?). **What is established**: `mlp.experts` is the first differing
+    module in *every* diverging pass measured — cache-on prefill (both chunks) and decode — and
+    is identical in the one non-diverging pass. Its inputs are identical in all of them.
+
+    **Unification complete at the component level**: one kernel explains the cache-on prefill
+    divergence, the decode divergence, the deferred-HC puzzle, the LAUNCHBLOCK null and the clean
+    runtime test. The mamba/align state machinery is exonerated as a *cause* — its role was
+    chunking the prefill so the MoE ran in a diverging configuration.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
