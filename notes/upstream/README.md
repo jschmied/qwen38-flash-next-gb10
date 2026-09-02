@@ -6,7 +6,12 @@ posted. Post in this order, so the comments can link to a real issue number:
 1. `issue-vllm-moe-fused-finalize.md` → new issue on vllm-project/vllm (bug template).
 2. `comment-vllm-54173.md` → comment on vllm#54173 (same build, same box, different symptom).
 3. `comment-flashinfer-3957.md` → comment on flashinfer#3957 (different kernel, same suspect).
-4. PR (optional, `pr-plan.md`): one kwarg + one env var; only after the issue has a number.
+4. PR (optional, `pr-plan.md`)
+
+Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer bojiang3 asked for it
+   2026-09-02). Branch pushed to `jschmied/vllm:fix/qsa-ring-widen` (02001b44); not opened yet.
+
+4b. (kept): one kwarg + one env var; only after the issue has a number.
 
 ## Rules that apply (vLLM contributing docs, checked 2026-09-02)
 
