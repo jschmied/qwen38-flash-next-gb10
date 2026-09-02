@@ -1,4 +1,4 @@
-# [Bug] FlashInfer CUTLASS NVFP4 MoE gives different logits for identical requests (fused finalize); `use_fused_finalize=False` is bit-stable at +3.6 % decode
+# [Bug] FlashInfer CUTLASS NVFP4 MoE gives different logits for identical requests (fused finalize); `use_fused_finalize=False` is bit-stable
 
 ## Your current environment
 
@@ -226,12 +226,12 @@ for i in range(3):
 | prefix cache off, `--enforce-eager`, no spec | token 1 identical, **token 2 differs — 3 distinct of 3** | **all 4 tokens identical, 1 distinct of 3** |
 | prefix cache on (the 55-token prompt is split 52 + 3 by the block-aligned mamba split) | **token 1 already differs — 3 distinct of 3** | **1 distinct of 3** |
 | prefix cache on + MTP `num_speculative_tokens=5` | not probed separately | **1 distinct of 3** |
-| decode, 8-turn agent loop, 130 tok/turn, c = 1, no spec | 43.92 ms/tok | 45.50 ms/tok (**+3.6 %**) |
+| decode, 8-turn agent loop, 130 tok/turn, c = 1, no spec (one measurement each; run-to-run band for this config is 42.8–47.7) | 43.92 ms/tok | 45.50 ms/tok (+3.6 %, indicative) |
 
 Each "after" row was repeated on a separate server start against the same autotune cache.
 
 Control: `--moe-backend emulation` (dequantised experts, everything else unchanged) is bit-identical
-in every configuration, at 51.38 ms/tok (+17 %). So every other component of this model — GDN
+in every configuration, at 51.38 ms/tok (+17 %, one measurement). So every other component of this model — GDN
 recurrent state, PLE lookup, hyperconnections, sampler — is reproducible; the divergence sits in
 the NVFP4 MoE kernel.
 
