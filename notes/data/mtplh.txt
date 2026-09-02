@@ -1,0 +1,77 @@
+preflight OK 19:26
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  layer-hash diagnostic INSTALLED (inert unless VLLM_LAYER_HASH=1)
+=== LHLONG  batch=8192  19:26 ===
+
+    graphs: capture_lines=0 compile_lines=2 enforce_eager=1
+  LHLONG req1: prompt_tokens=7503 top='The' lp=-0.09041760862
+  LHLONG req2: prompt_tokens=7503 top='The' lp=-0.04346867278
+  LHLONG req3: prompt_tokens=7503 top='The' lp=-0.04487945512
+  ACCEPT LHLONG-post: no draft tokens recorded (spec off, or counters absent)
+    LHLONG LAYERHASH lines: 442
+  441 hash lines, 9 passes, 7 real (2 dummy/profiling)
+
+  grouping passes by 'language_model.model.layers.0' (same hash == same input):
+    46c36404a52d  passes [3]
+    0cfa5e7ab5da  passes [4]
+    0f73fb57a2a9  passes [5]
+    792cd425d898  passes [6]
+    54b3533a7058  passes [7, 8, 9]
+
+  === passes [7, 8, 9] (identical 0) ===
+    language_model.model.layers.0                       54b3533a70 54b3533a70 54b3533a70   same
+    language_model.model.layers.1                       aad4ea3217 aad4ea3217 aad4ea3217   same
+    language_model.model.layers.1.ple.ple_embedding     1fb730c6cc 1fb730c6cc 1fb730c6cc   same
+    language_model.model.layers.2                       5581b19f73 5581b19f73 5581b19f73   same
+    language_model.model.layers.3                       6a3aada83b 8c87f03f8d 95428f026a   DIFFERS
+    language_model.model.layers.4                       ecdfac4656 14b1b0a786 f4c5202db3   DIFFERS
+    language_model.model.layers.5                       0e70475255 25182c094a f92753a776   DIFFERS
+    language_model.model.layers.6                       b356996eb0 25065204c2 7a84d70319   DIFFERS
+    language_model.model.layers.7                       928f0c9c24 838ff58435 7787f69b5f   DIFFERS
+    language_model.model.layers.8                       693ed01d79 6f8451ff1c d1c38b4e32   DIFFERS
+    language_model.model.layers.9                       b32e5fef1a 86c0e2cb45 0da8532285   DIFFERS
+    language_model.model.layers.10                      dea00557d4 392c09419c f622bc6014   DIFFERS
+    language_model.model.layers.11                      10a63908f8 9d1a5d2b87 dd03ea78cc   DIFFERS
+    language_model.model.layers.12                      00cadec2da 79c66c0696 c2cb0c6969   DIFFERS
+    language_model.model.layers.13                      57376dd193 6692299bae e96567b762   DIFFERS
+    language_model.model.layers.14                      aba16d860a 2c4e2054c8 8d1d776115   DIFFERS
+    language_model.model.layers.15                      0aa361c337 b28af30b9f cd802579a0   DIFFERS
+    language_model.model.layers.16                      6031645d69 7da9f7fad6 c6b57e2689   DIFFERS
+    language_model.model.layers.17                      f1fefae8c2 07fb3bd2e4 f64b3ff896   DIFFERS
+    language_model.model.layers.18                      3dd4eb6f9e e98d8fdf93 e9fc1082cb   DIFFERS
+    language_model.model.layers.19                      9c65d79136 28a5489c4f a0f9dade4f   DIFFERS
+    language_model.model.layers.20                      a4473e9ad1 8b45b0f6cc 68b3cb1bc1   DIFFERS
+    language_model.model.layers.21                      caf941650f 72fbc760b1 e34e290d21   DIFFERS
+    language_model.model.layers.22                      ddf6241b0c d5a5a0a82e 1c42bcc164   DIFFERS
+    language_model.model.layers.23                      2ab1c09bec 28030c4604 c0ab49a096   DIFFERS
+    language_model.model.layers.24                      4b94282c38 6e35770801 91ac961d29   DIFFERS
+    language_model.model.layers.25                      45a73f4809 d0a3fed9ad e8495e8b91   DIFFERS
+    language_model.model.layers.26                      df666be2a4 3c669e1aa5 aa0dabe0d8   DIFFERS
+    language_model.model.layers.27                      dee06aaca7 92a1773cfc f82568705c   DIFFERS
+    language_model.model.layers.28                      824c2c3766 cf6a7274a5 799f98bcc0   DIFFERS
+    language_model.model.layers.29                      d3ba71cb01 ecc4e7d7cb 4ed03e3f39   DIFFERS
+    language_model.model.layers.30                      dc383b047f 93bf72d709 af4857ddfe   DIFFERS
+    language_model.model.layers.31                      9397a7f07f 540f70ed42 2fced58c09   DIFFERS
+    language_model.model.layers.32                      8ff4f5e32f b9b2d1da40 8571127380   DIFFERS
+    language_model.model.layers.33                      9da847427d 3ffc52a221 1e57a1fe81   DIFFERS
+    language_model.model.layers.34                      18725471e9 0d5ce66c37 a1de491b44   DIFFERS
+    language_model.model.layers.35                      4d1f23575e d71eab34a4 86ae95ea09   DIFFERS
+    language_model.model.layers.36                      51bca560ba 499729837d 3643740856   DIFFERS
+    language_model.model.layers.37                      cc6e7a4046 a8f248b33f ebf562a375   DIFFERS
+    language_model.model.layers.38                      0359df7fbd c1f26e50b4 feb91e8bc9   DIFFERS
+    language_model.model.layers.39                      c903f2b4e3 30d13c8b17 719e7a50c8   DIFFERS
+    language_model.model.layers.40                      a55293e6f1 015d9adf16 fa58101c0b   DIFFERS
+    language_model.model.layers.41                      bee0a4e475 264efb95fd 7c9c0539f9   DIFFERS
+    language_model.model.layers.42                      3baef11a2c 9cd33577ae 033d432dfa   DIFFERS
+    language_model.model.layers.43                      04a8fbeffd 1ca920d4dd e4c7ab3baa   DIFFERS
+    language_model.model.layers.44                      32e854bf66 61d3a2164e 1ae2536f04   DIFFERS
+    language_model.model.layers.45                      13c33d2baf a4772f125b c43044b75e   DIFFERS
+    language_model.model.layers.46                      4041d7bdf3 c13df025b7 f1970f5e8d   DIFFERS
+    language_model.model.layers.47                      4bb5bb7a61 cc99081c2d 9ef6b951ec   DIFFERS
+
+    FIRST DIFFERENCE: language_model.model.layers.3
+  layer-hash diagnostic REMOVED
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==

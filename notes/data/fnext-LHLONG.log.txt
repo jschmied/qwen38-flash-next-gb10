@@ -1,0 +1,1114 @@
+(APIServer pid=1233792) INFO 09-02 19:26:42 [api_utils.py:333] 
+(APIServer pid=1233792) INFO 09-02 19:26:42 [api_utils.py:333]        █     █     █▄   ▄█
+(APIServer pid=1233792) INFO 09-02 19:26:42 [api_utils.py:333]  ▄▄ ▄█ █     █     █ ▀▄▀ █  version 0.1.dev20073+g8e685d198
+(APIServer pid=1233792) INFO 09-02 19:26:42 [api_utils.py:333]   █▄█▀ █     █     █     █  model   /opt/llm/models/qwen38-flash-next-fp8head
+(APIServer pid=1233792) INFO 09-02 19:26:42 [api_utils.py:333]    ▀▀  ▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀
+(APIServer pid=1233792) INFO 09-02 19:26:42 [api_utils.py:333] 
+(APIServer pid=1233792) INFO 09-02 19:26:42 [api_utils.py:272] non-default args: {'model_tag': '/opt/llm/models/qwen38-flash-next-fp8head', 'enable_auto_tool_choice': True, 'tool_call_parser': 'qwen3_xml', 'host': '127.0.0.1', 'port': 8092, 'model': '/opt/llm/models/qwen38-flash-next-fp8head', 'max_model_len': 32768, 'enforce_eager': True, 'served_model_name': ['flashnext'], 'reasoning_parser': 'qwen3', 'distributed_executor_backend': 'mp', 'gpu_memory_utilization': 0.9, 'enable_prefix_caching': False, 'max_num_batched_tokens': 8192, 'max_num_seqs': 16, 'enable_chunked_prefill': True, 'compilation_config': {'mode': None, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': [], 'ir_enable_torch_wrap': None, 'splitting_ops': None, 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': None, 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [1, 2, 4, 8], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': None, 'pass_config': {}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': None, 'static_all_moe_layers': []}}
+(APIServer pid=1233792) WARNING 09-02 19:26:42 [envs.py:2224] Unknown vLLM environment variable detected: VLLM_MOE_DET_FINALIZE
+(APIServer pid=1233792) WARNING 09-02 19:26:42 [envs.py:2224] Unknown vLLM environment variable detected: VLLM_LAYER_HASH
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) INFO 09-02 19:26:48 [model.py:672] Resolved architecture: Qwen4ExpForConditionalGeneration
+(APIServer pid=1233792) INFO 09-02 19:26:48 [model.py:1965] Using max model len 32768
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(APIServer pid=1233792) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(APIServer pid=1233792) INFO 09-02 19:26:50 [scheduler.py:246] Chunked prefill is enabled with max_num_batched_tokens=8192.
+(APIServer pid=1233792) WARNING 09-02 19:26:50 [modelopt.py:378] Detected ModelOpt fp8 checkpoint (quant_algo=FP8). Please note that the format is experimental and could change.
+(APIServer pid=1233792) WARNING 09-02 19:26:50 [modelopt.py:1123] Detected ModelOpt NVFP4 checkpoint (quant_algo=NVFP4). Please note that the format is experimental and could change in future.
+(APIServer pid=1233792) WARNING 09-02 19:26:50 [modelopt.py:1123] Detected ModelOpt NVFP4 checkpoint (quant_algo=W4A16_NVFP4). Please note that the format is experimental and could change in future.
+(APIServer pid=1233792) WARNING 09-02 19:26:50 [modelopt.py:1787] Detected ModelOpt MXFP8 checkpoint. Please note that the format is experimental and could change in future.
+(APIServer pid=1233792) WARNING 09-02 19:26:50 [vllm.py:1272] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+(APIServer pid=1233792) WARNING 09-02 19:26:50 [vllm.py:1341] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+(APIServer pid=1233792) INFO 09-02 19:26:50 [kernel.py:308] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'])
+(APIServer pid=1233792) INFO 09-02 19:26:50 [vllm.py:1520] Cudagraph is disabled under eager mode
+(APIServer pid=1233792) INFO 09-02 19:26:50 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(EngineCore pid=1234139) INFO 09-02 19:27:02 [core.py:122] Initializing a V1 LLM engine (v0.1.dev20073+g8e685d198) with config: model='/opt/llm/models/qwen38-flash-next-fp8head', speculative_config=None, tokenizer='/opt/llm/models/qwen38-flash-next-fp8head', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=32768, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=modelopt_mixed, quantization_config=None, enforce_eager=True, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='qwen3', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=flashnext, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 0, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, enable_bf16x3_router_gemm=False, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=1234139) INFO 09-02 19:27:02 [multiproc_executor.py:150] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.0.0.133 (local), world_size=1, local_world_size=1
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+[ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+[ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(Worker pid=1234215) INFO 09-02 19:27:08 [parallel_state.py:1638] world_size=1 rank=0 local_rank=0 distributed_init_method=file:///tmp/vllm_dist_3cdc5f2482394bf8a21189ddd0ff9f37 backend=nccl
+(Worker pid=1234215) INFO 09-02 19:27:08 [parallel_state.py:1982] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A
+(Worker pid=1234215) INFO 09-02 19:27:08 [gpu_worker.py:500] Using V2 Model Runner
+(Worker pid=1234215) INFO 09-02 19:27:08 [gpu_worker.py:270] PleOffload: spawning worker (rank=0, local_rank=0, dp_size=1, tp_size=1, num_workers=1, ipc_addr=ipc:///tmp/5fa786f0-9c65-4bab-92a6-20eaa71205bb).
+(Worker pid=1234215) INFO 09-02 19:27:08 [model_runner.py:385] Loading model from scratch...
+(Worker pid=1234215) INFO 09-02 19:27:08 [cuda.py:545] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(Worker pid=1234215) INFO 09-02 19:27:08 [mm_encoder_attention.py:375] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(Worker pid=1234215) INFO 09-02 19:27:09 [__init__.py:689] Selected CutlassFp8BlockScaledMMKernel for ModelOptFp8PbWoLinearMethod
+(Worker pid=1234215) INFO 09-02 19:27:09 [qwen_gdn_linear_attn.py:158] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+(Worker pid=1234215) INFO 09-02 19:27:09 [qwen_gdn_linear_attn.py:505] GDN decode kernel: triton
+(Worker pid=1234215) INFO 09-02 19:27:09 [nvfp4.py:291] Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM', 'FLASHINFER_CUTEDSL', 'FLASHINFER_CUTEDSL_BATCHED', 'FLASHINFER_CUTLASS', 'VLLM_CUTLASS', 'MARLIN', 'HUMMING', 'EMULATION'].
+(Worker pid=1234215) INFO 09-02 19:27:09 [flash_attn.py:911] Using FlashAttention version 2
+(Worker pid=1234215) INFO 09-02 19:27:12 [weight_utils.py:866] Filesystem type for checkpoints: EXT4. Checkpoint size: 122.83 GiB. Available RAM: 40.17 GiB.
+(Worker pid=1234215) INFO 09-02 19:27:12 [weight_utils.py:896] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre) and the checkpoint size (122.83 GiB) exceeds 90% of available RAM (40.17 GiB).
+(Worker pid=1234215) Loading safetensors checkpoint shards:   0% Completed | 0/206 [00:00<?, ?it/s]
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:13 [parallel_state.py:1638] world_size=1 rank=0 local_rank=0 distributed_init_method=file:///tmp/vllm_ple_offload_s7i_cojy/store backend=gloo
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:13 [scheduler.py:246] Chunked prefill is enabled with max_num_batched_tokens=2048.
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:13 [kernel.py:308] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:13 [parallel_state.py:1982] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:13 [worker.py:158] Distributed environment initialized (backend=gloo, rank=0, world_size=1).
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:13 [worker.py:365] Initializing model structure for PLE weight discovery ...
+(PleOffloadWorker pid=1234418) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(PleOffloadWorker pid=1234418) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(PleOffloadWorker pid=1234418) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(PleOffloadWorker pid=1234418) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(PleOffloadWorker pid=1234418) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(PleOffloadWorker pid=1234418) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(PleOffloadWorker pid=1234418) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [cuda.py:545] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [mm_encoder_attention.py:375] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [__init__.py:689] Selected CutlassFp8BlockScaledMMKernel for ModelOptFp8PbWoLinearMethod
+(Worker pid=1234215) Loading safetensors checkpoint shards:   0% Completed | 1/206 [00:02<06:52,  2.01s/it]
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [qwen_gdn_linear_attn.py:158] Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128).
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [qwen_gdn_linear_attn.py:505] GDN decode kernel: triton
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [nvfp4.py:291] Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM', 'FLASHINFER_CUTEDSL', 'FLASHINFER_CUTEDSL_BATCHED', 'FLASHINFER_CUTLASS', 'VLLM_CUTLASS', 'MARLIN', 'HUMMING', 'EMULATION'].
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [flash_attn.py:911] Using FlashAttention version 2
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [worker.py:385] Found 1 PleOffloadLayer(s): ['language_model.model.layers.1.ple.ple_embedding']
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [weight_utils.py:866] Filesystem type for checkpoints: EXT4. Checkpoint size: 122.83 GiB. Available RAM: 38.99 GiB.
+(PleOffloadWorker pid=1234418) INFO 09-02 19:27:14 [weight_utils.py:896] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre) and the checkpoint size (122.83 GiB) exceeds 90% of available RAM (38.99 GiB).
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   0% Completed | 0/206 [00:00<?, ?it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   1% Completed | 2/206 [00:00<00:20, 10.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   2% Completed | 4/206 [00:00<00:36,  5.58it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   2% Completed | 5/206 [00:00<00:35,  5.67it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   3% Completed | 6/206 [00:00<00:33,  6.00it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   3% Completed | 7/206 [00:01<00:32,  6.04it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   4% Completed | 8/206 [00:01<00:37,  5.32it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   4% Completed | 9/206 [00:01<00:39,  5.03it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   1% Completed | 2/206 [00:04<07:17,  2.15s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   5% Completed | 10/206 [00:01<00:40,  4.88it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   5% Completed | 11/206 [00:02<00:41,  4.67it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   6% Completed | 12/206 [00:02<00:42,  4.53it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   6% Completed | 13/206 [00:02<00:42,  4.52it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   7% Completed | 14/206 [00:02<00:42,  4.52it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   7% Completed | 15/206 [00:02<00:42,  4.49it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   8% Completed | 16/206 [00:03<00:42,  4.43it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   8% Completed | 17/206 [00:03<00:43,  4.34it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   9% Completed | 18/206 [00:03<00:43,  4.34it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   1% Completed | 3/206 [00:06<07:09,  2.12s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):   9% Completed | 19/206 [00:03<00:43,  4.30it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  10% Completed | 20/206 [00:04<00:43,  4.29it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  10% Completed | 21/206 [00:04<00:43,  4.29it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  11% Completed | 22/206 [00:04<00:42,  4.31it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  11% Completed | 23/206 [00:04<00:42,  4.27it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  12% Completed | 24/206 [00:05<00:43,  4.20it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  12% Completed | 25/206 [00:05<00:43,  4.13it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  13% Completed | 26/206 [00:05<00:43,  4.15it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   2% Completed | 4/206 [00:08<07:03,  2.10s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  13% Completed | 27/206 [00:05<00:42,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  14% Completed | 28/206 [00:06<00:43,  4.14it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  14% Completed | 29/206 [00:06<00:42,  4.15it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  15% Completed | 30/206 [00:06<00:42,  4.16it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  15% Completed | 31/206 [00:06<00:41,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  16% Completed | 32/206 [00:07<00:41,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  16% Completed | 33/206 [00:07<00:40,  4.25it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  17% Completed | 34/206 [00:07<00:40,  4.22it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  17% Completed | 35/206 [00:07<00:40,  4.24it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   2% Completed | 5/206 [00:10<06:59,  2.09s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  17% Completed | 36/206 [00:07<00:40,  4.16it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  18% Completed | 37/206 [00:08<00:41,  4.12it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  18% Completed | 38/206 [00:08<00:40,  4.15it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  19% Completed | 39/206 [00:08<00:39,  4.20it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  19% Completed | 40/206 [00:08<00:39,  4.25it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  20% Completed | 41/206 [00:09<00:38,  4.26it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  20% Completed | 42/206 [00:09<00:38,  4.30it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  21% Completed | 43/206 [00:09<00:37,  4.39it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  21% Completed | 44/206 [00:09<00:37,  4.32it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   3% Completed | 6/206 [00:12<06:58,  2.09s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  22% Completed | 45/206 [00:10<00:37,  4.30it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  22% Completed | 46/206 [00:10<00:37,  4.25it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  23% Completed | 47/206 [00:10<00:37,  4.29it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  23% Completed | 48/206 [00:10<00:36,  4.32it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  24% Completed | 49/206 [00:10<00:35,  4.36it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  24% Completed | 50/206 [00:11<00:36,  4.27it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  25% Completed | 51/206 [00:11<00:36,  4.27it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  25% Completed | 52/206 [00:11<00:36,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  26% Completed | 53/206 [00:11<00:35,  4.27it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   3% Completed | 7/206 [00:14<06:57,  2.10s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  26% Completed | 54/206 [00:12<00:35,  4.27it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  27% Completed | 55/206 [00:12<00:35,  4.25it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  27% Completed | 56/206 [00:12<00:35,  4.24it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  28% Completed | 57/206 [00:12<00:34,  4.32it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  28% Completed | 58/206 [00:13<00:32,  4.62it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  29% Completed | 59/206 [00:13<00:30,  4.86it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  29% Completed | 60/206 [00:13<00:28,  5.11it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  30% Completed | 61/206 [00:13<00:27,  5.25it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  30% Completed | 62/206 [00:13<00:28,  5.13it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  31% Completed | 63/206 [00:14<00:28,  4.96it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   4% Completed | 8/206 [00:16<06:56,  2.11s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  31% Completed | 64/206 [00:14<00:29,  4.79it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  32% Completed | 65/206 [00:14<00:31,  4.51it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  32% Completed | 66/206 [00:14<00:31,  4.39it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  33% Completed | 67/206 [00:14<00:31,  4.38it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  33% Completed | 68/206 [00:15<00:31,  4.36it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  33% Completed | 69/206 [00:15<00:31,  4.36it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  34% Completed | 70/206 [00:15<00:30,  4.42it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  34% Completed | 71/206 [00:15<00:31,  4.34it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  35% Completed | 72/206 [00:16<00:31,  4.28it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   4% Completed | 9/206 [00:18<06:52,  2.10s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  35% Completed | 73/206 [00:16<00:31,  4.24it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  36% Completed | 74/206 [00:16<00:31,  4.22it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  36% Completed | 75/206 [00:16<00:30,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  37% Completed | 76/206 [00:17<00:30,  4.21it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  37% Completed | 77/206 [00:17<00:30,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  38% Completed | 78/206 [00:17<00:30,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  38% Completed | 79/206 [00:17<00:30,  4.20it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  39% Completed | 80/206 [00:18<00:29,  4.22it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  39% Completed | 81/206 [00:18<00:29,  4.27it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   5% Completed | 10/206 [00:20<06:50,  2.09s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  40% Completed | 82/206 [00:18<00:29,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  40% Completed | 83/206 [00:18<00:29,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  41% Completed | 84/206 [00:18<00:28,  4.25it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  41% Completed | 85/206 [00:19<00:28,  4.27it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  42% Completed | 86/206 [00:19<00:28,  4.28it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  42% Completed | 87/206 [00:19<00:28,  4.20it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  43% Completed | 88/206 [00:19<00:28,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  43% Completed | 89/206 [00:20<00:28,  4.13it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  44% Completed | 90/206 [00:20<00:28,  4.12it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   5% Completed | 11/206 [00:23<06:49,  2.10s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  44% Completed | 91/206 [00:20<00:28,  4.09it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  45% Completed | 92/206 [00:20<00:27,  4.21it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  45% Completed | 93/206 [00:21<00:26,  4.21it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  46% Completed | 94/206 [00:21<00:26,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  46% Completed | 95/206 [00:21<00:26,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  47% Completed | 96/206 [00:21<00:26,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  47% Completed | 97/206 [00:22<00:25,  4.22it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  48% Completed | 98/206 [00:22<00:25,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  48% Completed | 99/206 [00:22<00:25,  4.22it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   6% Completed | 12/206 [00:25<06:48,  2.11s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  49% Completed | 100/206 [00:22<00:25,  4.21it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  49% Completed | 101/206 [00:23<00:25,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  50% Completed | 102/206 [00:23<00:24,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  50% Completed | 103/206 [00:23<00:24,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  50% Completed | 104/206 [00:23<00:24,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  51% Completed | 105/206 [00:23<00:23,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  51% Completed | 106/206 [00:24<00:23,  4.20it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  52% Completed | 107/206 [00:24<00:23,  4.14it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  52% Completed | 108/206 [00:24<00:23,  4.16it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   6% Completed | 13/206 [00:27<06:46,  2.10s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  53% Completed | 109/206 [00:24<00:23,  4.15it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  53% Completed | 110/206 [00:25<00:23,  4.14it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  54% Completed | 111/206 [00:25<00:22,  4.21it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  54% Completed | 112/206 [00:25<00:22,  4.14it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  55% Completed | 113/206 [00:25<00:22,  4.10it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  55% Completed | 114/206 [00:26<00:22,  4.06it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  56% Completed | 115/206 [00:26<00:22,  4.07it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  56% Completed | 116/206 [00:26<00:21,  4.09it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   7% Completed | 14/206 [00:29<06:45,  2.11s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  57% Completed | 117/206 [00:26<00:21,  4.07it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  57% Completed | 118/206 [00:27<00:21,  4.10it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  58% Completed | 119/206 [00:27<00:20,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  58% Completed | 120/206 [00:27<00:21,  4.09it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  59% Completed | 121/206 [00:27<00:20,  4.13it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  59% Completed | 122/206 [00:28<00:20,  4.10it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  60% Completed | 123/206 [00:28<00:20,  4.12it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  60% Completed | 124/206 [00:28<00:19,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  61% Completed | 125/206 [00:28<00:19,  4.11it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   7% Completed | 15/206 [00:31<06:44,  2.12s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  61% Completed | 126/206 [00:29<00:19,  4.08it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  62% Completed | 127/206 [00:29<00:19,  4.11it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  62% Completed | 128/206 [00:29<00:19,  4.09it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  63% Completed | 129/206 [00:29<00:18,  4.15it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  63% Completed | 130/206 [00:30<00:17,  4.22it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  64% Completed | 131/206 [00:30<00:17,  4.21it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  64% Completed | 132/206 [00:30<00:17,  4.23it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  65% Completed | 133/206 [00:30<00:17,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  65% Completed | 134/206 [00:30<00:17,  4.18it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   8% Completed | 16/206 [00:33<06:40,  2.11s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  66% Completed | 135/206 [00:31<00:17,  4.17it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  66% Completed | 136/206 [00:31<00:15,  4.49it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  67% Completed | 137/206 [00:31<00:15,  4.35it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  67% Completed | 138/206 [00:31<00:14,  4.64it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  67% Completed | 139/206 [00:32<00:13,  4.94it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  68% Completed | 140/206 [00:32<00:13,  4.81it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  68% Completed | 141/206 [00:32<00:13,  4.74it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  69% Completed | 142/206 [00:32<00:13,  4.65it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  69% Completed | 143/206 [00:32<00:13,  4.74it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  70% Completed | 144/206 [00:33<00:12,  4.85it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   8% Completed | 17/206 [00:35<06:39,  2.11s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  70% Completed | 145/206 [00:33<00:13,  4.63it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  71% Completed | 146/206 [00:33<00:13,  4.42it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  71% Completed | 147/206 [00:33<00:13,  4.37it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  72% Completed | 148/206 [00:33<00:12,  4.73it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  72% Completed | 149/206 [00:34<00:12,  4.62it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  73% Completed | 150/206 [00:34<00:12,  4.65it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  73% Completed | 151/206 [00:34<00:11,  4.66it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  74% Completed | 152/206 [00:34<00:11,  4.69it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  74% Completed | 153/206 [00:35<00:11,  4.74it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  75% Completed | 154/206 [00:35<00:11,  4.56it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   9% Completed | 18/206 [00:37<06:41,  2.14s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  75% Completed | 155/206 [00:35<00:11,  4.58it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  76% Completed | 156/206 [00:35<00:10,  4.55it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  76% Completed | 157/206 [00:35<00:10,  4.53it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  77% Completed | 158/206 [00:36<00:10,  4.53it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  77% Completed | 159/206 [00:36<00:10,  4.51it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  78% Completed | 160/206 [00:36<00:10,  4.39it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  78% Completed | 161/206 [00:36<00:10,  4.40it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  79% Completed | 162/206 [00:37<00:10,  4.35it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  79% Completed | 163/206 [00:37<00:09,  4.43it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:   9% Completed | 19/206 [00:40<06:39,  2.14s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  80% Completed | 164/206 [00:37<00:09,  4.41it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  80% Completed | 165/206 [00:37<00:09,  4.41it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  81% Completed | 166/206 [00:37<00:08,  4.79it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  81% Completed | 167/206 [00:38<00:07,  4.88it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  82% Completed | 168/206 [00:38<00:07,  4.89it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  82% Completed | 169/206 [00:38<00:07,  4.78it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  83% Completed | 170/206 [00:38<00:07,  4.70it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  83% Completed | 171/206 [00:38<00:07,  4.79it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  83% Completed | 172/206 [00:39<00:07,  4.69it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  84% Completed | 173/206 [00:39<00:07,  4.63it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  84% Completed | 174/206 [00:39<00:06,  4.63it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  10% Completed | 20/206 [00:42<06:37,  2.14s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  85% Completed | 175/206 [00:39<00:06,  4.57it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  85% Completed | 176/206 [00:40<00:06,  4.45it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  86% Completed | 177/206 [00:40<00:06,  4.31it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  86% Completed | 178/206 [00:40<00:06,  4.22it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  87% Completed | 179/206 [00:40<00:06,  4.21it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  87% Completed | 180/206 [00:41<00:06,  4.22it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  88% Completed | 181/206 [00:41<00:05,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  88% Completed | 182/206 [00:41<00:05,  4.15it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  89% Completed | 183/206 [00:41<00:05,  4.09it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  10% Completed | 21/206 [00:44<06:38,  2.15s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  89% Completed | 184/206 [00:42<00:05,  4.11it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  90% Completed | 185/206 [00:42<00:05,  4.15it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  90% Completed | 186/206 [00:42<00:04,  4.18it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  91% Completed | 187/206 [00:42<00:04,  4.12it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  91% Completed | 188/206 [00:42<00:04,  4.19it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  92% Completed | 189/206 [00:43<00:04,  4.11it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  92% Completed | 190/206 [00:43<00:03,  4.03it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  93% Completed | 191/206 [00:43<00:03,  4.03it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  11% Completed | 22/206 [00:46<06:35,  2.15s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  93% Completed | 192/206 [00:43<00:03,  4.05it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  95% Completed | 195/206 [00:44<00:01,  6.24it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  96% Completed | 197/206 [00:45<00:03,  2.69it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  11% Completed | 23/206 [00:49<07:23,  2.43s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  96% Completed | 198/206 [00:47<00:04,  1.70it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  97% Completed | 199/206 [00:48<00:05,  1.34it/s]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  12% Completed | 24/206 [00:52<07:49,  2.58s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  97% Completed | 200/206 [00:50<00:05,  1.09it/s]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  98% Completed | 201/206 [00:53<00:08,  1.65s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  12% Completed | 25/206 [00:58<10:49,  3.59s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  98% Completed | 202/206 [00:55<00:07,  1.78s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  99% Completed | 203/206 [00:57<00:04,  1.63s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload):  99% Completed | 204/206 [00:59<00:03,  1.83s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  13% Completed | 26/206 [01:02<10:54,  3.63s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload): 100% Completed | 205/206 [01:05<00:02,  2.99s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload): 100% Completed | 206/206 [01:09<00:00,  3.39s/it]
+(PleOffloadWorker pid=1234418) Loading safetensors checkpoint shards(PLE-offload): 100% Completed | 206/206 [01:09<00:00,  2.95it/s]
+(PleOffloadWorker pid=1234418) 
+(Worker pid=1234215) Loading safetensors checkpoint shards:  13% Completed | 27/206 [01:12<16:43,  5.60s/it]
+(PleOffloadWorker pid=1234418) INFO 09-02 19:28:24 [worker.py:448] PLE offload matched 132 checkpoint tensor(s), loaded 5 offload entries, and verified 2/2 materialized parameter(s) for layers: ['language_model.model.layers.1.ple.ple_embedding']
+(PleOffloadWorker pid=1234418) INFO 09-02 19:28:24 [worker.py:471] PLE weight loading complete.
+(PleOffloadWorker pid=1234418) INFO 09-02 19:28:24 [worker.py:289] Bound IPC address ipc:///tmp/5fa786f0-9c65-4bab-92a6-20eaa71205bb; waiting for 1 GPU worker registration(s).
+(PleOffloadWorker pid=1234418) INFO 09-02 19:28:24 [worker.py:479] Waiting for 1 GPU worker registration(s) ...
+(Worker pid=1234215) Loading safetensors checkpoint shards:  14% Completed | 28/206 [01:14<13:37,  4.59s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  14% Completed | 29/206 [01:16<11:30,  3.90s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  15% Completed | 30/206 [01:19<10:23,  3.54s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  15% Completed | 31/206 [01:22<09:32,  3.27s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  16% Completed | 32/206 [01:25<09:07,  3.15s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  16% Completed | 33/206 [01:27<08:41,  3.01s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  17% Completed | 34/206 [01:30<08:13,  2.87s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  17% Completed | 35/206 [01:33<07:57,  2.79s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  17% Completed | 36/206 [01:35<07:25,  2.62s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  18% Completed | 37/206 [01:37<07:01,  2.49s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  18% Completed | 38/206 [01:39<06:37,  2.37s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  19% Completed | 39/206 [01:41<06:20,  2.28s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  19% Completed | 40/206 [01:43<06:09,  2.23s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  20% Completed | 41/206 [01:45<06:04,  2.21s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  20% Completed | 42/206 [01:48<06:11,  2.27s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  21% Completed | 43/206 [01:50<06:01,  2.22s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  21% Completed | 44/206 [01:52<05:51,  2.17s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  22% Completed | 45/206 [01:54<05:43,  2.14s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  22% Completed | 46/206 [01:56<05:37,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  23% Completed | 47/206 [01:58<05:33,  2.09s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  23% Completed | 48/206 [02:00<05:29,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  24% Completed | 49/206 [02:02<05:26,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  24% Completed | 50/206 [02:04<05:23,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  25% Completed | 51/206 [02:06<05:21,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  25% Completed | 52/206 [02:08<05:18,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  26% Completed | 53/206 [02:10<05:15,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  26% Completed | 54/206 [02:13<05:13,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  27% Completed | 55/206 [02:15<05:09,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  27% Completed | 56/206 [02:17<05:08,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  28% Completed | 57/206 [02:19<05:06,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  28% Completed | 58/206 [02:21<05:04,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  29% Completed | 59/206 [02:23<05:02,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  29% Completed | 60/206 [02:25<05:01,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  30% Completed | 61/206 [02:27<04:58,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  30% Completed | 62/206 [02:29<04:56,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  31% Completed | 63/206 [02:31<04:54,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  31% Completed | 64/206 [02:33<04:52,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  32% Completed | 65/206 [02:35<04:50,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  32% Completed | 66/206 [02:37<04:47,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  33% Completed | 67/206 [02:39<04:44,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  33% Completed | 68/206 [02:41<04:42,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  33% Completed | 69/206 [02:43<04:40,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  34% Completed | 70/206 [02:45<04:38,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  34% Completed | 71/206 [02:47<04:39,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  35% Completed | 72/206 [02:50<05:11,  2.32s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  35% Completed | 73/206 [02:53<05:33,  2.51s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  36% Completed | 74/206 [02:57<06:14,  2.83s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  36% Completed | 75/206 [03:00<06:18,  2.89s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  37% Completed | 76/206 [03:02<05:44,  2.65s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  37% Completed | 77/206 [03:04<05:23,  2.51s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  38% Completed | 78/206 [03:06<05:06,  2.39s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  38% Completed | 79/206 [03:08<04:54,  2.32s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  39% Completed | 80/206 [03:11<04:46,  2.28s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  39% Completed | 81/206 [03:13<04:40,  2.24s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  40% Completed | 82/206 [03:15<04:34,  2.21s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  40% Completed | 83/206 [03:17<04:35,  2.24s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  41% Completed | 84/206 [03:19<04:28,  2.20s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  41% Completed | 85/206 [03:21<04:20,  2.15s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  42% Completed | 86/206 [03:23<04:13,  2.12s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  42% Completed | 87/206 [03:27<05:17,  2.67s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  43% Completed | 88/206 [03:32<06:22,  3.24s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  43% Completed | 89/206 [03:37<07:15,  3.72s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  44% Completed | 90/206 [03:41<07:36,  3.94s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  44% Completed | 91/206 [03:44<06:41,  3.49s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  45% Completed | 92/206 [03:46<05:51,  3.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  45% Completed | 93/206 [03:48<05:14,  2.79s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  46% Completed | 94/206 [03:50<04:47,  2.56s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  46% Completed | 95/206 [03:52<04:28,  2.42s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  47% Completed | 96/206 [03:54<04:15,  2.33s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  47% Completed | 97/206 [03:56<04:07,  2.27s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  48% Completed | 98/206 [03:59<04:02,  2.24s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  48% Completed | 99/206 [04:01<03:58,  2.22s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  49% Completed | 100/206 [04:03<03:54,  2.21s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  49% Completed | 101/206 [04:05<03:49,  2.19s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  50% Completed | 102/206 [04:07<03:43,  2.15s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  50% Completed | 103/206 [04:09<03:39,  2.13s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  50% Completed | 104/206 [04:11<03:35,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  51% Completed | 105/206 [04:13<03:31,  2.09s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  51% Completed | 106/206 [04:15<03:28,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  52% Completed | 107/206 [04:17<03:25,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  52% Completed | 108/206 [04:19<03:22,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  53% Completed | 109/206 [04:21<03:19,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  53% Completed | 110/206 [04:24<03:17,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  54% Completed | 111/206 [04:26<03:14,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  54% Completed | 112/206 [04:28<03:13,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  55% Completed | 113/206 [04:30<03:10,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  55% Completed | 114/206 [04:32<03:08,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  56% Completed | 115/206 [04:34<03:06,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  56% Completed | 116/206 [04:36<03:04,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  57% Completed | 117/206 [04:38<03:01,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  57% Completed | 118/206 [04:40<02:59,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  58% Completed | 119/206 [04:42<02:57,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  58% Completed | 120/206 [04:44<02:55,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  59% Completed | 121/206 [04:46<02:53,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  59% Completed | 122/206 [04:48<02:50,  2.03s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  60% Completed | 123/206 [04:50<02:48,  2.03s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  60% Completed | 124/206 [04:52<02:46,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  61% Completed | 125/206 [04:54<02:46,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  61% Completed | 126/206 [04:56<02:46,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  62% Completed | 127/206 [04:58<02:46,  2.10s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  62% Completed | 128/206 [05:01<02:45,  2.12s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  63% Completed | 129/206 [05:03<02:43,  2.12s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  63% Completed | 130/206 [05:05<02:41,  2.13s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  64% Completed | 131/206 [05:07<02:38,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  64% Completed | 132/206 [05:09<02:36,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  65% Completed | 133/206 [05:11<02:34,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  65% Completed | 134/206 [05:13<02:31,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  66% Completed | 135/206 [05:15<02:28,  2.10s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  66% Completed | 136/206 [05:18<02:28,  2.12s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  67% Completed | 137/206 [05:20<02:24,  2.10s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  67% Completed | 138/206 [05:22<02:21,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  67% Completed | 139/206 [05:24<02:18,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  68% Completed | 140/206 [05:26<02:15,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  68% Completed | 141/206 [05:28<02:13,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  69% Completed | 142/206 [05:30<02:11,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  69% Completed | 143/206 [05:32<02:09,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  70% Completed | 144/206 [05:34<02:06,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  70% Completed | 145/206 [05:36<02:04,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  71% Completed | 146/206 [05:38<02:02,  2.04s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  71% Completed | 147/206 [05:40<02:01,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  72% Completed | 148/206 [05:42<01:58,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  72% Completed | 149/206 [05:44<01:57,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  73% Completed | 150/206 [05:46<01:56,  2.09s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  73% Completed | 151/206 [05:49<02:04,  2.27s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  74% Completed | 152/206 [05:53<02:23,  2.66s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  74% Completed | 153/206 [05:55<02:12,  2.50s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  75% Completed | 154/206 [05:57<02:03,  2.38s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  75% Completed | 155/206 [05:59<01:58,  2.33s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  76% Completed | 156/206 [06:01<01:54,  2.29s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  76% Completed | 157/206 [06:03<01:49,  2.24s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  77% Completed | 158/206 [06:05<01:46,  2.22s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  77% Completed | 159/206 [06:08<01:42,  2.18s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  78% Completed | 160/206 [06:10<01:38,  2.14s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  78% Completed | 161/206 [06:12<01:35,  2.12s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  79% Completed | 162/206 [06:14<01:32,  2.10s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  79% Completed | 163/206 [06:16<01:29,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  80% Completed | 164/206 [06:18<01:27,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  80% Completed | 165/206 [06:20<01:24,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  81% Completed | 166/206 [06:22<01:22,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  81% Completed | 167/206 [06:24<01:20,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  82% Completed | 168/206 [06:26<01:18,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  82% Completed | 169/206 [06:28<01:15,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  83% Completed | 170/206 [06:30<01:14,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  83% Completed | 171/206 [06:32<01:12,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  83% Completed | 172/206 [06:34<01:11,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  84% Completed | 173/206 [06:37<01:09,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  84% Completed | 174/206 [06:39<01:06,  2.09s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  85% Completed | 175/206 [06:41<01:04,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  85% Completed | 176/206 [06:43<01:02,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  86% Completed | 177/206 [06:45<00:59,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  86% Completed | 178/206 [06:47<00:57,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  87% Completed | 179/206 [06:49<00:55,  2.05s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  87% Completed | 180/206 [06:51<00:53,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  88% Completed | 181/206 [06:53<00:51,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  88% Completed | 182/206 [06:55<00:50,  2.09s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  89% Completed | 183/206 [06:57<00:47,  2.08s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  89% Completed | 184/206 [06:59<00:45,  2.07s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  90% Completed | 185/206 [07:01<00:43,  2.06s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  90% Completed | 186/206 [07:04<00:42,  2.15s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  91% Completed | 187/206 [07:06<00:40,  2.12s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  91% Completed | 188/206 [07:08<00:38,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  92% Completed | 189/206 [07:10<00:35,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  92% Completed | 190/206 [07:12<00:33,  2.11s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  93% Completed | 191/206 [07:15<00:34,  2.30s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  93% Completed | 192/206 [07:17<00:32,  2.34s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  94% Completed | 193/206 [07:24<00:46,  3.55s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  94% Completed | 194/206 [07:25<00:34,  2.90s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  95% Completed | 195/206 [07:44<01:25,  7.79s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  95% Completed | 196/206 [07:59<01:40, 10.01s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards:  96% Completed | 197/206 [08:00<01:03,  7.09s/it]
+(Worker pid=1234215) Loading safetensors checkpoint shards: 100% Completed | 206/206 [08:00<00:00,  2.33s/it]
+(Worker pid=1234215) 
+(Worker pid=1234215) INFO 09-02 19:35:12 [default_loader.py:430] Loading weights took 480.17 seconds
+(Worker pid=1234215) INFO 09-02 19:35:12 [nvfp4.py:564] Using MoEPrepareAndFinalizeNoDPEPModular
+(Worker pid=1234215) INFO 09-02 19:35:19 [model_runner.py:407] Model loading took 71.15 GiB memory and 491.282858 seconds
+(Worker pid=1234215) INFO 09-02 19:35:20 [topk_topp_sampler.py:62] Using FlashInfer for top-p & top-k sampling.
+(Worker pid=1234215) INFO 09-02 19:35:20 [connector.py:241] PleOffload: registered 1 PleOffloadLayer(s) (dp_rank=0, tp_rank=0, ipc_addr=ipc:///tmp/5fa786f0-9c65-4bab-92a6-20eaa71205bb): ['language_model.model.layers.1.ple.ple_embedding']
+(PleOffloadWorker pid=1234418) INFO 09-02 19:35:20 [worker.py:489] GPU worker 0 registered (dp_rank=0, tp_rank=0, layers=['language_model.model.layers.1.ple.ple_embedding']).
+(PleOffloadWorker pid=1234418) INFO 09-02 19:35:20 [worker.py:576] Registrations complete (dp_size=1, tp_size=1, layers=['language_model.model.layers.1.ple.ple_embedding']).
+(Worker pid=1234215) INFO 09-02 19:35:20 [worker.py:232] Worker ready - 1 PleOffloadLayer(s): ['language_model.model.layers.1.ple.ple_embedding']
+(Worker pid=1234215) INFO 09-02 19:35:20 [interface.py:915] Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+(Worker pid=1234215) INFO 09-02 19:35:20 [interface.py:939] Padding mamba page size by 0.25% to ensure that mamba page size and attention page size are exactly equal.
+(PleOffloadWorker pid=1234418) INFO 09-02 19:35:20 [worker.py:590] Busy-loop started.
+(EngineCore pid=1234139) INFO 09-02 19:35:20 [torch_utils.py:262] Reducing Torch threads from 20 to 1 for serving. Set OMP_NUM_THREADS in the external environment to override.
+(Worker pid=1234215) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(Worker pid=1234215) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(Worker pid=1234215) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(Worker pid=1234215) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(Worker pid=1234215) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(Worker pid=1234215) INFO 09-02 19:35:25 [encoder_runner.py:120] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(Worker pid=1234215) WARNING 09-02 19:35:35 [model.py:1115] LAYERHASH installed on 49 modules
+(Worker pid=1234215) WARNING 09-02 19:35:36 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.0 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:37 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.1.ple.ple_embedding 33a3a11d54de row0=84ff92691f90 shape=(8192, 2560)
+(Worker pid=1234215) WARNING 09-02 19:35:39 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.1 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:42 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.2 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:42 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.3 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:45 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.4 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:45 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.5 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:48 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.6 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:49 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.7 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:51 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.8 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:52 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.9 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:55 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.10 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:55 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.11 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:58 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.12 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:35:58 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.13 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:01 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.14 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:02 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.15 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:04 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.16 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:05 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.17 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:08 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.18 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:08 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.19 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:11 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.20 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:11 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.21 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:14 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.22 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:15 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.23 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:17 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.24 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:18 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.25 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:21 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.26 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:21 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.27 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(EngineCore pid=1234139) INFO 09-02 19:36:21 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker pid=1234215) WARNING 09-02 19:36:24 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.28 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:24 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.29 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:27 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.30 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:27 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.31 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:30 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.32 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:31 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.33 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:33 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.34 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:34 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.35 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:37 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.36 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:37 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.37 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:40 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.38 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:40 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.39 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:43 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.40 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:43 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.41 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:46 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.42 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:47 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.43 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:49 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.44 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:50 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.45 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:53 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.46 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:36:53 [model.py:1105] LAYERHASH pass=1 language_model.model.layers.47 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) INFO 09-02 19:36:53 [gpu_worker.py:693] Available KV cache memory: 28.14 GiB
+(EngineCore pid=1234139) INFO 09-02 19:36:54 [kv_cache_utils.py:2258] GPU KV cache size: 1,061,398 tokens, Maximum concurrency for 32,768 tokens per request: 32.39x
+(Worker pid=1234215) INFO 09-02 19:37:08 [kernel_warmup.py:260] Using FlashInfer autotune cache file: /opt/llm/.cache-fnext/vllm/flashinfer_autotune_cache/0.6.17/121a/12f6cf1401e6a2ed7242717035a4a99be744392bbf99e1e35408868b8701537b/autotune_configs.json
+(Worker pid=1234215) 2026-09-02 19:37:08,171 - INFO - autotuner.py:829 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:   0%|          | 0/21 [00:00<?, ?profile/s]2026-09-02 19:37:08,969 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:   5%|▍         | 1/21 [00:00<00:03,  6.19profile/s]2026-09-02 19:37:09,132 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  10%|▉         | 2/21 [00:00<00:03,  6.17profile/s]2026-09-02 19:37:09,338 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  14%|█▍        | 3/21 [00:00<00:03,  5.49profile/s]2026-09-02 19:37:09,638 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  19%|█▉        | 4/21 [00:00<00:03,  4.37profile/s]2026-09-02 19:37:10,091 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  24%|██▍       | 5/21 [00:01<00:04,  3.23profile/s]2026-09-02 19:37:10,795 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  29%|██▊       | 6/21 [00:01<00:06,  2.25profile/s]2026-09-02 19:37:11,640 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  33%|███▎      | 7/21 [00:02<00:08,  1.74profile/s]2026-09-02 19:37:13,070 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  38%|███▊      | 8/21 [00:04<00:11,  1.18profile/s]2026-09-02 19:37:14,582 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  43%|████▎     | 9/21 [00:05<00:12,  1.05s/profile]2026-09-02 19:37:16,126 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  48%|████▊     | 10/21 [00:07<00:13,  1.21s/profile]2026-09-02 19:37:17,322 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  52%|█████▏    | 11/21 [00:08<00:12,  1.20s/profile]2026-09-02 19:37:18,443 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  57%|█████▋    | 12/21 [00:09<00:10,  1.18s/profile]2026-09-02 19:37:19,595 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  62%|██████▏   | 13/21 [00:10<00:09,  1.17s/profile]2026-09-02 19:37:20,743 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  67%|██████▋   | 14/21 [00:11<00:08,  1.16s/profile]2026-09-02 19:37:21,903 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  71%|███████▏  | 15/21 [00:13<00:06,  1.16s/profile]2026-09-02 19:37:23,084 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  76%|███████▌  | 16/21 [00:14<00:05,  1.17s/profile]2026-09-02 19:37:24,298 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  81%|████████  | 17/21 [00:15<00:04,  1.18s/profile]2026-09-02 19:37:25,561 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  86%|████████▌ | 18/21 [00:16<00:03,  1.21s/profile]2026-09-02 19:37:27,230 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  90%|█████████ | 19/21 [00:18<00:02,  1.35s/profile]2026-09-02 19:37:29,072 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1:  95%|█████████▌| 20/21 [00:20<00:01,  1.49s/profile]2026-09-02 19:37:31,831 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm1: 100%|██████████| 21/21 [00:23<00:00,  1.87s/profile][AutoTuner]: Tuning trtllm::fused_moe::gemm1: 100%|██████████| 21/21 [00:23<00:00,  1.10s/profile]
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:   0%|          | 0/21 [00:00<?, ?profile/s]2026-09-02 19:37:31,951 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:   5%|▍         | 1/21 [00:00<00:02,  8.51profile/s]2026-09-02 19:37:32,084 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  10%|▉         | 2/21 [00:00<00:02,  7.88profile/s]2026-09-02 19:37:32,239 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  14%|█▍        | 3/21 [00:00<00:02,  7.15profile/s]2026-09-02 19:37:32,425 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  19%|█▉        | 4/21 [00:00<00:02,  6.34profile/s]2026-09-02 19:37:32,672 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  24%|██▍       | 5/21 [00:00<00:03,  5.26profile/s]2026-09-02 19:37:33,013 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  29%|██▊       | 6/21 [00:01<00:03,  4.14profile/s]2026-09-02 19:37:33,457 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  33%|███▎      | 7/21 [00:01<00:04,  3.25profile/s]2026-09-02 19:37:33,994 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  38%|███▊      | 8/21 [00:02<00:04,  2.63profile/s]2026-09-02 19:37:34,574 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  43%|████▎     | 9/21 [00:02<00:05,  2.26profile/s]2026-09-02 19:37:35,183 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  48%|████▊     | 10/21 [00:03<00:05,  2.02profile/s]2026-09-02 19:37:35,805 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  52%|█████▏    | 11/21 [00:03<00:05,  1.87profile/s]2026-09-02 19:37:36,462 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  57%|█████▋    | 12/21 [00:04<00:05,  1.75profile/s]2026-09-02 19:37:37,147 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  62%|██████▏   | 13/21 [00:05<00:04,  1.65profile/s]2026-09-02 19:37:37,848 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  67%|██████▋   | 14/21 [00:06<00:04,  1.58profile/s]2026-09-02 19:37:38,576 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  71%|███████▏  | 15/21 [00:06<00:03,  1.51profile/s]2026-09-02 19:37:39,330 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  76%|███████▌  | 16/21 [00:07<00:03,  1.45profile/s]2026-09-02 19:37:40,136 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  81%|████████  | 17/21 [00:08<00:02,  1.38profile/s]2026-09-02 19:37:41,011 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  86%|████████▌ | 18/21 [00:09<00:02,  1.30profile/s]2026-09-02 19:37:42,194 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  90%|█████████ | 19/21 [00:10<00:01,  1.12profile/s]2026-09-02 19:37:44,011 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2:  95%|█████████▌| 20/21 [00:12<00:01,  1.17s/profile]2026-09-02 19:37:45,450 - INFO - autotuner.py:1699 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+(Worker pid=1234215) [AutoTuner]: Tuning trtllm::fused_moe::gemm2: 100%|██████████| 21/21 [00:13<00:00,  1.25s/profile][AutoTuner]: Tuning trtllm::fused_moe::gemm2: 100%|██████████| 21/21 [00:13<00:00,  1.54profile/s]
+(Worker pid=1234215) WARNING 09-02 19:37:47 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.0 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:37:47 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.1.ple.ple_embedding 33a3a11d54de row0=84ff92691f90 shape=(8192, 2560)
+(Worker pid=1234215) WARNING 09-02 19:37:50 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.1 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:37:53 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.2 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:37:54 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.3 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:37:57 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.4 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:37:57 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.5 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:00 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.6 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:00 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.7 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:03 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.8 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:04 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.9 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:07 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.10 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:07 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.11 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(EngineCore pid=1234139) INFO 09-02 19:38:08 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker pid=1234215) WARNING 09-02 19:38:10 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.12 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:10 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.13 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:13 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.14 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:14 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.15 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:17 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.16 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:17 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.17 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:20 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.18 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:20 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.19 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:23 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.20 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:24 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.21 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:27 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.22 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:27 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.23 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:30 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.24 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:31 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.25 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:33 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.26 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:34 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.27 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:37 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.28 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:37 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.29 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:40 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.30 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:40 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.31 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:43 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.32 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:44 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.33 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:47 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.34 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:47 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.35 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:50 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.36 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:51 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.37 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:54 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.38 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:54 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.39 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:57 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.40 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:38:58 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.41 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:01 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.42 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:01 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.43 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:05 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.44 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:05 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.45 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:08 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.46 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(EngineCore pid=1234139) INFO 09-02 19:39:08 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker pid=1234215) WARNING 09-02 19:39:08 [model.py:1105] LAYERHASH pass=2 language_model.model.layers.47 9942003e84c1 row0=02b1c2234680 shape=(8192, 10240)
+(Worker pid=1234215) 2026-09-02 19:39:08,855 - INFO - autotuner.py:852 - flashinfer.jit: [Autotuner]: Autotuning process ends
+(Worker pid=1234215) 2026-09-02 19:39:08,871 - INFO - autotuner.py:2269 - flashinfer.jit: [Autotuner]: Saved 42 configs to /opt/llm/.cache-fnext/vllm/flashinfer_autotune_cache/0.6.17/121a/12f6cf1401e6a2ed7242717035a4a99be744392bbf99e1e35408868b8701537b/autotune_configs.json (42 new, 0 from previous config)
+(Worker pid=1234215) INFO 09-02 19:39:08 [gpu_worker.py:919] Free memory on device (114.34/121.63 GiB) on startup. Desired GPU memory utilization is (0.9, 109.46 GiB). Actual usage is 79.29 GiB for consumed memory (weights + non-torch), 2.04 GiB for peak activation, and 0.0 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=30056372224` (27.99 GiB) to fit into requested memory, or `--kv-cache-memory=35290685440` (32.87 GiB) to fully utilize gpu memory. Current kv cache memory in use is 28.14 GiB.
+(Worker pid=1234215) WARNING 09-02 19:39:08 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.0 46c36404a52d row0=6e073d35ea9c shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.1.ple.ple_embedding 412a2bb620ef row0=fec6ddbc7285 shape=(32, 2560)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.1 6684c79b89b1 row0=7a1cba5fc3f5 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.2 47f6430b5453 row0=862cab2518d9 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.3 ab5b96f0c77f row0=453dd37f17e0 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.4 c4af2ca24ea6 row0=f2f0962c97b6 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.5 3ff096620481 row0=9f53644387f3 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.6 e00bf9311e96 row0=df330300e725 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.7 e617c31753c6 row0=61e369ec3e43 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.8 1896e1bbed91 row0=2787c216eaea shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.9 3a2c18dfac67 row0=0953e1eaa74b shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.10 4a9ed6713be5 row0=cd06225ab065 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.11 a4466352a6b5 row0=41c730550dab shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.12 7cbf54ca9a1c row0=6b1c29ef9c1a shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.13 4bdf897647aa row0=f5ce7eb57386 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.14 61449de123c1 row0=b5207b23f876 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.15 149e3d8ac769 row0=b4ded2185009 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.16 c9e1f17216d5 row0=3f615ede2ab6 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.17 4fa190d4a62f row0=180a2dc364a3 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.18 c987c336ffbc row0=8f452cb37ad7 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.19 84ac55a108ea row0=fcef6c1dd425 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.20 8fba21f8206d row0=eb9fcbb37a5f shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.21 af52d3833834 row0=ee920bfdc8bd shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.22 9552076102b3 row0=28ddf8db941e shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.23 a984fd83c7da row0=50c03eba5ae3 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.24 b83ab36c11bb row0=4cd611d22805 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.25 f60e260687ed row0=4f76985d1867 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.26 f38df2bca8b8 row0=a271e2fdc804 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.27 0a3ea721cbcc row0=07a344f1f9f7 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.28 53fe74841a27 row0=8eb4b3e117da shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.29 8af684607eef row0=1cb5d23e0740 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.30 aee5067f6b74 row0=82c92a81b3f9 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.31 1bf839fd2088 row0=384254cc5d87 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.32 88a4005dd74f row0=1423dfccaf50 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.33 33931bbd731d row0=0cbb3d430b39 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.34 343a4cadbfef row0=495ac22641b8 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.35 0d387ca37ac3 row0=c646a3f9ebab shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.36 9c0063bf9b39 row0=56f95c171015 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.37 662d2e108d1a row0=f6ec2177a6da shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.38 b2d9d9c553e9 row0=9ed063ae6b11 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.39 cabe30aff329 row0=24714f6a5ce7 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.40 0a6cacc215b3 row0=ca0ecfea6fa9 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.41 f952a473ccc1 row0=5d05807aa7a6 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.42 38be53f78280 row0=3b041c2c9450 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.43 a8caf690c2c3 row0=ee016ae7454d shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.44 b9d0753b67f7 row0=7fee24d4f6ea shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.45 c1d077895c88 row0=576bb020bbea shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.46 53b5605631d1 row0=5c7e8379f098 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=3 language_model.model.layers.47 fe4247226c1e row0=283491c927a3 shape=(32, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.0 0cfa5e7ab5da row0=86ab4bca506c shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.1.ple.ple_embedding 24882ae3950d row0=6616f7fbcd7f shape=(16, 2560)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.1 e5468f38000d row0=b00189e172b8 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.2 429086568089 row0=f4fed6831915 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.3 0a95bc434dbe row0=436b4877a8d0 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.4 b499a0f5e221 row0=e2fbce4a2872 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.5 fde71e355951 row0=74ac121c253a shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.6 b7c6abab430a row0=e41660034a88 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.7 891b6fdad7fa row0=5b782f4cacf3 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.8 9e6f5360d747 row0=77019c3e5ad3 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.9 93a1ef12a29c row0=49c24ed23fb2 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.10 12f672d2c0ae row0=0d4da86171b6 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.11 9e398d600283 row0=220b17a66d42 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.12 e4a70d6305b2 row0=3d1c304b8047 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.13 4542d513b46f row0=472c81a6650f shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.14 f19cf2012385 row0=f8337f179ed5 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.15 b5348d90cd61 row0=9b65c339eada shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.16 4282ee7530b3 row0=bd5323624e76 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.17 3000f5bd051a row0=4dbbe7aaae38 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.18 a347ac1304f7 row0=c588124634b9 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.19 277ec5e27361 row0=cbee57773835 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.20 26dd37ea5e05 row0=b597670974b4 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.21 d1caa3a96803 row0=92317c86fd80 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.22 0136c1d23079 row0=59ea8bbce66c shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.23 9d4f4c879d4a row0=174732508714 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.24 7d61124bd217 row0=661293cd2726 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.25 4615003965d2 row0=965eda80016f shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.26 28aefe8a10dc row0=1dbb4ade008f shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.27 04b1a86bfa44 row0=2f7a0bc1b2dd shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.28 2ac11d841e01 row0=709b7c31ed8e shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.29 a80cdd42e6a7 row0=617d3bd743c0 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.30 ef208c331d32 row0=2d9b03cbe53c shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.31 de8c435715c4 row0=a7ce09d31685 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.32 40a717ee7628 row0=eb8916d6c5f4 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.33 d666b6cbdc7e row0=3e9fc453937b shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.34 49971921e6d6 row0=55f3b24cc69e shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.35 215b7bdb77eb row0=ec9ac1efbaf2 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.36 bc9da3802f7a row0=a68fa03ad4b4 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.37 0cd29a8313d9 row0=44211311ecfa shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.38 fddb00e835c7 row0=a2e1b6eb0047 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.39 01a640912d4f row0=ceb6816ae446 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.40 6135d0a8ae4f row0=8112e9265bd3 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.41 848d13825db3 row0=741521b4f6b2 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.42 999d8779ad5e row0=dc04cec39c1a shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.43 8a79841c8af1 row0=220b777e147b shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.44 c6926a0916a1 row0=87fcfcdd496d shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.45 aaf84a45ba43 row0=28ca28b4b366 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.46 a8fbb1364699 row0=26bd8bb3b279 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=4 language_model.model.layers.47 c7aaca213972 row0=c233085483c6 shape=(16, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.0 0f73fb57a2a9 row0=9b98ce0c7e39 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.1.ple.ple_embedding d03a1712df7b row0=54b5a1b52826 shape=(2, 2560)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.1 7d2e75b4c0d3 row0=afef4851a1a8 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.2 d92262a7d9dd row0=f14ad11a39d2 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.3 d9e65e800825 row0=dee8f9eb4d4e shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.4 b767173f4eb2 row0=8019929c1114 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.5 0cbe7a5dcedf row0=3391fee8542a shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.6 fb08271f0f83 row0=e4000d1c7850 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.7 2453ec3c0def row0=6b9922184e21 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.8 4dd24bb9ff75 row0=aa912c314b1a shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.9 877e86913bb0 row0=6e03b81a4ffa shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.10 d25e4b146165 row0=0c15975a2006 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.11 7554b2494929 row0=1daaf5532657 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.12 35f8ba78d7e8 row0=5ea04c354363 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.13 26d0f0f03a3f row0=424ef1fb2a06 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.14 8db693a26010 row0=b87c3cfa636f shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.15 2f8d35afce9c row0=b65bc289591e shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.16 3a3edb765fe6 row0=25f409bdde7a shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.17 853a84e3a2c7 row0=4f3cab8b354f shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.18 e8245cb57f21 row0=7e19b0eeb73c shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.19 e0cdcc7600e0 row0=6bfd94787a9c shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.20 1eb85590b0b7 row0=19dacc7b485f shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.21 46a9d507e8f5 row0=501b5e6c6a53 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.22 788296add932 row0=3d057bf88bf4 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.23 fa7afb617f49 row0=2956d8a027c1 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.24 e973f0d1ea41 row0=3e5f50006577 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.25 105a9873f348 row0=5acd43b37bbf shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.26 4d5b9c84ea2b row0=0f721795a6b1 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.27 24d616b2417c row0=2c635345af58 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.28 cd860c1878fa row0=693f3f2170bd shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.29 849b33759bb7 row0=7e6a996b19fe shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.30 88ce86d70661 row0=2199a38e565d shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.31 8aef97d7ab01 row0=9d3d72022af2 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.32 cff62c6263ed row0=e0bb1e8d8ce4 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.33 38044fdd7720 row0=da5044e833ae shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.34 e671c4bbd622 row0=84fc36704b99 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.35 3a305631f81a row0=f9eda30494ab shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.36 77b9d3a44500 row0=5fa79a2e6514 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.37 fb9db6a398ff row0=1abb0fa72b28 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.38 2a6d111b7a2d row0=37383b2c9dc6 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.39 0ca8772d93ae row0=0ad1938e0f30 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.40 7eba7ff369a3 row0=403cc2222a9a shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.41 b1d8e651965b row0=a960ae9f3cbb shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.42 122daa944454 row0=1dcde4e9c5aa shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.43 e29e3bf8a066 row0=e161ea4ec511 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.44 0427006ed7df row0=0dd6923f7412 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.45 a4b1541a5455 row0=06a9fee39bf3 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.46 1f3bc371e8c3 row0=8de6c3bd2991 shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=5 language_model.model.layers.47 83d510b4c6db row0=fcfe458a875b shape=(2, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.0 792cd425d898 row0=792cd425d898 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.1.ple.ple_embedding d46598df65d3 row0=d46598df65d3 shape=(1, 2560)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.1 a52c6d98c688 row0=a52c6d98c688 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.2 6ed45fe37807 row0=6ed45fe37807 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.3 826ac4db1589 row0=826ac4db1589 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.4 2c9f2810ab02 row0=2c9f2810ab02 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.5 9c57b7f8adaa row0=9c57b7f8adaa shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.6 931f27e0a0f7 row0=931f27e0a0f7 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.7 1d94f1a5ec49 row0=1d94f1a5ec49 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.8 e1a4c2426482 row0=e1a4c2426482 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.9 47e370fb8792 row0=47e370fb8792 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.10 912f33569b24 row0=912f33569b24 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.11 6e60da57fefc row0=6e60da57fefc shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.12 0d71535e49c9 row0=0d71535e49c9 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.13 40b580802f55 row0=40b580802f55 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.14 f9dc8e680374 row0=f9dc8e680374 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.15 c41d730b34f0 row0=c41d730b34f0 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.16 0c2fcfdae7d9 row0=0c2fcfdae7d9 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.17 5c47350319d8 row0=5c47350319d8 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.18 2b47a78d9127 row0=2b47a78d9127 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.19 cee05373e468 row0=cee05373e468 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.20 ffc730c415a6 row0=ffc730c415a6 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.21 725535160684 row0=725535160684 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.22 add2d570b574 row0=add2d570b574 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.23 39a3a6a2becb row0=39a3a6a2becb shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.24 1c9bf0bf7078 row0=1c9bf0bf7078 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.25 e7295e30ced2 row0=e7295e30ced2 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.26 aae0563ecaf1 row0=aae0563ecaf1 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.27 0e66cf2e7ddb row0=0e66cf2e7ddb shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.28 db8aba596abb row0=db8aba596abb shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.29 5655dc28c6e2 row0=5655dc28c6e2 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.30 51b3d2bac130 row0=51b3d2bac130 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.31 131e148486cb row0=131e148486cb shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.32 70aaef5dce1c row0=70aaef5dce1c shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.33 4d80ccc4e30d row0=4d80ccc4e30d shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.34 b7049f043497 row0=b7049f043497 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.35 9766ddaec5a1 row0=9766ddaec5a1 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.36 60ed2e5c864c row0=60ed2e5c864c shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.37 38434074c109 row0=38434074c109 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.38 063ba49e86bb row0=063ba49e86bb shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.39 748d66ff35bd row0=748d66ff35bd shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.40 173420fe55b7 row0=173420fe55b7 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.41 6cca31620cc9 row0=6cca31620cc9 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.42 3d3735cb23b5 row0=3d3735cb23b5 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.43 f04e421f9ea8 row0=f04e421f9ea8 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.44 dbb203c848f5 row0=dbb203c848f5 shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.45 fe62058e0e0d row0=fe62058e0e0d shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.46 70c8625f0cec row0=70c8625f0cec shape=(1, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:09 [model.py:1105] LAYERHASH pass=6 language_model.model.layers.47 9cdbc07b4571 row0=9cdbc07b4571 shape=(1, 10240)
+(Worker pid=1234215) INFO 09-02 19:39:10 [jit_monitor.py:85] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(Worker pid=1234215) INFO 09-02 19:39:10 [torch_utils.py:262] Reducing Torch threads from 20 to 1 for serving. Set OMP_NUM_THREADS in the external environment to override.
+(EngineCore pid=1234139) INFO 09-02 19:39:10 [core.py:354] init engine (profile, create kv cache, warmup model) took 229.81 s
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_interleaved', 'mrope_section'}
+(EngineCore pid=1234139) [ERROR] `min_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(EngineCore pid=1234139) [ERROR] `max_frames` is part of Qwen3VLVideoProcessorInitKwargs, but not documented. Make sure to add it to the docstring of the function in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/transformers/models/qwen3_vl/video_processing_qwen3_vl.py.
+(EngineCore pid=1234139) WARNING 09-02 19:39:17 [vllm.py:1272] Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+(EngineCore pid=1234139) WARNING 09-02 19:39:17 [vllm.py:1341] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+(EngineCore pid=1234139) INFO 09-02 19:39:17 [kernel.py:308] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'])
+(EngineCore pid=1234139) INFO 09-02 19:39:17 [vllm.py:1520] Cudagraph is disabled under eager mode
+(EngineCore pid=1234139) INFO 09-02 19:39:17 [compilation.py:329] Enabled custom fusions: norm_quant, act_quant
+(APIServer pid=1233792) INFO 09-02 19:39:19 [api_server.py:653] Supported tasks: ['generate']
+(APIServer pid=1233792) INFO 09-02 19:39:20 [parser_manager.py:58] "auto" tool choice has been enabled.
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) INFO 09-02 19:39:21 [hf.py:551] Detected the chat template content format to be 'openai'. You can set `--chat-template-content-format` to override this.
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) [transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='default': {'mrope_section', 'mrope_interleaved'}
+(APIServer pid=1233792) INFO 09-02 19:39:35 [base.py:235] Multi-modal warmup completed in 13.650s
+(APIServer pid=1233792) INFO 09-02 19:39:36 [base.py:235] Readonly multi-modal warmup completed in 1.069s
+(APIServer pid=1233792) WARNING 09-02 19:39:36 [model.py:1713] Default vLLM sampling parameters have been overridden by the model's `generation_config.json`: `{'temperature': 1.0, 'top_k': 20, 'top_p': 0.95}`. If this is not intended, please relaunch vLLM instance with `--generation-config vllm`.
+(APIServer pid=1233792) INFO 09-02 19:39:36 [api_server.py:657] Starting vLLM server on http://127.0.0.1:8092
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:51] Available routes are:
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /openapi.json, Methods: GET, HEAD
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /docs, Methods: GET, HEAD
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /docs/oauth2-redirect, Methods: GET, HEAD
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /redoc, Methods: GET, HEAD
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /load, Methods: GET
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /version, Methods: GET
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /health, Methods: GET
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /metrics, Methods: GET
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /tokenize, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /detokenize, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/models, Methods: GET
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /ping, Methods: GET
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /ping, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /invocations, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/chat/completions, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/chat/completions/batch, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/responses, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/responses/{response_id}, Methods: GET
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/responses/{response_id}/cancel, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/completions, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/messages, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/messages/count_tokens, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /generative_scoring, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /scale_elastic_ep, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /is_scaling_elastic_ep, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/chat/completions/render, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/completions/render, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/chat/completions/derender, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /v1/completions/derender, Methods: POST
+(APIServer pid=1233792) INFO 09-02 19:39:36 [launcher.py:60] Route: /inference/v1/generate, Methods: POST
+(APIServer pid=1233792) INFO:     Started server process [1233792]
+(APIServer pid=1233792) INFO:     Waiting for application startup.
+(APIServer pid=1233792) INFO:     Application startup complete.
+(APIServer pid=1233792) INFO:     127.0.0.1:42612 - "GET /v1/models HTTP/1.1" 200 OK
+(Worker pid=1234215) WARNING 09-02 19:39:48 [jit_monitor.py:141] Triton kernel JIT compilation during inference: _fused_post_conv_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker pid=1234215) WARNING 09-02 19:39:51 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.0 54b3533a7058 row0=d6de204a4687 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:51 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.1.ple.ple_embedding 1fb730c6cc6b row0=4015ff227bd5 shape=(7503, 2560)
+(Worker pid=1234215) WARNING 09-02 19:39:53 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.1 aad4ea321748 row0=03f961af89c9 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:54 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.2 5581b19f73a5 row0=8282298ce8b8 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:54 [jit_monitor.py:141] Triton kernel JIT compilation during inference: _qsa_mqa_paged_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker pid=1234215) WARNING 09-02 19:39:54 [jit_monitor.py:141] Triton kernel JIT compilation during inference: _expand_qsa_indices_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker pid=1234215) WARNING 09-02 19:39:54 [jit_monitor.py:141] Triton kernel JIT compilation during inference: _qsa_sparse_paged_gqa_splitk_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+(Worker pid=1234215) WARNING 09-02 19:39:56 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.3 6a3aada83b58 row0=82ff2fba41ab shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:57 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.4 ecdfac46567d row0=05dc786b6755 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:39:59 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.5 0e70475255ff row0=890509956f0f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:00 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.6 b356996eb02c row0=1e3d8c1086a0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:02 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.7 928f0c9c245e row0=8d1671ca56e8 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:02 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.8 693ed01d7961 row0=710f255f91c8 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:05 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.9 b32e5fef1a88 row0=12658f971767 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:05 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.10 dea00557d455 row0=4319f173b4a2 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:08 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.11 10a63908f846 row0=cc81a063a1fa shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:09 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.12 00cadec2da21 row0=7c886be69463 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:11 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.13 57376dd1935e row0=59cd8fa8645e shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:12 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.14 aba16d860a2c row0=d84a5807d53e shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:14 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.15 0aa361c33779 row0=3d38a38028ae shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:15 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.16 6031645d69c1 row0=c7e71a5276bf shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:17 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.17 f1fefae8c222 row0=d51aeec55b63 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:18 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.18 3dd4eb6f9e3c row0=813252c0f45d shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:18 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.19 9c65d79136d1 row0=0bcebdfae26b shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:19 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.20 a4473e9ad120 row0=6b890fffd8b2 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:21 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.21 caf941650fae row0=f9d0eeff5b46 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:22 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.22 ddf6241b0c7a row0=8a5bce1ec54f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:24 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.23 2ab1c09bec94 row0=9637b0332959 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:25 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.24 4b94282c3818 row0=3938596a7a12 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:28 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.25 45a73f48099d row0=23f7eda57c72 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:28 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.26 df666be2a471 row0=e6f27d40878a shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:31 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.27 dee06aaca7f5 row0=8a52026a4324 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:31 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.28 824c2c37663c row0=073f3216578f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:34 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.29 d3ba71cb010d row0=5b40c48d6149 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:34 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.30 dc383b047f0b row0=c2f4af98c64d shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:37 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.31 9397a7f07f10 row0=e817dfe4a1a0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:37 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.32 8ff4f5e32f2c row0=8180ed467591 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:40 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.33 9da847427de9 row0=e859135e769c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:40 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.34 18725471e917 row0=41decf5b4f43 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:43 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.35 4d1f23575eb9 row0=63b93e01411b shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:44 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.36 51bca560ba62 row0=a6c105f215cb shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:46 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.37 cc6e7a4046d2 row0=faea8a195f4c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:47 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.38 0359df7fbd42 row0=15510f12efc3 shape=(7503, 10240)
+(EngineCore pid=1234139) INFO 09-02 19:40:48 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker pid=1234215) WARNING 09-02 19:40:49 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.39 c903f2b4e3e8 row0=55fd3c0ec624 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:50 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.40 a55293e6f1f7 row0=6f240e6102b0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:52 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.41 bee0a4e475f8 row0=ecfe5d61577c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:53 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.42 3baef11a2c19 row0=4cd103dae300 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:55 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.43 04a8fbeffd31 row0=570162cb0891 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:56 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.44 32e854bf6622 row0=6ad5fb9692b7 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:58 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.45 13c33d2baf47 row0=26a9f846a77a shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:40:59 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.46 4041d7bdf35a row0=86e8791cfd56 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:01 [model.py:1105] LAYERHASH pass=7 language_model.model.layers.47 4bb5bb7a612e row0=89041a8c25c5 shape=(7503, 10240)
+(APIServer pid=1233792) INFO:     127.0.0.1:42620 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(Worker pid=1234215) WARNING 09-02 19:41:02 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.0 54b3533a7058 row0=d6de204a4687 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:03 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.1.ple.ple_embedding 1fb730c6cc6b row0=4015ff227bd5 shape=(7503, 2560)
+(Worker pid=1234215) WARNING 09-02 19:41:05 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.1 aad4ea321748 row0=03f961af89c9 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:07 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.2 5581b19f73a5 row0=8282298ce8b8 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:08 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.3 8c87f03f8d1b row0=82ff2fba41ab shape=(7503, 10240)
+(APIServer pid=1233792) INFO 09-02 19:41:08 [loggers.py:310] Engine 000: Avg prompt throughput: 750.3 tokens/s, Avg generation throughput: 0.1 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(Worker pid=1234215) WARNING 09-02 19:41:10 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.4 14b1b0a786c6 row0=05dc786b6755 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:11 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.5 25182c094aac row0=890509956f0f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:13 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.6 25065204c21a row0=1e3d8c1086a0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:14 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.7 838ff5843561 row0=8d1671ca56e8 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:16 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.8 6f8451ff1c86 row0=710f255f91c8 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:17 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.9 86c0e2cb45d7 row0=12658f971767 shape=(7503, 10240)
+(APIServer pid=1233792) INFO 09-02 19:41:18 [loggers.py:310] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(Worker pid=1234215) WARNING 09-02 19:41:19 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.10 392c09419c9c row0=4319f173b4a2 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:19 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.11 9d1a5d2b87f8 row0=cc81a063a1fa shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:22 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.12 79c66c069650 row0=7c886be69463 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:22 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.13 6692299baefd row0=59cd8fa8645e shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:25 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.14 2c4e2054c815 row0=d84a5807d53e shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:25 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.15 b28af30b9f60 row0=3d38a38028ae shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:28 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.16 7da9f7fad697 row0=c7e71a5276bf shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:29 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.17 07fb3bd2e4d7 row0=d51aeec55b63 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:31 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.18 e98d8fdf93ed row0=813252c0f45d shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:32 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.19 28a5489c4fd7 row0=0bcebdfae26b shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:34 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.20 8b45b0f6cc18 row0=6b890fffd8b2 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:35 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.21 72fbc760b119 row0=f9d0eeff5b46 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:37 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.22 d5a5a0a82e12 row0=8a5bce1ec54f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:38 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.23 28030c4604eb row0=9637b0332959 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:40 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.24 6e3577080161 row0=3938596a7a12 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:41 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.25 d0a3fed9ada9 row0=23f7eda57c72 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:43 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.26 3c669e1aa53d row0=e6f27d40878a shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:44 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.27 92a1773cfcc4 row0=8a52026a4324 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:46 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.28 cf6a7274a5ac row0=073f3216578f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:47 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.29 ecc4e7d7cba5 row0=5b40c48d6149 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:50 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.30 93bf72d709b0 row0=c2f4af98c64d shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:50 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.31 540f70ed42df row0=e817dfe4a1a0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:53 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.32 b9b2d1da40d3 row0=8180ed467591 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:53 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.33 3ffc52a221ce row0=e859135e769c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:55 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.34 0d5ce66c37e5 row0=41decf5b4f43 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:56 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.35 d71eab34a4af row0=63b93e01411b shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:56 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.36 499729837d75 row0=a6c105f215cb shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:57 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.37 a8f248b33fd1 row0=faea8a195f4c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:41:59 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.38 c1f26e50b4a0 row0=15510f12efc3 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:00 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.39 30d13c8b1743 row0=55fd3c0ec624 shape=(7503, 10240)
+(EngineCore pid=1234139) INFO 09-02 19:42:02 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker pid=1234215) WARNING 09-02 19:42:02 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.40 015d9adf1615 row0=6f240e6102b0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:03 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.41 264efb95fdcf row0=ecfe5d61577c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:06 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.42 9cd33577ae9f row0=4cd103dae300 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:06 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.43 1ca920d4dd80 row0=570162cb0891 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:09 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.44 61d3a2164e81 row0=6ad5fb9692b7 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:09 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.45 a4772f125be6 row0=26a9f846a77a shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:12 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.46 c13df025b7d1 row0=86e8791cfd56 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:12 [model.py:1105] LAYERHASH pass=8 language_model.model.layers.47 cc99081c2dde row0=89041a8c25c5 shape=(7503, 10240)
+(APIServer pid=1233792) INFO:     127.0.0.1:53340 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(Worker pid=1234215) WARNING 09-02 19:42:15 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.0 54b3533a7058 row0=d6de204a4687 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:15 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.1.ple.ple_embedding 1fb730c6cc6b row0=4015ff227bd5 shape=(7503, 2560)
+(Worker pid=1234215) WARNING 09-02 19:42:18 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.1 aad4ea321748 row0=03f961af89c9 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:18 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.2 5581b19f73a5 row0=8282298ce8b8 shape=(7503, 10240)
+(APIServer pid=1233792) INFO 09-02 19:42:18 [loggers.py:310] Engine 000: Avg prompt throughput: 750.3 tokens/s, Avg generation throughput: 0.1 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(Worker pid=1234215) WARNING 09-02 19:42:21 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.3 95428f026a8e row0=82ff2fba41ab shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:21 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.4 f4c5202db337 row0=05dc786b6755 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:24 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.5 f92753a776a4 row0=890509956f0f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:24 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.6 7a84d70319c4 row0=1e3d8c1086a0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:27 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.7 7787f69b5fd4 row0=8d1671ca56e8 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:27 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.8 d1c38b4e32be row0=710f255f91c8 shape=(7503, 10240)
+(APIServer pid=1233792) INFO 09-02 19:42:28 [loggers.py:310] Engine 000: Avg prompt throughput: 0.0 tokens/s, Avg generation throughput: 0.0 tokens/s, Running: 0 reqs, Waiting: 0 reqs, GPU KV cache usage: 0.0%, Prefix cache hit rate: 0.0%
+(Worker pid=1234215) WARNING 09-02 19:42:30 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.9 0da8532285e0 row0=12658f971767 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:31 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.10 f622bc601497 row0=4319f173b4a2 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:33 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.11 dd03ea78cc07 row0=cc81a063a1fa shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:33 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.12 c2cb0c6969ff row0=7c886be69463 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:36 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.13 e96567b7629f row0=59cd8fa8645e shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:37 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.14 8d1d776115cb row0=d84a5807d53e shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:39 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.15 cd802579a0cc row0=3d38a38028ae shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:40 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.16 c6b57e2689b8 row0=c7e71a5276bf shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:42 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.17 f64b3ff8965d row0=d51aeec55b63 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:42 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.18 e9fc1082cb9a row0=813252c0f45d shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:45 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.19 a0f9dade4f32 row0=0bcebdfae26b shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:45 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.20 68b3cb1bc166 row0=6b890fffd8b2 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:48 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.21 e34e290d217d row0=f9d0eeff5b46 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:48 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.22 1c42bcc1649f row0=8a5bce1ec54f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:51 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.23 c0ab49a0962f row0=9637b0332959 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:51 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.24 91ac961d2905 row0=3938596a7a12 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:54 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.25 e8495e8b916b row0=23f7eda57c72 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:54 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.26 aa0dabe0d8fa row0=e6f27d40878a shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:57 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.27 f82568705ca2 row0=8a52026a4324 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:42:57 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.28 799f98bcc0e1 row0=073f3216578f shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:00 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.29 4ed03e3f39e7 row0=5b40c48d6149 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:01 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.30 af4857ddfed5 row0=c2f4af98c64d shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:03 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.31 2fced58c09af row0=e817dfe4a1a0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:04 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.32 85711273806b row0=8180ed467591 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:06 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.33 1e57a1fe8169 row0=e859135e769c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:07 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.34 a1de491b4441 row0=41decf5b4f43 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:09 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.35 86ae95ea0986 row0=63b93e01411b shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:10 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.36 36437408564d row0=a6c105f215cb shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:13 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.37 ebf562a3751a row0=faea8a195f4c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:13 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.38 feb91e8bc968 row0=15510f12efc3 shape=(7503, 10240)
+(EngineCore pid=1234139) INFO 09-02 19:43:13 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker pid=1234215) WARNING 09-02 19:43:16 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.39 719e7a50c8fa row0=55fd3c0ec624 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:16 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.40 fa58101c0be3 row0=6f240e6102b0 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:19 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.41 7c9c0539f9aa row0=ecfe5d61577c shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:19 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.42 033d432dfa4d row0=4cd103dae300 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:22 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.43 e4c7ab3baab4 row0=570162cb0891 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:23 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.44 1ae2536f049e row0=6ad5fb9692b7 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:25 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.45 c43044b75e89 row0=26a9f846a77a shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:26 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.46 f1970f5e8d6b row0=86e8791cfd56 shape=(7503, 10240)
+(Worker pid=1234215) WARNING 09-02 19:43:28 [model.py:1105] LAYERHASH pass=9 language_model.model.layers.47 9ef6b951ecd6 row0=89041a8c25c5 shape=(7503, 10240)
+(APIServer pid=1233792) INFO:     127.0.0.1:56704 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+(APIServer pid=1233792) INFO:     127.0.0.1:42576 - "GET /metrics HTTP/1.1" 200 OK
+(APIServer pid=1233792) INFO 09-02 19:43:30 [launcher.py:114] [shutdown] API server: shutdown triggered
+(EngineCore pid=1234139) INFO 09-02 19:43:30 [core.py:1329] [shutdown] EngineCore: trigger received signal=SIGTERM
+(APIServer pid=1233792) INFO 09-02 19:43:30 [launcher.py:130] [shutdown] API server: stopping engine client mode=abort timeout=0s
+(EngineCore pid=1234139) INFO 09-02 19:43:30 [core.py:1465] [shutdown] EngineCore: start mode=abort timeout=0s
+(EngineCore pid=1234139) INFO 09-02 19:43:30 [core.py:1496] [shutdown] EngineCore: request processing complete; starting resource teardown
+(EngineCore pid=1234139) INFO 09-02 19:43:30 [core.py:1342] [shutdown] EngineCore: exiting busy loop
+(APIServer pid=1233792) INFO 09-02 19:43:30 [core_client.py:689] [shutdown] MPClient: start timeout=0s
+(EngineCore pid=1234139) INFO 09-02 19:43:30 [multiproc_executor.py:469] [shutdown] Executor: waiting for worker exit count=1
+(APIServer pid=1233792) INFO 09-02 19:43:30 [core_client.py:691] [shutdown] MPClient: stopping engine manager
+(APIServer pid=1233792) INFO 09-02 19:43:30 [utils.py:615] [shutdown] Process manager: send sigterm to process EngineCore
+(Worker pid=1234215) INFO 09-02 19:43:30 [multiproc_executor.py:837] Parent process exited, terminating worker queues
+(APIServer pid=1233792) WARNING 09-02 19:43:30 [utils.py:635] [shutdown] Process manager: force killing remaining processes count=1
+(APIServer pid=1233792) WARNING 09-02 19:43:30 [utils.py:640] [shutdown] Process manager: force killing remaining process EngineCore pid 1234139
+(PleOffloadWorker pid=1234418) INFO 09-02 19:43:30 [worker.py:256] Parent exited, shutting down.
+(APIServer pid=1233792) INFO 09-02 19:43:30 [core_client.py:693] [shutdown] MPClient: engine manager stopped
+(APIServer pid=1233792) INFO 09-02 19:43:30 [core_client.py:694] [shutdown] MPClient: cleaning up background resources
+(APIServer pid=1233792) INFO 09-02 19:43:30 [core_client.py:696] [shutdown] MPClient: complete
+(APIServer pid=1233792) INFO 09-02 19:43:30 [launcher.py:139] [shutdown] API server: engine client stopped
+(APIServer pid=1233792) INFO 09-02 19:43:30 [launcher.py:142] [shutdown] API server: signalling HTTP server shutdown
+(APIServer pid=1233792) INFO 09-02 19:43:30 [launcher.py:163] [shutdown] API server: shutting down FastAPI HTTP server
+(APIServer pid=1233792) INFO:     Shutting down
+(APIServer pid=1233792) INFO:     Waiting for application shutdown.
+(APIServer pid=1233792) INFO:     Application shutdown complete.
+/usr/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 2 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/usr/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 2 leaked shared_memory objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

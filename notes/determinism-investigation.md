@@ -845,6 +845,24 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     three identical 7.5k-token requests. Raw: `notes/data/mtpdh3.txt`, `fnext-B8192_a.log.txt`,
     `fnext-B2048_a.log.txt`.
 
+52. **The long-prefill nondeterminism is in the QSA attention layers, not the GDN.** `MTPLH` /
+    `LHLONG`: no spec, cache off, eager, one 8192-token chunk, det MoE, the 7503-token turn-1
+    prompt three times, full-tensor hash of every decoder layer's output:
+
+    | module | 3 requests |
+    | --- | --- |
+    | layers.0, 1, 2 (linear_attention ×3, PLE at layer 2) | **identical**, all 7503 rows |
+    | layers.3 (first `full_attention` = QSA) | row 0 identical, full tensor **differs** |
+    | layers.4 … 47 | differ (downstream) |
+
+    Top-1 logprob of the next token: −0.0904 / −0.0435 / −0.0449 — the output already moves.
+    So over 7.5k tokens the GDN chunked kernels, the PLE and the (now deterministic) MoE are
+    exact, and the first QSA layer is not, with a position-dependent signature (row 0 exact).
+    That is the sparse-attention path: the indexer's `persistent_topk` (vllm#54521: tie set /
+    order varies on sm_121, cooperative top-k never selected on capability 12.x) feeding a
+    gather whose summation order then differs, or the split-K attention merge. `LHSUB3` hooks
+    every submodule of layers 3 and 7 next. Raw: `notes/data/fnext-LHLONG.log.txt`, `mtplh.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
