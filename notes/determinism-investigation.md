@@ -527,6 +527,18 @@ confidence each item deserves, plus what was refuted along the way.
     restored for it. Reportable upstream on its own: `use_fused_finalize=False` cannot be used
     with the autotuner on sm_121 in this FlashInfer.
 
+33. **The non-fused finalize path cannot start on this FlashInfer build — three attempts.**
+    (1) `use_fused_finalize=False` → `Invalid gemm2 profile id: 50` at init; (2) plus
+    `profile_ids=[-1,-1]` → same, id 50; (3) plus the autotune sweep skipped for
+    `trtllm::fused_moe::gemm1/gemm2` (`VLLM_FLASHINFER_AUTOTUNE_SKIP_OPS`) → still dies, **id 48**.
+    With no tuner and no caller-chosen tactic, the invalid id comes from FlashInfer's own
+    default-tactic resolution, which evidently indexes the *fused* runner's GEMM2 table while the
+    non-fused runner checks against its own shorter one. This is a second, independent FlashInfer
+    defect on sm_121 NVFP4: **the documented deterministic finalize is unusable**. The deterministic
+    serving option on this box therefore remains `--moe-backend emulation` (+17% decode). Both
+    defects belong in the upstream report: the atomic finalize's nondeterminism (documented, but
+    the default and the only working path) and the broken opt-out.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

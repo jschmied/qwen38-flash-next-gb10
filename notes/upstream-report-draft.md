@@ -68,6 +68,14 @@ reference 42.8–47.7); `emulation` **51.38 ms/tok** — **+17% decode**. n=1 fo
 no-spec arms reproduce to ~1.10x. TTFT and higher concurrency not measured. So emulation is a
 *serving-viable* deterministic option at modest cost, not merely a reference.
 
+## The documented fix does not work on this build
+
+`cutlass_fused_moe(use_fused_finalize=False)` — FlashInfer's own deterministic finalize — fails at
+engine init on sm_121 with `Invalid gemm2 profile id: 50` (48 with the autotune sweep skipped and
+`profile_ids=[-1,-1]`). The default-tactic resolution for the non-fused runner appears to index the
+fused runner's GEMM2 tactic table. So the deterministic path is unusable here, and the only
+deterministic backend is `emulation`.
+
 ## Consequences observed
 
 - MTP acceptance flips per turn between ~89% and ~27% of draft work kept (r = −0.964 with
