@@ -347,6 +347,35 @@ confidence each item deserves, plus what was refuted along the way.
     **Next, and decisive**: hash the PLE's return value and layer 1's GDN input at decode step 1
     (with the double-hash race detector), across three identical requests.
 
+25. **The PLE is exonerated; the divergence enters between layer 0's return and the PLE's input,
+    in the hyperconnection's DEFERRED block output.** `PLEHASH` arm (cache off, spec off, eager,
+    triton; raw in `notes/data/PLEHASH-run.txt`), across three identical requests:
+
+    | step | PLE in_ids | in_ctx | **PLE out** | RACE | **PLE in_hs** | layer-0 return (row0) | ple_embedding |
+    | --- | --- | --- | --- | --- | --- | --- | --- |
+    | prefill | identical | identical | identical | — | identical | identical | identical |
+    | decode 1 | identical | identical | **identical** | none | **DIFFERS** | identical | identical |
+    | decode 2, 3 | identical | identical | identical | none | differs | identical | identical |
+
+    - **The PLE is deterministic at every step**, offload lookup included (`out` identical, no race
+      flag, `ple_embedding` row0 identical). Given identical inputs it returns identical output.
+    - **Its INPUT differs at decode step 1** while layer 0's returned tensor is identical. The code
+      between them is `attn_hc.combine(hidden_states, prev_block_output, prev_injection)` —
+      `nvidia/model.py:288`, with the comment *"PLE adds directly to the multi-stream state, so
+      pending HC state must be materialized before the addition."*
+    - **This resolves the weak-fingerprint puzzle**: hyperconnections defer each layer's block
+      output as pending state (`prev_block_output`, `prev_injection`) carried *alongside* the
+      returned tensor. The layer hook hashed only the return, so layer 0 looked identical all
+      night while its pending block output could differ. Layer 0's GDN state is identical
+      (finding 24), so the differing pending output must come from **after** the GDN: layer 0's
+      MLP — the **MoE** — or the HC combine itself, in the single-token decode shape.
+    - `convstate` in this run is a whole-buffer hash across different slots and is not comparable;
+      instrument limitation, disregarded.
+
+    Consistent with the standing memory that Flash-Next (MoE) diverges at c=1 while the dense
+    27B does not, attributed then to MoE routing ties. Next arm: hash every submodule of layer 0
+    at decode step 1 — `mlp.gate` (router), `mlp.experts`, `mlp.shared_expert`, the HC ops.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
