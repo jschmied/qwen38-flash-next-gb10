@@ -592,6 +592,22 @@ confidence each item deserves, plus what was refuted along the way.
     three shapes (cache off / cache on / cache on + MTP n=5), plus the cost on the 8-turn agent
     loop against 43.92 (fused) and 51.38 (emulation) ms/tok.
 
+37. **COMPLETE FIX VALIDATED in all three shapes, against the SHARED default autotune cache.**
+    Both patches applied — vLLM `use_fused_finalize=False` (env-gated) + FlashInfer
+    `MoERunner.get_cache_key_extras()` — no cache-dir override, backend `FLASHINFER_CUTLASS`
+    verified per arm:
+
+    | arm | shape | result |
+    | --- | --- | --- |
+    | `DETFIN5` | cache off, spec off, eager | **all 4 tokens identical x3** |
+    | `DETFIN5_CON` | prefix cache ON (the 52+3 chunked prefill), graphs on | **all 4 tokens identical x3** |
+    | `DETFIN5_MTP` | prefix cache ON + MTP n=5 (production shape) | **all 4 tokens identical x3** |
+
+    The cache-key patch does against the shared cache what a fresh directory did in `DETFIN4`,
+    so attempts 1-3's failures are fully explained and closed. Every configuration that diverged
+    in this investigation is now bit-reproducible on the fast kernel. Cost measurement
+    (`DETCOST`, 8-turn agent loop) running.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
