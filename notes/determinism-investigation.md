@@ -886,6 +886,23 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     ordering of the selected blocks (padding kept trailing) and an exact `torch.topk`. Raw:
     `notes/data/fnext-LHSUB3.log.txt`, `mtplh2.txt`.
 
+54. **CONFIRMED: an exact top-k at the QSA selection site makes the entire 7.5k-token forward
+    bit-identical.** `MTPQSA`, same probe as 52/53 (3 identical 7503-token requests, det MoE,
+    every layer + every submodule of layers 3 and 7 hashed), `tools/determinism/qsafix_patch.py`:
+
+    | selection | next-token logprob ×3 | first differing module |
+    | --- | --- | --- |
+    | `persistent_topk` (stock) | −0.0904 / −0.0435 / −0.0449 | layers.3.self_attn.indexer |
+    | `persistent_topk` + canonical order (`VLLM_QSA_SORT`) | −0.0622 / −0.0610 / −0.0622 | layers.11 (req 2 only); layers 3 and 7 identical incl. indexer |
+    | exact `torch.topk` over the visible logits (`VLLM_QSA_EXACT_TOPK`) | −0.0592 ×3 | **none — all 48 layers, all 160 hooked modules identical** |
+
+    So on sm_121 `persistent_topk` returns the selected blocks in a varying ORDER (fixed by the
+    sort: layers 3 and 7 become exact) AND, less often, a varying SET (the residual at layer 11
+    in one of three requests; fixed by the exact selection). Correction to finding 5: "QSA top-k
+    excluded" was measured on a 55-token prompt with the MoE still nondeterministic, so it only
+    showed top-k was not the sole source then. Raw: `notes/data/lhsort_hashes.txt`,
+    `lhexact_hashes.txt`. The MTP replay arms under each fix follow (`MTP_EXACT`, `MTP_SORT`).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
