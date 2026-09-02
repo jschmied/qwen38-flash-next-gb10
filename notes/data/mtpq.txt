@@ -1,0 +1,68 @@
+preflight OK 13:11
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+=== MTPQ_a  batch=4096  13:11 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  MTPQ_a pass1 turn 1:  11.83 s   130 tok  hits+       0  acc=  6.1% len=1.30  ( 91.0 ms/tok)  gen=a982cd
+  MTPQ_a pass1 turn 2:   9.16 s   130 tok  hits+    4848  acc=  8.2% len=1.41  ( 70.5 ms/tok)  gen=a3e461
+  MTPQ_a pass1 turn 3:   3.97 s   130 tok  hits+    4848  acc= 64.5% len=4.23  ( 30.6 ms/tok)  gen=ae40b0
+  MTPQ_a pass1 turn 4:   4.42 s   130 tok  hits+    4848  acc= 59.4% len=3.97  ( 34.0 ms/tok)  gen=e387e8
+  MTPQ_a pass1 turn 5:  10.26 s   130 tok  hits+    4848  acc=  2.4% len=1.12  ( 78.9 ms/tok)  gen=521f0d
+  MTPQ_a pass1 turn 6:   4.33 s   130 tok  hits+    4848  acc= 68.0% len=4.40  ( 33.3 ms/tok)  gen=2da263
+  MTPQ_a pass1 turn 7:   8.85 s   130 tok  hits+    6464  acc=  5.5% len=1.28  ( 68.1 ms/tok)  gen=f316af
+  MTPQ_a pass1 turn 8:   8.87 s   130 tok  hits+    6464  acc=  5.8% len=1.29  ( 68.2 ms/tok)  gen=c3daaa
+  MTPQ_a pass1 PATTERN ssFFsFss  TOTAL 61.7 s  1040 tok  59.31 ms/tok
+  MTPQ_a pass2 turn 1:   9.58 s   130 tok  hits+    4848  acc=  4.3% len=1.22  ( 73.7 ms/tok)  gen=df1608
+  MTPQ_a pass2 turn 2:   9.49 s   130 tok  hits+    4848  acc=  5.0% len=1.25  ( 73.0 ms/tok)  gen=73ff34
+  MTPQ_a pass2 turn 3:   8.45 s   130 tok  hits+    4848  acc=  8.0% len=1.40  ( 65.0 ms/tok)  gen=a85030
+  MTPQ_a pass2 turn 4:   4.02 s   130 tok  hits+    4848  acc= 65.2% len=4.26  ( 30.9 ms/tok)  gen=325851
+  MTPQ_a pass2 turn 5:   9.67 s   130 tok  hits+    6464  acc=  2.2% len=1.11  ( 74.3 ms/tok)  gen=521f0d
+  MTPQ_a pass2 turn 6:   7.40 s   130 tok  hits+    6464  acc= 11.4% len=1.57  ( 56.9 ms/tok)  gen=e8db5a
+  MTPQ_a pass2 turn 7:   8.89 s   130 tok  hits+    6464  acc=  6.5% len=1.33  ( 68.4 ms/tok)  gen=629f1a
+  MTPQ_a pass2 turn 8:   7.95 s   130 tok  hits+    6464  acc=  9.5% len=1.48  ( 61.2 ms/tok)  gen=ada6e2
+  MTPQ_a pass2 PATTERN sssFssss  TOTAL 65.4 s  1040 tok  62.93 ms/tok
+  MTPQ_a pass3 turn 1:   9.20 s   130 tok  hits+    4848  acc=  5.0% len=1.25  ( 70.8 ms/tok)  gen=e74308
+  MTPQ_a pass3 turn 2:   9.37 s   130 tok  hits+    4848  acc=  5.3% len=1.26  ( 72.1 ms/tok)  gen=0097af
+  MTPQ_a pass3 turn 3:   3.68 s   130 tok  hits+    4848  acc= 72.1% len=4.61  ( 28.3 ms/tok)  gen=4dde8b
+  MTPQ_a pass3 turn 4:   9.17 s   130 tok  hits+    4848  acc=  5.5% len=1.28  ( 70.5 ms/tok)  gen=d58f67
+  MTPQ_a pass3 turn 5:   3.75 s   130 tok  hits+    6464  acc= 55.4% len=3.77  ( 28.9 ms/tok)  gen=dcb488
+  MTPQ_a pass3 turn 6:   8.49 s   130 tok  hits+    6464  acc=  7.7% len=1.39  ( 65.3 ms/tok)  gen=ed9b61
+  MTPQ_a pass3 turn 7:   7.47 s   130 tok  hits+    6464  acc= 10.7% len=1.54  ( 57.4 ms/tok)  gen=04c05d
+  MTPQ_a pass3 turn 8:   8.99 s   130 tok  hits+    6464  acc=  5.8% len=1.29  ( 69.2 ms/tok)  gen=a30605
+  MTPQ_a pass3 PATTERN ssFsFsss  TOTAL 60.1 s  1040 tok  57.81 ms/tok
+  ACCEPT MTPQ_a-post: drafts=1977 draft_tok=9885 accepted=1154 rate=11.7%  mean_accept_len=1.58
+=== MTPQ_b  batch=4096  13:25 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  MTPQ_b pass1 turn 1:  10.96 s   130 tok  hits+       0  acc=  8.0% len=1.40  ( 84.3 ms/tok)  gen=63cbf9
+  MTPQ_b pass1 turn 2:   9.15 s   130 tok  hits+    4848  acc=  7.2% len=1.36  ( 70.4 ms/tok)  gen=d539d4
+  MTPQ_b pass1 turn 3:   3.93 s   130 tok  hits+    4848  acc= 68.0% len=4.40  ( 30.2 ms/tok)  gen=065e3f
+  MTPQ_b pass1 turn 4:   7.01 s   130 tok  hits+    4848  acc= 17.4% len=1.87  ( 53.9 ms/tok)  gen=222bcb
+  MTPQ_b pass1 turn 5:   7.59 s   130 tok  hits+    4848  acc= 14.0% len=1.70  ( 58.4 ms/tok)  gen=0665aa
+  MTPQ_b pass1 turn 6:   4.58 s   130 tok  hits+    4848  acc= 63.7% len=4.19  ( 35.3 ms/tok)  gen=52acda
+  MTPQ_b pass1 turn 7:   7.54 s   130 tok  hits+    6464  acc= 11.1% len=1.55  ( 58.0 ms/tok)  gen=ee574e
+  MTPQ_b pass1 turn 8:   7.64 s   130 tok  hits+    6464  acc= 12.4% len=1.62  ( 58.8 ms/tok)  gen=2e8108
+  MTPQ_b pass1 PATTERN ssFssFss  TOTAL 58.4 s  1040 tok  56.16 ms/tok
+  MTPQ_b pass2 turn 1:   9.27 s   130 tok  hits+    4848  acc=  5.0% len=1.25  ( 71.3 ms/tok)  gen=9391b3
+  MTPQ_b pass2 turn 2:   8.39 s   130 tok  hits+    4848  acc=  9.3% len=1.47  ( 64.6 ms/tok)  gen=ba0566
+  MTPQ_b pass2 turn 3:   9.00 s   130 tok  hits+    4848  acc=  6.8% len=1.34  ( 69.3 ms/tok)  gen=7dc296
+  MTPQ_b pass2 turn 4:   9.16 s   130 tok  hits+    4848  acc=  6.6% len=1.33  ( 70.4 ms/tok)  gen=3d9e93
+  MTPQ_b pass2 turn 5:   4.17 s   130 tok  hits+    6464  acc= 50.5% len=3.53  ( 32.1 ms/tok)  gen=783ac6
+  MTPQ_b pass2 turn 6:   7.92 s   130 tok  hits+    6464  acc=  9.1% len=1.46  ( 60.9 ms/tok)  gen=e36864
+  MTPQ_b pass2 turn 7:   6.61 s   130 tok  hits+    6464  acc= 15.8% len=1.79  ( 50.8 ms/tok)  gen=a46b2f
+  MTPQ_b pass2 turn 8:   3.75 s   130 tok  hits+    6464  acc= 60.6% len=4.03  ( 28.9 ms/tok)  gen=7bee5d
+  MTPQ_b pass2 PATTERN ssssFssF  TOTAL 58.3 s  1040 tok  56.04 ms/tok
+  MTPQ_b pass3 turn 1:   9.38 s   130 tok  hits+    4848  acc=  4.6% len=1.23  ( 72.1 ms/tok)  gen=e74308
+  MTPQ_b pass3 turn 2:   9.82 s   130 tok  hits+    4848  acc=  5.0% len=1.25  ( 75.5 ms/tok)  gen=73ff34
+  MTPQ_b pass3 turn 3:   7.44 s   130 tok  hits+    4848  acc= 13.5% len=1.68  ( 57.2 ms/tok)  gen=a85030
+  MTPQ_b pass3 turn 4:   4.49 s   130 tok  hits+    4848  acc= 51.7% len=3.58  ( 34.5 ms/tok)  gen=2d6d17
+  MTPQ_b pass3 turn 5:   9.21 s   130 tok  hits+    6464  acc=  4.6% len=1.23  ( 70.8 ms/tok)  gen=7074d1
+  MTPQ_b pass3 turn 6:   8.57 s   130 tok  hits+    6464  acc=  6.3% len=1.32  ( 65.9 ms/tok)  gen=bbed40
+  MTPQ_b pass3 turn 7:   8.46 s   130 tok  hits+    6464  acc=  6.9% len=1.34  ( 65.1 ms/tok)  gen=10a91d
+  MTPQ_b pass3 turn 8:   9.38 s   130 tok  hits+    6464  acc=  5.0% len=1.25  ( 72.2 ms/tok)  gen=36bbdf
+  MTPQ_b pass3 PATTERN sssFssss  TOTAL 66.7 s  1040 tok  64.17 ms/tok
+  ACCEPT MTPQ_b-post: drafts=1903 draft_tok=9515 accepted=1219 rate=12.8%  mean_accept_len=1.64
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==

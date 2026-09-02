@@ -709,6 +709,17 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     the state seed for resumed requests. `MTPFIX3` (3 more starts of both, then seed-only ×2,
     split-only ×2) is queued to confirm and separate. Raw: `notes/data/mtpfix2.txt`.
 
+44. **Under MTP the generated text is not reproducible even with the deterministic MoE.** `MTPQ`
+    (det finalize installed, MTP n=5, 2 starts × 3 passes of byte-identical prompts): pass 2 vs
+    pass 3 — same cache state — differ in the generated text on 8 of 8 turns, in start a and in
+    start b, in healthy and in broken turns alike. So a text hash cannot tell "target corrupted"
+    from "drafter broken": MTP's verify shapes depend on how many drafts were accepted, and the
+    kernels are deterministic but not batch-invariant, so any acceptance difference changes
+    downstream logits and the text forks. The target-or-drafter question needs a no-spec
+    reference and the *position* of first divergence per turn (`MTPQ2`, queued). Patterns:
+    a `ssFFsFss` `sssFssss` `ssFsFsss`, b `ssFssFss` `ssssFssF` `sssFssss` — 6 of 48 healthy,
+    the lowest rate of any start so far. Raw: `notes/data/mtpq.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
