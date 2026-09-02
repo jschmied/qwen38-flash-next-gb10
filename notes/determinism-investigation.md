@@ -300,6 +300,22 @@ confidence each item deserves, plus what was refuted along the way.
     Slot wired; the cuda arms re-launched. Rule added to the runner: a `$12` value must show up in
     the arm's log or the arm does not count.
 
+23. **The GDN decode kernel choice moves WHERE divergence first appears — it does not remove it.**
+    `GDNCUDA_a` (cache off, spec off, eager, `GDN decode kernel: cuda` confirmed in the log;
+    prefill kernel unchanged, Triton/FLA):
+
+    | decode kernel | token 1 (prefill) | token 2 (decode step 1) |
+    | --- | --- | --- |
+    | triton (`GENBIS3`, old `GDNCUDA_a`; n=2) | **identical** x3 | differs |
+    | cuda (`GDNCUDA_a`; n=1, `_b` running) | **differs** x3 (`2255…`, `1ce1…`, `73a4…`) | differs |
+
+    A *decode* kernel switch changed *prefill* determinism, so the fused cuda path must touch the
+    prefill's final step or its state write (see the code excerpt in the log of this commit).
+    Neither kernel is "the source": both variants lose determinism on the GDN recurrent-state
+    path, cuda one step earlier. **The state write at the end of prefill and its read at decode
+    step 1 are now the narrowest suspect**, and the next instrument is to hash the GDN state
+    tensors directly at those two points.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
