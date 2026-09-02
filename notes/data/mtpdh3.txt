@@ -1,0 +1,72 @@
+preflight OK 18:51
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  draft-hash diagnostic INSTALLED (inert unless VLLM_DRAFT_HASH=1)
+=== B8192_a  batch=8192  18:51 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=0 compile_lines=3 enforce_eager=1
+  B8192_a pass1 turn 1:  13.43 s   130 tok  hits+       0  acc=  4.8% len=1.24  (103.3 ms/tok)  h=831f25
+  B8192_a pass1 turn 2:   9.75 s   130 tok  hits+       0  acc= 24.5% len=2.22  ( 75.0 ms/tok)  h=a0e854
+  B8192_a pass1 turn 3:  12.82 s   130 tok  hits+       0  acc=  7.1% len=1.35  ( 98.6 ms/tok)  h=f493a2
+  B8192_a pass1 turn 4:  11.04 s   130 tok  hits+       0  acc= 15.1% len=1.76  ( 84.9 ms/tok)  h=f493a2
+  B8192_a pass1 turn 5:   9.25 s   130 tok  hits+       0  acc= 84.8% len=5.24  ( 71.2 ms/tok)  h=c785e1
+  B8192_a pass1 turn 6:   9.98 s   130 tok  hits+       0  acc= 12.5% len=1.62  ( 76.7 ms/tok)  h=f493a2
+  B8192_a pass1 turn 7:   5.61 s   130 tok  hits+       0  acc= 87.5% len=5.38  ( 43.2 ms/tok)  h=b61149
+  B8192_a pass1 turn 8:   6.36 s   130 tok  hits+       0  acc= 86.4% len=5.32  ( 48.9 ms/tok)  h=529171
+  B8192_a pass1 PATTERN ssssFsFF  TOTAL 78.2 s  1040 tok  75.23 ms/tok
+  B8192_a pass2 turn 1:   7.21 s   130 tok  hits+       0  acc= 75.7% len=4.79  ( 55.5 ms/tok)  h=831f25
+  B8192_a pass2 turn 2:  11.60 s   130 tok  hits+       0  acc= 11.6% len=1.58  ( 89.2 ms/tok)  h=a0e854
+  B8192_a pass2 turn 3:  12.57 s   130 tok  hits+       0  acc=  7.7% len=1.38  ( 96.7 ms/tok)  h=f493a2
+  B8192_a pass2 turn 4:   7.48 s   130 tok  hits+       0  acc= 71.7% len=4.59  ( 57.5 ms/tok)  h=f493a2
+  B8192_a pass2 turn 5:  11.38 s   130 tok  hits+       0  acc= 14.7% len=1.73  ( 87.5 ms/tok)  h=c785e1
+  B8192_a pass2 turn 6:   5.45 s   130 tok  hits+       0  acc= 95.7% len=5.78  ( 42.0 ms/tok)  h=f493a2
+  B8192_a pass2 turn 7:   5.66 s   130 tok  hits+       0  acc= 91.7% len=5.58  ( 43.6 ms/tok)  h=b61149
+  B8192_a pass2 turn 8:   5.73 s   130 tok  hits+       0  acc= 84.8% len=5.24  ( 44.1 ms/tok)  h=529171
+  B8192_a pass2 PATTERN FssFsFFF  TOTAL 67.1 s  1040 tok  64.50 ms/tok
+  B8192_a pass3 turn 1:  13.11 s   130 tok  hits+       0  acc=  4.3% len=1.22  (100.8 ms/tok)  h=831f25
+  B8192_a pass3 turn 2:  11.06 s   130 tok  hits+       0  acc= 14.0% len=1.70  ( 85.1 ms/tok)  h=a0e854
+  B8192_a pass3 turn 3:  12.92 s   130 tok  hits+       0  acc=  5.5% len=1.28  ( 99.4 ms/tok)  h=f493a2
+  B8192_a pass3 turn 4:  12.45 s   130 tok  hits+       0  acc=  8.9% len=1.45  ( 95.7 ms/tok)  h=f493a2
+  B8192_a pass3 turn 5:   7.17 s   130 tok  hits+       0  acc= 93.9% len=5.70  ( 55.1 ms/tok)  h=c785e1
+  B8192_a pass3 turn 6:  10.53 s   130 tok  hits+       0  acc=  9.0% len=1.45  ( 81.0 ms/tok)  h=f493a2
+  B8192_a pass3 turn 7:   5.62 s   130 tok  hits+       0  acc= 89.2% len=5.46  ( 43.2 ms/tok)  h=b61149
+  B8192_a pass3 turn 8:   9.09 s   130 tok  hits+       0  acc= 17.9% len=1.90  ( 69.9 ms/tok)  h=529171
+  B8192_a pass3 PATTERN ssssFsFs  TOTAL 81.9 s  1040 tok  78.79 ms/tok
+  ACCEPT B8192_a-post: drafts=1447 draft_tok=7235 accepted=1692 rate=23.4%  mean_accept_len=2.17
+=== B2048_a  batch=2048  19:07 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=0 compile_lines=3 enforce_eager=1
+  B2048_a pass1 turn 1:  12.95 s   130 tok  hits+       0  acc=  4.6% len=1.23  ( 99.6 ms/tok)  h=822de5
+  B2048_a pass1 turn 2:   9.15 s   130 tok  hits+       0  acc= 18.5% len=1.93  ( 70.4 ms/tok)  h=3b6bf7
+  B2048_a pass1 turn 3:  11.21 s   130 tok  hits+       0  acc=  8.3% len=1.41  ( 86.2 ms/tok)  h=603649
+  B2048_a pass1 turn 4:  11.96 s   130 tok  hits+       0  acc=  5.3% len=1.26  ( 92.0 ms/tok)  h=463feb
+  B2048_a pass1 turn 5:  12.10 s   130 tok  hits+       0  acc=  5.5% len=1.28  ( 93.1 ms/tok)  h=a01f37
+  B2048_a pass1 turn 6:  12.05 s   130 tok  hits+       0  acc=  6.0% len=1.30  ( 92.7 ms/tok)  h=67c8ca
+  B2048_a pass1 turn 7:   7.79 s   130 tok  hits+       0  acc= 43.3% len=3.17  ( 59.9 ms/tok)  h=94e039
+  B2048_a pass1 turn 8:  10.57 s   130 tok  hits+       0  acc= 12.3% len=1.62  ( 81.3 ms/tok)  h=4384c6
+  B2048_a pass1 PATTERN ssssssFs  TOTAL 87.8 s  1040 tok  84.40 ms/tok
+  B2048_a pass2 turn 1:   5.99 s   130 tok  hits+       0  acc= 73.6% len=4.68  ( 46.1 ms/tok)  h=822de5
+  B2048_a pass2 turn 2:   9.21 s   130 tok  hits+       0  acc= 17.9% len=1.90  ( 70.8 ms/tok)  h=3b6bf7
+  B2048_a pass2 turn 3:  12.08 s   130 tok  hits+       0  acc=  5.0% len=1.25  ( 92.9 ms/tok)  h=603649
+  B2048_a pass2 turn 4:   7.92 s   130 tok  hits+       0  acc= 35.4% len=2.77  ( 60.9 ms/tok)  h=463feb
+  B2048_a pass2 turn 5:   9.53 s   130 tok  hits+       0  acc= 17.9% len=1.90  ( 73.3 ms/tok)  h=a01f37
+  B2048_a pass2 turn 6:  11.66 s   130 tok  hits+       0  acc=  8.0% len=1.40  ( 89.7 ms/tok)  h=67c8ca
+  B2048_a pass2 turn 7:  12.36 s   130 tok  hits+       0  acc=  6.1% len=1.30  ( 95.1 ms/tok)  h=94e039
+  B2048_a pass2 turn 8:  10.62 s   130 tok  hits+       0  acc= 12.3% len=1.61  ( 81.7 ms/tok)  h=4384c6
+  B2048_a pass2 PATTERN Fsssssss  TOTAL 79.4 s  1040 tok  76.30 ms/tok
+  B2048_a pass3 turn 1:   6.37 s   130 tok  hits+       0  acc= 58.8% len=3.94  ( 49.0 ms/tok)  h=822de5
+  B2048_a pass3 turn 2:  10.21 s   130 tok  hits+       0  acc= 13.8% len=1.69  ( 78.6 ms/tok)  h=3b6bf7
+  B2048_a pass3 turn 3:  11.54 s   130 tok  hits+       0  acc=  6.3% len=1.32  ( 88.8 ms/tok)  h=603649
+  B2048_a pass3 turn 4:   6.13 s   130 tok  hits+       0  acc= 74.3% len=4.71  ( 47.2 ms/tok)  h=463feb
+  B2048_a pass3 turn 5:  11.94 s   130 tok  hits+       0  acc=  6.2% len=1.31  ( 91.9 ms/tok)  h=a01f37
+  B2048_a pass3 turn 6:   6.88 s   130 tok  hits+       0  acc= 57.6% len=3.88  ( 52.9 ms/tok)  h=67c8ca
+  B2048_a pass3 turn 7:  11.97 s   130 tok  hits+       0  acc=  7.2% len=1.36  ( 92.1 ms/tok)  h=94e039
+  B2048_a pass3 turn 8:  11.42 s   130 tok  hits+       0  acc=  8.2% len=1.41  ( 87.8 ms/tok)  h=4384c6
+  B2048_a pass3 PATTERN FssFsFss  TOTAL 76.5 s  1040 tok  73.54 ms/tok
+  ACCEPT B2048_a-post: drafts=1843 draft_tok=9215 accepted=1295 rate=14.1%  mean_accept_len=1.70
+    B8192_a config: max_num_batched_tokens': 8192
+    B2048_a config: max_num_batched_tokens': 2048
+  draft-hash diagnostic REMOVED
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==

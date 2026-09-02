@@ -830,6 +830,21 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     (`--max-num-batched-tokens 8192`) vs four chunks (2048), hashing also the last row of each
     chunk (kernel-internal vs handoff). Raw: `notes/data/fnext-DH2_a.log.txt`, `fnext-DH3_a.log.txt` (when done).
 
+51. **Not the chunk handoff either — the long prefill itself is nondeterministic.** `MTPDH3`
+    (cache off, det MoE, eager, hashes of the FIRST and LAST row of every draft-prefill chunk):
+    - `B8192_a` (`--max-num-batched-tokens 8192`, the 7503-token turn-1 prompt is ONE chunk, no
+      handoff): row 0 identical across passes, the **last row differs** between identical
+      7503-token requests. Patterns `ssssFsFF` `FssFsFFF` `ssssFsFs` — no mitigation.
+    - `B2048_a` (four chunks): first chunk's row 0 identical, its last row and every later chunk
+      differ. Patterns `ssssssFs` `Fsssssss` `FssFsFss`.
+    So a kernel in the prefill produces different values at late positions for identical inputs
+    while its first rows are exact — position-dependent nondeterminism inside one forward, with
+    the MoE finalize already deterministic. All earlier "forward pass is deterministic" results
+    were on a 55-token prompt (the audit's rank-1 caveat, now confirmed as the blind spot).
+    `MTPLH` bisects it: every layer and submodule of the target hashed over the full tensor on
+    three identical 7.5k-token requests. Raw: `notes/data/mtpdh3.txt`, `fnext-B8192_a.log.txt`,
+    `fnext-B2048_a.log.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
