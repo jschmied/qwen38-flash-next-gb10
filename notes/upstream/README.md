@@ -9,7 +9,7 @@ posted. Post in this order, so the comments can link to a real issue number:
 4. PR (optional, `pr-plan.md`)
 
 Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer bojiang3 asked for it
-   2026-09-02). Branch pushed to `jschmied/vllm:fix/qsa-ring-widen` (02001b44); not opened yet.
+   2026-09-02). Branch pushed to `jschmied/vllm:fix/qsa-ring-widen` (02001b44); opened as vllm#54912 on 2026-09-02.
 
 4b. (kept): one kwarg + one env var; only after the issue has a number.
 

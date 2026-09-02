@@ -1,4 +1,4 @@
-# PR body for #54552 — branch `jschmied/vllm:fix/qsa-ring-widen` (commit 02001b44)
+# PR body for #54552 — branch `jschmied/vllm:fix/qsa-ring-widen` (commit 02001b44) — OPENED as https://github.com/vllm-project/vllm/pull/54912
 
 Title: `[Bugfix] Widen the QSA raw-key ring instead of asserting divisibility`
 
