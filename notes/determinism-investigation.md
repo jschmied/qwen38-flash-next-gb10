@@ -925,6 +925,27 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     compiled (PIECEWISE), so this does not bear on prod, but the eager hash instrument cannot be
     used to bisect defect C. Raw: `notes/data/mtpdh4.txt`, `fnext-DH4_a.log.txt`.
 
+57. **The full fix stack is clean in the production shape: 24/24 healthy turns, identical to the
+    decimal across three passes.** `MTPPAD` / `PAD_PROD`: prefix cache ON + align patches (#54076,
+    #53798) + exact top-k at the QSA selection + deterministic MoE finalize (+ the draft-pad fix,
+    which 57a shows is inert), MTP n=5, compiled (PIECEWISE), identical prompts × 3 passes:
+
+    ```
+PAD_PROD p1: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4% 
+PAD_PROD p2: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4% 
+PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
+    ```
+
+    31–35 ms/tok. Against the same prompts unpatched: 42/96 healthy over 12 starts, 32–70 ms/tok.
+    57a. The draft-pad candidate (stale trailing slots, `tools/determinism/draftpad_patch.py`) is
+    inert: `PAD_EXACT` reproduces `MTP_EXACT` to the decimal on every turn. Defect C — the
+    reproducible ~5–17 % turns of finding 55 — occurs only with the prefix cache OFF, i.e. when
+    every turn rebuilds the drafter's cache through a full draft prefill; with the cache on, the
+    drafter's state is built incrementally during decode and every turn is healthy. So C lives in
+    the draft-prefill path (position/content dependent, deterministic), and does not affect the
+    served configuration. `MTPACC` (per-step acceptance, cache off) characterises it; the depth
+    grid (`MTPGRID2`) runs on the validated stack. Raw: `notes/data/mtppad.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

@@ -1,0 +1,75 @@
+preflight OK 21:29
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  qsafix INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1 or VLLM_QSA_SORT=1)
+  draftpad INSTALLED
+=== PAD_EXACT  batch=4096  21:29 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  PAD_EXACT pass1 turn 1:  10.56 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 81.3 ms/tok)  h=831564
+  PAD_EXACT pass1 turn 2:  12.02 s   130 tok  hits+       0  acc=  5.3% len=1.26  ( 92.5 ms/tok)  h=a4e1cd
+  PAD_EXACT pass1 turn 3:   6.27 s   130 tok  hits+       0  acc= 63.2% len=4.16  ( 48.2 ms/tok)  h=f38c74
+  PAD_EXACT pass1 turn 4:   9.42 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.4 ms/tok)  h=3700d5
+  PAD_EXACT pass1 turn 5:   9.31 s   130 tok  hits+       0  acc= 17.4% len=1.87  ( 71.6 ms/tok)  h=563c53
+  PAD_EXACT pass1 turn 6:   6.52 s   130 tok  hits+       0  acc= 61.2% len=4.06  ( 50.2 ms/tok)  h=1491ce
+  PAD_EXACT pass1 turn 7:   6.32 s   130 tok  hits+       0  acc= 66.0% len=4.30  ( 48.6 ms/tok)  h=f7332f
+  PAD_EXACT pass1 turn 8:  11.97 s   130 tok  hits+       0  acc=  4.8% len=1.24  ( 92.1 ms/tok)  h=a46b2f
+  PAD_EXACT pass1 PATTERN ssFssFFs  TOTAL 72.4 s  1040 tok  69.61 ms/tok
+  PAD_EXACT pass2 turn 1:   9.39 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.3 ms/tok)  h=831564
+  PAD_EXACT pass2 turn 2:  11.98 s   130 tok  hits+       0  acc=  5.3% len=1.26  ( 92.2 ms/tok)  h=a4e1cd
+  PAD_EXACT pass2 turn 3:   6.21 s   130 tok  hits+       0  acc= 63.2% len=4.16  ( 47.8 ms/tok)  h=f38c74
+  PAD_EXACT pass2 turn 4:   9.37 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.1 ms/tok)  h=3700d5
+  PAD_EXACT pass2 turn 5:   9.28 s   130 tok  hits+       0  acc= 17.4% len=1.87  ( 71.4 ms/tok)  h=563c53
+  PAD_EXACT pass2 turn 6:   6.46 s   130 tok  hits+       0  acc= 61.2% len=4.06  ( 49.7 ms/tok)  h=1491ce
+  PAD_EXACT pass2 turn 7:   6.23 s   130 tok  hits+       0  acc= 66.0% len=4.30  ( 47.9 ms/tok)  h=f7332f
+  PAD_EXACT pass2 turn 8:  11.99 s   130 tok  hits+       0  acc=  4.8% len=1.24  ( 92.3 ms/tok)  h=a46b2f
+  PAD_EXACT pass2 PATTERN ssFssFFs  TOTAL 70.9 s  1040 tok  68.20 ms/tok
+  PAD_EXACT pass3 turn 1:   9.40 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.3 ms/tok)  h=831564
+  PAD_EXACT pass3 turn 2:  11.98 s   130 tok  hits+       0  acc=  5.3% len=1.26  ( 92.2 ms/tok)  h=a4e1cd
+  PAD_EXACT pass3 turn 3:   6.31 s   130 tok  hits+       0  acc= 63.2% len=4.16  ( 48.5 ms/tok)  h=f38c74
+  PAD_EXACT pass3 turn 4:   9.39 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.3 ms/tok)  h=3700d5
+  PAD_EXACT pass3 turn 5:   9.32 s   130 tok  hits+       0  acc= 17.4% len=1.87  ( 71.7 ms/tok)  h=563c53
+  PAD_EXACT pass3 turn 6:   6.46 s   130 tok  hits+       0  acc= 61.2% len=4.06  ( 49.7 ms/tok)  h=1491ce
+  PAD_EXACT pass3 turn 7:   6.22 s   130 tok  hits+       0  acc= 66.0% len=4.30  ( 47.9 ms/tok)  h=f7332f
+  PAD_EXACT pass3 turn 8:  11.96 s   130 tok  hits+       0  acc=  4.8% len=1.24  ( 92.0 ms/tok)  h=a46b2f
+  PAD_EXACT pass3 PATTERN ssFssFFs  TOTAL 71.0 s  1040 tok  68.32 ms/tok
+  ACCEPT PAD_EXACT-post: drafts=1557 draft_tok=7785 accepted=1554 rate=20.0%  mean_accept_len=2.00
+    PAD_EXACT: (Worker pid=1328622) QSAFIX active: exact
+=== PAD_PROD  batch=4096  21:44 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=10 enforce_eager=0
+  PAD_PROD pass1 turn 1:   7.09 s   130 tok  hits+       0  acc= 63.2% len=4.16  ( 54.5 ms/tok)  h=6a885d
+  PAD_PROD pass1 turn 2:   4.23 s   130 tok  hits+    4848  acc= 68.0% len=4.40  ( 32.5 ms/tok)  h=1c75cc
+  PAD_PROD pass1 turn 3:   4.31 s   130 tok  hits+    4848  acc= 60.6% len=4.03  ( 33.1 ms/tok)  h=2170bb
+  PAD_PROD pass1 turn 4:   4.58 s   130 tok  hits+    4848  acc= 55.9% len=3.79  ( 35.2 ms/tok)  h=4c8749
+  PAD_PROD pass1 turn 5:   4.59 s   130 tok  hits+    4848  acc= 56.5% len=3.82  ( 35.3 ms/tok)  h=d3c0c9
+  PAD_PROD pass1 turn 6:   3.89 s   130 tok  hits+    6464  acc= 58.2% len=3.91  ( 29.9 ms/tok)  h=8385f1
+  PAD_PROD pass1 turn 7:   3.65 s   130 tok  hits+    6464  acc= 69.0% len=4.45  ( 28.1 ms/tok)  h=99e417
+  PAD_PROD pass1 turn 8:   3.66 s   130 tok  hits+    6464  acc= 72.4% len=4.62  ( 28.2 ms/tok)  h=8690d1
+  PAD_PROD pass1 PATTERN FFFFFFFF  TOTAL 36.0 s  1040 tok  34.61 ms/tok
+  PAD_PROD pass2 turn 1:   3.98 s   130 tok  hits+    4848  acc= 63.2% len=4.16  ( 30.6 ms/tok)  h=6a885d
+  PAD_PROD pass2 turn 2:   4.09 s   130 tok  hits+    4848  acc= 68.0% len=4.40  ( 31.5 ms/tok)  h=1c75cc
+  PAD_PROD pass2 turn 3:   4.23 s   130 tok  hits+    4848  acc= 60.6% len=4.03  ( 32.5 ms/tok)  h=2170bb
+  PAD_PROD pass2 turn 4:   4.49 s   130 tok  hits+    4848  acc= 55.9% len=3.79  ( 34.6 ms/tok)  h=4c8749
+  PAD_PROD pass2 turn 5:   4.53 s   130 tok  hits+    4848  acc= 56.5% len=3.82  ( 34.9 ms/tok)  h=d3c0c9
+  PAD_PROD pass2 turn 6:   3.84 s   130 tok  hits+    6464  acc= 58.2% len=3.91  ( 29.6 ms/tok)  h=8385f1
+  PAD_PROD pass2 turn 7:   3.58 s   130 tok  hits+    6464  acc= 69.0% len=4.45  ( 27.5 ms/tok)  h=99e417
+  PAD_PROD pass2 turn 8:   3.62 s   130 tok  hits+    6464  acc= 72.4% len=4.62  ( 27.9 ms/tok)  h=8690d1
+  PAD_PROD pass2 PATTERN FFFFFFFF  TOTAL 32.4 s  1040 tok  31.12 ms/tok
+  PAD_PROD pass3 turn 1:   3.99 s   130 tok  hits+    4848  acc= 63.2% len=4.16  ( 30.7 ms/tok)  h=6a885d
+  PAD_PROD pass3 turn 2:   4.10 s   130 tok  hits+    4848  acc= 68.0% len=4.40  ( 31.5 ms/tok)  h=1c75cc
+  PAD_PROD pass3 turn 3:   4.22 s   130 tok  hits+    4848  acc= 60.6% len=4.03  ( 32.5 ms/tok)  h=2170bb
+  PAD_PROD pass3 turn 4:   4.49 s   130 tok  hits+    4848  acc= 55.9% len=3.79  ( 34.5 ms/tok)  h=4c8749
+  PAD_PROD pass3 turn 5:   4.56 s   130 tok  hits+    4848  acc= 56.5% len=3.82  ( 35.0 ms/tok)  h=d3c0c9
+  PAD_PROD pass3 turn 6:   3.84 s   130 tok  hits+    6464  acc= 58.2% len=3.91  ( 29.6 ms/tok)  h=8385f1
+  PAD_PROD pass3 turn 7:   3.59 s   130 tok  hits+    6464  acc= 69.0% len=4.45  ( 27.6 ms/tok)  h=99e417
+  PAD_PROD pass3 turn 8:   3.62 s   130 tok  hits+    6464  acc= 72.4% len=4.62  ( 27.9 ms/tok)  h=8690d1
+  PAD_PROD pass3 PATTERN FFFFFFFF  TOTAL 32.4 s  1040 tok  31.17 ms/tok
+  ACCEPT PAD_PROD-post: drafts=756 draft_tok=3780 accepted=2367 rate=62.6%  mean_accept_len=4.13
+  reverted scheduler.py
+  reverted mamba_hybrid.py
+  draftpad REMOVED
+  qsafix REMOVED
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==
