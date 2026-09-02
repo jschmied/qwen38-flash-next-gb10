@@ -86,7 +86,9 @@ returning `use_fused_finalize` and the other tactic-table-changing flags (same s
 **Two-part fix, both Python, no C++ / JIT rebuild:**
 1. vLLM: pass `use_fused_finalize=not <deterministic flag>` in `flashinfer_cutlass_moe.py`
    (`tools/determinism/fusedfinalize_patch.py`, env-gated on `VLLM_MOE_DET_FINALIZE=1`).
-2. FlashInfer: `MoERunner.get_cache_key_extras()` (`tools/determinism/moe_cachekey_patch.py`).
+2. FlashInfer: `MoERunner.get_cache_key_extras()` — **already fixed upstream** (present from
+   v0.6.18rc2; absent in 0.6.17). `tools/determinism/moe_cachekey_patch.py` is a backport for boxes
+   that cannot take 0.6.18 (on GB10/aarch64, 0.6.18 drops the SM121a JIT cubins).
 
 **Validated** against the shared default cache in all three serving shapes — cache off; prefix cache
 on (52+3 chunked prefill); prefix cache on + MTP n=5 — all 4 tokens identical across 3 requests

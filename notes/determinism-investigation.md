@@ -614,6 +614,18 @@ confidence each item deserves, plus what was refuted along the way.
     inside the fused reference band's upper half. Only the finalize changes — the expert GEMMs stay
     tuned — which is why it lands far below emulation's +17%. TTFT and concurrency unmeasured.
 
+39. **The cache-key defect is already fixed upstream — our FlashInfer patch is a backport.**
+    FlashInfer `main` has `MoERunner.get_cache_key_extras()` with the comment *"Include those
+    options here to prevent runners with identical tensor profiles from reusing incompatible saved
+    tactics"*, returning dtypes, top-k, parallel ranks, quantization flags, `min_latency_mode`, …
+    and `use_fused_finalize`. Pinned by file content per ref: absent at #3984 (2026-08-06),
+    present at #4106 (2026-08-13); **first release v0.6.18rc2, in v0.6.18 final; absent in our
+    0.6.17**. Consequences: (a) no FlashInfer issue needed — cite the fix instead; (b) upgrading
+    FlashInfer to 0.6.18 would bring it, but 0.6.18 drops the SM121a cubins from the aarch64 JIT
+    cache on this box ([[flashinfer-jit-oom-after-driver-upgrade]] / working-config memory), so
+    the backport stays until that is resolved; (c) the **vLLM** side is the only new upstream item:
+    `main` still never passes `use_fused_finalize`. No rebase of the box is needed for the fix.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
