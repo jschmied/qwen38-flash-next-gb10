@@ -1,4 +1,4 @@
-# PR body for #54945 — branch `fix/flashinfer-moe-fused-finalize` (local worktree ~/git/vllm-moe-finalize, not pushed)
+# PR body for #54945 — branch `fix/flashinfer-moe-fused-finalize` (local worktree ~/git/vllm-moe-finalize, not pushed) — OPENED as https://github.com/vllm-project/vllm/pull/54948
 
 Title: `[Kernel] Add VLLM_FLASHINFER_MOE_FUSED_FINALIZE to disable the nondeterministic MoE finalize`
 
