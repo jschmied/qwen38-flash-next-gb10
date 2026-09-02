@@ -60,8 +60,13 @@ unquantised drafter MoE, so every serving-grade backend is now measured.
 
 With `--moe-backend emulation` (dequantise, plain path) all four tokens are identical across three
 requests. Every other component — GDN recurrent state, PLE lookup, hyperconnections, sampling — is
-therefore reproducible; the divergence is confined to the NVFP4 MoE kernels. Emulation is far too
-slow to serve with, but it gives a reference output for validating any fix.
+therefore reproducible; the divergence is confined to the NVFP4 MoE kernels.
+
+**Cost of the deterministic mode** (8-turn agent loop, 130 tok/turn, c=1, no speculation, prefix
+cache on, backend verified per arm): `flashinfer_cutlass` **43.92 ms/tok** (matches the 12-arm
+reference 42.8–47.7); `emulation` **51.38 ms/tok** — **+17% decode**. n=1 for emulation, but
+no-spec arms reproduce to ~1.10x. TTFT and higher concurrency not measured. So emulation is a
+*serving-viable* deterministic option at modest cost, not merely a reference.
 
 ## Consequences observed
 

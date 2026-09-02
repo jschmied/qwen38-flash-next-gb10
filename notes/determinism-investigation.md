@@ -483,8 +483,11 @@ confidence each item deserves, plus what was refuted along the way.
     eager). The dequantised expert path removes the divergence entirely, prefill and decode. So
     the nondeterminism is in the NVFP4 MoE kernels — every serving-grade one measured — and not
     in the model, the recurrent state, the PLE, the hyperconnections, the scheduler or the
-    runtime. Emulation is a correctness-grade mitigation (reproducibility testing, reference
-    outputs), not a serving-grade one; its throughput cost is being measured (`emucost`).
+    runtime. **Emulation costs +17% decode** (`EMUCOST`, 8-turn agent loop, c=1, no spec, cache on:
+    `flashinfer_cutlass` 43.92 ms/tok — on the 12-arm reference — vs `emulation` 51.38; n=1 for
+    emulation, TTFT/concurrency unmeasured; raw in `notes/data/EMUCOST-run.txt`). I had written
+    "far too slow to serve with" without measuring — withdrawn. It is a serving-viable
+    deterministic mode at modest cost.
 
     **Final backend table** (same probe; backend verified per arm):
 

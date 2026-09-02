@@ -1,0 +1,33 @@
+preflight OK 04:53
+(does vllm#54521's sort fix stabilise acceptance and latency?)
+(BISECTION: which layer first differs on an identical prefill?)
+  already installed
+=== EMUCOST_flashinfer  batch=4096  04:53 ===
+
+    graphs: capture_lines=1 compile_lines=5 enforce_eager=0
+  EMUCOST_flashinfer turn 1:   8.05 s   130 tok  hits+       0
+  EMUCOST_flashinfer turn 2:   6.18 s   130 tok  hits+    4800
+  EMUCOST_flashinfer turn 3:   5.21 s   130 tok  hits+    7200
+  EMUCOST_flashinfer turn 4:   5.26 s   130 tok  hits+    7200
+  EMUCOST_flashinfer turn 5:   5.34 s   130 tok  hits+    7200
+  EMUCOST_flashinfer turn 6:   5.49 s   130 tok  hits+    7200
+  EMUCOST_flashinfer turn 7:   5.02 s   130 tok  hits+    8000
+  EMUCOST_flashinfer turn 8:   5.13 s   130 tok  hits+    8000
+  EMUCOST_flashinfer TOTAL 45.7 s over 8 turns  (5.71 s/turn)  1040 tok  43.92 ms/tok
+  ACCEPT EMUCOST_flashinfer-post: no draft tokens recorded (spec off, or counters absent)
+=== EMUCOST_emulation  batch=4096  05:04 ===
+
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  EMUCOST_emulation turn 1:  10.96 s   130 tok  hits+       0
+  EMUCOST_emulation turn 2:   7.78 s   130 tok  hits+    4800
+  EMUCOST_emulation turn 3:   5.70 s   130 tok  hits+    7200
+  EMUCOST_emulation turn 4:   6.29 s   130 tok  hits+    7200
+  EMUCOST_emulation turn 5:   5.84 s   130 tok  hits+    7200
+  EMUCOST_emulation turn 6:   6.14 s   130 tok  hits+    7200
+  EMUCOST_emulation turn 7:   5.26 s   130 tok  hits+    8000
+  EMUCOST_emulation turn 8:   5.47 s   130 tok  hits+    8000
+  EMUCOST_emulation TOTAL 53.4 s over 8 turns  (6.68 s/turn)  1040 tok  51.38 ms/tok
+  ACCEPT EMUCOST_emulation-post: no draft tokens recorded (spec off, or counters absent)
+    EMUCOST_flashinfer loaded: Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend
+    EMUCOST_emulation loaded: Using 'EMULATION' NvFp4 MoE backend
+== ALL DONE ==
