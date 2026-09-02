@@ -1,0 +1,71 @@
+preflight OK 20:03
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  layer-hash diagnostic INSTALLED (inert unless VLLM_LAYER_HASH=1)
+  qsafix INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1 or VLLM_QSA_SORT=1)
+=== LH_SORT  batch=8192  20:03 ===
+
+    graphs: capture_lines=0 compile_lines=2 enforce_eager=1
+  LH_SORT req1: prompt_tokens=7503 top='The' lp=-0.06220344454
+  LH_SORT req2: prompt_tokens=7503 top='The' lp=-0.06097752973
+  LH_SORT req3: prompt_tokens=7503 top='The' lp=-0.06220344454
+  ACCEPT LH_SORT-post: no draft tokens recorded (spec off, or counters absent)
+    LH_SORT: (Worker pid=1241055) QSAFIX active: sort
+  === passes [1, 2] (identical 0) ===
+    language_model.model.layers.0                       9942003e84 9942003e84   same
+    language_model.model.layers.1                       9942003e84 9942003e84   same
+    language_model.model.layers.2                       9942003e84 9942003e84   same
+    language_model.model.layers.3                       9942003e84 9942003e84   same
+    language_model.model.layers.4                       9942003e84 9942003e84   same
+    language_model.model.layers.5                       9942003e84 9942003e84   same
+    language_model.model.layers.6                       9942003e84 9942003e84   same
+=== LH_EXACT  batch=8192  20:21 ===
+
+    graphs: capture_lines=0 compile_lines=2 enforce_eager=1
+  LH_EXACT req1: prompt_tokens=7503 top='The' lp=-0.05920960382
+  LH_EXACT req2: prompt_tokens=7503 top='The' lp=-0.05920960382
+  LH_EXACT req3: prompt_tokens=7503 top='The' lp=-0.05920960382
+  ACCEPT LH_EXACT-post: no draft tokens recorded (spec off, or counters absent)
+    LH_EXACT: (Worker pid=1279118) QSAFIX active: exact
+  === passes [1, 2] (identical 0) ===
+    language_model.model.layers.0                       9942003e84 9942003e84   same
+    language_model.model.layers.1                       9942003e84 9942003e84   same
+    language_model.model.layers.2                       9942003e84 9942003e84   same
+    language_model.model.layers.3                       9942003e84 9942003e84   same
+    language_model.model.layers.4                       9942003e84 9942003e84   same
+    language_model.model.layers.5                       9942003e84 9942003e84   same
+    language_model.model.layers.6                       9942003e84 9942003e84   same
+  layer-hash diagnostic REMOVED
+=== MTP_EXACT  batch=4096  20:39 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=10 enforce_eager=0
+  MTP_EXACT pass1 turn 1:  11.47 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 88.2 ms/tok)  h=831564
+  MTP_EXACT pass1 turn 2:  12.06 s   130 tok  hits+       0  acc=  5.3% len=1.26  ( 92.7 ms/tok)  h=a4e1cd
+  MTP_EXACT pass1 turn 3:   6.29 s   130 tok  hits+       0  acc= 63.2% len=4.16  ( 48.3 ms/tok)  h=f38c74
+  MTP_EXACT pass1 turn 4:   9.47 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.9 ms/tok)  h=3700d5
+  MTP_EXACT pass1 turn 5:   9.31 s   130 tok  hits+       0  acc= 17.4% len=1.87  ( 71.6 ms/tok)  h=563c53
+  MTP_EXACT pass1 turn 6:   6.53 s   130 tok  hits+       0  acc= 61.2% len=4.06  ( 50.2 ms/tok)  h=1491ce
+  MTP_EXACT pass1 turn 7:   6.35 s   130 tok  hits+       0  acc= 66.0% len=4.30  ( 48.8 ms/tok)  h=f7332f
+  MTP_EXACT pass1 turn 8:  11.95 s   130 tok  hits+       0  acc=  4.8% len=1.24  ( 91.9 ms/tok)  h=a46b2f
+  MTP_EXACT pass1 PATTERN ssFssFFs  TOTAL 73.4 s  1040 tok  70.61 ms/tok
+  MTP_EXACT pass2 turn 1:   9.37 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.1 ms/tok)  h=831564
+  MTP_EXACT pass2 turn 2:  11.92 s   130 tok  hits+       0  acc=  5.3% len=1.26  ( 91.7 ms/tok)  h=a4e1cd
+  MTP_EXACT pass2 turn 3:   6.21 s   130 tok  hits+       0  acc= 63.2% len=4.16  ( 47.8 ms/tok)  h=f38c74
+  MTP_EXACT pass2 turn 4:   9.40 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.3 ms/tok)  h=3700d5
+  MTP_EXACT pass2 turn 5:   9.30 s   130 tok  hits+       0  acc= 17.4% len=1.87  ( 71.5 ms/tok)  h=563c53
+  MTP_EXACT pass2 turn 6:   6.48 s   130 tok  hits+       0  acc= 61.2% len=4.06  ( 49.8 ms/tok)  h=1491ce
+  MTP_EXACT pass2 turn 7:   6.43 s   130 tok  hits+       0  acc= 66.0% len=4.30  ( 49.4 ms/tok)  h=f7332f
+  MTP_EXACT pass2 turn 8:  11.95 s   130 tok  hits+       0  acc=  4.8% len=1.24  ( 91.9 ms/tok)  h=a46b2f
+  MTP_EXACT pass2 PATTERN ssFssFFs  TOTAL 71.1 s  1040 tok  68.34 ms/tok
+  MTP_EXACT pass3 turn 1:   9.41 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.4 ms/tok)  h=831564
+  MTP_EXACT pass3 turn 2:  11.95 s   130 tok  hits+       0  acc=  5.3% len=1.26  ( 91.9 ms/tok)  h=a4e1cd
+  MTP_EXACT pass3 turn 3:   6.22 s   130 tok  hits+       0  acc= 63.2% len=4.16  ( 47.8 ms/tok)  h=f38c74
+  MTP_EXACT pass3 turn 4:   9.39 s   130 tok  hits+       0  acc= 14.4% len=1.72  ( 72.2 ms/tok)  h=3700d5
+  MTP_EXACT pass3 turn 5:   9.34 s   130 tok  hits+       0  acc= 17.4% len=1.87  ( 71.9 ms/tok)  h=563c53
+  MTP_EXACT pass3 turn 6:   6.48 s   130 tok  hits+       0  acc= 61.2% len=4.06  ( 49.8 ms/tok)  h=1491ce
+  MTP_EXACT pass3 turn 7:   6.23 s   130 tok  hits+       0  acc= 66.0% len=4.30  ( 47.9 ms/tok)  h=f7332f
+  MTP_EXACT pass3 turn 8:  11.91 s   130 tok  hits+       0  acc=  4.8% len=1.24  ( 91.6 ms/tok)  h=a46b2f
+  MTP_EXACT pass3 PATTERN ssFssFFs  TOTAL 70.9 s  1040 tok  68.20 ms/tok
+  ACCEPT MTP_EXACT-post: drafts=1557 draft_tok=7785 accepted=1554 rate=20.0%  mean_accept_len=2.00
+    MTP_EXACT: (Worker pid=1282320) QSAFIX active: exact
+=== MTP_SORT  batch=4096  20:56 ===

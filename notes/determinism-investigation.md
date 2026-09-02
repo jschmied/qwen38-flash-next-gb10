@@ -903,6 +903,18 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     showed top-k was not the sole source then. Raw: `notes/data/lhsort_hashes.txt`,
     `lhexact_hashes.txt`. The MTP replay arms under each fix follow (`MTP_EXACT`, `MTP_SORT`).
 
+55. **With exact top-k the MTP loop is bit-deterministic; the "flip" becomes a fixed property of
+    the turn.** `MTP_EXACT` (exact `torch.topk` at the QSA selection, det MoE, cache off, MTP n=5,
+    identical prompts × 3 passes): per-turn acceptance **identical to the decimal in all three
+    passes** — 14.4 / 5.3 / 63.2 / 14.4 / 17.4 / 61.2 / 66.0 / 4.8 % (`ssFssFFs` ×3). Compare
+    finding 42 (stock: `ssssssss` / `FssssFFF` / `ssFssFFs` for the same prompts). So bug B
+    (nondeterministic selection, 53/54) is closed with a validated fix, and what is left is
+    **not a draw**: for this conversation turns 1, 2, 4, 5 and 8 have ~5–17 % acceptance every
+    time and turns 3, 6, 7 have ~61–66 %. A systematic, reproducible drafter/target disagreement
+    that depends on the turn (its prompt, length or position) — a third defect, deterministic
+    and therefore bisectable per turn. `MTPDH4` (drafter hashes under exact top-k) gives the
+    per-turn prompt lengths and chunking to correlate against. Raw: `notes/data/mtpqsa.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
