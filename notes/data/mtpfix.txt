@@ -1,0 +1,51 @@
+preflight OK 08:19
+(does vllm#54521's sort fix stabilise acceptance and latency?)
+(BISECTION: which layer first differs on an identical prefill?)
+  already installed
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+=== MTPFIX_a  batch=4096  08:19 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  MTPFIX_a turn 1:  11.13 s   130 tok  hits+       0
+  MTPFIX_a turn 2:  10.02 s   130 tok  hits+    4848
+  MTPFIX_a turn 3:  10.17 s   130 tok  hits+    4848
+  MTPFIX_a turn 4:   8.33 s   130 tok  hits+    4848
+  MTPFIX_a turn 5:   9.47 s   130 tok  hits+    4848
+  MTPFIX_a turn 6:   9.59 s   130 tok  hits+    4848
+  MTPFIX_a turn 7:   4.02 s   130 tok  hits+    6464
+  MTPFIX_a turn 8:   7.22 s   130 tok  hits+    6464
+  MTPFIX_a TOTAL 69.9 s over 8 turns  (8.74 s/turn)  1040 tok  67.25 ms/tok
+  ACCEPT MTPFIX_a-post: drafts=706 draft_tok=3530 accepted=330 rate=9.3%  mean_accept_len=1.47
+=== MTPFIX_b  batch=4096  08:32 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  MTPFIX_b turn 1:   5.99 s   130 tok  hits+       0
+  MTPFIX_b turn 2:   3.84 s   130 tok  hits+    4848
+  MTPFIX_b turn 3:   3.85 s   130 tok  hits+    4848
+  MTPFIX_b turn 4:   4.43 s   130 tok  hits+    4848
+  MTPFIX_b turn 5:   4.65 s   130 tok  hits+    4848
+  MTPFIX_b turn 6:   4.27 s   130 tok  hits+    4848
+  MTPFIX_b turn 7:   3.07 s   130 tok  hits+    6464
+  MTPFIX_b turn 8:   3.65 s   130 tok  hits+    6464
+  MTPFIX_b TOTAL 33.7 s over 8 turns  (4.22 s/turn)  1040 tok  32.45 ms/tok
+  ACCEPT MTPFIX_b-post: drafts=241 draft_tok=1205 accepted=799 rate=66.3%  mean_accept_len=4.32
+=== MTPFIX_c  batch=4096  08:44 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  MTPFIX_c turn 1:  13.01 s   130 tok  hits+       0
+  MTPFIX_c turn 2:   4.13 s   130 tok  hits+    4848
+  MTPFIX_c turn 3:   9.88 s   130 tok  hits+    4848
+  MTPFIX_c turn 4:   4.95 s   130 tok  hits+    4848
+  MTPFIX_c turn 5:   8.15 s   130 tok  hits+    4848
+  MTPFIX_c turn 6:   4.25 s   130 tok  hits+    4848
+  MTPFIX_c turn 7:   3.70 s   130 tok  hits+    6464
+  MTPFIX_c turn 8:   3.72 s   130 tok  hits+    6464
+  MTPFIX_c TOTAL 51.8 s over 8 turns  (6.47 s/turn)  1040 tok  49.78 ms/tok
+  ACCEPT MTPFIX_c-post: drafts=457 draft_tok=2285 accepted=587 rate=25.7%  mean_accept_len=2.28
+    MTPFIX_a loaded: Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend
+    MTPFIX_b loaded: Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend
+    MTPFIX_c loaded: Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==

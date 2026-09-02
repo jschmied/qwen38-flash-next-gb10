@@ -626,6 +626,26 @@ confidence each item deserves, plus what was refuted along the way.
     the backport stays until that is resolved; (c) the **vLLM** side is the only new upstream item:
     `main` still never passes `use_fused_finalize`. No rebase of the box is needed for the fix.
 
+40. **The fix does NOT stabilise MTP — the per-start bimodality is a separate defect.** `MTPFIX`
+    (both patches installed, `VLLM_MOE_DET_FINALIZE=1`, MTP n=5, 8-turn agent loop, prefix cache
+    on, backend `FLASHINFER_CUTLASS` verified in all three logs), three server starts:
+
+    | start | ms/tok | acceptance | mean accept len |
+    | --- | --- | --- | --- |
+    | a | 67.25 | 9.3 % | 1.47 |
+    | b | 32.45 | 66.3 % | 4.32 |
+    | c | 49.78 | 25.7 % | 2.28 |
+
+    Spread 2.07× across starts — the same spread as without the fix (1.83×, `AC1..5`). With a
+    bit-deterministic target the drafter still alternates between the good and the bad regime per
+    start, and per turn inside a start (arm a: turns 1–6 at ~10 s, turn 7 at 4.0 s when the
+    prefix-cache hit count jumped 4848→6464). So the explanation in the draft report — "acceptance
+    flips because the target moves under the drafter" — is **withdrawn**: the MoE nondeterminism
+    is real and fixed, but it is not what makes MTP unstable. Whatever sets the regime is chosen
+    per start and per turn independently of the target's arithmetic; the prefix-cache-hit
+    coincidence points at drafter state under the block-aligned mamba split (the #47861 thread),
+    not at the MoE. Raw: `notes/data/mtpfix.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

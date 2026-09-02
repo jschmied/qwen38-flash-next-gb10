@@ -97,9 +97,9 @@ on an 8-turn agent loop, c=1, no speculation; emulation was +17%).
 
 ## Consequences observed
 
-- MTP acceptance flips per turn between ~89% and ~27% of draft work kept (r = −0.964 with
-  ms/tok); no-spec decode is flat (CV 0.05). The drafter and target disagree because the target
-  moved.
+- MTP acceptance flips per start and per turn between ~89% and ~27% of draft work kept; no-spec
+  decode is flat (CV 0.05). **This is not caused by the nondeterminism**: with the fix installed
+  three MTP starts still span 32–67 ms/tok (9–66 % acceptance). Separate defect, not claimed here.
 - Independently reported on the same hardware/model: vllm#54173.
 
 ## Repro
