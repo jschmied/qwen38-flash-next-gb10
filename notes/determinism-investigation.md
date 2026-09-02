@@ -273,6 +273,23 @@ confidence each item deserves, plus what was refuted along the way.
     unmeasured (the fixed probe now hashes every token); over 1040 tokens it does (`F_noprefix`
     NOFB). Re-run queued as `GENBIS3`.
 
+21. **With the prefix cache OFF and speculation OFF, the first decode step's OUTPUT already
+    differs** (`GENBIS3`, eager, fixed probe hashing every token):
+
+    | token | req1 | req2 | req3 |
+    | --- | --- | --- | --- |
+    | 1 (prefill) | `355fed8e` | `355fed8e` | `355fed8e` |
+    | 2 (decode step 1) | `8052946b` | `9e428fac` | `ace4724f` |
+    | 3, 4 | differ | differ | differ |
+
+    This is the output-side confirmation of finding 20's layer hashes: prefill bit-identical, decode
+    divergent from step 1. It also means the `F_noprefix` NOFB divergence was never about length or
+    speculation — decode diverges immediately, with neither. **Both divergences now sit on the
+    recurrent-state path**: cache-on prefill (align machinery writing/reading state) and cache-off
+    decode (the state handed from prefill to decode step 1). Next single-flag test:
+    `VLLM_GDN_DECODE_KERNEL=cuda` vs the `triton` we run (chosen because cuda hung at c~32; c=1
+    is safe) — separates "the decode kernel" from "the state handoff".
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
