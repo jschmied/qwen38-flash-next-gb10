@@ -68,13 +68,28 @@ reference 42.8–47.7); `emulation` **51.38 ms/tok** — **+17% decode**. n=1 fo
 no-spec arms reproduce to ~1.10x. TTFT and higher concurrency not measured. So emulation is a
 *serving-viable* deterministic option at modest cost, not merely a reference.
 
-## The documented fix does not work on this build
+## The fix, and why the documented one looked broken
 
-`cutlass_fused_moe(use_fused_finalize=False)` — FlashInfer's own deterministic finalize — fails at
-engine init on sm_121 with `Invalid gemm2 profile id: 50` (48 with the autotune sweep skipped and
-`profile_ids=[-1,-1]`). The default-tactic resolution for the non-fused runner appears to index the
-fused runner's GEMM2 tactic table. So the deterministic path is unusable here, and the only
-deterministic backend is `emulation`.
+`cutlass_fused_moe(use_fused_finalize=False)` — FlashInfer's own deterministic finalize — **works
+and is deterministic on sm_121** (`DETFIN4`: all 4 tokens identical across 3 requests, backend
+`FLASHINFER_CUTLASS` verified). It initially failed at engine init with `Invalid gemm2 profile id:
+50` (48 with the autotune sweep skipped) because of a second, independent defect:
+
+**The persistent autotune cache key does not distinguish the non-fused runner.** flashinfer#3367
+(0.6.13) made the file-cache key `(custom_op, runner_class, profile, extras)` and added
+`get_cache_key_extras()` to `TrtllmGemmRunner` only. The cutlass `MoERunner` has no override, so a
+runner built with `use_fused_finalize=False` (20 GEMM2 tactics, ids 20-39) reads cache entries
+written by the fused runner (40 tactics, ids 20-59) and is handed an id it must reject. A fresh
+cache directory sidesteps it; the proper fix is a `get_cache_key_extras()` on `MoERunner`
+returning `use_fused_finalize` and the other tactic-table-changing flags (same shape as #3367).
+
+**Two-part fix, both Python, no C++ / JIT rebuild:**
+1. vLLM: pass `use_fused_finalize=not <deterministic flag>` in `flashinfer_cutlass_moe.py`
+   (`tools/determinism/fusedfinalize_patch.py`, env-gated on `VLLM_MOE_DET_FINALIZE=1`).
+2. FlashInfer: `MoERunner.get_cache_key_extras()` (`tools/determinism/moe_cachekey_patch.py`).
+
+Validation of the complete fix against the shared default cache, in all three serving shapes, and
+its cost, is running (`DETFIN5`).
 
 ## Consequences observed
 
