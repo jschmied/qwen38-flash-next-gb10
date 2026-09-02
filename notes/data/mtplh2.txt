@@ -1,0 +1,193 @@
+preflight OK 19:44
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  layer-hash diagnostic INSTALLED (inert unless VLLM_LAYER_HASH=1)
+=== LHSUB3  batch=8192  19:44 ===
+
+    graphs: capture_lines=0 compile_lines=2 enforce_eager=1
+  LHSUB3 req1: prompt_tokens=7503 top='The' lp=-0.04112026095
+  LHSUB3 req2: prompt_tokens=7503 top='The' lp=-0.03857903183
+  LHSUB3 req3: prompt_tokens=7503 top='The' lp=-0.06968742609
+  ACCEPT LHSUB3-post: no draft tokens recorded (spec off, or counters absent)
+    LHSUB3 LAYERHASH lines: 771
+  734 hash lines, 9 passes, 9 real (0 dummy/profiling)
+
+  grouping passes by 'language_model.model.layers.0' (same hash == same input):
+    9942003e84c1  passes [1, 2]
+    46c36404a52d  passes [3]
+    b59d6876e3d1  passes [4]
+    0f73fb57a2a9  passes [5]
+    792cd425d898  passes [6]
+    54b3533a7058  passes [7, 8, 9]
+
+  === passes [1, 2] (identical 0) ===
+    language_model.model.layers.0                       9942003e84 9942003e84   same
+    language_model.model.layers.1                       9942003e84 9942003e84   same
+    language_model.model.layers.2                       9942003e84 9942003e84   same
+    language_model.model.layers.3                       9942003e84 9942003e84   same
+    language_model.model.layers.3.attn_hyper_connection.input_mix_weight_down_block_inject82e3396cfc 82e3396cfc   same
+    language_model.model.layers.3.attn_hyper_connection.input_mix_weight_up9942003e84 9942003e84   same
+    language_model.model.layers.3.mlp                   33a3a11d54 33a3a11d54   same
+    language_model.model.layers.3.mlp.experts           33a3a11d54 33a3a11d54   same
+    language_model.model.layers.3.mlp.gate              080acf35a5 080acf35a5   same
+    language_model.model.layers.3.mlp.shared_expert     33a3a11d54 33a3a11d54   same
+    language_model.model.layers.3.mlp.shared_expert.act_fncd52d81e25 cd52d81e25   same
+    language_model.model.layers.3.mlp.shared_expert.down_proj33a3a11d54 33a3a11d54   same
+    language_model.model.layers.3.mlp.shared_expert.gate_up_proj80a3721188 80a3721188   same
+    language_model.model.layers.3.mlp.shared_expert_gatec35020473a c35020473a   same
+    language_model.model.layers.3.mlp_hyper_connection.input_mix_weight_down_block_inject82e3396cfc 82e3396cfc   same
+    language_model.model.layers.3.mlp_hyper_connection.input_mix_weight_up9942003e84 9942003e84   same
+    language_model.model.layers.3.self_attn             33a3a11d54 33a3a11d54   same
+    language_model.model.layers.3.self_attn.o_proj      33a3a11d54 33a3a11d54   same
+    language_model.model.layers.3.self_attn.qkv_proj    b9fdb33b1c b9fdb33b1c   same
+    language_model.model.layers.4                       9942003e84 9942003e84   same
+    language_model.model.layers.5                       9942003e84 9942003e84   same
+    language_model.model.layers.6                       9942003e84 9942003e84   same
+    language_model.model.layers.7                       9942003e84 9942003e84   same
+    language_model.model.layers.7.attn_hyper_connection.input_mix_weight_down_block_inject82e3396cfc 82e3396cfc   same
+    language_model.model.layers.7.attn_hyper_connection.input_mix_weight_up9942003e84 9942003e84   same
+    language_model.model.layers.7.mlp                   33a3a11d54 33a3a11d54   same
+    language_model.model.layers.7.mlp.experts           33a3a11d54 33a3a11d54   same
+    language_model.model.layers.7.mlp.gate              080acf35a5 080acf35a5   same
+    language_model.model.layers.7.mlp.shared_expert     33a3a11d54 33a3a11d54   same
+    language_model.model.layers.7.mlp.shared_expert.act_fncd52d81e25 cd52d81e25   same
+    language_model.model.layers.7.mlp.shared_expert.down_proj33a3a11d54 33a3a11d54   same
+    language_model.model.layers.7.mlp.shared_expert.gate_up_proj80a3721188 80a3721188   same
+    language_model.model.layers.7.mlp.shared_expert_gatec35020473a c35020473a   same
+    language_model.model.layers.7.mlp_hyper_connection.input_mix_weight_down_block_inject82e3396cfc 82e3396cfc   same
+    language_model.model.layers.7.mlp_hyper_connection.input_mix_weight_up9942003e84 9942003e84   same
+    language_model.model.layers.7.self_attn             33a3a11d54 33a3a11d54   same
+    language_model.model.layers.7.self_attn.o_proj      33a3a11d54 33a3a11d54   same
+    language_model.model.layers.7.self_attn.qkv_proj    b9fdb33b1c b9fdb33b1c   same
+    language_model.model.layers.8                       9942003e84 9942003e84   same
+    language_model.model.layers.9                       9942003e84 9942003e84   same
+    language_model.model.layers.10                      9942003e84 9942003e84   same
+    language_model.model.layers.11                      9942003e84 9942003e84   same
+    language_model.model.layers.12                      9942003e84 9942003e84   same
+    language_model.model.layers.13                      9942003e84 9942003e84   same
+    language_model.model.layers.14                      9942003e84 9942003e84   same
+    language_model.model.layers.15                      9942003e84 9942003e84   same
+    language_model.model.layers.16                      9942003e84 9942003e84   same
+    language_model.model.layers.17                      9942003e84 9942003e84   same
+    language_model.model.layers.18                      9942003e84 9942003e84   same
+    language_model.model.layers.19                      9942003e84 9942003e84   same
+    language_model.model.layers.20                      9942003e84 9942003e84   same
+    language_model.model.layers.21                      9942003e84 9942003e84   same
+    language_model.model.layers.22                      9942003e84 9942003e84   same
+    language_model.model.layers.23                      9942003e84 9942003e84   same
+    language_model.model.layers.24                      9942003e84 9942003e84   same
+    language_model.model.layers.25                      9942003e84 9942003e84   same
+    language_model.model.layers.26                      9942003e84 9942003e84   same
+    language_model.model.layers.27                      9942003e84 9942003e84   same
+    language_model.model.layers.28                      9942003e84 9942003e84   same
+    language_model.model.layers.29                      9942003e84 9942003e84   same
+    language_model.model.layers.30                      9942003e84 9942003e84   same
+    language_model.model.layers.31                      9942003e84 9942003e84   same
+    language_model.model.layers.32                      9942003e84 9942003e84   same
+    language_model.model.layers.33                      9942003e84 9942003e84   same
+    language_model.model.layers.34                      9942003e84 9942003e84   same
+    language_model.model.layers.35                      9942003e84 9942003e84   same
+    language_model.model.layers.36                      9942003e84 9942003e84   same
+    language_model.model.layers.37                      9942003e84 9942003e84   same
+    language_model.model.layers.38                      9942003e84 9942003e84   same
+    language_model.model.layers.39                      9942003e84 9942003e84   same
+    language_model.model.layers.40                      9942003e84 9942003e84   same
+    language_model.model.layers.41                      9942003e84 9942003e84   same
+    language_model.model.layers.42                      9942003e84 9942003e84   same
+    language_model.model.layers.43                      9942003e84 9942003e84   same
+    language_model.model.layers.44                      9942003e84 9942003e84   same
+    language_model.model.layers.45                      9942003e84 9942003e84   same
+    language_model.model.layers.46                      9942003e84 9942003e84   same
+    language_model.model.layers.47                      9942003e84 9942003e84   same
+
+    FIRST DIFFERENCE: none -- all modules identical across these passes
+
+  === passes [7, 8, 9] (identical 0) ===
+    language_model.model.layers.0                       54b3533a70 54b3533a70 54b3533a70   same
+    language_model.model.layers.1                       aad4ea3217 aad4ea3217 aad4ea3217   same
+    language_model.model.layers.2                       5581b19f73 5581b19f73 5581b19f73   same
+    language_model.model.layers.3                       01c28ed957 95a048a37c 1bc254e4f7   DIFFERS
+    language_model.model.layers.3.attn_hyper_connection.input_mix_weight_down_block_inject5173fba74f 5173fba74f 5173fba74f   same
+    language_model.model.layers.3.attn_hyper_connection.input_mix_weight_upa0fa1db5ad a0fa1db5ad a0fa1db5ad   same
+    language_model.model.layers.3.mlp                   2ec76c4f00 aa29ff6dca 429ae76bd3   DIFFERS
+    language_model.model.layers.3.mlp.experts           2ec76c4f00 aa29ff6dca 429ae76bd3   DIFFERS
+    language_model.model.layers.3.mlp.gate              d1f5d06c97 ff2c6fcfc5 cefc9b863c   DIFFERS
+    language_model.model.layers.3.mlp.shared_expert     f6b604eccc c160ae2edc 86439c698c   DIFFERS
+    language_model.model.layers.3.mlp.shared_expert.act_fn3043f9f7da eeb312949f b83992b03c   DIFFERS
+    language_model.model.layers.3.mlp.shared_expert.down_proja3a5364d17 91f04d57a0 89a5cb9fd0   DIFFERS
+    language_model.model.layers.3.mlp.shared_expert.gate_up_projd942e0e249 05ee2a1e28 e81ba98000   DIFFERS
+    language_model.model.layers.3.mlp.shared_expert_gatef4fcc26f11 a61b1923bf 2815377c24   DIFFERS
+    language_model.model.layers.3.mlp_hyper_connection.input_mix_weight_down_block_injectce74a88aa6 1d498b8389 e2bd051c16   DIFFERS
+    language_model.model.layers.3.mlp_hyper_connection.input_mix_weight_up9a6140f620 dc909c8022 34c16bb7ec   DIFFERS
+    language_model.model.layers.3.self_attn             86ecbc492f 5956e5ab9f 614cb36856   DIFFERS
+    language_model.model.layers.3.self_attn.indexer     6a27b79023 d8f4183cdc 0b8bfb6558   DIFFERS
+    language_model.model.layers.3.self_attn.indexer.index_qk_proj46c4d910a3 46c4d910a3 46c4d910a3   same
+    language_model.model.layers.3.self_attn.o_proj      86ecbc492f 5956e5ab9f 614cb36856   DIFFERS
+    language_model.model.layers.3.self_attn.qkv_proj    6f73e79e23 6f73e79e23 6f73e79e23   same
+    language_model.model.layers.4                       a569c1f5f0 fb6b79daf6 3f0fccd1df   DIFFERS
+    language_model.model.layers.5                       1c80837786 f7ff1ef94c 185c81b11c   DIFFERS
+    language_model.model.layers.6                       f42d776bea 3af50f7a16 3d19475b75   DIFFERS
+    language_model.model.layers.7                       e96db50229 4d24586806 5d4abadad2   DIFFERS
+    language_model.model.layers.7.attn_hyper_connection.input_mix_weight_down_block_inject86033ef27a c6f3020dca e129b2ec20   DIFFERS
+    language_model.model.layers.7.attn_hyper_connection.input_mix_weight_up5e188c1900 559d0b4cdd d0081a6831   DIFFERS
+    language_model.model.layers.7.mlp                   fa172a9858 24ad57b6fe 5e56eb0565   DIFFERS
+    language_model.model.layers.7.mlp.experts           fa172a9858 24ad57b6fe 5e56eb0565   DIFFERS
+    language_model.model.layers.7.mlp.gate              9524e63dcf e6b230f1e2 3aeac81342   DIFFERS
+    language_model.model.layers.7.mlp.shared_expert     82543d97bc 2320422bb3 17ca5a3307   DIFFERS
+    language_model.model.layers.7.mlp.shared_expert.act_fnedfe692d04 9891124889 aff758d96a   DIFFERS
+    language_model.model.layers.7.mlp.shared_expert.down_proja80dc8f628 0bb98cf08e c9be35a824   DIFFERS
+    language_model.model.layers.7.mlp.shared_expert.gate_up_proj1ff248dc6a cd31fe4c42 d8aa3b9289   DIFFERS
+    language_model.model.layers.7.mlp.shared_expert_gate8d4666010f 544035126a 1f0f0d4c18   DIFFERS
+    language_model.model.layers.7.mlp_hyper_connection.input_mix_weight_down_block_injectc224bada65 39e1a0e337 c21f37e1d1   DIFFERS
+    language_model.model.layers.7.mlp_hyper_connection.input_mix_weight_up40859afc23 214f7fcf25 b9c38da1f5   DIFFERS
+    language_model.model.layers.7.self_attn             39bc950338 788548032b 8f46d9b7e3   DIFFERS
+    language_model.model.layers.7.self_attn.indexer     7d401b8945 1eecaa004d b5d0bebe0b   DIFFERS
+    language_model.model.layers.7.self_attn.indexer.index_qk_proj8e13af80eb 336cf7f2d9 d3169d1159   DIFFERS
+    language_model.model.layers.7.self_attn.o_proj      39bc950338 788548032b 8f46d9b7e3   DIFFERS
+    language_model.model.layers.7.self_attn.qkv_proj    f83a40eb2f 11b698be2c c23d232f38   DIFFERS
+    language_model.model.layers.8                       121517829a b25062d2b2 6f5c4674d7   DIFFERS
+    language_model.model.layers.9                       a40491d2b7 edbe4803ca 911ac4d3a0   DIFFERS
+    language_model.model.layers.10                      65576eab24 74acc53c0f 2f2fa6a475   DIFFERS
+    language_model.model.layers.11                      8cb0c5abc1 29ab41416c 57558b684b   DIFFERS
+    language_model.model.layers.12                      11bfb6da99 6fc924c6da 9fada0bbe7   DIFFERS
+    language_model.model.layers.13                      da91e3338b f5a33ec002 10e48ea5f9   DIFFERS
+    language_model.model.layers.14                      32af9aa362 16eb7cf62e c7762dd7ca   DIFFERS
+    language_model.model.layers.15                      5f582ec6ce bbf867dd36 1adfde3991   DIFFERS
+    language_model.model.layers.16                      1d1bd07697 7baae07dbe 2c02eb93d8   DIFFERS
+    language_model.model.layers.17                      339f0d588d ed5ede8378 83666aecfa   DIFFERS
+    language_model.model.layers.18                      c80e52a4ea 10eea7e1b1 4c0c44b2ef   DIFFERS
+    language_model.model.layers.19                      ccc3c60968 414f1b95e7 cbea88948e   DIFFERS
+    language_model.model.layers.20                      6823ce1917 c607ab11cc f2300aabe7   DIFFERS
+    language_model.model.layers.21                      b415fc0126 73bde3f5c9 909a2489d8   DIFFERS
+    language_model.model.layers.22                      49fdcb4f18 1e8d972674 eb3ad4adbc   DIFFERS
+    language_model.model.layers.23                      af92f5f027 352324b942 5f6a9ec56e   DIFFERS
+    language_model.model.layers.24                      03b269b7e3 abef90508e 26fca8effd   DIFFERS
+    language_model.model.layers.25                      688153df0e 4bd1b7d82d 133bf7d060   DIFFERS
+    language_model.model.layers.26                      2ebbdc1bbf ca00f074fb f4a05b7af4   DIFFERS
+    language_model.model.layers.27                      8b2e077774 8ce323e3d3 bf56edf825   DIFFERS
+    language_model.model.layers.28                      1135b05343 1bedb876f1 0dd4536913   DIFFERS
+    language_model.model.layers.29                      1f80445be3 21b5b69289 1eac644623   DIFFERS
+    language_model.model.layers.30                      aae7e8676e f2a25ecac4 a2f1648081   DIFFERS
+    language_model.model.layers.31                      62edc8ac24 c71742de40 0755652967   DIFFERS
+    language_model.model.layers.32                      c7b26cbd8c 3d952329ae 7a269a338f   DIFFERS
+    language_model.model.layers.33                      b0ebcd42e8 0396d3e553 4bf680e069   DIFFERS
+    language_model.model.layers.34                      4c58698345 a627c4bf26 ae549ef97a   DIFFERS
+    language_model.model.layers.35                      f870d37263 4e5b1c1b98 c1b2f7b9b4   DIFFERS
+    language_model.model.layers.36                      b14c5dc716 d5c08fc6c0 5271a64d4c   DIFFERS
+    language_model.model.layers.37                      25a5a0115f d2faa44cdd ba6fba79e1   DIFFERS
+    language_model.model.layers.38                      b40b39d57c 4394727498 a95cd7e229   DIFFERS
+    language_model.model.layers.39                      ee6646a885 6ef25a24a1 a5d00ec7de   DIFFERS
+    language_model.model.layers.40                      5f4b1cb2a3 49b0ba3744 88e9dc99f6   DIFFERS
+    language_model.model.layers.41                      203ae3307e a3f6fff73a c3d6abbff1   DIFFERS
+    language_model.model.layers.42                      ca9284fc56 7a03e14340 5574331eb5   DIFFERS
+    language_model.model.layers.43                      e98a9c594c 9e70c98acb 018368f766   DIFFERS
+    language_model.model.layers.44                      d5e21bdcb4 f82bb9bc68 8c77f709be   DIFFERS
+    language_model.model.layers.45                      17819ba8d8 63e7b1794d f8ed43a06d   DIFFERS
+    language_model.model.layers.46                      ec0741079d d8faa5f8ca b8de61928a   DIFFERS
+    language_model.model.layers.47                      6abf78cc00 911fc98c55 c3767b3f91   DIFFERS
+
+    FIRST DIFFERENCE: language_model.model.layers.3
+  layer-hash diagnostic REMOVED
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==

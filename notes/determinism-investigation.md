@@ -863,6 +863,29 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     gather whose summation order then differs, or the split-K attention merge. `LHSUB3` hooks
     every submodule of layers 3 and 7 next. Raw: `notes/data/fnext-LHLONG.log.txt`, `mtplh.txt`.
 
+53. **Bug B located: the QSA indexer (`persistent_topk` block selection) is the first module
+    that differs, with bit-identical inputs.** `MTPLH2` / `LHSUB3` (same probe as 52, every
+    submodule of layers 3 and 7 hooked, full-tensor hashes, 3 identical 7503-token requests),
+    layer 3 in forward order:
+
+    | module | 3 requests |
+    | --- | --- |
+    | `attn_hyper_connection.*` | identical |
+    | `self_attn.qkv_proj` | identical |
+    | `self_attn.indexer.index_qk_proj` | identical |
+    | **`self_attn.indexer`** (block selection = `qsa_select_paged_tokens` → `persistent_topk`) | **differs** |
+    | `self_attn` / `o_proj`, `mlp_hyper_connection`, `mlp.*`, layer output | differ (downstream) |
+
+    Same inputs, different selected blocks; the sparse attention then sums a different key set
+    (or the same set in a different order) and the hidden state forks. On sm_121 the cooperative
+    top-k is never selected (`is_device_capability_family(120)`), so every selection goes through
+    `persistent_topk` — vllm#54521 / #51782, previously seen only as text nondeterminism. Chain
+    closed: nondeterministic selection at long context → target hidden state differs per request
+    → the drafter (whose only attention is this same QSA path) draws healthy or broken per
+    request → MTP acceptance flips. `MTPQSA` tests the two fixes at the call site: canonical
+    ordering of the selected blocks (padding kept trailing) and an exact `torch.topk`. Raw:
+    `notes/data/fnext-LHSUB3.log.txt`, `mtplh2.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
