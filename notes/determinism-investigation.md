@@ -412,7 +412,11 @@ confidence each item deserves, plus what was refuted along the way.
       submodule arm with the cache on (`LAYER0SUB_CON`, launched) — `mlp.experts` first again,
       and a chunked prefill in the log, would close it.
 
-    **Not yet established**: which MoE backend/kernel (see the log line in this commit), and the
+    **The kernel**: the arm's log names it — `Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend`
+    (`nvfp4.py:291`), with `MoEPrepareAndFinalizeNoDPEPModular`. So the nondeterministic
+    small-M path is FlashInfer's CUTLASS NVFP4 grouped-GEMM MoE on sm_121.
+
+    **Not yet established**: the
     per-start bias of the acceptance flip (finding 9) — atomics give per-execution noise, not a
     per-start tilt, so something else still contributes there.
 
