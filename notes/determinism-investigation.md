@@ -567,6 +567,22 @@ confidence each item deserves, plus what was refuted along the way.
     non-fused finalize with a fresh, empty cache dir and tuning enabled. Reportable: the autotune
     cache key must include `use_fused_finalize` (or the runner's tactic-table identity).
 
+35. **Upstream check (in parallel with attempt 4): no existing fix for either defect, but the
+    cache-key defect is documented almost verbatim.** vLLM `main` still does not pass
+    `use_fused_finalize` (call kwargs verified on the live file). FlashInfer
+    [#3367](https://github.com/flashinfer-ai/flashinfer/pull/3367) (0.6.13): *"The persistent
+    autotune file cache key was constructed as a 3-tuple (custom_op, runner_class, profile),
+    intentionally dropping hash(runner) for cross-process stability, but unintentionally also
+    dropping extras"* — it added `get_cache_key_extras()` for **`TrtllmGemmRunner` only**
+    (`use_8x4_sf_layout`). The cutlass `MoERunner` never got one, so fused and non-fused runners
+    share file-cache entries: exactly our 48/50. The real fix is therefore a few lines of
+    FlashInfer Python — `get_cache_key_extras()` on `MoERunner` returning `use_fused_finalize`
+    (and the other tactic-table-changing flags) — the same shape as #3367, no C++.
+    `tools/determinism/moe_cachekey_patch.py` implements it (not env-gated: widening a key is
+    pure correctness). Other related, not fixes: flashinfer#3957 (atomic finalize, 3-token
+    victim), #4043 (autotuner hash collisions), #2501 (autotune fails for W4A8 cutlass MoE),
+    #3537 (tuner picks slower tactics), #3935 (SM120 regression suspected on #3367).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
