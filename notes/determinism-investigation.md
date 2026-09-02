@@ -461,6 +461,17 @@ confidence each item deserves, plus what was refuted along the way.
     `cutlass`, `triton`, `triton_unfused` follow (`moeab2`). `vllm_cutlass` was an invalid CLI
     name (the choice is `cutlass`) and died at argparse — corrected.
 
+29. **Upstream cousin: [flashinfer#3957](https://github.com/flashinfer-ai/flashinfer/issues/3957)**
+    — nvfp4 unified-MoE, *silent* out-of-bounds device write from one call that corrupts a later
+    one; the victim config has **3 tokens** (top-k 8); suspected root cause *"atomic scatter-add
+    finalize in cutlass DSL nvfp4"*; passes in isolation, fails deterministically after ~23 other
+    shapes; open, classed a release blocker. Differences from ours: SM100 (B200) not sm_121, and
+    the cutlass-DSL / trtllm_fp4_routed variants rather than `FLASHINFER_CUTLASS`. Similarities:
+    same kernel family, a 3-token shape, an atomic finalize, silent corruption. It also suggests a
+    reading of finding 27's open question — deterministic at the first shape (55, cache off) but
+    divergent once shapes vary (52 → 3 → 1) is what cross-call state would look like, not what a
+    pure M-threshold would.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
