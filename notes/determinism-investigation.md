@@ -794,8 +794,9 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
 | RACEEAGER_a | `FFFFFFFF` | 8/8 |
 | RACEEAGER_b | `ssFsssss` | 1/8 |
 
-    The per-request draw survives full serialisation, with and without CUDA graphs. Bug B is not an
-    ordering problem between kernels. Raw: `notes/data/mtprace.txt`. Remaining for bug B: the
+    The draw survives full serialisation, with and without CUDA graphs. Bug B is not an ordering
+    problem between kernels. Worth noting (n=4): under launch blocking every start was all-or-
+    nothing (8/8, 1/8, 8/8, 1/8) — the per-turn flipping seen elsewhere did not appear. Raw: `notes/data/mtprace.txt`. Remaining for bug B: the
     drafter's own computation (top-k tie behaviour, input-slot binding) — `MTPDH` bisects inside
     the drafter next.
 
