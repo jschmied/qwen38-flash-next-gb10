@@ -1,8 +1,15 @@
-diff --git a/vllm/v1/core/sched/scheduler.py b/vllm/v1/core/sched/scheduler.py
-index 51f75a63d6b1..db691b383a12 100644
 --- a/vllm/v1/core/sched/scheduler.py
 +++ b/vllm/v1/core/sched/scheduler.py
-@@ -343,6 +343,29 @@ def __init__(
+@@ -53,7 +53,7 @@
+ )
+ from vllm.v1.core.sched.utils import check_stop, remove_all
+ from vllm.v1.engine import EngineCoreEventType, EngineCoreOutput, EngineCoreOutputs
+-from vllm.v1.kv_cache_interface import KVCacheConfig
++from vllm.v1.kv_cache_interface import KVCacheConfig, MambaSpec
+ from vllm.v1.metrics.perf import ModelMetrics, PerfStats
+ from vllm.v1.metrics.stats import PrefixCacheStats, SchedulerStats
+ from vllm.v1.outputs import DraftTokenIds, KVConnectorOutput, ModelRunnerOutput
+@@ -324,6 +324,29 @@
              and self.hash_block_size < self.block_size
              and self.kv_cache_manager.coordinator.enable_partial_hash_hits
          )
@@ -32,7 +39,7 @@ index 51f75a63d6b1..db691b383a12 100644
  
          # Counts of non-empty steps scheduled / processed. update_from_output
          # is called once per scheduled step in FIFO order, so these stay in sync.
-@@ -408,7 +431,14 @@ def _mamba_block_aligned_split(
+@@ -389,7 +412,14 @@
          if start >= prefill_end:
              return num_new_tokens
  
@@ -48,7 +55,7 @@ index 51f75a63d6b1..db691b383a12 100644
          # The last block-aligned position whose state can be cached. With
          # Eagle, FullAttn prunes the last matching block, so back off one
          # block to avoid a Mamba cache miss.
-@@ -443,9 +473,18 @@ def _mamba_block_aligned_split(
+@@ -419,9 +449,18 @@
              else 0
          )
          stops = (
