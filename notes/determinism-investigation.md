@@ -646,6 +646,41 @@ confidence each item deserves, plus what was refuted along the way.
     coincidence points at drafter state under the block-aligned mamba split (the #47861 thread),
     not at the MoE. Raw: `notes/data/mtpfix.txt`.
 
+41. **The MTP flip is per REQUEST, and none of async scheduling / CUDA graphs / ring widening /
+    prefix cache is the switch.** `MTPROOT` (12 starts, MTP agent loop, per-turn acceptance from
+    the metrics deltas, every arm's config line verified in its log):
+
+| arm | ms/tok | acceptance | accept len | per-turn pattern (F ≥40 %, s <40 %) | healthy turns |
+| --- | --- | --- | --- | --- | --- |
+| NOASYNC_a | 56.55 | 17.5 % | 1.87 | `FssssFss` | 2/8 |
+| NOASYNC_b | 52.60 | 19.8 % | 1.99 | `ssFFssFs` | 3/8 |
+| NOASYNC_c | 56.01 | 17.2 % | 1.86 | `sssFsFsF` | 3/8 |
+| EAGER_a | 61.62 | 13.8 % | 1.69 | `ssssFFss` | 2/8 |
+| EAGER_b | 50.32 | 24.5 % | 2.22 | `ssFsFsFF` | 4/8 |
+| EAGER_c | 33.15 | 65.1 % | 4.26 | `FFFFFFFF` | 8/8 |
+| N4_a | 55.42 | 15.9 % | 1.64 | `ssssssFF` | 2/8 |
+| N4_b | 52.51 | 19.9 % | 1.80 | `ssFFssss` | 2/8 |
+| N4_c | 57.05 | 16.6 % | 1.66 | `ssssFsFs` | 2/8 |
+| NOCACHE_a | 68.08 | 18.3 % | 1.92 | `sssFsFFs` | 3/8 |
+| NOCACHE_b | 49.07 | 59.8 % | 3.99 | `FFFFFFFF` | 8/8 |
+| NOCACHE_c | 69.92 | 17.4 % | 1.87 | `ssssFsFF` | 3/8 |
+
+healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
+
+    Every turn is in one of two clean states — healthy (≈50–77 % accepted, accept len ≈3.5–4.9)
+    or broken (≈3–21 %, len ≈1.1–1.9) — with almost nothing between. The state holds for the
+    request's lifetime and is drawn afresh per request; two starts (EAGER_c here, MTPFIX_b
+    before) were healthy on all 8 turns, so something at start decides whether the per-request
+    draw can come up broken at all. The earlier "per-start bias" (finding 40) was 8-turn
+    sampling of this per-request draw. NOCACHE (prefix caching off, 0 hits, every turn a full
+    re-prefill) flips just the same, which removes the stale-GDN-state-on-resume lead
+    (#53142/#54076/#53798) as the cause of *this* symptom; those PRs remain a real defect on this
+    build (`cache_config.block_size` = the QSA ring's 16, confirmed in `core.py`) and are queued
+    for their own validation. Raw: `notes/data/mtproot.txt`. Survivors:
+    the drafter's unzeroed per-request QSA ring block (claimed FIFO, excluded from zeroing,
+    polluted by warmup — `mtpring` queued), a shape-bucketed drafter kernel tactic per start,
+    and the drafter's own top-k.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
