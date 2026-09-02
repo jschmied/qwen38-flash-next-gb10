@@ -27,7 +27,7 @@ ins = (f"{ind}{MARK}\n"
        f"{ind}    return (\n"
        f"{ind}        self.use_fused_finalize, self.use_deepseek_fp8_block_scale,\n"
        f"{ind}        self.use_w4_group_scaling, self.use_mxfp8_act_scaling, self.use_packed_weights,\n"
-       f"{ind}        self.min_latency_mode, str(self.activation_type),\n"
+       f"{ind}        self.min_latency_mode, int(self.activation_type),\n"
        f"{ind}    )\n\n")
 s = s[:anchor.start()] + ins + s[anchor.start():]
 open(T, "w").write(s); print("  cache-key extras INSTALLED on MoERunner")
