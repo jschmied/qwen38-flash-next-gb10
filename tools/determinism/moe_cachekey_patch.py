@@ -22,7 +22,7 @@ anchor = re.search(r"^([ \t]*)def get_valid_tactics\(\s*\n", s, re.M)
 assert anchor, "get_valid_tactics not found in MoERunner"
 ind = anchor.group(1)
 ins = (f"{ind}{MARK}\n"
-       f"{ind}def get_cache_key_extras(self):\n"
+       f"{ind}def get_cache_key_extras(self, inputs):\n"
        f"{ind}    # every field that changes the runner's tactic table must be in the file-cache key\n"
        f"{ind}    return (\n"
        f"{ind}        self.use_fused_finalize, self.use_deepseek_fp8_block_scale,\n"
