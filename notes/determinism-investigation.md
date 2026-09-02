@@ -669,8 +669,8 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
 
     Every turn is in one of two clean states — healthy (≈50–77 % accepted, accept len ≈3.5–4.9)
     or broken (≈3–21 %, len ≈1.1–1.9) — with almost nothing between. The state holds for the
-    request's lifetime and is drawn afresh per request; two starts (EAGER_c here, MTPFIX_b
-    before) were healthy on all 8 turns, so something at start decides whether the per-request
+    request's lifetime and is drawn afresh per request; three starts (EAGER_c and NOCACHE_b here,
+    MTPFIX_b before) were healthy on all 8 turns, so something at start decides whether the per-request
     draw can come up broken at all. The earlier "per-start bias" (finding 40) was 8-turn
     sampling of this per-request draw. NOCACHE (prefix caching off, 0 hits, every turn a full
     re-prefill) flips just the same, which removes the stale-GDN-state-on-resume lead
