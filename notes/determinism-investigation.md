@@ -444,6 +444,23 @@ confidence each item deserves, plus what was refuted along the way.
     runtime test. The mamba/align state machinery is exonerated as a *cause* — its role was
     chunking the prefill so the MoE ran in a diverging configuration.
 
+28. **MoE backend A/B, round 1: `marlin` and `humming` are WORSE than the incumbent.** Same probe
+    as finding 21 (cache off, spec off, eager, max_tokens=4, per-token signatures), backend
+    verified from each arm's own `NvFp4 MoE backend` log line:
+
+    | backend | prefill (token 1) | decode (token 2+) |
+    | --- | --- | --- |
+    | `flashinfer_cutlass` (incumbent, 6 arms) | **identical** | differs |
+    | `marlin` | **differs** | differs |
+    | `humming` | **differs** | differs |
+
+    Marlin's MoE accumulates with atomic adds (the `VLLM_MARLIN_USE_ATOMIC_ADD` lever we enable for
+    speed on other models), so prefill nondeterminism is expected. Humming declares
+    `_supports_batch_invariance`, but that path needs `VLLM_BATCH_INVARIANT=1`, which this
+    architecture cannot run (finding 7); its default path diverges. Neither is a mitigation.
+    `cutlass`, `triton`, `triton_unfused` follow (`moeab2`). `vllm_cutlass` was an invalid CLI
+    name (the choice is `cutlass`) and died at argparse — corrected.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
