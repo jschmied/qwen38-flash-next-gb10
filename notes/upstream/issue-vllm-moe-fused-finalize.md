@@ -1,3 +1,5 @@
+# FILED as https://github.com/vllm-project/vllm/issues/54945 (2026-09-02)
+
 # [Bug] FlashInfer CUTLASS NVFP4 MoE gives different logits for identical requests (fused finalize); `use_fused_finalize=False` is bit-stable
 
 ## Your current environment

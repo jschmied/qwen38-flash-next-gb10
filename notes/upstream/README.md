@@ -3,8 +3,8 @@
 Drafts for one new vLLM issue and two comments, prepared 2026-09-02. Nothing here has been
 posted. Post in this order, so the comments can link to a real issue number:
 
-1. `issue-vllm-moe-fused-finalize.md` → new issue on vllm-project/vllm (bug template).
-2. `comment-vllm-54173.md` → comment on vllm#54173 (same build, same box, different symptom).
+1. `issue-vllm-moe-fused-finalize.md` → **FILED 2026-09-02 as vllm#54945** (cost numbers labelled n=1).
+2. `comment-vllm-54173.md` → NOT POSTED, and probably should not be: the thread moved on 2026-08-28/29 — the reporter's crash is fixed by #48375 + the #53142 fix (`precopy_mamba_align_fused_kernel` faulting), and a third contributor (zebgop-ops) documents a further mamba spec-decode block-table bug under PP. Our 'cheap discriminator' is moot there. A one-line cross-reference to #54945 is the most that fits.
 3. `comment-flashinfer-3957.md` → comment on flashinfer#3957 (different kernel, same suspect).
 4. PR (optional, `pr-plan.md`)
 
@@ -25,7 +25,7 @@ Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer boj
 ## Before posting (each item has cost us before)
 
 - Re-read the target thread first; the comment drafts were written against the thread state of
-  2026-09-02 (vllm#54173: 0 comments; flashinfer#3957: 0 comments).
+  2026-09-02 (vllm#54173: 4 comments as of 13:20; flashinfer#3957: 0 comments).
 - Search vllm issues for `use_fused_finalize` and `flashinfer cutlass moe deterministic` once more.
   Done 2026-09-02: no hit — the knob is absent on `main` (call site unchanged).
 - The repo scripts carry the server key and the sudo password: nothing from `*.sh` goes into a
