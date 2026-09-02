@@ -691,3 +691,11 @@ firing in production"*. **Grep the venv for probes before trusting a benchmark**
 
     grep -rnE "PROBE|_dq_calls|# temporary|\.item\(\)" $SP/vllm/models/qwen3_8_flash_next/ \
         $SP/vllm/model_executor/layers/quantization/modelopt.py
+
+
+## Two env vars in one systemd `Environment=` entry (2026-09-02)
+
+`--property="Environment=\"A=1 B=1\""` sets **A to `1 B=1`** and never sets B. It silently ran a
+bisection arm without the fix under test (finding 56, withdrawn). One variable per entry; and
+every arm must print its own activation line (`QSAFIX active`, `DRAFTHASH installed`, …) which the
+runner greps into the results before the numbers are believed.

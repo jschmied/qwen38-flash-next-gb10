@@ -915,7 +915,12 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     and therefore bisectable per turn. `MTPDH4` (drafter hashes under exact top-k) gives the
     per-turn prompt lengths and chunking to correlate against. Raw: `notes/data/mtpqsa.txt`.
 
-56. **Eager mode has one more nondeterministic kernel that compiled mode does not use.** `MTPDH4`
+56. **WITHDRAWN.** `DH4_a` ran WITHOUT exact top-k: its log has no `QSAFIX active` line. Two env
+    vars had been passed in ONE systemd `Environment=` entry (`"VLLM_DRAFT_HASH=1 VLLM_QSA_EXACT_TOPK=1"`),
+    so the first got the value `1 VLLM_QSA_EXACT_TOPK=1` and the second was never set. The eager
+    nondeterminism it reported is bug B, nothing new. Rule: one variable per `Environment=` entry,
+    and every arm must show its own activation line. Original text kept below for the record.
+    ~~Eager mode has one more nondeterministic kernel that compiled mode does not use.~~ `MTPDH4`
     (exact top-k, det MoE, cache off, `--enforce-eager`, drafter hashes, 3 passes): the draft
     PREFILL call is bit-identical across passes (input and every hooked module), but the first
     draft step after it already differs, and the per-turn acceptance differs per pass
