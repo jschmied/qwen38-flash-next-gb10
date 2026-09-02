@@ -38,7 +38,7 @@ confidence each item deserves, plus what was refuted along the way.
    groups of three passes. Layer 1 is the only layer carrying the PLE; layers 0-2 are all
    `linear_attention`, so attention type is not the difference.
 
-5. ***(QSA top-k: superseded by finding 54 — the exclusion held only while the MoE masked it.)* Excluded as causes:** speculation (`P_nospec`, `G_eager_nospec`), CUDA-graph replay
+5. *(QSA top-k: superseded by finding 54 — the exclusion held only while the MoE masked it.)* **Excluded as causes:** speculation (`P_nospec`, `G_eager_nospec`), CUDA-graph replay
    (`G_eager_*`, verified 0 captures), the QSA top-k (`torch.topk` substitution still diverged),
    PLE FP8 quantisation (0 dead rows in 2100 sampled, 2.9x total dynamic range), missing Triton
    bounds masks (every unmasked access is bounded by construction), and the top-k -> block
