@@ -309,9 +309,12 @@ confidence each item deserves, plus what was refuted along the way.
     | triton (`GENBIS3`, old `GDNCUDA_a`; n=2) | **identical** x3 | differs |
     | cuda (`GDNCUDA_a`; n=1, `_b` running) | **differs** x3 (`2255…`, `1ce1…`, `73a4…`) | differs |
 
-    A *decode* kernel switch changed *prefill* determinism, so the fused cuda path must touch the
-    prefill's final step or its state write (see the code excerpt in the log of this commit).
-    Neither kernel is "the source": both variants lose determinism on the GDN recurrent-state
+    **Why a "decode" flag changed prefill**: `use_fused_gdn_decode` (`qwen_gdn_linear_attn.py:892`)
+    is gated only on `enable_fused_gdn_decode` and dtypes — **no decode-step check** — so with
+    `cuda` the fused packed op (`qwen_gdn_attention_core_fused_norm_packed`) runs for EVERY forward,
+    prefill included. The cuda arm is therefore a *second GDN implementation throughout*, not the
+    same prefill with a different decode. Two independent implementations, both nondeterministic
+    on the same state path (`state=self.kv_cache[1]`, read/written in place). Neither is "the source": both variants lose determinism on the GDN recurrent-state
     path, cuda one step earlier. **The state write at the end of prefill and its read at decode
     step 1 are now the narrowest suspect**, and the next instrument is to hash the GDN state
     tensors directly at those two points.
