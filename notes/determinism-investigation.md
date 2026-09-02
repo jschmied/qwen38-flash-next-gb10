@@ -681,6 +681,14 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     polluted by warmup — `mtpring` queued), a shape-bucketed drafter kernel tactic per start,
     and the drafter's own top-k.
 
+42. **The per-request draw does not follow the prompt.** `BASE_replay` (one start, unpatched):
+    pass 1 runs the 8-turn loop live; passes 2 and 3 resend the byte-identical conversation
+    (pass-1 outputs substituted). Patterns: `ssssssss`, `FssssFFF`, `ssFssFFs`. Same bytes in,
+    different healthy/broken draw out — so the state is not a function of prompt content or
+    length (which also removes a shape-bucketed kernel tactic as the per-request switch). What
+    is left is what the request is *given*: its KV/ring blocks and its slot, or timing. Raw in
+    `notes/data/mtpfix2.txt` (copied when the run ends).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
