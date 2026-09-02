@@ -1,0 +1,42 @@
+preflight OK 21:13
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  draft-hash diagnostic INSTALLED (inert unless VLLM_DRAFT_HASH=1)
+  qsafix INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1 or VLLM_QSA_SORT=1)
+  installed: det MoE + draft-hash + exact top-k
+=== DH4_a  batch=8192  21:13 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=0 compile_lines=3 enforce_eager=1
+  DH4_a pass1 turn 1:   9.63 s   130 tok  hits+       0  acc= 26.1% len=2.30  ( 74.1 ms/tok)  h=e23d4f
+  DH4_a pass1 turn 2:  11.04 s   130 tok  hits+       0  acc=  6.0% len=1.30  ( 84.9 ms/tok)  h=a4e1cd
+  DH4_a pass1 turn 3:   8.45 s   130 tok  hits+       0  acc= 20.0% len=2.00  ( 65.0 ms/tok)  h=785d3c
+  DH4_a pass1 turn 4:   6.86 s   130 tok  hits+       0  acc= 41.4% len=3.07  ( 52.8 ms/tok)  h=a07d8d
+  DH4_a pass1 turn 5:  13.44 s   130 tok  hits+       0  acc=  4.8% len=1.24  (103.4 ms/tok)  h=ee574e
+  DH4_a pass1 turn 6:  12.38 s   130 tok  hits+       0  acc=  3.7% len=1.18  ( 95.3 ms/tok)  h=da9041
+  DH4_a pass1 turn 7:  11.56 s   130 tok  hits+       0  acc=  6.3% len=1.32  ( 89.0 ms/tok)  h=d43e82
+  DH4_a pass1 turn 8:   9.08 s   130 tok  hits+       0  acc= 19.1% len=1.95  ( 69.9 ms/tok)  h=c33a52
+  DH4_a pass1 PATTERN sssFssss  TOTAL 82.5 s  1040 tok  79.29 ms/tok
+  DH4_a pass2 turn 1:  12.89 s   130 tok  hits+       0  acc=  4.8% len=1.24  ( 99.1 ms/tok)  h=e23d4f
+  DH4_a pass2 turn 2:   6.09 s   130 tok  hits+       0  acc= 51.7% len=3.58  ( 46.9 ms/tok)  h=a4e1cd
+  DH4_a pass2 turn 3:  12.01 s   130 tok  hits+       0  acc=  5.8% len=1.29  ( 92.4 ms/tok)  h=785d3c
+  DH4_a pass2 turn 4:  11.71 s   130 tok  hits+       0  acc=  4.6% len=1.23  ( 90.1 ms/tok)  h=a07d8d
+  DH4_a pass2 turn 5:  13.41 s   130 tok  hits+       0  acc=  6.6% len=1.33  (103.1 ms/tok)  h=ee574e
+  DH4_a pass2 turn 6:  12.12 s   130 tok  hits+       0  acc=  4.3% len=1.22  ( 93.2 ms/tok)  h=da9041
+  DH4_a pass2 turn 7:  12.10 s   130 tok  hits+       0  acc=  5.1% len=1.26  ( 93.1 ms/tok)  h=d43e82
+  DH4_a pass2 turn 8:  11.66 s   130 tok  hits+       0  acc=  5.8% len=1.29  ( 89.7 ms/tok)  h=c33a52
+  DH4_a pass2 PATTERN sFssssss  TOTAL 92.0 s  1040 tok  88.45 ms/tok
+  DH4_a pass3 turn 1:  13.15 s   130 tok  hits+       0  acc=  4.1% len=1.21  (101.1 ms/tok)  h=e23d4f
+  DH4_a pass3 turn 2:  10.89 s   130 tok  hits+       0  acc=  6.0% len=1.30  ( 83.8 ms/tok)  h=a4e1cd
+  DH4_a pass3 turn 3:  11.88 s   130 tok  hits+       0  acc=  8.4% len=1.42  ( 91.4 ms/tok)  h=785d3c
+  DH4_a pass3 turn 4:  11.69 s   130 tok  hits+       0  acc=  4.6% len=1.23  ( 89.9 ms/tok)  h=a07d8d
+  DH4_a pass3 turn 5:  12.65 s   130 tok  hits+       0  acc=  7.2% len=1.36  ( 97.3 ms/tok)  h=ee574e
+  DH4_a pass3 turn 6:  11.13 s   130 tok  hits+       0  acc= 13.9% len=1.70  ( 85.6 ms/tok)  h=da9041
+  DH4_a pass3 turn 7:  10.84 s   130 tok  hits+       0  acc=  9.3% len=1.47  ( 83.4 ms/tok)  h=d43e82
+  DH4_a pass3 turn 8:   6.81 s   130 tok  hits+       0  acc= 50.8% len=3.54  ( 52.4 ms/tok)  h=c33a52
+  DH4_a pass3 PATTERN sssssssF  TOTAL 89.0 s  1040 tok  85.61 ms/tok
+  ACCEPT DH4_a-post: drafts=2099 draft_tok=10495 accepted=1016 rate=9.7%  mean_accept_len=1.48
+  qsafix REMOVED
+  draft-hash diagnostic REMOVED
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==

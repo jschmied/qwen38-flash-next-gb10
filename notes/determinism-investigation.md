@@ -915,6 +915,16 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     and therefore bisectable per turn. `MTPDH4` (drafter hashes under exact top-k) gives the
     per-turn prompt lengths and chunking to correlate against. Raw: `notes/data/mtpqsa.txt`.
 
+56. **Eager mode has one more nondeterministic kernel that compiled mode does not use.** `MTPDH4`
+    (exact top-k, det MoE, cache off, `--enforce-eager`, drafter hashes, 3 passes): the draft
+    PREFILL call is bit-identical across passes (input and every hooked module), but the first
+    draft step after it already differs, and the per-turn acceptance differs per pass
+    (`sssFssss` / `sFssssss` / `sssssssF`) — whereas the compiled `MTP_EXACT` run (55) was
+    identical to the decimal. The eager-only source sits in the drafter's own step after the
+    prefill (its unquantised BF16 MoE / eager attention path is the candidate); production runs
+    compiled (PIECEWISE), so this does not bear on prod, but the eager hash instrument cannot be
+    used to bisect defect C. Raw: `notes/data/mtpdh4.txt`, `fnext-DH4_a.log.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
