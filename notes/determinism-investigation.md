@@ -583,6 +583,15 @@ confidence each item deserves, plus what was refuted along the way.
     victim), #4043 (autotuner hash collisions), #2501 (autotune fails for W4A8 cutlass MoE),
     #3537 (tuner picks slower tactics), #3935 (SM120 regression suspected on #3367).
 
+36. **FIX CONFIRMED: `use_fused_finalize=False` is deterministic on the production kernel.**
+    `DETFIN4` (FlashInfer CUTLASS NVFP4 MoE, verified in the log; cache off, spec off, eager; fresh
+    autotune cache dir): **all 4 tokens identical across 3 requests** — the same result as
+    `emulation`, on the fast path. Attempts 1-3 failed only because the shared persisted autotune
+    cache handed the non-fused runner fused-range tactic ids (finding 34/35). Next: the proper
+    cache-key fix (`moe_cachekey_patch.py`) validated against the *shared default cache*, in all
+    three shapes (cache off / cache on / cache on + MTP n=5), plus the cost on the 8-turn agent
+    loop against 43.92 (fused) and 51.38 (emulation) ms/tok.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
