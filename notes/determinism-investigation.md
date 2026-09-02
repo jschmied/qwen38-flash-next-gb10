@@ -743,8 +743,8 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     new upstream CI test #54893, which asserts that equality on its hardware). Raw:
     `notes/data/mtpq2.txt`, reference texts `notes/data/mtpq2-ref.json`.
 
-46. **Bug A confirmed and split: the align-mode state SEED (#53798) carries most of the effect;
-    the chunk SPLIT (#54076) helps too.** `MTPFIX3`, MTP n=5, prefix cache on:
+46. **Bug A confirmed and split: EITHER align patch alone gives ~90 % healthy — the seed (#53798)
+    and the chunk split (#54076) act on the same wrong-block-size defect.** `MTPFIX3`, MTP n=5, prefix cache on:
 
     | arm | pattern | healthy |
     | --- | --- | --- |
@@ -757,7 +757,7 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
 | SPLITONLY_b | `FFFFFFFF` | 8/8 |
 
     Totals: both patches, 7 starts + 3 replay passes, **63/72 healthy (88 %)**; seed-only
-    14/16; split-only see table; unpatched 42/96 (44 %), and 3 of 15 unpatched starts were 8/8
+    14/16; split-only 15/16; unpatched 42/96 (44 %), and 3 of 15 unpatched starts were 8/8
     against 5 of 7 patched. Past the three-run bar for a rate change. Mechanism, from the code:
     on this build `cache_config.block_size` is the QSA ring's capacity (16), so a resumed request's
     running mamba state index was seeded as `(num_computed − 1) // 16` instead of `// 1616` —
