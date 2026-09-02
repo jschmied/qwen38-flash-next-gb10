@@ -307,7 +307,7 @@ confidence each item deserves, plus what was refuted along the way.
     | decode kernel | token 1 (prefill) | token 2 (decode step 1) |
     | --- | --- | --- |
     | triton (`GENBIS3`, old `GDNCUDA_a`; n=2) | **identical** x3 | differs |
-    | cuda (`GDNCUDA_a`; n=1, `_b` running) | **differs** x3 (`2255…`, `1ce1…`, `73a4…`) | differs |
+    | cuda (`GDNCUDA_a`, `_b`; **n=2**, kernel line verified `cuda` in both logs) | **differs** x3 in both arms | differs |
 
     **Why a "decode" flag changed prefill**: `use_fused_gdn_decode` (`qwen_gdn_linear_attn.py:892`)
     is gated only on `enable_fused_gdn_decode` and dtypes — **no decode-step check** — so with
