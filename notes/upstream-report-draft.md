@@ -46,7 +46,7 @@ suspected atomic scatter-add finalize) suggests cross-call state.
 | `humming` | differs | differs |
 | `cutlass` (`VLLM_CUTLASS`) | **crashes at init** — `Triton Error [CUDA]: an illegal memory access was encountered` | — |
 | `triton`, `triton_unfused` | **rejected** — `not supported for NvFP4 MoE` | — |
-| `emulation` (dequantised control) | *pending* | *pending* |
+| **`emulation`** (dequantised) | **identical** | **identical** |
 
 The selectable NvFP4 set on this build is `cutlass`, `flashinfer_trtllm`, `flashinfer_cutlass`,
 `flashinfer_cutedsl`, `flashinfer_b12x`, `marlin`, `humming`, `emulation`. `flashinfer_trtllm` has a
@@ -55,6 +55,13 @@ unquantised drafter MoE, so every serving-grade backend is now measured.
 
 `VLLM_BATCH_INVARIANT=1` cannot be used: no mamba/linear-attention backend implements
 `supports_batch_invariance()` and 36/48 layers are linear attention.
+
+## Control: emulation is deterministic
+
+With `--moe-backend emulation` (dequantise, plain path) all four tokens are identical across three
+requests. Every other component — GDN recurrent state, PLE lookup, hyperconnections, sampling — is
+therefore reproducible; the divergence is confined to the NVFP4 MoE kernels. Emulation is far too
+slow to serve with, but it gives a reference output for validating any fix.
 
 ## Consequences observed
 

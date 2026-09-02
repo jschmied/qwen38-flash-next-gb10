@@ -478,6 +478,28 @@ confidence each item deserves, plus what was refuted along the way.
     divergent once shapes vary (52 → 3 → 1) is what cross-call state would look like, not what a
     pure M-threshold would.
 
+30. **CLOSED AT THE KERNEL: `--moe-backend emulation` is fully deterministic — all 4 tokens
+    identical across 3 requests** (backend verified `EMULATION` in the log; cache off, spec off,
+    eager). The dequantised expert path removes the divergence entirely, prefill and decode. So
+    the nondeterminism is in the NVFP4 MoE kernels — every serving-grade one measured — and not
+    in the model, the recurrent state, the PLE, the hyperconnections, the scheduler or the
+    runtime. Emulation is a correctness-grade mitigation (reproducibility testing, reference
+    outputs), not a serving-grade one; its throughput cost is being measured (`emucost`).
+
+    **Final backend table** (same probe; backend verified per arm):
+
+    | `--moe-backend` | prefill | decode |
+    | --- | --- | --- |
+    | `flashinfer_cutlass` (auto) | identical | differs |
+    | `marlin` | differs | differs |
+    | `humming` | differs | differs |
+    | `cutlass` | crashes at init (illegal memory access) | — |
+    | `triton`, `triton_unfused` | rejected for NvFP4 | — |
+    | **`emulation`** | **identical** | **identical** |
+
+    **Stop condition (a) met**: root cause located, deterministic configuration demonstrated,
+    upstream report drafted (`upstream-report-draft.md`).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
