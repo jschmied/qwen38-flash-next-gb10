@@ -503,6 +503,17 @@ confidence each item deserves, plus what was refuted along the way.
     **Stop condition (a) met**: root cause located, deterministic configuration demonstrated,
     upstream report drafted (`upstream-report-draft.md`).
 
+31. **FIX CANDIDATE: FlashInfer's own `use_fused_finalize=False`.** `flashinfer/fused_moe/core.py`
+    documents the knob on `cutlass_fused_moe`: *"The fused epilogue reduces expert outputs via
+    non-associative atomics, so results are not deterministic run-to-run. Set to False to use the
+    non-fused, deterministic finalize path."* Default `True`; **vLLM never passes it**
+    (`experts/flashinfer_cutlass_moe.py:367`, the call has no such kwarg; the lazy wrapper forwards
+    `**kwargs`). So every arm in this investigation ran the atomic finalize by default — and the
+    kernel's own authors name our mechanism. `tools/determinism/fusedfinalize_patch.py` adds the
+    kwarg, env-gated on `VLLM_MOE_DET_FINALIZE=1`. Validation running (`detfin`): cache off /
+    cache on / cache on + MTP n=5, per-token probe; prediction: all tokens identical in all three.
+    If it holds, the cost to measure is finalize-only, which should be far below emulation's +17%.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
