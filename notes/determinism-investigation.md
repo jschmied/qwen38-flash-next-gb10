@@ -203,13 +203,13 @@ confidence each item deserves, plus what was refuted along the way.
     Oracle test note: `persistent_topk` accepts only k in {512, 1024, 2048}; the test's default
     k=16 was wrong and it is re-queued at the production k=512 (`oracle` unit, after `rerun`).
 
-14. **Cache off + speculation off: a 4-token generation is DETERMINISTIC** (`GENBIS`, eager,
+14. ~~**Cache off + speculation off: a 4-token generation is DETERMINISTIC**~~ **WITHDRAWN, see 20** (`GENBIS`, eager,
     identical signature x3, every prefill pass identical at every hooked module). The only
     generation-side divergence measured with the cache off (`F_noprefix` NOFB, 1040 tokens) had
     speculation ON, so the generation-side source may be spec-dependent (H3) rather than a
     separate base-path defect. Still to separate: length (4 vs 1040) from speculation.
 
-15. **Instrument flaw #2: the layer hook hashes non-semantic rows in decode.** In `GENBIS` the
+15. ~~**Instrument flaw #2: the layer hook hashes non-semantic rows in decode.**~~ **WITHDRAWN, see 20 — the hook was right, the probe was blind** In `GENBIS` the
     first decode pass of each request — same layer-0 hash, same token, same state — shows
     layers 1+ DIFFERING while the OUTPUT is identical. Real differences cannot vanish before the
     logits, so the hook is hashing padded/stale rows beyond the single real token.
@@ -256,6 +256,22 @@ confidence each item deserves, plus what was refuted along the way.
     ties — **all bit-identical over 5 runs, including with allocator churn between runs.** A bound,
     not a proof (5 runs), but consistent with cross-start determinism (finding on `NOPFX`): the
     divergence lives above the runtime, in vLLM's own kernels or model code.
+
+20. **Findings 14 and 15 are WITHDRAWN — the probe was blind to decode.** `logitprobe.py` hashed
+    only `lp[0]`, the first token's top-k. With `max_tokens=4`, tokens 2-4 were never checked, so
+    `GENBIS`/`GENBIS2` "1 distinct of 3" meant only "prefill deterministic" (already known). The
+    layer hook was fine: `GENBIS2` v3 shows decode layer-0 output shape `(1, 10240)` — one row, no
+    padding — and **row 0 differs at 47/48 modules**. Not a padding artifact.
+
+    **What the hashes actually establish: with the prefix cache OFF and speculation OFF, decode
+    diverges from layer 1 at the very first decode step**, while the prefill feeding it is
+    bit-identical at every module (`GENBIS2` prefill groups: 0/48 differ). So the generation-side
+    source is NOT spec-dependent and NOT the prefix cache. Between the identical prefill and the
+    diverging first decode step, what changes is (a) the GDN recurrent state handed from prefill
+    to decode — a state cache that exists whether or not prefix caching is on — and (b) the
+    decode-shaped kernels. Whether the divergence reaches the sampled tokens within 4 steps is
+    unmeasured (the fixed probe now hashes every token); over 1040 tokens it does (`F_noprefix`
+    NOFB). Re-run queued as `GENBIS3`.
 
 ## Independent corroboration
 
