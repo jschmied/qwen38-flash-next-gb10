@@ -767,6 +767,23 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     Not an elimination: 9 broken turns remain under both patches (bug B, per request, also present
     with the cache off where the seed path is never taken). Raw: `notes/data/mtpfix3.txt`.
 
+47. **The ring block is not the switch.** `MTPRING` (unpatched align path; ring block id logged per
+    request; then ring blocks included in allocation zeroing via `VLLM_RING_ZERO=1`):
+
+    ```
+RINGID_a: claims=8 turns=8  blk4:FFF  blk28:FFF  blk39:F  blk46:F
+RINGID_b: claims=8 turns=8  blk4:ssF  blk26:ss  blk28:ss  blk44:F
+RINGZERO_a: claims=8 turns=8  blk4:FFF  blk24:FF  blk28:Fs  blk44:F
+RINGZERO_b: claims=8 turns=8  blk4:FFF  blk24:FF  blk28:FF  blk44:F
+RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
+    ```
+
+    Same block id draws both states (RINGID_b: block 4 → s, s, F; block 28 → s, s). With zeroing,
+    starts a and b were 8/8 and c was 1/8 (`ssssssFs`-class, 67 ms/tok) — 2 of 3 all-healthy is
+    within the unpatched luck (3 of 15) and one broken start with zeroed rings is an existence
+    proof that zeroing does not remove the draw. Ring inheritance is out; the code-trace's rank-1
+    candidate for bug B does not hold. Raw: `notes/data/mtpring.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

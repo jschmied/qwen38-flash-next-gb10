@@ -1,0 +1,111 @@
+preflight OK 15:51
+  ringclaim INSTALLED
+  ringzero INSTALLED (inert unless VLLM_RING_ZERO=1)
+=== RINGID_a  batch=4096  15:51 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  RINGID_a turn 1:   7.25 s   130 tok  hits+       0  acc= 46.2% len=3.31  pos=0/0/0/0/0  ( 55.8 ms/tok)
+  RINGID_a turn 2:   4.54 s   130 tok  hits+    4848  acc= 57.6% len=3.88  pos=0/0/0/0/0  ( 34.9 ms/tok)
+  RINGID_a turn 3:   4.82 s   130 tok  hits+    4848  acc= 42.9% len=3.15  pos=0/0/0/0/0  ( 37.1 ms/tok)
+  RINGID_a turn 4:   4.29 s   130 tok  hits+    4848  acc= 57.6% len=3.88  pos=0/0/0/0/0  ( 33.0 ms/tok)
+  RINGID_a turn 5:   3.54 s   130 tok  hits+    4848  acc= 83.2% len=5.16  pos=0/0/0/0/0  ( 27.2 ms/tok)
+  RINGID_a turn 6:   4.43 s   130 tok  hits+    4848  acc= 56.0% len=3.80  pos=0/0/0/0/0  ( 34.1 ms/tok)
+  RINGID_a turn 7:   4.62 s   130 tok  hits+    4848  acc= 57.1% len=3.85  pos=0/0/0/0/0  ( 35.5 ms/tok)
+  RINGID_a turn 8:   3.79 s   130 tok  hits+    6464  acc= 58.8% len=3.94  pos=0/0/0/0/0  ( 29.2 ms/tok)
+  RINGID_a TOTAL 37.3 s over 8 turns  (4.66 s/turn)  1040 tok  35.85 ms/tok
+  ACCEPT RINGID_a-post: drafts=275 draft_tok=1375 accepted=770 rate=56.0%  mean_accept_len=3.80
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-bf16994aebba431f-8079803b block=4
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-942bb13baf09c739-a5413310 block=28
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-b4d645b07d4e61a4-809b5e6d block=4
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-a4c96abd85fbae67-95b3a856 block=28
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-b77f87b5819b74a1-91a28d6e block=4
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-9adba053487d172e-97844fc3 block=28
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-9309a1de306da966-929151de block=39
+    RINGID_a (EngineCore pid=1052970) RINGCLAIM req=chatcmpl-bd8b4d78aa827237-aa89f82a block=46
+=== RINGID_b  batch=4096  16:04 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  RINGID_b turn 1:   9.08 s   130 tok  hits+       0  acc= 17.9% len=1.90  pos=0/0/0/0/0  ( 69.8 ms/tok)
+  RINGID_b turn 2:   9.11 s   130 tok  hits+    4848  acc=  5.5% len=1.27  pos=0/0/0/0/0  ( 70.1 ms/tok)
+  RINGID_b turn 3:   8.38 s   130 tok  hits+    4848  acc=  8.7% len=1.43  pos=0/0/0/0/0  ( 64.5 ms/tok)
+  RINGID_b turn 4:  10.22 s   130 tok  hits+    4848  acc=  3.2% len=1.16  pos=0/0/0/0/0  ( 78.6 ms/tok)
+  RINGID_b turn 5:   5.09 s   130 tok  hits+    4848  acc= 41.9% len=3.09  pos=0/0/0/0/0  ( 39.1 ms/tok)
+  RINGID_b turn 6:   9.34 s   130 tok  hits+    4848  acc=  6.1% len=1.30  pos=0/0/0/0/0  ( 71.8 ms/tok)
+  RINGID_b turn 7:   4.36 s   130 tok  hits+    6464  acc= 47.0% len=3.35  pos=0/0/0/0/0  ( 33.6 ms/tok)
+  RINGID_b turn 8:   4.97 s   130 tok  hits+    6464  acc= 38.7% len=2.93  pos=0/0/0/0/0  ( 38.2 ms/tok)
+  RINGID_b TOTAL 60.6 s over 8 turns  (7.57 s/turn)  1040 tok  58.23 ms/tok
+  ACCEPT RINGID_b-post: drafts=598 draft_tok=2990 accepted=447 rate=14.9%  mean_accept_len=1.75
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-bddc2307f2fe80c2-a45bc80a block=4
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-977e79538709144d-8e0074d6 block=28
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-bfa576854681862c-a2299cc4 block=4
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-bbd9392098c40467-8152a98a block=28
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-a78fb96fbd030236-986f9998 block=4
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-83568ed8e742f295-a963ef9e block=26
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-a884a5a70e5247e5-9c67f61c block=44
+    RINGID_b (EngineCore pid=1055240) RINGCLAIM req=chatcmpl-a3a7d2efa41aeecf-82f8a95c block=26
+=== RINGZERO_a  batch=4096  16:17 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  RINGZERO_a turn 1:   5.78 s   130 tok  hits+       0  acc= 73.6% len=4.68  pos=0/0/0/0/0  ( 44.4 ms/tok)
+  RINGZERO_a turn 2:   4.08 s   130 tok  hits+    4848  acc= 63.1% len=4.16  pos=0/0/0/0/0  ( 31.4 ms/tok)
+  RINGZERO_a turn 3:   4.23 s   130 tok  hits+    4848  acc= 58.2% len=3.91  pos=0/0/0/0/0  ( 32.5 ms/tok)
+  RINGZERO_a turn 4:   6.70 s   130 tok  hits+    4848  acc= 18.0% len=1.90  pos=0/0/0/0/0  ( 51.5 ms/tok)
+  RINGZERO_a turn 5:   4.50 s   130 tok  hits+    4848  acc= 50.8% len=3.54  pos=0/0/0/0/0  ( 34.6 ms/tok)
+  RINGZERO_a turn 6:   4.21 s   130 tok  hits+    4848  acc= 66.5% len=4.32  pos=0/0/0/0/0  ( 32.4 ms/tok)
+  RINGZERO_a turn 7:   3.59 s   130 tok  hits+    6464  acc= 60.6% len=4.03  pos=0/0/0/0/0  ( 27.6 ms/tok)
+  RINGZERO_a turn 8:   3.52 s   130 tok  hits+    6464  acc= 68.0% len=4.40  pos=0/0/0/0/0  ( 27.1 ms/tok)
+  RINGZERO_a TOTAL 36.6 s over 8 turns  (4.58 s/turn)  1040 tok  35.19 ms/tok
+  ACCEPT RINGZERO_a-post: drafts=293 draft_tok=1465 accepted=761 rate=51.9%  mean_accept_len=3.60
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-ba739fc8a0dcc002-a083e4f7 block=4
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-9c8c1fd095460c22-8f9861b1 block=28
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-9e031b629aeb7c14-9f4eb58b block=4
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-b1229715118bba81-91683ae9 block=28
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-ba8c9d20fdee12ed-90bd9c54 block=4
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-a42ed9c2d357e82e-b9f3123e block=24
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-b62a22cf605b4998-b9ba74cf block=44
+    RINGZERO_a (EngineCore pid=1092880) RINGCLAIM req=chatcmpl-84f3ea533f366952-9cde3a13 block=24
+=== RINGZERO_b  batch=4096  16:29 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  RINGZERO_b turn 1:   5.93 s   130 tok  hits+       0  acc= 69.3% len=4.47  pos=0/0/0/0/0  ( 45.6 ms/tok)
+  RINGZERO_b turn 2:   3.81 s   130 tok  hits+    4848  acc= 70.3% len=4.52  pos=0/0/0/0/0  ( 29.3 ms/tok)
+  RINGZERO_b turn 3:   3.83 s   130 tok  hits+    4848  acc= 69.0% len=4.45  pos=0/0/0/0/0  ( 29.5 ms/tok)
+  RINGZERO_b turn 4:   4.15 s   130 tok  hits+    4848  acc= 63.7% len=4.19  pos=0/0/0/0/0  ( 31.9 ms/tok)
+  RINGZERO_b turn 5:   3.99 s   130 tok  hits+    4848  acc= 68.0% len=4.40  pos=0/0/0/0/0  ( 30.7 ms/tok)
+  RINGZERO_b turn 6:   4.84 s   130 tok  hits+    4848  acc= 48.4% len=3.42  pos=0/0/0/0/0  ( 37.3 ms/tok)
+  RINGZERO_b turn 7:   3.76 s   130 tok  hits+    6464  acc= 60.0% len=4.00  pos=0/0/0/0/0  ( 28.9 ms/tok)
+  RINGZERO_b turn 8:   3.45 s   130 tok  hits+    6464  acc= 72.4% len=4.62  pos=0/0/0/0/0  ( 26.5 ms/tok)
+  RINGZERO_b TOTAL 33.8 s over 8 turns  (4.22 s/turn)  1040 tok  32.47 ms/tok
+  ACCEPT RINGZERO_b-post: drafts=250 draft_tok=1250 accepted=806 rate=64.5%  mean_accept_len=4.22
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-9a04d88b10e041be-bf7b1b30 block=4
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-b26821114d12456f-9e2baa91 block=28
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-ac2fe33dbac27154-9851fc11 block=4
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-9ecca5516a0b577e-b7503d42 block=28
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-a347ee25fb820d1b-8e669bb3 block=4
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-b56187d6a2bdca5d-81e5277b block=24
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-bcf490b48b5637e0-ae150131 block=44
+    RINGZERO_b (EngineCore pid=1095042) RINGCLAIM req=chatcmpl-a2d50e101c5ff2a8-a2e81223 block=24
+=== RINGZERO_c  batch=4096  16:42 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  RINGZERO_c turn 1:   9.58 s   130 tok  hits+       0  acc= 14.9% len=1.74  pos=0/0/0/0/0  ( 73.7 ms/tok)
+  RINGZERO_c turn 2:   8.72 s   130 tok  hits+    4848  acc=  6.3% len=1.32  pos=0/0/0/0/0  ( 67.1 ms/tok)
+  RINGZERO_c turn 3:   9.26 s   130 tok  hits+    4848  acc=  6.6% len=1.33  pos=0/0/0/0/0  ( 71.3 ms/tok)
+  RINGZERO_c turn 4:  10.13 s   130 tok  hits+    4848  acc=  2.8% len=1.14  pos=0/0/0/0/0  ( 77.9 ms/tok)
+  RINGZERO_c turn 5:   9.35 s   130 tok  hits+    4848  acc=  5.3% len=1.26  pos=0/0/0/0/0  ( 71.9 ms/tok)
+  RINGZERO_c turn 6:   4.97 s   130 tok  hits+    4848  acc= 48.4% len=3.42  pos=0/0/0/0/0  ( 38.2 ms/tok)
+  RINGZERO_c turn 7:   9.09 s   130 tok  hits+    6464  acc=  5.5% len=1.28  pos=0/0/0/0/0  ( 69.9 ms/tok)
+  RINGZERO_c turn 8:   8.67 s   130 tok  hits+    6464  acc=  6.1% len=1.30  pos=0/0/0/0/0  ( 66.7 ms/tok)
+  RINGZERO_c TOTAL 69.8 s over 8 turns  (8.72 s/turn)  1040 tok  67.08 ms/tok
+  ACCEPT RINGZERO_c-post: drafts=722 draft_tok=3610 accepted=311 rate=8.6%  mean_accept_len=1.43
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-8ae5ab34052eae59-a0cf92e7 block=4
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-a52b43ce7b9d3b00-8379f419 block=28
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-a6f8e24f0975a843-a8753d38 block=4
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-aac8b40f2f5f7e4a-98f86f83 block=28
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-bb1f10fe25e32864-9ebc01e1 block=4
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-978d14372c9ed882-9bc0d969 block=43
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-95637b9763c78dbc-8bc4fe3a block=49
+    RINGZERO_c (EngineCore pid=1097282) RINGCLAIM req=chatcmpl-9a5afa6e9c0e75ba-900077e5 block=43
+  ringclaim REMOVED
+  ringzero REMOVED
+== ALL DONE ==
