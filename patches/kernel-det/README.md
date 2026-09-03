@@ -41,6 +41,9 @@ Build notes: the standalone glue needs `-DUSE_CUDA` (the CUDA stream getter in t
 is guarded by it; the generic stream getter returns an opaque handle and segfaults in the memset)
 and the launcher caps the dynamic-smem request at `sharedMemPerBlockOptin − static __shared__`.
 On GB10 the opt-in is 101,376 bytes, so the `num_rows > 32` filtered path is never dispatched here.
+`RADIX_THRESHOLD` is lowered 32768 → 16384 in the diff: the deterministic multi-CTA path is cheaper
+than the single-CTA `det_select_row` above 16k (`bench_results_threshold.txt`; 8192 was worse for
+64-row batches). Wiring for vLLM: `tools/determinism/qsadet_patch.py` + `VLLM_QSA_DET_TOPK=1`.
 
 Follow-up (not in this diff, on purpose): the filtered kernel keeps its `VEC_SIZE` /
 `UsePredicatedShortLoads` instantiation ladder, `FilteredTopKTraits`, `vec_t` and

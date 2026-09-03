@@ -1090,6 +1090,13 @@ all depths counter-identical across 3 starts: True
     PR: on GB10 the `num_rows > 32` filtered path is never taken (`sharedMemPerBlockOptin` = 101,376 <
     128 K), so the filtered-kernel change is compile-checked here but not executed.
 
+    **Addendum (same day): `RADIX_THRESHOLD` 32768 → 16384 adopted** (`bench_results_threshold.txt`,
+    177/177 tests again). Rows ≤ 16k are untouched; at 32k the multi-CTA path halves the det cost
+    (1 row k=2048: 71.8 → 37.5 µs; 64 rows: 207 → 127 µs; only 24 rows regresses, 73 → 85). 8192 was
+    also tried and loses at 64 rows × 16k (49 → 60 µs). Installed as `/opt/llm/kernel-det/_C_det.so`;
+    `tools/determinism/qsadet_patch.py` (`VLLM_QSA_DET_TOPK=1`) routes the QSA selection to it for
+    the end-to-end A/B. Not installed yet (queue: `mtpgrid0` running).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

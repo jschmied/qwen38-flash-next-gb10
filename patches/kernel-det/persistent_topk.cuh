@@ -33,7 +33,7 @@ constexpr size_t kMediumHeaderSize =
 constexpr int MAX_BUFFERED_ITEMS = 4096;
 constexpr size_t kSmemMedium =
     kMediumHeaderSize + 2 * MAX_BUFFERED_ITEMS * sizeof(int);  // 35968
-constexpr uint32_t RADIX_THRESHOLD = 32768;
+constexpr uint32_t RADIX_THRESHOLD = 16384;
 
 // Decode path constants
 constexpr int kDecodeBins = 2048;
