@@ -21,8 +21,8 @@ Review history on this PR: the first revision did the loop in Python (`apply_blo
 
 ## Test plan
 
-- `test_cutlass_fp8_blockwise_large_m` (M ∈ {4096, 8193, 12288} × (N,K) ∈ {(2048,2560), (2560,6144)}): `torch.equal` against a Python row-chunked reference with per-chunk re-laid-out scales (what the C++ path does internally; on GPUs that do not chunk it is the same identity), plus the usual tolerance check against the dequantized fp32 baseline.
-- `test_cutlass_fp8_blockwise_compiled_dynamic_m`: one `torch.compile(dynamic=True, fullgraph=True)` graph serving M = 4096, 8193 and 12288, equal to eager — the M dispatch is inside the op.
+- `test_cutlass_fp8_blockwise_large_m` (M ∈ {4096, 8193, 12288} × (N,K) ∈ {(2048,2560), (16384,2560), (57344,2560)} — the 42 MB and 147 MB weights exceed the 24 MiB (GB10) and 128 MiB (GB202) L2 respectively, so the chunk path is exercised on every SM 12.x part; the 5 MB weight is the no-chunk control): `torch.equal` against a Python row-chunked reference with per-chunk re-laid-out scales (what the C++ path does internally; on GPUs that do not chunk it is the same identity), plus the usual tolerance check against the dequantized fp32 baseline.
+- `test_cutlass_fp8_blockwise_compiled_dynamic_m`: one `torch.compile(dynamic=True, fullgraph=True)` graph serving M = 4096, 8193 and 12288 on the 42 MB weight, equal to eager — the M dispatch is inside the op.
 - Standalone build of the modified `.cu` against CUTLASS v4.7.1 on a GB10 (SM 12.1): bit-identity against the unmodified op at every tested (M, N, K) incl. partial last chunks, plus throughput — **pending, will be posted here** (draft until then).
 
 ## Test result
