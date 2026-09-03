@@ -243,3 +243,14 @@
     With finding 78 (tactic table flat, ~2× above the streaming floor) this closes the "different
     kernel family" route on the current software: the MoE share of prefill (14–19 %) stays where it
     is until FlashInfer's grouped GEMM handles ~150-row expert problems better (fewer/larger tiles).
+83. **`chunke2e` C4k arms fail at startup — the Python M-chunking patch is not compile-safe.** Root cause
+    (`fnext-C4k_a.log`): `Dynamo does not know how to trace builtin operator print` — v1 resolved the env
+    and printed its activation line lazily *inside* `apply_block_scaled_mm`, which torch.compile traces;
+    the first forward (KV profiling) aborts. The same trace region would also have specialised the Python
+    `for` loop on the symbolic M (the P1 point of the #55180 review, which is why the PR moved the loop
+    into the C++ op). v2 (`tools/main/fp8chunk_patch_v2.py`) resolves the env and prints at import and puts
+    the loop into an opaque `torch.library.custom_op` (`fp8chunk::scaled_mm_chunked`, fake impl returns
+    the [M, N] empty), so compile sees one opaque call guarded on `M > chunk`. The off arms (C0) still
+    run and give the batch-8192 main-build baseline. Redo runner `chunkredo` is staged (waits for the
+    whole chain), **not started** — needs the go.
+
