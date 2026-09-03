@@ -67,3 +67,34 @@ the answer for them (comment after the user's go).
 owed measurements → profile (1) → A (main build, because C/D/E should be measured on the stack we
 will keep) → C, D, E on it → B if the profile says PLE gather matters → write-up + prod switch
 (user decision).
+
+## 5. Ideas that are ours, not the field's (2026-09-03)
+
+Replicating the field buys ≤ 15 %. These are the directions nobody in the sweep is on, ranked by
+expected TTFT effect in the agent loop ÷ effort:
+
+1. **Spec decode must not cost a prefix block.** Our own finding (`spec-decode-prefix-cost-agentloop`):
+   with MTP on, the agent loop's prefix-cache hit rate drops 69 → 43 %, TTFT ×3 on the turn after,
+   one extra cold turn. That is a bug, not a property: the verified tokens + bonus token leave the
+   last block partially written or unaligned to the mamba align boundary, and the next turn
+   re-prefills it. Bisect with the hit counters we already trust (`prefix_cache_hits_total` deltas,
+   never `usage.cached_tokens`), fix in the scheduler/align path, upstream it. Direct TTFT win on
+   every agent turn; nobody else measures hit rate per turn.
+2. **PLE gather off the critical path.** The n-gram lookup depends only on token ids, so every row
+   for a whole prompt is known at tokenization time; on a cache hit the prefix's rows are not needed
+   at all. If the profile shows the CPU gather inside prefill time, prefetch the next chunk's rows
+   during the current chunk (one-chunk pipeline) and skip rows for cached blocks. Cheap, and the
+   worker already streams H2D asynchronously (`ple_offload/worker.py`), so the plumbing exists.
+3. **Index sharing across query positions in prefill.** The QSA indexer scores every query token
+   against every block (O(T × blocks); at 30k that is the bulk of the indexer cost). vLLM already
+   shares one selection across MTP draft positions (`index_share_for_mtp_iteration`); for prefill,
+   compute the selection every s-th query position and reuse it for neighbours. A quality trade —
+   and we are the only stack that can measure it exactly (bit-comparable outputs, logprob
+   divergence per layer). Gate: profile share of the indexer ≥ 20 %.
+4. **Persist the hybrid state across restarts.** With bit-exact determinism, GDN state + QSA KV of a
+   prefix is a pure function of the tokens: snapshot at align boundaries to host memory/NVMe and
+   reload — a KV-connector for hybrid models. Big effort; the payoff is cold-start TTFT of long
+   system prompts after every restart/eviction, which every recipe in the sweep pays.
+
+Not novel, dropped: PLE placement, batch sizes, MoE backend sweeps, GDN kernel A/Bs (keep as
+5–15 % housekeeping on the main build).
