@@ -891,3 +891,23 @@ Also worth having: **`thinking_budget` is not honored** in this build, so the on
 `reasoning_effort` (`low` / `medium` / `high`), which is what we have been using.
 
 - 2026-09-03: llama.cpp PR #28136 reads the PLE table with parallel `pread()` instead of mmap faults — DGX Spark cold prefill 300 → 750–800 tok/s with the table on SSD. Our vLLM PLE offload keeps the table in RAM and prefills ~2,400–2,600 tok/s; the transferable idea is an SSD-backed gather to free ~50 GB of unified memory. Details in `ple-access-pattern.md`.
+
+## 2026-09-03 sweep — GB10 prefill is the same everywhere (~2.3–2.7k tok/s cold)
+
+| repo | stack | cold prefill | note |
+| --- | --- | --- | --- |
+| airawatraj/dgx-spark-qwen38-flash-agent | SGLang + **HashK GPU-resident PLE** (12.8 GB, `build_hashk.sh` ~6 min on GPU) + NEXTN | 2,406–2,500 tok/s | warm radix-cache TTFT 1.1–1.5 s multi-turn; decode 36.8 (code) / 22 (chat) tok/s c=1 |
+| crimsonjoo/DGXspark1-Qwen3.8-Flash-Next | vLLM, PLE from NVMe via mmap, prefix-cache fix, **exact top-k default** (k3dani's overlay, #51782) | ~2,400 stock kernel, **1,500–2,000 with their exact top-k** (−17…−40 %; ours costs +6 %, PR #55122 ≈ +2 %) | "hybrid" NVFP4 experts + fp8 side layers: +20 % decode — same idea as our FP8-mixed checkpoint (+39 %) |
+| dolf3131/qwen3.8-flash-next-dgx-spark | vLLM, PLE paged to swap | 2,719 tok/s @30k | decode 32.7 tok/s; prefix cache "needs two flags" |
+| ryangu00/dell-pro-max-gb10 | vLLM TP2 dual GB10 | 2,321 tok/s @30k | worker dies from ~95k ctx on sm_121 dual-node |
+| ajeetcoolkarni/…-production | SGLang, 1 GB10 | 513 tok/s **with a concurrent decoder** | prefill starves decode: 21.6 tok/s during a 32k prefill |
+| bemlerlabs/…-sglang | SGLang, NVMe PLE mmap, "Triton FP4 prefill kernels" | not stated | NEXTN 3/1/4; claims 110–152 tok/s (unqualified) |
+| thadreber-web/llama.cpp-qwen38-flash-next | llama.cpp GB10 | `-b 8192 -ub 8192` 9.3 % faster e2e at 35k | CUDA-graph cache fix +12–14 % gen; on-disk PLE |
+| mratsim/sglang-qwen38fn-sm120-turbo | SGLang, 1× RTX Pro 6000 (sm_120, +3000 MT/s mem OC) | **11–13k tok/s** | ~4–5× GB10 — consistent with a compute-bound prefill |
+| cglab-public/dgx-spark-flashnext | SGLang TP2 → **migrated to vLLM 2026-09-01** | — | SGLang sm_121 sparse-decode kernel unobtainable / unmerged (sgl#36497) |
+| WeZZard/dgx-spark-bench | bench lab, 2 nodes, llama.cpp/SGLang/vLLM adapters, KL gate | — | SLA TTFT ≤ 2 s |
+| official `vllm-project/recipes` Qwen3.8-Flash-Next.yaml (08-26) | docker image only, `--no-enable-flashinfer-autotune`, MTP n=3, default variant Inferact NVFP4 (PLE in nvfp4) | — | GB10 not in the verified list |
+
+Reading: cold prefill on one GB10 is 2.3–2.7k tok/s on vLLM and SGLang alike, with the PLE on CPU,
+on NVMe, in swap, or **GPU-resident (HashK)** — PLE placement does not move prefill. The one
+stack-independent multiplier is the warm prefix cache (everyone reports ~10× on repeated prefixes).

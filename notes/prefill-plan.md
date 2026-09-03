@@ -41,6 +41,18 @@ Do not skip this — the last profile was prefill-contaminated (`the-prefill-dec
 Not levers (measured or excluded): `cooperative_topk` (needs TMA, excluded on sm_12x); llama.cpp
 #28136 (cold-start PLE read from SSD — our table is RAM-resident); MTP depth for TTFT.
 
+## 2b. Field calibration (sweep 2026-09-03, `the-field.md`)
+
+Every GB10 stack — vLLM or SGLang, PLE on CPU / NVMe / swap / **GPU (HashK)** — reports 2.3–2.7k
+tok/s cold prefill; an RTX Pro 6000 does 11–13k. So prefill here is compute-bound near the hardware
+line and lever **B (PLE on GPU) is not a prefill lever** (airawatraj: 2.4–2.5k with GPU-resident
+HashK) — keep it only for memory. Realistic win from A/C/D/E: 5–15 %, unless the profile finds an
+idle gap. The multiplier that is real is the warm prefix cache (~10× on repeated prefixes; we
+already hold −40 % TTFT after turn 1 and one lost block under spec decode) — so lever G moves up:
+maximise hit rate in the agent loop (block size, spec-decode block cost, what the client resends).
+Also seen: crimsonjoo's vLLM recipe pays −17…−40 % prefill for its exact top-k default; PR #55122 is
+the answer for them (comment after the user's go).
+
 ## 3. Method
 
 - One runner per lever, `TTFT=1` arms (ttft.py, 8k + 30k, 3 requests), 3 starts, interleaved.
