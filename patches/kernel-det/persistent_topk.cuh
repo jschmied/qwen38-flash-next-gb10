@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <type_traits>
 
-
 namespace vllm {
 namespace persistent {
 
@@ -111,23 +110,21 @@ __device__ __forceinline__ void load_float4_predicated(const float* ptr,
   v3 = __uint_as_float(r3);
 }
 
-
 // ============================================================================
-// DETERMINISM (jschmied 2026-09-03, v2 after review).
-// The buffered selection paths below hand out output slots with atomics
-// (thread-arrival order) and admit threshold-bin candidates into fixed-size
-// buffers in arrival order, so both the ORDER of the k indices and — when more
-// elements share the exact threshold key than the buffer holds — the SET
-// depend on scheduling (vllm#54521, #51782). The QSA consumer sums the selected
-// keys in output order, so either forks the hidden state.
+// Deterministic selection.
+// The output of this op must not depend on thread scheduling: the QSA
+// consumer sums the selected keys in output order, so a scheduling-dependent
+// order (or, under threshold ties, a scheduling-dependent set) makes identical
+// requests diverge (vllm#54521). Hence no output slot is ever assigned from an
+// arrival counter and no tie is ever resolved first-come.
 //
-// v2 replaces every single-CTA path with `det_select_row`: a radix select that
-// RESCANS the row for each of the four key bytes (no candidate buffers, so no
+// Every single-CTA row goes through `det_select_row`: a radix select that
+// rescans the row for each of the four key bytes (no candidate buffers, so no
 // truncation and an exact pivot), then one index-ordered block scan that emits
 // all elements above the pivot and the lowest-index `fin` elements equal to it,
 // then sorts the row ascending. Cost: five reads of the row + one in-block
-// sort of <= 2048 ints. Rows longer than RADIX_THRESHOLD keep the multi-CTA
-// path, whose emission is made deterministic with per-CTA prefixes.
+// sort of <= 2048 ints. Rows longer than RADIX_THRESHOLD take the multi-CTA
+// path, whose emission is ordered by per-CTA prefixes.
 // ============================================================================
 __device__ __forceinline__ uint32_t det_next_pow2(uint32_t n) {
   uint32_t p = 1;
@@ -145,7 +142,10 @@ __device__ __forceinline__ void det_block_sort_asc(int* data, int n, int cap) {
         if (ixj > i) {
           const int a = data[i], b = data[ixj];
           const bool up = ((i & k) == 0);
-          if ((a > b) == up) { data[i] = b; data[ixj] = a; }
+          if ((a > b) == up) {
+            data[i] = b;
+            data[ixj] = a;
+          }
         }
       }
       __syncthreads();
@@ -153,7 +153,8 @@ __device__ __forceinline__ void det_block_sort_asc(int* data, int n, int cap) {
   }
 }
 template <int N_THREADS>
-__device__ __forceinline__ void det_sort_row(int32_t* row, int k, int* scratch) {
+__device__ __forceinline__ void det_sort_row(int32_t* row, int k,
+                                             int* scratch) {
   const int cap = static_cast<int>(det_next_pow2(static_cast<uint32_t>(k)));
   for (int i = threadIdx.x; i < k; i += N_THREADS) scratch[i] = row[i];
   __syncthreads();
@@ -175,7 +176,8 @@ __host__ __device__ constexpr size_t det_select_row_fixed_bytes() {
   using ScanT = cub::BlockScan<uint32_t, N_THREADS>;
   size_t p = 1;
   while (p < static_cast<size_t>(TopK)) p <<= 1;
-  return 2048 + ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)) + p * sizeof(int);
+  return 2048 + ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)) +
+         p * sizeof(int);
 }
 // Bytes needed to keep a row of n keys cached (host side sizing helper).
 template <int TopK, int N_THREADS>
@@ -187,15 +189,18 @@ __device__ void det_select_row(const float* __restrict__ row, int n,
                                int32_t* __restrict__ out, void* smem,
                                size_t smem_bytes) {
   using ScanT = cub::BlockScan<uint32_t, N_THREADS>;
-  uint32_t* hist = reinterpret_cast<uint32_t*>(smem);            // [256]
-  uint32_t* hist2 = hist + 256;                                   // [256]
+  uint32_t* hist = reinterpret_cast<uint32_t*>(smem);  // [256]
+  uint32_t* hist2 = hist + 256;                        // [256]
   auto* scan_tmp = reinterpret_cast<typename ScanT::TempStorage*>(
       reinterpret_cast<char*>(smem) + 2048);
   const size_t fixed = det_select_row_fixed_bytes<TopK, N_THREADS>();
-  int* scratch = reinterpret_cast<int*>(reinterpret_cast<char*>(smem) + fixed -
-                                        static_cast<size_t>(det_next_pow2(TopK)) * sizeof(int));
-  uint32_t* keys = reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(smem) + fixed);
-  const bool cached = (fixed + static_cast<size_t>(n) * sizeof(uint32_t) <= smem_bytes);
+  int* scratch = reinterpret_cast<int*>(
+      reinterpret_cast<char*>(smem) + fixed -
+      static_cast<size_t>(det_next_pow2(TopK)) * sizeof(int));
+  uint32_t* keys =
+      reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(smem) + fixed);
+  const bool cached =
+      (fixed + static_cast<size_t>(n) * sizeof(uint32_t) <= smem_bytes);
   const int tx = threadIdx.x;
   uint32_t prefix = 0;
   uint32_t remaining = TopK;
@@ -210,13 +215,28 @@ __device__ void det_select_row(const float* __restrict__ row, int n,
       const bool aligned = ((reinterpret_cast<uintptr_t>(row) & 15) == 0);
       for (int i = tx * 4; i < n4; i += N_THREADS * 4) {
         float v0, v1, v2, v3;
-        if (aligned) load_float4(row + i, v0, v1, v2, v3);
-        else { v0 = row[i]; v1 = row[i + 1]; v2 = row[i + 2]; v3 = row[i + 3]; }
-        const uint32_t k0 = convert_to_uint32_v2(v0), k1 = convert_to_uint32_v2(v1);
-        const uint32_t k2 = convert_to_uint32_v2(v2), k3 = convert_to_uint32_v2(v3);
-        if (cached) { keys[i] = k0; keys[i + 1] = k1; keys[i + 2] = k2; keys[i + 3] = k3; }
-        atomicAdd(&hist[k0 >> 24], 1); atomicAdd(&hist[k1 >> 24], 1);
-        atomicAdd(&hist[k2 >> 24], 1); atomicAdd(&hist[k3 >> 24], 1);
+        if (aligned)
+          load_float4(row + i, v0, v1, v2, v3);
+        else {
+          v0 = row[i];
+          v1 = row[i + 1];
+          v2 = row[i + 2];
+          v3 = row[i + 3];
+        }
+        const uint32_t k0 = convert_to_uint32_v2(v0),
+                       k1 = convert_to_uint32_v2(v1);
+        const uint32_t k2 = convert_to_uint32_v2(v2),
+                       k3 = convert_to_uint32_v2(v3);
+        if (cached) {
+          keys[i] = k0;
+          keys[i + 1] = k1;
+          keys[i + 2] = k2;
+          keys[i + 3] = k3;
+        }
+        atomicAdd(&hist[k0 >> 24], 1);
+        atomicAdd(&hist[k1 >> 24], 1);
+        atomicAdd(&hist[k2 >> 24], 1);
+        atomicAdd(&hist[k3 >> 24], 1);
       }
       for (int i = n4 + tx; i < n; i += N_THREADS) {
         const uint32_t k = convert_to_uint32_v2(row[i]);
@@ -226,14 +246,16 @@ __device__ void det_select_row(const float* __restrict__ row, int n,
     } else {
       for (int i = tx; i < n; i += N_THREADS) {
         const uint32_t key = cached ? keys[i] : convert_to_uint32_v2(row[i]);
-        if ((key & hi_mask) == prefix) atomicAdd(&hist[(key >> shift) & 0xFF], 1);
+        if ((key & hi_mask) == prefix)
+          atomicAdd(&hist[(key >> shift) & 0xFF], 1);
       }
     }
     __syncthreads();
     // parallel suffix sum over the 256 bins (8 log-steps, double buffered):
     // hist -> suf[b] = #elements in this prefix group with byte >= b
     {
-      uint32_t* src = hist; uint32_t* dst = hist2;
+      uint32_t* src = hist;
+      uint32_t* dst = hist2;
 #pragma unroll
       for (int step = 0; step < 8; step++) {
         const int stride = 1 << step;
@@ -243,13 +265,18 @@ __device__ void det_select_row(const float* __restrict__ row, int n,
           dst[tx] = v;
         }
         __syncthreads();
-        uint32_t* t = src; src = dst; dst = t;
+        uint32_t* t = src;
+        src = dst;
+        dst = t;
       }
       // after 8 steps `src` holds the suffix sums
       if (tx < 256) {
         const uint32_t suf_b = src[tx];
         const uint32_t suf_b1 = (tx + 1 < 256) ? src[tx + 1] : 0u;
-        if (suf_b >= remaining && suf_b1 < remaining) { hist2[0] = tx; hist2[1] = suf_b1; }
+        if (suf_b >= remaining && suf_b1 < remaining) {
+          hist2[0] = tx;
+          hist2[1] = suf_b1;
+        }
       }
     }
     __syncthreads();
@@ -275,7 +302,8 @@ __device__ void det_select_row(const float* __restrict__ row, int n,
     ScanT(*scan_tmp).ExclusiveSum(feq, req, teq);
     if (fgt) out[run_gt + rgt] = i;
     if (feq && (run_eq + req) < fin) out[gt_total + run_eq + req] = i;
-    run_gt += tgt; run_eq += teq;
+    run_gt += tgt;
+    run_eq += teq;
     __syncthreads();
   }
   det_sort_row<N_THREADS>(out, TopK, scratch);
@@ -292,8 +320,8 @@ struct RadixRowState {
   uint32_t prefix;
   int arrival_counter;
   int output_counter;
-  uint32_t det_gt_counts[kDetMaxCtasPerGroup];  // DETERMINISM: per-CTA > pivot
-  uint32_t det_eq_counts[kDetMaxCtasPerGroup];  // DETERMINISM: per-CTA == pivot
+  uint32_t det_gt_counts[kDetMaxCtasPerGroup];  // per-CTA > pivot
+  uint32_t det_eq_counts[kDetMaxCtasPerGroup];  // per-CTA == pivot
 };
 
 // ============================================================================
@@ -311,7 +339,7 @@ struct PersistentTopKParams {
   uint32_t chunk_size;      // large path: elements per CTA
   uint32_t ctas_per_group;  // 1=medium, >1=large
   uint32_t max_seq_len;     // max seq_len across all rows (for early CTA exit)
-  uint32_t det_smem_bytes;  // DETERMINISM: dynamic smem available to det_select_row
+  uint32_t det_smem_bytes;  // dynamic smem available to det_select_row
 };
 
 // ============================================================================
@@ -994,8 +1022,8 @@ __device__ void radix_topk(const float* __restrict__ row_input,
   const uint32_t local_gt_count = suffix_sum[0];
 
   // -- Stage 3: Collect top-k indices --
-  // DETERMINISM: publish this CTA's counts; slots come from a prefix over
-  // CTAs, never from a global arrival counter. > pivot first (any order, the
+  // Publish this CTA's counts; slots come from a prefix over CTAs, never
+  // from a global arrival counter. > pivot first (any order, the
   // row is sorted at the end), == pivot lowest-index-first across the group.
   uint32_t my_eq_count = 0;
   for (uint32_t i = tx; i < actual_chunk_size; i += kThreadsPerBlock) {
@@ -1020,33 +1048,44 @@ __device__ void radix_topk(const float* __restrict__ row_input,
   __syncthreads();
   uint32_t gt_before = 0, gt_total = 0, eq_before = 0;
   for (uint32_t c = 0; c < ctas_per_group; c++) {
-    const uint32_t g = ld_acquire(reinterpret_cast<int*>(&state->det_gt_counts[c]));
-    const uint32_t e = ld_acquire(reinterpret_cast<int*>(&state->det_eq_counts[c]));
-    if (c < cta_in_group) { gt_before += g; eq_before += e; }
+    const uint32_t g =
+        ld_acquire(reinterpret_cast<int*>(&state->det_gt_counts[c]));
+    const uint32_t e =
+        ld_acquire(reinterpret_cast<int*>(&state->det_eq_counts[c]));
+    if (c < cta_in_group) {
+      gt_before += g;
+      eq_before += e;
+    }
     gt_total += g;
   }
-  const uint32_t remaining_eq = (gt_total < static_cast<uint32_t>(TopK)) ? (TopK - gt_total) : 0u;
+  const uint32_t remaining_eq =
+      (gt_total < static_cast<uint32_t>(TopK)) ? (TopK - gt_total) : 0u;
   if (tx == 0) local_histogram[0] = 0;
   __syncthreads();
   for (uint32_t i = tx; i < actual_chunk_size; i += kThreadsPerBlock) {
     if (shared_ordered[i] > ordered_pivot) {
       const uint32_t local_pos = atomicAdd(&local_histogram[0], 1);
       const uint32_t pos = gt_before + local_pos;
-      if (pos < static_cast<uint32_t>(TopK)) row_output[pos] = static_cast<int32_t>(my_chunk_start + i);
+      if (pos < static_cast<uint32_t>(TopK))
+        row_output[pos] = static_cast<int32_t>(my_chunk_start + i);
     }
   }
   {
     using ScanT = cub::BlockScan<uint32_t, kThreadsPerBlock>;
     __shared__ typename ScanT::TempStorage det_scan_tmp;
     uint32_t running = 0;
-    for (uint32_t base = 0; base < actual_chunk_size; base += kThreadsPerBlock) {
+    for (uint32_t base = 0; base < actual_chunk_size;
+         base += kThreadsPerBlock) {
       const uint32_t i = base + tx;
-      const uint32_t flag = (i < actual_chunk_size && shared_ordered[i] == ordered_pivot) ? 1u : 0u;
+      const uint32_t flag =
+          (i < actual_chunk_size && shared_ordered[i] == ordered_pivot) ? 1u
+                                                                        : 0u;
       uint32_t rank, tile_total;
       ScanT(det_scan_tmp).ExclusiveSum(flag, rank, tile_total);
       if (flag) {
         const uint32_t r = eq_before + running + rank;
-        if (r < remaining_eq) row_output[gt_total + r] = static_cast<int32_t>(my_chunk_start + i);
+        if (r < remaining_eq)
+          row_output[gt_total + r] = static_cast<int32_t>(my_chunk_start + i);
       }
       running += tile_total;
       __syncthreads();
@@ -1058,7 +1097,8 @@ __device__ void radix_topk(const float* __restrict__ row_input,
   barrier_phase++;
   __syncthreads();
   if (cta_in_group == 0) {
-    det_sort_row<kThreadsPerBlock>(row_output, TopK, reinterpret_cast<int*>(shared_ordered));
+    det_sort_row<kThreadsPerBlock>(row_output, TopK,
+                                   reinterpret_cast<int*>(shared_ordered));
     __threadfence();
   }
   if (tx == 0) red_release(&state->arrival_counter, 1);
@@ -1151,10 +1191,11 @@ __global__ void __launch_bounds__(kThreadsPerBlock, 2)
             row_output[i] = (i < seq_len) ? static_cast<int32_t>(i) : -1;
           }
         } else {
-          // DETERMINISM: buffered decode/medium paths replaced by the
-          // rescanning select (exact pivot, index-ranked ties, sorted row).
-          det_select_row<TopK, kThreadsPerBlock>(row_input, static_cast<int>(seq_len),
-                                                 row_output, smem_raw, params.det_smem_bytes);
+          // Single-CTA rows: rescanning select (exact pivot, index-ranked
+          // ties, sorted row).
+          det_select_row<TopK, kThreadsPerBlock>(
+              row_input, static_cast<int>(seq_len), row_output, smem_raw,
+              params.det_smem_bytes);
         }
       }
       continue;
@@ -1177,7 +1218,6 @@ __global__ void __launch_bounds__(kThreadsPerBlock, 2)
 // Kept with persistent_topk so the portable fallback owns the non-cluster path.
 // ============================================================================
 namespace filtered_topk {
-
 
 // ============================================================================
 // FilteredTopK — single CTA per row for bs > 32
@@ -1281,16 +1321,16 @@ __global__ void __launch_bounds__(FILTERED_TOPK_BLOCK_THREADS)
   }
 
   // Short path
-  // DETERMINISM: every filtered row (any length, including the launcher's
-  // occupancy fallback) goes through the rescanning select. vLLM instantiates
-  // this kernel for float only; the former buffered hist4096 / radix bodies
-  // (arrival-ordered atomics, truncating tie buffers) are removed.
+  // Every filtered row (any length, including the launcher's occupancy
+  // fallback) goes through the rescanning select. vLLM instantiates this
+  // kernel for float only.
   static_assert(std::is_same<DType, float>::value,
                 "FilteredTopKUnifiedKernel: deterministic path is float-only");
   extern __shared__ uint8_t _smem_reg[];
-  vllm::persistent::det_select_row<static_cast<int>(MAX_K), static_cast<int>(BLOCK_SIZE)>(
-      reinterpret_cast<const float*>(score), length, reinterpret_cast<int32_t*>(dst), _smem_reg,
-      FILTERED_TOPK_SMEM_DYNAMIC);
+  vllm::persistent::det_select_row<static_cast<int>(MAX_K),
+                                   static_cast<int>(BLOCK_SIZE)>(
+      reinterpret_cast<const float*>(score), length,
+      reinterpret_cast<int32_t*>(dst), _smem_reg, FILTERED_TOPK_SMEM_DYNAMIC);
 }
 
 // Helper to compute GCD for VEC_SIZE selection

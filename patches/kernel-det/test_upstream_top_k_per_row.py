@@ -1394,8 +1394,8 @@ def test_persistent_topk_all_equal(num_rows: int, seq_len: int) -> None:
 @pytest.mark.parametrize("seq_len", [8192, 40000])
 @pytest.mark.parametrize("num_ties", [2047, 2048, 2049, 4096, 4097, 16384, 16385])
 def test_persistent_topk_pivot_ties(seq_len: int, num_ties: int) -> None:
-    """More keys equal to the threshold than fit: the lowest indices win,
-    however many candidates the old buffers could hold."""
+    """More keys equal to the threshold than there are slots: the lowest
+    indices win, for any number of tie candidates."""
     top_k = 2048
     torch.set_default_device("cuda:0")
     if num_ties > seq_len - 1:

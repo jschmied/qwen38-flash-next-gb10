@@ -28,7 +28,7 @@ Cause: output slots are handed out by `atomicAdd` in thread-arrival order, and e
 
 ## Test plan
 
-- New tests in `tests/kernels/test_top_k_per_row.py`: `test_persistent_topk_deterministic` (rows {1, 8, 64} × lengths {1k, 4k, 8k, 20k, 40k} × k {512, 2048} × {random, tie-heavy}: 6 calls bit-identical and equal to the exact reference), `test_persistent_topk_all_equal` (all keys equal → exactly `[0, k)` 20×), `test_persistent_topk_pivot_ties` (tie populations of 2047 … 16385 around every buffer size the old kernels used).
+- New tests in `tests/kernels/test_top_k_per_row.py`: `test_persistent_topk_deterministic` (rows {1, 8, 64} × lengths {1k, 4k, 8k, 20k, 40k} × k {512, 2048} × {random, tie-heavy}: 6 calls bit-identical and equal to the exact reference), `test_persistent_topk_all_equal` (all keys equal → exactly `[0, k)` 20×), `test_persistent_topk_pivot_ties` (tie populations of 2047 … 16385).
 - The same 177 cases were run against a standalone build of these exact sources on a GB10 (sm_121): 177 / 177 pass; on the same inputs the unmodified kernel reproduces its own output in 0 / 177 cases.
 - Hardware other than sm_121 not tested by me; the change is architecture-independent (no `atomicAdd` slot assignment remains on any path).
 
