@@ -1041,6 +1041,20 @@ all depths counter-identical across 3 starts: True
     side of that). The old-loop numbers (58) are retired; the served config's choice is a
     workload question, not a defect question. Raw: `notes/data/mtpgrid3.txt`.
 
+62. **Prefill cost of the exact-top-k workaround: +6 % TTFT.** `MTPTTFT` (no spec, prefix cache
+    off, det MoE on both arms, 3 starts each, 3 requests per point, per-arm activation verified):
+
+    | prompt | stock `persistent_topk` | exact `torch.topk` (workaround) | cost |
+    | --- | --- | --- | --- |
+    | 7,503 tokens | 3.12 / 3.13 / 3.14 s | 3.32 / 3.32 / 3.44 s | +6.1 % |
+    | 29,263 tokens | 11.25 / 11.31 / 11.38 s | 11.97 / 12.02 / 11.94 s | +6.4 % |
+
+    The cost is flat in context length (the selection is O(rows × columns) either way), and far
+    below the community overlay's −8…−40 % (which replaced the kernel on every layer with a
+    Python top-k over the full logits *and* a canonical sort). The kernel fix (`patches/
+    kernel-det/`) is meant to bring this to ≈0; its microbenchmark is queued. Decode cost of the
+    workaround at c=1 is inside the run-to-run band (finding 61 vs 57). Raw: `notes/data/mtpttft.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

@@ -1,0 +1,50 @@
+preflight OK 10:23
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  qsafix INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1 or VLLM_QSA_SORT=1)
+=== TTstock_a  batch=4096  10:23 ===
+
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  TTstock_a TTFT 8k: prompt_tokens=7503 median=3.12s  all=4.32 3.12 3.10
+  TTstock_a TTFT 30k: prompt_tokens=29263 median=11.25s  all=11.24 11.25 11.39
+  ACCEPT TTstock_a-post: no draft tokens recorded (spec off, or counters absent)
+=== TTexact_a  batch=4096  10:35 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTexact_a TTFT 8k: prompt_tokens=7503 median=3.32s  all=3.75 3.32 3.28
+  TTexact_a TTFT 30k: prompt_tokens=29263 median=11.97s  all=11.97 11.97 11.97
+  ACCEPT TTexact_a-post: no draft tokens recorded (spec off, or counters absent)
+    TTexact_a: (Worker pid=1943975) QSAFIX active: exact
+    TTstock_a QSAFIX lines (expect 0): 0
+=== TTstock_b  batch=4096  10:47 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTstock_b TTFT 8k: prompt_tokens=7503 median=3.13s  all=4.40 3.13 3.11
+  TTstock_b TTFT 30k: prompt_tokens=29263 median=11.31s  all=11.31 11.28 11.32
+  ACCEPT TTstock_b-post: no draft tokens recorded (spec off, or counters absent)
+=== TTexact_b  batch=4096  10:57 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTexact_b TTFT 8k: prompt_tokens=7503 median=3.32s  all=3.62 3.32 3.29
+  TTexact_b TTFT 30k: prompt_tokens=29263 median=12.02s  all=12.01 12.02 12.04
+  ACCEPT TTexact_b-post: no draft tokens recorded (spec off, or counters absent)
+    TTexact_b: (Worker pid=1949092) QSAFIX active: exact
+    TTstock_b QSAFIX lines (expect 0): 0
+=== TTstock_c  batch=4096  11:08 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTstock_c TTFT 8k: prompt_tokens=7503 median=3.14s  all=4.76 3.14 3.13
+  TTstock_c TTFT 30k: prompt_tokens=29263 median=11.38s  all=11.77 11.38 11.37
+  ACCEPT TTstock_c-post: no draft tokens recorded (spec off, or counters absent)
+=== TTexact_c  batch=4096  11:20 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTexact_c TTFT 8k: prompt_tokens=7503 median=3.44s  all=4.50 3.44 3.28
+  TTexact_c TTFT 30k: prompt_tokens=29263 median=11.94s  all=11.94 11.94 11.98
+  ACCEPT TTexact_c-post: no draft tokens recorded (spec off, or counters absent)
+    TTexact_c: (Worker pid=1988897) QSAFIX active: exact
+    TTstock_c QSAFIX lines (expect 0): 0
+  qsafix REMOVED
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==
