@@ -1,0 +1,178 @@
+OK   rows= 1 cols= 1024 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols= 1024 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols= 4096 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols= 4096 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols= 4096 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols= 4096 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols= 4096 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols= 4096 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols= 8192 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols= 8192 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols= 8192 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols= 8192 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols= 8192 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols= 8192 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols=20000 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols=20000 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols=20000 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols=20000 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols=20000 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols=20000 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols=40000 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols=40000 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols=40000 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols=40000 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 1 cols=40000 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 1 cols=40000 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols= 1024 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols= 1024 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols= 4096 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols= 4096 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols= 4096 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols= 4096 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols= 4096 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols= 4096 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols= 8192 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols= 8192 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols= 8192 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols= 8192 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols= 8192 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols= 8192 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols=20000 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols=20000 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols=20000 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols=20000 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols=20000 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols=20000 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols=40000 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols=40000 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols=40000 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols=40000 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows= 8 cols=40000 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows= 8 cols=40000 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols= 1024 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols= 1024 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols= 4096 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols= 4096 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols= 4096 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols= 4096 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols= 4096 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols= 4096 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols= 8192 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols= 8192 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols= 8192 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols= 8192 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols= 8192 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols= 8192 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols=20000 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols=20000 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols=20000 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols=20000 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols=20000 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols=20000 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols=40000 k= 512 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols=40000 k= 512 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols=40000 k=1024 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols=40000 k=1024 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   rows=64 cols=40000 k=2048 rand: det identical x6=True exact=True | stock identical x3=False stock set==ref=True
+OK   rows=64 cols=40000 k=2048 ties: det identical x6=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols= 8192 k=512: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols= 8192 k=1024: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols= 8192 k=2048: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols=20000 k=512: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols=20000 k=1024: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols=20000 k=2048: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols=40000 k=512: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols=40000 k=1024: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows= 1 cols=40000 k=2048: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows=64 cols= 8192 k=512: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows=64 cols= 8192 k=1024: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows=64 cols= 8192 k=2048: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows=64 cols=40000 k=512: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows=64 cols=40000 k=1024: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   ALL-EQUAL rows=64 cols=40000 k=2048: det identical x100=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=257 ties=511: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=256 ties=512: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=256 ties=513: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=0 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=0 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=0 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=0 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=512 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=513 ties=1023: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=512 ties=1024: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=512 ties=1025: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=0 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=0 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=0 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=0 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=1024 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=1025 ties=2047: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=1024 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=1024 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=1024 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=1024 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=194 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=194 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols= 8192 k=2048 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=257 ties=511: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=256 ties=512: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=256 ties=513: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=0 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=0 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=0 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=0 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=0 ties=16384: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=512 above=0 ties=16385: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=513 ties=1023: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=512 ties=1024: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=512 ties=1025: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=0 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=0 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=0 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=0 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=0 ties=16384: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=1024 above=0 ties=16385: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=1025 ties=2047: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=1024 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=1024 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=1024 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=1024 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=194 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=194 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=0 ties=16384: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows= 1 cols=40000 k=2048 above=0 ties=16385: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=257 ties=511: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=256 ties=512: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=256 ties=513: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=0 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=0 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=0 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=0 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=0 ties=16384: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=512 above=0 ties=16385: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=513 ties=1023: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=512 ties=1024: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=512 ties=1025: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=0 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=0 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=0 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=0 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=0 ties=16384: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=1024 above=0 ties=16385: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=1025 ties=2047: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=1024 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=1024 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=1024 ties=2048: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=1024 ties=2049: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=194 ties=3708: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=194 ties=3709: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=0 ties=4096: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=0 ties=16384: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+OK   PIVOT-TIES rows=64 cols=20000 k=2048 above=0 ties=16385: det identical x20=True exact=True | stock identical x3=False stock set==ref=False
+FAILS: 0

@@ -73,15 +73,15 @@ inline cudaDeviceProp* get_device_prop() {
 // Utility to get the current CUDA stream for a given device using stable APIs.
 // Returns a cudaStream_t for use in kernel launches.
 inline cudaStream_t get_current_cuda_stream(int32_t device_index = -1) {
-  // DET build: torch 2.13 shim; the caller holds a DeviceGuard
   if (device_index < 0) {
     int dev = 0;
     cudaGetDevice(&dev);
     device_index = static_cast<int32_t>(dev);
   }
-  StreamHandle handle = nullptr;
-  TORCH_ERROR_CODE_CHECK(aoti_torch_get_current_stream(device_index, &handle));
-  return reinterpret_cast<cudaStream_t>(handle);
+  void* stream_ptr = nullptr;
+  TORCH_ERROR_CODE_CHECK(
+      aoti_torch_get_current_cuda_stream(device_index, &stream_ptr));
+  return reinterpret_cast<cudaStream_t>(stream_ptr);
 }
 
 // Utility to get the current cuBLAS handle using stable APIs.

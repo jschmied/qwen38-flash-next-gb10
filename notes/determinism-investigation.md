@@ -1055,6 +1055,41 @@ all depths counter-identical across 3 starts: True
     kernel-det/`) is meant to bring this to ≈0; its microbenchmark is queued. Decode cost of the
     workaround at c=1 is inside the run-to-run band (finding 61 vs 57). Raw: `notes/data/mtpttft.txt`.
 
+63. **Kernel fix `patches/kernel-det` v2.3: correct and deterministic on sm_121; 1.3–4× the stock
+    kernel's per-call time.** Built standalone as `_C_det` (three build defects fixed first, all in
+    the standalone glue, none in the kernel: the stable-shim stream getter must be
+    `aoti_torch_get_current_cuda_stream` behind `-DUSE_CUDA` — the generic `aoti_torch_get_current_stream`
+    returns an opaque `c10::Stream` handle and segfaults in `cudaMemsetAsync`; the dynamic-smem request
+    must leave room for the kernel's static `__shared__` BlockScan scratch, or `cudaFuncSetAttribute`
+    rejects the full 99 KB opt-in). `test_det.py`: **177 / 177 cases** bit-identical across 6 (ALL-EQUAL:
+    100, PIVOT-TIES: 20) calls and equal to the exact reference (value desc, index asc), on every path
+    (decode ≤ 8k, medium ≤ 32k, multi-CTA > 32k). The stock op reproduced its own output in **0 / 177**
+    cases (order) and on all 39 tie-heavy inputs returned a set other than lowest-index (a tie-break
+    that is valid per call, but finding 53 showed it changes between calls). Raw: `patches/kernel-det/
+    test_results.txt`.
+
+    `bench_det.py` (5 × 50 launches, median µs, stock re-measured after det; full table in
+    `patches/kernel-det/bench_results.txt`):
+
+    | rows | n | k | stock | det | ratio |
+    | --- | --- | --- | --- | --- | --- |
+    | 1 | 1,024 | 512 | 8.3 | 10.4 | 1.26 |
+    | 1 | 8,192 | 2,048 | 10.3 | 30.1 | 2.91 |
+    | 1 | 32,768 | 2,048 | 18.5 | 71.8 | 3.87 |
+    | 1 | 65,536 | 2,048 | 16.5 | 39.0 | 2.36 |
+    | 64 | 8,192 | 2,048 | 18.5 | 57.5 | 3.10 |
+    | 64 | 32,768 | 2,048 | 55.5 | 207.1 | 3.73 |
+    | 64 | 65,536 | 2,048 | 108.6 | 231.9 | 2.13 |
+
+    Two things follow. (a) The multi-CTA path (> 32k, deterministic emission on top of the existing
+    radix rounds) is *cheaper* than the single-CTA `det_select_row` at 32k — the four rescans plus
+    the in-block sort dominate; routing more rows to the multi-CTA path (`RADIX_THRESHOLD`) is the
+    first optimisation to try. (b) Model-level cost estimate, 12 QSA layers: decode at 32k context
+    +0.6 ms/step (≈ +1.5 % of 44 ms); prefill 7.5k tokens ≈ +55 ms (≈ +1.8 % TTFT, vs +6.1 % for the
+    Python workaround in finding 62). Estimates until the end-to-end A/B runs. Note for the upstream
+    PR: on GB10 the `num_rows > 32` filtered path is never taken (`sharedMemPerBlockOptin` = 101,376 <
+    128 K), so the filtered-kernel change is compile-checked here but not executed.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

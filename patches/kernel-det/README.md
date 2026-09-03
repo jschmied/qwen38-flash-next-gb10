@@ -33,7 +33,14 @@ whether the stock op reproduces itself on the same inputs.
 100× on every path, and pivot-tie populations of k−1, k, k+1, 2048, 2049, 3708, 3709, 4096,
 16384, 16385 around every buffer size the original kernels used.
 
-Status: v2 written 2026-09-03; compile + link + tests queued behind the measurement runs (`kdet`).
+Status (2026-09-03): v2.3 builds and links against torch 2.13 / CUDA 13 on the box; `test_det.py`
+177 / 177 (`test_results.txt`); `bench_det.py` in `bench_results.txt` — det costs 1.3–4× the stock
+call (8→10 µs at n=1k, 18.5→72 µs at n=32k/k=2048, single row), the multi-CTA path (> 32k) is the
+cheaper one. Model-level estimate ≈ +1.5 % decode at 32k ctx, ≈ +1.8 % TTFT at 7.5k (finding 63).
+Build notes: the standalone glue needs `-DUSE_CUDA` (the CUDA stream getter in torch's stable shim
+is guarded by it; the generic stream getter returns an opaque handle and segfaults in the memset)
+and the launcher caps the dynamic-smem request at `sharedMemPerBlockOptin − static __shared__`.
+On GB10 the opt-in is 101,376 bytes, so the `num_rows > 32` filtered path is never dispatched here.
 
 Follow-up (not in this diff, on purpose): the filtered kernel keeps its `VEC_SIZE` /
 `UsePredicatedShortLoads` instantiation ladder, `FilteredTopKTraits`, `vec_t` and

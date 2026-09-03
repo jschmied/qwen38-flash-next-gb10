@@ -7,7 +7,7 @@
 # up to 32768 then multi-CTA; rows 64 -> filtered kernel).
 import sys, itertools, torch
 torch.ops.load_library(sys.argv[1])
-import vllm._C  # noqa: F401  (stock op, for the reproducibility column)
+import vllm  # noqa: F401  (loads the stable-ABI ops incl. _C.persistent_topk)
 dev = "cuda"
 def ref_topk(logits, lengths, k):
     rows, cols = logits.shape; out = torch.full((rows, k), -1, dtype=torch.int32, device=dev)

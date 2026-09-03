@@ -1,7 +1,7 @@
 # Kernel microbenchmark: stock _C.persistent_topk vs _C_det.persistent_topk.
 #   argv[1] = path to _C_det .so.  Rows {1, 64}, n {1k,4k,8k,16k,32k,64k}, k {512, 2048}, random.
 import sys, torch, time, itertools
-torch.ops.load_library(sys.argv[1]); import vllm._C  # noqa
+torch.ops.load_library(sys.argv[1]); import vllm  # noqa
 dev="cuda"; ws=torch.empty(64*1024*1024, dtype=torch.uint8, device=dev)
 import statistics
 def bench(op, logits, lengths, k, iters=50, batches=5):
