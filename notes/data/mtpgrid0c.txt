@@ -1,0 +1,120 @@
+preflight OK 20:16 (STOCK stack, EOS-correct loop; remainder of mtpgrid0: S7_b S8_b S0_c..S8_c)
+=== S7_b  batch=4096  20:16 ===
+  DIED after 590s
+=== S8_b  batch=4096  20:26 ===
+  DIED after 670s
+=== S0_c  batch=4096  20:39 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  S0_c turn 1:   4.37 s    29 tok  hits+      0  acc  n/a
+  S0_c turn 2:   2.79 s    38 tok  hits+   4800  acc  n/a
+  S0_c turn 3:   1.28 s    26 tok  hits+   7200  acc  n/a
+  S0_c turn 4:   1.30 s    25 tok  hits+   7200  acc  n/a
+  S0_c turn 5:   1.37 s    26 tok  hits+   7200  acc  n/a
+  S0_c turn 6:   1.31 s    24 tok  hits+   7200  acc  n/a
+  S0_c turn 7:   1.58 s    31 tok  hits+   7200  acc  n/a
+  S0_c turn 8:   1.25 s    21 tok  hits+   7200  acc  n/a
+  S0_c TOTAL 15.2 s over 8 turns  (1.90 s/turn)  220 tok  69.24 ms/tok
+  ACCEPT S0_c-post: no draft tokens recorded (spec off, or counters absent)
+  ACCEPT S0_c-post: no draft tokens recorded (spec off, or counters absent)
+=== S1_c  batch=4096  20:52 ===
+  DIED after 140s
+=== S2_c  batch=4096  20:54 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S2_c turn 1:   4.52 s    24 tok  hits+      0  acc  70.0% len 2.40
+  S2_c turn 2:   1.76 s    18 tok  hits+   4800  acc  78.6% len 2.57
+  S2_c turn 3:   1.55 s    11 tok  hits+   4800  acc  87.5% len 2.75
+  S2_c turn 4:   1.67 s    12 tok  hits+   4800  acc  50.0% len 2.00
+  S2_c turn 5:   1.63 s    14 tok  hits+   4800  acc  90.0% len 2.80
+  S2_c turn 6:   1.96 s    17 tok  hits+   4800  acc  35.0% len 1.70
+  S2_c turn 7:   1.96 s    17 tok  hits+   4800  acc  38.9% len 1.78
+  S2_c turn 8:   1.90 s    18 tok  hits+   4800  acc  62.5% len 2.25
+  S2_c TOTAL 17.0 s over 8 turns  (2.12 s/turn)  131 tok  129.40 ms/tok
+  ACCEPT S2_c-post: drafts=59 draft_tok=118 accepted=71 rate=60.2%  mean_accept_len=2.20
+  ACCEPT S2_c-post: drafts=59 draft_tok=118 accepted=71 rate=60.2%  mean_accept_len=2.20
+=== S3_c  batch=4096  21:08 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S3_c turn 1:   4.25 s    29 tok  hits+      0  acc  63.3% len 2.90
+  S3_c turn 2:   2.19 s    35 tok  hits+   4800  acc  66.7% len 3.00
+  S3_c turn 3:   1.95 s    29 tok  hits+   4800  acc  70.4% len 3.11
+  S3_c turn 4:   2.18 s    27 tok  hits+   4800  acc  44.4% len 2.33
+  S3_c turn 5:   1.90 s    28 tok  hits+   4800  acc  87.5% len 3.62
+  S3_c turn 6:   2.28 s    29 tok  hits+   4800  acc  43.6% len 2.31
+  S3_c turn 7:   2.29 s    31 tok  hits+   4800  acc  48.7% len 2.46
+  S3_c turn 8:   2.10 s    25 tok  hits+   4800  acc  53.3% len 2.60
+  S3_c TOTAL 19.1 s over 8 turns  (2.39 s/turn)  233 tok  82.12 ms/tok
+  ACCEPT S3_c-post: drafts=87 draft_tok=261 accepted=151 rate=57.9%  mean_accept_len=2.74
+  ACCEPT S3_c-post: drafts=87 draft_tok=261 accepted=151 rate=57.9%  mean_accept_len=2.74
+=== S4_c  batch=4096  21:21 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S4_c turn 1:   4.44 s    29 tok  hits+      0  acc  68.8% len 3.75
+  S4_c turn 2:   2.37 s    35 tok  hits+   4848  acc  46.2% len 2.85
+  S4_c turn 3:   2.05 s    26 tok  hits+   4848  acc  47.2% len 2.89
+  S4_c turn 4:   2.03 s    30 tok  hits+   4848  acc  61.1% len 3.44
+  S4_c turn 5:   2.17 s    22 tok  hits+   4848  acc  32.5% len 2.30
+  S4_c turn 6:   2.06 s    20 tok  hits+   4848  acc  30.6% len 2.22
+  S4_c turn 7:   2.18 s    26 tok  hits+   4848  acc  37.5% len 2.50
+  S4_c turn 8:   2.27 s    31 tok  hits+   4848  acc  47.7% len 2.91
+  S4_c TOTAL 19.6 s over 8 turns  (2.45 s/turn)  219 tok  89.39 ms/tok
+  ACCEPT S4_c-post: drafts=79 draft_tok=316 accepted=145 rate=45.9%  mean_accept_len=2.84
+  ACCEPT S4_c-post: drafts=79 draft_tok=316 accepted=145 rate=45.9%  mean_accept_len=2.84
+=== S5_c  batch=4096  21:33 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S5_c turn 1:   4.36 s    29 tok  hits+      0  acc  62.9% len 4.14
+  S5_c turn 2:   1.98 s    22 tok  hits+   4848  acc  56.7% len 3.83
+  S5_c turn 3:   1.97 s    21 tok  hits+   4848  acc  37.1% len 2.86
+  S5_c turn 4:   2.16 s    21 tok  hits+   4848  acc  28.9% len 2.44
+  S5_c turn 5:   2.02 s    18 tok  hits+   4848  acc  34.3% len 2.71
+  S5_c turn 6:   2.11 s    20 tok  hits+   4848  acc  30.0% len 2.50
+  S5_c turn 7:   2.38 s    28 tok  hits+   4848  acc  32.7% len 2.64
+  S5_c turn 8:   1.92 s    18 tok  hits+   4848  acc  52.0% len 3.60
+  S5_c TOTAL 18.9 s over 8 turns  (2.36 s/turn)  177 tok  106.75 ms/tok
+  ACCEPT S5_c-post: drafts=60 draft_tok=300 accepted=120 rate=40.0%  mean_accept_len=3.00
+  ACCEPT S5_c-post: drafts=60 draft_tok=300 accepted=120 rate=40.0%  mean_accept_len=3.00
+=== S6_c  batch=4096  21:46 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S6_c turn 1:   4.24 s    28 tok  hits+      0  acc  47.9% len 3.88
+  S6_c turn 2:   2.42 s    34 tok  hits+   4896  acc  39.4% len 3.36
+  S6_c turn 3:   2.06 s    29 tok  hits+   4896  acc  54.8% len 4.29
+  S6_c turn 4:   2.30 s    26 tok  hits+   4896  acc  28.3% len 2.70
+  S6_c turn 5:   2.21 s    21 tok  hits+   4896  acc  24.1% len 2.44
+  S6_c turn 6:   2.23 s    20 tok  hits+   4896  acc  22.2% len 2.33
+  S6_c turn 7:   2.18 s    30 tok  hits+   4896  acc  47.9% len 3.88
+  S6_c turn 8:   2.29 s    30 tok  hits+   4896  acc  37.0% len 3.22
+  S6_c TOTAL 19.9 s over 8 turns  (2.49 s/turn)  218 tok  91.46 ms/tok
+  ACCEPT S6_c-post: drafts=71 draft_tok=426 accepted=157 rate=36.9%  mean_accept_len=3.21
+  ACCEPT S6_c-post: drafts=71 draft_tok=426 accepted=157 rate=36.9%  mean_accept_len=3.21
+=== S7_c  batch=4096  21:58 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S7_c turn 1:   5.51 s    28 tok  hits+      0  acc  41.1% len 3.88
+  S7_c turn 2:   1.96 s    22 tok  hits+   4944  acc  40.5% len 3.83
+  S7_c turn 3:   1.98 s    21 tok  hits+   4944  acc  38.1% len 3.67
+  S7_c turn 4:   2.30 s    16 tok  hits+   4944  acc  12.7% len 1.89
+  S7_c turn 5:   1.91 s    12 tok  hits+   4944  acc  22.9% len 2.60
+  S7_c turn 6:   1.92 s    13 tok  hits+   4944  acc  25.7% len 2.80
+  S7_c turn 7:   1.93 s    15 tok  hits+   4944  acc  31.4% len 3.20
+  S7_c turn 8:   1.95 s    13 tok  hits+   4944  acc  25.7% len 2.80
+  S7_c TOTAL 19.5 s over 8 turns  (2.43 s/turn)  140 tok  138.98 ms/tok
+  ACCEPT S7_c-post: drafts=49 draft_tok=343 accepted=101 rate=29.4%  mean_accept_len=3.06
+  ACCEPT S7_c-post: drafts=49 draft_tok=343 accepted=101 rate=29.4%  mean_accept_len=3.06
+=== S8_c  batch=4096  22:11 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S8_c turn 1:   4.80 s    29 tok  hits+      0  acc  37.5% len 4.00
+  S8_c turn 2:   2.70 s    35 tok  hits+   4944  acc  30.7% len 3.45
+  S8_c turn 3:   2.54 s    26 tok  hits+   4944  acc  21.2% len 2.70
+  S8_c turn 4:   2.39 s    28 tok  hits+   4944  acc  27.8% len 3.22
+  S8_c turn 5:   2.32 s    22 tok  hits+   4944  acc  23.4% len 2.88
+  S8_c turn 6:   2.39 s    20 tok  hits+   4944  acc  16.7% len 2.33
+  S8_c turn 7:   2.42 s    26 tok  hits+   4944  acc  25.0% len 3.00
+  S8_c turn 8:   2.69 s    31 tok  hits+   4944  acc  23.9% len 2.91
+  S8_c TOTAL 22.2 s over 8 turns  (2.78 s/turn)  217 tok  102.53 ms/tok
+  ACCEPT S8_c-post: drafts=75 draft_tok=600 accepted=154 rate=25.7%  mean_accept_len=3.05
+  ACCEPT S8_c-post: drafts=75 draft_tok=600 accepted=154 rate=25.7%  mean_accept_len=3.05
+== ALL DONE ==

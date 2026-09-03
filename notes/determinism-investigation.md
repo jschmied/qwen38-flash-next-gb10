@@ -1137,6 +1137,17 @@ all depths counter-identical across 3 starts: True
     #53388 disabling the trailing prefix-cache block drop under spec decode (= plan §5 item 1),
     #53877 GDN decode beta in FP32, #53456 XD-RoPE grid on prefix hit, #54251 GDN RMSNorm warm-up.
 
+81. **Grid start c (stock preview stack, EOS-correct agent loop, 22:23): the MTP acceptance ladder is
+    the same for the third time.** Rate by n: 60 / 58 / 46 / 40 / 37 / 29 / 26 % for n = 2..8 (a/b:
+    64/65, 45/50, 47/49, 37/41, 39/30, 27, 25); mean accepted length rises 2.2 → 3.0 and plateaus from
+    n=5; seconds per turn: n=0 1.90, n=2 2.12, n=3..7 2.36–2.49, n=8 2.78 (raw: `notes/data/mtpgrid0c.txt`,
+    table: `notes/data/mtpgrid0-partial.md`). Three starts agree within the run-to-run band of finding 61,
+    so the before-column for the #53142 correction is complete except n=1 (redo queued) — and the
+    conclusion holds: on the preview stack spec decode does not buy the agent loop a faster turn at
+    130–230-token turns; the no-spec arm is the fastest per turn at every start. Three arms of this run
+    died for two reasons that are both infrastructure, now fixed and documented in `failure-modes.md`
+    (the swapfile the reboot dropped; the PSI guard's "some" rule).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
