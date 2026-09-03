@@ -40,7 +40,7 @@ Fixes #54521. Related: #53142, #54912 (QSA ring bound).
 
 ---
 
-This PR includes AI-assisted code (Claude, Claude Code). Every line was reviewed by me; three review rounds are recorded in the linked repo (`patches/kernel-det/README.md`).
+This PR includes AI-assisted code (Claude Code). Every line was reviewed by the submitter.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
