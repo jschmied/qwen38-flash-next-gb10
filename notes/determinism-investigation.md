@@ -979,6 +979,31 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
     MTP head attends densely; ours re-selects through QSA — `densedraft_patch.py`), index sharing
     (SGLang's strategy; `index_share_for_mtp_iteration`). Raw: `notes/data/mtpgrid2.txt`.
 
+59. **The per-turn "healthy/broken" split is a BENCHMARK ARTIFACT of `ignore_eos`.** `MTPACC2`
+    (per-step acceptance from the scheduler + saved texts, full fix stack, n=2 and n=5, cache on):
+    - At n=2 a "broken" turn accepts normally for the first ~12 steps (`2102022220122…`), then runs
+      **50–90 consecutive steps with 0 accepted**, sometimes recovering to full 2s at the end.
+    - The saved text shows why: the model's real answer is **30–40 tokens** ("The code lacks X, so
+      …"). The loop sends `ignore_eos: true, max_tokens: 130`, so the target keeps generating past
+      its end-of-turn token. What it produces after EOS is one of two near-tie continuations:
+      the chat-template **restart** (`<|im_start|>user … <|im_start|>assistant <think> …` followed by
+      a verbatim repeat of the answer — trivially predictable, drafts accepted at ~100 %) or a
+      **wall of `<|im_start|>`** tokens (never predicted by the drafter, 0 accepted).
+    - Answer fraction of each turn's text: 7–30 %. Filler type per turn matches the state exactly:
+      ACC2on turns 2/5/7/8 = spam = the four broken turns; ACC5on all restart = all healthy; the
+      no-spec reference picks spam in 6 of 8 turns.
+    So "acceptance" in this loop was mostly the drafter's ability to predict post-EOS filler, and the
+    "regime" was which filler the target picked at a near-tie after EOS — resolved randomly under
+    the nondeterminism (findings 41–42: per request, prompt-independent) and deterministically
+    once A and B were fixed (55, 58: fixed per depth, because the verify-shape numerics shift the
+    tie). **The depth grid (58), the 40-turn DEG runs (9), the acceptance correlation (8), the
+    "target moves under the drafter" story and every MTP ms/tok from `agentloop*.py` are
+    contaminated by this.** The determinism findings (bit-level hashes, max_tokens 1–4) are not.
+    What stands: bug A and bug B are real nondeterminism with validated fixes; "defect C" and the
+    per-depth pattern are the artifact. `MTPGRID3` re-measures n=0..8 × 3 starts with the loop
+    stopping at EOS. Raw: `notes/data/acclog_n2_cache_on.txt`, `acc_n2_cache_on_texts.json`,
+    `acc_n5_cache_on_texts.json`, `mtpacc2-partial.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

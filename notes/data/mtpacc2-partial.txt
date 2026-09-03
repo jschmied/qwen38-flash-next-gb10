@@ -1,0 +1,72 @@
+preflight OK 03:53
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  qsafix INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1 or VLLM_QSA_SORT=1)
+  draft-hash diagnostic INSTALLED (inert unless VLLM_DRAFT_HASH=1)
+  align patches installed
+  acclog INSTALLED (inert unless VLLM_ACC_LOG=1)
+=== ACC5on  batch=4096  03:53 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=6 enforce_eager=0
+  ACC5on pass1 turn 1:   7.77 s   130 tok  hits+       0  acc= 63.2% F    gen=6a885d
+  ACC5on pass1 turn 2:   4.24 s   130 tok  hits+    4848  acc= 68.0% F    gen=1c75cc
+  ACC5on pass1 turn 3:   4.32 s   130 tok  hits+    4848  acc= 60.6% F    gen=2170bb
+  ACC5on pass1 turn 4:   4.58 s   130 tok  hits+    4848  acc= 55.9% F    gen=4c8749
+  ACC5on pass1 turn 5:   4.59 s   130 tok  hits+    4848  acc= 56.5% F    gen=d3c0c9
+  ACC5on pass1 turn 6:   3.89 s   130 tok  hits+    6464  acc= 58.2% F    gen=8385f1
+  ACC5on pass1 turn 7:   3.63 s   130 tok  hits+    6464  acc= 69.0% F    gen=99e417
+  ACC5on pass1 turn 8:   3.68 s   130 tok  hits+    6464  acc= 72.4% F    gen=8690d1
+  ACC5on pass1 PATTERN FFFFFFFF  DIV -  TOTAL 36.7 s  1040 tok  35.28 ms/tok
+  ACCEPT ACC5on-post: drafts=252 draft_tok=1260 accepted=789 rate=62.6%  mean_accept_len=4.13
+    ACC5on: (Worker pid=1614803) QSAFIX active: exact
+    ACC5on ACCLOG lines: 252
+  --- ACC5on per-step ---
+turn 1: steps=31 acc=98/155 (63%) first-pos=7515  seq=5332215011355512515055525514155
+         text: 'The `handler` function builds a context object from the incoming reque'
+turn 2: steps=30 acc=102/150 (68%) first-pos=7655  seq=511555000050055555552415555553
+         text: 'The code lacks error handling, so any exception raised in `build_conte'
+turn 3: steps=32 acc=97/160 (61%) first-pos=7802  seq=50102311050200055535245555553555
+         text: 'The code lacks input validation, so malformed or malicious requests co'
+turn 4: steps=34 acc=95/170 (56%) first-pos=7946  seq=2103022102150300551554353353555551
+         text: 'The code lacks type hints and documentation, making it difficult to un'
+turn 5: steps=34 acc=96/170 (56%) first-pos=8075  seq=2021001321205335335515515515515515
+         text: 'The code lacks logging, making it difficult to trace request flows or '
+turn 6: steps=33 acc=96/165 (58%) first-pos=8201  seq=322530000050355035335515515515515
+         text: 'The code lacks timeout controls, so a slow `build_context` or `dispatc'
+turn 7: steps=29 acc=100/145 (69%) first-pos=8330  seq=23214315225515551453555053355
+         text: 'The code lacks idempotency guarantees, so repeated calls with the same'
+turn 8: steps=29 acc=105/145 (72%) first-pos=8459  seq=32543215203554555425535550525
+         text: 'The code lacks concurrency safety, so if `build_context` or `dispatch`'
+=== ACC2on  batch=4096  04:06 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=6 enforce_eager=0
+  ACC2on pass1 turn 1:   9.88 s   130 tok  hits+       0  acc= 25.0% s    gen=831564
+  ACC2on pass1 turn 2:   7.79 s   130 tok  hits+    4800  acc= 10.3% s    gen=a4e1cd
+  ACC2on pass1 turn 3:   4.39 s   130 tok  hits+    4800  acc= 87.2% F    gen=f38c74
+  ACC2on pass1 turn 4:   6.50 s   130 tok  hits+    4800  acc= 27.7% s    gen=3700d5
+  ACC2on pass1 turn 5:   8.13 s   130 tok  hits+    4800  acc=  9.2% s    gen=58bfc0
+  ACC2on pass1 turn 6:   4.19 s   130 tok  hits+    6400  acc= 78.4% F    gen=3328a6
+  ACC2on pass1 turn 7:   7.06 s   130 tok  hits+    6400  acc= 14.4% s    gen=3e6aa0
+  ACC2on pass1 turn 8:   5.80 s   130 tok  hits+    6400  acc= 32.7% s    gen=c884c2
+  ACC2on pass1 PATTERN ssFssFss  DIV -  TOTAL 53.7 s  1040 tok  51.67 ms/tok
+  ACCEPT ACC2on-post: drafts=662 draft_tok=1324 accepted=373 rate=28.2%  mean_accept_len=1.56
+    ACC2on: (Worker pid=1617181) QSAFIX active: exact
+    ACC2on ACCLOG lines: 662
+  --- ACC2on per-step ---
+turn 1: steps=86 acc=43/172 (25%) first-pos=7509  seq=21020222201220000000000000000000000000000000000000000000000000000000000020222222222221
+         text: 'The `handler` function processes an incoming request by building a con'
+turn 2: steps=107 acc=22/214 (10%) first-pos=7661  seq=220222222200002200000000000000000000000000000000000000000000000000000000000000000000000000
+         text: 'The code lacks error handling, so any exception raised in `build_conte'
+turn 3: steps=47 acc=82/94 (87%) first-pos=7817  seq=22010222102202122222222222222222222222222212222
+         text: 'The code lacks input validation, so malformed or malicious requests co'
+turn 4: steps=83 acc=46/166 (28%) first-pos=7958  seq=20222211002110000000000000000000000000000100000000000000000000000000222222222222221
+         text: 'The code lacks timeout controls, so a slow or hanging `dispatch` call '
+turn 5: steps=109 acc=20/218 (9%) first-pos=8107  seq=211100102210000000000000000000000001010011100111001000000000000000000000000000000000000000
+         text: 'The code lacks logging, making it difficult to trace request flows or '
+turn 6: steps=51 acc=80/102 (78%) first-pos=8263  seq=212202210222111212202222222212020022022222222221222
+         text: 'The code lacks observability metrics, making it impossible to monitor '
+turn 7: steps=101 acc=29/202 (14%) first-pos=8406  seq=220112121102002000000000000000000000000100100100000000000000000000000000000000000000000000
+         text: 'The code lacks type hints, reducing static analysis capabilities and i'
+turn 8: steps=78 acc=51/156 (33%) first-pos=8559  seq=220212002122000110000001000000000100110001111111011100000111111111111111111001
+         text: 'The code lacks idempotency guarantees, so retrying a failed request co'
+=== ACC6on  batch=4096  04:18 ===
