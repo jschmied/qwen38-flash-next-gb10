@@ -953,7 +953,8 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
 
 58. **The depth grid on the full fix stack is bit-reproducible across starts, and four depths are
     broken deterministically.** `MTPGRID2` (prefix cache on, align + exact top-k + det MoE, compiled,
-    8-turn loop), starts a and b (c pending):
+    8-turn loop), three starts — **start c reproduced a and b to the counter at every depth**
+    (table shows a/b; `QSAFIX active` verified in all 27 arms):
 
     | n | ms/tok a / b | acceptance | accept len | pattern a / b | a vs b |
     | --- | --- | --- | --- | --- | --- |
@@ -976,7 +977,7 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
     used it), but the fresh-cache arm still runs as the control. Next arms, in order: per-step
     acceptance (where in a turn does n=2 fail?), fresh compile cache, DENSE drafter (llama.cpp's
     MTP head attends densely; ours re-selects through QSA — `densedraft_patch.py`), index sharing
-    (SGLang's strategy; `index_share_for_mtp_iteration`). Raw: `notes/data/mtpgrid2-partial.txt`.
+    (SGLang's strategy; `index_share_for_mtp_iteration`). Raw: `notes/data/mtpgrid2.txt`.
 
 ## Independent corroboration
 
