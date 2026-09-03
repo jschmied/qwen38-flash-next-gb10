@@ -178,3 +178,9 @@ does), and **`--cap-add=SYS_PTRACE`** for `VLLM_PLE_CPU_OFFLOAD` in Docker, wher
 `Failed core proc(s): {}`.
 
 Hardware: NVIDIA DGX Spark, GB10, sm_121, 128 GB unified, aarch64.
+
+## License
+
+Apache License 2.0 (see `LICENSE` and `NOTICE`): any use, including commercial, with attribution.
+Patches under `patches/` that modify vLLM stay under vLLM's Apache 2.0 license; upstream pull
+requests carried here are credited in their headers.
