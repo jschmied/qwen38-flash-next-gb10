@@ -6,19 +6,21 @@ radix round first-come. On sm_121 that makes the selected ORDER vary run to run 
 elements share the threshold key than fit, the SET. The sparse attention sums the selected keys
 in output order, so either forks the hidden state (bit-level proof: findings 52–54).
 
-This directory is the kernel-side fix, as diffs against vLLM `main` (2026-09-02, c00091e0):
+This directory is the kernel-side fix, as a diff against vLLM `main` (2026-09-02, c00091e0):
+`persistent_topk.det.diff` (v2 — after review; v1 still admitted tie candidates into fixed
+buffers in arrival order before ranking them, so >buffer exact ties stayed scheduler-dependent).
 
-- `persistent_topk.det.diff` — decode / medium / large (multi-CTA) / filtered (>32k) paths
-- `topk_histogram_4096.det.diff` — the ≤32k filtered path used by every prefill row
+- **Every single-CTA row** (persistent decode/medium paths, and the filtered kernel for
+  float) goes through `det_select_row`: a radix select that **rescans the row for each of the
+  four key bytes** (no candidate buffers → no truncation, exact pivot), then one index-ordered
+  block scan that emits all elements above the pivot and the lowest-index `fin` elements equal
+  to it, then sorts the row ascending. Five reads of the row + one in-block sort of ≤2048 ints.
+- **Multi-CTA rows** (> RADIX_THRESHOLD) keep the existing radix rounds (histograms over the
+  chunk in shared memory, no truncation) and get a deterministic emission: per-CTA `>`/`==`
+  counts published before the barrier, slots from a prefix over CTAs, `==` elements ranked by
+  index with a block scan, CTA 0 sorts the finished row.
 
-Two changes, applied at every emission site:
-1. exact-key ties are collected and taken **lowest index first** (single-CTA paths: in-block
-   bitonic sort of the tie buffer; multi-CTA path: per-CTA counts published before the barrier,
-   slots from a prefix over CTAs, rank inside a CTA from a block scan);
-2. every finished row is **sorted ascending** in shared memory before it leaves the kernel.
-
-Cost: one in-block sort of ≤2048 ints per row (~66 compare-exchange steps at 1024 threads) plus
-the tie sort when ties exist. Buffer overflow behaviour (>4096 candidates in a bin) is unchanged.
+`topk_histogram_4096.cuh` is unchanged (its float instantiation is no longer reached).
 
 Standalone build (no vLLM rebuild): `build_det.py` compiles `topk_det.cu` + `bindings_det.cpp`
 with `torch.utils.cpp_extension.load` into `_C_det` (op `torch.ops._C_det.persistent_topk`, same
@@ -27,4 +29,8 @@ signature as `_C.persistent_topk`). `torch_utils.h` is a minimal copy for torch 
 asc), across rows {1, 8, 64} × lengths {1k … 40k} × k {512, 2048} × {random, tie-heavy}, and prints
 whether the stock op reproduces itself on the same inputs.
 
-Status: compiles for sm_121a; link + tests queued behind the measurement runs (`kdet` unit).
+`test_det.py` adds the review's adversarial cases: all-equal rows must return exactly `[0..k)`
+100× on every path, and pivot-tie populations of k−1, k, k+1, 2048, 2049, 3708, 3709, 4096,
+16384, 16385 around every buffer size the original kernels used.
+
+Status: v2 written 2026-09-03; compile + link + tests queued behind the measurement runs (`kdet`).

@@ -188,25 +188,8 @@ __device__ void tie_handle(const Tie* ties, uint32_t num_ties,
       } else if (bin < thr)
         active = false;  // below -> discard
       else if (r == 3)
-        wpos = 0xFFFFFFFFu;  // DETERMINISM: resolved by index below
-    }
-    if (r == 3) {
-      // DETERMINISM: rank the exact-key ties by index; the lowest indices win.
-      // det_tied lives past TS in the tie-buffer region (already in registers).
-      int* det_tied = reinterpret_cast<int*>(static_cast<char*>(_smem) + 4096);
-      const bool tied = (wpos == 0xFFFFFFFFu);
-      det_tied[tx] = tied ? static_cast<int>(tie.idx) : -1;
-      __syncthreads();
-      if (tied) {
-        uint32_t rank = 0;
-        for (uint32_t t = 0; t < kBlockSize; t++) {
-          const int o = det_tied[t];
-          if (o >= 0 && (o < static_cast<int>(tie.idx))) rank++;
-        }
-        const uint32_t eq = s->match.equal_count;
-        wpos = (rank < eq) ? (TopK - eq + rank) : TopK;
-      }
-      __syncthreads();
+        wpos = TopK - atomicAdd(&s->match.equal_count,
+                                -1u);  // last round: place remaining
     }
     remain -= na;
     if (!remain) break;  // all ties resolved early
@@ -309,28 +292,11 @@ __device__ void tie_handle_large(const Tie* ties, uint32_t num_ties,
       } else if (bin < thr) {
         active[e] = false;
       } else if (r == 3) {
-        active[e] = true;  // DETERMINISM: still tied, resolved by index below
-      }
-    }
-    if (r == 3) {
-      // DETERMINISM: rank the exact-key ties by index; the lowest indices win.
-      int* det_tied = reinterpret_cast<int*>(static_cast<char*>(_smem) + 4096);
-      __syncthreads();
-      for (uint32_t e = 0; e < kPerThread; e++)
-        det_tied[e * kBlockSize + tx] = active[e] ? static_cast<int>(my_ties[e].idx) : -1;
-      __syncthreads();
-      const uint32_t eq = s->match.equal_count;
-      for (uint32_t e = 0; e < kPerThread; e++) {
-        if (!active[e]) continue;
-        const int mine = static_cast<int>(my_ties[e].idx);
-        uint32_t rank = 0;
-        for (uint32_t t = 0; t < kPerThread * kBlockSize; t++) {
-          const int o = det_tied[t];
-          if (o >= 0 && o < mine) rank++;
+        uint32_t wpos = TopK - atomicAdd(&s->match.equal_count, -1u);
+        if (wpos < TopK) {
+          output[wpos] = my_ties[e].idx;
         }
-        if (rank < eq) output[TopK - eq + rank] = my_ties[e].idx;
       }
-      __syncthreads();
     }
 
     num_above += na;
@@ -364,7 +330,7 @@ struct Histogram4096Smem {
 template <uint32_t TopK, uint32_t HIST_BITS,
           uint32_t VECS_PER_THREAD = kHist4096VecsPerThread,
           bool UsePredicatedLoads = false>
-__device__ void histogram_4096_topk_core(const float* __restrict__ scores,
+__device__ void histogram_4096_topk(const float* __restrict__ scores,
                                     int32_t* __restrict__ output,
                                     uint32_t length, void* _smem) {
   constexpr uint32_t HIST_BINS = 1 << HIST_BITS;
@@ -580,36 +546,6 @@ __device__ void histogram_4096_topk_core(const float* __restrict__ scores,
                              smem);
     }
   }
-}
-
-// DETERMINISM: run the core, then sort the finished row (ascending index).
-template <uint32_t TopK, uint32_t HIST_BITS,
-          uint32_t VECS_PER_THREAD = kHist4096VecsPerThread,
-          bool UsePredicatedLoads = false>
-__device__ void histogram_4096_topk(const float* __restrict__ scores,
-                                    int32_t* __restrict__ output,
-                                    uint32_t length, void* _smem) {
-  histogram_4096_topk_core<TopK, HIST_BITS, VECS_PER_THREAD, UsePredicatedLoads>(
-      scores, output, length, _smem);
-  __syncthreads();
-  int* scratch = reinterpret_cast<int*>(static_cast<char*>(_smem) + 512);
-  for (uint32_t i = threadIdx.x; i < TopK; i += kBlockSize) scratch[i] = output[i];
-  __syncthreads();
-  for (uint32_t k = 2; k <= TopK; k <<= 1) {
-    for (uint32_t j = k >> 1; j > 0; j >>= 1) {
-      for (uint32_t i = threadIdx.x; i < TopK; i += kBlockSize) {
-        const uint32_t ixj = i ^ j;
-        if (ixj > i) {
-          const int a = scratch[i], b = scratch[ixj];
-          const bool up = ((i & k) == 0);
-          if ((a > b) == up) { scratch[i] = b; scratch[ixj] = a; }
-        }
-      }
-      __syncthreads();
-    }
-  }
-  for (uint32_t i = threadIdx.x; i < TopK; i += kBlockSize) output[i] = scratch[i];
-  __syncthreads();
 }
 
 template <uint32_t TopK, uint32_t HIST_BITS,
