@@ -118,3 +118,31 @@
     finding 67(b): the 128×128 config is more efficient per row at ≤ 4,096 rows. So on the preview
     build: **keep batch 4096, pad prompts to a multiple of 4** (2.81 s / 11.1 s). Everything beyond
     that needs the main build (dispatch fix + #54513) or a faster blockwise GEMM (finding 67(c)).
+
+71. **The large-M collapse of scaled FP8 GEMMs on GB10 is an L2-locality effect, not a kernel bug —
+    and chunking M at 4,096 rows recovers 3×.** Probes on the idle GPU (in_proj shape 16,384×2,560,
+    5 × 10 launches, median):
+
+    | M | blockwise, 1 launch | blockwise, 4,096-row chunks | cuBLASLt row-wise, 1 launch | row-wise, chunks |
+    | --- | --- | --- | --- | --- |
+    | 8,192 | 7.6 ms (91 TFLOPS) | **4.3 ms (161)** | 7.0 ms (99) | 4.2 ms (165) |
+    | 16,384 | 26.2 ms (53) | **8.6 ms (160)** | 26.3 ms (52) | 8.3 ms (165) |
+    | 32,768 | 52.9 ms (52) | **17.0 ms (161)** | 52.3 ms (53) | 16.5 ms (166) |
+
+    Two independent libraries (vLLM's CUTLASS 3.x blockwise kernel and cuBLASLt's row-wise path)
+    degrade to the same numbers; cuBLASLt's per-tensor path does not (≈ 175 TFLOPS at every M). GB10:
+    **48 SMs, 24 MiB L2**; the FP8 weight operand here is 42 MB. A tile raster that walks M-major
+    re-streams the weight from DRAM once per tile row as soon as M spans many tile rows — the
+    per-tensor kernel evidently rasters/swizzles so the weight stays L2-resident. Also: PyTorch gates
+    DeepSeek-style (1×128 / 128×128) `_scaled_mm` to SM90 ("only supported in CUDA for SM90"), so a
+    cuBLASLt blockwise path is closed on the torch side regardless.
+
+    Consequences. (a) For sm_121 the right fix is in the tile scheduler (CUTLASS `RasterOrder` /
+    `max_swizzle_size`) or, trivially, an M-chunk loop at ≤ 4,096 rows in the blockwise caller; the
+    chunk loop is a 5-line Python change with a 3× before/after at 16k. (b) Anyone serving a
+    blockwise-FP8 checkpoint on GB10 (Qwen's official `-FP8`, lovedheart's FP8-mixed, crimsonjoo's
+    "hybrid") at the default `--max-num-batched-tokens` (8192+) pays 1.7–3× on every FP8 projection in
+    prefill; batch 4096 sidesteps it, which is why our prod setting was right without knowing why.
+    (c) For our own TTFT the remaining lever is therefore the main build (dispatch fix + #54513), not
+    the kernel — at batch 4096 we already sit at the 160-TFLOPS regime. (d) Upstream-shaped: an
+    issue with this table, and the chunk-loop or raster-swizzle PR. Not posted; needs the user's go.
