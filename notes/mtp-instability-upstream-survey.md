@@ -36,3 +36,19 @@ build that has it before drawing conclusions about the drafter.
 
 SGLang reports accept length 3.3 (B200 TP4) and ~2.3 (2.0–2.7) sustained on DGX Spark with
 index reuse in the drafter. Our good regime (4.3) is above that; our bad regime (1.5) is below.
+
+## Field update 2026-09-03
+
+- **#54076 rebased** (mergeable again, semantics unchanged); kamb-code rebuilds #53479 as a
+  narrow follow-up on top of #54076 + #54713.
+- **#54713** (open, tobymao): under EAGLE/MTP the Mamba retention keeps a state only *at* each
+  boundary, one block above what the EAGLE look-up requests, so the Mamba prefix hit is always 0
+  (our `prefix_cache_hits_total` counts attention blocks). Verified on a 4× DGX Spark GLM-5.3
+  deployment. Queued here as a TTFT/hit-rate test.
+- **#54997** (closed by author, no comment): compressed-tensors NVFP4 *drafter* → 0 % acceptance
+  under CUDA graphs on B200, eager fine. Same symptom class, different cause (our drafter is
+  unquantised and our flip survived eager).
+- **#54974** (open): modelopt NVFP4 MoE keeps only the gate global scale for the fused w13 and
+  warns when gate ≠ up. **Checked our checkpoint offline** (`qwen38-flash-next-fp8head`, F32
+  scalar `weight_scale_2` per expert): gate == up on every pair sampled (28 pairs across 8 layers
+  × 4 experts, plus 3000 sequential pairs) — not affected.
