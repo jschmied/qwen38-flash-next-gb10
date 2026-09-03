@@ -23,13 +23,11 @@ Review history on this PR: the first revision did the loop in Python (`apply_blo
 
 - `test_cutlass_fp8_blockwise_large_m` (M ∈ {4096, 8193, 12288} × (N,K) ∈ {(2048,2560), (2560,6144)}): `torch.equal` against a Python row-chunked reference with per-chunk re-laid-out scales (what the C++ path does internally; on GPUs that do not chunk it is the same identity), plus the usual tolerance check against the dequantized fp32 baseline.
 - `test_cutlass_fp8_blockwise_compiled_dynamic_m`: one `torch.compile(dynamic=True, fullgraph=True)` graph serving M = 4096, 8193 and 12288, equal to eager — the M dispatch is inside the op.
-- Standalone build of the modified `.cu` on a GB10 (SM 12.1): bit-identical to the unmodified op at every tested (M, N, K) including partial last chunks; throughput table below.
+- Standalone build of the modified `.cu` against CUTLASS v4.7.1 on a GB10 (SM 12.1): bit-identity against the unmodified op at every tested (M, N, K) incl. partial last chunks, plus throughput — **pending, will be posted here** (draft until then).
 
 ## Test result
 
-GB10: microbenchmark above; new test 8/8. Not measured on SM 12.0 (RTX PRO 6000) — same L2 class, expected to behave the same; the gate is the capability family, please say if it should be narrower.
-
-A tile-scheduler raster/swizzle change inside the kernel would be the in-kernel version of the same fix; this PR takes the Python route because it is exact, small, and reversible.
+Microbenchmark evidence above is from the same kernel launched in chunks from Python on a GB10 (finding-level numbers, 5×10 launches, median). The C++ path's own numbers follow once the standalone build has run. Not measured on SM 12.0 parts; by construction they are not chunked unless the weight exceeds their L2.
 
 ---
 
