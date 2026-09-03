@@ -56,3 +56,5 @@ Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer boj
    PR after the tests pass and a prefill A/B against the exact-selection workaround. Title idea:
    `[Kernel] Make persistent_topk deterministic (index-ranked ties, sorted rows)`; link #54521,
    #51782, our finding 53/54 chain as evidence; disclose AI assistance; `git commit -s`.
+
+8. 2026-09-03 10:xx: correction POSTED on #53142 (https://github.com/vllm-project/vllm/issues/53142#issuecomment-5522457527) and one-liners on #54076/#53798; the unpatched EOS-loop number is still owed (mtpgrid0).
