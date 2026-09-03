@@ -1408,3 +1408,23 @@ def test_persistent_topk_pivot_ties(seq_len: int, num_ties: int) -> None:
     ref = _exact_topk_reference(logits, lengths, top_k)
     for _ in range(20):
         assert torch.equal(_run_persistent_topk(logits, lengths, top_k), ref)
+
+
+@pytest.mark.skipif(not current_platform.is_cuda(), reason="CUDA only")
+@pytest.mark.parametrize("num_rows,seq_len", [(1, 8192), (1, 20000), (64, 40000)])
+@pytest.mark.parametrize("top_k", [512, 2048])
+def test_persistent_topk_narrow_value_range(
+    num_rows: int, seq_len: int, top_k: int
+) -> None:
+    """Every key in the row shares one coarse histogram bin (values within
+    1e-3 of 1.0, as a trained indexer head produces): the selection must
+    still be exact and reproducible, with no candidate dropped (#51782)."""
+    torch.set_default_device("cuda:0")
+    gen = torch.Generator(device="cuda").manual_seed(seq_len + top_k)
+    logits = 1.0 + 1e-3 * torch.randn(num_rows, seq_len, generator=gen, device="cuda")
+    lengths = torch.full((num_rows,), seq_len, dtype=torch.int32, device="cuda")
+    ref = _exact_topk_reference(logits, lengths, top_k)
+    outs = [_run_persistent_topk(logits, lengths, top_k) for _ in range(6)]
+    for out in outs[1:]:
+        assert torch.equal(out, outs[0]), "persistent_topk is not reproducible"
+    assert torch.equal(outs[0], ref), "persistent_topk dropped candidates"

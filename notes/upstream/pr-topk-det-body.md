@@ -28,7 +28,7 @@ Cause: output slots are handed out by `atomicAdd` in thread-arrival order, and e
 
 ## Test plan
 
-- New tests in `tests/kernels/test_top_k_per_row.py`: `test_persistent_topk_deterministic` (rows {1, 8, 64} × lengths {1k, 4k, 8k, 20k, 40k} × k {512, 2048} × {random, tie-heavy}: 6 calls bit-identical and equal to the exact reference), `test_persistent_topk_all_equal` (all keys equal → exactly `[0, k)` 20×), `test_persistent_topk_pivot_ties` (tie populations of 2047 … 16385).
+- New tests in `tests/kernels/test_top_k_per_row.py`: `test_persistent_topk_deterministic` (rows {1, 8, 64} × lengths {1k, 4k, 8k, 20k, 40k} × k {512, 2048} × {random, tie-heavy}: 6 calls bit-identical and equal to the exact reference), `test_persistent_topk_all_equal` (all keys equal → exactly `[0, k)` 20×), `test_persistent_topk_pivot_ties` (tie populations of 2047 … 16385), `test_persistent_topk_narrow_value_range` (every key in one coarse histogram bin, the #51782 shape: no candidate may be dropped).
 - The same 177 cases were run against a standalone build of these exact sources on a GB10 (sm_121): 177 / 177 pass; on the same inputs the unmodified kernel reproduces its own output in 0 / 177 cases.
 - Hardware other than sm_121 not tested by me; the change is architecture-independent (no `atomicAdd` slot assignment remains on any path).
 
@@ -36,7 +36,7 @@ Cause: output slots are handed out by `atomicAdd` in thread-arrival order, and e
 
 Standalone harness on sm_121: 177 / 177. The pytest file against the built kernel is queued on the same box; the result and the end-to-end decode / TTFT numbers follow as a comment.
 
-Fixes #54521. Related: this is one of three independent defects that together make Qwen3.8-Flash-Next reproducible on GB10 — the others are the FlashInfer CUTLASS MoE fused finalize (#54945, PR #54948) and the align-mode block-size PRs #54076 / #53798; bisection thread in #53142; #54912 (QSA ring bound).
+Fixes #54521. Fixes #51782 (the candidate buffers whose overflow dropped keys no longer exist; the narrow-range test covers that shape). #53287 explores the same two defects with a different mechanism (wider coarse histogram, exact fallback on overflow, buffered paths kept); this PR removes the buffers instead and also fixes the output order. Related: this is one of three independent defects that together make Qwen3.8-Flash-Next reproducible on GB10 — the others are the FlashInfer CUTLASS MoE fused finalize (#54945, PR #54948) and the align-mode block-size PRs #54076 / #53798; bisection thread in #53142; #54912 (QSA ring bound).
 
 ---
 
