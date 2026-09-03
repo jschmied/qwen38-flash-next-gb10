@@ -53,3 +53,13 @@ Follow-up (not in this diff, on purpose): the filtered kernel keeps its `VEC_SIZ
 ~200 lines and the launcher's instantiation dispatch; it is a separate, mechanical commit so the
 correctness diff stays reviewable. Only cost of leaving it: a few identical kernel instantiations
 (compile time).
+
+
+## For validators on another box (e.g. the `vllm/vllm-openai:qwen38-flash-next` image)
+
+1. `python build_det.py` in this directory with the image's Python (needs `nvcc` for sm_121a; ~5 min;
+   set `DET_ARCH` for another GPU). It builds `build/_C_det.so` against the installed torch.
+2. `python test_det.py build/_C_det.so` — expect 0 FAILS, and every `stock identical x3=False`.
+3. Wire it in: `python ../../tools/determinism/qsadet_patch.py` (finds `qsa.py` in the running vLLM;
+   `VLLM_QSA_PY=` overrides), then serve with `VLLM_QSA_DET_TOPK=1 VLLM_QSA_DET_LIB=<path>/_C_det.so`.
+   The log prints `QSADET active: <lib>` once. `qsadet_patch.py off` removes it.

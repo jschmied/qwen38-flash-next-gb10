@@ -5,7 +5,17 @@ built standalone as `_C_det` (see patches/kernel-det/build_det.py).
 Inert without VLLM_QSA_DET_TOPK. Composes with qsafix_patch.py (VLLM_QSA_EXACT_TOPK wins when set).
 `off` removes byte-exactly."""
 import sys
-TARGET = "/opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/models/qwen3_8_flash_next/nvidia/ops/qsa.py"
+import os
+# Target: the vLLM package of the interpreter running this script (preview tree: models/qwen3_8_flash_next;
+# main after #54513: models/qwen4_exp). Override with VLLM_QSA_PY=<path to nvidia/ops/qsa.py>.
+def _find_target():
+    if os.environ.get("VLLM_QSA_PY"): return os.environ["VLLM_QSA_PY"]
+    import vllm
+    root = os.path.dirname(vllm.__file__)
+    for rel in ("models/qwen3_8_flash_next/nvidia/ops/qsa.py", "models/qwen4_exp/nvidia/ops/qsa.py"):
+        if os.path.exists(os.path.join(root, rel)): return os.path.join(root, rel)
+    raise SystemExit("qsa.py not found under " + root + " (set VLLM_QSA_PY)")
+TARGET = _find_target()
 ANCHOR = '''        topk_op = (
             torch.ops._C.cooperative_topk
             if use_cooperative_topk
