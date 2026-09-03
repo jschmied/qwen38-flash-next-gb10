@@ -97,8 +97,7 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
     // (single-CTA rows are <= RADIX_THRESHOLD); capped by the device optin.
     {
       const uint32_t det_rows = std::min<uint32_t>(static_cast<uint32_t>(max_seq_len), P::RADIX_THRESHOLD);
-      const size_t det_fixed = 2048 + 8192 + static_cast<size_t>(TopK) * sizeof(int);
-      const size_t det_want = det_fixed + static_cast<size_t>(det_rows) * sizeof(uint32_t);
+      const size_t det_want = P::det_select_row_bytes<TopK, P::kThreadsPerBlock>(det_rows);  // same expression as the kernel
       if (det_want > smem_size) smem_size = std::min(det_want, static_cast<size_t>(max_smem_per_block));
     }
 

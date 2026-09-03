@@ -10,8 +10,9 @@ def bench(op, logits, lengths, k, iters=50):
     for _ in range(iters): op(logits, lengths, out, ws, k, logits.shape[1])
     torch.cuda.synchronize(); return (time.perf_counter()-t0)/iters*1e6
 print(f"{'rows':>4} {'n':>6} {'k':>5} {'stock us':>9} {'det us':>8} {'ratio':>6}")
-for rows, n, k in itertools.product((1, 64), (1024, 4096, 8192, 16384, 32768, 65536), (512, 2048)):
-    if k >= n: continue
+cases = [(r, n, k) for r, n, k in itertools.product((1, 64), (1024, 4096, 8192, 16384, 32768, 65536), (512, 2048)) if k < n]
+cases += [(r, n, 2048) for r in (2, 4, 8, 16, 24, 32, 48) for n in (8192, 16384, 32768)]
+for rows, n, k in cases:
     logits=torch.randn(rows, n, device=dev); lengths=torch.full((rows,), n, dtype=torch.int32, device=dev)
     a=bench(torch.ops._C.persistent_topk, logits, lengths, k); b=bench(torch.ops._C_det.persistent_topk, logits, lengths, k)
     print(f"{rows:4d} {n:6d} {k:5d} {a:9.1f} {b:8.1f} {b/a:6.2f}", flush=True)

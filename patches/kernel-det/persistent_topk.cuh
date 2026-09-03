@@ -169,11 +169,19 @@ __device__ __forceinline__ void det_sort_row(int32_t* row, int k, int* scratch) 
 // (4*n bytes), so passes 1..3 and the emission read shared memory and the
 // row is fetched from global memory exactly once. Otherwise every pass
 // rescans global memory (still deterministic, just slower).
+// Single source of truth for the fixed part of det_select_row's shared-memory
+// layout; usable from the launcher (host) and the kernel (device).
 template <int TopK, int N_THREADS>
-__device__ __forceinline__ size_t det_select_row_fixed_bytes() {
+__host__ __device__ constexpr size_t det_select_row_fixed_bytes() {
   using ScanT = cub::BlockScan<uint32_t, N_THREADS>;
-  return 2048 + ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)) +
-         static_cast<size_t>(det_next_pow2(TopK)) * sizeof(int);
+  size_t p = 1;
+  while (p < static_cast<size_t>(TopK)) p <<= 1;
+  return 2048 + ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)) + p * sizeof(int);
+}
+// Bytes needed to keep a row of n keys cached (host side sizing helper).
+template <int TopK, int N_THREADS>
+__host__ __device__ constexpr size_t det_select_row_bytes(size_t n) {
+  return det_select_row_fixed_bytes<TopK, N_THREADS>() + n * sizeof(uint32_t);
 }
 template <int TopK, int N_THREADS>
 __device__ void det_select_row(const float* __restrict__ row, int n,

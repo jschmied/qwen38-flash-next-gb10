@@ -1,5 +1,5 @@
 --- /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/edab7cc6-31ed-4698-abb3-e11333baf795/scratchpad/topk_src/persistent_topk.cuh	2026-09-03 07:27:36.681184970 +0200
-+++ persistent_topk.cuh	2026-09-03 07:54:58.001277065 +0200
++++ persistent_topk.cuh	2026-09-03 08:12:54.861326159 +0200
 @@ -10,6 +10,7 @@
  #include <cuda_runtime.h>
  #include <cub/cub.cuh>
@@ -8,7 +8,7 @@
  
  #include "topk_histogram_4096.cuh"
  
-@@ -111,16 +112,181 @@
+@@ -111,16 +112,189 @@
    v3 = __uint_as_float(r3);
  }
  
@@ -69,11 +69,19 @@
 +// (4*n bytes), so passes 1..3 and the emission read shared memory and the
 +// row is fetched from global memory exactly once. Otherwise every pass
 +// rescans global memory (still deterministic, just slower).
++// Single source of truth for the fixed part of det_select_row's shared-memory
++// layout; usable from the launcher (host) and the kernel (device).
 +template <int TopK, int N_THREADS>
-+__device__ __forceinline__ size_t det_select_row_fixed_bytes() {
++__host__ __device__ constexpr size_t det_select_row_fixed_bytes() {
 +  using ScanT = cub::BlockScan<uint32_t, N_THREADS>;
-+  return 2048 + ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)) +
-+         static_cast<size_t>(det_next_pow2(TopK)) * sizeof(int);
++  size_t p = 1;
++  while (p < static_cast<size_t>(TopK)) p <<= 1;
++  return 2048 + ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)) + p * sizeof(int);
++}
++// Bytes needed to keep a row of n keys cached (host side sizing helper).
++template <int TopK, int N_THREADS>
++__host__ __device__ constexpr size_t det_select_row_bytes(size_t n) {
++  return det_select_row_fixed_bytes<TopK, N_THREADS>() + n * sizeof(uint32_t);
 +}
 +template <int TopK, int N_THREADS>
 +__device__ void det_select_row(const float* __restrict__ row, int n,
@@ -190,7 +198,7 @@
  };
  
  // ============================================================================
-@@ -138,6 +304,7 @@
+@@ -138,6 +312,7 @@
    uint32_t chunk_size;      // large path: elements per CTA
    uint32_t ctas_per_group;  // 1=medium, >1=large
    uint32_t max_seq_len;     // max seq_len across all rows (for early CTA exit)
@@ -198,7 +206,7 @@
  };
  
  // ============================================================================
-@@ -820,39 +987,78 @@
+@@ -820,39 +995,78 @@
    const uint32_t local_gt_count = suffix_sum[0];
  
    // -- Stage 3: Collect top-k indices --
@@ -297,7 +305,7 @@
  }
  
  // ============================================================================
-@@ -937,10 +1143,11 @@
+@@ -937,10 +1151,11 @@
                 i += kThreadsPerBlock) {
              row_output[i] = (i < seq_len) ? static_cast<int32_t>(i) : -1;
            }
@@ -312,7 +320,7 @@
          }
        }
        continue;
-@@ -1068,6 +1275,16 @@
+@@ -1068,6 +1283,16 @@
    }
  
    // Short path
