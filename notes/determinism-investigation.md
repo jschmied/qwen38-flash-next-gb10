@@ -951,6 +951,33 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
     served configuration. `MTPACC` (per-step acceptance, cache off) characterises it; the depth
     grid (`MTPGRID2`) runs on the validated stack. Raw: `notes/data/mtppad.txt`.
 
+58. **The depth grid on the full fix stack is bit-reproducible across starts, and four depths are
+    broken deterministically.** `MTPGRID2` (prefix cache on, align + exact top-k + det MoE, compiled,
+    8-turn loop), starts a and b (c pending):
+
+    | n | ms/tok a / b | acceptance | accept len | pattern a / b | a vs b |
+    | --- | --- | --- | --- | --- | --- |
+| 0 | 45.4 / 46.2 | - % | - | `-` / `-` | n/a |
+| 1 | 42.1 / 39.9 | 85.2 % | 1.85 | `FFFFFFFF` / `FFFFFFFF` | identical counters |
+| 2 | 52.1 / 51.1 | 28.2 % | 1.56 | `ssFssFss` / `ssFssFss` | identical counters |
+| 3 | 53.7 / 53.5 | 21.6 % | 1.65 | `ssFssFss` / `ssFssFss` | identical counters |
+| 4 | 34.0 / 34.4 | 70.4 % | 3.82 | `FFFFFFFF` / `FFFFFFFF` | identical counters |
+| 5 | 34.5 / 34.9 | 62.6 % | 4.13 | `FFFFFFFF` / `FFFFFFFF` | identical counters |
+| 6 | 72.1 / 72.1 | 8.8 % | 1.53 | `sssFssss` / `sssFssss` | identical counters |
+| 7 | 37.8 / 36.8 | 54.2 % | 4.79 | `FFFFFFFF` / `FFFFFFFF` | identical counters |
+| 8 | 75.7 / 76.4 | 8.3 % | 1.67 | `ssssssss` / `ssssssss` | identical counters |
+
+    Every depth reproduces its draft/accept counters exactly from start to start, so on this stack
+    the MTP loop is deterministic end to end — and n = 2, 3, 6, 8 are broken *by construction*, not
+    by luck: same per-turn pattern (`ssFssFss` at 2 and 3 — the defect-C pattern of finding 55,
+    turns 3 and 6 healthy) every time. n = 1, 4, 5, 7 are healthy. Healthy/broken does not follow
+    ring capacity (8 for n≤4, 16 above), span parity, or tokens-per-step (1+n) in any way I can
+    see. A shared torch.compile cache cannot explain a *deterministic* depth function (both starts
+    used it), but the fresh-cache arm still runs as the control. Next arms, in order: per-step
+    acceptance (where in a turn does n=2 fail?), fresh compile cache, DENSE drafter (llama.cpp's
+    MTP head attends densely; ours re-selects through QSA — `densedraft_patch.py`), index sharing
+    (SGLang's strategy; `index_share_for_mtp_iteration`). Raw: `notes/data/mtpgrid2-partial.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

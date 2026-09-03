@@ -1,0 +1,240 @@
+preflight OK 22:11 (PAD_PROD 24/24)
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  qsafix INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1 or VLLM_QSA_SORT=1)
+  installed: det MoE + exact top-k + align(both)
+=== G0_a  batch=4096  22:11 ===
+
+    graphs: capture_lines=1 compile_lines=5 enforce_eager=0
+  G0_a turn 1:   9.41 s   130 tok  hits+       0  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 72.4 ms/tok)
+  G0_a turn 2:   5.35 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 41.2 ms/tok)
+  G0_a turn 3:   5.41 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 41.6 ms/tok)
+  G0_a turn 4:   5.55 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 42.7 ms/tok)
+  G0_a turn 5:   5.64 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 43.4 ms/tok)
+  G0_a turn 6:   5.24 s   130 tok  hits+    8000  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 40.3 ms/tok)
+  G0_a turn 7:   5.28 s   130 tok  hits+    8000  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 40.6 ms/tok)
+  G0_a turn 8:   5.31 s   130 tok  hits+    8000  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 40.8 ms/tok)
+  G0_a TOTAL 47.2 s over 8 turns  (5.90 s/turn)  1040 tok  45.37 ms/tok
+  ACCEPT G0_a-post: no draft tokens recorded (spec off, or counters absent)
+=== G1_a  batch=4096  22:22 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=8 enforce_eager=0
+  G1_a turn 1:   9.42 s   130 tok  hits+       0  acc= 85.7% len=1.86  pos=0/0/0/0/0  ( 72.5 ms/tok)
+  G1_a turn 2:   5.49 s   130 tok  hits+    4752  acc= 67.5% len=1.68  pos=0/0/0/0/0  ( 42.2 ms/tok)
+  G1_a turn 3:   5.05 s   130 tok  hits+    4752  acc= 88.4% len=1.88  pos=0/0/0/0/0  ( 38.8 ms/tok)
+  G1_a turn 4:   4.99 s   130 tok  hits+    4752  acc= 92.5% len=1.93  pos=0/0/0/0/0  ( 38.3 ms/tok)
+  G1_a turn 5:   5.05 s   130 tok  hits+    6336  acc= 84.3% len=1.84  pos=0/0/0/0/0  ( 38.8 ms/tok)
+  G1_a turn 6:   4.57 s   130 tok  hits+    6336  acc= 87.0% len=1.87  pos=0/0/0/0/0  ( 35.2 ms/tok)
+  G1_a turn 7:   4.65 s   130 tok  hits+    6336  acc= 88.4% len=1.88  pos=0/0/0/0/0  ( 35.8 ms/tok)
+  G1_a turn 8:   4.62 s   130 tok  hits+    6336  acc= 89.7% len=1.90  pos=0/0/0/0/0  ( 35.6 ms/tok)
+  G1_a TOTAL 43.8 s over 8 turns  (5.48 s/turn)  1040 tok  42.15 ms/tok
+  ACCEPT G1_a-post: drafts=559 draft_tok=559 accepted=476 rate=85.2%  mean_accept_len=1.85
+=== G2_a  batch=4096  22:37 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=10 enforce_eager=0
+  G2_a turn 1:  10.32 s   130 tok  hits+       0  acc= 25.0% len=1.50  pos=0/0/0/0/0  ( 79.3 ms/tok)
+  G2_a turn 2:   7.85 s   130 tok  hits+    4800  acc= 10.3% len=1.21  pos=0/0/0/0/0  ( 60.4 ms/tok)
+  G2_a turn 3:   4.40 s   130 tok  hits+    4800  acc= 87.2% len=2.74  pos=0/0/0/0/0  ( 33.8 ms/tok)
+  G2_a turn 4:   6.46 s   130 tok  hits+    4800  acc= 27.7% len=1.55  pos=0/0/0/0/0  ( 49.7 ms/tok)
+  G2_a turn 5:   8.23 s   130 tok  hits+    4800  acc=  9.2% len=1.18  pos=0/0/0/0/0  ( 63.3 ms/tok)
+  G2_a turn 6:   4.17 s   130 tok  hits+    6400  acc= 78.4% len=2.57  pos=0/0/0/0/0  ( 32.1 ms/tok)
+  G2_a turn 7:   7.02 s   130 tok  hits+    6400  acc= 14.4% len=1.29  pos=0/0/0/0/0  ( 54.0 ms/tok)
+  G2_a turn 8:   5.78 s   130 tok  hits+    6400  acc= 32.7% len=1.65  pos=0/0/0/0/0  ( 44.4 ms/tok)
+  G2_a TOTAL 54.2 s over 8 turns  (6.78 s/turn)  1040 tok  52.13 ms/tok
+  ACCEPT G2_a-post: drafts=662 draft_tok=1324 accepted=373 rate=28.2%  mean_accept_len=1.56
+=== G3_a  batch=4096  22:52 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G3_a turn 1:   9.53 s   130 tok  hits+       0  acc= 19.8% len=1.59  pos=0/0/0/0/0  ( 73.3 ms/tok)
+  G3_a turn 2:   8.53 s   130 tok  hits+    4800  acc=  7.6% len=1.23  pos=0/0/0/0/0  ( 65.6 ms/tok)
+  G3_a turn 3:   4.23 s   130 tok  hits+    4800  acc= 79.8% len=3.39  pos=0/0/0/0/0  ( 32.5 ms/tok)
+  G3_a turn 4:   6.84 s   130 tok  hits+    4800  acc= 21.1% len=1.63  pos=0/0/0/0/0  ( 52.7 ms/tok)
+  G3_a turn 5:   8.90 s   130 tok  hits+    4800  acc=  6.1% len=1.18  pos=0/0/0/0/0  ( 68.5 ms/tok)
+  G3_a turn 6:   3.79 s   130 tok  hits+    6400  acc= 77.8% len=3.33  pos=0/0/0/0/0  ( 29.1 ms/tok)
+  G3_a turn 7:   7.75 s   130 tok  hits+    6400  acc=  9.7% len=1.29  pos=0/0/0/0/0  ( 59.6 ms/tok)
+  G3_a turn 8:   6.31 s   130 tok  hits+    6400  acc= 23.2% len=1.70  pos=0/0/0/0/0  ( 48.5 ms/tok)
+  G3_a TOTAL 55.9 s over 8 turns  (6.98 s/turn)  1040 tok  53.73 ms/tok
+  ACCEPT G3_a-post: drafts=627 draft_tok=1881 accepted=406 rate=21.6%  mean_accept_len=1.65
+=== G4_a  batch=4096  23:04 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G4_a turn 1:   6.95 s   130 tok  hits+       0  acc= 72.1% len=3.88  pos=0/0/0/0/0  ( 53.5 ms/tok)
+  G4_a turn 2:   4.31 s   130 tok  hits+    4848  acc= 69.3% len=3.77  pos=0/0/0/0/0  ( 33.2 ms/tok)
+  G4_a turn 3:   4.38 s   130 tok  hits+    4848  acc= 66.0% len=3.64  pos=0/0/0/0/0  ( 33.7 ms/tok)
+  G4_a turn 4:   4.43 s   130 tok  hits+    4848  acc= 64.6% len=3.58  pos=0/0/0/0/0  ( 34.1 ms/tok)
+  G4_a turn 5:   4.29 s   130 tok  hits+    4848  acc= 69.9% len=3.79  pos=0/0/0/0/0  ( 33.0 ms/tok)
+  G4_a turn 6:   3.67 s   130 tok  hits+    6464  acc= 72.8% len=3.91  pos=0/0/0/0/0  ( 28.2 ms/tok)
+  G4_a turn 7:   3.63 s   130 tok  hits+    6464  acc= 74.2% len=3.97  pos=0/0/0/0/0  ( 27.9 ms/tok)
+  G4_a turn 8:   3.67 s   130 tok  hits+    6464  acc= 75.8% len=4.03  pos=0/0/0/0/0  ( 28.2 ms/tok)
+  G4_a TOTAL 35.3 s over 8 turns  (4.42 s/turn)  1040 tok  33.97 ms/tok
+  ACCEPT G4_a-post: drafts=274 draft_tok=1096 accepted=772 rate=70.4%  mean_accept_len=3.82
+=== G5_a  batch=4096  23:16 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G5_a turn 1:   6.96 s   130 tok  hits+       0  acc= 63.2% len=4.16  pos=0/0/0/0/0  ( 53.6 ms/tok)
+  G5_a turn 2:   4.24 s   130 tok  hits+    4848  acc= 68.0% len=4.40  pos=0/0/0/0/0  ( 32.6 ms/tok)
+  G5_a turn 3:   4.31 s   130 tok  hits+    4848  acc= 60.6% len=4.03  pos=0/0/0/0/0  ( 33.2 ms/tok)
+  G5_a turn 4:   4.58 s   130 tok  hits+    4848  acc= 55.9% len=3.79  pos=0/0/0/0/0  ( 35.2 ms/tok)
+  G5_a turn 5:   4.58 s   130 tok  hits+    4848  acc= 56.5% len=3.82  pos=0/0/0/0/0  ( 35.2 ms/tok)
+  G5_a turn 6:   3.89 s   130 tok  hits+    6464  acc= 58.2% len=3.91  pos=0/0/0/0/0  ( 29.9 ms/tok)
+  G5_a turn 7:   3.63 s   130 tok  hits+    6464  acc= 69.0% len=4.45  pos=0/0/0/0/0  ( 27.9 ms/tok)
+  G5_a turn 8:   3.66 s   130 tok  hits+    6464  acc= 72.4% len=4.62  pos=0/0/0/0/0  ( 28.2 ms/tok)
+  G5_a TOTAL 35.9 s over 8 turns  (4.48 s/turn)  1040 tok  34.47 ms/tok
+  ACCEPT G5_a-post: drafts=252 draft_tok=1260 accepted=789 rate=62.6%  mean_accept_len=4.13
+=== G6_a  batch=4096  23:28 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=10 enforce_eager=0
+  G6_a turn 1:  12.79 s   130 tok  hits+       0  acc=  4.8% len=1.29  pos=0/0/0/0/0  ( 98.4 ms/tok)
+  G6_a turn 2:  10.67 s   130 tok  hits+    4896  acc=  4.4% len=1.26  pos=0/0/0/0/0  ( 82.1 ms/tok)
+  G6_a turn 3:   7.94 s   130 tok  hits+    4896  acc= 13.6% len=1.82  pos=0/0/0/0/0  ( 61.1 ms/tok)
+  G6_a turn 4:   4.27 s   130 tok  hits+    4896  acc= 63.7% len=4.82  pos=0/0/0/0/0  ( 32.8 ms/tok)
+  G6_a turn 5:  11.13 s   130 tok  hits+    4896  acc=  3.1% len=1.18  pos=0/0/0/0/0  ( 85.6 ms/tok)
+  G6_a turn 6:   8.03 s   130 tok  hits+    4896  acc= 14.3% len=1.86  pos=0/0/0/0/0  ( 61.8 ms/tok)
+  G6_a turn 7:  10.28 s   130 tok  hits+    6528  acc=  4.0% len=1.24  pos=0/0/0/0/0  ( 79.1 ms/tok)
+  G6_a turn 8:   9.90 s   130 tok  hits+    6528  acc=  6.1% len=1.36  pos=0/0/0/0/0  ( 76.2 ms/tok)
+  G6_a TOTAL 75.0 s over 8 turns  (9.38 s/turn)  1040 tok  72.13 ms/tok
+  ACCEPT G6_a-post: drafts=684 draft_tok=4104 accepted=363 rate=8.8%  mean_accept_len=1.53
+=== G7_a  batch=4096  23:43 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=10 enforce_eager=0
+  G7_a turn 1:   7.65 s   130 tok  hits+       0  acc= 47.6% len=4.33  pos=0/0/0/0/0  ( 58.8 ms/tok)
+  G7_a turn 2:   4.05 s   130 tok  hits+    4944  acc= 65.5% len=5.58  pos=0/0/0/0/0  ( 31.1 ms/tok)
+  G7_a turn 3:   4.35 s   130 tok  hits+    4944  acc= 55.0% len=4.85  pos=0/0/0/0/0  ( 33.4 ms/tok)
+  G7_a turn 4:   5.10 s   130 tok  hits+    4944  acc= 49.0% len=4.43  pos=0/0/0/0/0  ( 39.2 ms/tok)
+  G7_a turn 5:   4.36 s   130 tok  hits+    4944  acc= 54.0% len=4.78  pos=0/0/0/0/0  ( 33.5 ms/tok)
+  G7_a turn 6:   4.32 s   130 tok  hits+    4944  acc= 62.3% len=5.36  pos=0/0/0/0/0  ( 33.2 ms/tok)
+  G7_a turn 7:   5.05 s   130 tok  hits+    4944  acc= 45.2% len=4.16  pos=0/0/0/0/0  ( 38.8 ms/tok)
+  G7_a turn 8:   4.47 s   130 tok  hits+    6592  acc= 59.3% len=5.15  pos=0/0/0/0/0  ( 34.4 ms/tok)
+  G7_a TOTAL 39.3 s over 8 turns  (4.92 s/turn)  1040 tok  37.82 ms/tok
+  ACCEPT G7_a-post: drafts=220 draft_tok=1540 accepted=834 rate=54.2%  mean_accept_len=4.79
+=== G8_a  batch=4096  23:57 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G8_a turn 1:  14.47 s   130 tok  hits+       0  acc=  3.0% len=1.24  pos=0/0/0/0/0  (111.3 ms/tok)
+  G8_a turn 2:   9.77 s   130 tok  hits+    4944  acc=  7.4% len=1.59  pos=0/0/0/0/0  ( 75.2 ms/tok)
+  G8_a turn 3:  10.48 s   130 tok  hits+    4944  acc=  6.0% len=1.48  pos=0/0/0/0/0  ( 80.6 ms/tok)
+  G8_a turn 4:  11.30 s   130 tok  hits+    4944  acc=  4.5% len=1.36  pos=0/0/0/0/0  ( 87.0 ms/tok)
+  G8_a turn 5:   5.68 s   130 tok  hits+    4944  acc= 34.7% len=3.78  pos=0/0/0/0/0  ( 43.7 ms/tok)
+  G8_a turn 6:  11.55 s   130 tok  hits+    4944  acc=  4.5% len=1.36  pos=0/0/0/0/0  ( 88.8 ms/tok)
+  G8_a turn 7:   4.91 s   130 tok  hits+    6592  acc= 35.4% len=3.83  pos=0/0/0/0/0  ( 37.8 ms/tok)
+  G8_a turn 8:  10.59 s   130 tok  hits+    6592  acc=  4.8% len=1.39  pos=0/0/0/0/0  ( 81.5 ms/tok)
+  G8_a TOTAL 78.8 s over 8 turns  (9.84 s/turn)  1040 tok  75.72 ms/tok
+  ACCEPT G8_a-post: drafts=626 draft_tok=5008 accepted=418 rate=8.3%  mean_accept_len=1.67
+=== G0_b  batch=4096  00:10 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  G0_b turn 1:   9.54 s   130 tok  hits+       0  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 73.4 ms/tok)
+  G0_b turn 2:   5.40 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 41.5 ms/tok)
+  G0_b turn 3:   5.42 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 41.7 ms/tok)
+  G0_b turn 4:   5.54 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 42.6 ms/tok)
+  G0_b turn 5:   5.63 s   130 tok  hits+    7200  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 43.3 ms/tok)
+  G0_b turn 6:   5.92 s   130 tok  hits+    8000  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 45.6 ms/tok)
+  G0_b turn 7:   5.31 s   130 tok  hits+    8000  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 40.8 ms/tok)
+  G0_b turn 8:   5.32 s   130 tok  hits+    8000  acc=  n/a  pos=nan/nan/nan/nan/nan  ( 40.9 ms/tok)
+  G0_b TOTAL 48.1 s over 8 turns  (6.01 s/turn)  1040 tok  46.22 ms/tok
+  ACCEPT G0_b-post: no draft tokens recorded (spec off, or counters absent)
+=== G1_b  batch=4096  00:21 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G1_b turn 1:   7.70 s   130 tok  hits+       0  acc= 85.7% len=1.86  pos=0/0/0/0/0  ( 59.2 ms/tok)
+  G1_b turn 2:   5.46 s   130 tok  hits+    4752  acc= 67.5% len=1.68  pos=0/0/0/0/0  ( 42.0 ms/tok)
+  G1_b turn 3:   5.01 s   130 tok  hits+    4752  acc= 88.4% len=1.88  pos=0/0/0/0/0  ( 38.5 ms/tok)
+  G1_b turn 4:   4.93 s   130 tok  hits+    4752  acc= 92.5% len=1.93  pos=0/0/0/0/0  ( 38.0 ms/tok)
+  G1_b turn 5:   4.58 s   130 tok  hits+    6336  acc= 84.3% len=1.84  pos=0/0/0/0/0  ( 35.3 ms/tok)
+  G1_b turn 6:   4.56 s   130 tok  hits+    6336  acc= 87.0% len=1.87  pos=0/0/0/0/0  ( 35.0 ms/tok)
+  G1_b turn 7:   4.62 s   130 tok  hits+    6336  acc= 88.4% len=1.88  pos=0/0/0/0/0  ( 35.5 ms/tok)
+  G1_b turn 8:   4.63 s   130 tok  hits+    6336  acc= 89.7% len=1.90  pos=0/0/0/0/0  ( 35.6 ms/tok)
+  G1_b TOTAL 41.5 s over 8 turns  (5.19 s/turn)  1040 tok  39.91 ms/tok
+  ACCEPT G1_b-post: drafts=559 draft_tok=559 accepted=476 rate=85.2%  mean_accept_len=1.85
+=== G2_b  batch=4096  00:33 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G2_b turn 1:   9.29 s   130 tok  hits+       0  acc= 25.0% len=1.50  pos=0/0/0/0/0  ( 71.5 ms/tok)
+  G2_b turn 2:   7.81 s   130 tok  hits+    4800  acc= 10.3% len=1.21  pos=0/0/0/0/0  ( 60.1 ms/tok)
+  G2_b turn 3:   4.39 s   130 tok  hits+    4800  acc= 87.2% len=2.74  pos=0/0/0/0/0  ( 33.7 ms/tok)
+  G2_b turn 4:   6.51 s   130 tok  hits+    4800  acc= 27.7% len=1.55  pos=0/0/0/0/0  ( 50.1 ms/tok)
+  G2_b turn 5:   8.16 s   130 tok  hits+    4800  acc=  9.2% len=1.18  pos=0/0/0/0/0  ( 62.8 ms/tok)
+  G2_b turn 6:   4.17 s   130 tok  hits+    6400  acc= 78.4% len=2.57  pos=0/0/0/0/0  ( 32.1 ms/tok)
+  G2_b turn 7:   7.05 s   130 tok  hits+    6400  acc= 14.4% len=1.29  pos=0/0/0/0/0  ( 54.2 ms/tok)
+  G2_b turn 8:   5.78 s   130 tok  hits+    6400  acc= 32.7% len=1.65  pos=0/0/0/0/0  ( 44.5 ms/tok)
+  G2_b TOTAL 53.2 s over 8 turns  (6.64 s/turn)  1040 tok  51.11 ms/tok
+  ACCEPT G2_b-post: drafts=662 draft_tok=1324 accepted=373 rate=28.2%  mean_accept_len=1.56
+=== G3_b  batch=4096  00:46 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G3_b turn 1:   9.63 s   130 tok  hits+       0  acc= 19.8% len=1.59  pos=0/0/0/0/0  ( 74.0 ms/tok)
+  G3_b turn 2:   8.44 s   130 tok  hits+    4800  acc=  7.6% len=1.23  pos=0/0/0/0/0  ( 64.9 ms/tok)
+  G3_b turn 3:   4.17 s   130 tok  hits+    4800  acc= 79.8% len=3.39  pos=0/0/0/0/0  ( 32.1 ms/tok)
+  G3_b turn 4:   6.81 s   130 tok  hits+    4800  acc= 21.1% len=1.63  pos=0/0/0/0/0  ( 52.4 ms/tok)
+  G3_b turn 5:   8.84 s   130 tok  hits+    4800  acc=  6.1% len=1.18  pos=0/0/0/0/0  ( 68.0 ms/tok)
+  G3_b turn 6:   3.75 s   130 tok  hits+    6400  acc= 77.8% len=3.33  pos=0/0/0/0/0  ( 28.8 ms/tok)
+  G3_b turn 7:   7.68 s   130 tok  hits+    6400  acc=  9.7% len=1.29  pos=0/0/0/0/0  ( 59.1 ms/tok)
+  G3_b turn 8:   6.35 s   130 tok  hits+    6400  acc= 23.2% len=1.70  pos=0/0/0/0/0  ( 48.9 ms/tok)
+  G3_b TOTAL 55.7 s over 8 turns  (6.96 s/turn)  1040 tok  53.52 ms/tok
+  ACCEPT G3_b-post: drafts=627 draft_tok=1881 accepted=406 rate=21.6%  mean_accept_len=1.65
+=== G4_b  batch=4096  00:59 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G4_b turn 1:   7.20 s   130 tok  hits+       0  acc= 72.1% len=3.88  pos=0/0/0/0/0  ( 55.4 ms/tok)
+  G4_b turn 2:   4.35 s   130 tok  hits+    4848  acc= 69.3% len=3.77  pos=0/0/0/0/0  ( 33.5 ms/tok)
+  G4_b turn 3:   4.41 s   130 tok  hits+    4848  acc= 66.0% len=3.64  pos=0/0/0/0/0  ( 34.0 ms/tok)
+  G4_b turn 4:   4.47 s   130 tok  hits+    4848  acc= 64.6% len=3.58  pos=0/0/0/0/0  ( 34.4 ms/tok)
+  G4_b turn 5:   4.30 s   130 tok  hits+    4848  acc= 69.9% len=3.79  pos=0/0/0/0/0  ( 33.1 ms/tok)
+  G4_b turn 6:   3.73 s   130 tok  hits+    6464  acc= 72.8% len=3.91  pos=0/0/0/0/0  ( 28.7 ms/tok)
+  G4_b turn 7:   3.65 s   130 tok  hits+    6464  acc= 74.2% len=3.97  pos=0/0/0/0/0  ( 28.1 ms/tok)
+  G4_b turn 8:   3.68 s   130 tok  hits+    6464  acc= 75.8% len=4.03  pos=0/0/0/0/0  ( 28.3 ms/tok)
+  G4_b TOTAL 35.8 s over 8 turns  (4.47 s/turn)  1040 tok  34.42 ms/tok
+  ACCEPT G4_b-post: drafts=274 draft_tok=1096 accepted=772 rate=70.4%  mean_accept_len=3.82
+=== G5_b  batch=4096  01:11 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G5_b turn 1:   7.23 s   130 tok  hits+       0  acc= 63.2% len=4.16  pos=0/0/0/0/0  ( 55.6 ms/tok)
+  G5_b turn 2:   4.24 s   130 tok  hits+    4848  acc= 68.0% len=4.40  pos=0/0/0/0/0  ( 32.6 ms/tok)
+  G5_b turn 3:   4.34 s   130 tok  hits+    4848  acc= 60.6% len=4.03  pos=0/0/0/0/0  ( 33.4 ms/tok)
+  G5_b turn 4:   4.60 s   130 tok  hits+    4848  acc= 55.9% len=3.79  pos=0/0/0/0/0  ( 35.4 ms/tok)
+  G5_b turn 5:   4.58 s   130 tok  hits+    4848  acc= 56.5% len=3.82  pos=0/0/0/0/0  ( 35.2 ms/tok)
+  G5_b turn 6:   3.92 s   130 tok  hits+    6464  acc= 58.2% len=3.91  pos=0/0/0/0/0  ( 30.2 ms/tok)
+  G5_b turn 7:   3.63 s   130 tok  hits+    6464  acc= 69.0% len=4.45  pos=0/0/0/0/0  ( 27.9 ms/tok)
+  G5_b turn 8:   3.69 s   130 tok  hits+    6464  acc= 72.4% len=4.62  pos=0/0/0/0/0  ( 28.4 ms/tok)
+  G5_b TOTAL 36.2 s over 8 turns  (4.53 s/turn)  1040 tok  34.85 ms/tok
+  ACCEPT G5_b-post: drafts=252 draft_tok=1260 accepted=789 rate=62.6%  mean_accept_len=4.13
+=== G6_b  batch=4096  01:23 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G6_b turn 1:  12.80 s   130 tok  hits+       0  acc=  4.8% len=1.29  pos=0/0/0/0/0  ( 98.4 ms/tok)
+  G6_b turn 2:  10.66 s   130 tok  hits+    4896  acc=  4.4% len=1.26  pos=0/0/0/0/0  ( 82.0 ms/tok)
+  G6_b turn 3:   7.96 s   130 tok  hits+    4896  acc= 13.6% len=1.82  pos=0/0/0/0/0  ( 61.3 ms/tok)
+  G6_b turn 4:   4.26 s   130 tok  hits+    4896  acc= 63.7% len=4.82  pos=0/0/0/0/0  ( 32.8 ms/tok)
+  G6_b turn 5:  11.13 s   130 tok  hits+    4896  acc=  3.1% len=1.18  pos=0/0/0/0/0  ( 85.6 ms/tok)
+  G6_b turn 6:   8.03 s   130 tok  hits+    4896  acc= 14.3% len=1.86  pos=0/0/0/0/0  ( 61.8 ms/tok)
+  G6_b turn 7:  10.28 s   130 tok  hits+    6528  acc=  4.0% len=1.24  pos=0/0/0/0/0  ( 79.1 ms/tok)
+  G6_b turn 8:   9.88 s   130 tok  hits+    6528  acc=  6.1% len=1.36  pos=0/0/0/0/0  ( 76.0 ms/tok)
+  G6_b TOTAL 75.0 s over 8 turns  (9.38 s/turn)  1040 tok  72.13 ms/tok
+  ACCEPT G6_b-post: drafts=684 draft_tok=4104 accepted=363 rate=8.8%  mean_accept_len=1.53
+=== G7_b  batch=4096  01:36 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G7_b turn 1:   7.54 s   130 tok  hits+       0  acc= 47.6% len=4.33  pos=0/0/0/0/0  ( 58.0 ms/tok)
+  G7_b turn 2:   4.08 s   130 tok  hits+    4944  acc= 65.5% len=5.58  pos=0/0/0/0/0  ( 31.4 ms/tok)
+  G7_b turn 3:   4.34 s   130 tok  hits+    4944  acc= 55.0% len=4.85  pos=0/0/0/0/0  ( 33.4 ms/tok)
+  G7_b turn 4:   4.74 s   130 tok  hits+    4944  acc= 49.0% len=4.43  pos=0/0/0/0/0  ( 36.5 ms/tok)
+  G7_b turn 5:   4.33 s   130 tok  hits+    4944  acc= 54.0% len=4.78  pos=0/0/0/0/0  ( 33.3 ms/tok)
+  G7_b turn 6:   4.30 s   130 tok  hits+    4944  acc= 62.3% len=5.36  pos=0/0/0/0/0  ( 33.1 ms/tok)
+  G7_b turn 7:   5.02 s   130 tok  hits+    4944  acc= 45.2% len=4.16  pos=0/0/0/0/0  ( 38.6 ms/tok)
+  G7_b turn 8:   3.89 s   130 tok  hits+    6592  acc= 59.3% len=5.15  pos=0/0/0/0/0  ( 29.9 ms/tok)
+  G7_b TOTAL 38.2 s over 8 turns  (4.78 s/turn)  1040 tok  36.76 ms/tok
+  ACCEPT G7_b-post: drafts=220 draft_tok=1540 accepted=834 rate=54.2%  mean_accept_len=4.79
+=== G8_b  batch=4096  01:48 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  G8_b turn 1:  14.71 s   130 tok  hits+       0  acc=  3.0% len=1.24  pos=0/0/0/0/0  (113.1 ms/tok)
+  G8_b turn 2:   9.88 s   130 tok  hits+    4944  acc=  7.4% len=1.59  pos=0/0/0/0/0  ( 76.0 ms/tok)
+  G8_b turn 3:  10.54 s   130 tok  hits+    4944  acc=  6.0% len=1.48  pos=0/0/0/0/0  ( 81.1 ms/tok)
+  G8_b turn 4:  11.36 s   130 tok  hits+    4944  acc=  4.5% len=1.36  pos=0/0/0/0/0  ( 87.3 ms/tok)
+  G8_b turn 5:   5.73 s   130 tok  hits+    4944  acc= 34.7% len=3.78  pos=0/0/0/0/0  ( 44.1 ms/tok)
+  G8_b turn 6:  11.64 s   130 tok  hits+    4944  acc=  4.5% len=1.36  pos=0/0/0/0/0  ( 89.6 ms/tok)
+  G8_b turn 7:   4.96 s   130 tok  hits+    6592  acc= 35.4% len=3.83  pos=0/0/0/0/0  ( 38.1 ms/tok)
+  G8_b turn 8:  10.67 s   130 tok  hits+    6592  acc=  4.8% len=1.39  pos=0/0/0/0/0  ( 82.1 ms/tok)
+  G8_b TOTAL 79.5 s over 8 turns  (9.94 s/turn)  1040 tok  76.43 ms/tok
+  ACCEPT G8_b-post: drafts=626 draft_tok=5008 accepted=418 rate=8.3%  mean_accept_len=1.67
+=== G0_c  batch=4096  02:01 ===
