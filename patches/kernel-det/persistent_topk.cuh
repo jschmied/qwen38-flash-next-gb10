@@ -162,57 +162,104 @@ __device__ __forceinline__ void det_sort_row(int32_t* row, int k, int* scratch) 
   for (int i = threadIdx.x; i < k; i += N_THREADS) row[i] = scratch[i];
   __syncthreads();
 }
-// Deterministic single-CTA top-k of one row (n > TopK). `smem` needs
-// 256 + 8 uint32 + BlockScan storage + next_pow2(TopK) ints; every path that
-// calls this has far more dynamic shared memory than that.
+// Deterministic single-CTA top-k of one row (n > TopK).
+// Shared memory layout (bytes): [0,1024) hist, [1024,2048) hist2 (suffix
+// scratch), [2048, +scan) BlockScan storage, then next_pow2(TopK) ints of
+// sort scratch, then — when `smem_bytes` allows — the row's ordered keys
+// (4*n bytes), so passes 1..3 and the emission read shared memory and the
+// row is fetched from global memory exactly once. Otherwise every pass
+// rescans global memory (still deterministic, just slower).
+template <int TopK, int N_THREADS>
+__device__ __forceinline__ size_t det_select_row_fixed_bytes() {
+  using ScanT = cub::BlockScan<uint32_t, N_THREADS>;
+  return 2048 + ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)) +
+         static_cast<size_t>(det_next_pow2(TopK)) * sizeof(int);
+}
 template <int TopK, int N_THREADS>
 __device__ void det_select_row(const float* __restrict__ row, int n,
-                               int32_t* __restrict__ out, void* smem) {
+                               int32_t* __restrict__ out, void* smem,
+                               size_t smem_bytes) {
   using ScanT = cub::BlockScan<uint32_t, N_THREADS>;
-  uint32_t* hist = reinterpret_cast<uint32_t*>(smem);           // [256]
-  uint32_t* sc = hist + 256;                                     // [8] scalars
+  uint32_t* hist = reinterpret_cast<uint32_t*>(smem);            // [256]
+  uint32_t* hist2 = hist + 256;                                   // [256]
   auto* scan_tmp = reinterpret_cast<typename ScanT::TempStorage*>(
       reinterpret_cast<char*>(smem) + 2048);
-  int* scratch = reinterpret_cast<int*>(reinterpret_cast<char*>(smem) + 2048 +
-                                        ((sizeof(typename ScanT::TempStorage) + 127) & ~size_t(127)));
+  const size_t fixed = det_select_row_fixed_bytes<TopK, N_THREADS>();
+  int* scratch = reinterpret_cast<int*>(reinterpret_cast<char*>(smem) + fixed -
+                                        static_cast<size_t>(det_next_pow2(TopK)) * sizeof(int));
+  uint32_t* keys = reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(smem) + fixed);
+  const bool cached = (fixed + static_cast<size_t>(n) * sizeof(uint32_t) <= smem_bytes);
   const int tx = threadIdx.x;
-  uint32_t prefix = 0;      // bytes of the pivot determined so far (high first)
+  uint32_t prefix = 0;
   uint32_t remaining = TopK;
   for (int pass = 0; pass < 4; pass++) {
     const int shift = 24 - pass * 8;
     const uint32_t hi_mask = (pass == 0) ? 0u : (0xFFFFFFFFu << (shift + 8));
     for (int i = tx; i < 256; i += N_THREADS) hist[i] = 0;
     __syncthreads();
-    for (int i = tx; i < n; i += N_THREADS) {
-      const uint32_t key = convert_to_uint32_v2(row[i]);
-      if ((key & hi_mask) == prefix) atomicAdd(&hist[(key >> shift) & 0xFF], 1);
+    if (pass == 0) {
+      // first pass: read the row once; keep the ordered keys if they fit
+      const int n4 = n & ~3;
+      const bool aligned = ((reinterpret_cast<uintptr_t>(row) & 15) == 0);
+      for (int i = tx * 4; i < n4; i += N_THREADS * 4) {
+        float v0, v1, v2, v3;
+        if (aligned) load_float4(row + i, v0, v1, v2, v3);
+        else { v0 = row[i]; v1 = row[i + 1]; v2 = row[i + 2]; v3 = row[i + 3]; }
+        const uint32_t k0 = convert_to_uint32_v2(v0), k1 = convert_to_uint32_v2(v1);
+        const uint32_t k2 = convert_to_uint32_v2(v2), k3 = convert_to_uint32_v2(v3);
+        if (cached) { keys[i] = k0; keys[i + 1] = k1; keys[i + 2] = k2; keys[i + 3] = k3; }
+        atomicAdd(&hist[k0 >> 24], 1); atomicAdd(&hist[k1 >> 24], 1);
+        atomicAdd(&hist[k2 >> 24], 1); atomicAdd(&hist[k3 >> 24], 1);
+      }
+      for (int i = n4 + tx; i < n; i += N_THREADS) {
+        const uint32_t k = convert_to_uint32_v2(row[i]);
+        if (cached) keys[i] = k;
+        atomicAdd(&hist[k >> 24], 1);
+      }
+    } else {
+      for (int i = tx; i < n; i += N_THREADS) {
+        const uint32_t key = cached ? keys[i] : convert_to_uint32_v2(row[i]);
+        if ((key & hi_mask) == prefix) atomicAdd(&hist[(key >> shift) & 0xFF], 1);
+      }
     }
     __syncthreads();
-    // suffix sums: suf[b] = #elements in this prefix group with byte >= b
-    if (tx < 256) {
-      uint32_t acc = 0;
-      for (int b = 255; b >= tx; b--) acc += hist[b];   // 256 threads x <=256 adds: trivial
-      // pick b with suf[b] >= remaining > suf[b+1]
-      const uint32_t suf_b = acc;
-      const uint32_t suf_b1 = acc - hist[tx];
-      if (suf_b >= remaining && suf_b1 < remaining) { sc[0] = tx; sc[1] = suf_b1; }
+    // parallel suffix sum over the 256 bins (8 log-steps, double buffered):
+    // hist -> suf[b] = #elements in this prefix group with byte >= b
+    {
+      uint32_t* src = hist; uint32_t* dst = hist2;
+#pragma unroll
+      for (int step = 0; step < 8; step++) {
+        const int stride = 1 << step;
+        if (tx < 256) {
+          uint32_t v = src[tx];
+          if (tx + stride < 256) v += src[tx + stride];
+          dst[tx] = v;
+        }
+        __syncthreads();
+        uint32_t* t = src; src = dst; dst = t;
+      }
+      // after 8 steps `src` holds the suffix sums
+      if (tx < 256) {
+        const uint32_t suf_b = src[tx];
+        const uint32_t suf_b1 = (tx + 1 < 256) ? src[tx + 1] : 0u;
+        if (suf_b >= remaining && suf_b1 < remaining) { hist2[0] = tx; hist2[1] = suf_b1; }
+      }
     }
     __syncthreads();
-    const uint32_t thr = sc[0];
-    remaining -= sc[1];                       // elements strictly above thr in this group
+    const uint32_t thr = hist2[0];
+    remaining -= hist2[1];
     prefix |= thr << shift;
     __syncthreads();
   }
-  const uint32_t pivot = prefix;              // exact key of the k-th largest
-  const uint32_t fin = remaining;             // how many == pivot to take (>= 1)
+  const uint32_t pivot = prefix;
+  const uint32_t fin = remaining;
   const uint32_t gt_total = TopK - fin;
-  // index-ordered emission: > pivot in [0, gt_total), == pivot (first fin by index) after it
   uint32_t run_gt = 0, run_eq = 0;
   for (int base = 0; base < n; base += N_THREADS) {
     const int i = base + tx;
-    uint32_t key = 0;
     const bool valid = (i < n);
-    if (valid) key = convert_to_uint32_v2(row[i]);
+    uint32_t key = 0;
+    if (valid) key = cached ? keys[i] : convert_to_uint32_v2(row[i]);
     const uint32_t fgt = (valid && key > pivot) ? 1u : 0u;
     const uint32_t feq = (valid && key == pivot) ? 1u : 0u;
     uint32_t rgt, tgt, req, teq;
@@ -257,6 +304,7 @@ struct PersistentTopKParams {
   uint32_t chunk_size;      // large path: elements per CTA
   uint32_t ctas_per_group;  // 1=medium, >1=large
   uint32_t max_seq_len;     // max seq_len across all rows (for early CTA exit)
+  uint32_t det_smem_bytes;  // DETERMINISM: dynamic smem available to det_select_row
 };
 
 // ============================================================================
@@ -1099,7 +1147,7 @@ __global__ void __launch_bounds__(kThreadsPerBlock, 2)
           // DETERMINISM: buffered decode/medium paths replaced by the
           // rescanning select (exact pivot, index-ranked ties, sorted row).
           det_select_row<TopK, kThreadsPerBlock>(row_input, static_cast<int>(seq_len),
-                                                 row_output, smem_raw);
+                                                 row_output, smem_raw, params.det_smem_bytes);
         }
       }
       continue;
@@ -1233,7 +1281,8 @@ __global__ void __launch_bounds__(FILTERED_TOPK_BLOCK_THREADS)
     // the non-float instantiations only.
     extern __shared__ uint8_t _smem_reg[];
     vllm::persistent::det_select_row<static_cast<int>(MAX_K), static_cast<int>(BLOCK_SIZE)>(
-        reinterpret_cast<const float*>(score), length, reinterpret_cast<int32_t*>(dst), _smem_reg);
+        reinterpret_cast<const float*>(score), length, reinterpret_cast<int32_t*>(dst), _smem_reg,
+        FILTERED_TOPK_SMEM_DYNAMIC);
     return;
   }
   if (length <= 32768) {
