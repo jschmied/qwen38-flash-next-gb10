@@ -13,15 +13,17 @@ cuBLASLt's row-wise FP8 path degrades identically (99 → 52 → 53 TFLOPS), its
 
 ## Changes
 
-- `CutlassFp8BlockScaledMMKernel.apply_block_scaled_mm`: on SM 12.x, issue the GEMM in 4,096-row chunks (`chunked_blockwise_scaled_mm`). Each chunk's activation scales are re-materialised in the kernel's column-major layout — the kernel derives that layout from its own M, so a row slice of the full scale tensor is read with the wrong stride (measured: silently wrong results).
-- Other architectures unchanged (`blockwise_fp8_m_chunk()` returns 0).
+- `csrc/libtorch_stable/quantization/w8a8/cutlass/c3x/scaled_mm_blockwise_sm120_fp8.cu`: when M > 4,096 **and the FP8 weight operand (N×K bytes) exceeds the device L2** (`cudaDeviceProp::l2CacheSize`), issue the GEMM in 4,096-row launches. A and the output are row-range views written in place; each chunk's activation scales are re-laid out in the kernel's column-major layout (the kernel derives that layout from its own M, so a row slice of the full scale tensor is read with the wrong stride — measured: silently wrong results). No extra output buffer, no Python-side control flow: the model graph still sees one `cutlass_scaled_mm` op with symbolic M.
+- The gate is the actual condition, not the architecture family: GB10 (24 MiB L2) chunks a 42 MB weight; RTX PRO 6000 Blackwell / GB202 (96–128 MiB L2) do not, and nothing else changes for them. SM 9.x/10.x paths are untouched.
+- The chunked result is bit-identical to the single launch (the per-element K-reduction is unchanged); verified against an fp32 reference at FP8 quantisation noise.
 
-The chunked result is bit-identical to the single launch (the per-element K-reduction is unchanged); verified against an fp32 reference at FP8 quantisation noise.
+Review history on this PR: the first revision did the loop in Python (`apply_block_scaled_mm`) and gated on `is_device_capability_family(120)`; both were changed after review — shape-dependent Python control flow in the compiled hot path specialises Dynamo on the token count, and the family gate covered parts whose L2 holds the weight.
 
 ## Test plan
 
-- New `test_cutlass_fp8_blockwise_m_chunk_matches_single_launch` in `tests/kernels/quantization/test_cutlass_scaled_mm.py`: M ∈ {8192, 12288} × (N,K) ∈ {(2048,2560), (2560,6144)} × chunk ∈ {4096, 2048}, `torch.equal` against the single launch, with column-major scales as `QuantFP8(column_major_scales=True)` emits them. Runs on any SM90+ GPU (the chunking function is architecture-independent; only the dispatch is gated).
-- The eight parametrisations were run on a GB10 (SM 12.1) through the same function: 8/8 bit-identical.
+- `test_cutlass_fp8_blockwise_large_m` (M ∈ {4096, 8193, 12288} × (N,K) ∈ {(2048,2560), (2560,6144)}): `torch.equal` against a Python row-chunked reference with per-chunk re-laid-out scales (what the C++ path does internally; on GPUs that do not chunk it is the same identity), plus the usual tolerance check against the dequantized fp32 baseline.
+- `test_cutlass_fp8_blockwise_compiled_dynamic_m`: one `torch.compile(dynamic=True, fullgraph=True)` graph serving M = 4096, 8193 and 12288, equal to eager — the M dispatch is inside the op.
+- Standalone build of the modified `.cu` on a GB10 (SM 12.1): bit-identical to the unmodified op at every tested (M, N, K) including partial last chunks; throughput table below.
 
 ## Test result
 
