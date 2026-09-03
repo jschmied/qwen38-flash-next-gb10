@@ -228,3 +228,18 @@
     principle, but not via tactics: it needs a different kernel family (`--moe-backend` A/B at prefill
     on the main build is the practical test), or fewer/larger per-expert tiles (a kernel change).
     Harness: `tools/moe_tactics.py`.
+
+79. **NVFP4 MoE backend at prefill (main build, offload worker, batch 4096, one start each, 3 requests):
+    FlashInfer CUTLASS stays the fastest; nothing else loads or beats it.** `notes/data/moeab.txt`:
+
+    | backend | 8k TTFT | 30k TTFT | note |
+    | --- | --- | --- | --- |
+    | `flashinfer_cutlass` (default) | **2.86 s** | **10.98 s** | |
+    | `marlin` | 2.98 s (+4 %) | 11.59 s (+6 %) | coherent text |
+    | `humming` | 2.95 s (+3 %) | 11.48 s (+5 %) | coherent text |
+    | `cutlass` (vLLM's own) | — | — | wrong CLI name in the runner (`vllm_cutlass`); known illegal-memory-access at init on this box |
+    | `flashinfer_cutedsl` | — | — | engine init failed on this checkpoint (see log line below) |
+
+    With finding 78 (tactic table flat, ~2× above the streaming floor) this closes the "different
+    kernel family" route on the current software: the MoE share of prefill (14–19 %) stays where it
+    is until FlashInfer's grouped GEMM handles ~150-row expert problems better (fewer/larger tiles).

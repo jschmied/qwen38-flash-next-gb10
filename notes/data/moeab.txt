@@ -1,0 +1,24 @@
+preflight OK 19:41
+=== flashinfer_cutlass UP after ~620s 19:51
+    Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM', 'FLASHINFER_CUTEDSL', 
+    smoke: 'A hash table is a data structure that stores key-value pairs by using a hash function to compute an index into an array '
+  MOE_flashinfer_cutlass TTFT 8k: prompt_tokens=7503 median=2.86s  all=2.86 3.03 2.82
+  MOE_flashinfer_cutlass TTFT 30k: prompt_tokens=29263 median=10.98s  all=10.99 10.98 10.98
+=== marlin UP after ~620s 20:02
+    Using 'MARLIN' NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM', 'FLASHINFER_CUTEDSL', 'FLASHINFER_
+    smoke: 'A hash table stores data in key-value pairs by using a hash function to compute an index into an array of buckets, enabl'
+  MOE_marlin TTFT 8k: prompt_tokens=7503 median=2.98s  all=4.47 2.97 2.98
+  MOE_marlin TTFT 30k: prompt_tokens=29263 median=11.59s  all=11.57 11.59 11.61
+=== humming UP after ~590s 20:13
+    Using 'HUMMING' NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM', 'FLASHINFER_CUTEDSL', 'FLASHINFER
+    smoke: 'A hash table stores data in key-value pairs by using a hash function to map keys to specific array indices, enabling hig'
+  MOE_humming TTFT 8k: prompt_tokens=7503 median=2.95s  all=3.04 2.95 2.95
+  MOE_humming TTFT 30k: prompt_tokens=29263 median=11.48s  all=11.46 11.48 12.54
+=== vllm_cutlass DIED after 20s
+vllm serve: error: argument --moe-backend: invalid choice: 'vllm_cutlass' (choose from 'aiter', 'aiter_triton_mxfp4_bf16', 'auto', 'b12x', 'batched_triton', 'cutlass', 'deep_gemm', 'deep_gemm_mega_moe
+=== flashinfer_cutedsl DIED after 40s
+(EngineCore pid=221271) Traceback (most recent call last):
+(APIServer pid=221052) Traceback (most recent call last):
+(APIServer pid=221052)     raise RuntimeError(
+(APIServer pid=221052) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+== ALL DONE ==
