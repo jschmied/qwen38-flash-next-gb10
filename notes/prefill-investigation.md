@@ -146,3 +146,20 @@
     (c) For our own TTFT the remaining lever is therefore the main build (dispatch fix + #54513), not
     the kernel — at batch 4096 we already sit at the 160-TFLOPS regime. (d) Upstream-shaped: an
     issue with this table, and the chunk-loop or raster-swizzle PR. Not posted; needs the user's go.
+
+72. **INCIDENT — the main-build load thrashed the box; reboot 17:08.** `fnmain1` (nightly dev352 venv,
+    body 69.4 GiB on the GPU at `--gpu-memory-utilization 0.60`, the 47.7 GiB PLE tables pinned in host
+    memory via `--cpu-offload-gb 56 --cpu-offload-params ngram_embedding`, `--language-model-only`)
+    passed model construction (CUTLASS blockwise FP8 kernel selected, Triton GDN, FlashInfer CUTLASS
+    MoE — both loader patches accepted) and then sat at 120 of 121 GB during the safetensors read;
+    from 16:52 the kernel logged hung tasks (`cache_mgr_main` blocked > 614 s), journald flushed
+    caches under memory pressure, the machine stopped responding and was rebooted from the
+    workstation at 17:06–17:08. Pinned (unswappable) host memory for the tables plus the GPU
+    reservation plus the loader's page cache exceed the pool — the preview's separate offload
+    worker held the same 47.7 GiB but not pinned, and the box lived at 119/121 GB. Lost with the
+    reboot: the /tmp scratchpad (runners, traces, microbench sources; every result of the day was
+    already in `notes/data/`, `mtpgrid0` transcribed to `notes/data/mtpgrid0-partial.md`). Survived:
+    `/opt/llm/kernel-det/_C_det.so`, `/opt/llm/serve-fnmain.sh`, the fnmain venv with PLEGATE +
+    SCALEINV installed (FP8CHUNK not yet). Rule: on GB10 never pin the PLE tables; a main build
+    needs either the CPU-offload worker ported or a compressed PLE (HashK 12.8 GB on the GPU) — the
+    latter is now a *memory* lever, not a speed one. The main-build TTFT question stays open.
