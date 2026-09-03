@@ -36,7 +36,7 @@ Cause: output slots are handed out by `atomicAdd` in thread-arrival order, and e
 
 Standalone harness on sm_121: 177 / 177. The pytest file against the built kernel is queued on the same box; the result and the end-to-end decode / TTFT numbers follow as a comment.
 
-Fixes #54521. Related: #53142, #54912 (QSA ring bound).
+Fixes #54521. Related: this is one of three independent defects that together make Qwen3.8-Flash-Next reproducible on GB10 — the others are the FlashInfer CUTLASS MoE fused finalize (#54945, PR #54948) and the align-mode block-size PRs #54076 / #53798; bisection thread in #53142; #54912 (QSA ring bound).
 
 ---
 
