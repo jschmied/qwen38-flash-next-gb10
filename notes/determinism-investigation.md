@@ -1047,7 +1047,7 @@ all depths counter-identical across 3 starts: True
     | prompt | stock `persistent_topk` | exact `torch.topk` (workaround) | cost |
     | --- | --- | --- | --- |
     | 7,503 tokens | 3.12 / 3.13 / 3.14 s | 3.32 / 3.32 / 3.44 s | +6.1 % |
-    | 29,263 tokens | 11.25 / 11.31 / 11.38 s | 11.97 / 12.02 / 11.94 s | +6.4 % |
+    | 29,263 tokens | 11.25 / 11.31 / 11.38 s | 11.97 / 12.02 / 11.94 s | +5.8 % |
 
     The cost is flat in context length (the selection is O(rows × columns) either way), and far
     below the community overlay's −8…−40 % (which replaced the kernel on every layer with a
