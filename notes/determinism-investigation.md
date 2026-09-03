@@ -1120,6 +1120,23 @@ all depths counter-identical across 3 starts: True
     **95/100 with 0/50 unstable items** vs stock 97/100 with **13/50 unstable**; the one-point gap is a
     single near-tie reasoning fork. Artefacts: k3net/docai-evals, experiments/2026-09-03-qwen38-flash-next-det-topk-kernel-batch-invariance-gb10.
 
+80. **The preview build lacks vllm#50729 (overlapping Mamba state-copy race, merged 2026-08-17).**
+    Found via blazux/qwen3.8-Flash-DGX (their image carries it plus a bounds guard by Saren-Arterius):
+    none of the fix's added lines exist in `vllm-venv-fnext`'s `v1/worker/mamba_utils.py`; all are in
+    the main venv. It is on our prefix-cache path (conv-state left shifts at align boundaries). Our
+    bit-identity results for cold vs partial-hit were measured without it, so they were either lucky or
+    the race needs concurrency we did not run; k3dani's 3/4 partial-hit case (finding 76) is a
+    candidate. The upstream diff applies cleanly to the preview (4 hunks, offsets 5–6); queued
+    (`race50729`) for after the night chain, backup `mamba_utils.py.pre50729`, diff saved as
+    `patches/upstream-candidates/vllm-pr50729-mamba-state-copy-race.diff`. Also in blazux's image and
+    worth adopting: the FLA shared-memory gate (sm_121 has 99 KiB, the gate asks 100 KiB → small tiles
+    for every gated GDN kernel) and the `chunk_delta_h` `num_warps=2` pin (fla#953 tl.dot race on
+    Blackwell) — `tools/main/fla_gb10_patch.py`, before/after bench queued (`flagate`).
+    Upstream merged since the preview fork that the main build has and the preview does not (our
+    files only): #52789 internal prefill checkpoints for Mamba prefix caching (9–25 % TTFT claimed),
+    #53388 disabling the trailing prefix-cache block drop under spec decode (= plan §5 item 1),
+    #53877 GDN decode beta in FP32, #53456 XD-RoPE grid on prefix hit, #54251 GDN RMSNorm warm-up.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
