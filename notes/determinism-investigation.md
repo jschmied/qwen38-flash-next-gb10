@@ -1015,6 +1015,32 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
     withdrawn 56: eager mode has no extra nondeterministic kernel. Raw: `notes/data/mtpacc2.txt`,
     `acclog_n6_cache_on.txt`, `acclog_n2_cache_off.txt`, `acc_*_texts.json`.
 
+61. **EOS-correct depth grid on the validated stack: no depth is broken; speculation does not pay
+    on 30-token turns.** `MTPGRID3` (loop stops at EOS, align + exact top-k + det MoE, prefix cache
+    on, compiled, 3 starts, `QSAFIX active` verified):
+
+| n | s/turn (a/b/c) | real tokens | acceptance | accept len | counters a=b=c |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 2.09 / 2.08 / 2.07 | 237 | – % | – | yes |
+| 1 | 2.63 / 2.64 / 2.67 | 208 | 74.4 % | 1.74 | yes |
+| 2 | 2.72 / 2.65 / 2.63 | 227 | 66.0 % | 2.32 | yes |
+| 3 | 2.70 / 2.67 / 2.67 | 227 | 57.0 % | 2.71 | yes |
+| 4 | 2.55 / 2.58 / 2.56 | 166 | 40.9 % | 2.64 | yes |
+| 5 | 2.66 / 2.66 / 2.67 | 166 | 34.2 % | 2.71 | yes |
+| 6 | 2.61 / 2.56 / 2.54 | 145 | 36.1 % | 3.17 | yes |
+| 7 | 2.78 / 2.56 / 2.58 | 149 | 30.3 % | 3.12 | yes |
+| 8 | 2.70 / 2.70 / 2.70 | 142 | 24.8 % | 2.98 | yes |
+
+all depths counter-identical across 3 starts: True
+
+    Every depth reproduces its draft/accept counters across the three starts. Acceptance on real
+    answer tokens falls from 74 % (n=1) to ~25 % (n=8) while the accept length rises to ~3 (n=6–7):
+    the drafter is sound at every depth. Turn time is TTFT-bound at this answer length (~30–40
+    tokens): 2.1 s/turn without speculation, 2.6–2.8 s with any MTP depth, because the one-block
+    prefix-cache back-off costs more re-prefill than the decode saved (cf. #54713 for the Mamba
+    side of that). The old-loop numbers (58) are retired; the served config's choice is a
+    workload question, not a defect question. Raw: `notes/data/mtpgrid3.txt`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
