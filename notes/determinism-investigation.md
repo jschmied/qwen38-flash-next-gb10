@@ -1106,6 +1106,20 @@ all depths counter-identical across 3 starts: True
     `patches/kernel-det/pytest_results.txt`. (Queue re-ordered the same afternoon: quick jobs first —
     pytest, prefill profile, HC-GEMM microbench — the grid remainder and the kernel A/B run from 22:00.)
 
+76. **Third-party validation of the kernel (k3dani, GB10, 2026-09-03, PR #55122 comment 16:38 UTC):
+    reproducible, throughput-neutral, quality-neutral.** RadixArk NVFP4, preview image, prefix cache +
+    chunked prefill + PIECEWISE graphs + MTP=2, sequential requests, sha256 over top-20 logprobs per
+    token: stock `persistent_topk` 0/4 prompts reproducible (10 distinct hashes each, diverging at token
+    0); exact `torch.topk` and `VLLM_QSA_DET_TOPK=1` 4/4 on 512-token thinking runs, 3/4 on the 48-token
+    runs where the one "failure" is a partial-prefix-cache-hit request whose logits differ from the
+    full-hit path — the align-resume defect (#53798/#54076/#54173), not the kernel. Prefill throughput
+    99–100 % of stock (exact fallback 87–90 %); decode unchanged. Batch invariance not provided (2–4
+    identical concurrent requests differ from sequential and from each other; expected, GDN has no
+    batch-invariant path). MoE fused finalize: 0 divergences across 80 warm requests on their shapes
+    (shape-dependent; a data point for #54945). Quality, 50-item Hungarian KIE suite × 3 runs:
+    **95/100 with 0/50 unstable items** vs stock 97/100 with **13/50 unstable**; the one-point gap is a
+    single near-tie reasoning fork. Artefacts: k3net/docai-evals, experiments/2026-09-03-qwen38-flash-next-det-topk-kernel-batch-invariance-gb10.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
