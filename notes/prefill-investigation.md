@@ -39,3 +39,15 @@
     profile shows the same kernel dominating (29,263 = 3 × 8,192 + 4,687, one misaligned chunk).
     PLE gather: 0.0 % — lever 2 of the plan is dead as a prefill lever. Hyper-connections
     (`_hc_combine_norm` + `_hc_gate_mix` + BF16 GEMMs) ≈ 12 %, second after the FP8 fix.
+
+66. **30k profile confirms the mechanism, and the 30k number itself is warm-up-contaminated.** Same
+    server, 29,263 tokens = 3 × 8,192 + 4,687: the three aligned chunks run the FP8 projection in the
+    **default 128×128 config at 6.3 ms per 8,192 rows** (288 calls; ~109 TFLOPS on the wide
+    projection), the misaligned 4,687-row tail runs the **swap-AB config at 13.5 ms** (100 calls) —
+    3.7× slower per row (at 7,503 rows it was 7.8×: the small-M kernel degrades superlinearly with M).
+    FP8 total 3.4 s of 13.35 s kernel time; MoE 2.6 s, QSA indexer+attention 1.8 s, GDN 1.4 s, all
+    linear in tokens vs 8k. GPU busy only 85 %: 2.0 s of gaps > 5 ms, the largest 1.29 s at 0.5 s into
+    the run with driver/attribute queries and kernel launches inside — first-time JIT/autotune for the
+    new 4,687-row shape (the warm-ups were 8k only). So the 16.3 s TTFT here is not comparable to
+    finding 62's 11.3 s at batch 4096; `ttftpad` (8192) and `ttftpad2` (4096) re-measure both lengths
+    warm, 3 requests each, with prompt lengths mod 4 = 0…3. Raw: `notes/data/prefprof.txt`.

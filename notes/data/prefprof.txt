@@ -44,3 +44,41 @@ triton_poi_fused_add_2                                                     17.4 
 === profile reps=860 15:23:03
   start_profile 200
   reps=860 prompt_tokens=29263 ttft=16.26s
+  stop_profile 000
+  trace: /opt/llm/prof-pf/dp0_pp0_tp0_dcp0_ep0_rank0.1788441853534444846.pt.trace.json.gz
+== prefill reps=860: span 15.62s  GPU busy 13.32s (85%)  kernel-sum 13.35s  launches 10,529
+component                                        ms      %
+FP8 projections (blockwise/scaled_mm)        3399.0  25.5%
+MoE (nvfp4 experts/finalize)                 2584.5  19.4%
+QSA indexer + top-k                          1810.8  13.6%
+other                                        1786.1  13.4%
+norm / elementwise / act                     1721.2  12.9%
+GDN chunked scan / conv                      1378.9  10.3%
+other GEMM                                    667.7   5.0%
+PLE / embedding gather                          1.6   0.0%
+
+top kernels:
+kernel                                                                       ms     %   calls  us/call
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlas   1809.7 13.6%     288   6283.5
+_qsa_sparse_paged_gqa_splitk_kernel                                      1521.0 11.4%      48  31687.9
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlas   1352.7 10.1%     100  13527.2
+_hc_combine_norm_kernel                                                  1090.8  8.2%     380   2870.5
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupP    989.3  7.4%     192   5152.4
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupP    942.6  7.1%     192   4909.2
+_hc_gate_mix_kernel                                                       598.1  4.5%     388   1541.4
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_12    573.9  4.3%     598    959.6
+chunk_gated_delta_rule_fwd_kernel_h_blockdim64                            387.0  2.9%     144   2687.8
+nvjet_sm121_tst_mma_128x128x64_3_32x64x64_tmaAB_bz_TNNN                   342.2  2.6%     291   1176.1
+chunk_fwd_kernel_o                                                        332.3  2.5%     144   2307.5
+void tensorrt_llm::kernels::cutlass_kernels::expandInputRowsKernel<__n    300.3  2.2%     192   1563.8
+recompute_w_u_fwd_kernel                                                  285.7  2.1%     144   1983.9
+void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_imp    278.5  2.1%       8  34812.6
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__nv_f    267.5  2.0%     192   1393.2
+_causal_conv1d_fwd_kernel                                                 261.1  2.0%     144   1813.4
+_fused_post_conv_kernel                                                   249.3  1.9%     144   1730.9
+_qsa_mqa_paged_kernel                                                     217.9  1.6%     132   1651.0
+triton_red_fused__to_copy__unsafe_view_abs_add_clamp_clone_cutlass_sca    145.4  1.1%     144   1009.8
+merge_16x16_to_64x64_inverse_kernel                                       126.0  0.9%     144    875.3
+nvjet_sm121_tst_mma_128x224x64_2_64x56x64_tmaAB_bz_TNNN                    98.3  0.7%     145    678.1
+chunk_scaled_dot_kkt_fwd_kernel                                            98.3  0.7%     144    682.4
+== ALL DONE ==
