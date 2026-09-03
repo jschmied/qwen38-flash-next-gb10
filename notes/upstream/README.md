@@ -45,3 +45,14 @@ Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer boj
   the same patched build.
 
 5. 2026-09-02 evening: acceptance-effect comment POSTED on vllm#53142, one-liners on #54076 and #53798 (finding 46).
+
+6. **2026-09-03 — CORRECTION OWED.** The acceptance-effect numbers posted on #53142 / #54076 / #53798
+   are contaminated by the `ignore_eos` artifact (finding 59). Draft: `comment-53142-correction.md`;
+   post after `MTPGRID3` (+ one unpatched EOS-correct run for the "before" number). The +3.6 % / +17 %
+   decode costs in #54945 / #54948 / flashinfer#3957 are no-spec token-rate comparisons at equal
+   token counts and are not affected by the filler; they remain n=1 as labelled.
+7. Kernel fix for #54521 (deterministic `persistent_topk`, all five emission sites):
+   `patches/kernel-det/` — compiles for sm_121a; standalone `_C_det` link + reference tests queued.
+   PR after the tests pass and a prefill A/B against the exact-selection workaround. Title idea:
+   `[Kernel] Make persistent_topk deterministic (index-ranked ties, sorted rows)`; link #54521,
+   #51782, our finding 53/54 chain as evidence; disclose AI assistance; `git commit -s`.
