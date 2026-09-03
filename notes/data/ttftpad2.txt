@@ -1,0 +1,15 @@
+preflight OK 15:55
+=== batch 4096, stock preview build
+  reps=220 extra=0 prompt_tokens=7503 (mod4=3) median=3.05s all=3.05 3.04 3.05
+  reps=220 extra=1 prompt_tokens=7505 (mod4=1) median=3.06s all=3.06 3.06 3.06
+  reps=220 extra=2 prompt_tokens=7506 (mod4=2) median=3.06s all=3.06 3.06 3.04
+  reps=220 extra=3 prompt_tokens=7507 (mod4=3) median=3.06s all=3.05 3.07 3.06
+  reps=220 extra=4 prompt_tokens=7508 (mod4=0) median=2.81s all=2.82 2.81 2.80
+  reps=220 extra=5 prompt_tokens=7509 (mod4=1) median=3.07s all=3.06 3.07 3.07
+  reps=860 extra=0 prompt_tokens=29263 (mod4=3) median=11.11s all=11.14 11.11 11.10
+  reps=860 extra=1 prompt_tokens=29265 (mod4=1) median=11.14s all=11.14 11.15 11.14
+  reps=860 extra=2 prompt_tokens=29266 (mod4=2) median=11.15s all=11.14 11.15 11.15
+  reps=860 extra=3 prompt_tokens=29267 (mod4=3) median=11.12s all=11.16 11.12 11.12
+  reps=860 extra=4 prompt_tokens=29268 (mod4=0) median=11.14s all=11.14 11.14 11.17
+  reps=860 extra=5 prompt_tokens=29269 (mod4=1) median=11.16s all=11.17 11.13 11.16
+== ALL DONE ==

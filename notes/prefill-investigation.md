@@ -104,3 +104,17 @@
     chunked prefill, that is the *last* chunk: `prompt_tokens % 4 == 0` when the batch size is a
     multiple of 4). Also: the first 30k request in a fresh server took 15.86 s vs 12.8 s warm — the
     profile's 16.3 s (finding 66) was that cold shape. `ttftpad2` repeats the grid at batch 4096.
+
+70. **Same grid at batch 4096: padding is worth −8 % at 8k and nothing at 30k; batch 4096 + padding is
+    the best preview-build configuration.** `TTFTPAD2` (`notes/data/ttftpad2.txt`), medians of 3:
+
+    | | 8k, mod 4 ≠ 0 | 8k, mod 4 = 0 | 30k, mod 4 ≠ 0 | 30k, mod 4 = 0 |
+    | --- | --- | --- | --- | --- |
+    | batch 8192 | 4.52–4.57 s | **2.86 s** | 12.59–12.92 s | **11.50 s** |
+    | batch 4096 | 3.05–3.07 s | **2.81 s** | 11.11–11.16 s | 11.14 s |
+
+    At batch 4096 the misrouted tail is 3,407 tokens at 8k (≈ 0.25 s) and 595 at 30k (nothing). With
+    the padding, batch 8192 and 4096 are within 2 % at 8k and batch 4096 is 3 % better at 30k —
+    finding 67(b): the 128×128 config is more efficient per row at ≤ 4,096 rows. So on the preview
+    build: **keep batch 4096, pad prompts to a multiple of 4** (2.81 s / 11.1 s). Everything beyond
+    that needs the main build (dispatch fix + #54513) or a faster blockwise GEMM (finding 67(c)).
