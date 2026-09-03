@@ -475,6 +475,13 @@ was reproducible to 1%. **Tell:** the noise is in one column only.
 `1000/decode_tps` from an independent benchmark — it now does, to ~1%, and the reproducibility
 went from 36% to **0.4%**.
 
+> **Superseded 2026-09-03 (finding 59, `post-mortem-2026-09-03.md`).** This fix created the next
+> artifact: `ignore_eos` makes a chat model emit post-EOS filler, and for speculative decoding that
+> filler is either a repeat the drafter predicts ~100 % or an `<|im_start|>` wall it predicts 0 %,
+> so every acceptance / ms/tok number under it measured the filler, not the model — the "MTP
+> degradation" we then chased for two days. The right fix for unequal work is to **stop at EOS,
+> record per-turn tokens, and report ms/tok over the real tokens** — never `ignore_eos`.
+
 ### Benchmarks serialized by unit name instead of by resource
 
 Each queued wave waited on a *named* systemd unit (`wave3` waits for `wave2`, …). That holds only
