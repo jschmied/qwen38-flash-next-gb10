@@ -102,3 +102,19 @@ expected TTFT effect in the agent loop ÷ effort:
 
 Not novel, dropped: PLE placement, batch sizes, MoE backend sweeps, GDN kernel A/Bs (keep as
 5–15 % housekeeping on the main build).
+
+5. **Hyper-connection GEMMs at prefill M (re-opened 2026-09-03).** Per layer: grouped RMSNorm →
+   down GEMM `[M,10240]→[M,320+4]` → silu → up GEMM `[M,320]→[M,10240]` → gate-mix (norm and mix are
+   already fused Triton ops; the GEMMs are plain BF16 `ReplicatedLinear` → cuBLAS →
+   `cutlass_80_wmma_tensorop_bf16`, an sm_80 path). FLOP share ≈ 5 % of the model, time share ≈ 25 %
+   in the earlier prefill-heavy trace — i.e. the kernel runs far below the tensor-core rate for
+   these skinny-K/skinny-N shapes on sm_121. At **decode** (M ≤ 8) three interventions were null
+   because the shapes are latency-bound (`the-prefill-decode-confound.md`); at **prefill** (M in the
+   thousands) that argument does not hold, so the same three arms (per-channel FP8 `scaled_mm`,
+   blockwise FP8, a Triton/CUTLASS GEMM tuned for K=320) are un-measured where they can matter.
+   Fusion (up GEMM + gate-mix epilogue, down GEMM + silu) is second-order: the gate round trip is
+   ~16 GB per 8k prefill ≈ 60 ms ≈ 2 % of TTFT. Order: profile share (queued) → offline microbench
+   of the two shapes at M ∈ {4096, 8192, 32768}: torch BF16 vs `scaled_mm` FP8 vs a Triton GEMM
+   (minutes, idle GPU) → if ≥ 2× on the kernel, wire it through the existing `quant_method` dispatch
+   (main already has `low_latency_gemm.py` for the decode side) and A/B TTFT. Nobody in the field
+   touches the hyper-connections.
