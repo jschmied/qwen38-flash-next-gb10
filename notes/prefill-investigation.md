@@ -196,3 +196,14 @@
     Memory guard (`/opt/llm/runners/memguard.sh`, PSI-based) never fired; pressure stayed ≤ 0.6 %
     throughout while `available` sat at 2 GiB — the availability-based guard would have aborted a
     working server, which is why it was replaced (the preview always ran like this).
+
+75. **PR #55180's C++ chunk path, standalone on GB10 (same build for both columns, CUTLASS v4.7.1):
+    48/48 bit-identical to the unmodified op, 1.66–3.16× on weights above the L2, no point below
+    0.98×.** `notes/data/fp8chunk_standalone_v2.txt`. The rule that survived the sweep: ~12 MiB of
+    activation per launch (K-aware: 4,096 rows at K=2,560, 2,456 at K=5,120), chunks balanced and
+    4-aligned, chunking from 1.5 chunks of rows; gate = weight bytes > L2. The first, fixed-4096
+    version (`fp8chunk_standalone_v1.txt`) lost 5–7 % at M=4,097 and left the 5120² weight at
+    ~120 TF; the K-aware version is 1.00–1.01 at 4,097 and 159 TF on 5120² from 4k rows up.
+    Earlier comparisons against the preview's `_C` overstated odd-M ratios (the preview still has the
+    #52775 misroute) and understated even-M ones by 2–7 % (different build) — hence the same-build
+    baseline. PR moved out of draft with this table.
