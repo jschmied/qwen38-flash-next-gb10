@@ -1,0 +1,14 @@
+preflight OK 15:07
+=== AFTER: PR tests against _C_det ===
+DETPLUGIN: _run_persistent_topk -> _C_det
+...............sss...........................sss........................ [ 92%]
+..s.s.                                                                   [100%]
+70 passed, 8 skipped, 196 deselected in 0.69s
+=== BEFORE: same tests against the stock _C.persistent_topk ===
+FAILED test_upstream_top_k_per_row.py::test_persistent_topk_pivot_ties[4096-40000]
+FAILED test_upstream_top_k_per_row.py::test_persistent_topk_pivot_ties[4097-8192]
+FAILED test_upstream_top_k_per_row.py::test_persistent_topk_pivot_ties[4097-40000]
+FAILED test_upstream_top_k_per_row.py::test_persistent_topk_pivot_ties[16384-40000]
+FAILED test_upstream_top_k_per_row.py::test_persistent_topk_pivot_ties[16385-40000]
+70 failed, 8 skipped, 196 deselected in 3.06s
+== ALL DONE ==

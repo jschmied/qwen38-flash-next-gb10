@@ -1097,6 +1097,15 @@ all depths counter-identical across 3 starts: True
     `tools/determinism/qsadet_patch.py` (`VLLM_QSA_DET_TOPK=1`) routes the QSA selection to it for
     the end-to-end A/B. Not installed yet (queue: `mtpgrid0` running).
 
+64. **PR #55122's test file: 70 / 70 pass against the built kernel, 70 / 70 fail against the stock op.**
+    The three new pytest cases (`test_persistent_topk_deterministic`, `_all_equal`, `_pivot_ties`,
+    `_narrow_value_range`; 70 parametrisations, 8 skipped for k ≥ n) run on the box with a plugin that
+    swaps the op for `_C_det` (`patches/kernel-det/detplugin.py`): **70 passed** in 0.7 s. The same file
+    against the venv's stock `_C.persistent_topk`: **70 failed** — every case, including the tie-free
+    random rows, because the stock output order is not reproducible and not index-sorted. Raw:
+    `patches/kernel-det/pytest_results.txt`. (Queue re-ordered the same afternoon: quick jobs first —
+    pytest, prefill profile, HC-GEMM microbench — the grid remainder and the kernel A/B run from 22:00.)
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
