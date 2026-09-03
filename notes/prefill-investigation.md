@@ -238,7 +238,7 @@
     | `marlin` | 2.98 s (+4 %) | 11.59 s (+6 %) | coherent text |
     | `humming` | 2.95 s (+3 %) | 11.48 s (+5 %) | coherent text |
     | `cutlass` (vLLM's own) | — | — | wrong CLI name in the runner (`vllm_cutlass`); known illegal-memory-access at init on this box |
-    | `flashinfer_cutedsl` | — | — | engine init failed on this checkpoint (see log line below) |
+    | `flashinfer_cutedsl` | — | — | refused at init: "kernel does not support current device" (sm_121) |
 
     With finding 78 (tactic table flat, ~2× above the streaming floor) this closes the "different
     kernel family" route on the current software: the MoE share of prefill (14–19 %) stays where it
