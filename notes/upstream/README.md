@@ -58,3 +58,4 @@ Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer boj
    #51782, our finding 53/54 chain as evidence; disclose AI assistance; `git commit -s`.
 
 8. 2026-09-03 10:xx: correction POSTED on #53142 (https://github.com/vllm-project/vllm/issues/53142#issuecomment-5522457527) and one-liners on #54076/#53798; the unpatched EOS-loop number is still owed (mtpgrid0).
+9. 2026-09-03 12:xx: kernel PR **OPENED** — https://github.com/vllm-project/vllm/pull/55122 (`[Kernel] Make persistent_topk deterministic`, Fixes #54521; body in `pr-topk-det-body.md`). Sources = `patches/kernel-det` v2.3 + `RADIX_THRESHOLD` 16384, clang-formatted; new pytest cases in `tests/kernels/test_top_k_per_row.py` (copy: `patches/kernel-det/test_upstream_top_k_per_row.py`, run against `_C_det` via `detplugin.py`). OWED on the PR: the pytest result (`kpytest`, queued) and the end-to-end decode/TTFT A/B (`kdetab`, queued).

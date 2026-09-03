@@ -11,6 +11,8 @@ Our local equivalent (env-gated on `VLLM_MOE_DET_FINALIZE=1`): `tools/determinis
 
 ## Kernel PR (persistent_topk determinism)
 
+**OPENED 2026-09-03: https://github.com/vllm-project/vllm/pull/55122** (see README item 9; follow-ups owed: pytest result, e2e A/B).
+
 Files: `csrc/libtorch_stable/persistent_topk.cuh`, `csrc/libtorch_stable/topk_histogram_4096.cuh`
 (diffs in `patches/kernel-det/*.det.diff`). Add a CPU-free unit test in `tests/kernels/` that runs
 the op 6× on random and tie-heavy inputs across rows {1, 8, 64} and lengths crossing 2048 / 8192 /

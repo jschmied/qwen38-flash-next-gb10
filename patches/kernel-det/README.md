@@ -33,6 +33,8 @@ whether the stock op reproduces itself on the same inputs.
 100× on every path, and pivot-tie populations of k−1, k, k+1, 2048, 2049, 3708, 3709, 4096,
 16384, 16385 around every buffer size the original kernels used.
 
+**Upstream: PR https://github.com/vllm-project/vllm/pull/55122 (2026-09-03).** `test_upstream_top_k_per_row.py` is the PR's test file; `detplugin.py` runs its new cases against the standalone `_C_det`.
+
 Status (2026-09-03): v2.3 builds and links against torch 2.13 / CUDA 13 on the box; `test_det.py`
 177 / 177 (`test_results.txt`); `bench_det.py` in `bench_results.txt` — det costs 1.3–4× the stock
 call (8→10 µs at n=1k, 18.5→72 µs at n=32k/k=2048, single row), the multi-CTA path (> 32k) is the
