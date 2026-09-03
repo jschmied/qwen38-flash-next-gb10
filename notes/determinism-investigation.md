@@ -1004,6 +1004,17 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
     stopping at EOS. Raw: `notes/data/acclog_n2_cache_on.txt`, `acc_n2_cache_on_texts.json`,
     `acc_n5_cache_on_texts.json`, `mtpacc2-partial.txt`.
 
+60. **59 holds at n=6 and with the cache off; eager mode with exact top-k is deterministic too.**
+    `MTPACC2` continued: n=6 cache on — every broken turn is ~10 healthy steps (the answer) then a
+    zero wall; n=2 cache off — the first four turns' step sequences are byte-identical to the
+    cache-on run (the cache path plays no part). `DH5_a` (eager, `--enforce-eager`, exact top-k
+    verified active, drafter hashes, 3 passes): per-turn acceptance identical to the decimal
+    (71.7 / 75.0 / 72.1 / 66.0 / 66.0 / 60.6 / 68.7 / 60.0 %), every hooked drafter module
+    identical across passes except one `embed_tokens` row at one draft call per turn (a call-
+    alignment artefact of the grouping, not pursued — acceptance is identical). This replaces the
+    withdrawn 56: eager mode has no extra nondeterministic kernel. Raw: `notes/data/mtpacc2.txt`,
+    `acclog_n6_cache_on.txt`, `acclog_n2_cache_off.txt`, `acc_*_texts.json`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
