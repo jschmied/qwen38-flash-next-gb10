@@ -93,6 +93,14 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
                     "persistent_topk_det: chunk_size ", chunk_size,
                     " smaller than TopK ", TopK);
     if (smem_size < P::kSmemMedium) smem_size = P::kSmemMedium;
+    // DETERMINISM: let det_select_row keep the row's keys in shared memory
+    // (single-CTA rows are <= RADIX_THRESHOLD); capped by the device optin.
+    {
+      const uint32_t det_rows = std::min<uint32_t>(static_cast<uint32_t>(max_seq_len), P::RADIX_THRESHOLD);
+      const size_t det_fixed = 2048 + 8192 + static_cast<size_t>(TopK) * sizeof(int);
+      const size_t det_want = det_fixed + static_cast<size_t>(det_rows) * sizeof(uint32_t);
+      if (det_want > smem_size) smem_size = std::min(det_want, static_cast<size_t>(max_smem_per_block));
+    }
 
     // Query occupancy for the instantiation that will actually launch;
     // overestimating it deadlocks the cooperative barrier.
@@ -211,6 +219,7 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
         workspace.mutable_data_ptr<uint8_t>());
     params.ctas_per_group = ctas_per_group;
     params.max_seq_len = static_cast<uint32_t>(max_seq_len);
+    params.det_smem_bytes = static_cast<uint32_t>(smem_size);
 
   #define LAUNCH_PERSISTENT(TOPK_VAL, VS)                                     \
     do {                                                                      \
