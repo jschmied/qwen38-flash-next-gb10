@@ -207,3 +207,11 @@
     Earlier comparisons against the preview's `_C` overstated odd-M ratios (the preview still has the
     #52775 misroute) and understated even-M ones by 2–7 % (different build) — hence the same-build
     baseline. PR moved out of draft with this table.
+
+77. **GDN chunked delta rule: fla-core 0.5.2 is 6–14 % faster than vLLM's vendored FLA on GB10 at the
+    model's prefill shapes, same outputs (bf16 rounding).** Standalone, H=48, K=V=128, one sequence,
+    `use_qk_l2norm_in_kernel=False`, 5×10 launches: T=2048 2.47 → 2.33 ms (1.06×); 7,503 8.94 → 8.07
+    (1.11×); 16,384 19.8 → 17.9 (1.11×); 29,263 37.4 → 32.7 (1.14×); max |Δ| 0.0078 = bf16 ulp. Per
+    layer × 36 GDN layers this is ~31 ms of a 2.8 s TTFT at 8k (≈ 1 %) and ~170 ms of 10.9 s at 30k
+    (≈ 1.6 %). Free (a vendored-copy sync upstream), small; the GDN share itself (7–10 %) is the
+    ceiling. Not pursued further today.
