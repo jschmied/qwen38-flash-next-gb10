@@ -118,3 +118,12 @@ Not novel, dropped: PLE placement, batch sizes, MoE backend sweeps, GDN kernel A
    (minutes, idle GPU) → if ≥ 2× on the kernel, wire it through the existing `quant_method` dispatch
    (main already has `low_latency_gemm.py` for the decode side) and A/B TTFT. Nobody in the field
    touches the hyper-connections.
+
+## 6. Night queue 2026-09-03 (user: "thats fine")
+
+`night` unit: moeab (MoE backend prefill A/B, main) → mtpgrid0c (grid remainder) → kdetab (PR #55122 e2e)
+→ chunke2e (Python-equivalent M-chunking on main at batch 8192, on/off) → `qsadump` (QSA block-selection
+overlap for one 8k + one 30k prefill: consecutive-row Jaccard and union-per-tile vs per-row gather — the
+go/no-go number for the tile-union sparse-attention kernel, §5 item 3 / kernel list #2). Deferred to a
+GPU-free slot because they need compiles: deterministic top-k pass-cost breakdown (kernel list #4) and the
+CUTLASS raster-swizzle experiment (#5). Results in `/opt/llm/runners/results/`, findings in the morning.
