@@ -36,7 +36,7 @@ def check(name, logits, lengths, k, repeats=6, expect=None):
     if tag == "FAIL":
         bad = (outs[0] != r).nonzero()[:3].tolist(); print("      first diffs (row,pos):", bad, "det:", outs[0].flatten()[:6].tolist(), "ref:", r.flatten()[:6].tolist())
 # 1. random and tie-heavy across paths
-for rows, cols, k, kind in itertools.product((1, 8, 64), (1024, 4096, 8192, 20000, 40000), (512, 2048), ("rand", "ties")):
+for rows, cols, k, kind in itertools.product((1, 8, 64), (1024, 4096, 8192, 20000, 40000), (512, 1024, 2048), ("rand", "ties")):
     if k >= cols: continue
     g = torch.Generator(device=dev).manual_seed(rows * 7 + cols + k)
     logits = torch.randn(rows, cols, generator=g, device=dev) if kind == "rand" else torch.randint(0, 5, (rows, cols), generator=g, device=dev).float()
@@ -44,13 +44,13 @@ for rows, cols, k, kind in itertools.product((1, 8, 64), (1024, 4096, 8192, 2000
     check(f"rows={rows:2d} cols={cols:5d} k={k:4d} {kind}", logits, lengths, k)
 # 2. all values equal -> must be exactly [0..k) every time (100 repeats), every path
 for rows, cols in ((1, 8192), (1, 20000), (1, 40000), (64, 8192), (64, 40000)):
-    for k in (512, 2048):
+    for k in (512, 1024, 2048):
         logits = torch.zeros((rows, cols), device=dev); lengths = torch.full((rows,), cols, dtype=torch.int32, device=dev)
         exp = torch.arange(k, dtype=torch.int32, device=dev).expand(rows, k).contiguous()
         check(f"ALL-EQUAL rows={rows:2d} cols={cols:5d} k={k}", logits, lengths, k, repeats=100, expect=exp)
 # 3. boundary tie populations at the pivot: m elements share the pivot value, k - m//2 above it
 for rows, cols in ((1, 8192), (1, 40000), (64, 20000)):
-    for k in (512, 2048):
+    for k in (512, 1024, 2048):
         for m in (k - 1, k, k + 1, 2048, 2049, 3708, 3709, 4096, 16384, 16385):
             if m + 8 > cols: continue
             g = torch.Generator(device=dev).manual_seed(m + cols)
