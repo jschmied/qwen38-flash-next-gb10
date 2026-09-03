@@ -52,19 +52,3 @@ index reuse in the drafter. Our good regime (4.3) is above that; our bad regime 
   warns when gate ≠ up. **Checked our checkpoint offline** (`qwen38-flash-next-fp8head`, F32
   scalar `weight_scale_2` per expert): gate == up on every pair sampled (28 pairs across 8 layers
   × 4 experts, plus 3000 sequential pairs) — not affected.
-
-## Field note 2026-09-03 — llama.cpp PR #28136 (PLE table direct reads)
-
-llama.cpp keeps the Qwen n-gram/PLE table on the SSD via mmap; a prefill touches ~16 rows per
-token (our `ple-access-pattern.md`: ~2.5 KB useful per token, ×26 page amplification). PR #28136
-stages the row ids per ubatch, sorts/dedups them and reads with parallel `pread()` workers
-(`--lazy-mode on-direct`): DGX Spark cold prefill 300 → 750–800 tok/s, major faults 200k → <100,
-decode unchanged, table stays on disk. Open, one approval, ggerganov asked for a cleaner shape.
-
-Relation to our stack: vLLM's PLE offload (`VLLM_PLE_CPU_OFFLOAD=1`, our backport) keeps the
-FP8 table RAM-resident (~51 GB of unified memory) and gathers on the CPU, so our prefill is
-already ~2400–2600 tok/s (today's TTFT run: 7503 tok in 3.12 s, 29263 in 11.25 s, stock) — about
-3× their *after* number. The transferable idea is the other way round: an SSD-backed gather
-(sorted/deduped row ids, batched `pread`/io_uring into the connector's staging buffer) would free
-~50 GB of unified memory for KV cache / concurrency at the cost of ~6 MB/s of scattered 160-byte
-reads at full prefill speed — well inside NVMe IOPS. A feature, not a fix; parked here.

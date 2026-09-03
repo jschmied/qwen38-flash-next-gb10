@@ -889,3 +889,5 @@ comparison into a loud one. Adopt it in every probe.
 
 Also worth having: **`thinking_budget` is not honored** in this build, so the only working lever is
 `reasoning_effort` (`low` / `medium` / `high`), which is what we have been using.
+
+- 2026-09-03: llama.cpp PR #28136 reads the PLE table with parallel `pread()` instead of mmap faults — DGX Spark cold prefill 300 → 750–800 tok/s with the table on SSD. Our vLLM PLE offload keeps the table in RAM and prefills ~2,400–2,600 tok/s; the transferable idea is an SSD-backed gather to free ~50 GB of unified memory. Details in `ple-access-pattern.md`.
