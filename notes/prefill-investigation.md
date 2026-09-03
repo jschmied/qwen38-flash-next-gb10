@@ -163,3 +163,14 @@
     SCALEINV installed (FP8CHUNK not yet). Rule: on GB10 never pin the PLE tables; a main build
     needs either the CPU-offload worker ported or a compressed PLE (HashK 12.8 GB on the GPU) — the
     latter is now a *memory* lever, not a speed one. The main-build TTFT question stays open.
+
+73. **M-chunking the blockwise GEMM is exact — only with re-materialised scales.** Bit-level check
+    (in_proj shape, realistic 1×128 / 128×128 quantisation, fp32 reference): single launch, chunked
+    with `As[i:i+c].t().contiguous().t()`, and the reference agree (mean |err| 0.0011 on outputs of
+    mean |y| 0.81 = FP8 noise; chunked == single launch in every element at 8k and 16k). A plain
+    row-slice of vLLM's **column-major** activation scales (`QuantFP8(column_major_scales=True)`,
+    stride (1, M)) is silently wrong: mean error 0.15, ~99 % of elements off — the kernel deduces
+    the scale layout from its own M. `tools/main/fp8chunk_patch.py` re-materialises per chunk
+    (4,096 × K/128 floats, negligible). Yesterday's microbench timings were unaffected (layout does not
+    change the kernel's work), the earlier "chunked != unchunked" was this layout mismatch, not a
+    kernel defect.

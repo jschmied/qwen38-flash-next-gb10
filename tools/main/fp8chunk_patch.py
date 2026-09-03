@@ -39,11 +39,15 @@ NEW = '''    def apply_block_scaled_mm(
         if chunk and M > chunk:
             out = torch.empty((M, B.shape[0]), dtype=out_dtype, device=A.device)
             for i in range(0, M, chunk):
+                # The kernel deduces the activation-scale layout from its own M
+                # (column-major, M fastest): a row slice of the full tensor is
+                # silently WRONG (mean output error 0.15 measured); re-materialise.
+                As_c = As[i : i + chunk].t().contiguous().t()
                 out[i : i + chunk] = ops.cutlass_scaled_mm(
-                    A[i : i + chunk],
+                    A[i : i + chunk].contiguous(),
                     B.T,
                     out_dtype=out_dtype,
-                    scale_a=As[i : i + chunk],
+                    scale_a=As_c,
                     scale_b=Bs.T,
                 )
             return out
