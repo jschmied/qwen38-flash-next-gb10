@@ -215,3 +215,16 @@
     layer × 36 GDN layers this is ~31 ms of a 2.8 s TTFT at 8k (≈ 1 %) and ~170 ms of 10.9 s at 30k
     (≈ 1.6 %). Free (a vendored-copy sync upstream), small; the GDN share itself (7–10 %) is the
     ceiling. Not pursued further today.
+
+78. **MoE at prefill: the FlashInfer CUTLASS grouped GEMM has no faster tactic on GB10; the layer
+    runs ~2× above its weight-streaming floor.** Standalone `cutlass_fused_moe` with the model's
+    geometry (512 experts, 2560→640, top-10, NVFP4 W4A4, random weights) at M=7,503: **13.5 ms per
+    MoE layer = 54 TFLOPS all-in** (738 GFLOP); the two grouped GEMMs are 9.3–9.9 ms of it, expand +
+    activation ~2.2 ms. Forcing every GEMM1 tactic (0–31) and every GEMM2 tactic (0–63) via
+    `profile_ids`: all within 13.2–13.7 ms (±2 %), i.e. the autotuner's noisy per-bucket choices
+    (finding: tactic ids jump between neighbouring buckets) are harmless — the tactic table does not
+    contain a faster kernel for ~147-row-per-expert problems on sm_121. Floor estimate: expert weights
+    1.26 GB/layer at 273 GB/s ≈ 4.6 ms + activation traffic ≈ 2 ms ≈ 7 ms. So ~1.5–1.9× is left in
+    principle, but not via tactics: it needs a different kernel family (`--moe-backend` A/B at prefill
+    on the main build is the practical test), or fewer/larger per-expert tiles (a kernel change).
+    Harness: `tools/moe_tactics.py`.
