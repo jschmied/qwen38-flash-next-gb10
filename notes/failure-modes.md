@@ -706,3 +706,21 @@ firing in production"*. **Grep the venv for probes before trusting a benchmark**
 bisection arm without the fix under test (finding 56, withdrawn). One variable per entry; and
 every arm must print its own activation line (`QSAFIX active`, `DRAFTHASH installed`, …) which the
 runner greps into the results before the numbers are believed.
+
+## The Flash-Next serve depends on a 64 GiB swapfile that a reboot drops (2026-09-03)
+
+Symptom: with the stock preview config (util 0.90, PLE CPU offload, MTP) the server dies 8–10 min after
+start, at 94 % of the *second* weight-load pass (the MTP drafter). `dmesg`: global OOM, victim the
+PLE offload worker (`anon-rss` 38.9 GB). Two consecutive grid arms (S7_b 20:26, S8_b 20:39) died with
+the identical signature; config, venv, kernel, driver and the checkpoint were all unchanged.
+
+Accounting at 21 % of the weight load (`/proc/meminfo`): 73 GiB driver-held GPU memory (the model's
+parameters are allocated up front), 38 GiB anon (the tables), 7 GiB page cache, 1.6 GiB free. That is
+the expected steady state of this configuration, so the earlier arms' 28 GiB of post-load headroom
+was the anomaly — and it came from `/swapfile-fnext` (64 GiB, `swapon` by hand on 2026-08-27, never
+put into fstab): the kernel paged out ~27 GiB of cold PLE-table rows. The 17:08 reboot dropped the
+file silently; the remaining 16 GiB `/swap.img` was 100 % full during the loads.
+
+Fix: `swapon -p -3 /swapfile-fnext` (done 20:47; swap 79 GiB, S0_c loaded normally afterwards).
+Check after every reboot: `cat /proc/swaps` must show both files before any Flash-Next serve. The
+persistent fix is an fstab line — a config decision for the user.
