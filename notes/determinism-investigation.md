@@ -1148,6 +1148,20 @@ all depths counter-identical across 3 starts: True
     died for two reasons that are both infrastructure, now fixed and documented in `failure-modes.md`
     (the swapfile the reboot dropped; the PSI guard's "some" rule).
 
+82. **Server-level A/B of the deterministic top-k kernel (`kdetab`, 22:24–01:24, three starts per arm,
+    stock preview stack, det-finalize/qsafix inert, align patch on both arms; raw `notes/data/kdetab.txt`).**
+    TTFT is unchanged: 8k (7,503 tok) median stock 3.10 / 3.29 / 3.10 s vs det 3.12 / 3.35 / 3.12 s;
+    30k (29,263 tok) stock 11.24 / 11.55 / 11.26 s vs det 11.22 / 11.62 / 11.27 s — every pair inside the
+    start-to-start band, activation line (`QSADET active: _C_det.so`) present on every det arm, zero patch
+    lines on every stock arm. Decode, MTP n=5, 8-turn EOS-correct agent loop, seconds per turn: stock
+    2.70 / 2.68 / 2.68, det 2.69 / 2.54 / 2.66, exact-top-k 2.71 / 2.65 / 2.64. The det and exact arms
+    produced the **same run six times out of six** (166 tokens, 65 drafts, 111 accepted, 34.2 %,
+    length 2.71) — the determinism property at the server level, across restarts, and evidence that the
+    kernel selects the exact set; the stock arm's differing acceptance (39.5 / 37.1 / 38.0 %) is a
+    different trajectory (208–224 tokens), not a kernel cost. Same for the ms/token gap (stock ~100,
+    det ~127): fewer tokens per turn under the same per-turn fixed cost, s/turn is the like-for-like
+    number. Conclusion for PR #55122: no TTFT and no per-turn cost end-to-end on GB10.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

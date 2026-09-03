@@ -1,0 +1,187 @@
+preflight OK 22:23
+  det-finalize INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  qsafix INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1 or VLLM_QSA_SORT=1)
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  installed: det MoE + qsafix(inert) + qsadet(inert) + align(both)
+=== TTstock_a  batch=4096  22:24 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTstock_a TTFT 8k: prompt_tokens=7503 median=3.10s  all=4.71 3.10 3.09
+  TTstock_a TTFT 30k: prompt_tokens=29263 median=11.24s  all=11.23 11.24 11.24
+  ACCEPT TTstock_a-post: no draft tokens recorded (spec off, or counters absent)
+=== TTdet_a  batch=4096  22:34 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTdet_a TTFT 8k: prompt_tokens=7503 median=3.12s  all=3.33 3.12 3.09
+  TTdet_a TTFT 30k: prompt_tokens=29263 median=11.22s  all=11.22 11.22 11.26
+  ACCEPT TTdet_a-post: no draft tokens recorded (spec off, or counters absent)
+    TTdet_a: (Worker pid=336460) QSADET active: /opt/llm/kernel-det/_C_det.so
+    TTstock_a QSA patch lines (expect 0): 0
+=== TTstock_b  batch=4096  22:46 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTstock_b TTFT 8k: prompt_tokens=7503 median=3.29s  all=5.44 3.29 3.18
+  TTstock_b TTFT 30k: prompt_tokens=29263 median=11.55s  all=11.54 11.55 11.59
+  ACCEPT TTstock_b-post: no draft tokens recorded (spec off, or counters absent)
+=== TTdet_b  batch=4096  22:58 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTdet_b TTFT 8k: prompt_tokens=7503 median=3.35s  all=3.35 3.13 3.81
+  TTdet_b TTFT 30k: prompt_tokens=29263 median=11.62s  all=12.39 11.51 11.62
+  ACCEPT TTdet_b-post: no draft tokens recorded (spec off, or counters absent)
+    TTdet_b: (Worker pid=342546) QSADET active: /opt/llm/kernel-det/_C_det.so
+    TTstock_b QSA patch lines (expect 0): 0
+=== TTstock_c  batch=4096  23:09 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTstock_c TTFT 8k: prompt_tokens=7503 median=3.10s  all=4.03 3.10 3.08
+  TTstock_c TTFT 30k: prompt_tokens=29263 median=11.26s  all=11.22 11.26 11.27
+  ACCEPT TTstock_c-post: no draft tokens recorded (spec off, or counters absent)
+=== TTdet_c  batch=4096  23:20 ===
+
+    graphs: capture_lines=1 compile_lines=2 enforce_eager=0
+  TTdet_c TTFT 8k: prompt_tokens=7503 median=3.12s  all=4.58 3.12 3.08
+  TTdet_c TTFT 30k: prompt_tokens=29263 median=11.27s  all=11.24 11.27 11.27
+  ACCEPT TTdet_c-post: no draft tokens recorded (spec off, or counters absent)
+    TTdet_c: (Worker pid=383972) QSADET active: /opt/llm/kernel-det/_C_det.so
+    TTstock_c QSA patch lines (expect 0): 0
+=== D5stock_a  batch=4096  23:31 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5stock_a turn 1:   4.86 s    28 tok  hits+      0  acc  55.0% len 3.75
+  D5stock_a turn 2:   2.43 s    33 tok  hits+   4848  acc  43.6% len 3.18
+  D5stock_a turn 3:   2.25 s    25 tok  hits+   4848  acc  37.8% len 2.89
+  D5stock_a turn 4:   2.27 s    22 tok  hits+   4848  acc  31.1% len 2.56
+  D5stock_a turn 5:   2.39 s    29 tok  hits+   4848  acc  40.0% len 3.00
+  D5stock_a turn 6:   2.14 s    20 tok  hits+   4848  acc  40.0% len 3.00
+  D5stock_a turn 7:   2.61 s    36 tok  hits+   4848  acc  38.3% len 2.92
+  D5stock_a turn 8:   2.63 s    31 tok  hits+   4848  acc  33.3% len 2.67
+  D5stock_a TOTAL 21.6 s over 8 turns  (2.70 s/turn)  224 tok  96.36 ms/tok
+  ACCEPT D5stock_a-post: drafts=78 draft_tok=390 accepted=154 rate=39.5%  mean_accept_len=2.97
+  ACCEPT D5stock_a-post: drafts=78 draft_tok=390 accepted=154 rate=39.5%  mean_accept_len=2.97
+=== D5det_a  batch=4096  23:44 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5det_a turn 1:   5.77 s    26 tok  hits+      0  acc  60.0% len 4.00
+  D5det_a turn 2:   2.22 s    31 tok  hits+   4848  acc  53.3% len 3.67
+  D5det_a turn 3:   2.34 s    22 tok  hits+   4848  acc  26.0% len 2.30
+  D5det_a turn 4:   2.27 s    16 tok  hits+   4848  acc  17.8% len 1.89
+  D5det_a turn 5:   2.14 s    16 tok  hits+   4848  acc  28.6% len 2.43
+  D5det_a turn 6:   2.33 s    17 tok  hits+   4848  acc  20.0% len 2.00
+  D5det_a turn 7:   2.23 s    21 tok  hits+   4848  acc  42.9% len 3.14
+  D5det_a turn 8:   2.19 s    17 tok  hits+   4848  acc  31.4% len 2.57
+  D5det_a TOTAL 21.5 s over 8 turns  (2.69 s/turn)  166 tok  129.48 ms/tok
+  ACCEPT D5det_a-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+  ACCEPT D5det_a-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+=== D5exact_a  batch=4096  23:56 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5exact_a turn 1:   5.24 s    26 tok  hits+      0  acc  60.0% len 4.00
+  D5exact_a turn 2:   2.31 s    31 tok  hits+   4848  acc  53.3% len 3.67
+  D5exact_a turn 3:   2.45 s    22 tok  hits+   4848  acc  26.0% len 2.30
+  D5exact_a turn 4:   2.44 s    16 tok  hits+   4848  acc  17.8% len 1.89
+  D5exact_a turn 5:   2.26 s    16 tok  hits+   4848  acc  28.6% len 2.43
+  D5exact_a turn 6:   2.44 s    17 tok  hits+   4848  acc  20.0% len 2.00
+  D5exact_a turn 7:   2.25 s    21 tok  hits+   4848  acc  42.9% len 3.14
+  D5exact_a turn 8:   2.28 s    17 tok  hits+   4848  acc  31.4% len 2.57
+  D5exact_a TOTAL 21.7 s over 8 turns  (2.71 s/turn)  166 tok  130.56 ms/tok
+  ACCEPT D5exact_a-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+  ACCEPT D5exact_a-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+    D5det_a config: (Worker pid=390643) QSADET active: /opt/llm/kernel-det/_C_det.so num_speculative_tokens': 5} 
+    D5exact_a config: (Worker pid=393958) QSAFIX active: exact num_speculative_tokens': 5} 
+=== D5stock_b  batch=4096  00:09 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5stock_b turn 1:   4.67 s    30 tok  hits+      0  acc  55.0% len 3.75
+  D5stock_b turn 2:   2.58 s    34 tok  hits+   4848  acc  41.7% len 3.08
+  D5stock_b turn 3:   2.32 s    26 tok  hits+   4848  acc  40.0% len 3.00
+  D5stock_b turn 4:   2.49 s    28 tok  hits+   4848  acc  38.0% len 2.90
+  D5stock_b turn 5:   2.45 s    22 tok  hits+   4848  acc  21.8% len 2.09
+  D5stock_b turn 6:   2.39 s    20 tok  hits+   4848  acc  22.0% len 2.10
+  D5stock_b turn 7:   2.34 s    25 tok  hits+   4848  acc  37.8% len 2.89
+  D5stock_b turn 8:   2.18 s    23 tok  hits+   4848  acc  48.6% len 3.43
+  D5stock_b TOTAL 21.4 s over 8 turns  (2.68 s/turn)  208 tok  103.01 ms/tok
+  ACCEPT D5stock_b-post: drafts=76 draft_tok=380 accepted=141 rate=37.1%  mean_accept_len=2.86
+  ACCEPT D5stock_b-post: drafts=76 draft_tok=380 accepted=141 rate=37.1%  mean_accept_len=2.86
+=== D5det_b  batch=4096  00:21 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5det_b turn 1:   4.68 s    26 tok  hits+      0  acc  60.0% len 4.00
+  D5det_b turn 2:   2.25 s    31 tok  hits+   4848  acc  53.3% len 3.67
+  D5det_b turn 3:   2.34 s    22 tok  hits+   4848  acc  26.0% len 2.30
+  D5det_b turn 4:   2.27 s    16 tok  hits+   4848  acc  17.8% len 1.89
+  D5det_b turn 5:   2.12 s    16 tok  hits+   4848  acc  28.6% len 2.43
+  D5det_b turn 6:   2.30 s    17 tok  hits+   4848  acc  20.0% len 2.00
+  D5det_b turn 7:   2.16 s    21 tok  hits+   4848  acc  42.9% len 3.14
+  D5det_b turn 8:   2.18 s    17 tok  hits+   4848  acc  31.4% len 2.57
+  D5det_b TOTAL 20.3 s over 8 turns  (2.54 s/turn)  166 tok  122.32 ms/tok
+  ACCEPT D5det_b-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+  ACCEPT D5det_b-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+=== D5exact_b  batch=4096  00:34 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5exact_b turn 1:   4.98 s    26 tok  hits+      0  acc  60.0% len 4.00
+  D5exact_b turn 2:   2.32 s    31 tok  hits+   4848  acc  53.3% len 3.67
+  D5exact_b turn 3:   2.44 s    22 tok  hits+   4848  acc  26.0% len 2.30
+  D5exact_b turn 4:   2.35 s    16 tok  hits+   4848  acc  17.8% len 1.89
+  D5exact_b turn 5:   2.22 s    16 tok  hits+   4848  acc  28.6% len 2.43
+  D5exact_b turn 6:   2.41 s    17 tok  hits+   4848  acc  20.0% len 2.00
+  D5exact_b turn 7:   2.24 s    21 tok  hits+   4848  acc  42.9% len 3.14
+  D5exact_b turn 8:   2.26 s    17 tok  hits+   4848  acc  31.4% len 2.57
+  D5exact_b TOTAL 21.2 s over 8 turns  (2.65 s/turn)  166 tok  127.85 ms/tok
+  ACCEPT D5exact_b-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+  ACCEPT D5exact_b-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+    D5det_b config: (Worker pid=436263) QSADET active: /opt/llm/kernel-det/_C_det.so num_speculative_tokens': 5} 
+    D5exact_b config: (Worker pid=439533) QSAFIX active: exact num_speculative_tokens': 5} 
+=== D5stock_c  batch=4096  00:46 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5stock_c turn 1:   4.82 s    28 tok  hits+      0  acc  55.0% len 3.75
+  D5stock_c turn 2:   2.48 s    34 tok  hits+   4848  acc  41.7% len 3.08
+  D5stock_c turn 3:   2.07 s    25 tok  hits+   4848  acc  54.3% len 3.71
+  D5stock_c turn 4:   2.33 s    22 tok  hits+   4848  acc  26.0% len 2.30
+  D5stock_c turn 5:   2.26 s    28 tok  hits+   4848  acc  46.7% len 3.33
+  D5stock_c turn 6:   2.54 s    24 tok  hits+   4848  acc  21.7% len 2.08
+  D5stock_c turn 7:   2.40 s    25 tok  hits+   4848  acc  32.0% len 2.60
+  D5stock_c turn 8:   2.52 s    31 tok  hits+   4848  acc  38.2% len 2.91
+  D5stock_c TOTAL 21.4 s over 8 turns  (2.68 s/turn)  217 tok  98.79 ms/tok
+  ACCEPT D5stock_c-post: drafts=79 draft_tok=395 accepted=150 rate=38.0%  mean_accept_len=2.90
+  ACCEPT D5stock_c-post: drafts=79 draft_tok=395 accepted=150 rate=38.0%  mean_accept_len=2.90
+=== D5det_c  batch=4096  00:58 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5det_c turn 1:   5.03 s    26 tok  hits+      0  acc  60.0% len 4.00
+  D5det_c turn 2:   2.30 s    31 tok  hits+   4848  acc  53.3% len 3.67
+  D5det_c turn 3:   2.48 s    22 tok  hits+   4848  acc  26.0% len 2.30
+  D5det_c turn 4:   2.30 s    16 tok  hits+   4848  acc  17.8% len 1.89
+  D5det_c turn 5:   2.25 s    16 tok  hits+   4848  acc  28.6% len 2.43
+  D5det_c turn 6:   2.34 s    17 tok  hits+   4848  acc  20.0% len 2.00
+  D5det_c turn 7:   2.26 s    21 tok  hits+   4848  acc  42.9% len 3.14
+  D5det_c turn 8:   2.29 s    17 tok  hits+   4848  acc  31.4% len 2.57
+  D5det_c TOTAL 21.3 s over 8 turns  (2.66 s/turn)  166 tok  128.03 ms/tok
+  ACCEPT D5det_c-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+  ACCEPT D5det_c-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+=== D5exact_c  batch=4096  01:11 ===
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  D5exact_c turn 1:   4.83 s    26 tok  hits+      0  acc  60.0% len 4.00
+  D5exact_c turn 2:   2.32 s    31 tok  hits+   4848  acc  53.3% len 3.67
+  D5exact_c turn 3:   2.44 s    22 tok  hits+   4848  acc  26.0% len 2.30
+  D5exact_c turn 4:   2.35 s    16 tok  hits+   4848  acc  17.8% len 1.89
+  D5exact_c turn 5:   2.22 s    16 tok  hits+   4848  acc  28.6% len 2.43
+  D5exact_c turn 6:   2.41 s    17 tok  hits+   4848  acc  20.0% len 2.00
+  D5exact_c turn 7:   2.26 s    21 tok  hits+   4848  acc  42.9% len 3.14
+  D5exact_c turn 8:   2.27 s    17 tok  hits+   4848  acc  31.4% len 2.57
+  D5exact_c TOTAL 21.1 s over 8 turns  (2.64 s/turn)  166 tok  127.10 ms/tok
+  ACCEPT D5exact_c-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+  ACCEPT D5exact_c-post: drafts=65 draft_tok=325 accepted=111 rate=34.2%  mean_accept_len=2.71
+    D5det_c config: (Worker pid=446042) QSADET active: /opt/llm/kernel-det/_C_det.so num_speculative_tokens': 5} 
+    D5exact_c config: (Worker pid=484877) QSAFIX active: exact num_speculative_tokens': 5} 
+  reverted scheduler.py
+  reverted mamba_hybrid.py
+  qsafix REMOVED
+  qsadet REMOVED
+  det-finalize REMOVED
+  cache-key extras REMOVED
+== ALL DONE ==
