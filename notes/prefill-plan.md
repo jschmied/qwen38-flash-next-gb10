@@ -73,13 +73,17 @@ will keep) → C, D, E on it → B if the profile says PLE gather matters → wr
 Replicating the field buys ≤ 15 %. These are the directions nobody in the sweep is on, ranked by
 expected TTFT effect in the agent loop ÷ effort:
 
-1. **Spec decode must not cost a prefix block.** Our own finding (`spec-decode-prefix-cost-agentloop`):
-   with MTP on, the agent loop's prefix-cache hit rate drops 69 → 43 %, TTFT ×3 on the turn after,
-   one extra cold turn. That is a bug, not a property: the verified tokens + bonus token leave the
-   last block partially written or unaligned to the mamba align boundary, and the next turn
-   re-prefills it. Bisect with the hit counters we already trust (`prefix_cache_hits_total` deltas,
-   never `usage.cached_tokens`), fix in the scheduler/align path, upstream it. Direct TTFT win on
-   every agent turn; nobody else measures hit rate per turn.
+1. **Spec decode must not cost a prefix block — CORRECTED: known upstream, stuck on scope.** The
+   drop is deliberate code (`drop_eagle_block` in `get_computed_blocks`: EAGLE-family drafters need
+   the hidden state of the last token, so the last full block is never served from cache). Upstream
+   issue #53670 (Suppressor72, 08-25; our GB10 numbers are comment 2; Gemma-4 reproduction too) and
+   the candidate fix PR #50897 (ZJY0516, lookahead-aware prefix hashing, +2434/−205 over 50 files,
+   incl. mamba-align tests) — which we measured working on the 27B on 08-24 — is `needs-rebase`/DIRTY
+   and reviewer ivanium asks for it to be split (PP deferred-finalize fix, KV-event revamp, the
+   rest). What is ours here: (a) **measure it on Flash-Next** (hybrid + align + in-checkpoint MTP —
+   nobody has; #53670 names the GDN layout explicitly), (b) if it holds, offer the split-out core
+   ("the rest") as a small PR with the hybrid measurement, which is what unblocks it. Not novel
+   as an idea; novel as the missing evidence and the missing small PR.
 2. **PLE gather off the critical path.** The n-gram lookup depends only on token ids, so every row
    for a whole prompt is known at tokenization time; on a cache hit the prefix's rows are not needed
    at all. If the profile shows the CPU gather inside prefill time, prefetch the next chunk's rows
