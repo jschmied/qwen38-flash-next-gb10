@@ -86,3 +86,21 @@
     `cutlass_80_tensorop_bf16_s16816gemm_relu_128x256` for the up GEMM. In the 8k trace the two GEMM
     families are ≈ 5 % of prefill; `_hc_combine_norm` + `_hc_gate_mix` another ≈ 9 %, memory-bound.
     Best case for fusion ≈ 4 % of TTFT. Not a priority.
+
+69. **Padding the prompt to a multiple of 4 tokens: −37 % TTFT at 8k, −9 % at 30k, on the shipped
+    preview build, no code change.** `TTFTPAD` (batch 8192, prefix cache off, no spec, stock kernels;
+    two warm-ups, then 3 requests per arm; `notes/data/ttftpad.txt`):
+
+    | prompt tokens | mod 4 | TTFT median (3) |
+    | --- | --- | --- |
+    | 7,503 / 7,505 / 7,506 / 7,507 / 7,509 | 3 / 1 / 2 / 3 / 1 | 4.52 / 4.53 / 4.53 / 4.54 / 4.57 s |
+    | **7,508** | **0** | **2.86 s** |
+    | 29,263 / 29,265 / 29,266 / 29,267 / 29,269 | 3 / 1 / 2 / 3 / 1 | 12.92 / 12.60 / 12.60 / 12.59 / 12.60 s |
+    | **29,268** | **0** | **11.50 s** |
+
+    Exactly the `swap_ab = (M <= 64) || (M % 4 != 0)` clause (finding 65): at 8k the whole chunk is
+    the tail, at 30k only the last 4,687 tokens are. Request-level workaround for any client of the
+    preview image: pad the prompt so the scheduled chunk's token count is a multiple of 4 (with
+    chunked prefill, that is the *last* chunk: `prompt_tokens % 4 == 0` when the batch size is a
+    multiple of 4). Also: the first 30k request in a fresh server took 15.86 s vs 12.8 s warm — the
+    profile's 16.3 s (finding 66) was that cold shape. `ttftpad2` repeats the grid at batch 4096.
