@@ -34,3 +34,10 @@ whether the stock op reproduces itself on the same inputs.
 16384, 16385 around every buffer size the original kernels used.
 
 Status: v2 written 2026-09-03; compile + link + tests queued behind the measurement runs (`kdet`).
+
+Follow-up (not in this diff, on purpose): the filtered kernel keeps its `VEC_SIZE` /
+`UsePredicatedShortLoads` instantiation ladder, `FilteredTopKTraits`, `vec_t` and
+`ComputeFilteredTopKVecSize`, which the deterministic path no longer uses. Removing them deletes
+~200 lines and the launcher's instantiation dispatch; it is a separate, mechanical commit so the
+correctness diff stays reviewable. Only cost of leaving it: a few identical kernel instantiations
+(compile time).
