@@ -724,3 +724,8 @@ file silently; the remaining 16 GiB `/swap.img` was 100 % full during the loads.
 Fix: `swapon -p -3 /swapfile-fnext` (done 20:47; swap 79 GiB, S0_c loaded normally afterwards).
 Check after every reboot: `cat /proc/swaps` must show both files before any Flash-Next serve. The
 persistent fix is an fstab line — a config decision for the user.
+
+Follow-up the same evening: the PSI guard written after the reboot used `some avg10 > 60 %` alone and
+stopped a healthy arm (S1_c, 20:54: some 67.7 %, 28.8 GiB available) — with the swapfile active, the
+kernel's paging during the load phase raises "some" without any stall. Guard v2 requires
+`full avg10 > 60 %` **and** MemAvailable < 3 GiB (`tools/main/memguard.sh`).
