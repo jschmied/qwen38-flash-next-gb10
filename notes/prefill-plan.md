@@ -84,6 +84,24 @@ expected TTFT effect in the agent loop ÷ effort:
    nobody has; #53670 names the GDN layout explicitly), (b) if it holds, offer the split-out core
    ("the rest") as a small PR with the hybrid measurement, which is what unblocks it. Not novel
    as an idea; novel as the missing evidence and the missing small PR.
+   **UPDATE 2026-09-03 (finding 80):** upstream did not wait for #50897 — #53388 (merged 09-01, in
+   our main venv `0.28.1rc1.dev352`) adds the opt-in `disable_eagle_block_drop` on
+   `SpeculativeConfig`, honoured for every `use_eagle()` method **including `mtp`**: the trailing
+   block is kept instead of dropped. The preview build lacks it. So the experiment is now a
+   one-flag A/B on the main build, no patch: `--speculative-config '{"method":"mtp",
+   "num_speculative_tokens":3,"disable_eagle_block_drop":true}'`, prefix cache on, `agentloop2`
+   turns, compare `prefix_cache_hits_total` deltas + TTFT per turn + MTP acceptance (the PR warns
+   the proposed drafts change, so acceptance may move) against the same config with the flag off.
+   Expected: hit rate back from ~43 % to ~69 % and the extra cold turn gone (finding in
+   `spec-decode-prefix-cost-agentloop`). Needs the box (main-build serve, ~2×20 min) — after the
+   night chain and `race50729`, on the user's go.
+   Also on main and not in the preview: #52789 "internal prefill checkpoints" (one forward pass
+   for the whole prefill, Mamba checkpoint saved mid-kernel instead of splitting the forward at the
+   last block boundary; 9–25 % TTFT claimed). The generic side is in (`num_prefill_checkpoint_blocks`
+   in `kv_cache_interface.py`, `_needs_internal_checkpoint` in the cache manager) but only Kimi-K3's
+   KDA layer implements the kernel side; the GDN backend does not claim it. For us it is a
+   contribution candidate (GDN `chunk_gated_delta_rule` already checkpoints per chunk internally),
+   not a free win.
 2. **PLE gather off the critical path.** The n-gram lookup depends only on token ids, so every row
    for a whole prompt is known at tokenization time; on a cache hit the prefix's rows are not needed
    at all. If the profile shows the CPU gather inside prefill time, prefetch the next chunk's rows
