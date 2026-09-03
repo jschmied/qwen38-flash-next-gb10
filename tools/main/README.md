@@ -18,3 +18,14 @@ Two loader patches, env-gated scripts with `off`:
 
 Both revert on any reinstall. Memory: body 69.4 GiB on the GPU + 47.7 GiB PLE pinned = 117 GiB of 121;
 serve with `FN_UTIL` ≈ 0.60 and `--language-model-only`.
+
+## vllm#53899 overlay (PLE CPU-offload worker) — 2026-09-03 evening
+
+Main has no PLE CPU-offload worker; the UVA route pins the tables and thrashes the box (finding 72).
+Overlay applied to `vllm-venv-fnmain`: `pr53899.vllm.diff` (the PR's `vllm/` files, 13 apply
+cleanly, 14/17 hunks of `ple_layer.py`), then `port53899.py` hand-ports the three rejected hunks
+onto main's fused-op PLE layer (offload-aware `forward_impl`, offload helper methods, retain-only
+`load_weights`, constructor on the offload target device) and re-widens the gate for
+`modelopt_mixed`. Backup of the whole package: `/opt/llm/runtime/vllm-venv-fnmain-vllm-pkg-pre53899.tgz`
+(plus `*.pre53899` per-file backups). Serve: `FN_PLE_OFFLOAD=1` (default) in `/opt/llm/serve-fnmain.sh`.
+Known open item on the PR itself: the non-offload FP8-scale sentinel (Dev-Jahn, 09-01) — not on our path.

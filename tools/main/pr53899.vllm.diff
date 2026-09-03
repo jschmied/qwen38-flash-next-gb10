@@ -1,0 +1,2683 @@
+diff --git a/vllm/compilation/passes/utility/fix_functionalization.py b/vllm/compilation/passes/utility/fix_functionalization.py
+index c0643a916b38..e5aaba62e123 100644
+--- a/vllm/compilation/passes/utility/fix_functionalization.py
++++ b/vllm/compilation/passes/utility/fix_functionalization.py
+@@ -171,6 +171,15 @@ def __call__(self, graph: torch.fx.Graph) -> None:
+                     "forced_token_heads_per_warp",
+                 )
+                 self.defunctionalize(graph, node, mutated_args=mutated_args, args=args)
++            elif (
++                hasattr(torch.ops.vllm, "ple_offload_wait")
++                and at_target == torch.ops.vllm.ple_offload_wait.default
++            ):
++                # Functionalization would clone the declared-mutated buffer
++                # before the wait, potentially reading it before the CPU signals.
++                # Restore the wait and keep users on the original IPC buffer.
++                mutated_args = {1: "gpu_output_buffer"}
++                self.defunctionalize(graph, node, mutated_args)
+             elif (
+                 hasattr(torch.ops.vllm, "fused_rope_and_unified_kv_cache_update")
+                 and at_target
+diff --git a/vllm/config/parallel.py b/vllm/config/parallel.py
+index e7710c59ea10..c5cc7d060949 100644
+--- a/vllm/config/parallel.py
++++ b/vllm/config/parallel.py
+@@ -17,7 +17,7 @@
+ from vllm.config.utils import config
+ from vllm.logger import init_logger
+ from vllm.platforms import current_platform
+-from vllm.utils.network_utils import get_open_ports_list
++from vllm.utils.network_utils import get_open_ports_list, get_open_zmq_ipc_path
+ 
+ if TYPE_CHECKING:
+     from ray.runtime_env import RuntimeEnv
+@@ -346,6 +346,9 @@ class is dynamically inherited by the worker class. This is used to inject
+     """Port of the coordination TCPStore. Can be set by the API server; workers
+     connect as clients to exchange self-picked group ports at runtime."""
+ 
++    _ple_offload_ipc_path: str = ""
++    """Node-local ZMQ IPC address for the PLE offload worker."""
++
+     decode_context_parallel_size: int = Field(default=1, ge=1)
+     """Number of ranks that shard the decode KV cache. DCP does not expand
+     the process world size. Without PCP, DCP reuses TP ranks. With PCP, DCP
+@@ -485,6 +488,9 @@ def _validate_parallel_config(self) -> Self:
+                 "The FT system assumes one AsyncMPClient manages all engines."
+             )
+ 
++        if envs.VLLM_PLE_CPU_OFFLOAD and not self._ple_offload_ipc_path:
++            self._ple_offload_ipc_path = get_open_zmq_ipc_path()
++
+         if self.all2all_backend in ["pplx", "naive"]:
+             logger.warning(
+                 "The '%s' all2all backend has been removed. "
+@@ -844,6 +850,7 @@ def compute_hash(self):
+             "worker_extension_cls",
+             "_api_process_count",
+             "_api_process_rank",
++            "_ple_offload_ipc_path",
+             # NUMA binding is per-rank host-side memory locality; it does
+             # not affect collective-communication semantics. When numa_bind
+             # is enabled with auto-detection, each DP rank stores its own
+diff --git a/vllm/envs.py b/vllm/envs.py
+index 786864b9124d..6c90627bcf4b 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -296,6 +296,8 @@
+     VLLM_MULTI_STREAM_GEMM_TOKEN_THRESHOLD: int = 1024
+     VLLM_COMPILE_CACHE_SAVE_FORMAT: Literal["binary", "unpacked"] = "binary"
+     VLLM_USE_V2_MODEL_RUNNER: bool | None = None
++    VLLM_PLE_CPU_OFFLOAD: bool = False
++    VLLM_PLE_OFFLOAD_READY_TIMEOUT: float = 600.0
+     VLLM_LOG_MODEL_INSPECTION: bool = False
+     VLLM_DEBUG_MFU_METRICS: bool = False
+     VLLM_WEIGHT_OFFLOADING_DISABLE_PIN_MEMORY: bool = False
+@@ -2035,6 +2037,15 @@ def _resolve_rust_cli_path() -> str | None:
+     "VLLM_USE_V2_MODEL_RUNNER": lambda: maybe_convert_bool(
+         os.getenv("VLLM_USE_V2_MODEL_RUNNER", None)
+     ),
++    # Run n-gram PLE lookup in a dedicated CPU offload worker. The initial
++    # implementation supports ModelRunner V1 and single-node TP only.
++    "VLLM_PLE_CPU_OFFLOAD": lambda: (
++        os.getenv("VLLM_PLE_CPU_OFFLOAD", "False").lower() in ("true", "1")
++    ),
++    # Timeout for PLE weight loading and TP worker registration.
++    "VLLM_PLE_OFFLOAD_READY_TIMEOUT": lambda: float(
++        os.getenv("VLLM_PLE_OFFLOAD_READY_TIMEOUT", "600")
++    ),
+     # Log model inspection after loading.
+     # If enabled, logs a transformers-style hierarchical view of the model
+     # with quantization methods and attention backends.
+diff --git a/vllm/model_executor/layers/ple_offload_layer.py b/vllm/model_executor/layers/ple_offload_layer.py
+new file mode 100644
+index 000000000000..f5bb7f9b8240
+--- /dev/null
++++ b/vllm/model_executor/layers/ple_offload_layer.py
+@@ -0,0 +1,270 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Base class for PLE layers that support cross-process CPU offload.
++
++Synchronization between the offload process and the GPU main stream is
++handled by :class:`CpuGpuSemaphore`, which uses CUDA's
++``cuStreamWaitValue32`` / ``cuStreamWriteValue32`` stream memory operations.
++
++Typical decode-step timeline
++----------------------------
++Offload process (CPU)                  GPU main stream (forward)
++-----------------------------          ------------------------------
++forward_impl() on CPU                  ... other GPU ops ...
++pinned -> GPU async H2D (copy_stream)   WaitValue32(flag==1)  <- in Graph
++WriteValue32(flag=1, copy_stream)       return _gpu_output_buffer[:n]
++                                       ... model consumes output ...
++                                       WriteValue32(flag=0)  <- after forward
++"""
++
++import functools
++from abc import ABC, abstractmethod
++from collections.abc import Callable
++from typing import Any, cast
++
++import torch
++from cuda.bindings import driver as cuda_driver
++from cuda.bindings.driver import CUstreamWaitValue_flags
++from torch import nn
++
++import vllm.envs as envs
++from vllm.utils.torch_utils import direct_register_custom_op
++
++# Module-level flag set to True inside the offload subprocess.
++# Because the offload process and GPU worker processes are separate OS
++# processes (spawned via multiprocessing), each has its own memory space.
++# A plain module-level bool is sufficient -- no thread-local storage needed.
++_offload_worker_flag = False
++
++
++def is_offload_process() -> bool:
++    """Return True inside the dedicated PLE CPU-offload subprocess."""
++    return _offload_worker_flag
++
++
++def mark_as_offload_worker() -> None:
++    """Mark the current process as the dedicated PLE offload worker."""
++    global _offload_worker_flag
++    _offload_worker_flag = True
++
++
++def _cuda_check(result: Any, operation: str) -> Any:
++    """Check the ``(CUresult, ...)`` tuple returned by cuda-python calls."""
++    error = result[0] if isinstance(result, tuple) else result
++    if error.value != 0:
++        raise RuntimeError(f"{operation} failed: {error}")
++    return result
++
++
++class CpuGpuSemaphore:
++    """Cross-process semaphore backed by a one-element int32 CUDA tensor.
++
++    The flag is stored in a regular GPU tensor that is shared through
++    PyTorch's CUDA IPC mechanism. Both processes obtain device pointers that
++    map to the same physical GPU memory, so a stream-memory wait in the GPU
++    worker observes the write issued by the offload process.
++    """
++
++    RESET_VALUE = 0
++    DONE_VALUE = 1
++
++    def __init__(self, device: torch.device) -> None:
++        self._flag_tensor = torch.zeros(1, dtype=torch.int32, device=device)
++
++    @classmethod
++    def from_ipc_tensor(cls, flag_tensor: torch.Tensor) -> "CpuGpuSemaphore":
++        """Construct a semaphore from a CUDA tensor received through IPC."""
++        semaphore = cls.__new__(cls)
++        semaphore._flag_tensor = flag_tensor
++        return semaphore
++
++    @property
++    def flag_tensor(self) -> torch.Tensor:
++        """Return the CUDA tensor used to share the semaphore through IPC."""
++        return self._flag_tensor
++
++    def reset(self, stream: torch.cuda.Stream | None = None) -> None:
++        """Enqueue ``WriteValue32(flag=0)`` on ``stream``."""
++        if stream is None:
++            stream = torch.cuda.current_stream()
++        _cuda_check(
++            cuda_driver.cuStreamWriteValue32(
++                cuda_driver.CUstream(stream.cuda_stream),
++                cuda_driver.CUdeviceptr(self._flag_tensor.data_ptr()),
++                self.RESET_VALUE,
++                0,
++            ),
++            "CpuGpuSemaphore.reset",
++        )
++
++    def signal(self, stream: torch.cuda.Stream | None = None) -> None:
++        """Enqueue ``WriteValue32(flag=1)`` on ``stream``."""
++        if stream is None:
++            stream = torch.cuda.current_stream()
++        _cuda_check(
++            cuda_driver.cuStreamWriteValue32(
++                cuda_driver.CUstream(stream.cuda_stream),
++                cuda_driver.CUdeviceptr(self._flag_tensor.data_ptr()),
++                self.DONE_VALUE,
++                0,
++            ),
++            "CpuGpuSemaphore.signal",
++        )
++
++    def wait_reset(self, stream: torch.cuda.Stream | None = None) -> None:
++        """Enqueue ``WaitValue32(flag==0)`` on ``stream``."""
++        if stream is None:
++            stream = torch.cuda.current_stream()
++        _cuda_check(
++            cuda_driver.cuStreamWaitValue32(
++                cuda_driver.CUstream(stream.cuda_stream),
++                cuda_driver.CUdeviceptr(self._flag_tensor.data_ptr()),
++                self.RESET_VALUE,
++                CUstreamWaitValue_flags.CU_STREAM_WAIT_VALUE_EQ.value,
++            ),
++            "CpuGpuSemaphore.wait_reset",
++        )
++
++
++# ---------------------------------------------------------------------------
++# Custom op: vllm::ple_offload_wait
++# ---------------------------------------------------------------------------
++# Wraps cuStreamWaitValue32 as a torch custom op so that
++# torch.compile(fullgraph=True) treats the CUDA Driver call as an opaque node.
++# The hidden_states argument creates a dynamo data-dependency edge that prevents
++# the wait from being reordered before preceding GPU work.
++# ---------------------------------------------------------------------------
++
++
++def _ple_offload_wait_impl(
++    sem_flag_tensor: torch.Tensor,
++    gpu_output_buffer: torch.Tensor,
++    hidden_states: torch.Tensor,
++) -> None:
++    """Wait for the CPU result without releasing its output buffer."""
++    stream = torch.cuda.current_stream()
++    cuda_stream = cuda_driver.CUstream(stream.cuda_stream)
++    dev_ptr = cuda_driver.CUdeviceptr(sem_flag_tensor.data_ptr())
++    _cuda_check(
++        cuda_driver.cuStreamWaitValue32(
++            cuda_stream,
++            dev_ptr,
++            CpuGpuSemaphore.DONE_VALUE,
++            CUstreamWaitValue_flags.CU_STREAM_WAIT_VALUE_EQ.value,
++        ),
++        "cuStreamWaitValue32(done)",
++    )
++
++
++def _ple_offload_wait_fake(
++    sem_flag_tensor: torch.Tensor,
++    gpu_output_buffer: torch.Tensor,
++    hidden_states: torch.Tensor,
++) -> None:
++    """Represent the side-effect-only wait during dynamo tracing."""
++    pass
++
++
++direct_register_custom_op(
++    op_name="ple_offload_wait",
++    op_func=_ple_offload_wait_impl,
++    mutates_args=["gpu_output_buffer"],
++    fake_impl=_ple_offload_wait_fake,
++)
++
++
++class PleOffloadLayer(nn.Module, ABC):
++    """Base class for embedding-like PLE layers that can run on CPU.
++
++    Subclasses implement :meth:`forward_impl`, which contains the regular
++    on-device computation. In a GPU worker with PLE offload enabled, subclass
++    constructors are skipped so their large weights are never allocated. The
++    CPU process constructs a complete copy and owns those weights instead.
++    """
++
++    _is_cpu_offloaded = False
++    _gpu_output_buffer: torch.Tensor
++    _sem: CpuGpuSemaphore
++
++    def __init_subclass__(cls, **kwargs: object) -> None:
++        """Skip subclass initialization in cross-process GPU-worker mode."""
++        super().__init_subclass__(**kwargs)
++        original_init_obj = cls.__dict__.get("__init__")
++        if original_init_obj is None or not callable(original_init_obj):
++            return
++        original_init = cast(Callable[..., None], original_init_obj)
++
++        @functools.wraps(original_init)
++        def guarded_init(
++            self: "PleOffloadLayer", *args: object, **kwargs: object
++        ) -> None:
++            if envs.VLLM_PLE_CPU_OFFLOAD and not is_offload_process():
++                nn.Module.__init__(self)
++                return
++            original_init(self, *args, **kwargs)
++
++        cls.__init__ = guarded_init  # type: ignore[method-assign, assignment]
++
++    @classmethod
++    def get_target_device(cls) -> torch.device:
++        """Return CPU for the offload process and the active GPU otherwise."""
++        if envs.VLLM_PLE_CPU_OFFLOAD:
++            return torch.device("cpu")
++        return torch.device("cuda", torch.accelerator.current_device_index())
++
++    @abstractmethod
++    def forward_impl(
++        self,
++        hidden_states: torch.Tensor,
++        input_ids: torch.Tensor,
++        *args: object,
++        **kwargs: object,
++    ) -> torch.Tensor:
++        """Execute the actual embedding computation on the owning device."""
++        raise NotImplementedError
++
++    def get_offload_output_dtype(self, default_dtype: torch.dtype) -> torch.dtype:
++        """Return the dtype used by cross-process output buffers."""
++        return default_dtype
++
++    def get_offload_output_dim(self, default_dim: int) -> int:
++        """Return the last dimension used by cross-process output buffers."""
++        return default_dim
++
++    def initialize_dummy_offload_metadata(self, device: torch.device) -> None:
++        """Initialize metadata needed by dummy offload execution."""
++
++    def setup_cross_process_offload(
++        self,
++        gpu_output_buffer: torch.Tensor,
++        semaphore: CpuGpuSemaphore,
++    ) -> None:
++        """Configure the GPU-worker placeholder with its IPC resources."""
++        self._is_cpu_offloaded = True
++        self._gpu_output_buffer = gpu_output_buffer
++        self._sem = semaphore
++
++    def forward(
++        self,
++        hidden_states: torch.Tensor,
++        input_ids: torch.Tensor,
++        *args: object,
++        **kwargs: object,
++    ) -> torch.Tensor:
++        """Wait for an offloaded result or delegate to ``forward_impl``."""
++        if self._is_cpu_offloaded:
++            torch.ops.vllm.ple_offload_wait(
++                self._sem.flag_tensor,
++                self._gpu_output_buffer,
++                hidden_states,
++            )
++            return self._gpu_output_buffer[: input_ids.shape[0]]
++        return self.forward_impl(hidden_states, input_ids, *args, **kwargs)
++
++    def release_offloaded_output(
++        self,
++        stream: torch.cuda.Stream | None = None,
++    ) -> None:
++        """Mark the cross-process output buffer reusable on ``stream``."""
++        if self._is_cpu_offloaded:
++            self._sem.reset(stream)
+diff --git a/vllm/model_executor/model_loader/weight_utils.py b/vllm/model_executor/model_loader/weight_utils.py
+index c8b166d1348a..60cbfb4ee292 100644
+--- a/vllm/model_executor/model_loader/weight_utils.py
++++ b/vllm/model_executor/model_loader/weight_utils.py
+@@ -60,6 +60,7 @@
+     fastsafetensors = PlaceholderModule("fastsafetensors")
+     SingleGroup = fastsafetensors.placeholder_attr("SingleGroup")
+ 
++from vllm.model_executor.layers.ple_offload_layer import is_offload_process
+ from vllm.model_executor.layers.quantization.torchao import torchao_version_at_least
+ 
+ logger = init_logger(__name__)
+@@ -849,6 +850,8 @@ def safetensors_weights_iterator(
+     loading_desc = "Loading safetensors checkpoint shards"
+     if safetensors_load_strategy == "eager":
+         loading_desc += " (eager)"
++    if is_offload_process():
++        loading_desc += "(PLE-offload)"
+ 
+     sorted_files = sorted(hf_weights_files, key=_natural_sort_key)
+ 
+diff --git a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+index 09e8e324995d..0b0426430eb8 100644
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+@@ -9,8 +9,10 @@
+ import torch.nn.functional as F
+ from torch import nn
+ 
++import vllm.envs as envs
+ from vllm.config import CacheConfig, ModelConfig, VllmConfig, get_current_vllm_config
+ from vllm.forward_context import get_forward_context
++from vllm.logger import init_logger
+ from vllm.model_executor.layers.linear import ReplicatedLinear
+ from vllm.model_executor.layers.mamba.abstract import MambaBase
+ from vllm.model_executor.layers.mamba.mamba_utils import (
+@@ -18,11 +20,16 @@
+     MambaStateShapeCalculator,
+     is_conv_state_dim_first,
+ )
++from vllm.model_executor.layers.ple_offload_layer import (
++    PleOffloadLayer,
++    is_offload_process,
++)
+ from vllm.model_executor.layers.quantization.base_config import (
+     QuantizationConfig,
+     QuantizeMethodBase,
+ )
+ from vllm.model_executor.layers.quantization.fp8 import Fp8Config
++from vllm.model_executor.layers.quantization.modelopt import ModelOptNvFp4Config
+ from vllm.model_executor.layers.quantization.utils.fp8_utils import (
+     create_fp8_scale_parameter,
+     create_fp8_weight_parameter,
+@@ -33,6 +40,7 @@
+ )
+ from vllm.model_executor.models.utils import AutoWeightsLoader
+ from vllm.model_executor.parameter import PerTensorScaleParameter
++from vllm.model_executor.utils import set_weight_attrs
+ from vllm.transformers_utils.configs.qwen4_exp import (
+     Qwen4ExpTextConfig,
+ )
+@@ -44,7 +52,9 @@
+ )
+ from vllm.v1.attention.backends.utils import NULL_BLOCK_ID
+ 
+-from ..common.ple import PLEVocabParallelEmbedding
++from ..common.ple import PLEVocabParallelEmbedding, copy_ple_embedding_shard_
++
++logger = init_logger(__name__)
+ 
+ 
+ class Qwen4ExpPLEGroupedNorm(nn.Module):
+@@ -122,33 +132,208 @@ def embedding(self, layer: nn.Module, input_: torch.Tensor) -> torch.Tensor:
+         return F.embedding(input_, layer.weight)
+ 
+ 
++_NVFP4_BLOCK_SIZE = 16
++
++
++class Qwen4ExpPLENVFp4EmbeddingMethod(QuantizeMethodBase):
++    """NVFP4 PLE embedding kept packed at runtime.
++
++    The table stays as uint8 codes with FP8 block scales (16 values per
++    block) and one FP32 global scale. A lookup only gathers the packed rows;
++    the PLE layer dequantizes them after lookup.
++    """
++
++    def create_weights(
++        self,
++        layer: nn.Module,
++        input_size_per_partition: int,
++        output_partition_sizes: list[int],
++        input_size: int,
++        output_size: int,
++        params_dtype: torch.dtype,
++        **extra_weight_attrs,
++    ) -> None:
++        del input_size, output_size, extra_weight_attrs
++        if input_size_per_partition % _NVFP4_BLOCK_SIZE:
++            raise ValueError(
++                "NVFP4 PLE embedding requires the embedding dim to be a "
++                f"multiple of {_NVFP4_BLOCK_SIZE}, got {input_size_per_partition}"
++            )
++        self.params_dtype = params_dtype
++        self.head_dim = input_size_per_partition
++        self.packed_row_width = (
++            input_size_per_partition // 2
++            + input_size_per_partition // _NVFP4_BLOCK_SIZE
++        )
++        rows = sum(output_partition_sizes)
++        weight = nn.Parameter(
++            torch.empty(rows, input_size_per_partition // 2, dtype=torch.uint8),
++            requires_grad=False,
++        )
++        set_weight_attrs(weight, {"input_dim": 1, "output_dim": 0})
++        layer.register_parameter("weight", weight)
++
++        weight_scale = nn.Parameter(
++            torch.empty(
++                rows,
++                input_size_per_partition // _NVFP4_BLOCK_SIZE,
++                dtype=torch.float8_e4m3fn,
++            ),
++            requires_grad=False,
++        )
++        set_weight_attrs(weight_scale, {"input_dim": 1, "output_dim": 0})
++        layer.register_parameter("weight_scale", weight_scale)
++
++        weight_scale_2 = nn.Parameter(
++            torch.empty((), dtype=torch.float32), requires_grad=False
++        )
++        layer.register_parameter("weight_scale_2", weight_scale_2)
++        self._lut: torch.Tensor | None = None
++
++    def process_weights_after_loading(self, layer: nn.Module) -> None:
++        # Build the lookup table before CUDA graph capture.
++        self._lut = torch.tensor(
++            _FP4_VALUES, dtype=torch.float32, device=layer.weight.device
++        )
++
++    def apply(
++        self,
++        layer: nn.Module,
++        x: torch.Tensor,
++        bias: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        raise NotImplementedError("PLE NVFP4 weights only support embedding lookup")
++
++    def embedding(self, layer: nn.Module, input_: torch.Tensor) -> torch.Tensor:
++        """Gather packed rows for deferred dequantization."""
++        codes = F.embedding(input_, layer.weight)
++        scales = F.embedding(input_, layer.weight_scale)
++        return torch.cat((codes, scales.view(torch.uint8)), dim=-1)
++
++    def dequantize(
++        self,
++        packed_rows: torch.Tensor,
++        scale_2: torch.Tensor,
++        output_dtype: torch.dtype,
++    ) -> torch.Tensor:
++        """Dequantize rows containing NVFP4 codes and block scales."""
++        lut = self._lut
++        if lut is None or lut.device != packed_rows.device:
++            lut = torch.tensor(
++                _FP4_VALUES, dtype=torch.float32, device=packed_rows.device
++            )
++            self._lut = lut
++        return _dequant_nvfp4_rows(
++            packed_rows, self.head_dim, scale_2, output_dtype, lut
++        )
++
++
++def _ple_dtype_is_fp8(ple_embedding_dtype: object) -> bool:
++    """Return whether the model config declares FP8 PLE checkpoint weights."""
++
++    if ple_embedding_dtype is None:
++        return False
++    if isinstance(ple_embedding_dtype, torch.dtype):
++        return ple_embedding_dtype == torch.float8_e4m3fn
++    return str(ple_embedding_dtype).rsplit(".", 1)[-1] == "float8_e4m3fn"
++
++
+ def _get_ple_embedding_quant_method(
+     quant_config: QuantizationConfig | None,
+     prefix: str,
++    ple_embedding_dtype: object = None,
+ ) -> QuantizeMethodBase | None:
+-    """Select global-scale FP8 only for quantized PLE checkpoint shards."""
+-
+-    if not isinstance(quant_config, Fp8Config):
+-        return None
+-    if not quant_config.is_checkpoint_fp8_serialized:
+-        return None
+-
+-    ignored_layers = quant_config.ignored_layers
+-    if is_layer_skipped(
+-        prefix,
+-        ignored_layers,
+-        quant_config.packed_modules_mapping,
+-        match_mode=quant_config.ignored_layers_match_mode,
+-    ):
+-        return None
+-    # PLE checkpoint shards form one runtime embedding parameter.
+-    shard_prefix = f"{prefix}.shard_"
+-    if any(name.startswith(shard_prefix) for name in ignored_layers):
+-        return None
+-    return Qwen4ExpPLEFp8EmbeddingMethod()
+-
+-
+-class Qwen4ExpNGramEmbedding(nn.Module):
++    """Select a packed PLE embedding method for quantized checkpoint shards."""
++
++    if isinstance(quant_config, Fp8Config):
++        if not quant_config.is_checkpoint_fp8_serialized:
++            return None
++        ignored_layers = quant_config.ignored_layers
++        if is_layer_skipped(
++            prefix,
++            ignored_layers,
++            quant_config.packed_modules_mapping,
++            match_mode=quant_config.ignored_layers_match_mode,
++        ):
++            return None
++        # PLE checkpoint shards form one runtime embedding parameter.
++        shard_prefix = f"{prefix}.shard_"
++        if any(name.startswith(shard_prefix) for name in ignored_layers):
++            return None
++        return Qwen4ExpPLEFp8EmbeddingMethod()
++
++    if isinstance(quant_config, ModelOptNvFp4Config):
++        if not quant_config.is_checkpoint_nvfp4_serialized:
++            return None
++        if not quant_config.is_layer_excluded(prefix):
++            logger.info_once("PLE embedding %s uses the runtime NVFP4 method", prefix)
++            return Qwen4ExpPLENVFp4EmbeddingMethod()
++        if _ple_dtype_is_fp8(ple_embedding_dtype):
++            logger.info_once(
++                "Excluded ModelOpt PLE embedding %s uses the runtime FP8 method",
++                prefix,
++            )
++            return Qwen4ExpPLEFp8EmbeddingMethod()
++
++    return None
++
++
++_FP4_VALUES = (0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0)
++
++
++def _dequant_nvfp4_codes(
++    packed: torch.Tensor,
++    scale: torch.Tensor,
++    scale_2: torch.Tensor,
++    lut: torch.Tensor | None = None,
++) -> torch.Tensor:
++    """Unpack NVFP4 codes with FP8 block scales and an FP32 global scale."""
++    half = packed.shape[-1]
++    codes = torch.stack([packed & 0xF, (packed >> 4) & 0xF], dim=-1).reshape(
++        *packed.shape[:-1], half * 2
++    )
++    if lut is None:
++        lut = torch.tensor(_FP4_VALUES, dtype=torch.float32, device=packed.device)
++    magnitude = lut[(codes & 0x7).long()]
++    sign = ((codes >> 3) & 1).to(torch.float32)
++    fp4 = (magnitude * (1 - 2 * sign)).reshape(
++        *packed.shape[:-1], -1, _NVFP4_BLOCK_SIZE
++    )
++    output = fp4 * scale.float().unsqueeze(-1) * scale_2.float()
++    return output.reshape(*packed.shape[:-1], half * 2)
++
++
++def _dequant_nvfp4_rows(
++    packed_rows: torch.Tensor,
++    head_dim: int,
++    scale_2: torch.Tensor,
++    output_dtype: torch.dtype,
++    lut: torch.Tensor,
++) -> torch.Tensor:
++    """Dequantize rows containing NVFP4 codes followed by block scales."""
++    half = head_dim // 2
++    codes = packed_rows[..., :half]
++    scales = packed_rows[..., half:].contiguous().view(torch.float8_e4m3fn)
++    return _dequant_nvfp4_codes(codes, scales, scale_2, lut).to(output_dtype)
++
++
++def _get_shared_nvfp4_outer_scale(
++    outer_scales: dict[int, torch.Tensor],
++) -> torch.Tensor:
++    """Validate and return the global scale shared by NVFP4 PLE shards."""
++    first_index, reference = next(iter(outer_scales.items()))
++    reference = reference.reshape(())
++    for shard_index, outer_scale in outer_scales.items():
++        if not torch.equal(outer_scale.reshape(()), reference):
++            raise ValueError(
++                "NVFP4 PLE shards must share the same global scale, but "
++                f"shards {first_index} and {shard_index} differ"
++            )
++    return reference
++
++
++class Qwen4ExpNGramEmbedding(PleOffloadLayer):
++    _offload_quant_method: QuantizeMethodBase | None = None
+     _MASK64 = (1 << 64) - 1
+     _SPLITMIX_GAMMA = 0x9E3779B97F4A7C15
+     _SPLITMIX_M1 = 0xBF58476D1CE4E5B9
+@@ -315,7 +500,9 @@ def __init__(
+             padding_size=divisor,
+             prefix=f"{prefix}.ngram_embedding",
+             quant_method=_get_ple_embedding_quant_method(
+-                quant_config, f"{prefix}.ngram_embedding"
++                quant_config,
++                f"{prefix}.ngram_embedding",
++                getattr(config, "ple_embedding_dtype", None),
+             ),
+         )
+         self.register_buffer(
+@@ -390,15 +577,35 @@ def compute_ngram_ids(
+                 f"at most {self.padded_buffer.shape[0]}"
+             )
+ 
++        # The CPU-offload subprocess is never captured by a CUDA Graph, so its
++        # pack workspace can narrow to the actual maximum sequence length. The
++        # regular GPU path retains the static maximum-width buffer for capture.
++        if is_offload_process():
++            if num_reqs <= 0:
++                raise ValueError("PLE CPU offload requires at least one request")
++            max_seq_len = max(
++                1,
++                int((query_start_loc[1:] - query_start_loc[:-1]).max().item()),
++            )
++            # The model runner sends the CUDA-graph padded token count together
++            # with an unpadded query_start_loc. Stale padding must not enter the
++            # scatter: its clamped indices would overwrite the last real token.
++            num_valid_tokens = min(int(query_start_loc[-1].item()), num_tokens)
++        else:
++            max_seq_len = self.padded_buffer.shape[1]
++            num_valid_tokens = num_tokens
++
+         positions = self.positions_buffer[:num_tokens]
+-        packed = self.padded_buffer[:num_reqs, :num_tokens]
++        packed = self.padded_buffer[:num_reqs, :max_seq_len]
+         packed.fill_(self.eos_token_id)
+         request_indices = torch.searchsorted(query_start_loc, positions, right=True) - 1
+         request_indices.clamp_(max=num_reqs - 1)
+         columns = (positions - query_start_loc[request_indices]).clamp(
+             0, packed.shape[1] - 1
+         )
+-        packed[request_indices, columns] = input_ids
++        packed[request_indices[:num_valid_tokens], columns[:num_valid_tokens]] = (
++            input_ids[:num_valid_tokens]
++        )
+         ngram_context = ngram_context[:num_reqs].to(
+             device=input_ids.device, dtype=torch.long
+         )
+@@ -434,30 +641,144 @@ def compute_ngram_ids(
+             id_blocks.append(ids[request_indices, adjusted_columns])
+         return torch.cat(id_blocks, dim=-1)
+ 
+-    def forward(
++    def forward_impl(  # type: ignore[override]
+         self,
++        hidden_states: torch.Tensor,
+         input_ids: torch.Tensor,
+         query_start_loc: torch.Tensor,
+         ngram_context: torch.Tensor,
++        output_buffer: torch.Tensor | None = None,
+     ) -> torch.Tensor:
+-        ngram_ids = input_ids.new_empty(
+-            (input_ids.shape[0], self.ngram_heads),
+-            dtype=torch.long,
+-        )
+-        # Keep num_reqs-dependent ID generation outside PIECEWISE CUDA graphs,
+-        # which dispatch only on the padded token count.
+-        torch.ops.vllm.qwen4_exp_compute_ple_ngram_ids(
++        del hidden_states
++        ngram_ids = self.compute_ngram_ids(
+             input_ids,
+             query_start_loc,
+             ngram_context,
+-            ngram_ids,
+-            self.layer_name,
+         )
++        num_tokens = input_ids.reshape(-1).shape[0]
++        if output_buffer is not None:
++            quant_method = getattr(self.ngram_embedding, "quant_method", None)
++            if isinstance(quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++                output_dim = self.get_offload_output_dim(self.embedding_dim)
++                output = output_buffer[:num_tokens, :output_dim]
++                output.copy_(self.ngram_embedding(ngram_ids).flatten(-2))
++                return output
++            output = output_buffer[:num_tokens, : self.embedding_dim]
++            torch.index_select(
++                self.ngram_embedding.weight,
++                0,
++                ngram_ids.reshape(-1),
++                out=output.reshape(-1, self.head_dim),
++            )
++            return output
+         return self.ngram_embedding(ngram_ids).flatten(-2)
+ 
++    def get_offload_output_dtype(self, default_dtype: torch.dtype) -> torch.dtype:
++        """Keep quantized lookup results in their embedding storage dtype."""
++        embedding = getattr(self, "ngram_embedding", None)
++        weight = getattr(embedding, "weight", None)
++        if weight is not None:
++            return weight.dtype
++        if isinstance(self._offload_quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++            return torch.uint8
++        if isinstance(self._offload_quant_method, Qwen4ExpPLEFp8EmbeddingMethod):
++            return torch.float8_e4m3fn
++        return default_dtype
++
++    def get_offload_output_dim(self, default_dim: int) -> int:
++        """Keep NVFP4 lookup rows packed while transferring them to the GPU."""
++        quant_method = getattr(
++            getattr(self, "ngram_embedding", None), "quant_method", None
++        )
++        if quant_method is None:
++            quant_method = self._offload_quant_method
++        if isinstance(quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++            if default_dim % _NVFP4_BLOCK_SIZE:
++                raise ValueError(
++                    "NVFP4 PLE output dim must be a multiple of "
++                    f"{_NVFP4_BLOCK_SIZE}, got {default_dim}"
++                )
++            return default_dim // 2 + default_dim // _NVFP4_BLOCK_SIZE
++        return default_dim
++
++    def initialize_dummy_offload_metadata(self, device: torch.device) -> None:
++        """Initialize quantization metadata skipped by the dummy loader."""
++        quant_method = self._offload_quant_method
++        if isinstance(quant_method, Qwen4ExpPLEFp8EmbeddingMethod):
++            self.register_buffer(
++                "_offload_weight_scale",
++                torch.ones((), dtype=torch.float32, device=device),
++                persistent=False,
++            )
++        elif isinstance(quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++            self.register_buffer(
++                "_offload_weight_scale_2",
++                torch.ones((), dtype=torch.float32, device=device),
++                persistent=False,
++            )
++            self.register_buffer(
++                "_offload_nvfp4_lut",
++                torch.tensor(_FP4_VALUES, dtype=torch.float32, device=device),
++                persistent=False,
++            )
++
+     def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+         """Load hash buffers and checkpoint-split embedding rows."""
+ 
++        # Prefix grouping may invoke this method repeatedly for one module.
++        # Treat the global FP8 scale as incrementally loaded state.
++        # GPU workers retain only dequantization metadata. The CPU process owns
++        # the embedding table and transfers quantized lookup rows unchanged.
++        if envs.VLLM_PLE_CPU_OFFLOAD and not is_offload_process():
++            retained: set[str] = set()
++            quant_method = self._offload_quant_method
++            if isinstance(quant_method, Qwen4ExpPLEFp8EmbeddingMethod):
++                for name, loaded_weight in weights:
++                    if name != "ngram_embedding.weight_scale":
++                        continue
++                    self.register_buffer(
++                        "_offload_weight_scale",
++                        loaded_weight.to(
++                            device=torch.accelerator.current_accelerator()
++                        ),
++                        persistent=False,
++                    )
++                    retained.add(name)
++            elif isinstance(quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++                outer_scales: dict[int, torch.Tensor] = {}
++                for name, loaded_weight in weights:
++                    if not name.startswith(
++                        "ngram_embedding.shard_"
++                    ) or not name.endswith(".weight_scale_2"):
++                        continue
++                    shard_text = name[
++                        len("ngram_embedding.shard_") : -len(".weight_scale_2")
++                    ]
++                    shard_index = int(shard_text)
++                    outer_scales[shard_index] = loaded_weight
++                    retained.add(name)
++                if not retained:
++                    raise ValueError(
++                        "NVFP4 PLE offload checkpoint is missing its global scale"
++                    )
++                scale_2 = _get_shared_nvfp4_outer_scale(outer_scales).to(
++                    device=torch.accelerator.current_accelerator()
++                )
++                self.register_buffer(
++                    "_offload_weight_scale_2", scale_2, persistent=False
++                )
++                self.register_buffer(
++                    "_offload_nvfp4_lut",
++                    torch.tensor(
++                        _FP4_VALUES, dtype=torch.float32, device=scale_2.device
++                    ),
++                    persistent=False,
++                )
++            else:
++                for _ in weights:
++                    pass
++            return retained
++
+         persistent_buffers = {
+             "layer_multipliers": self.layer_multipliers,
+             "ngram_heads_offsets": self.ngram_heads_offsets,
+@@ -466,6 +787,11 @@ def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+         loaded: set[str] = set()
+         regular_weights: list[tuple[str, torch.Tensor]] = []
+         shard_prefix = "ngram_embedding.shard_"
++        quant_method = getattr(self.ngram_embedding, "quant_method", None)
++        nvfp4_runtime = isinstance(quant_method, Qwen4ExpPLENVFp4EmbeddingMethod)
++        packed_codes: dict[int, torch.Tensor] = {}
++        packed_scales: dict[int, torch.Tensor] = {}
++        packed_outer_scales: dict[int, torch.Tensor] = {}
+ 
+         for name, loaded_weight in weights:
+             leaf_name = name.rsplit(".", 1)[-1]
+@@ -481,7 +807,34 @@ def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+                 buffer.copy_(loaded_weight.to(device=buffer.device, dtype=buffer.dtype))
+                 loaded.add(name)
+                 continue
+-            if name.startswith(shard_prefix) and name.endswith(".weight"):
++
++            if nvfp4_runtime and name.startswith(shard_prefix):
++                suffix = name[len(shard_prefix) :]
++                for ending, sink in (
++                    (".weight_scale_2", packed_outer_scales),
++                    (".weight_scale", packed_scales),
++                    (".weight", packed_codes),
++                ):
++                    if not suffix.endswith(ending):
++                        continue
++                    shard_text = suffix[: -len(ending)]
++                    shard_index = int(shard_text)
++                    if shard_index >= self.split_ngram_parts:
++                        raise ValueError(
++                            f"PLE embedding shard index {shard_index} exceeds "
++                            f"split_ngram_parts={self.split_ngram_parts}"
++                        )
++                    sink[shard_index] = loaded_weight
++                    break
++                else:
++                    regular_weights.append((name, loaded_weight))
++                continue
++
++            if (
++                not nvfp4_runtime
++                and name.startswith(shard_prefix)
++                and name.endswith(".weight")
++            ):
+                 shard_text = name[len(shard_prefix) : -len(".weight")]
+                 if not shard_text.isdigit():
+                     regular_weights.append((name, loaded_weight))
+@@ -517,6 +870,67 @@ def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+                 continue
+             regular_weights.append((name, loaded_weight))
+ 
++        if nvfp4_runtime:
++            if not packed_codes:
++                raise ValueError("NVFP4 PLE checkpoint contains no packed shards")
++            for shard_index in packed_codes:
++                if (
++                    shard_index not in packed_scales
++                    or shard_index not in packed_outer_scales
++                ):
++                    raise ValueError(
++                        f"NVFP4 PLE shard {shard_index} is missing its scale tensors"
++                    )
++            shared_outer_scale = _get_shared_nvfp4_outer_scale(
++                {
++                    shard_index: packed_outer_scales[shard_index]
++                    for shard_index in packed_codes
++                }
++            )
++
++        for shard_index, codes in packed_codes.items():
++            embedding = self.ngram_embedding
++            shard_size = (
++                embedding.org_vocab_size + self.split_ngram_parts - 1
++            ) // self.split_ngram_parts
++            checkpoint_start = shard_index * shard_size
++            expected_rows = max(
++                0, min(shard_size, embedding.org_vocab_size - checkpoint_start)
++            )
++            expected_codes_shape = (expected_rows, embedding.embedding_dim // 2)
++            if tuple(codes.shape) != expected_codes_shape:
++                raise ValueError(
++                    f"Shape mismatch for packed PLE shard {shard_index}: "
++                    f"expected {expected_codes_shape}, got {tuple(codes.shape)}"
++                )
++            tp_bounds = {
++                "checkpoint_start": checkpoint_start,
++                "tp_start": embedding.shard_indices.org_vocab_start_index,
++                "tp_end": embedding.shard_indices.org_vocab_end_index,
++            }
++            scales = packed_scales[shard_index]
++            expected_scales_shape = (
++                expected_rows,
++                embedding.embedding_dim // _NVFP4_BLOCK_SIZE,
++            )
++            if tuple(scales.shape) != expected_scales_shape:
++                raise ValueError(
++                    f"Scale shape mismatch for packed PLE shard {shard_index}: "
++                    f"expected {expected_scales_shape}, got {tuple(scales.shape)}"
++                )
++            copy_ple_embedding_shard_(embedding.weight.data, codes, **tp_bounds)
++            copy_ple_embedding_shard_(embedding.weight_scale.data, scales, **tp_bounds)
++
++        if nvfp4_runtime:
++            self.ngram_embedding.weight_scale_2.data.copy_(shared_outer_scale)
++            loaded.update(
++                {
++                    "ngram_embedding.weight",
++                    "ngram_embedding.weight_scale",
++                    "ngram_embedding.weight_scale_2",
++                }
++            )
++
+         if regular_weights:
+             loaded.update(AutoWeightsLoader(self).load_weights(regular_weights))
+         return loaded
+@@ -545,6 +959,11 @@ def __init__(
+         )
+         self.prefix = prefix
+         self.hidden_size = int(config.hidden_size)
++        self.ple_embedding_dim = int(config.ple_embed_dim)
++        self.ple_ngram_heads = (int(config.ngram_size) - 1) * int(
++            config.heads_per_ngram
++        )
++        self.ple_head_dim = self.ple_embedding_dim // self.ple_ngram_heads
+         self.hc_count = config.hc_count
+         self.hc_hidden_size = self.hidden_size * self.hc_count
+         self.conv_kernel_size = int(config.ple_conv_kernel_size)
+@@ -552,17 +971,28 @@ def __init__(
+         self.conv_state_len = (self.conv_kernel_size - 1) * self.short_conv_dilation
+         self.num_spec_tokens = vllm_config.num_speculative_tokens
+         self.activation = "silu"
+-        self.ple_embedding = Qwen4ExpNGramEmbedding(
+-            config,
+-            int(config.ple_embed_dim),
+-            self.ple_dense_layer_id,
+-            vllm_config.scheduler_config.max_num_batched_tokens,
+-            vllm_config.scheduler_config.max_num_seqs,
+-            prefix=f"{prefix}.ple_embedding",
+-            layer_name=prefix,
+-            quant_config=quant_config,
+-            params_dtype=model_config.dtype,
+-        )
++        # The offload process builds the surrounding model on meta while
++        # this subtree must own real CPU storage. GPU workers skip the
++        # subclass constructor and retain only an empty IPC placeholder.
++        with torch.device(PleOffloadLayer.get_target_device()):
++            ple_embedding = Qwen4ExpNGramEmbedding(
++                config,
++                int(config.ple_embed_dim),
++                self.ple_dense_layer_id,
++                vllm_config.scheduler_config.max_num_batched_tokens,
++                vllm_config.scheduler_config.max_num_seqs,
++                prefix=f"{prefix}.ple_embedding",
++                layer_name=prefix,
++                quant_config=quant_config,
++                params_dtype=model_config.dtype,
++            )
++        if envs.VLLM_PLE_CPU_OFFLOAD and not is_offload_process():
++            ple_embedding._offload_quant_method = _get_ple_embedding_quant_method(
++                quant_config,
++                f"{prefix}.ple_embedding.ngram_embedding",
++                getattr(config, "ple_embedding_dtype", None),
++            )
++        self.ple_embedding: nn.Module = ple_embedding
+         self.key_proj = ReplicatedLinear(
+             int(config.ple_embed_dim),
+             self.hc_hidden_size,
+@@ -606,7 +1036,10 @@ def __init__(
+ 
+     def _get_embedding_weight_scale(self) -> torch.Tensor | None:
+         embedding = getattr(self.ple_embedding, "ngram_embedding", None)
+-        return getattr(embedding, "weight_scale", None)
++        weight_scale = getattr(embedding, "weight_scale", None)
++        if weight_scale is not None:
++            return weight_scale
++        return getattr(self.ple_embedding, "_offload_weight_scale", None)
+ 
+     def _dequantize_embeddings(
+         self,
+@@ -615,6 +1048,45 @@ def _dequantize_embeddings(
+     ) -> torch.Tensor:
+         """Dequantize PLE lookup output."""
+ 
++        quant_method = getattr(
++            getattr(self.ple_embedding, "ngram_embedding", None),
++            "quant_method",
++            None,
++        )
++        offload_quant_method = getattr(
++            self.ple_embedding, "_offload_quant_method", None
++        )
++        if isinstance(offload_quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++            offload_scale_2 = getattr(
++                self.ple_embedding, "_offload_weight_scale_2", None
++            )
++            if offload_scale_2 is None:
++                raise RuntimeError("NVFP4 PLE offload is missing its global scale")
++            packed_row_width = (
++                self.ple_head_dim // 2 + self.ple_head_dim // _NVFP4_BLOCK_SIZE
++            )
++            packed_rows = embeddings.unflatten(
++                -1, (self.ple_ngram_heads, packed_row_width)
++            )
++            dequantized = _dequant_nvfp4_rows(
++                packed_rows,
++                self.ple_head_dim,
++                offload_scale_2,
++                output_dtype,
++                self.ple_embedding._offload_nvfp4_lut,
++            )
++            return dequantized.flatten(-2)
++        if isinstance(quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++            packed_rows = embeddings.unflatten(
++                -1,
++                (self.ple_embedding.ngram_heads, quant_method.packed_row_width),
++            )
++            dequantized = quant_method.dequantize(
++                packed_rows,
++                self.ple_embedding.ngram_embedding.weight_scale_2,
++                output_dtype,
++            )
++            return dequantized.flatten(-2)
+         if not is_fp8(embeddings):
+             return embeddings
+         weight_scale = self._get_embedding_weight_scale()
+@@ -1166,7 +1638,13 @@ def forward(
+                 f"token length, got {input_ids.shape[0]} and "
+                 f"{hidden_states.shape[0]}"
+             )
+-        embeddings = self.ple_embedding(input_ids, query_start_loc, ngram_context)
++        embeddings = torch.ops.vllm.qwen4_exp_ple_embed(
++            hidden_states,
++            input_ids,
++            query_start_loc,
++            ngram_context,
++            self.prefix,
++        )
+         embeddings = self._dequantize_embeddings(embeddings, hidden_states.dtype)
+         key, _ = self.key_proj(embeddings)
+         value, _ = self.value_proj(embeddings)
+@@ -1249,8 +1727,66 @@ def qwen4_exp_ple_short_conv_fake(
+ )
+ 
+ 
++# Keep data-dependent n-gram hashing and the large table gather out of the
++# compiled model graph, where Inductor can miscompile the embedding indices.
++def qwen4_exp_ple_embed(
++    hidden_states: torch.Tensor,
++    input_ids: torch.Tensor,
++    query_start_loc: torch.Tensor,
++    ngram_context: torch.Tensor,
++    layer_name: str,
++) -> torch.Tensor:
++    """Run the PLE embedding lookup eagerly."""
++    layer = get_forward_context().no_compile_layers[layer_name]
++    return layer.ple_embedding(hidden_states, input_ids, query_start_loc, ngram_context)
++
++
++def qwen4_exp_ple_embed_fake(
++    hidden_states: torch.Tensor,
++    input_ids: torch.Tensor,
++    query_start_loc: torch.Tensor,
++    ngram_context: torch.Tensor,
++    layer_name: str,
++) -> torch.Tensor:
++    """Return PLE lookup metadata while tracing the custom op."""
++    del query_start_loc, ngram_context
++    layer = get_forward_context().no_compile_layers[layer_name]
++    embedding = layer.ple_embedding
++    if embedding._is_cpu_offloaded:
++        output_buffer = embedding._gpu_output_buffer
++        return torch.empty(
++            (input_ids.shape[0], output_buffer.shape[-1]),
++            device=hidden_states.device,
++            dtype=output_buffer.dtype,
++        )
++    quant_method = embedding.ngram_embedding.quant_method
++    if isinstance(quant_method, Qwen4ExpPLENVFp4EmbeddingMethod):
++        return torch.empty(
++            (
++                input_ids.shape[0],
++                embedding.ngram_heads * quant_method.packed_row_width,
++            ),
++            device=hidden_states.device,
++            dtype=torch.uint8,
++        )
++    return torch.empty(
++        (input_ids.shape[0], embedding.embedding_dim),
++        device=hidden_states.device,
++        dtype=embedding.ngram_embedding.weight.dtype,
++    )
++
++
++direct_register_custom_op(
++    op_name="qwen4_exp_ple_embed",
++    op_func=qwen4_exp_ple_embed,
++    mutates_args=[],
++    fake_impl=qwen4_exp_ple_embed_fake,
++)
++
++
+ __all__ = [
+     "Qwen4ExpNGramEmbedding",
+     "Qwen4ExpPLEGroupedNorm",
++    "Qwen4ExpPLENVFp4EmbeddingMethod",
+     "Qwen4ExpPLELayer",
+ ]
+diff --git a/vllm/v1/executor/multiproc_executor.py b/vllm/v1/executor/multiproc_executor.py
+index 67a631d3ce20..80d340d54442 100644
+--- a/vllm/v1/executor/multiproc_executor.py
++++ b/vllm/v1/executor/multiproc_executor.py
+@@ -670,6 +670,8 @@ def __init__(
+ 
+         # Load model
+         self.worker.init_device()
++        if envs.VLLM_PLE_CPU_OFFLOAD:
++            self.worker.spawn_ple_offload()
+         # Update process title now that parallel groups are initialized
+         self.setup_proc_title_and_log_prefix(
+             enable_ep=vllm_config.parallel_config.enable_expert_parallel
+@@ -678,6 +680,8 @@ def __init__(
+             self.worker.elastic_ep_execute("load_model")
+         else:
+             self.worker.load_model()
++        if envs.VLLM_PLE_CPU_OFFLOAD:
++            self.worker.wait_ple_offload_ready()
+ 
+         scheduler_config = vllm_config.scheduler_config
+         self.use_async_scheduling = scheduler_config.async_scheduling
+diff --git a/vllm/v1/executor/uniproc_executor.py b/vllm/v1/executor/uniproc_executor.py
+index da1f2c588b6e..5d17c1481746 100644
+--- a/vllm/v1/executor/uniproc_executor.py
++++ b/vllm/v1/executor/uniproc_executor.py
+@@ -68,10 +68,15 @@ def _init_executor(self) -> None:
+         self.driver_worker.init_worker(all_kwargs=[kwargs])
+         self.driver_worker.init_device()
+ 
++        if envs.VLLM_PLE_CPU_OFFLOAD:
++            self.driver_worker.spawn_ple_offload()
++
+         if envs.VLLM_ELASTIC_EP_SCALE_UP_LAUNCH:
+             self.driver_worker.elastic_ep_execute("load_model")
+         else:
+             self.driver_worker.load_model()
++        if envs.VLLM_PLE_CPU_OFFLOAD:
++            self.driver_worker.wait_ple_offload_ready()
+         current_platform.update_block_size_for_backend(self.vllm_config)
+ 
+     def _distributed_args(self) -> tuple[str, int, int]:
+diff --git a/vllm/v1/ple_offload/__init__.py b/vllm/v1/ple_offload/__init__.py
+new file mode 100644
+index 000000000000..208f01a7cb5e
+--- /dev/null
++++ b/vllm/v1/ple_offload/__init__.py
+@@ -0,0 +1,2 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+diff --git a/vllm/v1/ple_offload/connector.py b/vllm/v1/ple_offload/connector.py
+new file mode 100644
+index 000000000000..d1b25c7290fd
+--- /dev/null
++++ b/vllm/v1/ple_offload/connector.py
+@@ -0,0 +1,433 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Exchange PLE data between a GPU worker and the CPU-offload process."""
++
++import os
++import queue
++import threading
++from dataclasses import dataclass
++from multiprocessing.reduction import ForkingPickler
++from typing import Any
++
++import msgspec
++import torch
++import torch.nn as nn
++import zmq
++from cuda.bindings import driver as cuda_driver
++
++from vllm.config import VllmConfig
++from vllm.distributed.parallel_state import get_dp_group, get_tp_group
++from vllm.logger import init_logger
++from vllm.model_executor.layers.ple_offload_layer import (
++    CpuGpuSemaphore,
++    PleOffloadLayer,
++)
++from vllm.v1.ple_offload.protocol import (
++    PleOffloadRegistration,
++    PleOffloadRequest,
++)
++from vllm.v1.utils import record_function_or_nullcontext
++
++logger = init_logger(__name__)
++
++
++@dataclass(frozen=True)
++class _PendingPleOffloadRequest:
++    """Bind request metadata to its MRV2 D2H completion event."""
++
++    request: PleOffloadRequest
++    d2h_done_event: torch.cuda.Event
++
++
++def _cuda_check(result: Any, operation: str) -> Any:
++    """Check the ``(CUresult, ...)`` tuple returned by cuda-python calls."""
++    error = result[0] if isinstance(result, tuple) else result
++    if error.value != 0:
++        raise RuntimeError(f"{operation} failed: {error}")
++    return result
++
++
++class PleOffloadConnector:
++    """Connect a model runner V2 GPU worker to the PLE CPU worker."""
++
++    def __init__(
++        self,
++        vllm_config: VllmConfig,
++        model: nn.Module,
++        device: torch.device,
++        ipc_addr: str,
++        *,
++        input_ids_source: torch.Tensor,
++        query_start_loc_source: torch.Tensor,
++        ngram_context_source: torch.Tensor | None,
++    ) -> None:
++        self.device = device
++        self.dp_rank = get_dp_group().rank_in_group
++        self.tp_rank = get_tp_group().rank_in_group
++        self._layers = self._setup_layers(vllm_config, model)
++
++        # TP0 registers shared buffers with CUDA for asynchronous D2H copies.
++        scheduler_config = vllm_config.scheduler_config
++        self._input_ids_buf = torch.empty(
++            scheduler_config.max_num_batched_tokens,
++            dtype=torch.int32,
++            device="cpu",
++        ).share_memory_()
++        self._query_start_loc_buf = torch.empty(
++            scheduler_config.max_num_seqs + 1,
++            dtype=torch.int32,
++            device="cpu",
++        ).share_memory_()
++        self._ngram_context_buf = None
++        config = vllm_config.model_config.hf_text_config
++        ngram_context_len = int(config.ngram_size) - 1
++        if ngram_context_len > 0:
++            self._ngram_context_buf = torch.empty(
++                scheduler_config.max_num_seqs,
++                ngram_context_len,
++                dtype=torch.int32,
++                device="cpu",
++            ).share_memory_()
++
++        # Runner input allocations are address-stable, so bind them once and
++        # pass only batch sizes through the per-forward request queue.
++        self._input_ids_source = input_ids_source
++        self._query_start_loc_source = query_start_loc_source
++        self._ngram_context_source = ngram_context_source
++        self._validate_input_sources()
++
++        self._pinned_input_buffers: list[torch.Tensor] = []
++        self._request_queue: queue.Queue[_PendingPleOffloadRequest | None] = (
++            queue.Queue(maxsize=vllm_config.max_concurrent_batches)
++        )
++        self._request_thread: threading.Thread | None = None
++        self._request_thread_ready = threading.Event()
++        self._zmq_ctx: zmq.Context | None = None
++        self._registration_socket: zmq.Socket | None = None
++        self._d2h_event_pool: queue.Queue[torch.cuda.Event] | None = None
++
++        try:
++            self._zmq_ctx = zmq.Context()
++            self._registration_socket = self._zmq_ctx.socket(zmq.PUSH)
++            self._registration_socket.connect(ipc_addr)
++            self._register_with_offload_worker(vllm_config, ipc_addr)
++
++            if self.tp_rank == 0:
++                # ForkingPickler may replace CPU storage while converting its
++                # sharing strategy, so register only the final addresses.
++                with torch.accelerator.device_index(self.device.index):
++                    self._pin_input_buffers()
++                    self._d2h_event_pool = queue.Queue(
++                        maxsize=vllm_config.max_concurrent_batches
++                    )
++                    for _ in range(vllm_config.max_concurrent_batches):
++                        self._d2h_event_pool.put_nowait(torch.cuda.Event())
++                self._start_request_thread(ipc_addr)
++        except Exception:
++            self.close()
++            raise
++
++    def _setup_layers(
++        self,
++        vllm_config: VllmConfig,
++        model: nn.Module,
++    ) -> dict[str, PleOffloadLayer]:
++        """Attach output buffers and semaphores to GPU PLE placeholders."""
++        layers = {
++            name: module
++            for name, module in model.named_modules()
++            if isinstance(module, PleOffloadLayer)
++        }
++        if not layers:
++            raise RuntimeError(
++                "VLLM_PLE_CPU_OFFLOAD is enabled, but the model has no PleOffloadLayer"
++            )
++
++        config = vllm_config.model_config.hf_text_config
++        max_num_tokens = vllm_config.scheduler_config.max_num_batched_tokens
++        for layer in layers.values():
++            if vllm_config.load_config.load_format == "dummy":
++                layer.initialize_dummy_offload_metadata(self.device)
++            # The CPU worker writes results here through CUDA IPC. The GPU
++            # placeholder waits on the paired cross-process semaphore.
++            output_buffer = torch.empty(
++                max_num_tokens,
++                layer.get_offload_output_dim(int(config.ple_embed_dim)),
++                dtype=layer.get_offload_output_dtype(vllm_config.model_config.dtype),
++                device=self.device,
++            )
++            layer.setup_cross_process_offload(
++                output_buffer,
++                CpuGpuSemaphore(self.device),
++            )
++        return layers
++
++    def _pin_input_buffers(self) -> None:
++        """Page-lock shared input allocations without replacing their storage."""
++        buffers = [self._input_ids_buf, self._query_start_loc_buf]
++        if self._ngram_context_buf is not None:
++            buffers.append(self._ngram_context_buf)
++        for buffer in buffers:
++            if buffer.device.type != "cpu" or not buffer.is_shared():
++                raise RuntimeError("PLE input buffers must be shared CPU tensors")
++            if not buffer.is_contiguous():
++                raise RuntimeError("PLE input buffers must be contiguous")
++            _cuda_check(
++                cuda_driver.cuMemHostRegister(
++                    buffer.data_ptr(),
++                    buffer.numel() * buffer.element_size(),
++                    cuda_driver.CU_MEMHOSTREGISTER_PORTABLE,
++                ),
++                "cuMemHostRegister(PLE input buffer)",
++            )
++            self._pinned_input_buffers.append(buffer)
++            if not buffer.is_pinned():
++                raise RuntimeError("CUDA did not page-lock a PLE input buffer")
++
++    def _unpin_input_buffers(self) -> None:
++        """Release CUDA registrations after the request thread has stopped."""
++        for buffer in reversed(self._pinned_input_buffers):
++            try:
++                _cuda_check(
++                    cuda_driver.cuMemHostUnregister(buffer.data_ptr()),
++                    "cuMemHostUnregister(PLE input buffer)",
++                )
++            except RuntimeError:
++                logger.exception("Failed to unregister a PLE input buffer")
++        self._pinned_input_buffers.clear()
++
++    def _register_with_offload_worker(
++        self, vllm_config: VllmConfig, ipc_addr: str
++    ) -> None:
++        """Register CUDA IPC outputs and shared CPU inputs with the worker."""
++        # Each GPU worker owns distinct output buffers, while TP0's shared
++        # inputs become the request source for its DP rank.
++        registration = PleOffloadRegistration(
++            worker_id=(
++                self.dp_rank * vllm_config.parallel_config.world_size
++                + vllm_config.parallel_config.rank
++            ),
++            tp_rank=self.tp_rank,
++            dp_rank=self.dp_rank,
++            gpu_output_buffers={
++                name: layer._gpu_output_buffer for name, layer in self._layers.items()
++            },
++            sem_flag_tensors={
++                name: layer._sem.flag_tensor for name, layer in self._layers.items()
++            },
++            input_ids_buf=self._input_ids_buf,
++            query_start_loc_buf=self._query_start_loc_buf,
++            ngram_context_buf=self._ngram_context_buf,
++        )
++
++        # ForkingPickler transmits tensors through shared-memory and CUDA IPC.
++        import torch.multiprocessing as torch_mp
++
++        original_strategy = torch_mp.get_sharing_strategy()
++        torch_mp.set_sharing_strategy("file_system")
++        try:
++            payload = ForkingPickler.dumps(registration)
++        finally:
++            torch_mp.set_sharing_strategy(original_strategy)
++        assert self._registration_socket is not None
++        self._registration_socket.send(payload)
++
++        logger.info(
++            "PleOffload: registered %d PleOffloadLayer(s) "
++            "(dp_rank=%d, tp_rank=%d, ipc_addr=%s): %s",
++            len(self._layers),
++            self.dp_rank,
++            self.tp_rank,
++            ipc_addr,
++            sorted(self._layers),
++        )
++
++    def _start_request_thread(self, ipc_addr: str) -> None:
++        """Start the thread that publishes batches after inputs are ready."""
++        self._request_thread = threading.Thread(
++            target=self._request_loop,
++            args=(ipc_addr,),
++            name=f"ple-offload-dp{self.dp_rank}",
++            daemon=True,
++        )
++        self._request_thread.start()
++        if not self._request_thread_ready.wait(timeout=10):
++            raise RuntimeError("Timed out starting the PLE request thread")
++
++    def _request_loop(self, ipc_addr: str) -> None:
++        """Wait for staged inputs, then notify the CPU worker."""
++        socket: zmq.Socket | None = None
++        try:
++            if self._zmq_ctx is None:
++                raise RuntimeError("PLE ZMQ context closed before thread startup")
++            socket = self._zmq_ctx.socket(zmq.PUSH)
++            socket.connect(ipc_addr)
++            self._request_thread_ready.set()
++            while True:
++                request = self._request_queue.get()
++                if request is None:
++                    return
++                self._process_request(request, socket)
++        except Exception:
++            logger.exception("PLE request thread failed")
++            os._exit(1)
++        finally:
++            self._request_thread_ready.set()
++            if socket is not None:
++                socket.close(linger=0)
++
++    def _process_request(
++        self, pending: _PendingPleOffloadRequest, socket: zmq.Socket
++    ) -> None:
++        """Wait for one staged batch and publish its request."""
++        request = pending.request
++        event_pool = self._d2h_event_pool
++        event = pending.d2h_done_event
++        assert event_pool is not None, "PLE D2H event pool is not initialized"
++        with torch.accelerator.device_index(self.device.index):
++            event.synchronize()
++
++        socket.send(msgspec.msgpack.encode(request))
++        event_pool.put_nowait(event)
++
++    def _validate_input_sources(self) -> None:
++        """Validate fixed runner sources against shared input buffers."""
++        sources = [
++            ("input_ids", self._input_ids_source, self._input_ids_buf),
++            (
++                "query_start_loc",
++                self._query_start_loc_source,
++                self._query_start_loc_buf,
++            ),
++        ]
++        if (self._ngram_context_source is None) != (self._ngram_context_buf is None):
++            raise ValueError("PLE ngram_context source and buffer must match")
++        if self._ngram_context_source is not None:
++            assert self._ngram_context_buf is not None
++            sources.append(
++                (
++                    "ngram_context",
++                    self._ngram_context_source,
++                    self._ngram_context_buf,
++                )
++            )
++
++        for name, source, buffer in sources:
++            if (
++                source.device != self.device
++                or source.dtype != buffer.dtype
++                or source.ndim != buffer.ndim
++                or source.shape[0] < buffer.shape[0]
++                or source.shape[1:] != buffer.shape[1:]
++            ):
++                raise ValueError(f"PLE {name} source is incompatible")
++
++    def _enqueue_cuda_inputs(
++        self,
++        request: PleOffloadRequest,
++        d2h_done_event: torch.cuda.Event,
++    ) -> None:
++        """Stage inputs on the model stream and record D2H completion."""
++        with (
++            record_function_or_nullcontext("ple_offload: enqueue_cuda_inputs"),
++            torch.accelerator.device_index(self.device.index),
++        ):
++            stream = torch.cuda.current_stream(self.device)
++            self._input_ids_buf[: request.num_tokens].copy_(
++                self._input_ids_source[: request.num_tokens],
++                non_blocking=True,
++            )
++            self._query_start_loc_buf[: request.num_reqs + 1].copy_(
++                self._query_start_loc_source[: request.num_reqs + 1],
++                non_blocking=True,
++            )
++            if self._ngram_context_buf is not None:
++                assert self._ngram_context_source is not None
++                self._ngram_context_buf[: request.num_reqs].copy_(
++                    self._ngram_context_source[: request.num_reqs],
++                    non_blocking=True,
++                )
++            d2h_done_event.record(stream)
++
++    def _launch(
++        self,
++        num_reqs: int,
++        num_tokens: int,
++    ) -> None:
++        """Stage or queue one batch for request publication."""
++        # Inputs are replicated across TP ranks. One request per DP rank drives
++        # the CPU result fan-out to every registered TP output buffer.
++        if self.tp_rank != 0:
++            return
++
++        request = PleOffloadRequest(
++            dp_rank=self.dp_rank,
++            num_tokens=num_tokens,
++            num_reqs=num_reqs,
++        )
++        assert self._d2h_event_pool is not None, "PLE D2H event pool is not initialized"
++        try:
++            d2h_done_event = self._d2h_event_pool.get_nowait()
++        except queue.Empty as exc:
++            raise RuntimeError(
++                "PLE has more requests than configured concurrent batches"
++            ) from exc
++        self._enqueue_cuda_inputs(request, d2h_done_event)
++        self._request_queue.put_nowait(
++            _PendingPleOffloadRequest(request, d2h_done_event)
++        )
++
++    def prepare_forward(
++        self,
++        num_reqs: int,
++        num_tokens: int,
++        dummy_run: bool,
++    ) -> None:
++        """Submit real inputs or satisfy the PLE wait for a dummy forward."""
++        if dummy_run:
++            self.signal_dummy_outputs(num_tokens)
++            return
++        self._launch(num_reqs, num_tokens)
++
++    def signal_dummy_outputs(self, num_tokens: int) -> None:
++        """Locally satisfy PLE waits for dummy and capture forwards."""
++        # Dummy and capture forwards do not send CPU requests, but every PLE
++        # placeholder still waits for a completed output semaphore.
++        stream = torch.cuda.current_stream(self.device)
++        for layer in self._layers.values():
++            layer._gpu_output_buffer[:num_tokens].zero_()
++            layer._sem.signal(stream)
++
++    def release_outputs(self) -> None:
++        """Mark GPU output buffers reusable after the model consumes them."""
++        # Reset only after the consumer forward so the CPU worker cannot
++        # overwrite an output that a GPU PLE placeholder may still read.
++        stream = torch.cuda.current_stream(self.device)
++        for layer in self._layers.values():
++            layer.release_offloaded_output(stream)
++
++    def close(self) -> None:
++        """Stop request transport and release host registrations."""
++        request_thread = self._request_thread
++        if request_thread is not None and request_thread.is_alive():
++            try:
++                self._request_queue.put(None, timeout=5)
++            except queue.Full:
++                logger.error("Timed out stopping the PLE request thread")
++            request_thread.join(timeout=5)
++        if request_thread is not None and request_thread.is_alive():
++            # The thread may still access the registered buffers or ZMQ context.
++            logger.error("PLE request thread did not stop; deferring resource cleanup")
++            return
++        self._request_thread = None
++
++        if self._pinned_input_buffers:
++            with torch.accelerator.device_index(self.device.index):
++                self._unpin_input_buffers()
++        self._d2h_event_pool = None
++        if self._registration_socket is not None:
++            self._registration_socket.close(linger=0)
++            self._registration_socket = None
++        if self._zmq_ctx is not None:
++            self._zmq_ctx.term()
++            self._zmq_ctx = None
+diff --git a/vllm/v1/ple_offload/protocol.py b/vllm/v1/ple_offload/protocol.py
+new file mode 100644
+index 000000000000..e8c0ccaf79df
+--- /dev/null
++++ b/vllm/v1/ple_offload/protocol.py
+@@ -0,0 +1,40 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""IPC message definitions for PLE CPU offload."""
++
++from dataclasses import dataclass
++
++import msgspec
++import torch
++
++# ---------------------------------------------------------------------------
++# IPC message dataclasses
++# ---------------------------------------------------------------------------
++
++
++@dataclass
++class PleOffloadRegistration:
++    """Sent once from each GPU worker during offload setup."""
++
++    worker_id: int
++    tp_rank: int
++    dp_rank: int
++    # CUDA tensors are serialized through PyTorch CUDA IPC.
++    gpu_output_buffers: dict[str, torch.Tensor]
++    sem_flag_tensors: dict[str, torch.Tensor]
++    # CPU tensors are allocated in shared memory and registered once.
++    input_ids_buf: torch.Tensor
++    query_start_loc_buf: torch.Tensor
++    ngram_context_buf: torch.Tensor | None
++
++
++@dataclass
++class PleOffloadRequest:
++    """Sent by each DP rank's TP rank zero at every inference step."""
++
++    dp_rank: int
++    num_tokens: int
++    num_reqs: int
++
++
++_PLE_OFFLOAD_REQUEST_DECODER = msgspec.msgpack.Decoder(PleOffloadRequest)
+diff --git a/vllm/v1/ple_offload/worker.py b/vllm/v1/ple_offload/worker.py
+new file mode 100644
+index 000000000000..432d7352bc6f
+--- /dev/null
++++ b/vllm/v1/ple_offload/worker.py
+@@ -0,0 +1,679 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Dedicated CPU-offload process for PLE embedding layers.
++
++This module implements a standalone process that:
++1. Loads only the :class:`PleOffloadLayer` weights into CPU memory.
++2. Accepts per-step computation requests from GPU worker processes.
++3. Runs ``forward_impl()`` on CPU, copies results to every TP worker's GPU
++   output buffer for the requesting DP rank, and signals the corresponding
++   IPC semaphore.
++
++The TP workers within one DP rank receive identical inputs, so the CPU result
++is computed once per DP rank and fanned out to all of its TP ranks.
++
++Class structure mirrors the GPU worker pattern in multiproc_executor.py:
++
++  PleOffloadWorkerHandle -- handle held by the spawning GPU worker
++  PleOffloadWorker       -- process lifecycle and READY handshake
++  PleOffloadRunner       -- owns weights and serves inference requests
++"""
++
++import contextlib
++import multiprocessing.process
++import pickle
++import signal
++import tempfile
++import threading
++from collections.abc import Iterable
++from dataclasses import dataclass
++from multiprocessing.connection import Connection
++from typing import Any, cast
++
++import msgspec
++import torch
++import torch.distributed as dist
++import zmq
++
++import vllm.envs as envs
++from vllm.config import VllmConfig, set_current_vllm_config
++from vllm.distributed.parallel_state import (
++    ensure_model_parallel_initialized,
++    init_distributed_environment,
++)
++from vllm.logger import init_logger
++from vllm.model_executor.layers.ple_offload_layer import (
++    CpuGpuSemaphore,
++    PleOffloadLayer,
++    mark_as_offload_worker,
++)
++from vllm.model_executor.model_loader import get_model_loader
++from vllm.model_executor.model_loader.default_loader import DefaultModelLoader
++from vllm.model_executor.model_loader.dummy_loader import DummyModelLoader
++from vllm.model_executor.model_loader.utils import (
++    initialize_model,
++    process_weights_after_loading,
++)
++from vllm.model_executor.model_loader.weight_utils import initialize_dummy_weights
++from vllm.utils.system_utils import decorate_logs, get_mp_context
++from vllm.utils.torch_utils import set_default_torch_dtype
++from vllm.v1.ple_offload.protocol import (
++    _PLE_OFFLOAD_REQUEST_DECODER,
++    PleOffloadRegistration,
++    PleOffloadRequest,
++)
++from vllm.v1.utils import record_function_or_nullcontext
++
++logger = init_logger(__name__)
++
++
++@dataclass
++class PleOffloadOutputTarget:
++    """GPU output destination and semaphore for one TP worker."""
++
++    tp_rank: int
++    gpu_output_buffer: torch.Tensor  # IPC-mapped GPU buffer for this TP worker
++    sem: CpuGpuSemaphore  # semaphore paired with gpu_output_buffer
++    copy_stream: torch.cuda.Stream
++
++
++@dataclass
++class PleOffloadInputBuffers:
++    """Shared-memory input buffers registered for one DP rank."""
++
++    input_ids_buf: torch.Tensor  # int32 (max_num_tokens,)
++    query_start_loc_buf: torch.Tensor  # int32 (max_num_reqs + 1,)
++    ngram_context_buf: torch.Tensor | None  # int32 (max_num_reqs, ngram_context_len)
++
++
++@dataclass
++class PleOffloadWorkerHandle:
++    """Resources owned by the GPU worker that spawned the offload process."""
++
++    proc: Any
++    death_writer: Connection | None
++    ready_pipe_reader: Connection | None
++
++    def close(self) -> None:
++        """Release all process resources. Safe to call more than once."""
++        if self.ready_pipe_reader is not None:
++            self.ready_pipe_reader.close()
++            self.ready_pipe_reader = None
++        if self.death_writer is not None:
++            self.death_writer.close()
++            self.death_writer = None
++        # First allow the child to exit after observing the closed death pipe.
++        if self.proc.is_alive():
++            self.proc.join(timeout=5)
++        # Fall back to SIGTERM if graceful shutdown times out.
++        if self.proc.is_alive():
++            self.proc.terminate()
++            self.proc.join(timeout=5)
++        # Use SIGKILL as the final fallback for a stuck child.
++        if self.proc.is_alive():
++            self.proc.kill()
++            self.proc.join(timeout=5)
++
++
++def _init_offload_distributed() -> None:
++    """Initialize the single-rank Gloo world required by TP-aware layers."""
++    if dist.is_initialized():
++        return
++
++    # VocabParallelEmbedding reads the TP process group during construction.
++    # The offload process owns the full embedding table, so it uses an isolated
++    # TP1/PP1 Gloo world and never joins the GPU workers' NCCL groups.
++    store_dir = tempfile.mkdtemp(prefix="vllm_ple_offload_")
++    init_distributed_environment(
++        world_size=1,
++        rank=0,
++        distributed_init_method=f"file://{store_dir}/store",
++        local_rank=0,
++        backend="gloo",
++    )
++    # initialize_model_parallel reads the active VllmConfig in the current
++    # vLLM version. Explicitly configure DP1/TP1/PP1 to match the isolated
++    # world, regardless of any DP environment variables inherited from the GPU
++    # worker. The real DP/TP configuration is used later for model construction,
++    # registration, and request routing.
++    offload_config = VllmConfig()
++    offload_parallel_config = offload_config.parallel_config
++    offload_parallel_config.data_parallel_size = 1
++    offload_parallel_config.data_parallel_size_local = 1
++    offload_parallel_config.data_parallel_rank = 0
++    offload_parallel_config.data_parallel_rank_local = 0
++    offload_parallel_config.data_parallel_index = 0
++    offload_parallel_config.tensor_parallel_size = 1
++    offload_parallel_config.pipeline_parallel_size = 1
++    offload_parallel_config.prefill_context_parallel_size = 1
++    offload_parallel_config.decode_context_parallel_size = 1
++    offload_parallel_config.world_size = 1
++    offload_parallel_config.nnodes = 1
++    offload_parallel_config.node_rank = 0
++    with set_current_vllm_config(offload_config):
++        ensure_model_parallel_initialized(
++            tensor_model_parallel_size=1,
++            pipeline_model_parallel_size=1,
++            backend="gloo",
++        )
++    logger.info(
++        "Distributed environment initialized (backend=gloo, rank=0, world_size=1)."
++    )
++
++
++class PleOffloadWorker:
++    """Manage process creation, READY handshake, and the child entry point."""
++
++    READY_STR = "READY"
++
++    @staticmethod
++    def make_process(
++        vllm_config: VllmConfig,
++        num_workers: int,
++        ipc_addr: str,
++    ) -> PleOffloadWorkerHandle:
++        """Spawn one CPU offload process for all local DP and TP workers."""
++        context = get_mp_context()
++        ready_reader, ready_writer = context.Pipe(duplex=False)
++        death_reader, death_writer = context.Pipe(duplex=False)
++        proc = context.Process(
++            target=PleOffloadWorker.proc_main,
++            kwargs={
++                "vllm_config": vllm_config,
++                "num_workers": num_workers,
++                "ipc_addr": ipc_addr,
++                "ready_pipe": (ready_reader, ready_writer),
++                "death_pipe": death_reader,
++            },
++            name="PleOffloadWorker",
++            daemon=True,
++        )
++
++        # Python normally forbids a daemon WorkerProc from spawning children.
++        # vLLM owns this process through death_pipe and explicit shutdown, so
++        # temporarily clear the daemon flag while the child is created.
++        parent = multiprocessing.process._current_process  # type: ignore[attr-defined]
++        saved_daemon = parent._config.get("daemon")
++        parent._config["daemon"] = False
++        try:
++            proc.start()
++        finally:
++            parent._config["daemon"] = saved_daemon
++        ready_writer.close()
++        return PleOffloadWorkerHandle(
++            proc=proc,
++            death_writer=death_writer,
++            ready_pipe_reader=ready_reader,
++        )
++
++    @staticmethod
++    def wait_for_ready(handle: PleOffloadWorkerHandle) -> None:
++        """Wait until weights and all GPU registrations are ready to serve."""
++        reader = handle.ready_pipe_reader
++        if reader is None:
++            return
++        if not reader.poll(envs.VLLM_PLE_OFFLOAD_READY_TIMEOUT):
++            raise TimeoutError(
++                "PLE offload worker did not become ready within "
++                f"{envs.VLLM_PLE_OFFLOAD_READY_TIMEOUT}s."
++            )
++        try:
++            message = reader.recv()
++        except EOFError as error:
++            raise RuntimeError("PLE offload worker exited during startup") from error
++        finally:
++            reader.close()
++            handle.ready_pipe_reader = None
++        if message.get("status") != PleOffloadWorker.READY_STR:
++            raise RuntimeError(
++                "PLE offload worker failed during startup: "
++                f"{message.get('error', 'unknown error')}"
++            )
++        layer_names = message["layer_names"]
++        logger.info(
++            "Worker ready - %d PleOffloadLayer(s): %s",
++            len(layer_names),
++            layer_names,
++        )
++
++    @staticmethod
++    def proc_main(
++        vllm_config: VllmConfig,
++        num_workers: int,
++        ipc_addr: str,
++        ready_pipe: tuple[Connection, Connection],
++        death_pipe: Connection,
++    ) -> None:
++        """Load PLE weights, accept registrations, and run the request loop."""
++        decorate_logs("PleOffloadWorker")
++        ready_reader, ready_writer = ready_pipe
++        ready_reader.close()
++        shutdown_event = threading.Event()
++
++        def monitor_parent() -> None:
++            try:
++                death_pipe.recv()
++            except EOFError:
++                logger.info("Parent exited, shutting down.")
++                shutdown_event.set()
++
++        def handle_signal(_signum: int, _frame: object) -> None:
++            shutdown_event.set()
++
++        signal.signal(signal.SIGTERM, handle_signal)
++        signal.signal(signal.SIGINT, handle_signal)
++        threading.Thread(
++            target=monitor_parent,
++            daemon=True,
++            name="PleOffloadDeathMonitor",
++        ).start()
++
++        zmq_context: zmq.Context | None = None
++        pull_socket: zmq.Socket | None = None
++        try:
++            # The flag lets PleOffloadLayer subclasses execute their complete
++            # constructors instead of becoming empty GPU-worker placeholders.
++            mark_as_offload_worker()
++
++            # Initialize Gloo before installing the real VllmConfig. This keeps
++            # the CPU process in an isolated rank-zero, world-size-one group.
++            _init_offload_distributed()
++
++            # Model components read the active VllmConfig while the meta model
++            # is constructed, so keep the context around runner initialization.
++            with set_current_vllm_config(vllm_config):
++                runner = PleOffloadRunner(vllm_config)
++
++            zmq_context = zmq.Context()
++            pull_socket = zmq_context.socket(zmq.PULL)
++            pull_socket.bind(ipc_addr)
++            logger.info(
++                "Bound IPC address %s; waiting for %d GPU worker registration(s).",
++                ipc_addr,
++                num_workers,
++            )
++
++            # READY means that the process can immediately serve requests. Wait
++            # for every DP/TP worker to register before notifying the parent.
++            runner.accept_registrations(pull_socket, num_workers)
++            ready_writer.send(
++                {
++                    "status": PleOffloadWorker.READY_STR,
++                    "layer_names": sorted(runner.layer_names),
++                }
++            )
++            ready_writer.close()
++            ready_writer = None  # type: ignore[assignment]
++
++            runner.busy_loop(pull_socket, shutdown_event)
++        except Exception as error:
++            logger.exception("Unexpected failure in PLE offload worker.")
++            if ready_writer is not None:
++                with contextlib.suppress(Exception):
++                    ready_writer.send({"status": "FAILURE", "error": repr(error)})
++            raise
++        finally:
++            if pull_socket is not None:
++                pull_socket.close(linger=0)
++            if zmq_context is not None:
++                zmq_context.term()
++            if ready_writer is not None:
++                ready_writer.close()
++            death_pipe.close()
++
++
++class PleOffloadRunner:
++    """Own all discovered PLE tables and serve every local DP rank."""
++
++    def __init__(self, vllm_config: VllmConfig) -> None:
++        self.vllm_config = vllm_config
++        self._clamp_input_ids = (
++            getattr(vllm_config, "speculative_config", None) is not None
++        )
++        # name -> PleOffloadLayer (CPU)
++        self._layers: dict[str, PleOffloadLayer] = {}
++        # dp_rank -> layer_name -> one destination per TP rank
++        self._worker_targets: dict[int, dict[str, list[PleOffloadOutputTarget]]] = {}
++        # Each (dp_rank, layer_name) pair owns a separate pinned scratch buffer.
++        # Sharing one buffer is unsafe because an asynchronous H2D copy may still
++        # be reading it when another layer or DP rank starts writing.
++        self._pinned_bufs: dict[int, dict[str, torch.Tensor]] = {}
++        # Shared-memory inputs are registered once per DP rank by TP rank zero.
++        self._input_bufs: dict[int, PleOffloadInputBuffers] = {}
++        self._load_weights()
++
++    @property
++    def layer_names(self) -> list[str]:
++        """Return PleOffloadLayer names in model traversal order."""
++        return list(self._layers)
++
++    def _load_weights(self) -> None:
++        """Load only :class:`PleOffloadLayer` subtrees into CPU memory.
++
++        Strategy:
++        1. Build the entire model on ``meta`` so non-offloaded parameters use no
++           physical memory. PleOffloadLayer constructors explicitly target CPU.
++        2. Discover all PleOffloadLayer modules from the complete model.
++        3. Stream the checkpoint through a prefix filter so only matching PLE
++           tensors are materialized and passed to ``model.load_weights``.
++        4. Run post-load processing only on the CPU-owned PLE subtrees.
++        """
++        model_config = self.vllm_config.model_config
++        load_config = self.vllm_config.load_config
++
++        # Step 1: build complete structure, while only PLE subtrees allocate CPU
++        # memory. All transformer, MoE, and vision parameters remain on meta.
++        logger.info("Initializing model structure for PLE weight discovery ...")
++        model_dtype = cast(torch.dtype, model_config.dtype)
++        with set_default_torch_dtype(model_dtype), torch.device("meta"):
++            model = initialize_model(
++                vllm_config=self.vllm_config,
++                model_config=model_config,
++            )
++
++        # Step 2: preserve named_modules DFS order so CPU execution follows the
++        # same layer order as the GPU model forward.
++        offload_layers = {
++            name: module
++            for name, module in model.named_modules()
++            if isinstance(module, PleOffloadLayer)
++        }
++        if not offload_layers:
++            raise RuntimeError(
++                "VLLM_PLE_CPU_OFFLOAD is enabled, but no PleOffloadLayer "
++                "was found in the initialized model"
++            )
++        logger.info(
++            "Found %d PleOffloadLayer(s): %s",
++            len(offload_layers),
++            sorted(offload_layers),
++        )
++        offload_prefixes = tuple(f"{name}." for name in offload_layers)
++
++        # Step 3: filter checkpoint tensors before model.load_weights(). The
++        # conditional-generation checkpoint uses HF names such as
++        # ``model.language_model.*`` while named_modules exposes mapped vLLM
++        # names such as ``language_model.model.*``. Apply the model mapper only
++        # for matching, then yield the original pair so load_weights performs
++        # its normal single mapping pass.
++        mapper = getattr(model, "hf_to_vllm_mapper", None)
++        matched_checkpoint_tensors = 0
++
++        def offload_only_iter(
++            weights: Iterable[tuple[str, torch.Tensor]],
++        ) -> Iterable[tuple[str, torch.Tensor]]:
++            nonlocal matched_checkpoint_tensors
++            for weight_name, tensor in weights:
++                mapped_name: str | None = weight_name
++                if mapper is not None:
++                    mapped_names = mapper.apply_list([weight_name])
++                    mapped_name = mapped_names[0] if mapped_names else None
++                if mapped_name is not None and mapped_name.startswith(offload_prefixes):
++                    matched_checkpoint_tensors += 1
++                    yield weight_name, tensor
++
++        loader = get_model_loader(load_config)
++        if isinstance(loader, DummyModelLoader):
++            logger.info(
++                "Initializing dummy weights for %d PleOffloadLayer(s) ...",
++                len(offload_layers),
++            )
++            for layer in offload_layers.values():
++                initialize_dummy_weights(layer, model_config)
++        elif isinstance(loader, DefaultModelLoader):
++            all_weights = loader.get_all_weights(model_config, model)
++            loaded_params = model.load_weights(offload_only_iter(all_weights))
++            if matched_checkpoint_tensors == 0:
++                raise RuntimeError(
++                    "PLE offload checkpoint filter matched no weights for "
++                    f"layers: {sorted(offload_layers)}"
++                )
++
++            expected_offload_params = {
++                f"{layer_name}.{param_name}"
++                for layer_name, layer in offload_layers.items()
++                for param_name, _ in layer.named_parameters()
++            }
++            loaded_offload_entries = {
++                name for name in loaded_params if name.startswith(offload_prefixes)
++            }
++            loaded_expected_params = expected_offload_params.intersection(loaded_params)
++            missing_offload_params = sorted(
++                expected_offload_params.difference(loaded_expected_params)
++            )
++            if missing_offload_params:
++                raise RuntimeError(
++                    "PLE offload checkpoint did not load all materialized "
++                    f"parameters: {missing_offload_params}"
++                )
++            logger.info(
++                "PLE offload matched %d checkpoint tensor(s), loaded %d "
++                "offload entries, and verified %d/%d materialized "
++                "parameter(s) for layers: %s",
++                matched_checkpoint_tensors,
++                len(loaded_offload_entries),
++                len(loaded_expected_params),
++                len(expected_offload_params),
++                sorted(offload_layers),
++            )
++        else:
++            raise NotImplementedError(
++                "PLE offload requires the default or dummy model loader, got "
++                f"{type(loader).__name__}"
++            )
++
++        # Step 4: post-load processing is restricted to CPU-owned PLE modules;
++        # the remainder of the model is still on meta and must not be visited.
++        for layer in offload_layers.values():
++            process_weights_after_loading(layer, model_config, torch.device("cpu"))
++
++        self._layers.update(offload_layers)
++        del model
++        logger.info("PLE weight loading complete.")
++
++    def accept_registrations(
++        self,
++        pull_socket: zmq.Socket,
++        num_workers: int,
++    ) -> None:
++        """Receive every local DP/TP worker's IPC and shared-memory buffers."""
++        logger.info("Waiting for %d GPU worker registration(s) ...", num_workers)
++        registrations: list[PleOffloadRegistration] = []
++        for index in range(num_workers):
++            item = pickle.loads(pull_socket.recv())
++            if not isinstance(item, PleOffloadRegistration):
++                raise RuntimeError(
++                    "Expected PleOffloadRegistration during setup, got "
++                    f"{type(item).__name__} ({index + 1}/{num_workers})"
++                )
++            registrations.append(item)
++            logger.info(
++                "GPU worker %d registered (dp_rank=%d, tp_rank=%d, layers=%s).",
++                item.worker_id,
++                item.dp_rank,
++                item.tp_rank,
++                sorted(item.gpu_output_buffers),
++            )
++
++        dp_size = self.vllm_config.parallel_config.data_parallel_size
++        tp_size = self.vllm_config.parallel_config.tensor_parallel_size
++        if num_workers != dp_size * tp_size:
++            raise RuntimeError(
++                f"Expected {dp_size * tp_size} registrations for DP={dp_size}, "
++                f"TP={tp_size}, got {num_workers}"
++            )
++
++        registrations_by_dp: dict[int, list[PleOffloadRegistration]] = {}
++        for registration in registrations:
++            registrations_by_dp.setdefault(registration.dp_rank, []).append(
++                registration
++            )
++        if set(registrations_by_dp) != set(range(dp_size)):
++            raise RuntimeError(
++                f"Expected DP ranks {set(range(dp_size))}, "
++                f"got {set(registrations_by_dp)}"
++            )
++        for dp_rank, dp_registrations in registrations_by_dp.items():
++            tp_ranks = {registration.tp_rank for registration in dp_registrations}
++            if tp_ranks != set(range(tp_size)):
++                raise RuntimeError(
++                    f"DP rank {dp_rank} expected TP ranks {set(range(tp_size))}, "
++                    f"got {tp_ranks}"
++                )
++
++        for registration in registrations:
++            if set(registration.gpu_output_buffers) != set(self.layer_names):
++                raise RuntimeError(
++                    "Registered PLE layers do not match CPU layers: "
++                    f"registered={sorted(registration.gpu_output_buffers)}, "
++                    f"cpu={sorted(self.layer_names)}"
++                )
++            targets_for_dp = self._worker_targets.setdefault(registration.dp_rank, {})
++            for layer_name, gpu_buffer in registration.gpu_output_buffers.items():
++                target = PleOffloadOutputTarget(
++                    tp_rank=registration.tp_rank,
++                    gpu_output_buffer=gpu_buffer,
++                    sem=CpuGpuSemaphore.from_ipc_tensor(
++                        registration.sem_flag_tensors[layer_name]
++                    ),
++                    copy_stream=torch.cuda.Stream(device=gpu_buffer.device),
++                )
++                targets_for_dp.setdefault(layer_name, []).append(target)
++            # All TP ranks in one DP group receive the same input, so buffers
++            # registered by TP rank zero are sufficient for that DP rank.
++            if registration.tp_rank == 0:
++                self._input_bufs[registration.dp_rank] = PleOffloadInputBuffers(
++                    input_ids_buf=registration.input_ids_buf,
++                    query_start_loc_buf=registration.query_start_loc_buf,
++                    ngram_context_buf=registration.ngram_context_buf,
++                )
++
++        if set(self._input_bufs) != set(range(dp_size)):
++            raise RuntimeError(
++                "TP rank zero did not register PLE input buffers for every DP "
++                f"rank: expected={set(range(dp_size))}, got={set(self._input_bufs)}"
++            )
++
++        config = self.vllm_config.model_config.hf_text_config
++        max_tokens = self.vllm_config.scheduler_config.max_num_batched_tokens
++        for dp_rank, layer_targets in self._worker_targets.items():
++            self._pinned_bufs[dp_rank] = {}
++            for layer_name, targets in layer_targets.items():
++                if len(targets) != tp_size:
++                    raise RuntimeError(
++                        f"PLE layer {layer_name} for DP rank {dp_rank} received "
++                        f"{len(targets)} targets, expected {tp_size}"
++                    )
++                targets.sort(key=lambda target: target.tp_rank)
++                self._pinned_bufs[dp_rank][layer_name] = torch.empty(
++                    max_tokens,
++                    self._layers[layer_name].get_offload_output_dim(
++                        int(config.ple_embed_dim)
++                    ),
++                    dtype=self._layers[layer_name].get_offload_output_dtype(
++                        self.vllm_config.model_config.dtype
++                    ),
++                    pin_memory=True,
++                )
++        logger.info(
++            "Registrations complete (dp_size=%d, tp_size=%d, layers=%s).",
++            dp_size,
++            tp_size,
++            sorted(self.layer_names),
++        )
++
++    @torch.inference_mode()
++    def busy_loop(
++        self,
++        pull_socket: zmq.Socket,
++        shutdown_event: threading.Event,
++    ) -> None:
++        """Decode and batch available requests by DP rank until shutdown."""
++        logger.info("Busy-loop started.")
++        poller = zmq.Poller()
++        poller.register(pull_socket, zmq.POLLIN)
++        while not shutdown_event.is_set():
++            if pull_socket not in dict(poller.poll(timeout=100)):
++                continue
++
++            requests = []
++            try:
++                requests.append(_PLE_OFFLOAD_REQUEST_DECODER.decode(pull_socket.recv()))
++                while True:
++                    requests.append(
++                        _PLE_OFFLOAD_REQUEST_DECODER.decode(
++                            pull_socket.recv(zmq.NOBLOCK)
++                        )
++                    )
++            except zmq.Again:
++                pass
++            except msgspec.DecodeError as error:
++                raise RuntimeError("Unexpected PLE offload request") from error
++
++            self._handle_requests(requests)
++
++    def _handle_requests(self, requests: list[PleOffloadRequest]) -> None:
++        """Run requests layer-first so each DP rank can resume promptly."""
++        with record_function_or_nullcontext("ple_offload: handle_requests"):
++            self._handle_requests_impl(requests)
++
++    def _handle_requests_impl(self, requests: list[PleOffloadRequest]) -> None:
++        """Process one batch of PLE requests."""
++        requests_by_dp: dict[int, PleOffloadRequest] = {}
++        for request in requests:
++            if request.dp_rank not in self._worker_targets:
++                logger.warning(
++                    "No PLE output targets for dp_rank=%d; skipping request.",
++                    request.dp_rank,
++                )
++                continue
++            if request.dp_rank in requests_by_dp:
++                logger.warning(
++                    "Duplicate PLE request for dp_rank=%d; skipping duplicate.",
++                    request.dp_rank,
++                )
++                continue
++            requests_by_dp[request.dp_rank] = request
++
++        # Speculative placeholders are not vocabulary IDs. Normalize each DP
++        # input once before all PLE layers consume the shared buffer.
++        if self._clamp_input_ids:
++            for dp_rank, request in requests_by_dp.items():
++                self._input_bufs[dp_rank].input_ids_buf[
++                    : request.num_tokens
++                ].clamp_min_(0)
++
++        for layer_name, layer in self._layers.items():
++            for dp_rank, request in requests_by_dp.items():
++                targets = self._worker_targets[dp_rank][layer_name]
++
++                # The CPU must not overwrite a GPU output buffer until its
++                # previous result has been consumed. The GPU runner resets the
++                # flag after the complete model forward.
++                for target in targets:
++                    target.copy_stream.synchronize()
++                    target.sem.wait_reset(target.copy_stream)
++
++                input_bufs = self._input_bufs[dp_rank]
++                ngram_context = (
++                    input_bufs.ngram_context_buf[: request.num_reqs]
++                    if input_bufs.ngram_context_buf is not None
++                    else None
++                )
++                result = layer.forward_impl(
++                    input_bufs.input_ids_buf[: request.num_tokens],
++                    input_bufs.input_ids_buf[: request.num_tokens],
++                    input_bufs.query_start_loc_buf[: request.num_reqs + 1],
++                    ngram_context,
++                    output_buffer=self._pinned_bufs[dp_rank][layer_name],
++                )
++
++                # The result is identical on every TP rank in this DP group.
++                # Each copy stream signals only after its DMA completes.
++                slices = tuple(slice(0, size) for size in result.shape)
++                for target in targets:
++                    with torch.cuda.stream(target.copy_stream):
++                        target.gpu_output_buffer[slices].copy_(
++                            result[slices], non_blocking=True
++                        )
++                        target.sem.signal(target.copy_stream)
+diff --git a/vllm/v1/worker/gpu/model_runner.py b/vllm/v1/worker/gpu/model_runner.py
+index 0ee05328c9c5..51463e155b8a 100644
+--- a/vllm/v1/worker/gpu/model_runner.py
++++ b/vllm/v1/worker/gpu/model_runner.py
+@@ -76,6 +76,7 @@
+     ModelRunnerOutput,
+     RoutedExpertsTensors,
+ )
++from vllm.v1.ple_offload.connector import PleOffloadConnector
+ from vllm.v1.worker.block_table import get_block_table_width
+ from vllm.v1.worker.cp_utils import check_attention_cp_compatibility
+ from vllm.v1.worker.gpu import pcp_manager as pcp
+@@ -340,6 +341,7 @@ def __init__(self, vllm_config: VllmConfig, device: torch.device):
+ 
+         # For transferring state from execute_model to subsequent sample_tokens call.
+         self.execute_model_state: ExecuteModelState | None = None
++        self._ple_offload_connector: PleOffloadConnector | None = None
+ 
+         # Expert parallelism load balancer.
+         self.eplb = EPLBController(self.parallel_config, self.device)
+@@ -371,6 +373,26 @@ def get_supported_tasks(self) -> tuple[SupportedTask, ...]:
+             tasks.extend(PoolingRunner.get_supported_tasks(self.model))
+         return tuple(tasks)
+ 
++    def _setup_ple_offload(self, ipc_addr: str) -> None:
++        """Initialize PLE offload after the model state is available."""
++        # PLE placeholders are created by model loading, so CUDA output
++        # registration cannot happen in the runner constructor.
++        query_start_loc_source = getattr(self.model_state, "ple_query_start_loc", None)
++        ngram_context_source = getattr(self.model_state, "ngram_context", None)
++        if not isinstance(query_start_loc_source, torch.Tensor):
++            raise RuntimeError("PLE offload requires a query_start_loc source")
++        if not isinstance(ngram_context_source, torch.Tensor):
++            raise RuntimeError("PLE offload requires an ngram_context source")
++        self._ple_offload_connector = PleOffloadConnector(
++            self.vllm_config,
++            self.model,
++            self.device,
++            ipc_addr,
++            input_ids_source=self.input_buffers.input_ids,
++            query_start_loc_source=query_start_loc_source,
++            ngram_context_source=ngram_context_source,
++        )
++
+     def load_model(self, load_dummy_weights: bool = False, *args, **kwargs) -> None:
+         time_before_load = time.perf_counter()
+         if load_dummy_weights:
+@@ -920,6 +942,10 @@ def capture_model(self) -> int:
+         torch.accelerator.empty_cache()
+         start_free_gpu_memory = torch.accelerator.get_memory_info()[0]
+ 
++        # Decoder capture calls the model outside execute_model. Keep dummy PLE
++        # outputs signaled until every graph has captured its semaphore wait.
++        if self._ple_offload_connector is not None and capture_decoder:
++            self._ple_offload_connector.signal_dummy_outputs(self.max_num_tokens)
+         with self.maybe_setup_dummy_loras(self.lora_config):
+             if capture_encoder:
+                 self.model_state.encoder_runner.capture()
+@@ -951,6 +977,8 @@ def capture_model(self) -> int:
+                         ):
+                             self._dummy_run(**batch)
+                     self.adaptive_verification.set_initial_cost_curves(timings)
++        if self._ple_offload_connector is not None and capture_decoder:
++            self._ple_offload_connector.release_outputs()
+ 
+         end_time = time.perf_counter()
+         end_free_gpu_memory = torch.accelerator.get_memory_info()[0]
+@@ -1733,6 +1761,15 @@ def execute_model(
+         )
+         self.step_timing.forward_start()
+ 
++        # prepare_inputs has finalized MRV2's GPU buffers. Stage D2H on this
++        # stream before the PLE placeholder can wait for CPU output.
++        if self._ple_offload_connector is not None:
++            self._ple_offload_connector.prepare_forward(
++                input_batch.num_reqs,
++                input_batch.num_tokens_after_padding,
++                dummy_run,
++            )
++
+         # Run model.
+         if batch_desc.cg_mode == CUDAGraphMode.FULL:
+             # Use explicit cudagraph replay for FULL mode.
+@@ -1775,6 +1812,11 @@ def execute_model(
+                     # Eager (NONE): call the raw model directly.
+                     model_output = self.model(**model_inputs)
+ 
++        # The model has consumed every PLE output, so the CPU worker may reuse
++        # the registered buffers for the next request.
++        if self._ple_offload_connector is not None:
++            self._ple_offload_connector.release_outputs()
++
+         if self.is_last_pp_rank:
+             if self.use_aux_hidden_state_outputs:
+                 assert isinstance(model_output, tuple)
+@@ -2032,6 +2074,9 @@ def shutdown(self) -> None:
+         """Release GPU tensors (model weights, KV caches, workspace) so that
+         memory is reclaimable when running in the same process."""
+         torch.accelerator.synchronize()
++        if self._ple_offload_connector is not None:
++            self._ple_offload_connector.close()
++            self._ple_offload_connector = None
+         self.cudagraph_manager = None
+         if hasattr(self, "kv_caches"):
+             self.kv_caches.clear()
+diff --git a/vllm/v1/worker/gpu_worker.py b/vllm/v1/worker/gpu_worker.py
+index 6b8fdb94ef18..c6ae1dc13f6a 100644
+--- a/vllm/v1/worker/gpu_worker.py
++++ b/vllm/v1/worker/gpu_worker.py
+@@ -9,7 +9,7 @@
+ from contextlib import AbstractContextManager, contextmanager, nullcontext
+ from datetime import timedelta
+ from types import NoneType
+-from typing import TYPE_CHECKING, Any
++from typing import TYPE_CHECKING, Any, cast
+ 
+ import numpy as np
+ import regex as re
+@@ -137,6 +137,7 @@ def maybe_rocm_profiling_fallback(profile_result: MemoryProfilingResult) -> int
+ if TYPE_CHECKING:
+     from vllm.device_allocator.sleep_mode_backend import SleepModeBackend
+     from vllm.model_executor.model_loader.tensorizer import TensorizerConfig
++    from vllm.v1.worker.gpu.model_runner import GPUModelRunner as GPUModelRunnerV2
+     from vllm.v1.worker.gpu_model_runner import GPUModelRunner
+ 
+ 
+@@ -216,10 +217,119 @@ def __init__(
+         self.profiler_config = vllm_config.profiler_config
+ 
+         self.use_v2_model_runner = vllm_config.use_v2_model_runner
++        self._ple_offload_worker_handle: Any | None = None
++        self._ple_offload_enabled = self._has_ple_layers()
++        if envs.VLLM_PLE_CPU_OFFLOAD:
++            if self._ple_offload_enabled:
++                self._validate_ple_offload_config()
++            elif self.rank == 0 and self.parallel_config.data_parallel_rank == 0:
++                text_config = self.model_config.hf_text_config
++                logger.warning(
++                    "VLLM_PLE_CPU_OFFLOAD is enabled, but the model has no "
++                    "PLE layers (ple_layer_ids=%s); skipping PLE offload "
++                    "process creation.",
++                    getattr(text_config, "ple_layer_ids", None),
++                )
++        # pending non-blocking PP send work from the previous iteration
++        self._pp_send_work: list[Handle] = []
+ 
+         # Resolved lazily on first sleep/wake; persists worker-process state.
+         self._sleep_mode_backend: SleepModeBackend | None = None
+ 
++    def _has_ple_layers(self) -> bool:
++        """Return whether this model configuration constructs PLE layers."""
++        if not envs.VLLM_PLE_CPU_OFFLOAD:
++            return False
++        text_config = self.model_config.hf_text_config
++        return bool(getattr(text_config, "ple_layer_ids", None))
++
++    def _validate_ple_offload_config(self) -> None:
++        """Reject unsupported PLE offload execution modes."""
++        parallel_config = self.parallel_config
++        unsupported = []
++        if not self.use_v2_model_runner:
++            unsupported.append("model runner V1")
++        if not current_platform.is_cuda():
++            unsupported.append(f"device={current_platform.device_type}")
++        if parallel_config.nnodes != 1:
++            unsupported.append(f"nnodes={parallel_config.nnodes}")
++        if parallel_config.data_parallel_backend != "mp":
++            unsupported.append(f"DP backend={parallel_config.data_parallel_backend}")
++        if (
++            parallel_config.data_parallel_size_local
++            != parallel_config.data_parallel_size
++        ):
++            unsupported.append(
++                "non-local DP "
++                f"({parallel_config.data_parallel_size_local}/"
++                f"{parallel_config.data_parallel_size} local ranks)"
++            )
++        if parallel_config.pipeline_parallel_size != 1:
++            unsupported.append(f"PP={parallel_config.pipeline_parallel_size}")
++        if parallel_config.prefill_context_parallel_size != 1:
++            unsupported.append(f"PCP={parallel_config.prefill_context_parallel_size}")
++        if parallel_config.decode_context_parallel_size != 1:
++            unsupported.append(f"DCP={parallel_config.decode_context_parallel_size}")
++        if parallel_config.use_ubatching:
++            unsupported.append("ubatching/DBO")
++        if self.model_config.architecture not in {
++            "Qwen4ExpForCausalLM",
++            "Qwen4ExpForConditionalGeneration",
++        }:
++            unsupported.append("architecture")
++        if self.vllm_config.weight_transfer_config is not None:
++            unsupported.append("weight transfer")
++
++        if unsupported:
++            raise ValueError(
++                "VLLM_PLE_CPU_OFFLOAD does not support the requested "
++                "configuration. Unsupported settings: "
++                f"{', '.join(unsupported)}"
++            )
++
++    def spawn_ple_offload(self) -> None:
++        """Spawn one node-local PLE CPU worker from DP0/TP0."""
++        if (
++            not self._ple_offload_enabled
++            or self.rank != 0
++            or self.parallel_config.data_parallel_rank != 0
++        ):
++            return
++
++        from vllm.v1.ple_offload.worker import PleOffloadWorker
++
++        ipc_addr = self.parallel_config._ple_offload_ipc_path
++        if not ipc_addr:
++            raise RuntimeError("PLE offload IPC address was not initialized")
++        dp_size = self.parallel_config.data_parallel_size
++        tp_size = self.parallel_config.tensor_parallel_size
++        num_workers = dp_size * tp_size
++        logger.info(
++            "PleOffload: spawning worker "
++            "(rank=%d, local_rank=%d, dp_size=%d, tp_size=%d, "
++            "num_workers=%d, ipc_addr=%s).",
++            self.rank,
++            self.local_rank,
++            dp_size,
++            tp_size,
++            num_workers,
++            ipc_addr,
++        )
++        self._ple_offload_worker_handle = PleOffloadWorker.make_process(
++            self.vllm_config,
++            num_workers,
++            ipc_addr,
++        )
++
++    def wait_ple_offload_ready(self) -> None:
++        """Wait until weights and every TP registration are ready."""
++        if self._ple_offload_worker_handle is None:
++            return
++
++        from vllm.v1.ple_offload.worker import PleOffloadWorker
++
++        PleOffloadWorker.wait_for_ready(self._ple_offload_worker_handle)
++
+     def _get_sleep_mode_backend(self) -> "SleepModeBackend":
+         if self._sleep_mode_backend is None:
+             from vllm.device_allocator.sleep_mode_backend import (
+@@ -491,6 +601,12 @@ def load_model(self, *, load_dummy_weights: bool = False) -> None:
+         ):
+             self.model_runner.load_model(load_dummy_weights=load_dummy_weights)
+ 
++        # Model loading constructs the PLE placeholders whose CUDA buffers are
++        # registered by the model runner V2 offload client.
++        if self._ple_offload_enabled:
++            model_runner = cast("GPUModelRunnerV2", self.model_runner)
++            model_runner._setup_ple_offload(self.parallel_config._ple_offload_ipc_path)
++
+         if self.vllm_config.weight_transfer_config is not None:
+             self.weight_transfer_engine = WeightTransferEngineFactory.create_engine(
+                 self.vllm_config.weight_transfer_config,
+@@ -503,6 +619,10 @@ def update_config(self, overrides: dict[str, Any]) -> None:
+         self.model_runner.update_config(overrides)
+ 
+     def reload_weights(self, *args, **kwargs) -> None:
++        if self._ple_offload_enabled:
++            raise NotImplementedError(
++                "Weight reload is not supported with PLE CPU offload"
++            )
+         with set_current_vllm_config(self.vllm_config):
+             self.model_runner.reload_weights(*args, **kwargs)
+ 
+@@ -1438,6 +1558,10 @@ def shutdown(self) -> None:
+ 
+         self.elastic_ep_executor.shutdown()
+ 
++        if self._ple_offload_worker_handle is not None:
++            self._ple_offload_worker_handle.close()
++            self._ple_offload_worker_handle = None
++
+         # Release GPU resources held by the model runner so that memory
+         # can be reclaimed when running in-process
+         if model_runner := getattr(self, "model_runner", None):
