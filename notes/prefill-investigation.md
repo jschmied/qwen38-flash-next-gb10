@@ -174,3 +174,25 @@
     (4,096 × K/128 floats, negligible). Yesterday's microbench timings were unaffected (layout does not
     change the kernel's work), the earlier "chunked != unchunked" was this layout mismatch, not a
     kernel defect.
+
+74. **Main tree serves the FP8-mixed checkpoint on GB10 — via the vllm#53899 offload worker — and the
+    misroute is gone by default: TTFT 8k 2.80 s, 30k 10.87 s, flat across prompt residues.** `FNMAIN3`
+    (`notes/data/fnmain3.txt`): nightly `0.28.1rc1.dev352` venv + the #53899 overlay/hand-port
+    (`tools/main/`) + four loader patches for this checkpoint (PLE gate for `modelopt_mixed`,
+    `weight_scale_inv` rank-2 → `weight_scale`, `quant_config` on the body `ParallelLMHead`, a
+    block-scale branch in `VocabParallelEmbedding.weight_loader` for the head's `[1940, 20]` scales),
+    `--kv-cache-memory-bytes 2 GiB` (the utilisation heuristic counts the offload process's 48 GB and
+    comes out at −11 GiB at util 0.80), `--language-model-only`, batch 4096, prefix cache off, no spec.
+    Model 69.84 GiB in 508 s; KV 68,056 tokens (2.08× at 32k); up after 660 s; smoke text coherent.
+
+    | | preview, unpadded | preview, padded to 4 | **main, any residue** |
+    | --- | --- | --- | --- |
+    | 8k (7,503 tok) | 3.05 s | 2.81 s | **2.80–2.81 s** (6 residues, 3 requests each) |
+    | 30k (29,263 tok) | 11.11 s | 11.14 s | **10.84–10.90 s** |
+
+    So #52775 is confirmed end to end (main unpadded = preview padded), and main is a further −2 %
+    at 30k (the #54513 indexer split, at batch 4096 where the FP8 GEMMs are already in their good
+    regime). At batch 4096 the C++ chunk fix (PR #55180) has nothing to add; its case is batch ≥ 8192.
+    Memory guard (`/opt/llm/runners/memguard.sh`, PSI-based) never fired; pressure stayed ≤ 0.6 %
+    throughout while `available` sat at 2 GiB — the availability-based guard would have aborted a
+    working server, which is why it was replaced (the preview always ran like this).

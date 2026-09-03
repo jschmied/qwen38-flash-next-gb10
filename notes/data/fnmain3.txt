@@ -1,0 +1,28 @@
+preflight OK 18:58  free: 118 GiB available
+UP after ~660s 19:08  free: 2 GiB available
+(PleOffloadWorker pid=123249) Loading safetensors checkpoint shards(PLE-offload): 100% Completed | 205/206 [01:08<00:01,  1.94s/it]
+(PleOffloadWorker pid=123249) Loading safetensors checkpoint shards(PLE-offload): 100% Completed | 206/206 [01:10<00:00,  1.73s/it]
+(PleOffloadWorker pid=123249) Loading safetensors checkpoint shards(PLE-offload): 100% Completed | 206/206 [01:10<00:00,  2.94it/s]
+(PleOffloadWorker pid=123249) INFO 09-03 18:59:38 [worker.py:449] PLE offload matched 132 checkpoint tensor(s), loaded 5 offload entries, and verified 2/2 materialized parameter(s) for layers: ['langu
+(PleOffloadWorker pid=123249) INFO 09-03 18:59:38 [worker.py:472] PLE weight loading complete.
+(Worker pid=123033) INFO 09-03 19:06:54 [default_loader.py:430] Loading weights took 508.06 seconds
+(Worker pid=123033) INFO 09-03 19:06:58 [model_runner.py:430] Model loading took 69.84 GiB memory and 515.759139 seconds
+(EngineCore pid=122899) INFO 09-03 19:06:59 [utils.py:306] Using BLNHC KV cache layout.
+(Worker pid=123033) INFO 09-03 19:07:45 [gpu_worker.py:671] Initial free memory 115.06 GiB, reserved 2.0 GiB memory for KV Cache as specified by kv_cache_memory_bytes config and skipped memory profili
+(EngineCore pid=122899) INFO 09-03 19:07:46 [kv_cache_utils.py:2042] GPU KV cache size: 68,056 tokens, Maximum concurrency for 32,768 tokens per request: 2.08x
+  smoke: 'A hash table stores data as key-value pairs by using a hash function to compute an index for each key. This allows for extremely fast, constant-time average complexity for retrieving, inserting, and d'
+  FNMAIN3 TTFT 8k: prompt_tokens=7503 median=2.78s  all=3.66 2.78 2.78
+  FNMAIN3 TTFT 30k: prompt_tokens=29263 median=11.00s  all=11.11 11.00 10.83
+  reps=220 extra=0 prompt_tokens=7503 (mod4=3) median=2.80s all=2.88 2.80 2.80
+  reps=220 extra=1 prompt_tokens=7505 (mod4=1) median=2.81s all=2.80 2.81 2.81
+  reps=220 extra=2 prompt_tokens=7506 (mod4=2) median=2.80s all=2.82 2.80 2.80
+  reps=220 extra=3 prompt_tokens=7507 (mod4=3) median=2.80s all=2.80 2.80 2.81
+  reps=220 extra=4 prompt_tokens=7508 (mod4=0) median=2.80s all=2.80 2.80 2.80
+  reps=220 extra=5 prompt_tokens=7509 (mod4=1) median=2.80s all=2.80 2.82 2.80
+  reps=860 extra=0 prompt_tokens=29263 (mod4=3) median=10.84s all=10.83 10.84 10.84
+  reps=860 extra=1 prompt_tokens=29265 (mod4=1) median=10.90s all=10.91 10.90 10.83
+  reps=860 extra=2 prompt_tokens=29266 (mod4=2) median=10.86s all=10.85 10.86 10.86
+  reps=860 extra=3 prompt_tokens=29267 (mod4=3) median=10.87s all=10.87 10.84 10.89
+  reps=860 extra=4 prompt_tokens=29268 (mod4=0) median=10.87s all=10.87 10.84 10.88
+  reps=860 extra=5 prompt_tokens=29269 (mod4=1) median=10.87s all=10.89 10.87 10.86
+== ALL DONE ==
