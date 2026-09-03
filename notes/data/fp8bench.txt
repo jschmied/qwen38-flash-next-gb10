@@ -1,0 +1,66 @@
+preflight OK 15:38
+USDT:2026-09-03 15:38:57 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:38:57 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+shape                      M |  fp8 blockwise  bf16 matmul  fp8 per-tensor | TFLOPS blk/bf16/pt | blockwise kernel
+in_proj 16384x2560        64 |        202.5us      379.6us         203.3us |  26.5/ 14.1/ 26.4 | tile 128x32x128 swap
+USDT:2026-09-03 15:38:58 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:38:58 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+in_proj 16384x2560       256 |        239.2us      455.9us         241.6us |  89.8/ 47.1/ 88.9 | tile 64x128x128 noswap
+USDT:2026-09-03 15:38:58 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:38:58 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+in_proj 16384x2560      2048 |       1069.0us     1694.1us        1056.9us | 160.7/101.4/162.5 | tile 128x128x128 noswap
+USDT:2026-09-03 15:38:59 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:38:59 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+in_proj 16384x2560      4096 |       2102.2us     3730.9us        1999.7us | 163.4/ 92.1/171.8 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:04 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:04 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+in_proj 16384x2560      7503 |      45293.5us     6646.2us        3599.3us |  13.9/ 94.7/174.9 | tile 128x32x128 swap
+USDT:2026-09-03 15:39:06 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:06 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+in_proj 16384x2560      8192 |       7248.3us     6836.0us        3854.0us |  94.8/100.5/178.3 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+in_proj 16384x2560     16384 |      26938.9us    13376.1us        7789.4us |  51.0/102.7/176.4 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+out_proj 2560x6144        64 |         24.9us      136.6us          22.5us |  80.7/ 14.7/ 89.6 | tile 128x32x128 swap
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+out_proj 2560x6144       256 |         66.3us      166.7us          49.8us | 121.4/ 48.3/161.8 | tile 64x128x128 noswap
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:11 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+out_proj 2560x6144      2048 |        369.0us      818.8us         379.8us | 174.6/ 78.7/169.6 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:12 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:12 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+out_proj 2560x6144      4096 |        757.6us     1480.5us         736.0us | 170.1/ 87.0/175.1 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:12 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:12 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+out_proj 2560x6144      7503 |       2339.1us     2637.7us        1339.7us | 100.9/ 89.5/176.2 | tile 128x32x128 swap
+USDT:2026-09-03 15:39:13 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:13 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+out_proj 2560x6144      8192 |       1440.2us     2760.0us        1413.7us | 178.9/ 93.4/182.3 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:14 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:14 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+out_proj 2560x6144     16384 |       2874.5us     5993.5us        2753.1us | 179.3/ 86.0/187.2 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:14 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:14 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+q_proj 12288x2560         64 |        142.9us      293.9us         149.5us |  28.2/ 13.7/ 26.9 | tile 128x32x128 swap
+USDT:2026-09-03 15:39:14 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:14 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+q_proj 12288x2560        256 |        175.1us      332.7us         177.3us |  92.0/ 48.4/ 90.9 | tile 64x128x128 noswap
+USDT:2026-09-03 15:39:15 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:15 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+q_proj 12288x2560       2048 |        834.0us     1315.3us         750.3us | 154.5/ 98.0/171.7 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:15 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:15 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+q_proj 12288x2560       4096 |       1549.7us     2711.8us        1547.0us | 166.3/ 95.0/166.6 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:19 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:19 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+q_proj 12288x2560       7503 |      30736.0us     4911.9us        2750.0us |  15.4/ 96.1/171.7 | tile 128x32x128 swap
+USDT:2026-09-03 15:39:21 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:21 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+q_proj 12288x2560       8192 |       5993.5us     5291.2us        2950.6us |  86.0/ 97.4/174.7 | tile 128x128x128 noswap
+USDT:2026-09-03 15:39:24 2197425:2197425 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:39:24 2197425:2197425 SyncActivityProfilerHandler.cpp:59] profiler_stop
+q_proj 12288x2560      16384 |      19394.7us    10235.2us        5828.5us |  53.1/100.7/176.9 | tile 128x128x128 noswap
+== ALL DONE ==

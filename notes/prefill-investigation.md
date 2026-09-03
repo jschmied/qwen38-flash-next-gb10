@@ -51,3 +51,38 @@
     new 4,687-row shape (the warm-ups were 8k only). So the 16.3 s TTFT here is not comparable to
     finding 62's 11.3 s at batch 4096; `ttftpad` (8192) and `ttftpad2` (4096) re-measure both lengths
     warm, 3 requests each, with prompt lengths mod 4 = 0…3. Raw: `notes/data/prefprof.txt`.
+
+67. **The blockwise FP8 GEMM on sm_121 has a steep M-dependence, and cuBLASLt per-tensor FP8 runs 1.8–2.7×
+    faster at large M.** `fp8bench` (preview build's `_C.cutlass_scaled_mm` with 128×128 weight / 1×128
+    activation scales, vs BF16 `torch.matmul` (cuBLAS nvjet), vs per-tensor FP8 `torch._scaled_mm`
+    (cuBLASLt); 5 × 20 launches, median; `notes/data/fp8bench.txt`). In TFLOPS, in_proj 16,384×2,560:
+
+    | M | blockwise (config) | BF16 | FP8 per-tensor |
+    | --- | --- | --- | --- |
+    | 64 | 26 (swap 128×32) | 14 | 26 |
+    | 256 | 90 (pingpong 64×128) | 47 | 89 |
+    | 2,048 | **161** (128×128) | 101 | 162 |
+    | 4,096 | **163** | 92 | 172 |
+    | 7,503 (odd) | **13.9** (swap 128×32) | 95 | 175 |
+    | 8,192 | 95 (128×128) | 100 | 178 |
+    | 16,384 | 51 (128×128) | 103 | 176 |
+
+    out_proj (2,560×6,144) and q_proj (12,288×2,560) behave the same (odd M → 15 TFLOPS; 8,192 →
+    86–179; 16,384 → 53–179). Three conclusions. (a) The `M % 4` misroute is exactly the 45 ms we saw
+    (7,503: 45.3 ms here vs 45 ms in the trace) — 3.3× slower than the aligned 8,192 call for fewer
+    rows. (b) Even correctly routed, the 128×128 config **loses efficiency above 4,096 rows** (163 →
+    95 → 51 TFLOPS): for FP8-projection checkpoints on sm_121 the right prefill batch is **4,096 or
+    2,048, not 8,192** — the missing explanation for the batch-size note (finding 62's 3.1 s at 4096
+    vs 4.6 s at 8192 was both effects at once). (c) cuBLASLt's per-tensor FP8 path is flat at
+    **~175 TFLOPS** from 2k to 16k — 1.1× the blockwise kernel at 4,096, 1.85× at 8,192, 3.4× at
+    16,384. Per-tensor scaling is a different quantisation (quality cost), so the lever is a
+    cuBLASLt **blockwise** path on sm_121 (`torch._scaled_mm` with 1×128/128×128 scales, if the
+    library supports it here) — `fp8bench2`, queued. If it does, vLLM's `CutlassFp8BlockScaledMMKernel`
+    is the wrong default for GB10 at every prefill size, and that is an upstream-shaped finding.
+
+68. **Hyper-connection GEMMs are near their ceiling; lever 5 downgraded.** `hcbench`
+    (`notes/data/hcbench.txt`): down 10,240→324 runs at 52–55 TFLOPS BF16 (Triton 55–58), up 320→10,240
+    at 43–46 (Triton 47–48, per-tensor FP8 54–59) at M = 4k…32k. cuBLAS picks
+    `cutlass_80_tensorop_bf16_s16816gemm_relu_128x256` for the up GEMM. In the 8k trace the two GEMM
+    families are ≈ 5 % of prefill; `_hc_combine_norm` + `_hc_gate_mix` another ≈ 9 %, memory-bound.
+    Best case for fusion ≈ 4 % of TTFT. Not a priority.

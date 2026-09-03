@@ -1,0 +1,18 @@
+preflight OK 15:36
+shape                           M |  bf16 cuBLAS  fp8 scaled_mm  triton bf16 | TFLOPS bf16/fp8/triton
+   fp8 err: mat2 shape (10240x324) must be divisible by 16
+down 10240->324                 8 |       14.5us          nanus       55.6us | 3.7/nan/1.0  (triton maxerr 0.0312)
+   fp8 err: mat2 shape (10240x324) must be divisible by 16
+down 10240->324              4096 |      520.8us          nanus      489.5us | 52.2/nan/55.5  (triton maxerr 0)
+   fp8 err: mat2 shape (10240x324) must be divisible by 16
+down 10240->324              8192 |     1029.8us          nanus      971.6us | 52.8/nan/55.9  (triton maxerr 0)
+   fp8 err: mat2 shape (10240x324) must be divisible by 16
+down 10240->324             32768 |     3970.0us          nanus     3777.5us | 54.8/nan/57.6  (triton maxerr 0)
+up 320->10240                   8 |       10.4us         24.2us       41.3us | 5.1/2.2/1.3  (triton maxerr 0)
+up 320->10240                4096 |      586.6us        496.0us      576.1us | 45.8/54.1/46.6  (triton maxerr 0)
+up 320->10240                8192 |     1253.4us        955.0us     1120.8us | 42.8/56.2/47.9  (triton maxerr 0)
+up 320->10240               32768 |     4962.8us       3613.2us     4577.0us | 43.3/59.4/46.9  (triton maxerr 0)
+USDT:2026-09-03 15:38:52 2196486:2196486 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-03 15:38:52 2196486:2196486 SyncActivityProfilerHandler.cpp:59] profiler_stop
+cuBLAS kernel for up@M=8192: void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32x3_tn_align8
+== ALL DONE ==
