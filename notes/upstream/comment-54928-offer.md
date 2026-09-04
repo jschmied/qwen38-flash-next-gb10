@@ -1,4 +1,4 @@
-Same symptom on a different stack, and two tools that may help narrow it.
+Same symptom on a different stack, and a data point against the "verification path is inherently different in BF16" reading above (@chenWULUQI): on our box the block-verification path *does* reproduce the q_len=1 path bit-for-bit once three unrelated kernel defects are fixed, so the mismatch is not intrinsic to BF16 verification — at least not on FlashInfer/sm_121.
 
 On a GB10 (sm_121) we serve the same target family (Qwen3.8-27B, NVFP4 body, and Qwen3.8-Flash-Next) with DFlash2 and MTP under vLLM, greedy, and see the output leave the target-only path around token 30 as well. In our case the divergence had three concrete sources, all now fixed or patched upstream, and none of them was the drafter itself:
 
@@ -6,7 +6,7 @@ On a GB10 (sm_121) we serve the same target family (Qwen3.8-27B, NVFP4 body, and
 - the mamba/GDN align block units seeded from the wrong block size on prefix-cache resume (#54076 / #53798);
 - `persistent_topk` on sm_121 returning an order- and set-unstable selection (#55122).
 
-With those fixed, DFlash2 K=1 greedy reproduces the target's run bit-for-bit across restarts on our box, so on this hardware the "changes at token 30" was never DFlash2's own acceptance logic. Your setup is BF16 on 4×24 GB, so the first source cannot apply and the third only if the QSA top-k runs there; the second applies to any hybrid target with prefix caching on.
+With those fixed, DFlash2 K=1 greedy reproduces the target's run bit-for-bit across restarts on our box (six of six starts, identical draft/accept counts), so on this hardware the "changes at token 30" was never DFlash2's own acceptance logic, and the block forward and the single-token forward agree exactly in BF16. Your FP32 result is consistent with that: FP32 hides an unstable kernel as well as a path difference, so it separates "numerical" from "state" but not "inherent" from "a fixable kernel". Your setup is BF16 on 4×24 GB, so the first source cannot apply and the third only if the QSA top-k runs there; the second applies to any hybrid target with prefix caching on.
 
 Two things that were decisive for us and that you can run without a patched build:
 
