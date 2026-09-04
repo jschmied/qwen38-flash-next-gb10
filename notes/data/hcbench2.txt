@@ -1,0 +1,60 @@
+preflight OK 10:22
+=== start a 10:22 ===
+== N=4096: [N,DIM] bf16 = 84 MB
+  torch add [N,DIM]+[N,DIM]->[N,DIM]  (3 tensors):    749.1 us     336 GB/s  <- achievable floor
+  combine_norm stock :   1555.4 us     175 GB/s (block counted once)
+  combine_norm v2 BLOCK=512 warps=4:   1281.8 us     213 GB/s  x1.21  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=4:   1285.6 us     212 GB/s  x1.21  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=8:   1316.9 us     207 GB/s  x1.18  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=2560 warps=8: ERR at 11:25:
+def _combine_norm_v2(block_ptr, res_ptr, inj_ptr, w_ptr, out_ptr, y_ptr, stride_block, str
+  gate_mix stock :    821.9 us     230 GB/s
+  gate_mix v2 ROWS=1 BLOCK=512 warps=4:    820.1 us     230 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=512 warps=4:    833.9 us     226 GB/s  x0.99  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=1024 warps=8:    832.7 us     227 GB/s  x0.99  max|d|=0.0000
+  gate_mix v2 ROWS=8 BLOCK=512 warps=8:    819.2 us     230 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=16 BLOCK=256 warps=8:    828.9 us     228 GB/s  x0.99  max|d|=0.0000
+== N=8192: [N,DIM] bf16 = 168 MB
+  torch add [N,DIM]+[N,DIM]->[N,DIM]  (3 tensors):   1489.1 us     338 GB/s  <- achievable floor
+  combine_norm stock :   3082.8 us     177 GB/s (block counted once)
+  combine_norm v2 BLOCK=512 warps=4:   2473.1 us     220 GB/s  x1.25  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=4:   2514.0 us     217 GB/s  x1.23  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=8:   2443.2 us     223 GB/s  x1.26  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=2560 warps=8: ERR at 11:25:
+def _combine_norm_v2(block_ptr, res_ptr, inj_ptr, w_ptr, out_ptr, y_ptr, stride_block, str
+  gate_mix stock :   1621.5 us     233 GB/s
+  gate_mix v2 ROWS=1 BLOCK=512 warps=4:   1632.1 us     231 GB/s  x0.99  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=512 warps=4:   1626.5 us     232 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=1024 warps=8:   1631.3 us     231 GB/s  x0.99  max|d|=0.0000
+  gate_mix v2 ROWS=8 BLOCK=512 warps=8:   1622.7 us     233 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=16 BLOCK=256 warps=8:   1639.4 us     230 GB/s  x0.99  max|d|=0.0000
+=== start b 10:22 ===
+== N=4096: [N,DIM] bf16 = 84 MB
+  torch add [N,DIM]+[N,DIM]->[N,DIM]  (3 tensors):    770.5 us     327 GB/s  <- achievable floor
+  combine_norm stock :   1530.4 us     178 GB/s (block counted once)
+  combine_norm v2 BLOCK=512 warps=4:   1227.4 us     222 GB/s  x1.25  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=4:   1213.9 us     225 GB/s  x1.26  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=8:   1201.8 us     227 GB/s  x1.27  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=2560 warps=8: ERR at 11:25:
+def _combine_norm_v2(block_ptr, res_ptr, inj_ptr, w_ptr, out_ptr, y_ptr, stride_block, str
+  gate_mix stock :    823.5 us     229 GB/s
+  gate_mix v2 ROWS=1 BLOCK=512 warps=4:    825.5 us     229 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=512 warps=4:    825.0 us     229 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=1024 warps=8:    825.1 us     229 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=8 BLOCK=512 warps=8:    825.0 us     229 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=16 BLOCK=256 warps=8:    827.7 us     228 GB/s  x0.99  max|d|=0.0000
+== N=8192: [N,DIM] bf16 = 168 MB
+  torch add [N,DIM]+[N,DIM]->[N,DIM]  (3 tensors):   1520.7 us     331 GB/s  <- achievable floor
+  combine_norm stock :   3069.0 us     178 GB/s (block counted once)
+  combine_norm v2 BLOCK=512 warps=4:   2492.6 us     219 GB/s  x1.23  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=4:   2470.1 us     221 GB/s  x1.24  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=1024 warps=8:   2436.5 us     224 GB/s  x1.26  max|d out|=0.0000 max|d y|=0.0156
+  combine_norm v2 BLOCK=2560 warps=8: ERR at 11:25:
+def _combine_norm_v2(block_ptr, res_ptr, inj_ptr, w_ptr, out_ptr, y_ptr, stride_block, str
+  gate_mix stock :   1628.3 us     232 GB/s
+  gate_mix v2 ROWS=1 BLOCK=512 warps=4:   1649.9 us     229 GB/s  x0.99  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=512 warps=4:   1633.0 us     231 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=4 BLOCK=1024 warps=8:   1647.3 us     229 GB/s  x0.99  max|d|=0.0000
+  gate_mix v2 ROWS=8 BLOCK=512 warps=8:   1628.7 us     232 GB/s  x1.00  max|d|=0.0000
+  gate_mix v2 ROWS=16 BLOCK=256 warps=8:   1658.8 us     228 GB/s  x0.98  max|d|=0.0000
+== ALL DONE ==
