@@ -1,0 +1,41 @@
+  qsaunion REMOVED
+  qsaunion INSTALLED in /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/qsa.py and /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/qsa.py
+preflight OK 18:53
+=== test sel_002_3813.pt 18:53
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+sel_002_3813.pt: rows=3813 ctx=3814 stock  14535.2 us | R=4 union   7986.5 us x1.82 | R=2 union   9379.0 us x1.55
+=== test sel_024_3407.pt 18:53
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+sel_024_3407.pt: rows=3407 ctx=7502 stock  14014.0 us | R=4 union  10268.8 us x1.36 | R=2 union  11415.9 us x1.23
+=== test sel_089_283.pt 18:53
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+sel_089_283.pt: rows=283 ctx=12290 stock   1186.5 us | R=4 union   1308.3 us x0.91 | R=2 union   1106.5 us x1.07
+=== QZ1_a  union=1  18:53 ===
+    activation: 1 lines
+  QZ1_a TTFT 8k: prompt_tokens=7503 median=2.65s  all=4.13 2.65 2.64
+  QZ1_a TTFT 30k: prompt_tokens=29263 median=10.53s  all=10.94 10.49 10.53
+=== QZ0_a  union=0  19:03 ===
+    activation: 0 lines
+  QZ0_a TTFT 8k: prompt_tokens=7503 median=2.73s  all=2.87 2.72 2.73
+  QZ0_a TTFT 30k: prompt_tokens=29263 median=10.55s  all=10.55 10.55 10.59
+=== QZ1_b  union=1  19:14 ===
+    activation: 1 lines
+  QZ1_b TTFT 8k: prompt_tokens=7503 median=2.63s  all=3.07 2.63 2.63
+  QZ1_b TTFT 30k: prompt_tokens=29263 median=10.48s  all=10.49 10.48 10.48
+=== QZ0_b  union=0  19:25 ===
+    activation: 0 lines
+  QZ0_b TTFT 8k: prompt_tokens=7503 median=2.74s  all=3.97 2.74 2.73
+  QZ0_b TTFT 30k: prompt_tokens=29263 median=10.58s  all=10.58 10.58 10.61
+== ALL DONE ==

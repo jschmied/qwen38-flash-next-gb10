@@ -593,3 +593,13 @@
     the split and build (a dozen small ops) now costs more than the kernel gains; next the components are timed
     separately and the split goes away (lever 1: build from `block_indices`). Server A/B running.
 
+110. **Union v4.3 integrated, server level: −4 % TTFT at 8k, −1 % at 30k, two starts (`qsaunion12`,
+    `notes/data/qsaunion12.txt`) — identical to v3 (finding 106).** 8k: 2.65 / 2.63 s on vs 2.73 / 2.74 off; 30k:
+    10.53 / 10.48 vs 10.55 / 10.58. The review rework (block-only union, separate tail pass, metadata-threaded
+    parameters, no device reads, request validation, asserting test) is thus correctness- and hygiene-neutral on speed:
+    the standalone whole-path went 1.97× → 1.82× at 8k (finding 108) and the server did not move, so the server number
+    is set by something the standalone does not contain — the per-layer torch glue around the call (split + build
+    ≈ 15 small launches × 12 layers per chunk) and the stock path's own share of the chunk. Target remains ~8 %
+    (finding 103); the levers are now (1) build from `block_indices` on the indexer (no split), (2) fuse the build's
+    torch ops into the Triton kernel, (3) the v6 bisect result for the R=2 BN=32 tile.
+
