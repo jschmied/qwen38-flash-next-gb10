@@ -164,6 +164,17 @@ Chained on the box after `chunkredo` → `qsadump2` → `blockdrop`:
   a torch bandwidth floor and re-tiled variants (all HC streams per program, block read once; rows×cols
   tiles for the mix). Stock runs at ~90–115 GB/s on a 273 GB/s part. Expected win if the variants
   reach the floor: ~1.6 + 0.8 ms per call → ~8 % of 8k TTFT, more at 30k. Numerics checked vs stock.
+- **TODO later — 27B swizzle optimizations (user 2026-09-04 16:2x):** apply the finding-100 lever to the two
+  GEMM paths the 27B actually runs, both larger than the L2 by 2.5–7×: (a) the per-channel FP8 W8A8 dispatch
+  `scaled_mm_sm120_fp8_dispatch.cuh` (attention q/k/v/o, GDN qkv/z/out at 60–120 MiB, the eight FP8 MLP layers
+  at 170 MiB) — same `cutlass_gemm_caller` plumbing, one scheduler argument, unmeasured; (b) vLLM's NVFP4 dense
+  `nvfp4_scaled_mm_sm120_kernels.cu` (42.5 MiB MLP weights; builds `Gemm::Arguments` itself, so
+  `arguments.scheduler.max_swizzle_size`) — relevant only if prod moves off FlashInfer's `mm_fp4`, whose CUTLASS
+  kernel collapsed like unswizzled CUTLASS in finding 99 and would need the fix inside FlashInfer. Steps: extend
+  the `_C_swz` standalone (scratchpad `swz/`) to both dispatches, sweep swizzle 1/2/4/8 at the 27B shapes and
+  M 4k–32k with `tools/l2sweep27.py`'s shape list, bit-identity vs stock; if the per-channel path collapses
+  and recovers, add it to PR #55180 as a second commit under the same activation-slab + L2 gate (bound from
+  finding 89's estimate: ~13 % of 8k TTFT, ~22 % at 32k on the 27B). No 27B serve needed for the measurement.
 - **27B (prod) — PARKED by the user 2026-09-04 ("27b not now").** Its kernels differ (per-channel FP8
   `CutlassFP8ScaledMMLinearKernel` for attention/GDN projections at 60–120 MiB, FlashInfer CUTLASS
   `mm_fp4` for the NVFP4 MLP at 42.5 MiB — all 2.5–7× the L2) and the bound is larger (~35 % of 8k TTFT,
