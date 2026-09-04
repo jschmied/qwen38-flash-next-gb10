@@ -163,5 +163,10 @@ Chained on the box after `chunkredo` → `qsadump2` → `blockdrop`:
   a torch bandwidth floor and re-tiled variants (all HC streams per program, block read once; rows×cols
   tiles for the mix). Stock runs at ~90–115 GB/s on a 273 GB/s part. Expected win if the variants
   reach the floor: ~1.6 + 0.8 ms per call → ~8 % of 8k TTFT, more at 30k. Numerics checked vs stock.
+- **27B (prod) — PARKED by the user 2026-09-04 ("27b not now").** Its kernels differ (per-channel FP8
+  `CutlassFP8ScaledMMLinearKernel` for attention/GDN projections at 60–120 MiB, FlashInfer CUTLASS
+  `mm_fp4` for the NVFP4 MLP at 42.5 MiB — all 2.5–7× the L2) and the bound is larger (~35 % of 8k TTFT,
+  ~50 % at 32k/batch 16384, half of that realistic). `tools/l2sweep27.py` + runner `l2sweep27.sh`
+  (prod venv, refuses to start if `vllm-qwen38` is up) are ready; the unit was dequeued. Start on request.
 - Not queued, by design: full attention (TTFT 30k/7.5k = 3.6× for 3.9× tokens — K/V still fits L2 at
   30k, revisit past 40k), lm_head (last token only at prefill), GDN chunk state (64 KB/head).
