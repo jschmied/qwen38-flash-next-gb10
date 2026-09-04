@@ -217,3 +217,5 @@ if `hitprobe3` confirms it, the boundary-padding workaround for static system pr
 
 Feedback until 2026-09-11. Before a PR, in this order: (3) per-request tile boundaries (`query_start_loc` padding), (2) indexer hands over the compact selection via metadata instead of the attribute stash, (1) separate path vs stock-kernel tiling per the maintainers' answer, then a real diff against main. Independent of the answer: dispatch table below 1,024 rows, fuse the build's torch launches.
 
+Implementation plan for the PR (steps 1–8, effort, scope): `notes/upstream/pr-qsa-union-plan.md`.
+

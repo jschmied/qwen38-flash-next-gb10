@@ -1,0 +1,90 @@
+# Plan: tile-union QSA prefill → mergeable vLLM PR (after RFC #55394)
+
+Base: vLLM `origin/main` 3284af6b (2026-09-04). All changes are Python/Triton — no C++ build; the branch's files can be
+copied onto `vllm-venv-fnmain2` for validation on the GB10 (the venv is dev401 + overlay; the four touched files are not
+in the overlay). Positioning: *"Tile-union QSA prefill for SM121: −4.7 % 8k / −3.7 % 30k TTFT on DGX Spark; generic
+algorithm, SM121-tuned dispatch."* Build fusion and the sub-1,024-row dispatch are follow-ups, not in this PR.
+
+## Steps, in order
+
+### 1. Real diff on main (½ day) — replaces the patch mechanism
+Branch `feat/qsa-tile-union-sm121` in `~/git/vllm-fp8chunk` (clone of upstream). Move the v9 code out of
+`tools/main/qsa_union_patch.py` into:
+- `vllm/models/qwen4_exp/nvidia/ops/qsa.py`: `_qsa_union_build_kernel`, `_qsa_union_attn_kernel`, `_qsa_union_build`,
+  `qsa_sparse_paged_attention_union`, `qsa_union_config()` (dispatch), `warmup_qsa_union()`; the gate inside
+  `qsa_sparse_paged_attention` after the stock validation (`use_prefill_config` is already there — reuse it: union only
+  when `use_prefill_config` is True).
+- `vllm/models/qwen4_exp/nvidia/qsa.py` (owner) and `indexer_qsa.py`: the data path of step 2.
+- `vllm/model_executor/warmup/qwen4_exp_qsa_warmup.py`: step 4.
+- `tests/kernels/attention/test_qsa_tile_union.py`: step 5.
+Drop `_qsa_union_split` entirely (the expanded-buffer path is the fallback no more: no compact selection → stock kernel).
+Keep the packed-buffer contract of #54873 (`[rows, width + 1]`, trailing count column) untouched.
+
+### 2. Explicit data path instead of the attribute stash (½ day)
+- Owner allocates `self.block_indices_buffer: int32 [max_num_tokens, block_topk]` next to `topk_indices_buffer`
+  (persistent; the indexer today allocates `block_indices` with `torch.empty` on every call — the buffer removes that).
+- `QSAIndexer.forward(hidden, positions, out, block_indices_out=None)` writes the selection into it before
+  `expand_qsa_block_indices`. No new return value: the owner already owns both buffers.
+- `forward_qsa(..., union_inputs)` where `union_inputs = QSAUnionInputs(block_indices, logical_positions, visible_blocks,
+  query_start_loc, num_decode_tokens)` is a small frozen dataclass the owner fills from `self.block_indices_buffer[:n]`
+  and the compressed metadata it can read the same way the indexer does (`metadata[self.indexer.compressed_key_cache.prefix]`:
+  `logical_positions`, `visible_blocks`, `query_start_loc`, `num_decode_tokens`, `num_decodes`). No pointer checks.
+- Reviewer-facing invariant, asserted: `union_inputs.block_indices.shape == (num_tokens, block_topk)`.
+
+### 3. Per-request tiles (½ day + one A/B) — the functional gap
+Rows of a request are contiguous; a tile must not straddle two requests. No padding of the batch: a **row→(tile, slot)
+map** built from `query_start_loc`:
+```
+len_q      = qsl[q+1] - qsl[q]                    # prefill requests only
+tiles_q    = ceil(len_q / R);  tile_base = exclusive cumsum(tiles_q)      # T = sum tiles_q
+tile(row)  = tile_base[req(row)] + (row - qsl[req(row)]) // R
+slot(row)  = (row - qsl[req(row)]) % R
+tile_row0[t] = first row of tile t                                         # int32 [T]
+```
+Build: pack `(block*8 + slot)` and scatter rows into `packed[tile]` via `tile(row)` (one `index_copy_`/scatter instead
+of the `.view(T, R, E)`); tails and membership use `slot`. Attention kernel: `row = tile_row0[tile] + r_of_m`, and a
+per-tile `rows_in_tile` (≤ R) masks the padded slot of an odd-length request. `tile_request` becomes simply
+`token_to_req[tile_row0[tile]]` (every row of the tile is that request by construction; the invalid-request masking of
+v4.3 stays). Eligibility: `use_prefill_config` and `num_decode_tokens == 0` (decode rows keep the split-K stock kernel;
+mixed batches are a follow-up: run union on the prefill slice and stock on the decode slice) and `num_tokens ≥ min_rows`.
+Validation on the box: the existing single-request A/B **plus** a two-concurrent-8k-prompt A/B (the new capability).
+
+### 4. Warmup (¼ day)
+`warmup_qsa_union(kv_cache, block_table, *, num_query_heads, compress_ratio, block_topk, cfg)` in `ops/qsa.py`:
+`.warmup()` of both Triton kernels with `TritonWarmupTensor` for the deployment-constant constexprs (`R, BNB, CR, GP,
+GROUP_SIZE, HEAD_DIM, PAGE_SIZE, TAIL_COLS, N`) and `do_not_specialize=["num_rows", "num_requests", "table_width",
+"num_cache_blocks"]` on the kernels (as the stock kernel does). Called from `qwen4_exp_qsa_triton_warmup` right after
+`warmup_qsa_sparse_paged_attention`, only when `qsa_union_config()` is not None. `torch.sort` needs no warmup.
+
+### 5. Contract and dispatch (¼ day)
+- `TAIL_COLS = next_pow2(R * (CR - 1))` (16 for R=2, CR=4), `ROW_BITS = ceil(log2 R)` replaces the hard-coded `*8`, with
+  `R ≤ 8` asserted; `N = next_pow2(R * block_topk)` padded with the sentinel instead of refusing non-power-of-two budgets;
+  `PAGE % CR == 0` and `block_topk * CR == token_topk` checked once at layer init (fallback to stock with a one-time log).
+- Dispatch `qsa_union_config()`: env `VLLM_QSA_TILE_UNION` ∈ {auto (default), 0, 1}. `auto` → enabled only on compute
+  capability (12, 1) with the table `{(12, 1): TileUnionConfig(R=2, BNB=8, num_warps=4, min_rows=1024)}`; `1` forces the
+  same config on any architecture (benchmarking override, documented as untuned); `0` off. One log line at init with the
+  chosen config, one at first use with the path (`raw` / `stock fallback: <reason>`).
+- The compress ratio stays derived (CR constexpr), but the test matrix and the PR body state CR=4 as the validated case.
+
+### 6. Test (¼ day)
+Port `tools/qsa_union_test.py` to `tests/kernels/attention/test_qsa_tile_union.py`, no dump files: synthetic selections
+with a tunable neighbour overlap (Jaccard 0.9) run through the real `expand_qsa_block_indices`, compared with the stock
+kernel under a peaked softmax; the negative control stays (one swapped block must move the output > 5e-2); cases: tail
+lengths 0..CR−1, permuted physical pages with decoy requests, **multi-request batches with odd lengths** (new), masked
+rows, non-power-of-two `block_topk` padding, `PAGE % CR != 0` fallback. Marked for CUDA ≥ SM120 shapes only where needed.
+
+### 7. Validation on the GB10 (2 h box time)
+Copy the branch's four Python files onto `vllm-venv-fnmain2` (record the diff to the overlay), run the test, then:
+single-request A/B (two starts, `auto` vs `0`), two-concurrent-prompt A/B (two starts), one warm-turn agent loop to
+confirm no regression with prefix caching + MTP. Expected: ≥ the v9 numbers at c=1; a first number at c=2.
+
+### 8. PR
+Title `[Kernel][Qwen3.8-Flash-Next] Tile-union QSA sparse attention for prefill on SM121`; body = RFC summary + the
+step-7 tables + the four answered questions; `git commit -s`, AI-assistance disclosure, `Co-authored-by`. Open after the
+RFC's feedback lands or on 09-11, whichever first; if the maintainers prefer tiling inside the stock kernel, steps 1–6
+still hold (only the kernel body moves).
+
+## Effort
+≈ 2.5 days of work + ~2 h box time, in the order above; steps 2 and 3 are the ones that change behaviour and get their
+own A/B before the PR. Not in scope: build fusion (~0.8 ms/call), the < 1,024-row dispatch table, GB300/H100 tuning
+(needs hardware we do not have; the override flag lets others measure).
