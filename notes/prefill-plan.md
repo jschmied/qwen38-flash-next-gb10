@@ -147,3 +147,21 @@ overlap for one 8k + one 30k prefill: consecutive-row Jaccard and union-per-tile
 go/no-go number for the tile-union sparse-attention kernel, §5 item 3 / kernel list #2). Deferred to a
 GPU-free slot because they need compiles: deterministic top-k pass-cost breakdown (kernel list #4) and the
 CUTLASS raster-swizzle experiment (#5). Results in `/opt/llm/runners/results/`, findings in the morning.
+
+### Queue 2026-09-04 (user: "queue micro benchmarks for this" — the small-L2 question)
+
+Chained on the box after `chunkredo` → `qsadump2` → `blockdrop`:
+
+- **`moel2`** — `tools/moe_l2sweep.py`: NVFP4 grouped MoE GEMM vs M with balanced and random routing.
+  Hypothesis: rows per expert = M·10/512; past one 128-row M-tile (M ≈ 6.5k) each expert's ~2.5 MB
+  weight is streamed a second time — that is finding 78's "2× above the floor" and why batch 4096
+  beat 8192. A step at the tile boundary confirms; then the lever is a ≤ 6k MoE chunk and, upstream,
+  per-expert M-chunking in the grouped kernel (#55180's shape of fix).
+- **`hcbench2`** — `tools/hc_kernels_bench.py`: the two hyper-connection Triton kernels
+  (`_hc_combine_norm` 2.88 ms/call, `_hc_gate_mix` 1.55 ms/call at 4096 rows; 9.3 % of the 7.5k prefill
+  in `prefprof`, 12.7 % at 30k, ~15 % of the main build's 8k TTFT now that the FP8 GEMM is fixed) against
+  a torch bandwidth floor and re-tiled variants (all HC streams per program, block read once; rows×cols
+  tiles for the mix). Stock runs at ~90–115 GB/s on a 273 GB/s part. Expected win if the variants
+  reach the floor: ~1.6 + 0.8 ms per call → ~8 % of 8k TTFT, more at 30k. Numerics checked vs stock.
+- Not queued, by design: full attention (TTFT 30k/7.5k = 3.6× for 3.9× tokens — K/V still fits L2 at
+  30k, revisit past 40k), lm_head (last token only at prefill), GDN chunk state (64 KB/head).
