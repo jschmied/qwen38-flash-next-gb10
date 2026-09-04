@@ -1,0 +1,20 @@
+  fp8chunk INSTALLED in /opt/llm/runtime/vllm-venv-fnmain/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/cutlass.py
+preflight OK 09:03
+=== C4k_a (VLLM_FP8_BLOCK_M_CHUNK=4096) UP 09:14
+    (APIServer pid=798405) FP8CHUNK active: M chunk = 4096
+  C4k_a TTFT 8k: prompt_tokens=7503 median=2.73s  all=2.85 2.73 2.72
+  C4k_a TTFT 30k: prompt_tokens=29263 median=10.70s  all=10.65 10.70 10.70
+=== C0_a (VLLM_FP8_BLOCK_M_CHUNK=0) UP 09:27
+    (APIServer pid=839230) FP8CHUNK active: M chunk = 0
+  C0_a TTFT 8k: prompt_tokens=7503 median=2.71s  all=2.90 2.71 2.71
+  C0_a TTFT 30k: prompt_tokens=29263 median=10.64s  all=10.64 10.63 10.64
+=== C4k_b (VLLM_FP8_BLOCK_M_CHUNK=4096) UP 09:39
+    (APIServer pid=842559) FP8CHUNK active: M chunk = 4096
+  C4k_b TTFT 8k: prompt_tokens=7503 median=2.72s  all=2.91 2.72 2.72
+  C4k_b TTFT 30k: prompt_tokens=29263 median=10.66s  all=10.66 10.64 10.67
+=== C0_b (VLLM_FP8_BLOCK_M_CHUNK=0) UP 09:50
+    (APIServer pid=846996) FP8CHUNK active: M chunk = 0
+  C0_b TTFT 8k: prompt_tokens=7503 median=2.71s  all=2.89 2.71 2.71
+  C0_b TTFT 30k: prompt_tokens=29263 median=10.62s  all=10.61 10.62 10.66
+  fp8chunk REMOVED
+== ALL DONE ==

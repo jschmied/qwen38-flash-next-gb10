@@ -275,3 +275,13 @@
     started on that venv 02:23; given the ±1 % no-op with identical outputs the redo counts as stock;
     `flarevert` removes the patch after the redo and the #50729 application.
 
+89. **Server-level M-chunking on Flash-Next (`chunkredo`, main venv, batch 8192, v2 patch active on the selected
+    `CutlassFp8BlockScaledMMKernel` path, two interleaved starts; `notes/data/chunkredo.txt`): null.** TTFT 8k
+    chunk-on 2.73 / 2.72 s vs off 2.71 / 2.71 s; 30k on 10.70 / 10.66 s vs off 10.64 / 10.62 s. Explanation is
+    the checkpoint, not the kernel: Flash-Next's largest FP8 blockwise weights are 25 MiB (`in_proj_qkv`, 36×)
+    and 30 MiB (`q_proj`, 12×), barely over the 24 MiB L2, and they carry ~20 TFLOP per 8k prefill, so even a
+    full recovery to the chunked rate bounds the gain at ~3 % — inside single-start noise. This is the
+    server-level number for PR #55180 on this model: "no measurable change, no cost" (the C++ gate would not
+    even fire here). The models that show the PR's gain have 100+ MiB FP8 projections (the 27B's are 60–120
+    MiB, parked). The venv was reverted after the run (0 patch lines).
+
