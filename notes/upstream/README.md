@@ -73,3 +73,5 @@ Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer boj
 18. 2026-09-04 09:03 — #53142 follow-up: complete three-start acceptance ladder (`comment-53142-followup-grid.md`) → https://github.com/vllm-project/vllm/issues/53142#issuecomment-5536961342
 19. 2026-09-04 09:03 — PR #55122 follow-up: server-level A/B, no TTFT/per-turn cost, det==exact 6/6 (`comment-55122-followup-e2e.md`) → https://github.com/vllm-project/vllm/pull/55122#issuecomment-5536961535
 20. 2026-09-04 11:17 — #54928: same-symptom data point (block path == q_len=1 path bit-for-bit after the three kernel fixes), two diagnostics, GB10 trace offer (`comment-54928-offer.md`) → https://github.com/vllm-project/vllm/issues/54928#issuecomment-5538340562
+21. 2026-09-04 13:33 — blazux issue #3: M%4 pad drop-in + numbers, #53388 port with the −26 % table, #55180 correction (`comment-blazux-4.md`) → https://github.com/blazux/qwen3.8-Flash-DGX/issues/3#issuecomment-5539850457
+22. 2026-09-04 13:33 — #53670: hybrid + in-checkpoint-MTP evidence table for the trailing-block drop (`comment-53670-hybrid-evidence.md`) → https://github.com/vllm-project/vllm/issues/53670#issuecomment-5539850703

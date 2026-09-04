@@ -8,7 +8,7 @@ Two things measured on our GB10 this week that apply directly to this image, plu
 | 7,508 (mod 4 = 0) | **2.86 s** | **2.81 s** |
 | 29,263 / 29,268 | 12.60 / **11.50 s** | 11.11 / 11.11 s |
 
-Your hybrid mode routes the GDN and QSA side layers through this very kernel, so it is more exposed than the stock NVFP4 checkpoint. Drop-in, no rebuild: `tools/main/fp8_m4pad_patch.py` in our repo pads M to a multiple of 4 inside `apply_block_scaled_mm` (zero rows + unit scale rows, output sliced, opaque custom op so `torch.compile` does not specialise on M); env `VLLM_FP8_PAD_M4=0` turns it off. Same target file as the image's. Server-level validation on our preview venv: M4PAD_NUMBERS.
+Your hybrid mode routes the GDN and QSA side layers through this very kernel, so it is more exposed than the stock NVFP4 checkpoint. Drop-in, no rebuild: `tools/main/fp8_m4pad_patch.py` in our repo pads M to a multiple of 4 inside `apply_block_scaled_mm` (zero rows + unit scale rows, output sliced, opaque custom op so `torch.compile` does not specialise on M); env `VLLM_FP8_PAD_M4=0` turns it off. Same target file as the image's. Server-level validation on our preview venv (batch 8192, prefix cache off, no spec, one start each so far, a second is running): 8k **2.84 s** with the patch vs 5.03 s without (3 requests: 4.58/2.84/2.82 vs 5.03/6.64/3.51 — the unpatched kernel is also far noisier); 30k **11.28 s** vs 13.52 s. It also removes the mod-4 sensitivity of the batch size: batch 8192 becomes strictly better than 4096 again.
 
 **2. The trailing prefix-cache block under MTP.** With any EAGLE-family drafter (MTP included) vLLM drops the last full block on every prefix-cache hit, so every agent turn re-prefills it. vllm#53388 (merged 09-01, main only) adds `disable_eagle_block_drop` to the speculative config. Measured on our main-build serve, MTP n=3, prefix caching on, 8-turn EOS-correct agent loop, three interleaved starts:
 
@@ -20,6 +20,6 @@ Your hybrid mode routes the GDN and QSA side layers through this very kernel, so
 
 Acceptance does not move. For this image it is a port of the four `vllm/` files of #53388 (`config/speculative.py`, `v1/core/kv_cache_utils.py`, `v1/core/sched/scheduler.py`, `v1/core/single_type_kv_cache_manager.py`); with `MTP=2 PREFIX_CACHE=1` as defaults it is the single largest per-turn win we know of for agent loops on this model.
 
-**3. Not worth testing here: our M-chunking PR (vllm#55180).** It only fires when a weight exceeds the L2 (24 MiB on GB10); Flash-Next's largest FP8 side-layer weights are 25–30 MiB, so the bound is ~3 % and the server-level measurement was null (2.73 vs 2.71 s at 8k, 10.70 vs 10.64 s at 30k). It matters for dense models with 100+ MiB projections, not this one.
+**3. Correcting my pointer above: our M-chunking PR (vllm#55180) is not worth testing here.** It only fires when a weight exceeds the L2 (24 MiB on GB10); Flash-Next's largest FP8 side-layer weights are 25–30 MiB, so the bound is ~3 % and the server-level measurement was null (2.73 vs 2.71 s at 8k, 10.70 vs 10.64 s at 30k). It matters for dense models with 100+ MiB projections, not this one.
 
 Both patches live at https://github.com/jschmied/qwen38-flash-next-gb10/tree/main/tools/main with the measurements in `notes/prefill-investigation.md` (findings 69/70, 89, 94).
