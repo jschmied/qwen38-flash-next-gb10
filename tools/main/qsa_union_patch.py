@@ -1,4 +1,8 @@
-"""Tile-union QSA sparse attention for prefill (findings 92/96/103/104/111), v8 = v7 + lever 1: the union is built from
+"""Tile-union QSA sparse attention for prefill (findings 92/96/103/104/111), v9 = v8 with layout-independent addressing:
+the build kernel stores page*PAGE + offset per union block and the attention kernel decomposes it back to
+page*stride_block + offset*stride_token (the server's K/V views are [blocks, PAGE, kv, D] slices of a wider tensor, so
+block stride != PAGE * token stride and v7/v8's guard silently fell back to the stock path — finding 114); one-time log
+lines say which path ran. v8 = v7 + lever 1: the union is built from
 the indexer's own block ids / query positions / visible-block counts (stashed by indexer_qsa.py, third target file), so the
 1.2 ms split of the expanded [rows, 2051] buffer disappears; the causal tails are written by the build kernel from the
 query positions with the expansion kernel's exact rule. v7 = v4.3 + finding 111: one fixed tile
@@ -126,14 +130,16 @@ def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cn
     ubound = tl.load(cnt_ptr + tile)
     for t in range(0, ubound, BNB):
         emask = (t + b_off) < ubound
-        phys = tl.load(uni_ptr + tile * stride_uni + t + b_off, mask=emask, other=-1)   # physical token bases
+        phys = tl.load(uni_ptr + tile * stride_uni + t + b_off, mask=emask, other=-1)   # page*PAGE + offset, or -1
         tok2 = tl.where((phys >= 0)[:, None], phys[:, None] + j_off[None, :], -1)
         physical_token = tl.reshape(tok2, (BN,))
         valid = physical_token >= 0
-        safe_token = tl.maximum(physical_token, 0).to(tl.int64)   # cache is [blocks, PAGE, kv, D] contiguous in tokens
-        keys = tl.load(k_cache_ptr + safe_token[None, :] * stride_k_token
+        safe_token = tl.maximum(physical_token, 0)
+        safe_page = (safe_token // PAGE_SIZE).to(tl.int64)     # whole blocks never straddle a page (PAGE % CR == 0)
+        page_offset = safe_token % PAGE_SIZE
+        keys = tl.load(k_cache_ptr + safe_page[None, :] * stride_k_block + page_offset[None, :] * stride_k_token
                        + kv_head * stride_k_head + dim_offsets[:, None], mask=valid[None, :], other=0.0)
-        values = tl.load(v_cache_ptr + safe_token[:, None] * stride_v_token
+        values = tl.load(v_cache_ptr + safe_page[:, None] * stride_v_block + page_offset[:, None] * stride_v_token
                          + kv_head * stride_v_head + dim_offsets[None, :], mask=valid[:, None], other=0.0)
         memb = tl.load(mem_ptr + tile * stride_mem_t + r_of_m[:, None] * stride_mem_r + t + b_off[None, :],
                        mask=emask[None, :], other=0)
@@ -264,11 +270,18 @@ def _qsa_union_build_raw(block_indices: torch.Tensor, query_positions: torch.Ten
 
 
 def qsa_union_layout_ok(k_cache: torch.Tensor, v_cache: torch.Tensor, compress_ratio: int) -> bool:
-    """The pre-resolved addressing needs token-contiguous pages (block stride == PAGE * token stride) and whole
-    compressed blocks inside a page (PAGE % CR == 0). Otherwise the stock kernel runs."""
-    page = k_cache.shape[1]
-    return (page % compress_ratio == 0 and k_cache.stride(0) == page * k_cache.stride(1)
-            and v_cache.stride(0) == page * v_cache.stride(1))
+    """The pre-resolved page*PAGE + offset form needs whole compressed blocks inside a page (PAGE % CR == 0);
+    strides are free (the server's K/V views are slices of a wider tensor). Otherwise the stock kernel runs."""
+    return k_cache.shape[1] % compress_ratio == 0
+
+
+_QSA_UNION_LOGGED = set()
+
+
+def _qsa_union_log_once(what: str):
+    if what not in _QSA_UNION_LOGGED:
+        _QSA_UNION_LOGGED.add(what)
+        print(f"QSAUNION path: {what}", flush=True)
 
 
 def qsa_sparse_paged_attention_union(q, k_cache, v_cache, logical_indices, block_table, token_to_req, out, *,
@@ -279,9 +292,11 @@ def qsa_sparse_paged_attention_union(q, k_cache, v_cache, logical_indices, block
     # the stash must be this step's selection: same rows, and its expansion is the buffer we were handed
     if (raw is not None and raw[0].shape[0] == rows and raw[0].shape[1] == token_topk // compress_ratio
             and raw[3].data_ptr() == logical_indices.data_ptr()):
+        _qsa_union_log_once(f"raw (indexer selection), R={R} BNB={_QSA_UNION_BNB} warps={_QSA_UNION_WARPS}")
         uni, mem, cnt, tails, T = _qsa_union_build_raw(raw[0], raw[1], raw[2], R, token_to_req, block_table, num_requests,
                                                        k_cache, compress_ratio)
     else:
+        _qsa_union_log_once(f"split (expanded buffer; raw stash {'absent' if raw is None else 'stale'}), R={R}")
         blocks, tail = _qsa_union_split(logical_indices, compress_ratio, token_topk)
         uni, mem, cnt, tails, T = _qsa_union_build(blocks, tail, R, token_to_req, block_table, num_requests, k_cache, compress_ratio)
     group_size = q.shape[1] // k_cache.shape[2]
@@ -313,7 +328,9 @@ GATE_ANCHOR = '''    if out is None:
     if not q.shape[0]:
         return out
 '''
-GATE_NEW = GATE_ANCHOR + '''    if union is not None and qsa_union_layout_ok(k_cache, v_cache, union["compress_ratio"]):  # QSA UNION gate
+GATE_NEW = GATE_ANCHOR + '''    if union is not None and not qsa_union_layout_ok(k_cache, v_cache, union["compress_ratio"]):  # QSA UNION gate
+        _qsa_union_log_once("stock fallback (page size not a multiple of the compress ratio)")
+    elif union is not None:
         return qsa_sparse_paged_attention_union(q, k_cache, v_cache, logical_indices, block_table, token_to_req, out,
                                                 compress_ratio=union["compress_ratio"], token_topk=union["token_topk"],
                                                 num_requests=union["num_requests"], raw=union.get("raw"))

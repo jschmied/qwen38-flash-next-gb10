@@ -632,3 +632,16 @@
     is worth more at R=4. The asserting test now also times a cold cache (2,048 pages, random table); the v8 run
     measures R=2, R=4 and off at the server. Lesson for the standalone: size the cache past the L2 before ranking tiles.
 
+114. **v7's and v8's server arms never ran the union kernel: the layout guard fell back to stock.** `forward_qsa`
+    hands the kernel `kv_cache.transpose(1, 2).split(head_size, dim=-1)` — K and V are [blocks, PAGE, kv, D] views of a
+    wider tensor, so block stride ≠ PAGE × token stride, and v7's `qsa_union_layout_ok` (written for the standalone's
+    contiguous cache) returned False on every call. Finding 113's "+1 %" is therefore stock + noise, not a tile
+    ranking, and the L2 explanation there is withdrawn; `qsaunion15` (v8 arms) was stopped for the same reason.
+    v9 stores page × PAGE + offset per union block and decomposes it in the attention loop (page × stride_block +
+    offset × stride_token), which is layout-free and costs nothing (standalone raw path 2.26× at 8k, identical to
+    v8), and logs the path it takes once per process (`QSAUNION path: raw …` / `split …` / `stock fallback …`) so a
+    silent fallback can never again pass for a measurement. The v8 test lines (`notes/data/qsaunion15.txt`) stand as
+    the standalone result for lever 1: raw build 0.8 ms replaces split + build 2.0 ms; whole path R=2 2.24× / 1.71× /
+    1.41× (8k / 30k chunk / tail), R=4 1.92× / 1.33× / 0.90×. `qsaunion16` = v9 at the server, R=2 / R=4 / off, two
+    starts each, with the path line per arm.
+

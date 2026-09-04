@@ -1,0 +1,49 @@
+  qsaunion REMOVED
+  qsaunion INSTALLED in /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/qsa.py /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/qsa.py and /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/indexer_qsa.py
+preflight OK 20:25
+=== test sel_002_3813.pt 20:25
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_raw_build_matches_split_and_stock
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+--- timing, hot cache (L2-resident)
+sel_002_3813.pt: rows=3813 ctx=3814 stock  14729.6 us | R=2 union(split)   7802.0 us x1.89, union(raw)   6584.5 us x2.24 | R=4 union(split)   8926.9 us x1.65, union(raw)   7653.8 us x1.92
+    R=2: split  1228.5 + build   798.5 us | raw build   801.3 us | kernel ~ 5730.7 us
+    R=4: split  1189.7 + build   806.6 us | raw build   847.8 us | kernel ~ 6907.7 us
+--- timing, cold cache (2048 pages ~ 3.3 GB, random table)
+sel_002_3813.pt: rows=3813 ctx=3814 stock  14791.3 us | R=2 union(split)   7730.3 us x1.91, union(raw)   6578.3 us x2.25 | R=4 union(split)   8866.3 us x1.67, union(raw)   7600.8 us x1.95
+    R=2: split  1187.9 + build   786.0 us | raw build   775.2 us | kernel ~ 5821.2 us
+    R=4: split  1254.6 + build   823.2 us | raw build   848.9 us | kernel ~ 6828.3 us
+=== test sel_024_3407.pt 20:25
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_raw_build_matches_split_and_stock
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+--- timing, hot cache (L2-resident)
+sel_024_3407.pt: rows=3407 ctx=7502 stock  14190.0 us | R=2 union(split)   9399.7 us x1.51, union(raw)   8285.4 us x1.71 | R=4 union(split)  11834.1 us x1.20, union(raw)  10628.6 us x1.34
+    R=2: split  1057.0 + build   655.3 us | raw build   698.2 us | kernel ~ 7690.9 us
+    R=4: split  1062.3 + build   723.1 us | raw build   757.3 us | kernel ~10030.3 us
+--- timing, cold cache (2048 pages ~ 3.3 GB, random table)
+sel_024_3407.pt: rows=3407 ctx=7502 stock  14158.0 us | R=2 union(split)   9405.9 us x1.51, union(raw)   8252.6 us x1.72 | R=4 union(split)  11703.6 us x1.21, union(raw)  10692.0 us x1.32
+    R=2: split  1053.6 + build   689.5 us | raw build   726.7 us | kernel ~ 7591.3 us
+    R=4: split  1084.5 + build   681.3 us | raw build   780.6 us | kernel ~ 9948.6 us
+=== test sel_089_283.pt 20:26
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_raw_build_matches_split_and_stock
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+--- timing, hot cache (L2-resident)
+sel_089_283.pt: rows=283 ctx=12290 stock   1193.3 us | R=2 union(split)    947.4 us x1.26, union(raw)    841.6 us x1.42 | R=4 union(split)   1432.3 us x0.83, union(raw)   1323.2 us x0.90
+    R=2: split   100.3 + build   100.7 us | raw build   101.6 us | kernel ~  732.6 us
+    R=4: split    99.6 + build   101.5 us | raw build   101.5 us | kernel ~ 1230.9 us
+--- timing, cold cache (2048 pages ~ 3.3 GB, random table)
+sel_089_283.pt: rows=283 ctx=12290 stock   1193.2 us | R=2 union(split)    935.6 us x1.28, union(raw)    848.3 us x1.41 | R=4 union(split)   1436.7 us x0.83, union(raw)   1336.3 us x0.89
+    R=2: split   101.5 + build   101.9 us | raw build   100.4 us | kernel ~  731.2 us
+    R=4: split    98.7 + build    99.6 us | raw build   101.2 us | kernel ~ 1272.6 us
+=== QV8R2_a  union=1 R=2  20:26 ===
