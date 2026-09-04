@@ -729,3 +729,19 @@ Follow-up the same evening: the PSI guard written after the reboot used `some av
 stopped a healthy arm (S1_c, 20:54: some 67.7 %, 28.8 GiB available) — with the swapfile active, the
 kernel's paging during the load phase raises "some" without any stall. Guard v2 requires
 `full avg10 > 60 %` **and** MemAvailable < 3 GiB (`tools/main/memguard.sh`).
+
+
+## vLLM's compile wrapper freezes Python branches at the profiling shape (2026-09-04, cost: two null runs)
+
+Any `if` on a tensor shape inside a method that vLLM traces (`apply_block_scaled_mm` and everything below the
+model's `forward`) is evaluated ONCE, at the first traced shape — the KV-profiling pass at
+`max_num_batched_tokens` (8192, a multiple of 4) — and vLLM's `TorchCompileWrapperWithCustomDispatcher` then
+dispatches straight to the compiled code, bypassing Dynamo's guards for the rest of the process. So a
+Python-level `if M % 4 != 0:` never fires at runtime (`fp8_m4pad_patch` v1: 4.65 s, identical to stock), and a
+Python-level `print` in the same region hard-fails the trace (`fp8chunk_patch` v1). Both symptoms look like
+"patch has no effect" while the module's import-time activation line prints fine.
+
+Rule: shape-dependent decisions go INSIDE an opaque `torch.library.custom_op` (with a `register_fake`), never
+in the traced Python; the activation line goes at import time. That is also why PR #55180 keeps its M test in
+the C++ op. Verify a patch fires with a *runtime* marker (a counter read after a real request), not with the
+import-time line.
