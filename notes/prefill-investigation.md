@@ -645,3 +645,22 @@
     1.41× (8k / 30k chunk / tail), R=4 1.92× / 1.33× / 0.90×. `qsaunion16` = v9 at the server, R=2 / R=4 / off, two
     starts each, with the path line per arm.
 
+115. **Union v9 at the server: −4.7 % TTFT at 8k, −3.7 % at 30k with R=2; R=4 is −3 % / +0.5 %; two starts each
+    (`qsaunion16`, `notes/data/qsaunion16.txt`).** Every union arm's log carries `QSAUNION path: raw (indexer
+    selection)`, so this is the kernel, not a fallback.
+
+    | arm | 8k (7,503 tok) | 30k (29,263 tok) |
+    | --- | --- | --- |
+    | **R=2, BN=32, 4 warps** | **2.60 / 2.59 s** | **10.17 / 10.18 s** |
+    | R=4, BN=32, 4 warps | 2.64 / 2.65 s | 10.59 / 10.64 s |
+    | off | 2.72 / 2.74 s | 10.57 / 10.57 s |
+
+    Per-start spread ≤ 0.01 s at 8k and ≤ 0.05 s at 30k, so the ordering is not noise. R=2 wins at both contexts,
+    as the standalone said (finding 111) — and at 30k R=4 is a wash because its union widens to 1.4× a row while the
+    tile count halves; the cost model of finding 104 predicted exactly that crossover, at ~8k. Progress on the
+    ~8 % target (finding 103): v3/v4.3 −4 % / −1 % → v9 −4.7 % / −3.7 %; the 30k gain is new and comes from lever 1
+    (no split) plus the R=2 tile. What is left: the build is still ~0.8 ms of torch launches per call (sort + six
+    small ops × 12 layers × chunks), the 1,024-row gate leaves the 283-row tail chunks on the stock kernel (1.41×
+    standalone at R=2 — the dispatch table of the review's lever 4), and the kernel itself sits at 2.5× while the
+    dot at M=32 is far from the tensor-core roofline. Default tile is now R=2 (`VLLM_QSA_UNION_R`).
+

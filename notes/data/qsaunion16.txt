@@ -1,0 +1,88 @@
+  qsaunion REMOVED
+  qsaunion INSTALLED in /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/qsa.py /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/qsa.py and /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/indexer_qsa.py
+preflight OK 20:30
+=== test sel_002_3813.pt 20:30
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+QSAUNION path: split (expanded buffer; raw stash absent), R=4
+QSAUNION path: split (expanded buffer; raw stash absent), R=2
+  PASS test_union_matches_stock_all_tails
+QSAUNION path: raw (indexer selection), R=2 BNB=8 warps=4
+QSAUNION path: raw (indexer selection), R=4 BNB=8 warps=4
+QSAUNION path: split (expanded buffer; raw stash stale), R=2
+  PASS test_raw_build_matches_split_and_stock
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+--- timing, hot cache (L2-resident)
+sel_002_3813.pt: rows=3813 ctx=3814 stock  14614.6 us | R=2 union(split)   7656.2 us x1.91, union(raw)   6459.9 us x2.26 | R=4 union(split)   8977.3 us x1.63, union(raw)   7737.0 us x1.89
+    R=2: split  1184.3 + build   763.3 us | raw build   848.7 us | kernel ~ 5650.8 us
+    R=4: split  1179.7 + build   842.3 us | raw build   818.1 us | kernel ~ 6862.0 us
+--- timing, cold cache (2048 pages ~ 3.3 GB, random table)
+sel_002_3813.pt: rows=3813 ctx=3814 stock  14612.6 us | R=2 union(split)   7604.3 us x1.92, union(raw)   6524.3 us x2.24 | R=4 union(split)   8997.1 us x1.62, union(raw)   7826.5 us x1.87
+    R=2: split  1236.7 + build   803.9 us | raw build   761.2 us | kernel ~ 5664.5 us
+    R=4: split  1204.5 + build   821.7 us | raw build   880.5 us | kernel ~ 6945.1 us
+=== test sel_024_3407.pt 20:31
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+QSAUNION path: split (expanded buffer; raw stash absent), R=4
+QSAUNION path: split (expanded buffer; raw stash absent), R=2
+  PASS test_union_matches_stock_all_tails
+QSAUNION path: raw (indexer selection), R=2 BNB=8 warps=4
+QSAUNION path: raw (indexer selection), R=4 BNB=8 warps=4
+QSAUNION path: split (expanded buffer; raw stash stale), R=2
+  PASS test_raw_build_matches_split_and_stock
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+--- timing, hot cache (L2-resident)
+sel_024_3407.pt: rows=3407 ctx=7502 stock  13976.2 us | R=2 union(split)   9230.5 us x1.51, union(raw)   8167.4 us x1.71 | R=4 union(split)  11884.7 us x1.18, union(raw)  10780.9 us x1.30
+    R=2: split  1060.1 + build   674.1 us | raw build   712.9 us | kernel ~ 7527.0 us
+    R=4: split  1090.3 + build   714.2 us | raw build   731.5 us | kernel ~10167.3 us
+--- timing, cold cache (2048 pages ~ 3.3 GB, random table)
+sel_024_3407.pt: rows=3407 ctx=7502 stock  14029.3 us | R=2 union(split)   9232.0 us x1.52, union(raw)   8282.3 us x1.69 | R=4 union(split)  12047.5 us x1.16, union(raw)  10770.3 us x1.30
+    R=2: split  1049.0 + build   687.6 us | raw build   687.8 us | kernel ~ 7503.3 us
+    R=4: split  1055.8 + build   696.9 us | raw build   696.8 us | kernel ~10209.7 us
+=== test sel_089_283.pt 20:31
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+QSAUNION path: split (expanded buffer; raw stash absent), R=4
+QSAUNION path: split (expanded buffer; raw stash absent), R=2
+  PASS test_union_matches_stock_all_tails
+QSAUNION path: raw (indexer selection), R=2 BNB=8 warps=4
+QSAUNION path: raw (indexer selection), R=4 BNB=8 warps=4
+QSAUNION path: split (expanded buffer; raw stash stale), R=2
+  PASS test_raw_build_matches_split_and_stock
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+--- timing, hot cache (L2-resident)
+sel_089_283.pt: rows=283 ctx=12290 stock   1183.0 us | R=2 union(split)    926.7 us x1.28, union(raw)    833.1 us x1.42 | R=4 union(split)   1428.1 us x0.83, union(raw)   1364.4 us x0.87
+    R=2: split   102.1 + build   102.8 us | raw build   102.9 us | kernel ~  725.4 us
+    R=4: split   101.4 + build   102.9 us | raw build   102.5 us | kernel ~ 1234.8 us
+--- timing, cold cache (2048 pages ~ 3.3 GB, random table)
+sel_089_283.pt: rows=283 ctx=12290 stock   1185.3 us | R=2 union(split)    930.8 us x1.27, union(raw)    836.2 us x1.42 | R=4 union(split)   1554.7 us x0.76, union(raw)   1400.5 us x0.85
+    R=2: split   103.9 + build   105.5 us | raw build   102.9 us | kernel ~  719.2 us
+    R=4: split   101.9 + build   101.9 us | raw build   102.1 us | kernel ~ 1310.8 us
+=== QV9R2_a  union=1 R=2  20:31 ===
+    activation: 1 lines; paths: 
+  QV9R2_a TTFT 8k: prompt_tokens=7503 median=2.60s  all=3.85 2.60 2.59
+  QV9R2_a TTFT 30k: prompt_tokens=29263 median=10.17s  all=10.18 10.15 10.17
+=== QV9R4_a  union=1 R=4  20:41 ===
+    activation: 1 lines; paths: 
+  QV9R4_a TTFT 8k: prompt_tokens=7503 median=2.64s  all=4.49 2.64 2.64
+  QV9R4_a TTFT 30k: prompt_tokens=29263 median=10.59s  all=10.59 10.59 10.62
+=== QV90_a  union=0 R=2  20:54 ===
+    activation: 0 lines; paths: 
+  QV90_a TTFT 8k: prompt_tokens=7503 median=2.72s  all=2.85 2.72 2.72
+  QV90_a TTFT 30k: prompt_tokens=29263 median=10.57s  all=10.55 10.57 10.57
+=== QV9R2_b  union=1 R=2  21:05 ===
+    activation: 1 lines; paths: 
+  QV9R2_b TTFT 8k: prompt_tokens=7503 median=2.59s  all=2.75 2.59 2.59
+  QV9R2_b TTFT 30k: prompt_tokens=29263 median=10.18s  all=10.19 10.18 10.18
+=== QV9R4_b  union=1 R=4  21:15 ===
+    activation: 1 lines; paths: 
+  QV9R4_b TTFT 8k: prompt_tokens=7503 median=2.65s  all=2.80 2.65 2.65
+  QV9R4_b TTFT 30k: prompt_tokens=29263 median=10.64s  all=10.65 10.63 10.64
+=== QV90_b  union=0 R=2  21:26 ===
+    activation: 0 lines; paths: 
+  QV90_b TTFT 8k: prompt_tokens=7503 median=2.74s  all=2.86 2.73 2.74
+  QV90_b TTFT 30k: prompt_tokens=29263 median=10.57s  all=10.57 10.54 10.63
+== ALL DONE ==
