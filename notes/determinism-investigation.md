@@ -1259,3 +1259,23 @@ Plus whatever drives the separate generation-side path.
     verification block need not be bit-identical. `tools/gemm_m_invariance.py` (runner `gemminv`, queued behind the
     union runs) measures exactly that on the model's dense shapes for per-channel FP8, blockwise FP8 and BF16 cuBLAS.
     Reply drafted (`notes/upstream/comment-54928-reply-windless.md`), to be posted with the GEMM result after a go.
+
+112. **GEMM batch-shape invariance on sm_121 (`gemminv`, `tools/gemm_m_invariance.py`, `notes/data/gemminv.txt`):
+    per-channel FP8 is bit-identical across M, blockwise FP8 and BF16 cuBLAS are not.** Same first row through
+    M = 1, 2, 3, 4, 8, 9, 16, 32, 64, 128, 256, 1024, 4096 on the dense shapes 12288×2560, 5120×5120, 16384×2560:
+
+    | path | row 0 == M=1 result | max |diff| (bf16 out) |
+    | --- | --- | --- |
+    | per-channel FP8, `cutlass_scaled_mm` (sm120 dispatch) | every M | 0 |
+    | blockwise FP8 128×128, `cutlass_scaled_mm` (sm120 blockwise, the #55180 kernel) | M=1 only; differs from M=2 on | 1.0–1.5e-2 |
+    | BF16 cuBLAS | M=1 only; differs from M=2 on | 0.25–2.0 (unscaled randn) |
+
+    So on this GPU a decode row at M=1 and the same row inside an M=8 verification block do not go through the same
+    arithmetic in any blockwise-FP8 or BF16 dense projection; only the per-channel FP8 path is M-invariant. Qwen's
+    official `Qwen3.8-27B-FP8` is blockwise, i.e. Windless84's stack (finding 109) has this in every dense layer
+    of every GDN and QSA block; the 0.1-nat flips they attribute are of the order such 1-ulp output differences
+    produce after 40+ layers. It is a candidate, not an attribution: the test is on the GEMM alone, not on the
+    logits. Reply draft filled (`notes/upstream/comment-54928-reply-windless.md`); a logit-level version would run
+    the target with `--max-num-seqs 1` and top-5 logprobs at q_len 1 vs 8 through the same prefix — which is what
+    their instrumented run already did, with the same outcome.
+
