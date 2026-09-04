@@ -1244,3 +1244,18 @@ Plus whatever drives the separate generation-side path.
 - One flag can change two things: `--no-enable-prefix-caching` also flips
   `mamba_cache_mode` align -> none.
 - A negative result is only as strong as its sample size — report the bound, not "clean".
+
+109. **Field, vllm#54928 (Windless84, 2026-09-04 16:45): the block-verification forward ranks a different token than the
+    single-token forward on a dense Qwen3.8-27B-FP8, stock vLLM 0.28.0, RTX PRO 6000 (sm_120).** Verifier-side attribution
+    at the first divergence in every instrumented run: E == V != A (emitted = verifier argmax ≠ target-only argmax) at
+    positions where the target-only top-2 gap was ≤ 0.125 nats; `--enforce-eager` does not remove it; custom RMSNorm
+    makes it worse and non-repeatable across launches; the target alone is not batch-shape invariant (`--max-num-seqs`
+    1 vs 4 diverges at 188, with a concurrent request at 69); `VLLM_BATCH_INVARIANT=1` is refused for GDN. Same pattern on
+    a patched NVFP4 build (first divergence 12). This is our diagnostic 2 from the 09-04 reply run by someone else, with
+    the same outcome: the drafter exposes a batch-shape dependence of the target. On GB10 the same signature came from
+    three concrete kernels (findings 80–93); on their stack (FP8 dense, no prefix cache, sm_120) none of those three
+    applies, so the next candidate is the GEMM itself: the sm120 CUTLASS FP8 dispatch and cuBLAS both choose kernels by
+    M (the swap-AB / small-M path we hit in PR #55180's test oracle), so an M=1 decode row and the same row inside an M=8
+    verification block need not be bit-identical. `tools/gemm_m_invariance.py` (runner `gemminv`, queued behind the
+    union runs) measures exactly that on the model's dense shapes for per-channel FP8, blockwise FP8 and BF16 cuBLAS.
+    Reply drafted (`notes/upstream/comment-54928-reply-windless.md`), to be posted with the GEMM result after a go.

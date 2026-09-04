@@ -941,6 +941,9 @@ stack-independent multiplier is the warm prefix cache (everyone reports ~10× on
 - **#54882 merged 09-03 17:09**: FP8 PLE loading in mixed ModelOpt checkpoints (in `qwen4_exp/nvidia/ple_layer.py`)
   — this is our `tools/main/ple_gate_patch.py`; obsolete on the next main rebuild (our venv predates the merge).
 - #54129 (Trosfy, mmap PLE, `VLLM_PLE_MMAP`) still open, 24 comments, active 09-03. #53899 (offload worker) open.
+- #54928 update 09-04 16:45: Windless84 (sm_120, stock 0.28.0, 27B-FP8) shows E == V != A at the first divergence — the
+  verifier's block forward ranks differently than the single-token forward; eager does not help; GDN refuses batch-invariant
+  mode. Finding 109; GEMM M-invariance microtest queued (`gemminv`).
 - Issues: #54928 "DFlash2 changes greedy Qwen3.8 output at token 30, incl. K=1 and eager" (BF16, 4×24 GB; one
   reply offering to trace) — same shape as our "diverges from ~30 tokens" findings, but on a BF16 27B, so not the
   NVFP4 finalize; our per-position acceptance and logprob-divergence tools would apply. #54919 long-prefill
