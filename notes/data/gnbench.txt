@@ -1,0 +1,246 @@
+preflight OK 15:33
+=== start a 15:33 ===
+cutedsl kernel imported
+== in_proj_qkv    N=10240 K= 2560 M= 4096 w= 25.0MiB | cutlass full   1242.4 us  172.8 TF | chunk4096   2001.7 us  107.3 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   2130.0 us  100.8 TF  x0.58 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   5073.5 us   42.3 TF  x0.24 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   2064.5 us  104.0 TF  x0.60 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   2034.2 us  105.6 TF  x0.61 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   2239.2 us   95.9 TF  x0.55 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   2560.8 us   83.9 TF  x0.49 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   2172.0 us   98.9 TF  x0.57 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   3291.0 us   65.3 TF  x0.38  maxdiff 0.0000
+   cutedsl sm120 1d2d:   1477.8 us  145.3 TF  x0.84  maxdiff 0.0000
+== in_proj_qkv    N=10240 K= 2560 M= 8192 w= 25.0MiB | cutlass full   4783.9 us   89.8 TF | chunk4096   4156.0 us  103.3 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   4240.4 us  101.3 TF  x1.13 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   9882.2 us   43.5 TF  x0.48 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   4247.3 us  101.1 TF  x1.13 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   4261.9 us  100.8 TF  x1.12 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   4618.6 us   93.0 TF  x1.04 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   5211.2 us   82.4 TF  x0.92 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   4445.9 us   96.6 TF  x1.08 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   6484.3 us   66.2 TF  x0.74  maxdiff 0.0000
+   cutedsl sm120 1d2d:   4375.4 us   98.2 TF  x1.09  maxdiff 0.0000
+== in_proj_qkv    N=10240 K= 2560 M=16384 w= 25.0MiB | cutlass full  13345.5 us   64.4 TF | chunk4096   8305.1 us  103.4 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   8497.0 us  101.1 TF  x1.57 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  19523.7 us   44.0 TF  x0.68 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   8563.5 us  100.3 TF  x1.56 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   8544.2 us  100.5 TF  x1.56 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   9331.1 us   92.1 TF  x1.43 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  10267.3 us   83.7 TF  x1.30 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   9008.6 us   95.4 TF  x1.48 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  12958.4 us   66.3 TF  x1.03  maxdiff 0.0000
+   cutedsl sm120 1d2d:  16857.7 us   51.0 TF  x0.79  maxdiff 0.0000
+== q_proj         N=12288 K= 2560 M= 4096 w= 30.0MiB | cutlass full   1496.7 us  172.2 TF | chunk4096   2496.9 us  103.2 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   2549.2 us  101.1 TF  x0.59 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   5911.5 us   43.6 TF  x0.25 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   2603.2 us   99.0 TF  x0.57 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   2628.9 us   98.0 TF  x0.57 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   2805.3 us   91.9 TF  x0.53 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   3096.5 us   83.2 TF  x0.48 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   2696.6 us   95.6 TF  x0.56 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   3866.1 us   66.7 TF  x0.39  maxdiff 0.0000
+   cutedsl sm120 1d2d:   1804.0 us  142.9 TF  x0.83  maxdiff 0.0000
+== q_proj         N=12288 K= 2560 M= 8192 w= 30.0MiB | cutlass full   5321.1 us   96.9 TF | chunk4096   4921.8 us  104.7 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   5116.9 us  100.7 TF  x1.04 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  11662.5 us   44.2 TF  x0.46 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   5153.4 us  100.0 TF  x1.03 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   5129.5 us  100.5 TF  x1.04 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   5570.9 us   92.5 TF  x0.96 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   6094.7 us   84.6 TF  x0.87 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   5287.8 us   97.5 TF  x1.01 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   7803.9 us   66.0 TF  x0.68  maxdiff 0.0000
+   cutedsl sm120 1d2d:   4938.5 us  104.4 TF  x1.08  maxdiff 0.0000
+== q_proj         N=12288 K= 2560 M=16384 w= 30.0MiB | cutlass full  19320.3 us   53.4 TF | chunk4096   9992.2 us  103.2 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:  10346.0 us   99.6 TF  x1.87 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  23644.8 us   43.6 TF  x0.82 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:  10302.6 us  100.1 TF  x1.88 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:  10322.1 us   99.9 TF  x1.87 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:  11127.6 us   92.6 TF  x1.74 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  12198.4 us   84.5 TF  x1.58 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:  10644.4 us   96.8 TF  x1.82 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  15602.5 us   66.1 TF  x1.24  maxdiff 0.0000
+   cutedsl sm120 1d2d:  20663.5 us   49.9 TF  x0.93  maxdiff 0.0000
+== f67 16384x2560 N=16384 K= 2560 M= 4096 w= 40.0MiB | cutlass full   2101.3 us  163.5 TF | chunk4096   3319.4 us  103.5 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   3416.7 us  100.6 TF  x0.62 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   8001.2 us   42.9 TF  x0.26 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   3427.3 us  100.3 TF  x0.61 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   3514.8 us   97.8 TF  x0.60 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   3842.3 us   89.4 TF  x0.55 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   4107.7 us   83.6 TF  x0.51 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   3547.3 us   96.9 TF  x0.59 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   5158.2 us   66.6 TF  x0.41  maxdiff 0.0000
+   cutedsl sm120 1d2d:   2465.3 us  139.4 TF  x0.85  maxdiff 0.0000
+== f67 16384x2560 N=16384 K= 2560 M= 8192 w= 40.0MiB | cutlass full   7441.8 us   92.3 TF | chunk4096   6468.3 us  106.2 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   6831.6 us  100.6 TF  x1.09 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  15538.6 us   44.2 TF  x0.48 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   6878.8 us   99.9 TF  x1.08 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   6829.5 us  100.6 TF  x1.09 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   7428.1 us   92.5 TF  x1.00 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   8198.9 us   83.8 TF  x0.91 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   7155.6 us   96.0 TF  x1.04 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  10449.0 us   65.8 TF  x0.71  maxdiff 0.0000
+   cutedsl sm120 1d2d:   7086.3 us   97.0 TF  x1.05  maxdiff 0.0000
+== f67 16384x2560 N=16384 K= 2560 M=16384 w= 40.0MiB | cutlass full  26187.8 us   52.5 TF | chunk4096  13234.1 us  103.9 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:  13644.7 us  100.7 TF  x1.92 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  31192.6 us   44.1 TF  x0.84 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:  13742.2 us  100.0 TF  x1.91 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:  13656.7 us  100.6 TF  x1.92 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:  15086.0 us   91.1 TF  x1.74 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  16326.5 us   84.2 TF  x1.60 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:  14192.6 us   96.8 TF  x1.85 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  20680.9 us   66.5 TF  x1.27  maxdiff 0.0000
+   cutedsl sm120 1d2d:  27642.7 us   49.7 TF  x0.95  maxdiff 0.0000
+== f67 5120x5120  N= 5120 K= 5120 M= 4096 w= 25.0MiB | cutlass full   1699.9 us  126.3 TF | chunk4096   2002.6 us  107.2 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   2142.6 us  100.2 TF  x0.79 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   5118.2 us   42.0 TF  x0.33 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   2035.3 us  105.5 TF  x0.84 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   2135.6 us  100.6 TF  x0.80 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   2240.6 us   95.8 TF  x0.76 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   2575.2 us   83.4 TF  x0.66 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   2097.1 us  102.4 TF  x0.81 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   3295.1 us   65.2 TF  x0.52  maxdiff 0.0000
+   cutedsl sm120 1d2d:   1807.2 us  118.8 TF  x0.94  maxdiff 0.0000
+== f67 5120x5120  N= 5120 K= 5120 M= 8192 w= 25.0MiB | cutlass full   5710.0 us   75.2 TF | chunk4096   4477.7 us   95.9 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   4362.7 us   98.4 TF  x1.31 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   9790.2 us   43.9 TF  x0.58 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   4371.8 us   98.2 TF  x1.31 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   4279.8 us  100.4 TF  x1.33 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   4604.8 us   93.3 TF  x1.24 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   5106.8 us   84.1 TF  x1.12 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   4415.7 us   97.3 TF  x1.29 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   6438.1 us   66.7 TF  x0.89  maxdiff 0.0000
+   cutedsl sm120 1d2d:   8292.6 us   51.8 TF  x0.69  maxdiff 0.0000
+== f67 5120x5120  N= 5120 K= 5120 M=16384 w= 25.0MiB | cutlass full  11893.3 us   72.2 TF | chunk4096   9765.4 us   88.0 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   8417.9 us  102.0 TF  x1.41 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  19481.0 us   44.1 TF  x0.61 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   8476.9 us  101.3 TF  x1.40 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   8636.9 us   99.5 TF  x1.38 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   9169.6 us   93.7 TF  x1.30 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  10015.6 us   85.8 TF  x1.19 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   8715.5 us   98.6 TF  x1.36 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  12883.1 us   66.7 TF  x0.92  maxdiff 0.0000
+   cutedsl sm120 1d2d:  16455.9 us   52.2 TF  x0.72  maxdiff 0.0000
+=== start b 15:34 ===
+cutedsl kernel imported
+== in_proj_qkv    N=10240 K= 2560 M= 4096 w= 25.0MiB | cutlass full   1223.5 us  175.5 TF | chunk4096   2000.9 us  107.3 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   2100.9 us  102.2 TF  x0.58 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   5087.6 us   42.2 TF  x0.24 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   2196.1 us   97.8 TF  x0.56 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   2207.7 us   97.3 TF  x0.55 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   2325.7 us   92.3 TF  x0.53 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   2616.1 us   82.1 TF  x0.47 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   2235.2 us   96.1 TF  x0.55 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   3288.5 us   65.3 TF  x0.37  maxdiff 0.0000
+   cutedsl sm120 1d2d:   1489.3 us  144.2 TF  x0.82  maxdiff 0.0000
+== in_proj_qkv    N=10240 K= 2560 M= 8192 w= 25.0MiB | cutlass full   4730.0 us   90.8 TF | chunk4096   4170.9 us  103.0 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   4281.0 us  100.3 TF  x1.10 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   9949.5 us   43.2 TF  x0.48 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   4272.9 us  100.5 TF  x1.11 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   4416.8 us   97.2 TF  x1.07 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   4661.8 us   92.1 TF  x1.01 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   5106.4 us   84.1 TF  x0.93 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   4561.8 us   94.2 TF  x1.04 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   6552.1 us   65.6 TF  x0.72  maxdiff 0.0000
+   cutedsl sm120 1d2d:   4285.8 us  100.2 TF  x1.10  maxdiff 0.0000
+== in_proj_qkv    N=10240 K= 2560 M=16384 w= 25.0MiB | cutlass full  14344.4 us   59.9 TF | chunk4096   8246.3 us  104.2 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   8584.8 us  100.1 TF  x1.67 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  19642.5 us   43.7 TF  x0.73 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   8616.0 us   99.7 TF  x1.66 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   8676.8 us   99.0 TF  x1.65 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   9468.8 us   90.7 TF  x1.51 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  10263.6 us   83.7 TF  x1.40 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   9006.4 us   95.4 TF  x1.59 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  13096.5 us   65.6 TF  x1.10  maxdiff 0.0000
+   cutedsl sm120 1d2d:  17217.8 us   49.9 TF  x0.83  maxdiff 0.0000
+== q_proj         N=12288 K= 2560 M= 4096 w= 30.0MiB | cutlass full   1476.3 us  174.6 TF | chunk4096   2454.1 us  105.0 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   2525.9 us  102.0 TF  x0.58 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   5945.4 us   43.3 TF  x0.25 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   2614.2 us   98.6 TF  x0.56 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   2684.2 us   96.0 TF  x0.55 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   2817.7 us   91.5 TF  x0.52 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   3092.3 us   83.3 TF  x0.48 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   2660.2 us   96.9 TF  x0.55 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   3972.0 us   64.9 TF  x0.37  maxdiff 0.0000
+   cutedsl sm120 1d2d:   1867.8 us  138.0 TF  x0.79  maxdiff 0.0000
+== q_proj         N=12288 K= 2560 M= 8192 w= 30.0MiB | cutlass full   6017.5 us   85.6 TF | chunk4096   4977.5 us  103.5 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   5158.9 us   99.9 TF  x1.17 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  11930.4 us   43.2 TF  x0.50 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   5196.2 us   99.2 TF  x1.16 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   5295.0 us   97.3 TF  x1.14 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   5630.1 us   91.5 TF  x1.07 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   6165.2 us   83.6 TF  x0.98 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   5459.9 us   94.4 TF  x1.10 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   7870.3 us   65.5 TF  x0.76  maxdiff 0.0000
+   cutedsl sm120 1d2d:   5359.6 us   96.2 TF  x1.12  maxdiff 0.0000
+== q_proj         N=12288 K= 2560 M=16384 w= 30.0MiB | cutlass full  19555.4 us   52.7 TF | chunk4096  10013.5 us  102.9 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:  10303.9 us  100.0 TF  x1.90 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  23667.9 us   43.6 TF  x0.83 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:  10389.0 us   99.2 TF  x1.88 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:  10404.5 us   99.1 TF  x1.88 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:  11232.9 us   91.8 TF  x1.74 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  12467.1 us   82.7 TF  x1.57 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:  10658.4 us   96.7 TF  x1.83 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  15795.1 us   65.3 TF  x1.24  maxdiff 0.0000
+   cutedsl sm120 1d2d:  20572.9 us   50.1 TF  x0.95  maxdiff 0.0000
+== f67 16384x2560 N=16384 K= 2560 M= 4096 w= 40.0MiB | cutlass full   2058.1 us  167.0 TF | chunk4096   3309.0 us  103.8 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   3440.4 us   99.9 TF  x0.60 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   7870.8 us   43.7 TF  x0.26 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   3599.0 us   95.5 TF  x0.57 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   3526.4 us   97.4 TF  x0.58 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   3782.9 us   90.8 TF  x0.54 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   4145.3 us   82.9 TF  x0.50 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   3671.9 us   93.6 TF  x0.56 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   5260.9 us   65.3 TF  x0.39  maxdiff 0.0000
+   cutedsl sm120 1d2d:   2490.2 us  138.0 TF  x0.83  maxdiff 0.0000
+== f67 16384x2560 N=16384 K= 2560 M= 8192 w= 40.0MiB | cutlass full   7059.6 us   97.3 TF | chunk4096   6612.8 us  103.9 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   6875.7 us   99.9 TF  x1.03 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  15769.0 us   43.6 TF  x0.45 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   6928.1 us   99.2 TF  x1.02 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   6954.6 us   98.8 TF  x1.02 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   7527.6 us   91.3 TF  x0.94 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   8238.7 us   83.4 TF  x0.86 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   7146.0 us   96.2 TF  x0.99 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  10427.1 us   65.9 TF  x0.68  maxdiff 0.0000
+   cutedsl sm120 1d2d:   6458.6 us  106.4 TF  x1.09  maxdiff 0.0000
+== f67 16384x2560 N=16384 K= 2560 M=16384 w= 40.0MiB | cutlass full  26450.8 us   52.0 TF | chunk4096  13371.8 us  102.8 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:  13744.9 us  100.0 TF  x1.92 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  31198.7 us   44.1 TF  x0.85 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:  13820.2 us   99.4 TF  x1.91 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:  13851.7 us   99.2 TF  x1.91 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:  15154.9 us   90.7 TF  x1.75 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  16446.0 us   83.6 TF  x1.61 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:  14183.9 us   96.9 TF  x1.86 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  20799.6 us   66.1 TF  x1.27  maxdiff 0.0000
+   cutedsl sm120 1d2d:  27357.0 us   50.2 TF  x0.97  maxdiff 0.0000
+== f67 5120x5120  N= 5120 K= 5120 M= 4096 w= 25.0MiB | cutlass full   1921.1 us  111.8 TF | chunk4096   2359.8 us   91.0 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   2104.8 us  102.0 TF  x0.91 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   4998.0 us   43.0 TF  x0.38 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   2120.1 us  101.3 TF  x0.91 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   2156.8 us   99.6 TF  x0.89 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   2425.1 us   88.6 TF  x0.79 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   2525.8 us   85.0 TF  x0.76 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   2280.6 us   94.2 TF  x0.84 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   3269.6 us   65.7 TF  x0.59  maxdiff 0.0000
+   cutedsl sm120 1d2d:   1892.3 us  113.5 TF  x1.02  maxdiff 0.0000
+== f67 5120x5120  N= 5120 K= 5120 M= 8192 w= 25.0MiB | cutlass full   5541.2 us   77.5 TF | chunk4096   4552.9 us   94.3 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   4243.1 us  101.2 TF  x1.31 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:   9934.0 us   43.2 TF  x0.56 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   4280.4 us  100.3 TF  x1.29 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   4275.1 us  100.5 TF  x1.30 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   4746.4 us   90.5 TF  x1.17 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:   5020.7 us   85.5 TF  x1.10 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   4512.4 us   95.2 TF  x1.23 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:   6460.2 us   66.5 TF  x0.86  maxdiff 0.0000
+   cutedsl sm120 1d2d:   8381.0 us   51.2 TF  x0.66  maxdiff 0.0000
+== f67 5120x5120  N= 5120 K= 5120 M=16384 w= 25.0MiB | cutlass full  11140.7 us   77.1 TF | chunk4096   8964.7 us   95.8 TF
+   triton BM=128 BN=64 G= 8 w=4 s=3:   8463.9 us  101.5 TF  x1.32 vs full  maxdiff 0.0000
+   triton BM=128 BN=128 G= 8 w=4 s=3:  19635.9 us   43.7 TF  x0.57 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 4 w=4 s=3:   8526.9 us  100.7 TF  x1.31 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G=16 w=4 s=3:   8500.2 us  101.1 TF  x1.31 vs full  maxdiff 0.0000
+   triton BM=64 BN=64 G= 8 w=4 s=3:   9370.4 us   91.7 TF  x1.19 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=8 s=3:  10055.4 us   85.4 TF  x1.11 vs full  maxdiff 0.0000
+   triton BM=128 BN=64 G= 8 w=4 s=2:   8878.5 us   96.8 TF  x1.25 vs full  maxdiff 0.0000
+   triton dot_scaled BM=128 BN=64 G=8:  13036.6 us   65.9 TF  x0.85  maxdiff 0.0000
+   cutedsl sm120 1d2d:  16640.9 us   51.6 TF  x0.67  maxdiff 0.0000
+== ALL DONE ==

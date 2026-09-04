@@ -424,3 +424,22 @@
     Also seen: with the 2 GiB KV pool (23 blocks) the sweep's 24 seeds evicted each other's last block —
     the first request after an eviction pays one block (0.9 s); medians are quoted.
 
+99. **gau-nernst's blockwise-FP8 kernels on GB10 (`gnbench`, two starts, standalone, `notes/data/gnbench.txt`):
+    neither beats CUTLASS-in-L2 nor chunking; each has half of the answer.** TFLOPS, start a / b within 3 %:
+
+    | shape, weight | M | CUTLASS single launch | their Triton (swizzle 8) | their CuteDSL sm120 | PR #55180 C++ chunking (finding 75) |
+    | --- | --- | --- | --- | --- | --- |
+    | in_proj_qkv 10240×2560, 25 MiB | 4k / 8k / 16k | **173** / 90 / 64 | 101 / 101 / 101 | 145 / 98 / 51 | 155–170 at every M |
+    | q_proj 12288×2560, 30 MiB | 4k / 8k / 16k | **172** / 97 / 53 | 101 / 101 / 100 | 143 / 104 / 50 | " |
+    | 16384×2560, 40 MiB | 4k / 8k / 16k | **164** / 92 / 52 | 101 / 101 / 101 | 139 / 97 / 50 | " |
+    | 5120×5120, 25 MiB | 4k / 8k / 16k | 126 / 75 / 72 | 100 / 98 / **102** | 119 / 52 / 52 | " |
+
+    All bit-identical to CUTLASS (max|diff| 0). The Triton kernel's `swizzle2d` raster is what a GB10 kernel
+    needs — flat at every M, 1.9× the collapsed CUTLASS at 16k — but its mainloop tops out at ~100 TF (Triton's
+    FP8 `tl.dot` on sm_121; `dot_scaled` is worse, 66 TF). The CuteDSL kernel has the mainloop (145 TF at 4k,
+    0.84× CUTLASS) but no L2-aware raster, so it collapses exactly like CUTLASS (98 → 51). The kernel that would
+    beat chunking is the CuteDSL mainloop with the Triton kernel's swizzle — not built by anyone yet. Bench
+    caveat: the Python "chunk4096" column here (103–107 TF) carries a per-chunk output copy (~0.7 ms), the C++
+    op in the PR writes in place (finding 75: 155–170 TF). Tile sweep: BN=128 halves throughput (42 TF, smem),
+    BM=64 −5 %, 8 warps −17 %, swizzle group 4/8/16 within 3 %.
+
