@@ -1,4 +1,4 @@
-diff -ruN '--exclude=*.orig' newtree/vllm/compilation/passes/utility/fix_functionalization.py newtree2/vllm/compilation/passes/utility/fix_functionalization.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/compilation/passes/utility/fix_functionalization.py newtree2/vllm/compilation/passes/utility/fix_functionalization.py
 --- newtree/vllm/compilation/passes/utility/fix_functionalization.py	2026-09-04 15:37:23.818088462 +0200
 +++ newtree2/vllm/compilation/passes/utility/fix_functionalization.py	2026-09-04 15:37:57.268711685 +0200
 @@ -172,6 +172,15 @@
@@ -17,7 +17,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/compilation/passes/utility/fix_functio
                  hasattr(torch.ops.vllm, "fused_rope_and_unified_kv_cache_update")
                  and at_target
                  == torch.ops.vllm.fused_rope_and_unified_kv_cache_update.default
-diff -ruN '--exclude=*.orig' newtree/vllm/config/parallel.py newtree2/vllm/config/parallel.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/config/parallel.py newtree2/vllm/config/parallel.py
 --- newtree/vllm/config/parallel.py	2026-09-04 15:37:24.059914851 +0200
 +++ newtree2/vllm/config/parallel.py	2026-09-04 15:37:57.268956501 +0200
 @@ -17,7 +17,7 @@
@@ -57,7 +57,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/config/parallel.py newtree2/vllm/confi
              # NUMA binding is per-rank host-side memory locality; it does
              # not affect collective-communication semantics. When numa_bind
              # is enabled with auto-detection, each DP rank stores its own
-diff -ruN '--exclude=*.orig' newtree/vllm/envs.py newtree2/vllm/envs.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/envs.py newtree2/vllm/envs.py
 --- newtree/vllm/envs.py	2026-09-04 15:37:24.348914801 +0200
 +++ newtree2/vllm/envs.py	2026-09-04 15:37:57.269236341 +0200
 @@ -299,6 +299,8 @@
@@ -85,7 +85,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/envs.py newtree2/vllm/envs.py
      # Log model inspection after loading.
      # If enabled, logs a transformers-style hierarchical view of the model
      # with quantization methods and attention backends.
-diff -ruN '--exclude=*.orig' newtree/vllm/model_executor/layers/ple_offload_layer.py newtree2/vllm/model_executor/layers/ple_offload_layer.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/model_executor/layers/ple_offload_layer.py newtree2/vllm/model_executor/layers/ple_offload_layer.py
 --- newtree/vllm/model_executor/layers/ple_offload_layer.py	1970-01-01 01:00:00.000000000 +0100
 +++ newtree2/vllm/model_executor/layers/ple_offload_layer.py	2026-09-04 15:37:57.269706901 +0200
 @@ -0,0 +1,270 @@
@@ -359,7 +359,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/model_executor/layers/ple_offload_laye
 +        """Mark the cross-process output buffer reusable on ``stream``."""
 +        if self._is_cpu_offloaded:
 +            self._sem.reset(stream)
-diff -ruN '--exclude=*.orig' newtree/vllm/model_executor/layers/vocab_parallel_embedding.py newtree2/vllm/model_executor/layers/vocab_parallel_embedding.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/model_executor/layers/vocab_parallel_embedding.py newtree2/vllm/model_executor/layers/vocab_parallel_embedding.py
 --- newtree/vllm/model_executor/layers/vocab_parallel_embedding.py	2026-09-04 15:37:24.828914717 +0200
 +++ newtree2/vllm/model_executor/layers/vocab_parallel_embedding.py	2026-09-04 15:37:57.269807285 +0200
 @@ -479,6 +479,23 @@
@@ -386,7 +386,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/model_executor/layers/vocab_parallel_e
          # If param packed on the same dim we are sharding on, then
          # need to adjust offsets of loaded weight by pack_factor.
          if packed_dim is not None and packed_dim == output_dim:
-diff -ruN '--exclude=*.orig' newtree/vllm/model_executor/model_loader/weight_utils.py newtree2/vllm/model_executor/model_loader/weight_utils.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/model_executor/model_loader/weight_utils.py newtree2/vllm/model_executor/model_loader/weight_utils.py
 --- newtree/vllm/model_executor/model_loader/weight_utils.py	2026-09-04 15:37:25.095914671 +0200
 +++ newtree2/vllm/model_executor/model_loader/weight_utils.py	2026-09-04 15:37:57.269980197 +0200
 @@ -60,6 +60,7 @@
@@ -406,9 +406,9 @@ diff -ruN '--exclude=*.orig' newtree/vllm/model_executor/model_loader/weight_uti
  
      sorted_files = sorted(hf_weights_files, key=_natural_sort_key)
  
-diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/model.py newtree2/vllm/models/qwen4_exp/nvidia/model.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/models/qwen4_exp/nvidia/model.py newtree2/vllm/models/qwen4_exp/nvidia/model.py
 --- newtree/vllm/models/qwen4_exp/nvidia/model.py	2026-09-04 15:37:25.379914621 +0200
-+++ newtree2/vllm/models/qwen4_exp/nvidia/model.py	2026-09-04 15:37:57.270200581 +0200
++++ newtree2/vllm/models/qwen4_exp/nvidia/model.py	2026-09-04 15:56:49.923393319 +0200
 @@ -649,6 +649,7 @@
          self.lm_head = ParallelLMHead(
              config.vocab_size,
@@ -417,7 +417,25 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/model.py newtr
              prefix=maybe_prefix(prefix, "lm_head"),
          )
          self.logits_processor = LogitsProcessor(config.vocab_size)
-diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/mtp.py newtree2/vllm/models/qwen4_exp/nvidia/mtp.py
+@@ -1025,6 +1026,17 @@
+             self,
+             ignore_unexpected_suffixes=_QWEN4_EXP_IGNORED_MISSING_SUFFIXES.copy(),
+         )
++        # ---- SCALEINV (jschmied 2026-09-03): ModelOpt FP8_PB_WO exports name the block
++        # scale `weight_scale_inv` (rank-2 [N/128, K/128]); vLLM expects `weight_scale`
++        # shaped [ob, 1, ib, 1]. Same quantity, "_inv" is a naming legacy (verified).
++        def _scaleinv(ws):
++            for name, w in ws:
++                if name.endswith("weight_scale_inv") and w.dim() == 2:
++                    yield name[: -len("_inv")], w.reshape(w.shape[0], 1, w.shape[1], 1)
++                else:
++                    yield name, w
++        weights = _scaleinv(weights)
++        # ---- end SCALEINV ----
+         return loader.load_weights(weights, mapper=mapper)
+ 
+     @classmethod
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/models/qwen4_exp/nvidia/mtp.py newtree2/vllm/models/qwen4_exp/nvidia/mtp.py
 --- newtree/vllm/models/qwen4_exp/nvidia/mtp.py	2026-09-04 15:37:25.694914566 +0200
 +++ newtree2/vllm/models/qwen4_exp/nvidia/mtp.py	2026-09-04 15:37:57.270334405 +0200
 @@ -403,6 +403,7 @@
@@ -446,9 +464,9 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/mtp.py newtree
  
  
  __all__ = ["Qwen4ExpMTP", "Qwen4ExpMultiTokenPredictor"]
-diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py newtree2/vllm/models/qwen4_exp/nvidia/ple_layer.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py newtree2/vllm/models/qwen4_exp/nvidia/ple_layer.py
 --- newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py	2026-09-04 15:37:26.034914506 +0200
-+++ newtree2/vllm/models/qwen4_exp/nvidia/ple_layer.py	2026-09-04 15:39:02.999879314 +0200
++++ newtree2/vllm/models/qwen4_exp/nvidia/ple_layer.py	2026-09-04 15:56:49.912449397 +0200
 @@ -8,8 +8,10 @@
  import torch.nn.functional as F
  from torch import nn
@@ -496,7 +514,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
  from .ops.ple import ple_conv, ple_gate, ple_ngram_ids
  
  
-@@ -130,38 +140,215 @@
+@@ -130,38 +140,219 @@
          return F.embedding(input_, layer.weight)
  
  
@@ -618,6 +636,10 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
      if isinstance(quant_config, ModelOptMixedPrecisionConfig):
          if quant_config._resolve_quant_algo(prefix) == "FP8":
              return Qwen4ExpPLEFp8EmbeddingMethod()
++        # Checkpoints that list the PLE under `exclude_modules` (e.g. the fp8head build:
++        # `*.ple.*`) still ship F8_E4M3 shards + one global scale: trust the config dtype.
++        if _ple_dtype_is_fp8(ple_embedding_dtype):
++            return Qwen4ExpPLEFp8EmbeddingMethod()
          return None
  
 -    if not isinstance(quant_config, Fp8Config):
@@ -731,7 +753,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
      _MASK64 = (1 << 64) - 1
      _SPLITMIX_GAMMA = 0x9E3779B97F4A7C15
      _SPLITMIX_M1 = 0xBF58476D1CE4E5B9
-@@ -326,7 +513,9 @@
+@@ -326,7 +517,9 @@
              padding_size=divisor,
              prefix=f"{prefix}.ngram_embedding",
              quant_method=_get_ple_embedding_quant_method(
@@ -742,7 +764,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
              ),
          )
  
-@@ -439,31 +628,153 @@
+@@ -439,31 +632,153 @@
              id_blocks.append(ids[request_indices, adjusted_columns])
          return torch.cat(id_blocks, dim=-1)
  
@@ -912,7 +934,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
          persistent_buffers = {
              "layer_multipliers": self.layer_multipliers,
              "ngram_heads_offsets": self.ngram_heads_offsets,
-@@ -472,6 +783,11 @@
+@@ -472,6 +787,11 @@
          loaded: set[str] = set()
          regular_weights: list[tuple[str, torch.Tensor]] = []
          shard_prefix = "ngram_embedding.shard_"
@@ -924,7 +946,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
  
          for name, loaded_weight in weights:
              leaf_name = name.rsplit(".", 1)[-1]
-@@ -487,7 +803,34 @@
+@@ -487,7 +807,34 @@
                  buffer.copy_(loaded_weight.to(device=buffer.device, dtype=buffer.dtype))
                  loaded.add(name)
                  continue
@@ -960,7 +982,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
                  shard_text = name[len(shard_prefix) : -len(".weight")]
                  if not shard_text.isdigit():
                      regular_weights.append((name, loaded_weight))
-@@ -523,6 +866,67 @@
+@@ -523,6 +870,67 @@
                  continue
              regular_weights.append((name, loaded_weight))
  
@@ -1028,7 +1050,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
          if regular_weights:
              loaded.update(AutoWeightsLoader(self).load_weights(regular_weights))
          return loaded
-@@ -551,6 +955,11 @@
+@@ -551,6 +959,11 @@
          )
          self.prefix = prefix
          self.hidden_size = int(config.hidden_size)
@@ -1040,7 +1062,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
          self.hc_count = config.hc_count
          self.hc_hidden_size = self.hidden_size * self.hc_count
          self.conv_kernel_size = int(config.ple_conv_kernel_size)
-@@ -558,15 +967,26 @@
+@@ -558,15 +971,26 @@
          self.conv_state_len = (self.conv_kernel_size - 1) * self.short_conv_dilation
          self.num_spec_tokens = vllm_config.num_speculative_tokens
          self.activation = "silu"
@@ -1076,7 +1098,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
          # The PLE cache is TP-replicated, so this merged projection is too.
          self.kv_proj = MergedColumnParallelLinear(
              int(config.ple_embed_dim),
-@@ -606,7 +1026,10 @@
+@@ -606,7 +1030,10 @@
  
      def _get_embedding_weight_scale(self) -> torch.Tensor | None:
          embedding = getattr(self.ple_embedding, "ngram_embedding", None)
@@ -1088,7 +1110,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
  
      def _dequantize_embeddings(
          self,
-@@ -615,6 +1038,45 @@
+@@ -615,6 +1042,45 @@
      ) -> torch.Tensor:
          """Dequantize PLE lookup output."""
  
@@ -1134,7 +1156,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
          if not is_fp8(embeddings):
              return embeddings
          weight_scale = self._get_embedding_weight_scale()
-@@ -841,7 +1303,13 @@
+@@ -841,7 +1307,13 @@
                  f"token length, got {input_ids.shape[0]} and "
                  f"{hidden_states.shape[0]}"
              )
@@ -1149,7 +1171,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
          embeddings = self._dequantize_embeddings(embeddings, hidden_states.dtype)
          kv, _ = self.kv_proj(embeddings)
          key, value = kv.split(self.kv_proj.output_sizes, dim=-1)
-@@ -920,8 +1388,66 @@
+@@ -920,8 +1392,66 @@
  )
  
  
@@ -1217,7 +1239,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/models/qwen4_exp/nvidia/ple_layer.py n
      "Qwen4ExpPLELayer",
  ]
 Binärdateien newtree/vllm/models/qwen4_exp/nvidia/__pycache__/ple_layer.cpython-312.pyc und newtree2/vllm/models/qwen4_exp/nvidia/__pycache__/ple_layer.cpython-312.pyc sind verschieden.
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/executor/multiproc_executor.py newtree2/vllm/v1/executor/multiproc_executor.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/executor/multiproc_executor.py newtree2/vllm/v1/executor/multiproc_executor.py
 --- newtree/vllm/v1/executor/multiproc_executor.py	2026-09-04 15:37:26.649914397 +0200
 +++ newtree2/vllm/v1/executor/multiproc_executor.py	2026-09-04 15:37:57.270901045 +0200
 @@ -670,6 +670,8 @@
@@ -1238,7 +1260,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/v1/executor/multiproc_executor.py newt
  
          scheduler_config = vllm_config.scheduler_config
          self.use_async_scheduling = scheduler_config.async_scheduling
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/executor/uniproc_executor.py newtree2/vllm/v1/executor/uniproc_executor.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/executor/uniproc_executor.py newtree2/vllm/v1/executor/uniproc_executor.py
 --- newtree/vllm/v1/executor/uniproc_executor.py	2026-09-04 15:37:26.904958304 +0200
 +++ newtree2/vllm/v1/executor/uniproc_executor.py	2026-09-04 15:37:57.271065893 +0200
 @@ -68,10 +68,15 @@
@@ -1257,7 +1279,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/v1/executor/uniproc_executor.py newtre
          current_platform.update_block_size_for_backend(self.vllm_config)
  
      def _distributed_args(self) -> tuple[str, int, int]:
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/ple_offload/connector.py newtree2/vllm/v1/ple_offload/connector.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/ple_offload/connector.py newtree2/vllm/v1/ple_offload/connector.py
 --- newtree/vllm/v1/ple_offload/connector.py	1970-01-01 01:00:00.000000000 +0100
 +++ newtree2/vllm/v1/ple_offload/connector.py	2026-09-04 15:37:57.271248757 +0200
 @@ -0,0 +1,433 @@
@@ -1694,13 +1716,13 @@ diff -ruN '--exclude=*.orig' newtree/vllm/v1/ple_offload/connector.py newtree2/v
 +        if self._zmq_ctx is not None:
 +            self._zmq_ctx.term()
 +            self._zmq_ctx = None
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/ple_offload/__init__.py newtree2/vllm/v1/ple_offload/__init__.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/ple_offload/__init__.py newtree2/vllm/v1/ple_offload/__init__.py
 --- newtree/vllm/v1/ple_offload/__init__.py	1970-01-01 01:00:00.000000000 +0100
 +++ newtree2/vllm/v1/ple_offload/__init__.py	2026-09-04 15:37:57.271315669 +0200
 @@ -0,0 +1,2 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/ple_offload/protocol.py newtree2/vllm/v1/ple_offload/protocol.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/ple_offload/protocol.py newtree2/vllm/v1/ple_offload/protocol.py
 --- newtree/vllm/v1/ple_offload/protocol.py	1970-01-01 01:00:00.000000000 +0100
 +++ newtree2/vllm/v1/ple_offload/protocol.py	2026-09-04 15:37:57.271366053 +0200
 @@ -0,0 +1,40 @@
@@ -1744,7 +1766,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/v1/ple_offload/protocol.py newtree2/vl
 +
 +
 +_PLE_OFFLOAD_REQUEST_DECODER = msgspec.msgpack.Decoder(PleOffloadRequest)
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/ple_offload/worker.py newtree2/vllm/v1/ple_offload/worker.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/ple_offload/worker.py newtree2/vllm/v1/ple_offload/worker.py
 --- newtree/vllm/v1/ple_offload/worker.py	1970-01-01 01:00:00.000000000 +0100
 +++ newtree2/vllm/v1/ple_offload/worker.py	2026-09-04 15:37:57.271414869 +0200
 @@ -0,0 +1,679 @@
@@ -2427,7 +2449,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/v1/ple_offload/worker.py newtree2/vllm
 +                            result[slices], non_blocking=True
 +                        )
 +                        target.sem.signal(target.copy_stream)
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/worker/gpu/model_runner.py newtree2/vllm/v1/worker/gpu/model_runner.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/worker/gpu/model_runner.py newtree2/vllm/v1/worker/gpu/model_runner.py
 --- newtree/vllm/v1/worker/gpu/model_runner.py	2026-09-04 15:37:29.106913955 +0200
 +++ newtree2/vllm/v1/worker/gpu/model_runner.py	2026-09-04 15:37:57.271772629 +0200
 @@ -78,6 +78,7 @@
@@ -2531,7 +2553,7 @@ diff -ruN '--exclude=*.orig' newtree/vllm/v1/worker/gpu/model_runner.py newtree2
          self.cudagraph_manager = None
          if hasattr(self, "kv_caches"):
              self.kv_caches.clear()
-diff -ruN '--exclude=*.orig' newtree/vllm/v1/worker/gpu_worker.py newtree2/vllm/v1/worker/gpu_worker.py
+diff -ruN '--exclude=*.orig' '--exclude=*.rej' newtree/vllm/v1/worker/gpu_worker.py newtree2/vllm/v1/worker/gpu_worker.py
 --- newtree/vllm/v1/worker/gpu_worker.py	2026-09-04 15:37:29.367913907 +0200
 +++ newtree2/vllm/v1/worker/gpu_worker.py	2026-09-04 15:37:57.272047029 +0200
 @@ -9,7 +9,7 @@
