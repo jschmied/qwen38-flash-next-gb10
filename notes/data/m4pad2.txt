@@ -1,0 +1,20 @@
+  fp8m4pad INSTALLED in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/cutlass.py
+preflight OK 12:59 (preview venv, batch 8192, prefix off, no spec)
+=== P1_a (VLLM_FP8_PAD_M4=1) UP 13:11
+    (APIServer pid=1012817) FP8M4PAD active: 1
+  P1_a TTFT 8k: prompt_tokens=7503 median=2.84s  all=4.58 2.84 2.82
+  P1_a TTFT 30k: prompt_tokens=29263 median=11.28s  all=12.34 11.14 11.28
+=== P0_a (VLLM_FP8_PAD_M4=0) UP 13:23
+    (APIServer pid=1051698) FP8M4PAD active: 0
+  P0_a TTFT 8k: prompt_tokens=7503 median=5.03s  all=5.03 6.64 3.51
+  P0_a TTFT 30k: prompt_tokens=29263 median=13.52s  all=14.92 13.52 11.47
+=== P1_b (VLLM_FP8_PAD_M4=1) UP 13:35
+    (APIServer pid=1054943) FP8M4PAD active: 1
+  P1_b TTFT 8k: prompt_tokens=7503 median=2.84s  all=3.10 2.84 2.80
+  P1_b TTFT 30k: prompt_tokens=29263 median=11.16s  all=11.79 11.13 11.16
+=== P0_b (VLLM_FP8_PAD_M4=0) UP 13:46
+    (APIServer pid=1058285) FP8M4PAD active: 0
+  P0_b TTFT 8k: prompt_tokens=7503 median=3.51s  all=5.22 2.93 3.51
+  P0_b TTFT 30k: prompt_tokens=29263 median=11.72s  all=13.06 11.72 11.68
+  fp8m4pad REMOVED
+== ALL DONE ==

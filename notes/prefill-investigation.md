@@ -336,3 +336,22 @@
     with MTP + prefix caching should set it. For the preview image (blazux et al.) it is a 4-file
     port of #53388. Also: this run was the main build's first serve with MTP at all (finding 93).
 
+95. **Drop-in M%4 pad for the preview's blockwise-FP8 GEMM: validated at the server level (`m4pad2`,
+    preview venv, batch 8192, prefix cache off, no spec, two interleaved starts; `notes/data/m4pad2.txt`).**
+    `tools/main/fp8_m4pad_patch.py` v2 (M test inside the opaque custom op — see `failure-modes.md`):
+
+    | | patch on (a / b) | patch off (a / b) |
+    | --- | --- | --- |
+    | TTFT 8k, median of 3 | **2.84 / 2.84 s** | 5.03 / 3.51 s |
+    | 8k, all requests | 4.58 2.84 2.82 / 3.10 2.84 2.80 | 5.03 6.64 3.51 / 5.22 2.93 3.51 |
+    | TTFT 30k, median of 3 | **11.28 / 11.16 s** | 13.52 / 11.72 s |
+
+    With the pad the 8k number is 2.84 s on every non-warm-up request, the same value the request-level
+    padding gave (finding 69) and the same as the *fixed* main build (2.71 s, finding 74) within the
+    preview/main gap. Without it the stock kernel is not just slower but **bimodal** (2.9–6.6 s at 8k,
+    11.5–14.9 s at 30k): the swap_ab path's cost depends on how the scheduler happens to cut the chunk.
+    Effect on the shipped image at batch 8192: −40 % TTFT at 8k, −10–15 % at 30k, and batch 8192 is
+    strictly better than 4096 again. This supersedes the "batch 4096 + request padding" recommendation
+    (finding 70) for anyone on the vendor image: install the patch, run batch 8192. Handed to blazux
+    (posting-log item 21). The venv was reverted after the run.
+
