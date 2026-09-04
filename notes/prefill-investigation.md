@@ -550,3 +550,10 @@
     asserting test) are queued behind this run, then the v5 standalone (union from block ids, R-bit membership,
     pre-resolved physical pages, R=2 tile sweep).
 
+106. **Union v3 integrated, server level: −4 % TTFT at 8k, −1 % at 30k, two starts (`qsaunion6`,
+    `notes/data/qsaunion6.txt`).** 8k: 2.62 / 2.61 s on vs 2.72 / 2.73 off; 30k: 10.44 / 10.42 vs 10.55 / 10.56.
+    Standalone: 1.97× on the 8k chunk, 1.40× at 30k, 1.00 on the tail (gated off below 1,024 rows). v3 = exact-width
+    sort, one union chosen by the last row's max index, request read in-kernel, 1,024-row gate. Doubling of the
+    server gain vs v2 (finding 105) came from the halved precompute; the remaining gap to the finding-104 target
+    (~8 %) is the 4,096-wide build (three tail entries per row) and the R choice, which v4 removes.
+
