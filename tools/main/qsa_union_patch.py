@@ -155,9 +155,9 @@ def qsa_sparse_paged_attention_union(q, k_cache, v_cache, logical_indices, block
     rows = q.shape[0]
     token_topk = (logical_indices.shape[1] - (compress_ratio - 1))
     entries = _qsa_union_entries(logical_indices, compress_ratio, token_topk)
-    # R by context (finding 104: R=4 wins up to ~8k of visible context, R=2 beyond); the visible context of the
-    # chunk is bounded by the page table width, which needs no device sync
-    visible_tokens = block_table.shape[1] * k_cache.shape[1]
+    # R by context (finding 104: R=4 wins up to ~8k of visible context, R=2 beyond). The last row of a prefill
+    # chunk sees the most; one small device->host read (the page table is padded to max_model_len, unusable).
+    visible_tokens = int(logical_indices[rows - 1].max()) + 1
     R = 4 if visible_tokens <= _QSA_UNION_R4_MAX_CTX else 2
     uni, mem, cnt, T = _qsa_union_build(entries, R)
     group_size = q.shape[1] // k_cache.shape[2]
