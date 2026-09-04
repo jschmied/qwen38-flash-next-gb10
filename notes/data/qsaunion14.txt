@@ -1,0 +1,47 @@
+  qsaunion REMOVED
+  qsaunion INSTALLED in /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/qsa.py and /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/qsa.py
+preflight OK 19:41
+=== test sel_002_3813.pt 19:41
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+sel_002_3813.pt: rows=3813 ctx=3814 stock  14589.5 us | R=2 union   7705.7 us x1.89 | R=4 union   8841.0 us x1.65
+    R=2: split  1216.5 + build   781.5 us, kernel ~ 5640.6 us
+    R=4: split  1183.9 + build   756.0 us, kernel ~ 6866.8 us
+=== test sel_024_3407.pt 19:41
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+sel_024_3407.pt: rows=3407 ctx=7502 stock  13986.3 us | R=2 union   9267.2 us x1.51 | R=4 union  11678.1 us x1.20
+    R=2: split  1038.1 + build   708.3 us, kernel ~ 7531.0 us
+    R=4: split  1041.8 + build   670.3 us, kernel ~ 9981.3 us
+=== test sel_089_283.pt 19:41
+  PASS test_split_matches_expansion
+  PASS test_negative_control_has_power
+  PASS test_union_matches_stock_all_tails
+  PASS test_invalid_request_rows_masked
+  PASS test_eligibility_is_cpu_only
+sel_089_283.pt: rows=283 ctx=12290 stock   1183.3 us | R=2 union    943.0 us x1.25 | R=4 union   1447.9 us x0.82
+    R=2: split    98.9 + build    94.6 us, kernel ~  737.4 us
+    R=4: split    97.6 + build    94.1 us, kernel ~ 1250.9 us
+=== QV71_a  union=1  19:41 ===
+    activation: 1 lines
+  QV71_a TTFT 8k: prompt_tokens=7503 median=2.78s  all=3.36 2.78 2.78
+  QV71_a TTFT 30k: prompt_tokens=29263 median=10.79s  all=10.77 10.79 11.13
+=== QV70_a  union=0  19:52 ===
+    activation: 0 lines
+  QV70_a TTFT 8k: prompt_tokens=7503 median=2.73s  all=2.86 2.73 2.72
+  QV70_a TTFT 30k: prompt_tokens=29263 median=10.55s  all=10.54 10.55 10.59
+=== QV71_b  union=1  20:03 ===
+    activation: 1 lines
+  QV71_b TTFT 8k: prompt_tokens=7503 median=2.74s  all=2.88 2.73 2.74
+  QV71_b TTFT 30k: prompt_tokens=29263 median=10.59s  all=10.59 10.59 10.60
+=== QV70_b  union=0  20:14 ===
+    activation: 0 lines
+  QV70_b TTFT 8k: prompt_tokens=7503 median=2.73s  all=2.85 2.73 2.73
+  QV70_b TTFT 30k: prompt_tokens=29263 median=10.59s  all=10.58 10.59 10.69
+== ALL DONE ==

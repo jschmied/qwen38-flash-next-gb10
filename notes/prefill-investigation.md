@@ -623,3 +623,12 @@
     the narrower one (1.06× / 1.16× of a row vs 1.12× / 1.39×) — so one fixed tile replaces the adaptive R choice,
     and the build shrinks to N = 1,024. v7 = the v4.3 kernel with those two changes.
 
+113. **Union v7 (R=2, BN=32, 4 warps, pre-resolved pages) at the server: +1 % / +1 % — the standalone win did not
+    carry (`qsaunion14`, `notes/data/qsaunion14.txt`).** 8k: 2.78 / 2.74 s on vs 2.73 / 2.73 off; 30k: 10.79 / 10.59 vs
+    10.55 / 10.59. Standalone the same code was the best so far (whole path 1.89× / 1.51× / 1.25×, finding 108 → this
+    run's test lines: split 1.2 ms + build 0.8 ms + kernel 5.6 ms at 8k). The standalone is L2-resident: three to eight
+    1600-token pages of K/V (1.6 MiB each) fit in the 24 MiB L2, so its gathers are free and the smaller M of R=2
+    wins on the dot; in the server the K/V pages come from DRAM and the union's point — one gather shared by R rows —
+    is worth more at R=4. The asserting test now also times a cold cache (2,048 pages, random table); the v8 run
+    measures R=2, R=4 and off at the server. Lesson for the standalone: size the cache past the L2 before ranking tiles.
+
