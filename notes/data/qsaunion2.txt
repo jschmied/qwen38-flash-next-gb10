@@ -1,0 +1,69 @@
+preflight OK 16:59
+=== sel_002_3813.pt R/BN=4 64 16:59
+sel_002_3813.pt: rows=3813 ctx=3812 pages=3 R=4 BN=64
+  union: tiles=954 U(max,padded)=2944 mean per-tile columns=1708 mean|sel|=1497  (precompute torch 120.2 ms)
+  union R=4 BN=64 warps=8 stages=1:    5315.3 us  vs stock   14322.1 us  -> x2.69  (  1.39 vs   3.76 us/row)  max|diff|=0.0001 rel=3.74e-04
+  union R=4 BN=64 warps=4 stages=1:    6017.8 us  vs stock   14322.1 us  -> x2.38  (  1.58 vs   3.76 us/row)  max|diff|=0.0002 rel=7.49e-04
+  union warps=8 stages=2: ERR out of resource: shared memory, Required: 106496, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+=== sel_024_3407.pt R/BN=4 64 16:59
+sel_024_3407.pt: rows=3407 ctx=7500 pages=5 R=4 BN=64
+  union: tiles=852 U(max,padded)=3968 mean per-tile columns=2879 mean|sel|=2048  (precompute torch 123.0 ms)
+  union R=4 BN=64 warps=8 stages=1:    7895.1 us  vs stock   13758.1 us  -> x1.74  (  2.32 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union R=4 BN=64 warps=4 stages=1:    8973.7 us  vs stock   13758.1 us  -> x1.53  (  2.63 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union warps=8 stages=2: ERR out of resource: shared memory, Required: 106496, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+=== sel_089_283.pt R/BN=4 64 16:59
+sel_089_283.pt: rows=283 ctx=12288 pages=8 R=4 BN=64
+  union: tiles=71 U(max,padded)=4928 mean per-tile columns=3858 mean|sel|=2048  (precompute torch 101.7 ms)
+  union R=4 BN=64 warps=8 stages=1:     970.5 us  vs stock    1155.8 us  -> x1.19  (  3.43 vs   4.08 us/row)  max|diff|=0.0001 rel=6.02e-03
+  union R=4 BN=64 warps=4 stages=1:    1083.6 us  vs stock    1155.8 us  -> x1.07  (  3.83 vs   4.08 us/row)  max|diff|=0.0001 rel=6.02e-03
+  union warps=8 stages=2: ERR out of resource: shared memory, Required: 106496, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+=== sel_002_3813.pt R/BN=4 32 16:59
+sel_002_3813.pt: rows=3813 ctx=3812 pages=3 R=4 BN=32
+  union: tiles=954 U(max,padded)=2944 mean per-tile columns=1693 mean|sel|=1497  (precompute torch 114.6 ms)
+  union R=4 BN=32 warps=8 stages=1:    7334.9 us  vs stock   14284.0 us  -> x1.95  (  1.92 vs   3.75 us/row)  max|diff|=0.0005 rel=1.50e-03
+  union R=4 BN=32 warps=4 stages=1:    6363.8 us  vs stock   14284.0 us  -> x2.24  (  1.67 vs   3.75 us/row)  max|diff|=0.0005 rel=1.50e-03
+  union R=4 BN=32 warps=8 stages=2:    7029.0 us  vs stock   14284.0 us  -> x2.03  (  1.84 vs   3.75 us/row)  max|diff|=0.0005 rel=1.50e-03
+=== sel_024_3407.pt R/BN=4 32 16:59
+sel_024_3407.pt: rows=3407 ctx=7500 pages=5 R=4 BN=32
+  union: tiles=852 U(max,padded)=3968 mean per-tile columns=2864 mean|sel|=2048  (precompute torch 121.6 ms)
+  union R=4 BN=32 warps=8 stages=1:   11012.0 us  vs stock   13752.1 us  -> x1.25  (  3.23 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union R=4 BN=32 warps=4 stages=1:    9571.2 us  vs stock   13752.1 us  -> x1.44  (  2.81 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union R=4 BN=32 warps=8 stages=2:   10499.1 us  vs stock   13752.1 us  -> x1.31  (  3.08 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+=== sel_089_283.pt R/BN=4 32 16:59
+=== sel_002_3813.pt R/BN=2 64 16:59
+sel_002_3813.pt: rows=3813 ctx=3812 pages=3 R=2 BN=64
+  union: tiles=1907 U(max,padded)=2560 mean per-tile columns=1616 mean|sel|=1497  (precompute torch 121.0 ms)
+  union R=2 BN=64 warps=8 stages=1:    7146.6 us  vs stock   14292.5 us  -> x2.00  (  1.87 vs   3.75 us/row)  max|diff|=0.0001 rel=3.74e-04
+  union R=2 BN=64 warps=4 stages=1:    7206.4 us  vs stock   14292.5 us  -> x1.98  (  1.89 vs   3.75 us/row)  max|diff|=0.0002 rel=7.49e-04
+  union R=2 BN=64 warps=8 stages=2:    8254.7 us  vs stock   14292.5 us  -> x1.73  (  2.16 vs   3.75 us/row)  max|diff|=0.0001 rel=3.74e-04
+=== sel_024_3407.pt R/BN=2 64 16:59
+sel_024_3407.pt: rows=3407 ctx=7500 pages=5 R=2 BN=64
+  union: tiles=1704 U(max,padded)=3072 mean per-tile columns=2396 mean|sel|=2048  (precompute torch 112.2 ms)
+  union R=2 BN=64 warps=8 stages=1:    9385.2 us  vs stock   13766.2 us  -> x1.47  (  2.75 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union R=2 BN=64 warps=4 stages=1:    9402.7 us  vs stock   13766.2 us  -> x1.46  (  2.76 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union R=2 BN=64 warps=8 stages=2:   10865.0 us  vs stock   13766.2 us  -> x1.27  (  3.19 vs   4.04 us/row)  max|diff|=0.0001 rel=5.62e-03
+=== sel_089_283.pt R/BN=2 64 16:59
+sel_089_283.pt: rows=283 ctx=12288 pages=8 R=2 BN=64
+  union: tiles=142 U(max,padded)=3328 mean per-tile columns=2784 mean|sel|=2048  (precompute torch 104.1 ms)
+  union R=2 BN=64 warps=8 stages=1:     927.1 us  vs stock    1161.8 us  -> x1.25  (  3.28 vs   4.11 us/row)  max|diff|=0.0001 rel=6.02e-03
+  union R=2 BN=64 warps=4 stages=1:     968.6 us  vs stock    1161.8 us  -> x1.20  (  3.42 vs   4.11 us/row)  max|diff|=0.0001 rel=6.02e-03
+  union R=2 BN=64 warps=8 stages=2:    1061.0 us  vs stock    1161.8 us  -> x1.10  (  3.75 vs   4.11 us/row)  max|diff|=0.0001 rel=6.02e-03
+=== sel_002_3813.pt R/BN=8 32 16:59
+sel_002_3813.pt: rows=3813 ctx=3812 pages=3 R=8 BN=32
+  union: tiles=477 U(max,padded)=3520 mean per-tile columns=1791 mean|sel|=1497  (precompute torch 113.0 ms)
+  union R=8 BN=32 warps=8 stages=1:    7949.4 us  vs stock   14322.5 us  -> x1.80  (  2.08 vs   3.76 us/row)  max|diff|=0.0005 rel=1.50e-03
+  union R=8 BN=32 warps=4 stages=1:   14320.5 us  vs stock   14322.5 us  -> x1.00  (  3.76 vs   3.76 us/row)  max|diff|=0.0005 rel=1.50e-03
+  union warps=8 stages=2: ERR out of resource: shared memory, Required: 106496, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+=== sel_024_3407.pt R/BN=8 32 16:59
+sel_024_3407.pt: rows=3407 ctx=7500 pages=5 R=8 BN=32
+  union: tiles=426 U(max,padded)=4864 mean per-tile columns=3558 mean|sel|=2048  (precompute torch 118.1 ms)
+  union R=8 BN=32 warps=8 stages=1:   14088.6 us  vs stock   13711.4 us  -> x0.97  (  4.14 vs   4.02 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union R=8 BN=32 warps=4 stages=1:   24297.9 us  vs stock   13711.4 us  -> x0.56  (  7.13 vs   4.02 us/row)  max|diff|=0.0001 rel=5.62e-03
+  union warps=8 stages=2: ERR out of resource: shared memory, Required: 106496, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+=== sel_089_283.pt R/BN=8 32 17:00
+sel_089_283.pt: rows=283 ctx=12288 pages=8 R=8 BN=32
+  union: tiles=36 U(max,padded)=6400 mean per-tile columns=5318 mean|sel|=2048  (precompute torch 98.2 ms)
+  union R=8 BN=32 warps=8 stages=1:    2372.2 us  vs stock    1155.1 us  -> x0.49  (  8.38 vs   4.08 us/row)  max|diff|=0.0001 rel=6.02e-03
+  union R=8 BN=32 warps=4 stages=1:    4068.0 us  vs stock    1155.1 us  -> x0.28  ( 14.37 vs   4.08 us/row)  max|diff|=0.0001 rel=6.02e-03
+  union warps=8 stages=2: ERR out of resource: shared memory, Required: 106496, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.
+== ALL DONE ==

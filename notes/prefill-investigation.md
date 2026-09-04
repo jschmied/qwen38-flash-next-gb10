@@ -491,3 +491,29 @@
     (15 TF) against the branch's main-based dispatch (#52775 fixed) — not a swizzle effect. PR #55180 state:
     three commits (rewrite, gate + balanced oracle, threshold), body v3, reviewer replies posted; done from our side.
 
+103. **Tile-union QSA prototype works: 2.7× on the 8k prefill chunk, 1.7× on a 30k chunk, outputs equal to the
+    stock kernel at bf16 rounding (`qsaunion2`, real selections from the dump, synthetic q/K/V at the model's
+    geometry; `notes/data/qsaunion2.txt`; `tools/qsa_union_proto.py`).** Per program: R consecutive query rows
+    share one gathered token set (the sorted union), a per-row membership mask over it, dot M = R·16.
+
+    | dump | R / BN / warps | union columns per tile vs per row | speed vs stock | max diff |
+    | --- | --- | --- | --- | --- |
+    | 8k prefill chunk (3,813 rows, causal, mean sel 1,497) | 4 / 64 / 8 | 1,708 (1.14×) | **×2.69** (1.39 vs 3.76 µs/row) | 1e-4 |
+    | 30k chunk (3,407 rows, 7.5k ctx) | 4 / 64 / 8 | 2,879 (1.41×) | **×1.74** (2.32 vs 4.04 µs/row) | 1e-4 |
+    | 30k tail (283 rows, 12k ctx) | 4 / 64 / 8 | 3,858 (1.88×) | ×1.19 | 1e-4 |
+    | 8k / 30k / tail | 2 / 64 / 8 | 1.08× / 1.17× / 1.36× | ×2.00 / 1.47 / 1.25 | 1e-4 |
+    | 8k / 30k / tail | 8 / 32 / 8 | 1.20× / 1.74× / 2.60× | ×1.80 / 0.97 / 0.49 | 5e-4 |
+
+    R=4, BN=64, 8 warps, one stage is the optimum (as finding 96 predicted; two stages do not fit the 99 KiB
+    smem, 4 warps −10 %). The gain tracks the union width: where consecutive rows share most of their
+    selection (early context, Jaccard ~0.9) the kernel gets the full small-M win; as the visible context grows
+    the union widens (1.4× at 7.5k ctx, 1.9× at 12k) and the gain shrinks — so R should adapt (4 early, 2 late)
+    or the union be built per 2 rows past ~8k of context. Two prototype defects fixed on the way: the
+    membership search must run on a sorted key (padding at the end broke `searchsorted` and silently dropped
+    tokens — the first run's outputs were wrong by the value magnitude), and each tile needs its own column
+    bound (the first run looped every tile to the chunk-wide maximum). **Not yet counted: the union
+    precompute** — 100–120 ms of torch per chunk per layer (sort/unique/searchsorted) would erase the gain
+    across 12 attention layers; the real implementation needs a Triton merge of the (already sorted) per-row
+    block lists at block granularity (512 ids per row, not 2,048 tokens), expanded ×4 inside the attention
+    kernel. Expected TTFT effect with that in place: ~8 % at 8k (0.36 → ~0.14 s of 2.71), ~5 % at 30k.
+
