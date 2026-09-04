@@ -117,15 +117,14 @@ def _qsa_union_entries(logical_indices: torch.Tensor, compress_ratio: int, token
     cols = logical_indices[:, : block_topk * compress_ratio].reshape(rows, block_topk, compress_ratio)
     first = cols[:, :, 0]
     whole = (first >= 0) & ((first % compress_ratio) == 0) & (cols[:, :, compress_ratio - 1] == first + compress_ratio - 1)
-    # a row's expanded prefix ends where whole blocks stop; everything after is tail or padding
-    tail = logical_indices[:, block_topk * compress_ratio:]  # [rows, CR-1] (only meaningful when the prefix is full)
     ent_blocks = torch.where(whole, first * 2, torch.full_like(first, -1))
-    # tail tokens live either right after a partial prefix (inside `cols`) or in the trailing CR-1 columns
-    flat = logical_indices[:, : block_topk * compress_ratio]
-    in_prefix_tail = (flat >= 0) & ~whole.repeat_interleave(compress_ratio, dim=1)
-    ent_tail_in = torch.where(in_prefix_tail, flat * 2 + 1, torch.full_like(flat, -1))
-    ent_tail_out = torch.where(tail >= 0, tail * 2 + 1, torch.full_like(tail, -1))
-    return torch.cat([ent_blocks, ent_tail_in, ent_tail_out], dim=1).to(torch.int32)
+    # the causal tail (<= CR-1 tokens) sits right after the last whole block: columns 4c .. 4c+CR-2
+    c = whole.sum(dim=1, keepdim=True)
+    width = logical_indices.shape[1]
+    tcols = (c * compress_ratio + torch.arange(compress_ratio - 1, device=logical_indices.device)[None, :]).clamp(max=width - 1)
+    tail = torch.gather(logical_indices, 1, tcols)
+    ent_tail = torch.where(tail >= 0, tail * 2 + 1, torch.full_like(tail, -1))
+    return torch.cat([ent_blocks, ent_tail], dim=1).to(torch.int32)
 
 
 def _qsa_union_build(entries: torch.Tensor, R: int):
