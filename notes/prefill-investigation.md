@@ -378,3 +378,27 @@
     −9 % at 30k. Effort: new Triton kernel + union/mask precompute + integration on the indexer path +
     correctness vs the dumped selections, 2–3 days. Decision pending.
 
+97. **Warm-turn decomposition on a prefix hit: the intercept is the un-hit tail of the 1,600-token align
+    block, not a kernel (`hitprobe`, main build, prefix caching on, batch 4096; `notes/data/hitprobe.txt`).**
+    Streamed first-token time vs new tokens appended to a cached ~7.6k-token prefix, medians of 3:
+
+    | new tokens | MTP n=3 + flag | no spec |
+    | --- | --- | --- |
+    | 0 (identical request) | 0.592 s | 0.637 s |
+    | 1 | 0.610 | 0.644 |
+    | 130 | 0.746 | 0.734 |
+    | 1,000 | 0.978 | 0.969 |
+    | cold seed / 2nd identical | 3.00 / 3.15 s | 2.96 / 3.04 s |
+
+    Slope 0.34–0.37 ms per new token (= the 2.7k tok/s prefill rate); intercept ~0.6 s independent of the
+    drafter. vLLM sets the attention block to **1,600 tokens** ("to ensure that attention page size is >=
+    mamba page size", `interface.py:918`); a 7,640-token prompt hits 4 blocks = 6,400 tokens and re-prefills
+    the remaining ~1,240 on every warm turn ≈ 0.46 s; the rest (~0.13 s) is fixed. So a 1.52 s warm turn is
+    ≈ 0.46 tail re-prefill + 0.13 fixed + 0.05 new-token prefill + ~0.8 decode (no-spec decode measured at
+    40.5 ms/token = 24.7 tok/s; MTP ~27 ms/token from the loop totals — the streamed per-delta number
+    under MTP is the delta-vs-token trap and is not a token rate). The second identical request re-prefills
+    fully on both arms ("first repetition never hits", independent of spec). No supported knob changes the
+    granularity: `--mamba-block-size` is overridden in align mode, `MambaDType` has no fp8, and fp8
+    attention KV would *double* the block (fewer bytes per token). The fix is upstream RFC #45702 (partial
+    cache hits, copy-on-write tail); `hitprobe3` tests the boundary-padding workaround.
+

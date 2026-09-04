@@ -1,0 +1,46 @@
+preflight OK 14:32 (main venv, prefix cache ON, batch 4096)
+=== HP_mtp  spec=mtp n=3  14:32 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True
+  HP_mtp cold seed: ttft   3.00 s
+  HP_mtp 2nd identical (align-mode first repetition): ttft   3.15 s
+  HP_mtp hit +   0 new tokens rep 0: ttft  0.594 s
+  HP_mtp hit +   1 new tokens rep 0: ttft  0.699 s
+  HP_mtp hit + 130 new tokens rep 0: ttft  0.746 s
+  HP_mtp hit +1000 new tokens rep 0: ttft  0.978 s
+  HP_mtp hit +   0 new tokens rep 1: ttft  0.590 s
+  HP_mtp hit +   1 new tokens rep 1: ttft  0.610 s
+  HP_mtp hit + 130 new tokens rep 1: ttft  0.755 s
+  HP_mtp hit +1000 new tokens rep 1: ttft  0.978 s
+  HP_mtp hit +   0 new tokens rep 2: ttft  0.592 s
+  HP_mtp hit +   1 new tokens rep 2: ttft  0.604 s
+  HP_mtp hit + 130 new tokens rep 2: ttft  0.743 s
+  HP_mtp hit +1000 new tokens rep 2: ttft  0.977 s
+  HP_mtp HIT +   0: median ttft  0.592 s  (all 0.594 0.590 0.592)
+  HP_mtp HIT +   1: median ttft  0.610 s  (all 0.699 0.610 0.604)
+  HP_mtp HIT + 130: median ttft  0.746 s  (all 0.746 0.755 0.743)
+  HP_mtp HIT +1000: median ttft  0.978 s  (all 0.978 0.978 0.977)
+  HP_mtp DECODE after +130 hit rep 0: ttft  0.740 s  total   1.74 s  15 tok    71.7 ms/tok
+  HP_mtp DECODE after +130 hit rep 1: ttft  0.785 s  total   1.20 s  7 tok    68.3 ms/tok
+=== HP_nospec  spec=none n=0  14:43 ===
+    spec: 
+  HP_nospec cold seed: ttft   2.96 s
+  HP_nospec 2nd identical (align-mode first repetition): ttft   3.04 s
+  HP_nospec hit +   0 new tokens rep 0: ttft  0.633 s
+  HP_nospec hit +   1 new tokens rep 0: ttft  0.728 s
+  HP_nospec hit + 130 new tokens rep 0: ttft  0.858 s
+  HP_nospec hit +1000 new tokens rep 0: ttft  1.260 s
+  HP_nospec hit +   0 new tokens rep 1: ttft  0.640 s
+  HP_nospec hit +   1 new tokens rep 1: ttft  0.644 s
+  HP_nospec hit + 130 new tokens rep 1: ttft  0.734 s
+  HP_nospec hit +1000 new tokens rep 1: ttft  0.964 s
+  HP_nospec hit +   0 new tokens rep 2: ttft  0.637 s
+  HP_nospec hit +   1 new tokens rep 2: ttft  0.643 s
+  HP_nospec hit + 130 new tokens rep 2: ttft  0.731 s
+  HP_nospec hit +1000 new tokens rep 2: ttft  0.969 s
+  HP_nospec HIT +   0: median ttft  0.637 s  (all 0.633 0.640 0.637)
+  HP_nospec HIT +   1: median ttft  0.644 s  (all 0.728 0.644 0.643)
+  HP_nospec HIT + 130: median ttft  0.734 s  (all 0.858 0.734 0.731)
+  HP_nospec HIT +1000: median ttft  0.969 s  (all 1.260 0.964 0.969)
+  HP_nospec DECODE after +130 hit rep 0: ttft  0.739 s  total   2.77 s  51 tok    40.7 ms/tok
+  HP_nospec DECODE after +130 hit rep 1: ttft  0.751 s  total   1.47 s  19 tok    40.2 ms/tok
+== ALL DONE ==
