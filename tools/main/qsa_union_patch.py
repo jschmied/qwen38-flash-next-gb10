@@ -243,6 +243,7 @@ SIG_NEW = '''    token_to_req: torch.Tensor,
 ) -> torch.Tensor:
     """Run sparse GQA directly over paged BF16 K/V caches."""'''
 OWNER_ANCHOR = '''        from .ops.qsa import qsa_sparse_paged_attention
+
         qsa_sparse_paged_attention(
             query[:num_tokens],
             key_cache,
@@ -253,6 +254,7 @@ OWNER_ANCHOR = '''        from .ops.qsa import qsa_sparse_paged_attention
             output[:num_tokens],
         )'''
 OWNER_NEW = '''        from .ops.qsa import qsa_sparse_paged_attention, qsa_union_eligible, qsa_union_pick_r  # QSA UNION
+
         union = None
         indexer = getattr(layer, "indexer", None)
         if indexer is not None:
