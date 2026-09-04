@@ -97,6 +97,7 @@ expected TTFT effect in the agent loop ÷ effort:
    night chain and `race50729`, on the user's go. **QUEUED 2026-09-04 09:10 as runner `blockdrop`** (user go
    "continue"): main venv, MTP n=3, prefix caching on, three interleaved starts of off/on via the new
    `FN_SPEC_NODROP=1` knob in `serve-fnmain.sh`; runs after `chunkredo` and `qsadump2`.
+   **DONE 2026-09-04 12:40 — finding 94: warm turns −26 %, cached tokens +33 %, acceptance unchanged. CLOSED.**
    Also on main and not in the preview: #52789 "internal prefill checkpoints" (one forward pass
    for the whole prefill, Mamba checkpoint saved mid-kernel instead of splitting the forward at the
    last block boundary; 9–25 % TTFT claimed). The generic side is in (`num_prefill_checkpoint_blocks`

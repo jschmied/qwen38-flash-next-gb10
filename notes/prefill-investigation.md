@@ -315,3 +315,24 @@
     `_qsa_sparse_paged_gqa_splitk_kernel` (0.36 s at 8k, 1.5 s at 30k) is gather-bound — next step is a
     tile-union prototype of that kernel, standalone, against the dumped selections.
 
+94. **Trailing-block drop under MTP: the flag is worth −26 % per warm agent turn (`blockdrop3`, main build,
+    MTP n=3, prefix caching on, batch 4096, three interleaved starts each; `notes/data/blockdrop3.txt`).**
+    `disable_eagle_block_drop=true` (#53388) vs default:
+
+    | | default (drop) | flag on |
+    | --- | --- | --- |
+    | s per turn, 8-turn loop (a / b / c) | 2.75 / 2.49 / 2.51 | 2.15 / 2.11 / 2.10 |
+    | warm turns 3–8, mean of 18 | 2.05 s | **1.52 s (−26 %)** |
+    | cached tokens per warm turn | 4,800 | **6,400 (+33 %)** |
+    | MTP acceptance | 56.1 / 53.3 / 53.8 % | 59.5 / 57.5 / 60.0 % |
+    | turn 1 (cold) / turn 2 | 4.65–3.62 / 4.7–4.12 | 3.83–3.61 / 4.16–4.22 |
+
+    Acceptance does not move (the PR's caveat does not bite here); the on-arm's total is also more
+    reproducible (2.10–2.15 vs 2.49–2.75). Turn 2 is cold on *both* arms — that is the align mode's
+    "first repetition never hits" behaviour (`prefix-cache-align-mode-dead`), not the block drop; the
+    flag cannot touch it and it is the next-largest per-turn cost. This is plan §5 item 1 closed:
+    the missing evidence for #53670 / #50897 now exists on a hybrid + align + in-checkpoint-MTP
+    model, and the fix is a merged one-line flag on main. **Prod implication:** any main-build serve
+    with MTP + prefix caching should set it. For the preview image (blazux et al.) it is a 4-file
+    port of #53388. Also: this run was the main build's first serve with MTP at all (finding 93).
+

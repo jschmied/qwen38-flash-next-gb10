@@ -1,0 +1,94 @@
+  lmheadq already installed
+  scaleinv-mtp INSTALLED in /opt/llm/runtime/vllm-venv-fnmain/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/mtp.py
+preflight OK 11:24 (main venv, MTP n=3, prefix cache ON)
+=== ND0_a  nodrop=0  11:24 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3
+    nodrop line: 
+    prefix caching: enable_prefix_caching=True
+  ND0_a turn 1:   4.65 s    24 tok  hits+      0  acc  62.5% len 2.88
+  ND0_a turn 2:   4.70 s    36 tok  hits+      0  acc  54.8% len 2.64
+  ND0_a turn 3:   1.84 s    26 tok  hits+   4800  acc  70.8% len 3.12
+  ND0_a turn 4:   2.15 s    26 tok  hits+   4800  acc  41.7% len 2.25
+  ND0_a turn 5:   2.08 s    31 tok  hits+   4800  acc  60.6% len 2.82
+  ND0_a turn 6:   2.20 s    33 tok  hits+   4800  acc  58.3% len 2.75
+  ND0_a turn 7:   2.07 s    32 tok  hits+   4800  acc  73.3% len 3.20
+  ND0_a turn 8:   2.30 s    29 tok  hits+   4800  acc  38.5% len 2.15
+  ND0_a TOTAL 22.0 s over 8 turns  (2.75 s/turn)  237 tok  92.83 ms/tok
+  ACCEPT ND0_a-post: drafts=88 draft_tok=264 accepted=148 rate=56.1%  mean_accept_len=2.68
+  ACCEPT ND0_a-post: drafts=88 draft_tok=264 accepted=148 rate=56.1%  mean_accept_len=2.68
+=== ND1_a  nodrop=1  11:39 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True
+    nodrop line: disable_eagle_block_drop': True 
+    prefix caching: enable_prefix_caching=True
+  ND1_a turn 1:   3.83 s    30 tok  hits+      0  acc  63.6% len 2.91
+  ND1_a turn 2:   4.16 s    36 tok  hits+      0  acc  54.8% len 2.64
+  ND1_a turn 3:   1.37 s    26 tok  hits+   6400  acc  63.0% len 2.89
+  ND1_a turn 4:   1.45 s    19 tok  hits+   6400  acc  33.3% len 2.00
+  ND1_a turn 5:   1.87 s    31 tok  hits+   6400  acc  73.3% len 3.20
+  ND1_a turn 6:   1.55 s    29 tok  hits+   6400  acc  57.6% len 2.73
+  ND1_a turn 7:   1.58 s    27 tok  hits+   6400  acc  51.5% len 2.55
+  ND1_a turn 8:   1.39 s    29 tok  hits+   6400  acc  87.5% len 3.62
+  ND1_a TOTAL 17.2 s over 8 turns  (2.15 s/turn)  227 tok  75.79 ms/tok
+  ACCEPT ND1_a-post: drafts=84 draft_tok=252 accepted=150 rate=59.5%  mean_accept_len=2.79
+  ACCEPT ND1_a-post: drafts=84 draft_tok=252 accepted=150 rate=59.5%  mean_accept_len=2.79
+=== ND0_b  nodrop=0  11:51 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3
+    nodrop line: 
+    prefix caching: enable_prefix_caching=True
+  ND0_b turn 1:   3.62 s    24 tok  hits+      0  acc  75.0% len 3.25
+  ND0_b turn 2:   4.12 s    34 tok  hits+      0  acc  56.4% len 2.69
+  ND0_b turn 3:   2.03 s    28 tok  hits+   4800  acc  48.5% len 2.45
+  ND0_b turn 4:   2.07 s    23 tok  hits+   4800  acc  36.4% len 2.09
+  ND0_b turn 5:   1.92 s    24 tok  hits+   4800  acc  59.3% len 2.78
+  ND0_b turn 6:   2.03 s    24 tok  hits+   4800  acc  50.0% len 2.50
+  ND0_b turn 7:   2.13 s    26 tok  hits+   4800  acc  48.5% len 2.45
+  ND0_b turn 8:   1.99 s    26 tok  hits+   4800  acc  59.3% len 2.78
+  ND0_b TOTAL 19.9 s over 8 turns  (2.49 s/turn)  209 tok  95.26 ms/tok
+  ACCEPT ND0_b-post: drafts=82 draft_tok=246 accepted=131 rate=53.3%  mean_accept_len=2.60
+  ACCEPT ND0_b-post: drafts=82 draft_tok=246 accepted=131 rate=53.3%  mean_accept_len=2.60
+=== ND1_b  nodrop=1  12:03 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True
+    nodrop line: disable_eagle_block_drop': True 
+    prefix caching: enable_prefix_caching=True
+  ND1_b turn 1:   3.63 s    24 tok  hits+      0  acc  70.8% len 3.12
+  ND1_b turn 2:   4.15 s    34 tok  hits+      0  acc  56.4% len 2.69
+  ND1_b turn 3:   1.44 s    26 tok  hits+   6400  acc  53.3% len 2.60
+  ND1_b turn 4:   1.52 s    27 tok  hits+   6400  acc  48.5% len 2.45
+  ND1_b turn 5:   1.40 s    22 tok  hits+   6400  acc  44.4% len 2.33
+  ND1_b turn 6:   1.50 s    29 tok  hits+   6400  acc  63.3% len 2.90
+  ND1_b turn 7:   1.57 s    32 tok  hits+   6400  acc  66.7% len 3.00
+  ND1_b turn 8:   1.68 s    33 tok  hits+   6400  acc  58.3% len 2.75
+  ND1_b TOTAL 16.9 s over 8 turns  (2.11 s/turn)  227 tok  74.37 ms/tok
+  ACCEPT ND1_b-post: drafts=84 draft_tok=252 accepted=145 rate=57.5%  mean_accept_len=2.73
+  ACCEPT ND1_b-post: drafts=84 draft_tok=252 accepted=145 rate=57.5%  mean_accept_len=2.73
+=== ND0_c  nodrop=0  12:15 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3
+    nodrop line: 
+    prefix caching: enable_prefix_caching=True
+  ND0_c turn 1:   3.75 s    26 tok  hits+      0  acc  60.0% len 2.80
+  ND0_c turn 2:   4.15 s    36 tok  hits+      0  acc  61.5% len 2.85
+  ND0_c turn 3:   1.90 s    26 tok  hits+   4800  acc  63.0% len 2.89
+  ND0_c turn 4:   1.98 s    19 tok  hits+   4800  acc  33.3% len 2.00
+  ND0_c turn 5:   2.03 s    29 tok  hits+   4800  acc  63.3% len 2.90
+  ND0_c turn 6:   2.05 s    24 tok  hits+   4800  acc  50.0% len 2.50
+  ND0_c turn 7:   2.12 s    25 tok  hits+   4800  acc  45.5% len 2.36
+  ND0_c turn 8:   2.08 s    26 tok  hits+   4800  acc  53.3% len 2.60
+  ND0_c TOTAL 20.1 s over 8 turns  (2.51 s/turn)  211 tok  95.04 ms/tok
+  ACCEPT ND0_c-post: drafts=83 draft_tok=249 accepted=134 rate=53.8%  mean_accept_len=2.61
+  ACCEPT ND0_c-post: drafts=83 draft_tok=249 accepted=134 rate=53.8%  mean_accept_len=2.61
+=== ND1_c  nodrop=1  12:27 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True
+    nodrop line: disable_eagle_block_drop': True 
+    prefix caching: enable_prefix_caching=True
+  ND1_c turn 1:   3.61 s    24 tok  hits+      0  acc  62.5% len 2.88
+  ND1_c turn 2:   4.22 s    40 tok  hits+      0  acc  64.3% len 2.93
+  ND1_c turn 3:   1.37 s    26 tok  hits+   6400  acc  59.3% len 2.78
+  ND1_c turn 4:   1.51 s    27 tok  hits+   6400  acc  51.5% len 2.55
+  ND1_c turn 5:   1.60 s    29 tok  hits+   6400  acc  43.6% len 2.31
+  ND1_c turn 6:   1.43 s    33 tok  hits+   6400  acc  80.0% len 3.40
+  ND1_c turn 7:   1.51 s    32 tok  hits+   6400  acc  70.0% len 3.10
+  ND1_c turn 8:   1.54 s    25 tok  hits+   6400  acc  53.3% len 2.60
+  ND1_c TOTAL 16.8 s over 8 turns  (2.10 s/turn)  236 tok  71.13 ms/tok
+  ACCEPT ND1_c-post: drafts=85 draft_tok=255 accepted=153 rate=60.0%  mean_accept_len=2.80
+  ACCEPT ND1_c-post: drafts=85 draft_tok=255 accepted=153 rate=60.0%  mean_accept_len=2.80
+== ALL DONE ==
