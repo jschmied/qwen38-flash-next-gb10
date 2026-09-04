@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Correctness + timing of the integrated union path (qsa_union_patch.py) against the stock kernel, on a real
 selection dump run through vLLM's own expand_qsa_block_indices (so the causal tail tokens are exercised).
-Usage: qsa_union_test.py <sel_*.pt>   (run with the patched venv; VLLM_QSA_UNION may be unset — calls the union
+Usage: qsa_union_test.py <sel_*.pt>  (v3: single union by context, exact-width sort)   (run with the patched venv; VLLM_QSA_UNION may be unset — calls the union
 function directly)."""
 import sys, statistics, torch
 import vllm  # noqa

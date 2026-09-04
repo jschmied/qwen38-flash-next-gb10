@@ -17,20 +17,20 @@ import triton
 import triton.language as tl
 
 _QSA_UNION = _os.environ.get("VLLM_QSA_UNION", "0") not in ("0", "", "false", "False")
-_QSA_UNION_MIN_ROWS = int(_os.environ.get("VLLM_QSA_UNION_MIN_ROWS", "256"))
-_QSA_UNION_C4, _QSA_UNION_C2 = 12.8, 9.1  # ns per (tile, union entry), finding 104 cost model
+_QSA_UNION_MIN_ROWS = int(_os.environ.get("VLLM_QSA_UNION_MIN_ROWS", "1024"))
+_QSA_UNION_R4_MAX_CTX = int(_os.environ.get("VLLM_QSA_UNION_R4_MAX_CTX", "9600"))  # finding 104: R=4 up to ~8k ctx
 if _QSA_UNION:
     print("QSAUNION active", flush=True)
 
 
 @triton.jit
 def _qsa_union_build_kernel(sorted_ptr, uni_ptr, mem_ptr, cnt_ptr, stride_sorted, stride_uni,
-                            stride_mem_t, stride_mem_r, N: tl.constexpr):
-    # sorted_ptr[t]: ascending packed entries (entry*8 + row_in_tile), BIG*8+7 for padding
+                            stride_mem_t, stride_mem_r, L, N: tl.constexpr):
+    # sorted_ptr[t]: ascending packed entries (entry*8 + row_in_tile), BIG*8+7 for padding; L valid columns
     t = tl.program_id(0)
     i = tl.arange(0, N)
-    packed = tl.load(sorted_ptr + t * stride_sorted + i)
-    prev = tl.load(sorted_ptr + t * stride_sorted + i - 1, mask=i > 0, other=-8)
+    packed = tl.load(sorted_ptr + t * stride_sorted + i, mask=i < L, other=(1 << 27) * 8 + 7)
+    prev = tl.load(sorted_ptr + t * stride_sorted + i - 1, mask=(i > 0) & (i < L), other=-8)
     entry = packed // 8
     r = packed % 8
     valid = entry < (1 << 27)
@@ -42,10 +42,10 @@ def _qsa_union_build_kernel(sorted_ptr, uni_ptr, mem_ptr, cnt_ptr, stride_sorted
 
 
 @triton.jit
-def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cnt_ptr, block_table_ptr, out_ptr,
+def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cnt_ptr, block_table_ptr, token_to_req_ptr, out_ptr,
                            stride_q_row, stride_q_head, stride_k_block, stride_k_token, stride_k_head,
                            stride_v_block, stride_v_token, stride_v_head, stride_uni, stride_mem_t, stride_mem_r,
-                           stride_out_row, stride_out_head, num_rows, request, num_cache_blocks,
+                           stride_out_row, stride_out_head, num_rows, num_cache_blocks,
                            R: tl.constexpr, GP: tl.constexpr, GROUP_SIZE: tl.constexpr, HEAD_DIM: tl.constexpr,
                            BNB: tl.constexpr, CR: tl.constexpr, PAGE_SIZE: tl.constexpr, PAGE_TABLE_WIDTH: tl.constexpr,
                            STRIDE_TABLE_REQ: tl.constexpr):
@@ -62,6 +62,7 @@ def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cn
     row = tile * R + r_of_m
     qmask = (row < num_rows) & (h_of_m < GROUP_SIZE)
     first_head = kv_head * GROUP_SIZE
+    request = tl.load(token_to_req_ptr + tl.minimum(tile * R, num_rows - 1))
     query = tl.load(q_ptr + row[:, None] * stride_q_row + (first_head + h_of_m[:, None]) * stride_q_head
                     + dim_offsets[None, :], mask=qmask[:, None], other=0.0)
     max_value = tl.full((M,), -1.0e20, dtype=tl.float32)
@@ -130,22 +131,22 @@ def _qsa_union_entries(logical_indices: torch.Tensor, compress_ratio: int, token
 def _qsa_union_build(entries: torch.Tensor, R: int):
     rows, E = entries.shape
     T = (rows + R - 1) // R
-    N = 1 << (R * E - 1).bit_length()
+    L = R * E
+    N = 1 << (L - 1).bit_length()
     dev = entries.device
-    packed = torch.full((T, N), (1 << 27) * 8 + 7, device=dev, dtype=torch.int32)
     e = entries
     if T * R != rows:
         e = torch.cat([e, torch.full((T * R - rows, E), -1, device=dev, dtype=torch.int32)])
     e = e.view(T, R, E)
     rr = torch.arange(R, device=dev, dtype=torch.int32)[None, :, None]
-    packed[:, : R * E] = torch.where(e >= 0, e * 8 + rr, torch.full_like(e, (1 << 27) * 8 + 7)).view(T, R * E)
-    packed, _ = torch.sort(packed, dim=1)
+    packed = torch.where(e >= 0, e * 8 + rr, torch.full_like(e, (1 << 27) * 8 + 7)).view(T, L)
+    packed, _ = torch.sort(packed, dim=1)  # exact width, not the power of two
     UB = R * E
     uni = torch.full((T, UB), -1, device=dev, dtype=torch.int32)
     mem = torch.zeros((T, R, UB), device=dev, dtype=torch.int8)
     cnt = torch.empty(T, device=dev, dtype=torch.int32)
     _qsa_union_build_kernel[(T,)](packed, uni, mem, cnt, packed.stride(0), uni.stride(0), mem.stride(0), mem.stride(1),
-                                  N=N, num_warps=4)
+                                  L, N=N, num_warps=4)
     return uni, mem, cnt, T
 
 
@@ -154,19 +155,17 @@ def qsa_sparse_paged_attention_union(q, k_cache, v_cache, logical_indices, block
     rows = q.shape[0]
     token_topk = (logical_indices.shape[1] - (compress_ratio - 1))
     entries = _qsa_union_entries(logical_indices, compress_ratio, token_topk)
-    u4 = _qsa_union_build(entries, 4)
-    u2 = _qsa_union_build(entries, 2)
-    t4 = float(u4[2].sum()) * _QSA_UNION_C4
-    t2 = float(u2[2].sum()) * _QSA_UNION_C2
-    uni, mem, cnt, T = u4 if t4 <= t2 else u2
-    R = 4 if t4 <= t2 else 2
+    # R by context (finding 104: R=4 wins up to ~8k of visible context, R=2 beyond); the visible context of the
+    # chunk is bounded by the page table width, which needs no device sync
+    visible_tokens = block_table.shape[1] * k_cache.shape[1]
+    R = 4 if visible_tokens <= _QSA_UNION_R4_MAX_CTX else 2
+    uni, mem, cnt, T = _qsa_union_build(entries, R)
     group_size = q.shape[1] // k_cache.shape[2]
-    request = int(token_to_req[0])
     _qsa_union_attn_kernel[(T, k_cache.shape[2])](
-        q, k_cache, v_cache, uni, mem, cnt, block_table, out,
+        q, k_cache, v_cache, uni, mem, cnt, block_table, token_to_req, out,
         q.stride(0), q.stride(1), k_cache.stride(0), k_cache.stride(1), k_cache.stride(2),
         v_cache.stride(0), v_cache.stride(1), v_cache.stride(2), uni.stride(0), mem.stride(0), mem.stride(1),
-        out.stride(0), out.stride(1), rows, request, k_cache.shape[0],
+        out.stride(0), out.stride(1), rows, k_cache.shape[0],
         R=R, GP=triton.next_power_of_2(group_size), GROUP_SIZE=group_size, HEAD_DIM=q.shape[2],
         BNB=16, CR=compress_ratio, PAGE_SIZE=k_cache.shape[1], PAGE_TABLE_WIDTH=block_table.shape[1],
         STRIDE_TABLE_REQ=block_table.stride(0), num_warps=8, num_stages=1)
