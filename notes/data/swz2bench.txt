@@ -1,0 +1,73 @@
+== build 16:28
+[1/3] c++ -MMD -MF bindings_chunk.o.d -DTORCH_EXTENSION_NAME=_C_swz2 -DTORCH_API_INCLUDE_EXTENSION_H -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/swz2 -I/home/jschmied/git/vllm-fp8chunk/csrc -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable/quantization/w8a8/cutlass/c3x -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/include -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/tools/util/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -fPIC -std=c++20 -O3 -std=c++17 -DUSE_CUDA -DTORCH_STABLE_ONLY -DTORCH_TARGET_VERSION=0x020B000000000000ULL -c /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/swz2/bindings_chunk.cpp -o bindings_chunk.o 
+[2/3] /usr/local/cuda/bin/nvcc -MD -MF scaled_mm_blockwise_sm120_fp8.cuda.o.d -DTORCH_EXTENSION_NAME=_C_swz2 -DTORCH_API_INCLUDE_EXTENSION_H -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/swz2 -I/home/jschmied/git/vllm-fp8chunk/csrc -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable/quantization/w8a8/cutlass/c3x -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/include -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/tools/util/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -std=c++17 -gencode=arch=compute_121a,code=sm_121a --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math -DENABLE_SCALED_MM_SM120=1 -DTORCH_STABLE_ONLY -DUSE_CUDA -DTORCH_TARGET_VERSION=0x020B000000000000ULL -c /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/swz2/scaled_mm_blockwise_sm120_fp8.cu -o scaled_mm_blockwise_sm120_fp8.cuda.o 
+[3/3] c++ scaled_mm_blockwise_sm120_fp8.cuda.o bindings_chunk.o -shared -L/opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/lib -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch -ltorch_python -L/usr/local/cuda/lib64 -lcudart -o _C_swz2.so
+built: /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/swz2/build/_C_swz2.so
+op: _C_swz2.blockwise_sm120
+  build rc=0 16:28
+-rwxr-xr-x 1 root root 590464 Sep  4 16:28 /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/swz2/build/_C_swz2.so
+=== start a 16:28 ===
+  n=16384 k=2560 m=   64: identical=True  stock    186.7us ( 28.8 TF)  chunked-op    187.6us ( 28.6 TF)
+  n=16384 k=2560 m= 4096: identical=True  stock   2035.0us (168.8 TF)  chunked-op   2156.1us (159.4 TF)
+  n=16384 k=2560 m= 4097: identical=True  stock  22694.3us ( 15.1 TF)  chunked-op   2024.3us (169.8 TF)
+  n=16384 k=2560 m= 5120: identical=True  stock   2586.2us (166.1 TF)  chunked-op   2807.0us (153.0 TF)
+  n=16384 k=2560 m= 6144: identical=True  stock   3752.6us (137.3 TF)  chunked-op   3359.2us (153.4 TF)
+  n=16384 k=2560 m= 8191: identical=True  stock  44665.8us ( 15.4 TF)  chunked-op   4505.6us (152.5 TF)
+  n=16384 k=2560 m= 8192: identical=True  stock   7597.0us ( 90.5 TF)  chunked-op   4416.9us (155.6 TF)
+  n=16384 k=2560 m= 8193: identical=True  stock  48865.2us ( 14.1 TF)  chunked-op   4219.8us (162.9 TF)
+  n=16384 k=2560 m=12288: identical=True  stock  19494.3us ( 52.9 TF)  chunked-op   6699.8us (153.9 TF)
+  n=16384 k=2560 m=16384: identical=True  stock  26580.2us ( 51.7 TF)  chunked-op   8897.7us (154.5 TF)
+  n=57344 k=2560 m=   64: identical=True  stock    669.9us ( 28.0 TF)  chunked-op    661.1us ( 28.4 TF)
+  n=57344 k=2560 m= 4096: identical=True  stock   7122.8us (168.8 TF)  chunked-op   7450.8us (161.4 TF)
+  n=57344 k=2560 m= 4097: identical=True  stock  12049.1us ( 99.8 TF)  chunked-op   7221.4us (166.6 TF)
+  n=57344 k=2560 m= 5120: identical=True  stock   9423.7us (159.5 TF)  chunked-op   9737.5us (154.4 TF)
+  n=57344 k=2560 m= 6144: identical=True  stock  13669.6us (132.0 TF)  chunked-op  11804.2us (152.8 TF)
+  n=57344 k=2560 m= 8191: identical=True  stock  28916.5us ( 83.2 TF)  chunked-op  15700.4us (153.2 TF)
+  n=57344 k=2560 m= 8192: identical=True  stock  25927.3us ( 92.8 TF)  chunked-op  15711.6us (153.1 TF)
+  n=57344 k=2560 m= 8193: identical=True  stock  28372.2us ( 84.8 TF)  chunked-op  15197.9us (158.3 TF)
+  n=57344 k=2560 m=12288: identical=True  stock  68414.0us ( 52.7 TF)  chunked-op  23585.5us (153.0 TF)
+  n=57344 k=2560 m=16384: identical=True  stock  91639.5us ( 52.5 TF)  chunked-op  31202.2us (154.2 TF)
+  n= 2048 k=2560 m=   64: identical=True  stock     12.6us ( 53.4 TF)  chunked-op     12.8us ( 52.6 TF)
+  n= 2048 k=2560 m= 4096: identical=True  stock    274.7us (156.4 TF)  chunked-op    288.7us (148.8 TF)
+  n= 2048 k=2560 m= 4097: identical=True  stock    440.7us ( 97.5 TF)  chunked-op    290.9us (147.7 TF)
+  n= 2048 k=2560 m= 5120: identical=True  stock    351.4us (152.8 TF)  chunked-op    363.3us (147.8 TF)
+  n= 2048 k=2560 m= 6144: identical=True  stock    409.3us (157.4 TF)  chunked-op    422.0us (152.7 TF)
+  n= 2048 k=2560 m= 8191: identical=True  stock    871.0us ( 98.6 TF)  chunked-op    576.8us (148.9 TF)
+  n= 2048 k=2560 m= 8192: identical=True  stock    557.5us (154.1 TF)  chunked-op    577.4us (148.8 TF)
+  n= 2048 k=2560 m= 8193: identical=True  stock    874.9us ( 98.2 TF)  chunked-op    579.2us (148.3 TF)
+  n= 2048 k=2560 m=12288: identical=True  stock    817.1us (157.7 TF)  chunked-op    848.1us (151.9 TF)
+  n= 2048 k=2560 m=16384: identical=True  stock   1120.6us (153.3 TF)  chunked-op   1130.7us (151.9 TF)
+30/30 identical; FAILS: 0
+=== start b 16:29 ===
+  n=16384 k=2560 m=   64: identical=True  stock    183.3us ( 29.3 TF)  chunked-op    183.7us ( 29.2 TF)
+  n=16384 k=2560 m= 4096: identical=True  stock   2042.5us (168.2 TF)  chunked-op   2189.0us (157.0 TF)
+  n=16384 k=2560 m= 4097: identical=True  stock  22686.1us ( 15.1 TF)  chunked-op   2078.2us (165.4 TF)
+  n=16384 k=2560 m= 5120: identical=True  stock   2673.1us (160.7 TF)  chunked-op   2863.2us (150.0 TF)
+  n=16384 k=2560 m= 6144: identical=True  stock   3471.7us (148.5 TF)  chunked-op   3401.6us (151.5 TF)
+  n=16384 k=2560 m= 8191: identical=True  stock  46419.3us ( 14.8 TF)  chunked-op   4492.7us (152.9 TF)
+  n=16384 k=2560 m= 8192: identical=True  stock   7062.8us ( 97.3 TF)  chunked-op   4526.7us (151.8 TF)
+  n=16384 k=2560 m= 8193: identical=True  stock  45708.7us ( 15.0 TF)  chunked-op   4323.6us (159.0 TF)
+  n=16384 k=2560 m=12288: identical=True  stock  20172.3us ( 51.1 TF)  chunked-op   6787.3us (151.9 TF)
+  n=16384 k=2560 m=16384: identical=True  stock  26896.8us ( 51.1 TF)  chunked-op   8955.4us (153.5 TF)
+  n=57344 k=2560 m=   64: identical=True  stock    658.8us ( 28.5 TF)  chunked-op    663.5us ( 28.3 TF)
+  n=57344 k=2560 m= 4096: identical=True  stock   7403.9us (162.4 TF)  chunked-op   7690.2us (156.4 TF)
+  n=57344 k=2560 m= 4097: identical=True  stock  12126.1us ( 99.2 TF)  chunked-op   7211.2us (166.8 TF)
+  n=57344 k=2560 m= 5120: identical=True  stock   9300.6us (161.6 TF)  chunked-op   9891.2us (152.0 TF)
+  n=57344 k=2560 m= 6144: identical=True  stock  13395.9us (134.7 TF)  chunked-op  11986.0us (150.5 TF)
+  n=57344 k=2560 m= 8191: identical=True  stock  32821.9us ( 73.3 TF)  chunked-op  15887.2us (151.4 TF)
+  n=57344 k=2560 m= 8192: identical=True  stock  26236.3us ( 91.7 TF)  chunked-op  15815.9us (152.1 TF)
+  n=57344 k=2560 m= 8193: identical=True  stock  29790.9us ( 80.7 TF)  chunked-op  15311.4us (157.1 TF)
+  n=57344 k=2560 m=12288: identical=True  stock  70419.4us ( 51.2 TF)  chunked-op  23844.3us (151.3 TF)
+  n=57344 k=2560 m=16384: identical=True  stock  91543.6us ( 52.5 TF)  chunked-op  31463.2us (152.9 TF)
+  n= 2048 k=2560 m=   64: identical=True  stock     12.3us ( 54.6 TF)  chunked-op     12.7us ( 52.8 TF)
+  n= 2048 k=2560 m= 4096: identical=True  stock    277.3us (154.9 TF)  chunked-op    288.3us (149.0 TF)
+  n= 2048 k=2560 m= 4097: identical=True  stock    446.1us ( 96.3 TF)  chunked-op    292.5us (146.9 TF)
+  n= 2048 k=2560 m= 5120: identical=True  stock    353.3us (151.9 TF)  chunked-op    365.5us (146.9 TF)
+  n= 2048 k=2560 m= 6144: identical=True  stock    409.1us (157.5 TF)  chunked-op    424.7us (151.7 TF)
+  n= 2048 k=2560 m= 8191: identical=True  stock    876.7us ( 98.0 TF)  chunked-op    580.6us (147.9 TF)
+  n= 2048 k=2560 m= 8192: identical=True  stock    558.6us (153.8 TF)  chunked-op    579.3us (148.3 TF)
+  n= 2048 k=2560 m= 8193: identical=True  stock    881.6us ( 97.4 TF)  chunked-op    581.0us (147.9 TF)
+  n= 2048 k=2560 m=12288: identical=True  stock    842.4us (153.0 TF)  chunked-op    847.5us (152.0 TF)
+  n= 2048 k=2560 m=16384: identical=True  stock   1098.8us (156.4 TF)  chunked-op   1139.5us (150.8 TF)
+30/30 identical; FAILS: 0
+== ALL DONE ==

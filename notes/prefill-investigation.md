@@ -482,3 +482,12 @@
     selection identical (`CutlassFp8BlockScaledMMKernel` everywhere incl. the MTP head), offload worker up.
     Not yet prod: the old venv stays; promote after a three-start agent loop and a `prefprof` on the new kernels.
 
+102. **The pushed PR code verified standalone (`swz2bench`, `_C_swz2` = the branch's `.cu` + dispatch, two starts;
+    `notes/data/swz2bench.txt`): 30/30 bit-identical to the stock kernel across 3 weights × 10 M values (64…16384),
+    and 152–170 TF at every M ≥ 6144 on 16384×2560 (stock 137 → 52).** The sweep added the point that fixed the
+    gate: M=5120 on 16384×2560 (12.5 MiB of A) still loses with the swizzle (153 vs 166), M=6144 (15 MiB) gains
+    (153 vs 137), so the activation-slab threshold went from 12 to 14 MiB (commit bd84b180); 5120×5120 at M=4096
+    (20 MiB) stays swizzled (117 → 160). The `m % 4 != 0` rows show the *preview* stock kernel's swap-AB misroute
+    (15 TF) against the branch's main-based dispatch (#52775 fixed) — not a swizzle effect. PR #55180 state:
+    three commits (rewrite, gate + balanced oracle, threshold), body v3, reviewer replies posted; done from our side.
+
