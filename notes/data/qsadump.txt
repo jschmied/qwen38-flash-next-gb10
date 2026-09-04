@@ -1,0 +1,6 @@
+  qsadump INSTALLED in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/models/qwen3_8_flash_next/nvidia/ops/qsa.py
+preflight OK 02:07
+  sent 220 reps -> 7503 tokens
+  sent 860 reps -> 29263 tokens
+  qsadump REMOVED
+== ALL DONE ==

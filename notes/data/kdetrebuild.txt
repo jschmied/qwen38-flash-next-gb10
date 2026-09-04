@@ -1,0 +1,6 @@
+preflight OK 02:21
+built: /opt/llm/runners/kdet_build/build/_C_det.so
+FAILS: 0
+OK lines: 177
+installed /opt/llm/kernel-det/_C_det.so (rebuilt 02:21)
+== ALL DONE ==

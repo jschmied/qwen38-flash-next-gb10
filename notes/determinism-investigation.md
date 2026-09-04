@@ -1162,6 +1162,11 @@ all depths counter-identical across 3 starts: True
     det ~127): fewer tokens per turn under the same per-turn fixed cost, s/turn is the like-for-like
     number. Conclusion for PR #55122: no TTFT and no per-turn cost end-to-end on GB10.
 
+84. **`_C_det` rebuilt from the PR #55122 follow-up source (per-call device properties, k=1024 test
+    shapes) — 177/177 tests pass, installed 02:21** (`notes/data/kdetrebuild.txt`). The box copy now
+    matches the PR head `cbd0642a`; the kdetab A/B (finding 82) ran on the previous build, whose kernel
+    body is identical (the follow-up only moved the smem query per call).
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
