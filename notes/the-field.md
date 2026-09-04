@@ -970,3 +970,30 @@ decode equal. Posted issue #4 with the three transferable items (concurrency cei
 the union kernel is deliberately not offered there — their batches mix requests (our gate needs single-request
 chunks) and the honest route is upstream.
 
+## 2026-09-04 late — sweep: who else is doing real work on Flash-Next
+
+- **mratsim/sglang-qwen38fn-sm120-turbo** (2026-09-02, ★5): SGLang on one RTX Pro 6000 (CC 12.0, 96 GiB), RadixArk NVFP4;
+  **11–13k tok/s prefill, ~200 tok/s per stream, 1,170 tok/s aggregate at 8**. Seven patches on the day-0 image: fp8 KV
+  on sm_120, linear-attention layers do not cache MTP drafts (−2 GB, "surprisingly not slower"), **MXFP8 at load for
+  everything the checkpoint left in bf16** (attention, MLP, lm_head, hyper-connection mix), richer-calibration NVFP4 from
+  local-inference-lab, Triton preload via long-prefill warmup. mratsim is a serious kernel engineer; the natural SM120
+  tester for the tile-union override once the PR is up. Lists four other SM120 SGLang forks (jpezzulli, gabrielolympie,
+  lovedheart, ormandj).
+- **carloslfu/slotstream** (★287): Macs, experts streamed from SSD through a fixed slot pool, 12 tok/s warm decode in
+  32 GB on a 48 GB M5 Pro. Memory design, not kernels; the most-starred Flash-Next repo.
+- **alexskinner/qwen38-flash-spark-blend** (2026-09-04): blazux + Mia's `MADV_RANDOM` + MTP=3 on one GB10, one harness
+  head-to-head: 30.4 tok/s decode, **1,863 tok/s prefill at 40k (+26 % over blazux)**, 92 tok/s at 8 streams, 1.12 s
+  prefix-hit TTFT. Confirms Mia's mmap advice and MTP=3 (2.45 accepted/step vs 2.10 at MTP=2).
+- **davetha/r9700-lru-expert-cache** (AMD, 2× R9700): device-side LRU expert cache decided on the GPU between decode
+  steps; PCIe expert traffic 432 MB/step → much less, prose 76.7 → 91.8 tok/s with MTP-4. A real systems idea for any
+  box whose experts do not fit.
+- **llama.cpp**: coder543 #28136 *direct reads for the lazy PLE table* — real-task prefill 300 → 750–800 tok/s on GB10,
+  root cause mmap over-read ("it's always mmap"); abdel-darwish-27 #28213 gather-based sparse attention for QSA decode;
+  fairydreaming #28330 no V cache for the indexer. The llama.cpp lane is now touching the same two levers we did
+  (PLE placement, QSA gather).
+- **vLLM**: gau-nernst #55272 remove torch.compile for the NVIDIA implementation (open — bears on our compile-freeze
+  findings); peakcrosser7 #55375 fused PLE conv state-index strides fix; aoshen02 #55341 warm up kernels before CUDA
+  graph capture. **SGLang** #37995 (Jiminator) cookbook for NVFP4 TP=2 on 2× Spark with PLE offload *off* on unified memory.
+- HF today: primitive-ai NVFP4 at 12k downloads, Baekpica SSD-PLE GGUF 14k, arnomatic W4A16-PLE8, tcclaviger MXFP4-FP8,
+  lychee888 NVFP4-FP8PLE.
+
