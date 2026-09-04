@@ -212,3 +212,8 @@ overridden in align mode, `MambaDType` has no fp8, so no supported knob changes 
 
 Our contribution: the measured per-turn cost of the granularity on a real agent loop (0.46 s of 1.52 s) and,
 if `hitprobe3` confirms it, the boundary-padding workaround for static system prompts — evidence for #45702.
+
+### 2026-09-04 late — union kernel: RFC #55394 open
+
+Feedback until 2026-09-11. Before a PR, in this order: (3) per-request tile boundaries (`query_start_loc` padding), (2) indexer hands over the compact selection via metadata instead of the attribute stash, (1) separate path vs stock-kernel tiling per the maintainers' answer, then a real diff against main. Independent of the answer: dispatch table below 1,024 rows, fuse the build's torch launches.
+
