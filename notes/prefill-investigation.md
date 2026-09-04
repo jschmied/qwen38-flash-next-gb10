@@ -443,3 +443,27 @@
     op in the PR writes in place (finding 75: 155–170 TF). Tile sweep: BN=128 halves throughput (42 TF, smem),
     BM=64 −5 %, 8 warps −17 %, swizzle group 4/8/16 within 3 %.
 
+100. **CUTLASS tile-scheduler swizzle replaces chunking: `max_swizzle_size = 8` recovers 150–168 TF at every M,
+    bit-identical (`swzbench`, standalone `_C_swz` = the PR's dispatch with `TileSchedulerArguments` exposed,
+    two starts; `notes/data/swzbench.txt`).** The reviewer (gau-nernst) and the user's reading were right: the
+    scheduler argument vLLM's `cutlass_gemm_caller` already accepts is the whole fix.
+
+    | shape | M | stock (sw 1) | chunk4096 (PR) | sw2 | sw4 | **sw8 heuristic** | sw8 AlongM | sw8 AlongN |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    | 16384×2560 | 4096 | 165–170 | 151–161 | 154–164 | 153–162 | 149–155 | 148–154 | 145–156 |
+    | | 8192 | 86–96 | 150–157 | 111 | 139–142 | **148–154** | 148–154 | 150–156 |
+    | | 16384 | 52 | 151–156 | 93 | 142–144 | **152–156** | 151–155 | 152–156 |
+    | | 32768 | 52 | 156 | 94 | 143 | **154** | 153 | 155 |
+    | 10240×2560 | 8192 / 16384 / 32768 | 96 / 63 / 64 | 150 / 151 / 151 | 113 / 95 / 95 | 141 / 140 / 140 | **151 / 150 / 152** | 151 / 152 / 151 | 152 / 153 / 152 |
+    | 5120×5120 | 8192 / 16384 / 32768 | 74 / 73 / 74 | 153 / 155 / 155 | 122 / 123 / 122 | 150 / 151 / 150 | **164 / 162 / 163** | 166 / 168 / 168 | 163 / 164 / 164 |
+
+    Every configuration bit-identical to the single launch (swizzle only reorders CTAs). sw8 matches chunking on the
+    skinny-N shapes and beats it by 6–8 % on 5120×5120 (chunking's per-launch tail cost); the raster order is
+    within noise, heuristic is fine. Cost: at M=4096, where the weight already sits in L2, sw8 is 5–9 % below the
+    stock order on 16384×2560 (155 vs 170) — so gate it exactly like the chunking was gated (`weight_bytes >
+    l2CacheSize`, and M above ~1.5× the tile rows), or accept the small loss. Implication for PR #55180: drop
+    the M loop, the scale re-layout, the chunk-size heuristic and the chunked-reference tests; keep the L2 gate
+    and set `scheduler.max_swizzle_size = 8` on the kernel's `TileSchedulerArguments`. Also worth noting
+    upstream: CUTLASS's default here is swizzle 1, and sw2 already halves the loss — the default is wrong for
+    every part whose L2 is smaller than its weights.
+
