@@ -1,0 +1,27 @@
+preflight OK 15:20 (main venv, prefix cache ON, batch 4096)
+=== HP_aligned  spec=mtp n=3  15:20 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True
+    block: Setting attention block size to 1600 tokens  ssm dtype: 
+  HP_aligned prompt_tokens(tail 'a') = 7530
+  HP_aligned S= 2 pad= 472 prompt_tokens=8003: cold  0.09 s  hit(tail 'b')  0.837 s
+  HP_aligned S= 3 pad= 473 prompt_tokens=8004: cold  0.08 s  hit(tail 'b')  0.830 s
+  HP_aligned S= 4 pad= 474 prompt_tokens=8005: cold  0.08 s  hit(tail 'b')  0.837 s
+  HP_aligned S= 5 pad= 475 prompt_tokens=8006: cold  0.84 s  hit(tail 'b')  0.837 s
+  HP_aligned S= 6 pad= 476 prompt_tokens=8007: cold  0.08 s  hit(tail 'b')  0.833 s
+  HP_aligned S= 7 pad= 477 prompt_tokens=8008: cold  0.84 s  hit(tail 'b')  0.740 s
+  HP_aligned S= 8 pad= 478 prompt_tokens=8009: cold  0.89 s  hit(tail 'b')  0.824 s
+  HP_aligned S= 9 pad= 479 prompt_tokens=8010: cold  0.83 s  hit(tail 'b')  0.898 s
+  HP_aligned S=10 pad= 480 prompt_tokens=8011: cold  0.90 s  hit(tail 'b')  0.148 s
+  HP_aligned S=11 pad= 481 prompt_tokens=8012: cold  0.90 s  hit(tail 'b')  0.151 s
+  HP_aligned S=12 pad= 482 prompt_tokens=8013: cold  0.84 s  hit(tail 'b')  0.907 s
+  HP_aligned S=13 pad= 483 prompt_tokens=8014: cold  0.91 s  hit(tail 'b')  0.153 s
+  HP_aligned BEST: S=10 pad=480 -> hit with 1 new token 0.148 s (shared prefix on the 1600 boundary)
+  HP_aligned aligned hit +   1 rep 0: ttft  0.910 s  prompt_tokens 8012
+  HP_aligned aligned hit + 130 rep 0: ttft  0.720 s  prompt_tokens 8123
+  HP_aligned aligned hit +   1 rep 1: ttft  0.153 s  prompt_tokens 8012
+  HP_aligned aligned hit + 130 rep 1: ttft  0.265 s  prompt_tokens 8123
+  HP_aligned aligned hit +   1 rep 2: ttft  0.153 s  prompt_tokens 8012
+  HP_aligned aligned hit + 130 rep 2: ttft  0.264 s  prompt_tokens 8123
+  HP_aligned ALIGNED HIT +   1: median ttft  0.153 s  (all 0.910 0.153 0.153)
+  HP_aligned ALIGNED HIT + 130: median ttft  0.265 s  (all 0.720 0.265 0.264)
+== ALL DONE ==

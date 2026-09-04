@@ -402,3 +402,25 @@
     attention KV would *double* the block (fewer bytes per token). The fix is upstream RFC #45702 (partial
     cache hits, copy-on-write tail); `hitprobe3` tests the boundary-padding workaround.
 
+98. **Boundary-aligned prefix: the warm-turn intercept collapses from 0.59–0.75 s to 0.15–0.27 s
+    (`hitprobe5`, main build, MTP n=3 + flag, `notes/data/hitprobe5.txt`).** The probe pads the shared prefix
+    (seed turn + assistant turn + the next user header) so it ends exactly on the 1,600-token align block; the
+    chat-template suffix after the new content turned out to be 10 tokens (the S-sweep dips only at S=10 and,
+    by coincidence of the second boundary, S=13). On the same server, same prompt length ±5 tokens:
+
+    | | shared prefix mis-aligned (prompt mod 1600 ≈ 1,240) | aligned |
+    | --- | --- | --- |
+    | hit, +1 new token | 0.61–0.84 s | **0.153 s** |
+    | hit, +130 new tokens | 0.75 s | **0.265 s** |
+    | identical request, prompt exactly on a boundary | 0.71 s (the last block is always recomputed) | — |
+
+    So the fixed cost of a hit on this stack is ~0.1 s and everything above it in finding 97 was the tail
+    re-prefill. Two consequences: (1) **workaround for agents with a static system prompt: pad it so the
+    shared prefix is a multiple of 1,600 tokens** (`tools/hitprobe_aligned.py` shows how to find the exact
+    pad against a live server; the template suffix is 10 tokens for this model with thinking off) — worth
+    0.5–0.6 s per warm turn, i.e. a 1.52 s turn → ~1.0 s; the loop's later turns drift off the boundary as
+    the transcript grows, so the average saving over a session is about half of that unless the client
+    re-pads; (2) the upstream fix is #45702 (partial cache hits) and this is the per-turn number it lacks.
+    Also seen: with the 2 GiB KV pool (23 blocks) the sweep's 24 seeds evicted each other's last block —
+    the first request after an eviction pays one block (0.9 s); medians are quoted.
+
