@@ -21,7 +21,8 @@ def _k(q_ptr, idx_ptr, k_ptr, v_ptr, o_ptr, stride_q_row, stride_idx_row, stride
     M: tl.constexpr = ROWS * H
     m_off = tl.arange(0, M); d_off = tl.arange(0, D); c_off = tl.arange(0, BN)
     row0 = pid * ROWS
-    q = tl.load(q_ptr + (row0 + m_off // H) * stride_q_row + (m_off % H) * D + d_off[None, :] * 0 + d_off[None, :]).to(tl.bfloat16)  # [M, D]
+    qrow = (row0 + m_off // H) * stride_q_row + (m_off % H) * D
+    q = tl.load(q_ptr + qrow[:, None] + d_off[None, :]).to(tl.bfloat16)  # [M, D]
     mx = tl.full((M,), -1.0e20, tl.float32); nrm = tl.zeros((M,), tl.float32); acc = tl.zeros((M, D), tl.float32)
     scale: tl.constexpr = (D ** -0.5) * 1.4426950408889634
     for t in range(0, TOPK, BN):
@@ -34,22 +35,24 @@ def _k(q_ptr, idx_ptr, k_ptr, v_ptr, o_ptr, stride_q_row, stride_idx_row, stride
         nmx = tl.maximum(mx, tl.max(s, 1)); a = tl.math.exp2(mx - nmx); p = tl.math.exp2(s - nmx[:, None])
         acc = tl.dot(p.to(tl.bfloat16), vals, acc=acc * a[:, None]); nrm = nrm * a + tl.sum(p, 1); mx = nmx
     o = acc / nrm[:, None]
-    tl.store(o_ptr + (row0 + m_off // H) * stride_o_row + (m_off % H) * D + d_off[None, :], o.to(tl.bfloat16))
+    orow = (row0 + m_off // H) * stride_o_row + (m_off % H) * D
+    tl.store(o_ptr + orow[:, None] + d_off[None, :], o.to(tl.bfloat16))
 
-def run(N, ROWS, warps):
+def run(N, ROWS, warps, stages=2, BNc=BN):
     q = torch.randn(N, H, D, device=dev, dtype=torch.bfloat16) * 0.1
     ntok = 32768; kc = torch.randn(ntok, D, device=dev, dtype=torch.bfloat16); vc = torch.randn(ntok, D, device=dev, dtype=torch.bfloat16)
     # one index list per program (shared by its ROWS rows), random tokens in the context
     idx = torch.randint(0, ntok, (N, TOPK), device=dev, dtype=torch.int32)
     out = torch.empty(N, H, D, device=dev, dtype=torch.bfloat16)
-    def f(): _k[(N // ROWS,)](q, idx, kc, vc, out, q.stride(0), idx.stride(0), out.stride(0), ROWS=ROWS, H=H, D=D, TOPK=TOPK, BN=BN, PAGE=PAGE, num_warps=warps, num_stages=2)
+    def f(): _k[(N // ROWS,)](q, idx, kc, vc, out, q.stride(0), idx.stride(0), out.stride(0), ROWS=ROWS, H=H, D=D, TOPK=TOPK, BN=BNc, PAGE=PAGE, num_warps=warps, num_stages=stages)
     return f
 N = 4096
 fl = 2 * 2 * N * H * TOPK * D  # QK + PV per query row-group
 print(f"N={N} query rows, {H} heads, TOPK={TOPK}, D={D}: {fl/1e9:.0f} GFLOP", flush=True)
-for ROWS, warps in ((1,4),(1,8),(2,4),(4,4),(4,8),(8,8),(8,16),(16,8),(16,16)):
+# GB10 has 99 KiB shared memory per block: q [M,256] + K [256,BN] + V [BN,256] bf16 x stages must fit.
+for ROWS, warps, stages, BNc in ((1,4,2,64),(1,4,1,64),(2,4,1,64),(2,4,2,32),(4,4,1,64),(4,8,1,64),(4,8,1,32),(4,8,2,32),(8,8,1,32),(8,16,1,32),(8,8,1,16)):
     try:
-        t = timeit(run(N, ROWS, warps))
-        print(f"  ROWS={ROWS:2d} (M={ROWS*H:3d}) warps={warps:2d}: {t:9.1f} us  {t/N:6.3f} us/row  {fl/t/1e6:6.1f} TFLOPS", flush=True)
+        t = timeit(run(N, ROWS, warps, stages, BNc))
+        print(f"  ROWS={ROWS:2d} (M={ROWS*H:3d}) warps={warps:2d} stages={stages} BN={BNc:2d}: {t:9.1f} us  {t/N:6.3f} us/row  {fl/t/1e6:6.1f} TFLOPS", flush=True)
     except Exception as ex:
-        print(f"  ROWS={ROWS:2d} warps={warps}: ERR {str(ex)[:110]}", flush=True)
+        print(f"  ROWS={ROWS:2d} (M={ROWS*H:3d}) warps={warps:2d} stages={stages} BN={BNc:2d}: ERR {str(ex).splitlines()[0][:100]}", flush=True)
