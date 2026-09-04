@@ -1,0 +1,20 @@
+  fp8chunk INSTALLED in /opt/llm/runtime/vllm-venv-fnmain/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/cutlass.py
+preflight OK 01:24
+=== C4k_a DIED
+(APIServer pid=488245) Traceback (most recent call last):
+(APIServer pid=488245)     raise RuntimeError(
+(APIServer pid=488245) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== C0_a DIED
+(APIServer pid=491072) Traceback (most recent call last):
+(APIServer pid=491072)     raise RuntimeError(
+(APIServer pid=491072) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== C4k_b DIED
+(APIServer pid=494701) Traceback (most recent call last):
+(APIServer pid=494701)     raise RuntimeError(
+(APIServer pid=494701) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== C0_b DIED
+(APIServer pid=497664) Traceback (most recent call last):
+(APIServer pid=497664)     raise RuntimeError(
+(APIServer pid=497664) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+  fp8chunk REMOVED
+== ALL DONE ==

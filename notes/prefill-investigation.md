@@ -250,7 +250,8 @@
     `for` loop on the symbolic M (the P1 point of the #55180 review, which is why the PR moved the loop
     into the C++ op). v2 (`tools/main/fp8chunk_patch_v2.py`) resolves the env and prints at import and puts
     the loop into an opaque `torch.library.custom_op` (`fp8chunk::scaled_mm_chunked`, fake impl returns
-    the [M, N] empty), so compile sees one opaque call guarded on `M > chunk`. The off arms (C0) still
-    run and give the batch-8192 main-build baseline. Redo runner `chunkredo` is staged (waits for the
+    the [M, N] empty), so compile sees one opaque call guarded on `M > chunk`. The off arms (C0) die too —
+    v1 calls the printing helper unconditionally — so this run yields nothing (`notes/data/chunke2e-failed.txt`);
+    the venv was reverted cleanly at the end. Redo runner `chunkredo` is staged (waits for the
     whole chain), **not started** — needs the go.
 
