@@ -170,3 +170,10 @@ Chained on the box after `chunkredo` → `qsadump2` → `blockdrop`:
   (prod venv, refuses to start if `vllm-qwen38` is up) are ready; the unit was dequeued. Start on request.
 - Not queued, by design: full attention (TTFT 30k/7.5k = 3.6× for 3.9× tokens — K/V still fits L2 at
   30k, revisit past 40k), lm_head (last token only at prefill), GDN chunk state (64 KB/head).
+
+### TODO later — downloads (user 2026-09-04: "put downloads in todo for later"; each needs an explicit go)
+
+- primitive-ai `Qwen3.8-Flash-Next-PLE-quant` INT4 g16 sidecars (~32 GB) + the two overlay files — replaces our
+  BF16 offload tables + swap dependency; quality check vs the BF16 divergence reference.
+- myllmbox `Qwen3.8-Flash-Next-hibrid46` (91 GiB) + bilikaz kit image — A/B vs our FP8-mix + MTP for single-stream
+  speed (their 44 tok/s claim) and quality (GDN NVFP4, int3 resident PLE).
