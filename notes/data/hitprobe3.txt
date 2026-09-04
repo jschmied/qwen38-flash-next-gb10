@@ -1,0 +1,19 @@
+preflight OK 14:55 (main venv, prefix cache ON, batch 4096)
+=== HP_aligned  spec=mtp n=3  14:55 ===
+    spec: 'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True
+    block: Setting attention block size to 1600 tokens  ssm dtype: 
+  HP_aligned probe: prompt_tokens 7536 (+' x' -> 7538)
+  HP_aligned aligned prompt_tokens=9600 (added 2063 filler tokens)
+  HP_aligned aligned hit +   0 rep 0: ttft  1.477 s  prompt_tokens 9600
+  HP_aligned aligned hit +   1 rep 0: ttft  0.821 s  prompt_tokens 9605
+  HP_aligned aligned hit + 130 rep 0: ttft  0.876 s  prompt_tokens 9715
+  HP_aligned aligned hit +   0 rep 1: ttft  0.704 s  prompt_tokens 9600
+  HP_aligned aligned hit +   1 rep 1: ttft  0.815 s  prompt_tokens 9605
+  HP_aligned aligned hit + 130 rep 1: ttft  0.855 s  prompt_tokens 9715
+  HP_aligned aligned hit +   0 rep 2: ttft  0.709 s  prompt_tokens 9600
+  HP_aligned aligned hit +   1 rep 2: ttft  0.814 s  prompt_tokens 9605
+  HP_aligned aligned hit + 130 rep 2: ttft  0.859 s  prompt_tokens 9715
+  HP_aligned ALIGNED HIT +   0: median ttft  0.709 s  (all 1.477 0.704 0.709)
+  HP_aligned ALIGNED HIT +   1: median ttft  0.815 s  (all 0.821 0.815 0.814)
+  HP_aligned ALIGNED HIT + 130: median ttft  0.859 s  (all 0.876 0.855 0.859)
+== ALL DONE ==
