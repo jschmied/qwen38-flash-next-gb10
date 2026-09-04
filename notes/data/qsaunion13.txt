@@ -1,0 +1,55 @@
+=== sel_002_3813.pt 19:37
+sel_002_3813.pt: rows=3813 ctx=3816 stock  14716.3 us
+  R=4 BNB=16 warps=8: union mean 420 blocks/tile
+    bits=1 prephys=1: kernel  11993.3 us -> kernel x1.23  max|diff|=0.0010
+    bits=1 prephys=0: kernel  12034.0 us -> kernel x1.22  max|diff|=0.0010
+    bits=0 prephys=1: kernel   5551.5 us -> kernel x2.65  max|diff|=0.0010
+    bits=0 prephys=0: kernel   5885.4 us -> kernel x2.50  max|diff|=0.0010
+  R=4 BNB=16 warps=4: union mean 420 blocks/tile
+    bits=1 prephys=1: kernel   9615.0 us -> kernel x1.53  max|diff|=0.0010
+    bits=1 prephys=0: kernel   9919.1 us -> kernel x1.48  max|diff|=0.0010
+    bits=0 prephys=1: kernel   5974.2 us -> kernel x2.46  max|diff|=0.0010
+    bits=0 prephys=0: kernel   6887.0 us -> kernel x2.14  max|diff|=0.0010
+  R=4 BNB=8 warps=8: union mean 420 blocks/tile
+    bits=1 prephys=1: kernel  85077.9 us -> kernel x0.17  max|diff|=0.0010
+    bits=1 prephys=0: kernel  86893.2 us -> kernel x0.17  max|diff|=0.0010
+    bits=0 prephys=1: kernel   7527.3 us -> kernel x1.96  max|diff|=0.0010
+    bits=0 prephys=0: kernel   8145.0 us -> kernel x1.81  max|diff|=0.0010
+  R=2 BNB=8 warps=4: union mean 396 blocks/tile
+    bits=1 prephys=1: kernel   6230.8 us -> kernel x2.36  max|diff|=0.0010
+    bits=1 prephys=0: kernel   6744.9 us -> kernel x2.18  max|diff|=0.0010
+    bits=0 prephys=1: kernel   5428.2 us -> kernel x2.71  max|diff|=0.0010
+    bits=0 prephys=0: kernel   5806.6 us -> kernel x2.53  max|diff|=0.0010
+  R=2 BNB=16 warps=4: union mean 396 blocks/tile
+    bits=1 prephys=1: kernel   6965.7 us -> kernel x2.11  max|diff|=0.0010
+    bits=1 prephys=0: kernel   7713.9 us -> kernel x1.91  max|diff|=0.0010
+    bits=0 prephys=1: kernel   6878.5 us -> kernel x2.14  max|diff|=0.0010
+    bits=0 prephys=0: kernel   7647.9 us -> kernel x1.92  max|diff|=0.0010
+=== sel_024_3407.pt 19:37
+sel_024_3407.pt: rows=3407 ctx=7504 stock  14140.7 us
+  R=4 BNB=16 warps=8: union mean 713 blocks/tile
+    bits=1 prephys=1: kernel  15256.4 us -> kernel x0.93  max|diff|=0.0001
+    bits=1 prephys=0: kernel  15011.5 us -> kernel x0.94  max|diff|=0.0001
+    bits=0 prephys=1: kernel   7914.5 us -> kernel x1.79  max|diff|=0.0001
+    bits=0 prephys=0: kernel   8326.0 us -> kernel x1.70  max|diff|=0.0001
+  R=4 BNB=16 warps=4: union mean 713 blocks/tile
+    bits=1 prephys=1: kernel  13381.4 us -> kernel x1.06  max|diff|=0.0001
+    bits=1 prephys=0: kernel  14052.0 us -> kernel x1.01  max|diff|=0.0001
+    bits=0 prephys=1: kernel   8662.9 us -> kernel x1.63  max|diff|=0.0001
+    bits=0 prephys=0: kernel   9869.2 us -> kernel x1.43  max|diff|=0.0001
+  R=4 BNB=8 warps=8: union mean 713 blocks/tile
+    bits=1 prephys=1: kernel 125881.3 us -> kernel x0.11  max|diff|=0.0001
+    bits=1 prephys=0: kernel 123385.9 us -> kernel x0.11  max|diff|=0.0001
+    bits=0 prephys=1: kernel  10948.1 us -> kernel x1.29  max|diff|=0.0001
+    bits=0 prephys=0: kernel  11804.0 us -> kernel x1.20  max|diff|=0.0001
+  R=2 BNB=8 warps=4: union mean 592 blocks/tile
+    bits=1 prephys=1: kernel   8082.9 us -> kernel x1.75  max|diff|=0.0001
+    bits=1 prephys=0: kernel   8660.4 us -> kernel x1.63  max|diff|=0.0001
+    bits=0 prephys=1: kernel   7296.2 us -> kernel x1.94  max|diff|=0.0001
+    bits=0 prephys=0: kernel   7611.3 us -> kernel x1.86  max|diff|=0.0001
+  R=2 BNB=16 warps=4: union mean 592 blocks/tile
+    bits=1 prephys=1: kernel   8937.9 us -> kernel x1.58  max|diff|=0.0001
+    bits=1 prephys=0: kernel  10005.7 us -> kernel x1.41  max|diff|=0.0001
+    bits=0 prephys=1: kernel   9016.7 us -> kernel x1.57  max|diff|=0.0001
+    bits=0 prephys=0: kernel   9966.0 us -> kernel x1.42  max|diff|=0.0001
+== ALL DONE ==

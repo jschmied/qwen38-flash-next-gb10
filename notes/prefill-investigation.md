@@ -603,3 +603,23 @@
     (finding 103); the levers are now (1) build from `block_indices` on the indexer (no split), (2) fuse the build's
     torch ops into the Triton kernel, (3) the v6 bisect result for the R=2 BN=32 tile.
 
+111. **v6 bisect (`qsaunion13`, `tools/qsa_union_v6.py`, `notes/data/qsaunion13.txt`): the R-bit membership mask is
+    the R=4 regression; pre-resolved pages are a consistent +5–8 %; R=2 at BN=32 with 4 warps is the best tile at
+    both contexts.** Kernel vs stock, 2×2 of membership form × addressing:
+
+    | tile | 8k: bits+phys / bits+table / **matrix+phys** / matrix+table | 30k chunk (7.5k ctx): same order |
+    | --- | --- | --- |
+    | R=4 BN=64 w8 | 1.23 / 1.22 / **2.65** / 2.50 | 0.93 / 0.94 / **1.79** / 1.70 |
+    | R=4 BN=64 w4 | 1.53 / 1.48 / **2.46** / 2.14 | 1.06 / 1.01 / **1.63** / 1.43 |
+    | R=4 BN=32 w8 | 0.17 / 0.17 / **1.96** / 1.81 | 0.11 / 0.11 / **1.29** / 1.20 |
+    | **R=2 BN=32 w4** | 2.36 / 2.18 / **2.71** / 2.53 | 1.75 / 1.63 / **1.94** / 1.86 |
+    | R=2 BN=64 w4 | 2.11 / 1.91 / 2.14 / 1.92 | 1.58 / 1.41 / 1.57 / 1.42 |
+
+    The `(um[None, :] & (1 << r)[:, None]) != 0` expansion is what spills at M=64 (a [M, BNB] int32 temporary and its
+    broadcast to [M, BN] on top of the 64×256 accumulator — 60× slower at BN=32); the int8 [M, BNB] load has no such
+    temporary. Lever 2 (bitmask) is therefore rejected; lever 3 (pre-resolved physical token bases, one [BNB] load
+    instead of the page-table gather in the loop) is kept. With matrix + pre-resolved, R=2 BN=32 (4 warps) beats the
+    finding-104 optimum R=4 BN=64 at 8k (2.71 vs 2.65) and clearly at 7.5k ctx (1.94 vs 1.79), and the R=2 union is
+    the narrower one (1.06× / 1.16× of a row vs 1.12× / 1.39×) — so one fixed tile replaces the adaptive R choice,
+    and the build shrinks to N = 1,024. v7 = the v4.3 kernel with those two changes.
+
