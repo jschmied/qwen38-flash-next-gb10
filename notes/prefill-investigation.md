@@ -285,3 +285,33 @@
     even fire here). The models that show the PR's gain have 100+ MiB FP8 projections (the 27B's are 60–120
     MiB, parked). The venv was reverted after the run (0 patch lines).
 
+90. **MoE tile-boundary hypothesis REFUTED (`moel2`, two starts, `notes/data/moel2.txt`).** The NVFP4 grouped
+    GEMM shows no step at any M-tile boundary (64 / 128 / 256 rows per expert): time per token falls
+    monotonically, 4.03 µs at M=2048 → 2.47 at 4096 → 1.86 at 7503 → 1.76 at 8192 → 1.38 at 16384, balanced
+    and random routing within 2 %. So the kernel does not re-stream expert weights per tile, and larger
+    prefill chunks are strictly better for the MoE — the batch-4096 optimum on the preview came from the
+    FP8 misroute, not from here. What the sweep does show: the kernel tops out at ~70 TFLOPS on a part
+    with ~1 PFLOPS dense FP4, i.e. it is neither bandwidth- nor compute-bound but *shape*-bound — 512
+    experts × N=640 give tiny per-expert tiles and low occupancy. That is a kernel-config problem
+    (tile shape / split-K / cluster) not an L2 one, and it is the "2× above the floor" of finding 78.
+    Retire plan §6 item "moel2"; the MoE lever is a FlashInfer grouped-GEMM config for small-N experts.
+91. **Hyper-connection kernels (`hcbench2`, two starts, `notes/data/hcbench2.txt`): one of the two has
+    headroom.** Torch's own elementwise floor on this box is 330–340 GB/s (not the 273 GB/s spec).
+    `_hc_combine_norm` stock runs at 175–177 GB/s (1.56 ms at 4096 rows, 3.08 ms at 8192); the re-tiled
+    v2 (one program per row, all four streams, block output read once) reaches 213–224 GB/s: **×1.21 at
+    4096, ×1.26 at 8192**, outputs identical for `out`, y within bf16 rounding (0.0156). `_hc_gate_mix`
+    stock is already at 230 GB/s and no tiling beats it (×0.99–1.00). At 8k prefill the combine-norm
+    saves ~0.6 ms × 48 layers ≈ 30 ms of 2.71 s (1 %), at 30k ~4 × that (~1 %). Real but small; the
+    remaining gap to the 335 GB/s floor is the second pass over `out` and can be closed only by fusing
+    the norm into the consumer. Keep as a low-priority patch candidate, not a plan item.
+92. **QSA block-selection overlap (`qsadump2`, 96 dumps over the 8k and 30k prefills, `notes/data/qsadump2.txt`):
+    the tile-union kernel is a clear GO.** Consecutive-query Jaccard 0.87–0.94 in the 8k prefill's
+    3,813-row chunks and 0.4–0.8 elsewhere; the union of selections over 64 consecutive queries is
+    487–2,536 blocks against 64 × 374–512 per-row gathers: **gather traffic saved 90–98 % at tile 64,
+    94–99 % at tile 128**, worst case (30k, 3,072 visible blocks) still 90 %. Mean |sel| is 374 in the
+    first chunk (top-k < 512 because fewer blocks are visible) and 512 after. This is the number plan
+    §5 item 3 needed: a kernel that gathers the union once per query tile and masks per row would cut
+    the sparse attention's KV traffic by ~20×; whether that converts to time depends on whether
+    `_qsa_sparse_paged_gqa_splitk_kernel` (0.36 s at 8k, 1.5 s at 30k) is gather-bound — next step is a
+    tile-union prototype of that kernel, standalone, against the dumped selections.
+

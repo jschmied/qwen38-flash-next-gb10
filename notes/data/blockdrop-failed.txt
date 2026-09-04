@@ -1,0 +1,7 @@
+preflight OK 10:05 (main venv, MTP n=3, prefix cache ON)
+=== ND0_a  nodrop=0  10:05 ===
+  DIED after 630s
+(APIServer pid=856828) Traceback (most recent call last):
+(APIServer pid=856828)     raise RuntimeError(
+(APIServer pid=856828) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== ND1_a  nodrop=1  10:17 ===

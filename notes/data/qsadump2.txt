@@ -1,0 +1,200 @@
+  qsadump INSTALLED in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/models/qwen3_8_flash_next/nvidia/ops/qsa.py
+preflight OK 09:51
+  armed 10:04:12
+  sent 220 reps -> 7503 tokens
+  sent 860 reps -> 29263 tokens
+  qsadump REMOVED
+ARM
+sel_000_3813.pt
+sel_001_283.pt
+sel_002_3813.pt
+sel_003_283.pt
+sel_004_3813.pt
+sel_005_283.pt
+sel_006_3813.pt
+sel_007_283.pt
+sel_008_3813.pt
+sel_009_283.pt
+sel_010_3813.pt
+sel_011_283.pt
+sel_012_3813.pt
+sel_013_283.pt
+sel_014_3813.pt
+sel_015_283.pt
+sel_016_3813.pt
+sel_017_283.pt
+sel_018_3813.pt
+sel_019_283.pt
+sel_020_3813.pt
+sel_021_283.pt
+sel_022_3813.pt
+sel_023_283.pt
+sel_024_3407.pt
+sel_025_3407.pt
+sel_026_3407.pt
+sel_027_3407.pt
+sel_028_3407.pt
+sel_029_3407.pt
+sel_030_3407.pt
+sel_031_3407.pt
+sel_032_3407.pt
+sel_033_3407.pt
+sel_034_3407.pt
+sel_035_3407.pt
+sel_036_3813.pt
+sel_037_283.pt
+sel_038_3813.pt
+sel_039_283.pt
+sel_040_3813.pt
+sel_041_283.pt
+sel_042_3813.pt
+sel_043_283.pt
+sel_044_3813.pt
+sel_045_283.pt
+sel_046_3813.pt
+sel_047_283.pt
+sel_048_3813.pt
+sel_049_283.pt
+sel_050_3813.pt
+sel_051_283.pt
+sel_052_3813.pt
+sel_053_283.pt
+sel_054_3813.pt
+sel_055_283.pt
+sel_056_3813.pt
+sel_057_283.pt
+sel_058_3813.pt
+sel_059_283.pt
+sel_060_3813.pt
+sel_061_283.pt
+sel_062_3813.pt
+sel_063_283.pt
+sel_064_3813.pt
+sel_065_283.pt
+sel_066_3813.pt
+sel_067_283.pt
+sel_068_3813.pt
+sel_069_283.pt
+sel_070_3813.pt
+sel_071_283.pt
+sel_072_3813.pt
+sel_073_283.pt
+sel_074_3813.pt
+sel_075_283.pt
+sel_076_3813.pt
+sel_077_283.pt
+sel_078_3813.pt
+sel_079_283.pt
+sel_080_3813.pt
+sel_081_283.pt
+sel_082_3813.pt
+sel_083_283.pt
+sel_084_3813.pt
+sel_085_283.pt
+sel_086_3813.pt
+sel_087_283.pt
+sel_088_3813.pt
+sel_089_283.pt
+sel_090_3813.pt
+sel_091_283.pt
+sel_092_3813.pt
+sel_093_283.pt
+sel_094_3813.pt
+sel_095_283.pt
+sel_000_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.939 | tile 16: union/tile=467 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_001_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.784 | tile 16: union/tile=893 (vs 16x512) -> gather saved 89% | tile 64: union/tile=999 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1008 (vs 128x512) -> gather saved 98%
+sel_002_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.924 | tile 16: union/tile=469 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_003_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.763 | tile 16: union/tile=908 (vs 16x512) -> gather saved 89% | tile 64: union/tile=999 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1009 (vs 128x512) -> gather saved 98%
+sel_004_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.893 | tile 16: union/tile=477 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_005_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.650 | tile 16: union/tile=951 (vs 16x512) -> gather saved 88% | tile 64: union/tile=993 (vs 64x512) -> gather saved 97% | tile 128: union/tile=999 (vs 128x512) -> gather saved 98%
+sel_006_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.889 | tile 16: union/tile=471 (vs 16x374) -> gather saved 92% | tile 64: union/tile=487 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_007_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.634 | tile 16: union/tile=925 (vs 16x512) -> gather saved 89% | tile 64: union/tile=983 (vs 64x512) -> gather saved 97% | tile 128: union/tile=987 (vs 128x512) -> gather saved 98%
+sel_008_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.872 | tile 16: union/tile=477 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_009_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.587 | tile 16: union/tile=967 (vs 16x512) -> gather saved 88% | tile 64: union/tile=998 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1007 (vs 128x512) -> gather saved 98%
+sel_010_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.902 | tile 16: union/tile=473 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_011_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.677 | tile 16: union/tile=938 (vs 16x512) -> gather saved 88% | tile 64: union/tile=996 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1005 (vs 128x512) -> gather saved 98%
+sel_012_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.877 | tile 16: union/tile=477 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_013_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.578 | tile 16: union/tile=971 (vs 16x512) -> gather saved 88% | tile 64: union/tile=995 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1002 (vs 128x512) -> gather saved 98%
+sel_014_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.877 | tile 16: union/tile=474 (vs 16x374) -> gather saved 92% | tile 64: union/tile=487 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_015_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.596 | tile 16: union/tile=941 (vs 16x512) -> gather saved 88% | tile 64: union/tile=986 (vs 64x512) -> gather saved 97% | tile 128: union/tile=995 (vs 128x512) -> gather saved 98%
+sel_016_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.883 | tile 16: union/tile=473 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_017_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.614 | tile 16: union/tile=944 (vs 16x512) -> gather saved 88% | tile 64: union/tile=995 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1002 (vs 128x512) -> gather saved 98%
+sel_018_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.904 | tile 16: union/tile=472 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_019_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.693 | tile 16: union/tile=931 (vs 16x512) -> gather saved 88% | tile 64: union/tile=994 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1000 (vs 128x512) -> gather saved 98%
+sel_020_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.910 | tile 16: union/tile=471 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_021_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.710 | tile 16: union/tile=928 (vs 16x512) -> gather saved 88% | tile 64: union/tile=999 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1008 (vs 128x512) -> gather saved 98%
+sel_022_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.916 | tile 16: union/tile=470 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_023_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.741 | tile 16: union/tile=918 (vs 16x512) -> gather saved 89% | tile 64: union/tile=996 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1003 (vs 128x512) -> gather saved 98%
+sel_024_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.716 | tile 16: union/tile=1162 (vs 16x512) -> gather saved 86% | tile 64: union/tile=1448 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1471 (vs 128x512) -> gather saved 98%
+sel_025_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.712 | tile 16: union/tile=1180 (vs 16x512) -> gather saved 86% | tile 64: union/tile=1450 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1472 (vs 128x512) -> gather saved 98%
+sel_026_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.590 | tile 16: union/tile=1263 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1429 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1459 (vs 128x512) -> gather saved 98%
+sel_027_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.549 | tile 16: union/tile=1224 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1419 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1460 (vs 128x512) -> gather saved 98%
+sel_028_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.499 | tile 16: union/tile=1314 (vs 16x512) -> gather saved 84% | tile 64: union/tile=1452 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1471 (vs 128x512) -> gather saved 98%
+sel_029_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.588 | tile 16: union/tile=1229 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1431 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1464 (vs 128x512) -> gather saved 98%
+sel_030_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.473 | tile 16: union/tile=1338 (vs 16x512) -> gather saved 84% | tile 64: union/tile=1447 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1470 (vs 128x512) -> gather saved 98%
+sel_031_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.505 | tile 16: union/tile=1244 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1405 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1449 (vs 128x512) -> gather saved 98%
+sel_032_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.525 | tile 16: union/tile=1244 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1426 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1460 (vs 128x512) -> gather saved 98%
+sel_033_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.629 | tile 16: union/tile=1200 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1432 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1462 (vs 128x512) -> gather saved 98%
+sel_034_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.666 | tile 16: union/tile=1199 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1450 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1471 (vs 128x512) -> gather saved 98%
+sel_035_3407.pt: rows=3407 k=512 mean|sel|=512 visible[max]=1875  consecutive Jaccard mean=0.683 | tile 16: union/tile=1196 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1452 (vs 64x512) -> gather saved 96% | tile 128: union/tile=1471 (vs 128x512) -> gather saved 98%
+sel_036_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.939 | tile 16: union/tile=467 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_037_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.784 | tile 16: union/tile=893 (vs 16x512) -> gather saved 89% | tile 64: union/tile=999 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1008 (vs 128x512) -> gather saved 98%
+sel_038_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.924 | tile 16: union/tile=469 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_039_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.761 | tile 16: union/tile=907 (vs 16x512) -> gather saved 89% | tile 64: union/tile=999 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1009 (vs 128x512) -> gather saved 98%
+sel_040_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.893 | tile 16: union/tile=477 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_041_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.649 | tile 16: union/tile=950 (vs 16x512) -> gather saved 88% | tile 64: union/tile=993 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1000 (vs 128x512) -> gather saved 98%
+sel_042_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.888 | tile 16: union/tile=472 (vs 16x374) -> gather saved 92% | tile 64: union/tile=487 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_043_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.630 | tile 16: union/tile=922 (vs 16x512) -> gather saved 89% | tile 64: union/tile=981 (vs 64x512) -> gather saved 97% | tile 128: union/tile=986 (vs 128x512) -> gather saved 98%
+sel_044_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.872 | tile 16: union/tile=477 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_045_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.582 | tile 16: union/tile=970 (vs 16x512) -> gather saved 88% | tile 64: union/tile=999 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1008 (vs 128x512) -> gather saved 98%
+sel_046_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.901 | tile 16: union/tile=473 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_047_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.674 | tile 16: union/tile=937 (vs 16x512) -> gather saved 88% | tile 64: union/tile=997 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1006 (vs 128x512) -> gather saved 98%
+sel_048_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.874 | tile 16: union/tile=477 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_049_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.578 | tile 16: union/tile=970 (vs 16x512) -> gather saved 88% | tile 64: union/tile=997 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1006 (vs 128x512) -> gather saved 98%
+sel_050_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.875 | tile 16: union/tile=475 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_051_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.591 | tile 16: union/tile=942 (vs 16x512) -> gather saved 88% | tile 64: union/tile=992 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1002 (vs 128x512) -> gather saved 98%
+sel_052_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.881 | tile 16: union/tile=473 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_053_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.619 | tile 16: union/tile=945 (vs 16x512) -> gather saved 88% | tile 64: union/tile=998 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1008 (vs 128x512) -> gather saved 98%
+sel_054_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.900 | tile 16: union/tile=472 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_055_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.686 | tile 16: union/tile=926 (vs 16x512) -> gather saved 89% | tile 64: union/tile=997 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1005 (vs 128x512) -> gather saved 98%
+sel_056_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.906 | tile 16: union/tile=472 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_057_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.703 | tile 16: union/tile=927 (vs 16x512) -> gather saved 88% | tile 64: union/tile=999 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1009 (vs 128x512) -> gather saved 98%
+sel_058_3813.pt: rows=3813 k=512 mean|sel|=374 visible[max]=953  consecutive Jaccard mean=0.912 | tile 16: union/tile=471 (vs 16x374) -> gather saved 92% | tile 64: union/tile=488 (vs 64x374) -> gather saved 98% | tile 128: union/tile=496 (vs 128x374) -> gather saved 99%
+sel_059_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=1024  consecutive Jaccard mean=0.732 | tile 16: union/tile=916 (vs 16x512) -> gather saved 89% | tile 64: union/tile=997 (vs 64x512) -> gather saved 97% | tile 128: union/tile=1006 (vs 128x512) -> gather saved 98%
+sel_060_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.713 | tile 16: union/tile=1183 (vs 16x512) -> gather saved 86% | tile 64: union/tile=1510 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1520 (vs 128x512) -> gather saved 98%
+sel_061_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.681 | tile 16: union/tile=1411 (vs 16x512) -> gather saved 82% | tile 64: union/tile=1978 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1974 (vs 128x512) -> gather saved 96%
+sel_062_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.710 | tile 16: union/tile=1200 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1512 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1520 (vs 128x512) -> gather saved 98%
+sel_063_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.685 | tile 16: union/tile=1441 (vs 16x512) -> gather saved 82% | tile 64: union/tile=2015 (vs 64x512) -> gather saved 93% | tile 128: union/tile=2019 (vs 128x512) -> gather saved 96%
+sel_064_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.587 | tile 16: union/tile=1285 (vs 16x512) -> gather saved 84% | tile 64: union/tile=1484 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1503 (vs 128x512) -> gather saved 98%
+sel_065_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.561 | tile 16: union/tile=1536 (vs 16x512) -> gather saved 81% | tile 64: union/tile=1906 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1933 (vs 128x512) -> gather saved 96%
+sel_066_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.540 | tile 16: union/tile=1250 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1471 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1504 (vs 128x512) -> gather saved 98%
+sel_067_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.481 | tile 16: union/tile=1480 (vs 16x512) -> gather saved 82% | tile 64: union/tile=1847 (vs 64x512) -> gather saved 94% | tile 128: union/tile=1860 (vs 128x512) -> gather saved 96%
+sel_068_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.495 | tile 16: union/tile=1344 (vs 16x512) -> gather saved 84% | tile 64: union/tile=1509 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1520 (vs 128x512) -> gather saved 98%
+sel_069_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.440 | tile 16: union/tile=1630 (vs 16x512) -> gather saved 80% | tile 64: union/tile=1986 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1986 (vs 128x512) -> gather saved 96%
+sel_070_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.579 | tile 16: union/tile=1261 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1491 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1512 (vs 128x512) -> gather saved 98%
+sel_071_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.512 | tile 16: union/tile=1528 (vs 16x512) -> gather saved 81% | tile 64: union/tile=1932 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1927 (vs 128x512) -> gather saved 96%
+sel_072_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.468 | tile 16: union/tile=1369 (vs 16x512) -> gather saved 83% | tile 64: union/tile=1506 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1518 (vs 128x512) -> gather saved 98%
+sel_073_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.411 | tile 16: union/tile=1691 (vs 16x512) -> gather saved 79% | tile 64: union/tile=1987 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1998 (vs 128x512) -> gather saved 96%
+sel_074_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.496 | tile 16: union/tile=1284 (vs 16x512) -> gather saved 84% | tile 64: union/tile=1467 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1499 (vs 128x512) -> gather saved 98%
+sel_075_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.457 | tile 16: union/tile=1545 (vs 16x512) -> gather saved 81% | tile 64: union/tile=1870 (vs 64x512) -> gather saved 94% | tile 128: union/tile=1907 (vs 128x512) -> gather saved 96%
+sel_076_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.516 | tile 16: union/tile=1273 (vs 16x512) -> gather saved 84% | tile 64: union/tile=1483 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1508 (vs 128x512) -> gather saved 98%
+sel_077_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.473 | tile 16: union/tile=1499 (vs 16x512) -> gather saved 81% | tile 64: union/tile=1880 (vs 64x512) -> gather saved 94% | tile 128: union/tile=1914 (vs 128x512) -> gather saved 96%
+sel_078_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.614 | tile 16: union/tile=1232 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1483 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1507 (vs 128x512) -> gather saved 98%
+sel_079_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.579 | tile 16: union/tile=1427 (vs 16x512) -> gather saved 82% | tile 64: union/tile=1894 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1915 (vs 128x512) -> gather saved 96%
+sel_080_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.651 | tile 16: union/tile=1233 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1512 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1520 (vs 128x512) -> gather saved 98%
+sel_081_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.613 | tile 16: union/tile=1459 (vs 16x512) -> gather saved 82% | tile 64: union/tile=1983 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1967 (vs 128x512) -> gather saved 96%
+sel_082_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=1977  consecutive Jaccard mean=0.676 | tile 16: union/tile=1212 (vs 16x512) -> gather saved 85% | tile 64: union/tile=1511 (vs 64x512) -> gather saved 95% | tile 128: union/tile=1520 (vs 128x512) -> gather saved 98%
+sel_083_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=2048  consecutive Jaccard mean=0.632 | tile 16: union/tile=1459 (vs 16x512) -> gather saved 82% | tile 64: union/tile=2001 (vs 64x512) -> gather saved 93% | tile 128: union/tile=1997 (vs 128x512) -> gather saved 96%
+sel_084_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=3001  consecutive Jaccard mean=0.647 | tile 16: union/tile=1606 (vs 16x512) -> gather saved 80% | tile 64: union/tile=2475 (vs 64x512) -> gather saved 92% | tile 128: union/tile=2516 (vs 128x512) -> gather saved 96%
+sel_085_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=3072  consecutive Jaccard mean=0.622 | tile 16: union/tile=1795 (vs 16x512) -> gather saved 78% | tile 64: union/tile=2861 (vs 64x512) -> gather saved 90% | tile 128: union/tile=2873 (vs 128x512) -> gather saved 94%
+sel_086_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=3001  consecutive Jaccard mean=0.661 | tile 16: union/tile=1668 (vs 16x512) -> gather saved 80% | tile 64: union/tile=2536 (vs 64x512) -> gather saved 92% | tile 128: union/tile=2544 (vs 128x512) -> gather saved 96%
+sel_087_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=3072  consecutive Jaccard mean=0.636 | tile 16: union/tile=1857 (vs 16x512) -> gather saved 77% | tile 64: union/tile=3006 (vs 64x512) -> gather saved 90% | tile 128: union/tile=2988 (vs 128x512) -> gather saved 94%
+sel_088_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=3001  consecutive Jaccard mean=0.537 | tile 16: union/tile=1725 (vs 16x512) -> gather saved 79% | tile 64: union/tile=2304 (vs 64x512) -> gather saved 93% | tile 128: union/tile=2382 (vs 128x512) -> gather saved 96%
+sel_089_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=3072  consecutive Jaccard mean=0.524 | tile 16: union/tile=1847 (vs 16x512) -> gather saved 77% | tile 64: union/tile=2542 (vs 64x512) -> gather saved 91% | tile 128: union/tile=2597 (vs 128x512) -> gather saved 95%
+sel_090_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=3001  consecutive Jaccard mean=0.453 | tile 16: union/tile=1711 (vs 16x512) -> gather saved 79% | tile 64: union/tile=2308 (vs 64x512) -> gather saved 93% | tile 128: union/tile=2414 (vs 128x512) -> gather saved 96%
+sel_091_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=3072  consecutive Jaccard mean=0.421 | tile 16: union/tile=1888 (vs 16x512) -> gather saved 77% | tile 64: union/tile=2619 (vs 64x512) -> gather saved 91% | tile 128: union/tile=2696 (vs 128x512) -> gather saved 94%
+sel_092_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=3001  consecutive Jaccard mean=0.415 | tile 16: union/tile=1874 (vs 16x512) -> gather saved 77% | tile 64: union/tile=2481 (vs 64x512) -> gather saved 92% | tile 128: union/tile=2536 (vs 128x512) -> gather saved 96%
+sel_093_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=3072  consecutive Jaccard mean=0.391 | tile 16: union/tile=2044 (vs 16x512) -> gather saved 75% | tile 64: union/tile=2856 (vs 64x512) -> gather saved 90% | tile 128: union/tile=2887 (vs 128x512) -> gather saved 94%
+sel_094_3813.pt: rows=3813 k=512 mean|sel|=512 visible[max]=3001  consecutive Jaccard mean=0.495 | tile 16: union/tile=1700 (vs 16x512) -> gather saved 79% | tile 64: union/tile=2358 (vs 64x512) -> gather saved 93% | tile 128: union/tile=2468 (vs 128x512) -> gather saved 96%
+sel_095_283.pt: rows=283 k=512 mean|sel|=512 visible[max]=3072  consecutive Jaccard mean=0.464 | tile 16: union/tile=1865 (vs 16x512) -> gather saved 77% | tile 64: union/tile=2665 (vs 64x512) -> gather saved 91% | tile 128: union/tile=2722 (vs 128x512) -> gather saved 94%
+== ALL DONE ==

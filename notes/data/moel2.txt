@@ -1,0 +1,62 @@
+preflight OK 10:21
+=== start a 10:21 ===
+expert weight per layer: 1.42 GB -> single-stream floor at 273 GB/s = 5185 us
+== routing: balanced
+  M=  2048 rows/expert=  40.0 tiles@128=1 tiles@64=1:    8258.7 us    24.4 TFLOPS   4.033 us/token  x_floor=1.59
+  M=  3277 rows/expert=  64.0 tiles@128=1 tiles@64=2:    9429.2 us    34.2 TFLOPS   2.877 us/token  x_floor=1.82
+  M=  4096 rows/expert=  80.0 tiles@128=1 tiles@64=2:   10098.3 us    39.9 TFLOPS   2.465 us/token  x_floor=1.95
+  M=  6144 rows/expert= 120.0 tiles@128=1 tiles@64=2:   12452.8 us    48.5 TFLOPS   2.027 us/token  x_floor=2.40
+  M=  6554 rows/expert= 128.0 tiles@128=2 tiles@64=3:   12800.6 us    50.3 TFLOPS   1.953 us/token  x_floor=2.47
+  M=  6656 rows/expert= 130.0 tiles@128=2 tiles@64=3:   12816.3 us    51.1 TFLOPS   1.926 us/token  x_floor=2.47
+  M=  7503 rows/expert= 146.5 tiles@128=2 tiles@64=3:   13932.8 us    52.9 TFLOPS   1.857 us/token  x_floor=2.69
+  M=  8192 rows/expert= 160.0 tiles@128=2 tiles@64=3:   14385.5 us    56.0 TFLOPS   1.756 us/token  x_floor=2.77
+  M=  9830 rows/expert= 192.0 tiles@128=2 tiles@64=3:   15655.9 us    61.7 TFLOPS   1.593 us/token  x_floor=3.02
+  M= 12288 rows/expert= 240.0 tiles@128=2 tiles@64=4:   18496.4 us    65.3 TFLOPS   1.505 us/token  x_floor=3.57
+  M= 13107 rows/expert= 256.0 tiles@128=2 tiles@64=4:   19130.2 us    67.4 TFLOPS   1.460 us/token  x_floor=3.69
+  M= 13312 rows/expert= 260.0 tiles@128=3 tiles@64=5:   19923.7 us    65.7 TFLOPS   1.497 us/token  x_floor=3.84
+  M= 16384 rows/expert= 320.0 tiles@128=3 tiles@64=5:   22634.8 us    71.2 TFLOPS   1.382 us/token  x_floor=4.37
+== routing: random
+  M=  2048 rows/expert=  40.0 tiles@128=1 tiles@64=1:    8152.6 us    24.7 TFLOPS   3.981 us/token  x_floor=1.57
+  M=  3277 rows/expert=  64.0 tiles@128=1 tiles@64=2:    9290.8 us    34.7 TFLOPS   2.835 us/token  x_floor=1.79
+  M=  4096 rows/expert=  80.0 tiles@128=1 tiles@64=2:   10097.6 us    39.9 TFLOPS   2.465 us/token  x_floor=1.95
+  M=  6144 rows/expert= 120.0 tiles@128=1 tiles@64=2:   12152.9 us    49.7 TFLOPS   1.978 us/token  x_floor=2.34
+  M=  6554 rows/expert= 128.0 tiles@128=2 tiles@64=3:   12495.3 us    51.6 TFLOPS   1.907 us/token  x_floor=2.41
+  M=  6656 rows/expert= 130.0 tiles@128=2 tiles@64=3:   12597.4 us    51.9 TFLOPS   1.893 us/token  x_floor=2.43
+  M=  7503 rows/expert= 146.5 tiles@128=2 tiles@64=3:   13742.9 us    53.7 TFLOPS   1.832 us/token  x_floor=2.65
+  M=  8192 rows/expert= 160.0 tiles@128=2 tiles@64=3:   14306.6 us    56.3 TFLOPS   1.746 us/token  x_floor=2.76
+  M=  9830 rows/expert= 192.0 tiles@128=2 tiles@64=3:   15875.4 us    60.9 TFLOPS   1.615 us/token  x_floor=3.06
+  M= 12288 rows/expert= 240.0 tiles@128=2 tiles@64=4:   18532.1 us    65.2 TFLOPS   1.508 us/token  x_floor=3.57
+  M= 13107 rows/expert= 256.0 tiles@128=2 tiles@64=4:   19311.6 us    66.7 TFLOPS   1.473 us/token  x_floor=3.72
+  M= 13312 rows/expert= 260.0 tiles@128=3 tiles@64=5:   19731.3 us    66.3 TFLOPS   1.482 us/token  x_floor=3.81
+  M= 16384 rows/expert= 320.0 tiles@128=3 tiles@64=5:   22922.3 us    70.3 TFLOPS   1.399 us/token  x_floor=4.42
+=== start b 10:22 ===
+expert weight per layer: 1.42 GB -> single-stream floor at 273 GB/s = 5185 us
+== routing: balanced
+  M=  2048 rows/expert=  40.0 tiles@128=1 tiles@64=1:    8287.3 us    24.3 TFLOPS   4.047 us/token  x_floor=1.60
+  M=  3277 rows/expert=  64.0 tiles@128=1 tiles@64=2:    9476.8 us    34.0 TFLOPS   2.892 us/token  x_floor=1.83
+  M=  4096 rows/expert=  80.0 tiles@128=1 tiles@64=2:   10191.9 us    39.5 TFLOPS   2.488 us/token  x_floor=1.97
+  M=  6144 rows/expert= 120.0 tiles@128=1 tiles@64=2:   12182.2 us    49.6 TFLOPS   1.983 us/token  x_floor=2.35
+  M=  6554 rows/expert= 128.0 tiles@128=2 tiles@64=3:   12858.9 us    50.1 TFLOPS   1.962 us/token  x_floor=2.48
+  M=  6656 rows/expert= 130.0 tiles@128=2 tiles@64=3:   12803.9 us    51.1 TFLOPS   1.924 us/token  x_floor=2.47
+  M=  7503 rows/expert= 146.5 tiles@128=2 tiles@64=3:   13749.6 us    53.6 TFLOPS   1.833 us/token  x_floor=2.65
+  M=  8192 rows/expert= 160.0 tiles@128=2 tiles@64=3:   14507.7 us    55.5 TFLOPS   1.771 us/token  x_floor=2.80
+  M=  9830 rows/expert= 192.0 tiles@128=2 tiles@64=3:   15634.3 us    61.8 TFLOPS   1.590 us/token  x_floor=3.02
+  M= 12288 rows/expert= 240.0 tiles@128=2 tiles@64=4:   18358.3 us    65.8 TFLOPS   1.494 us/token  x_floor=3.54
+  M= 13107 rows/expert= 256.0 tiles@128=2 tiles@64=4:   19099.3 us    67.5 TFLOPS   1.457 us/token  x_floor=3.68
+  M= 13312 rows/expert= 260.0 tiles@128=3 tiles@64=5:   19624.5 us    66.7 TFLOPS   1.474 us/token  x_floor=3.78
+  M= 16384 rows/expert= 320.0 tiles@128=3 tiles@64=5:   22587.1 us    71.3 TFLOPS   1.379 us/token  x_floor=4.36
+== routing: random
+  M=  2048 rows/expert=  40.0 tiles@128=1 tiles@64=1:    8195.4 us    24.6 TFLOPS   4.002 us/token  x_floor=1.58
+  M=  3277 rows/expert=  64.0 tiles@128=1 tiles@64=2:    9394.5 us    34.3 TFLOPS   2.867 us/token  x_floor=1.81
+  M=  4096 rows/expert=  80.0 tiles@128=1 tiles@64=2:   10076.0 us    40.0 TFLOPS   2.460 us/token  x_floor=1.94
+  M=  6144 rows/expert= 120.0 tiles@128=1 tiles@64=2:   12168.3 us    49.6 TFLOPS   1.981 us/token  x_floor=2.35
+  M=  6554 rows/expert= 128.0 tiles@128=2 tiles@64=3:   12686.8 us    50.8 TFLOPS   1.936 us/token  x_floor=2.45
+  M=  6656 rows/expert= 130.0 tiles@128=2 tiles@64=3:   12637.8 us    51.8 TFLOPS   1.899 us/token  x_floor=2.44
+  M=  7503 rows/expert= 146.5 tiles@128=2 tiles@64=3:   13689.1 us    53.9 TFLOPS   1.824 us/token  x_floor=2.64
+  M=  8192 rows/expert= 160.0 tiles@128=2 tiles@64=3:   14599.5 us    55.2 TFLOPS   1.782 us/token  x_floor=2.82
+  M=  9830 rows/expert= 192.0 tiles@128=2 tiles@64=3:   15902.5 us    60.8 TFLOPS   1.618 us/token  x_floor=3.07
+  M= 12288 rows/expert= 240.0 tiles@128=2 tiles@64=4:   18452.8 us    65.5 TFLOPS   1.502 us/token  x_floor=3.56
+  M= 13107 rows/expert= 256.0 tiles@128=2 tiles@64=4:   19578.2 us    65.8 TFLOPS   1.494 us/token  x_floor=3.78
+  M= 13312 rows/expert= 260.0 tiles@128=3 tiles@64=5:   19636.2 us    66.6 TFLOPS   1.475 us/token  x_floor=3.79
+  M= 16384 rows/expert= 320.0 tiles@128=3 tiles@64=5:   23079.9 us    69.8 TFLOPS   1.409 us/token  x_floor=4.45
+== ALL DONE ==

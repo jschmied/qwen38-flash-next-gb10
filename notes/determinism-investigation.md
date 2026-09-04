@@ -1179,6 +1179,13 @@ all depths counter-identical across 3 starts: True
     at offsets 5–6, `py_compile` clean, backup `mamba_utils.py.pre50729` (`notes/data/race50729.txt`).
     Every preview measurement from here on carries it; nothing above was re-measured with it.
 
+93. **The main build had never served with MTP: the MTP head's `lm_head` is built unquantized** (`Qwen4ExpMTP`
+    builds its own `ParallelLMHead` without `quant_config`, and `_map_mtp_name` maps the checkpoint's
+    `lm_head.weight_scale_inv` onto it → "no parameter named lm_head.weight_scale_inv"). Same defect as
+    the body head (patched in `lmhead_patch.py`), same fix: `tools/main/lmhead_mtp_patch.py`. The
+    trailing-block A/B (`blockdrop`) lost its first arm to it and was stopped; `blockdrop2` applies the
+    patch in preflight and re-runs all six arms after `hcbench2`.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same
