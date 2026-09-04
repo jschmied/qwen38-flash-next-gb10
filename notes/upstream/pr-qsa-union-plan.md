@@ -113,3 +113,25 @@ with the cold-cache setup: A R2 BN32 w4 · B R2 BN64 w4 · C R2 BN32 w8 · D R4 
 build/launch weighs more). Expected outcome: R2 everywhere, BN/warps per architecture — recorded in
 `_TILE_UNION_TABLE` as measurements arrive; the PR ships SM121 only.
 
+## Dataflow review (2026-09-04 late) — applied on the branch, head 8c09f0c5
+
+Done: int64 `logical_positions` contract (the production metadata buffer's dtype — the branch's first server run
+silently fell back on this; the test now spies the call on production dtypes), fused Triton pack kernel (one read of
+the block ids, no eager temporaries), union built **in place** over the sorted keys (no `uni` buffer), page lookups
+for first occurrences only, causal tails resolved to physical tokens in the build (attention kernel has no block
+table), `visible_blocks` dropped (top-k pads with −1), int32 layout math with `searchsorted(out_int32)`, `skip_topk`
+guard in the owner, power-of-two compress ratio / positive top-k / sentinel-domain / tensor-contract checks in
+eligibility and a static guard shared with warmup, padding rows past `query_start_loc[-1]` covered structurally by
+the last request's tiles (written as zeros). 12 tests green on the GB10.
+
+Deferred, with reason:
+- **Skip `expand_qsa_block_indices` on the union path** — not safe as is: the MTP drafter's QSA layers reuse their
+  step-0 *expanded* buffer on later steps (`set_skip_topk(True)` in the proposer, `compact_topk_indices`), so a
+  drafter layer that skipped expansion at step 0 would feed garbage to its later split-K steps. Needs the compact
+  selection to follow the same compaction/reuse lifecycle first. ~30 MiB of dead writes per eligible layer stay.
+- `output.zero_()` in `forward_qsa` (44.7 MiB per layer at 3,813 rows): removable once both kernels are proven to
+  write every row; the union kernel now does, the split-K side needs the same audit.
+- Shared per-batch tile layout across QSA layers; one model-wide raw workspace instead of a per-layer buffer;
+  keys-only sort (torch.sort writes a hidden int64 index tensor, ~15 MiB per call) — profile the build first.
+- Fragmented-batch benchmark (1×4096 / 4×1024 / 16×256 / 64×64) — evidence for the `min_rows_per_request=64` gate.
+
