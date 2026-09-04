@@ -174,6 +174,12 @@ def report_timing():
             t_u = timeit(lambda: c.union(R))
             line += f" | R={R} union {t_u:8.1f} us x{t_ref / t_u:4.2f}"
         print(line, flush=True)
+        # components: split (torch), build (torch + sort + Triton), kernel
+        for R in (4, 2):
+            t_split = timeit(lambda: Q._qsa_union_split(c.logical, CR, TOPK))
+            blocks, tail = Q._qsa_union_split(c.logical, CR, TOPK)
+            t_build = timeit(lambda: Q._qsa_union_build(blocks, tail, R))
+            print(f"    R={R}: split {t_split:7.1f} + build {t_build:7.1f} us, kernel ~{timeit(lambda: c.union(R)) - t_split - t_build:7.1f} us", flush=True)
 
 
 if __name__ == "__main__":
