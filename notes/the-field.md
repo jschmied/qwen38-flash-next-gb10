@@ -911,3 +911,46 @@ Also worth having: **`thinking_budget` is not honored** in this build, so the on
 Reading: cold prefill on one GB10 is 2.3–2.7k tok/s on vLLM and SGLang alike, with the PLE on CPU,
 on NVMe, in swap, or **GPU-resident (HashK)** — PLE placement does not move prefill. The one
 stack-independent multiplier is the warm prefix cache (everyone reports ~10× on repeated prefixes).
+
+## 2026-09-04 sweep — the field went after the PLE table, and one single-Spark kit claims 44 tok/s
+
+**Checkpoints / kits**
+- **myllmbox `Qwen3.8-Flash-Next-hibrid46`** + kit `bilikaz/qwen38-flash-next-recipe` (09-04, 91.2 GiB, 3 downloads):
+  single Spark, vLLM (vendor SM121 image + one `ple_layer.py` patch), MTP K=3. Precision map: routed experts
+  NVFP4 (Inferact), **GDN in/out NVFP4**, QSA q/k/v/o **bf16**, shared expert / lm_head / embeddings / MTP head
+  bf16, **PLE table int3 asymmetric per-row (group 160) shipped as ordinary tensors** (`qbits_packed/_scales/_mins`,
+  ~19 GB, declared in `config.json` `ple_quantization`) and loaded *resident*, dequant on gather — no offload
+  worker, no swap, no side files. Claimed: 44 tok/s sustained single-stream (55 peak, MTP acceptance
+  "3.1–3.3"), 148–158 aggregate at c=8, 19 G KV pool, 262k context, `async-scheduling` +9–12 %. Versus ours
+  (finding: 69 % of single-stream is the BF16 GEMV on the unquantized dense weights + the PLE IPC): they attack
+  exactly those two — the GDN projections quantized and the table on the GPU side. Quality claim: "A/B'd on
+  paired outputs", no numbers. Patch upstreaming "planned".
+- **primitive-ai `Qwen3.8-Flash-Next-PLE-quant`** (105 GB repo): the BF16 table re-quantized three ways —
+  FP8 per-row 49 GB, INT4 g16 32 GB, NVFP4-style e2m1 g16 28.8 GB — plus a two-file overlay
+  (`worker_image_quant.py`, `ple_layer_quant.py`) for the `vllm/vllm-openai:qwen38-flash-next` image that
+  serves them **memory-mapped from disk** (`VLLM_PLE_QUANT_DIR`): host cost becomes page cache. Works with any
+  checkpoint that keeps the BF16 tables (ours does). `huginnfork/…-noPLE` is the primitive-ai mixed build minus the
+  43 BF16 PLE shards (95.4 GiB saved on disk) for use with those sidecars.
+- Also new: `arnomatic/…-W4A16-PLE8` (INT4 + W8A16 g32 PLE, 2× Strix Halo), JANGQ-AI/OsaurusAI `JANG_*` bundles
+  (vMLX/Mac, "median KL 0.0042 vs bf16 at 96 GiB"), `p0ly31 … MTPLX` (Mac, SSD-streamed table), `Mia-AiLab/…-NVFP4`
+  (a mirror of local-inference-lab's), `WeZZard/dgx-spark-bench` (2-node, served-rate methodology, three MoEs),
+  `bjk110/spark_vllm_docker` (★57, single/dual presets + patch ledger), `Dyluhn/R9V` (RDNA4 shape-specialised
+  engines, one model per profile — same philosophy as antirez's DS4).
+
+**Upstream**
+- **#54882 merged 09-03 17:09**: FP8 PLE loading in mixed ModelOpt checkpoints (in `qwen4_exp/nvidia/ple_layer.py`)
+  — this is our `tools/main/ple_gate_patch.py`; obsolete on the next main rebuild (our venv predates the merge).
+- #54129 (Trosfy, mmap PLE, `VLLM_PLE_MMAP`) still open, 24 comments, active 09-03. #53899 (offload worker) open.
+- Issues: #54928 "DFlash2 changes greedy Qwen3.8 output at token 30, incl. K=1 and eager" (BF16, 4×24 GB; one
+  reply offering to trace) — same shape as our "diverges from ~30 tokens" findings, but on a BF16 27B, so not the
+  NVFP4 finalize; our per-position acceptance and logprob-divergence tools would apply. #54919 long-prefill
+  starving decode for minutes on 2-node TP2 (scheduler, not ours). #55279 DFlash2 cumulative OOB on sm_80.
+
+**What this changes for us**
+1. The PLE memory shape has two ready alternatives to our swap-backed offload worker: primitive-ai's mmap'd
+   INT4/NVFP4 sidecars (drop-in, our checkpoint, ~30 GB page cache instead of 48 GiB anon + 64 GiB swap) and the
+   hibrid46 resident-int3 route (needs their checkpoint). Either would also free ~20–40 GiB for KV.
+2. hibrid46's 44 tok/s single-stream, if it holds, is above our best (FP8-mix + MTP). The two levers are ones we
+   identified but did not build (quantize the GDN projections; keep the table on the GPU side). A/B needs their
+   91 GiB checkpoint (download only on the user's go) and our BF16-divergence tooling for the quality side.
+3. Nothing new on prefill/TTFT anywhere in the field; our L2 line remains ours.
