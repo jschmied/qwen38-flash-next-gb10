@@ -1185,6 +1185,10 @@ all depths counter-identical across 3 starts: True
     the body head (patched in `lmhead_patch.py`), same fix: `tools/main/lmhead_mtp_patch.py`. The
     trailing-block A/B (`blockdrop`) lost its first arm to it and was stopped; `blockdrop2` applies the
     patch in preflight and re-runs all six arms after `hcbench2`.
+    **Second layer of the same defect (11:22):** with the head quantized, the checkpoint's `lm_head.weight_scale_inv`
+    still has no home — the MTP loader lacks the body's FP8_PB_WO rename/reshape (`scaleinv_patch.py`);
+    `tools/main/scaleinv_mtp_patch.py` adds it to `Qwen4ExpMTP.load_weights`. `blockdrop3` applies both. Cost of
+    finding it in two rounds: ~1 h of dead arms (four in `blockdrop2`, `notes/data/blockdrop2-failed.txt`).
 
 ## Independent corroboration
 

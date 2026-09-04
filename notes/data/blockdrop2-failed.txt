@@ -1,0 +1,23 @@
+  lmheadq-mtp INSTALLED in /opt/llm/runtime/vllm-venv-fnmain/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/mtp.py
+preflight OK 10:23 (main venv, MTP n=3, prefix cache ON)
+=== ND0_a  nodrop=0  10:23 ===
+  DIED after 650s
+(APIServer pid=898691) Traceback (most recent call last):
+(APIServer pid=898691)     raise RuntimeError(
+(APIServer pid=898691) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== ND1_a  nodrop=1  10:35 ===
+  DIED after 660s
+(APIServer pid=902623) Traceback (most recent call last):
+(APIServer pid=902623)     raise RuntimeError(
+(APIServer pid=902623) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== ND0_b  nodrop=0  10:48 ===
+  DIED after 720s
+(APIServer pid=905434) Traceback (most recent call last):
+(APIServer pid=905434)     raise RuntimeError(
+(APIServer pid=905434) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== ND1_b  nodrop=1  11:01 ===
+  DIED after 710s
+(APIServer pid=908441) Traceback (most recent call last):
+(APIServer pid=908441)     raise RuntimeError(
+(APIServer pid=908441) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+=== ND0_c  nodrop=0  11:14 ===
