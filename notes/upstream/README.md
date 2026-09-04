@@ -76,4 +76,9 @@ Separate item: `pr-54552-body.md` — the QSA ring PR for #54552 (maintainer boj
 21. 2026-09-04 13:33 — blazux issue #3: M%4 pad drop-in + numbers, #53388 port with the −26 % table, #55180 correction (`comment-blazux-4.md`) → https://github.com/blazux/qwen3.8-Flash-DGX/issues/3#issuecomment-5539850457
 22. 2026-09-04 13:33 — #53670: hybrid + in-checkpoint-MTP evidence table for the trailing-block drop (`comment-53670-hybrid-evidence.md`) → https://github.com/vllm-project/vllm/issues/53670#issuecomment-5539850703
 23. 2026-09-04 15:24 — PR #55180 reply to gau-nernst: swizzle vs chunking not exclusive; will bench their Triton/CuteDSL FP8 kernels on GB10 (`comment-55180-reply-gaunernst.md`) → https://github.com/vllm-project/vllm/pull/55180#issuecomment-5541081489
-24. 2026-09-04 16:11 — PR #55180 REWRITTEN (d6459ded pushed): chunking → tile-scheduler max_swizzle_size=8 behind the same L2 gate; title+body v2 (`pr-55180-body-v2.md`); reply to gau-nernst with the sweep (`comment-55180-swizzle.md`) → https://github.com/vllm-project/vllm/pull/55180#issuecomment-5541663159
+24. 2026-09-04 16:11 — PR #55180 REWRITTEN (ff29cfc4 pushed to jschmied/vllm, rebased on the fork's merge commit): chunking → tile-scheduler max_swizzle_size=8 behind the same L2 gate; title+body v2 (`pr-55180-body-v2.md`); reply to gau-nernst with the sweep (`comment-55180-swizzle.md`) → https://github.com/vllm-project/vllm/pull/55180#issuecomment-5541663159
+
+Gotcha (2026-09-04): `gh pr edit` on vllm-project/vllm fails with a "Projects (classic) is being deprecated" GraphQL error and
+silently changes nothing — edit title/body with `gh api -X PATCH repos/vllm-project/vllm/pulls/<n> --input body.json`. The PR
+branch's push remote is the fork (`jschmied/vllm`), and GitHub's "update branch" adds merge commits there that a local
+branch lacks — fetch + rebase before pushing.
