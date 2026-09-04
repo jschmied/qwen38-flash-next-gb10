@@ -517,3 +517,26 @@
     block lists at block granularity (512 ids per row, not 2,048 tokens), expanded ×4 inside the attention
     kernel. Expected TTFT effect with that in place: ~8 % at 8k (0.36 → ~0.14 s of 2.71), ~5 % at 30k.
 
+104. **Union v2: precompute solved (0.7 ms per chunk, was 100 ms), kernel gains hold (`qsaunion3`,
+    `notes/data/qsaunion3.txt`; `tools/qsa_union_v2.py`).** Union at block granularity (512 ids per row): one
+    `torch.sort` over each tile's packed `(block_id*8 + row)` list plus a Triton kernel that flags first
+    occurrences, prefix-sums the union position and scatters the union ids and the per-row membership; the
+    attention kernel iterates union blocks (16 per step) and expands the four tokens itself. All outputs within
+    1–2e-4 of the stock kernel.
+
+    | chunk | R | union / row | precompute | kernel vs stock | total vs stock |
+    | --- | --- | --- | --- | --- | --- |
+    | 8k prefill, 3,813 rows | 4 | 1.12× | 0.74 ms | **×2.78** | ×2.43 |
+    | | 2 | 1.06× | 0.71 ms | ×2.09 | ×1.89 |
+    | 30k chunk, 3,407 rows at 7.5k ctx | 4 | 1.39× | 0.68 ms | **×1.80** | ×1.65 |
+    | | 2 | 1.16× | 0.62 ms | ×1.52 | ×1.42 |
+    | 30k tail, 283 rows at 12k ctx | 4 | 1.87× | 0.09 ms | ×1.23 | ×1.13 |
+    | | 2 | 1.35× | 0.08 ms | ×1.30 | **×1.19** |
+
+    A cost model fits all six points to within 5 %: kernel time ≈ tiles × union_count × c_R with c_4 = 12.8 ns and
+    c_2 = 9.1 ns per (tile, union block) — R=2 is cheaper per unit (smaller M) but has more units. So the adaptive
+    rule is: build both unions (1.4 ms) and pick the R with the smaller predicted time; R=4 wins up to ~8k of
+    visible context, R=2 beyond. Precompute across 12 attention layers ≈ 9–17 ms per 8k prefill against ~0.2 s
+    saved. Next: integration behind `VLLM_QSA_UNION=1` in the nightly venv (single-request prefill chunks first,
+    per-request tiles later), then the server-level TTFT.
+

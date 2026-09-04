@@ -1,0 +1,32 @@
+preflight OK 17:08
+=== sel_002_3813.pt R=4 17:08
+sel_002_3813.pt: rows=3813 ctx=3812 R=4
+  union blocks: tiles=954 mean count=420 (x1.12 of a row) max=736  precompute    738.0 us
+  union-v2 R=4 warps=8: kernel   5123.9 us + precompute  738.0 us =   5862.0  vs stock  14252.6 us -> x2.43 (kernel alone x2.78)  max|diff|=0.0001
+  union-v2 R=4 warps=4: kernel   5249.0 us + precompute  738.0 us =   5987.1  vs stock  14252.6 us -> x2.38 (kernel alone x2.72)  max|diff|=0.0002
+=== sel_024_3407.pt R=4 17:08
+sel_024_3407.pt: rows=3407 ctx=7500 R=4
+  union blocks: tiles=852 mean count=713 (x1.39 of a row) max=990  precompute    684.1 us
+  union-v2 R=4 warps=8: kernel   7630.6 us + precompute  684.1 us =   8314.7  vs stock  13740.1 us -> x1.65 (kernel alone x1.80)  max|diff|=0.0001
+  union-v2 R=4 warps=4: kernel   7802.9 us + precompute  684.1 us =   8487.0  vs stock  13740.1 us -> x1.62 (kernel alone x1.76)  max|diff|=0.0001
+=== sel_089_283.pt R=4 17:08
+sel_089_283.pt: rows=283 ctx=12288 R=4
+  union blocks: tiles=71 mean count=957 (x1.87 of a row) max=1229  precompute     85.8 us
+  union-v2 R=4 warps=8: kernel    935.2 us + precompute   85.8 us =   1020.9  vs stock   1152.0 us -> x1.13 (kernel alone x1.23)  max|diff|=0.0001
+  union-v2 R=4 warps=4: kernel    945.6 us + precompute   85.8 us =   1031.4  vs stock   1152.0 us -> x1.12 (kernel alone x1.22)  max|diff|=0.0001
+=== sel_002_3813.pt R=2 17:08
+sel_002_3813.pt: rows=3813 ctx=3812 R=2
+  union blocks: tiles=1907 mean count=396 (x1.06 of a row) max=638  precompute    714.6 us
+  union-v2 R=2 warps=8: kernel   6875.3 us + precompute  714.6 us =   7589.9  vs stock  14353.5 us -> x1.89 (kernel alone x2.09)  max|diff|=0.0001
+  union-v2 R=2 warps=4: kernel   6835.3 us + precompute  714.6 us =   7549.9  vs stock  14353.5 us -> x1.90 (kernel alone x2.10)  max|diff|=0.0002
+=== sel_024_3407.pt R=2 17:08
+sel_024_3407.pt: rows=3407 ctx=7500 R=2
+  union blocks: tiles=1704 mean count=592 (x1.16 of a row) max=761  precompute    620.2 us
+  union-v2 R=2 warps=8: kernel   9035.7 us + precompute  620.2 us =   9655.9  vs stock  13719.6 us -> x1.42 (kernel alone x1.52)  max|diff|=0.0001
+  union-v2 R=2 warps=4: kernel   8934.5 us + precompute  620.2 us =   9554.7  vs stock  13719.6 us -> x1.44 (kernel alone x1.54)  max|diff|=0.0001
+=== sel_089_283.pt R=2 17:08
+sel_089_283.pt: rows=283 ctx=12288 R=2
+  union blocks: tiles=142 mean count=689 (x1.35 of a row) max=820  precompute     77.1 us
+  union-v2 R=2 warps=8: kernel    884.3 us + precompute   77.1 us =    961.4  vs stock   1146.2 us -> x1.19 (kernel alone x1.30)  max|diff|=0.0001
+  union-v2 R=2 warps=4: kernel    885.6 us + precompute   77.1 us =    962.7  vs stock   1146.2 us -> x1.19 (kernel alone x1.29)  max|diff|=0.0001
+== ALL DONE ==
