@@ -83,3 +83,4 @@ silently changes nothing — edit title/body with `gh api -X PATCH repos/vllm-pr
 branch's push remote is the fork (`jschmied/vllm`), and GitHub's "update branch" adds merge commits there that a local
 branch lacks — fetch + rebase before pushing.
 25. 2026-09-04 16:22 — PR #55180 follow-up commit (activation-bytes gate, balanced reference slices, comment); body v3; comment → https://github.com/vllm-project/vllm/pull/55180#issuecomment-5541812440
+26. 2026-09-04 21:5x — MiaAI-Lab single-Spark kit, issue #4: MAX_NUM_SEQS ceiling, prefill config on the same image (~1.8× TTFT), warm-turn fixes (`issue-miaai-single-spark.md`) → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/4

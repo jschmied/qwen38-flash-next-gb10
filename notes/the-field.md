@@ -957,3 +957,16 @@ stack-independent multiplier is the warm prefix cache (everyone reports ~10× on
    identified but did not build (quantize the GDN projections; keep the table on the GPU side). A/B needs their
    91 GiB checkpoint (download only on the user's go) and our BF16-divergence tooling for the quality side.
 3. Nothing new on prefill/TTFT anywhere in the field; our L2 line remains ours.
+
+## 2026-09-04 — MiaAI-Lab single-Spark kit (vLLM, NVFP4 + MXFP8, mmap PLE)
+
+https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark (49 stars, pushed today). Same preview image as our
+finding-69/74 measurements, `Mia-AiLab/Qwen3.8-Flash-Next-NVFP4` (99 GB; MXFP8 dense via FlashInfer `mm_mxfp8` with a
+BF16-emulation fallback for `N % 32 != 0` — their dimension table for sm_121 is a real finding), PLE as a packed 27 GB
+file under `MADV_RANDOM` mmap (page cache, no swapfile), MTP 3, fp8 KV via their own kernel patch, compile mode 0,
+batch 2048, `MAX_NUM_SEQS=4`, cgroup cap + memwatch at a 6 GiB floor. Their numbers: 8k TTFT 5.00 s (1,646 tok/s),
+32k 15.83 s; decode 36.9 tok/s single-stream, 85.9 aggregate at 4. Ours on the same image: 2.7–2.8 s / 10.6–10.9 s;
+decode equal. Posted issue #4 with the three transferable items (concurrency ceiling, prefill config, warm turns);
+the union kernel is deliberately not offered there — their batches mix requests (our gate needs single-request
+chunks) and the honest route is upstream.
+
