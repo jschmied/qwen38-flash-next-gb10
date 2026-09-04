@@ -1167,6 +1167,18 @@ all depths counter-identical across 3 starts: True
     matches the PR head `cbd0642a`; the kdetab A/B (finding 82) ran on the previous build, whose kernel
     body is identical (the follow-up only moved the smem query per call).
 
+87. **Grid complete: three starts for every n = 0..8 on the stock preview stack** (redo arms
+    `notes/data/s7redo.txt`: S7_b 29.9 % / 3.09 / 2.89 s, S8_b 32.2 % / 3.58 / 2.89 s, S1_c 71.2 % / 1.71 /
+    2.24 s; table `notes/data/mtpgrid0-partial.md`, #53142 follow-up draft updated). The ladder over
+    three starts: n=1 72 / 73 / 71 %, n=2 64 / 65 / 60, n=3 45 / 50 / 58, n=4 47 / 49 / 46, n=5 37 / 41 / 40,
+    n=6 39 / 30 / 37, n=7 27 / 30 / 29, n=8 25 / 32 / 26. Seconds per turn never beat the no-spec arm
+    (1.85–2.09) on this stack. Infrastructure notes from the redo: the swapfile fix holds (both arms that
+    died twice loaded and ran); the headroom guard in the redo runner sat *before* the previous arm's
+    stop, so it only added a 10-min wait per arm — fixed in the runner afterwards, not a measurement issue.
+88. **vllm#50729 (overlapping Mamba state-copy race) applied to the preview venv 03:21**, all four hunks
+    at offsets 5–6, `py_compile` clean, backup `mamba_utils.py.pre50729` (`notes/data/race50729.txt`).
+    Every preview measurement from here on carries it; nothing above was re-measured with it.
+
 ## Independent corroboration
 
 [vllm#54173](https://github.com/vllm-project/vllm/issues/54173) — open, different reporter, **same

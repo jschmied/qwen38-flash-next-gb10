@@ -1,0 +1,47 @@
+preflight OK 02:23 (STOCK stack, EOS-correct loop; S7_b+S8_b REDO: OOM-killed 20:26/20:39 because the 64 GiB /swapfile-fnext was lost at the 17:08 reboot; re-activated 20:47; S1_c killed by the old memguard rule 20:54)
+=== S7_b  batch=4096  02:23 ===
+  headroom 118 GiB before start
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S7_b turn 1:   6.64 s    30 tok  hits+      0  acc  42.9% len 4.00
+  S7_b turn 2:   2.40 s    34 tok  hits+   4944  acc  38.6% len 3.70
+  S7_b turn 3:   2.36 s    25 tok  hits+   4944  acc  22.9% len 2.60
+  S7_b turn 4:   2.29 s    19 tok  hits+   4944  acc  17.5% len 2.22
+  S7_b turn 5:   1.90 s    25 tok  hits+   4944  acc  57.1% len 5.00
+  S7_b turn 6:   2.55 s    30 tok  hits+   4944  acc  27.3% len 2.91
+  S7_b turn 7:   2.65 s    35 tok  hits+   4944  acc  28.6% len 3.00
+  S7_b turn 8:   2.34 s    20 tok  hits+   4944  acc  19.0% len 2.33
+  S7_b TOTAL 23.1 s over 8 turns  (2.89 s/turn)  218 tok  106.17 ms/tok
+  ACCEPT S7_b-post: drafts=74 draft_tok=518 accepted=155 rate=29.9%  mean_accept_len=3.09
+  ACCEPT S7_b-post: drafts=74 draft_tok=518 accepted=155 rate=29.9%  mean_accept_len=3.09
+=== S8_b  batch=4096  02:35 ===
+  headroom 1 GiB before start
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S8_b turn 1:   6.16 s    28 tok  hits+      0  acc  30.6% len 3.44
+  S8_b turn 2:   2.44 s    34 tok  hits+   4944  acc  36.1% len 3.89
+  S8_b turn 3:   2.15 s    29 tok  hits+   4944  acc  41.1% len 4.29
+  S8_b turn 4:   2.51 s    25 tok  hits+   4944  acc  20.0% len 2.60
+  S8_b turn 5:   2.20 s    33 tok  hits+   4944  acc  51.8% len 5.14
+  S8_b turn 6:   2.61 s    29 tok  hits+   4944  acc  25.0% len 3.00
+  S8_b turn 7:   2.59 s    29 tok  hits+   4944  acc  29.2% len 3.33
+  S8_b turn 8:   2.45 s    28 tok  hits+   4944  acc  32.8% len 3.62
+  S8_b TOTAL 23.1 s over 8 turns  (2.89 s/turn)  235 tok  98.34 ms/tok
+  ACCEPT S8_b-post: drafts=69 draft_tok=552 accepted=178 rate=32.2%  mean_accept_len=3.58
+  ACCEPT S8_b-post: drafts=69 draft_tok=552 accepted=178 rate=32.2%  mean_accept_len=3.58
+=== S1_c  batch=4096  02:58 ===
+  headroom 1 GiB before start
+    resolved: 'method': 'mtp' 
+    graphs: capture_lines=1 compile_lines=4 enforce_eager=0
+  S1_c turn 1:   5.55 s    23 tok  hits+      0  acc  69.2% len 1.69
+  S1_c turn 2:   2.18 s    16 tok  hits+   4752  acc  66.7% len 1.67
+  S1_c turn 3:   1.64 s    13 tok  hits+   4752  acc  71.4% len 1.71
+  S1_c turn 4:   1.60 s    11 tok  hits+   4752  acc  66.7% len 1.67
+  S1_c turn 5:   1.70 s    14 tok  hits+   4752  acc  75.0% len 1.75
+  S1_c turn 6:   1.75 s    13 tok  hits+   4752  acc  50.0% len 1.50
+  S1_c turn 7:   1.76 s    15 tok  hits+   4752  acc  75.0% len 1.75
+  S1_c turn 8:   1.74 s    15 tok  hits+   4752  acc 100.0% len 2.00
+  S1_c TOTAL 17.9 s over 8 turns  (2.24 s/turn)  120 tok  149.41 ms/tok
+  ACCEPT S1_c-post: drafts=66 draft_tok=66 accepted=47 rate=71.2%  mean_accept_len=1.71
+  ACCEPT S1_c-post: drafts=66 draft_tok=66 accepted=47 rate=71.2%  mean_accept_len=1.71
+== ALL DONE ==

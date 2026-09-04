@@ -1,0 +1,7 @@
+patching file vllm/v1/worker/mamba_utils.py
+Hunk #1 succeeded at 194 (offset 6 lines).
+Hunk #2 succeeded at 242 (offset 6 lines).
+Hunk #3 succeeded at 571 (offset 5 lines).
+Hunk #4 succeeded at 581 (offset 5 lines).
+py_compile ok; #50729 applied 03:21
+== ALL DONE ==
