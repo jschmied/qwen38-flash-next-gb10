@@ -50,16 +50,20 @@ def build_union(tok, R, BN):
     tr=t.view(T, R, tok.shape[1])
     # for each (tile,row,token>=0): position via searchsorted on uni
     valid=tr>=0
-    p=torch.searchsorted(uni.contiguous(), tr.reshape(T, -1).contiguous()).view(T, R, -1).clamp(max=U-1)
+    key=torch.where(uni >= 0, uni, torch.full_like(uni, 2**31-1))   # sorted ascending, padding last
+    p=torch.searchsorted(key.contiguous(), tr.reshape(T, -1).contiguous()).view(T, R, -1).clamp(max=U-1)
     ok=valid & (torch.gather(uni, 1, p.view(T, -1)).view(T, R, -1)==tr)
     tt=torch.arange(T, device=dev)[:, None, None].expand_as(p); rr=torch.arange(R, device=dev)[None, :, None].expand_as(p)
     member[tt[ok], rr[ok], p[ok]]=1
-    return uni.contiguous(), member.contiguous(), T, U
-torch.cuda.synchronize(); t0=time.perf_counter(); uni, member, T, U = build_union(tok, R, BN); torch.cuda.synchronize(); t_pre=(time.perf_counter()-t0)*1e6
-mean_sel=float((tok>=0).sum(1).float().mean()); print(f"  union: tiles={T} U(padded)={U} mean|sel|={mean_sel:.0f} -> columns per row-tile {U} vs {mean_sel:.0f}  (precompute torch {t_pre/1e3:.1f} ms)", flush=True)
+    ucount=((counts + BN - 1)//BN*BN).to(torch.int32).contiguous()     # per-tile column bound (multiple of BN)
+    return uni.contiguous(), member.contiguous(), T, U, ucount
+torch.cuda.synchronize(); t0=time.perf_counter(); uni, member, T, U, ucount = build_union(tok, R, BN); torch.cuda.synchronize(); t_pre=(time.perf_counter()-t0)*1e6
+mean_sel=float((tok>=0).sum(1).float().mean()); print(f"  union: tiles={T} U(max,padded)={U} mean per-tile columns={float(ucount.float().mean()):.0f} mean|sel|={mean_sel:.0f}  (precompute torch {t_pre/1e3:.1f} ms)", flush=True)
+# membership sanity: every selected token of every row must be present exactly once
+assert int(member.sum()) == int((tok>=0).sum()), (int(member.sum()), int((tok>=0).sum()))
 
 @triton.jit
-def _union_kernel(q_ptr, kc_ptr, vc_ptr, uni_ptr, mem_ptr, bt_ptr, out_ptr, stride_q_row, stride_q_head, stride_k_block, stride_k_token, stride_k_head,
+def _union_kernel(q_ptr, kc_ptr, vc_ptr, uni_ptr, mem_ptr, ucount_ptr, bt_ptr, out_ptr, stride_q_row, stride_q_head, stride_k_block, stride_k_token, stride_k_head,
                   stride_uni, stride_mem_t, stride_mem_r, stride_out_row, stride_out_head, num_rows,
                   R: tl.constexpr, GP: tl.constexpr, G: tl.constexpr, D: tl.constexpr, U: tl.constexpr, BN: tl.constexpr, PAGE: tl.constexpr):
     tile=tl.program_id(0); kv=tl.program_id(1)
@@ -69,7 +73,8 @@ def _union_kernel(q_ptr, kc_ptr, vc_ptr, uni_ptr, mem_ptr, bt_ptr, out_ptr, stri
     q=tl.load(q_ptr + row[:, None]*stride_q_row + (kv*G + h_of_m[:, None])*stride_q_head + d_off[None, :], mask=qmask[:, None], other=0.0)
     mx=tl.full((M,), -1.0e20, tl.float32); nrm=tl.zeros((M,), tl.float32); acc=tl.zeros((M, D), tl.float32)
     scale: tl.constexpr = (D ** -0.5) * 1.4426950408889634
-    for t in range(0, U, BN):
+    ubound=tl.load(ucount_ptr + tile)
+    for t in range(0, ubound, BN):
         cols=t + c_off
         tok=tl.load(uni_ptr + tile*stride_uni + cols)                       # -1 padded
         valid=tok >= 0; st=tl.maximum(tok, 0); page=st//PAGE; off=st%PAGE
@@ -86,7 +91,7 @@ def _union_kernel(q_ptr, kc_ptr, vc_ptr, uni_ptr, mem_ptr, bt_ptr, out_ptr, stri
 
 def run_union(warps=8, stages=1):
     out=torch.empty_like(q)
-    _union_kernel[(T, HKV)](q, kc, vc, uni, member, block_table, out, q.stride(0), q.stride(1), kc.stride(0), kc.stride(1), kc.stride(2),
+    _union_kernel[(T, HKV)](q, kc, vc, uni, member, ucount, block_table, out, q.stride(0), q.stride(1), kc.stride(0), kc.stride(1), kc.stride(2),
                             uni.stride(0), member.stride(0), member.stride(1), out.stride(0), out.stride(1), rows,
                             R=R, GP=GP, G=G, D=D, U=U, BN=BN, PAGE=PAGE, num_warps=warps, num_stages=stages)
     return out
