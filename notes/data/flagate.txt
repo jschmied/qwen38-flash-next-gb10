@@ -1,0 +1,17 @@
+preflight OK 02:21
+=== BEFORE (vendored FLA as shipped) ===
+fla-core 0.5.2
+T=  2048: vendored    2455.9 us | fla-core 0.5.2    2383.6 us | ratio  1.03 | max|diff| 0.00781
+T=  7503: vendored    9002.6 us | fla-core 0.5.2    8193.5 us | ratio  1.10 | max|diff| 0.00781
+T= 16384: vendored   19864.4 us | fla-core 0.5.2   17872.4 us | ratio  1.11 | max|diff| 0.00781
+T= 29263: vendored   36312.3 us | fla-core 0.5.2   32285.0 us | ratio  1.12 | max|diff| 0.00781
+  INSTALLED utils.py
+  INSTALLED chunk_delta_h.py
+=== AFTER (gate 101376 + num_warps 2) ===
+fla-core 0.5.2
+T=  2048: vendored    2486.4 us | fla-core 0.5.2    2421.1 us | ratio  1.03 | max|diff| 0.00781
+T=  7503: vendored    8932.3 us | fla-core 0.5.2    8234.4 us | ratio  1.08 | max|diff| 0.00781
+T= 16384: vendored   19953.4 us | fla-core 0.5.2   18004.5 us | ratio  1.11 | max|diff| 0.00781
+T= 29263: vendored   36073.3 us | fla-core 0.5.2   32094.0 us | ratio  1.12 | max|diff| 0.00781
+(patch left INSTALLED in vllm-venv-fnext; run fla_gb10_patch.py off to revert)
+== ALL DONE ==

@@ -264,3 +264,14 @@
     `qsadump2` also runs `--enforce-eager` so no compile cache can serve a stale graph. Staged behind
     the chain, **not started** — needs the go.
 
+86. **FLA shared-memory gate (102400 → 101376) + `chunk_delta_h` `num_warps=2` pin (blazux/Saren-Arterius)
+    — no effect on our vendored FLA (`flagate`, `notes/data/flagate.txt`).** `chunk_gated_delta_rule`
+    before/after at T = 2048 / 7503 / 16384 / 29263: 2456 → 2486, 9003 → 8932, 19864 → 19953,
+    36312 → 36073 µs, i.e. ±1 % with identical numerics (max|diff| 0.0078 in both). fla-core 0.5.2 stays
+    8–12 % faster than the vendored copy at every length (finding 77 reproduced: 1.03 / 1.10 / 1.11 /
+    1.12). So the 99-KiB gate is not what the hot kernels consult on sm_121, and the warp pin matches
+    the autotuner's pick; the swap to fla-core is the lever, not the gate. `tools/main/fla_gb10_patch.py`
+    is kept only as a record. Caveat: the runner left the patch installed and the grid redo (`s7redo`)
+    started on that venv 02:23; given the ±1 % no-op with identical outputs the redo counts as stock;
+    `flarevert` removes the patch after the redo and the #50729 application.
+
