@@ -1,0 +1,6 @@
+  fp8m4pad INSTALLED in /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/vllm/model_executor/kernels/linear/scaled_mm/cutlass.py
+preflight OK 12:40 (preview venv, batch 8192, prefix off, no spec)
+=== P1_a (VLLM_FP8_PAD_M4=1) UP 12:53
+    (APIServer pid=1006121) FP8M4PAD active: 1
+  P1_a TTFT 8k: prompt_tokens=7503 median=4.65s  all=4.82 4.65 4.47
+  P1_a TTFT 30k: prompt_tokens=29263 median=12.33s  all=12.51 12.33 12.33
