@@ -467,3 +467,18 @@
     upstream: CUTLASS's default here is swizzle 1, and sw2 already halves the loss — the default is wrong for
     every part whose L2 is smaller than its weights.
 
+101. **Nightly dev401 rebuild (`vllm-venv-fnmain2`) serves; first numbers within noise of dev352, agent turn
+    possibly ~10 % faster (`fnmain2test2`, one start; `notes/data/fnmain2test2.txt`).** Build: clone + wheel +
+    the dev401 overlay (17 files: #53899 offload worker port with the PLE gate merged onto #54882's mixed
+    branch, the body SCALEINV rename, LMHEADQ, the two MTP-head patches, lmhead-scale loader). Two defects found
+    on the first serve and fixed in the overlay: the SCALEINV rename predated the backup the overlay was
+    diffed from (lost), and the merged gate returned None for a mixed checkpoint that lists the PLE under
+    `exclude_modules` (ours) — now falls back to the config's `ple_embedding_dtype`. Results vs dev352:
+    TTFT 8k 2.77 vs 2.71 s, 30k 10.68 vs 10.64 s (no spec); MTP n=3 + flag agent loop **1.92 s/turn vs
+    2.10–2.15** (223 tok, acceptance 54.7 vs 57–60 %); hit intercept 0.592 s (unchanged, the block is
+    unchanged: 1,600 with MTP, 1,568 without — the draft tokens enter the page math); hit +130 0.647 vs
+    0.746 s, hit +1000 1.083 vs 0.978 s (mixed — the merged QSA kernel #54873 skips padded columns, which
+    helps short chunks; the +1000 regression needs the three-start check before it is a finding). Kernel
+    selection identical (`CutlassFp8BlockScaledMMKernel` everywhere incl. the MTP head), offload worker up.
+    Not yet prod: the old venv stays; promote after a three-start agent loop and a `prefprof` on the new kernels.
+

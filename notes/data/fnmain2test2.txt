@@ -1,0 +1,43 @@
+preflight OK 15:58 (vllm-venv-fnmain2 = 0.28.1rc1.dev401+g8340fe1bb)
+=== M2T  spec=none n=0 prefix=0  15:58 ===
+    engine: Initializing a V1 LLM engine (v0.28.1rc1.dev401+g8340fe1bb)
+    ple: PleOffload: spawning worker (rank=0  block: Setting attention block size to 1568 tokens
+    kernels: Selected CutlassFp8BlockScaledMMKernel for MergedColumnParallelLinear;Selected CutlassFp8BlockScaledMMKernel for ParallelLMHead;Selected CutlassFp8BlockScaledMMKernel for QKVParallelLinear;Selected Cu
+  M2T TTFT 8k: prompt_tokens=7503 median=2.77s  all=3.71 2.77 2.76
+  M2T TTFT 30k: prompt_tokens=29263 median=10.68s  all=10.68 10.68 10.69
+=== M2L  spec=mtp n=3 prefix=1  16:13 ===
+    engine: Initializing a V1 LLM engine (v0.28.1rc1.dev401+g8340fe1bb)
+    ple: PleOffload: spawning worker (rank=0  block: Setting attention block size to 1600 tokens
+    kernels: Selected CutlassFp8BlockScaledMMKernel for MergedColumnParallelLinear;Selected CutlassFp8BlockScaledMMKernel for ParallelLMHead;Selected CutlassFp8BlockScaledMMKernel for QKVParallelLinear;Selected Cu
+  M2L turn 1:   5.37 s    32 tok  hits+      0  acc  55.6% len 2.67
+  M2L turn 2:   1.53 s    35 tok  hits+   6400  acc  59.0% len 2.77
+  M2L turn 3:   1.31 s    26 tok  hits+   6400  acc  63.0% len 2.89
+  M2L turn 4:   1.37 s    19 tok  hits+   6400  acc  33.3% len 2.00
+  M2L turn 5:   1.33 s    28 tok  hits+   6400  acc  70.4% len 3.11
+  M2L turn 6:   1.46 s    24 tok  hits+   6400  acc  42.4% len 2.27
+  M2L turn 7:   1.49 s    26 tok  hits+   6400  acc  48.5% len 2.45
+  M2L turn 8:   1.51 s    33 tok  hits+   6400  acc  66.7% len 3.00
+  M2L TOTAL 15.4 s over 8 turns  (1.92 s/turn)  223 tok  68.94 ms/tok
+  ACCEPT M2L-post: drafts=86 draft_tok=258 accepted=141 rate=54.7%  mean_accept_len=2.64
+  ACCEPT M2L-post: drafts=86 draft_tok=258 accepted=141 rate=54.7%  mean_accept_len=2.64
+  M2L cold seed: ttft   0.60 s
+  M2L 2nd identical (align-mode first repetition): ttft   0.60 s
+  M2L hit +   0 new tokens rep 0: ttft  0.595 s
+  M2L hit +   1 new tokens rep 0: ttft  0.606 s
+  M2L hit + 130 new tokens rep 0: ttft  0.647 s
+  M2L hit +1000 new tokens rep 0: ttft  1.084 s
+  M2L hit +   0 new tokens rep 1: ttft  0.592 s
+  M2L hit +   1 new tokens rep 1: ttft  0.612 s
+  M2L hit + 130 new tokens rep 1: ttft  0.647 s
+  M2L hit +1000 new tokens rep 1: ttft  1.082 s
+  M2L hit +   0 new tokens rep 2: ttft  0.592 s
+  M2L hit +   1 new tokens rep 2: ttft  0.605 s
+  M2L hit + 130 new tokens rep 2: ttft  0.640 s
+  M2L hit +1000 new tokens rep 2: ttft  1.083 s
+  M2L HIT +   0: median ttft  0.592 s  (all 0.595 0.592 0.592)
+  M2L HIT +   1: median ttft  0.606 s  (all 0.606 0.612 0.605)
+  M2L HIT + 130: median ttft  0.647 s  (all 0.647 0.647 0.640)
+  M2L HIT +1000: median ttft  1.083 s  (all 1.084 1.082 1.083)
+  M2L DECODE after +130 hit rep 0: ttft  0.639 s  total   1.57 s  14 tok    72.0 ms/tok
+  M2L DECODE after +130 hit rep 1: ttft  0.683 s  total   1.57 s  14 tok    68.0 ms/tok
+== ALL DONE ==
