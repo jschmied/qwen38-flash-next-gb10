@@ -42,7 +42,7 @@ def timeit(fn, n=5, reps=5):
 class Case:
     """One dump at one tail length, with a random physical-page permutation and a 3-row block table."""
 
-    def __init__(self, f, tail_len, seed=0, nreq=3, req=1):
+    def __init__(self, f, tail_len, seed=0, nreq=3, req=1, cache_pages=None):
         g = torch.Generator(device=DEV).manual_seed(seed)
         d = torch.load(f)
         self.blocks = d["blocks"].to(DEV).to(torch.int32).contiguous()
@@ -57,7 +57,9 @@ class Case:
         npages = (ctx + PAGE - 1) // PAGE
         # peaked softmax: scores ~ N(0, 2^2) over 2048 tokens -> a handful of tokens carry the output
         self.q = (torch.randn(rows, HQ, D, device=DEV, generator=g) * 2.0).to(torch.bfloat16)
-        phys = npages * nreq + 2
+        # cache_pages > npages*nreq spreads the request's pages over a cache far larger than the L2 (the server's
+        # case: gathers come from DRAM); the default keeps the correctness cases small
+        phys = max(npages * nreq + 2, cache_pages or 0)
         self.kc = torch.randn(phys, PAGE, HKV, D, device=DEV, generator=g).to(torch.bfloat16)
         self.vc = (torch.randn(phys, PAGE, HKV, D, device=DEV, generator=g) * 0.2).to(torch.bfloat16)
         perm = torch.randperm(phys, device=DEV, generator=g)[: npages * nreq].view(nreq, npages).to(torch.int32)
@@ -196,8 +198,15 @@ def test_eligibility_is_cpu_only():
 
 
 def report_timing():
-    for f in _dumps():
-        c = Case(f, 2)
+    for cold in (False, True):
+        print(f"--- timing, {'cold cache (2048 pages ~ 3.3 GB, random table)' if cold else 'hot cache (L2-resident)'}", flush=True)
+        for f in _dumps():
+            c = Case(f, 2, cache_pages=2048 if cold else None)
+            _report_case(f, c)
+
+
+def _report_case(f, c):
+    if True:
         ctx = int(c.qpos.max().item()) + 1
         t_ref = timeit(c.stock)
         line = f"{os.path.basename(f)}: rows={c.rows} ctx={ctx} stock {t_ref:8.1f} us"
