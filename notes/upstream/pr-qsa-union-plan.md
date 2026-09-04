@@ -88,3 +88,28 @@ still hold (only the kernel body moves).
 ≈ 2.5 days of work + ~2 h box time, in the order above; steps 2 and 3 are the ones that change behaviour and get their
 own A/B before the PR. Not in scope: build fusion (~0.8 ms/call), the < 1,024-row dispatch table, GB300/H100 tuning
 (needs hardware we do not have; the override flag lets others measure).
+
+## Bring-up on other architectures (review input 2026-09-04, adopted)
+
+The override `VLLM_QSA_TILE_UNION=R,BNB,warps,min_rows` (branch commit 35ac471f) lets anyone run the matrix below
+without code edits. R is the algorithmic choice (union waste vs shared gather) and stays 2 everywhere until a
+measurement says otherwise; BN = BNB × CR and warps are the hardware choices. Register file is 64K/SM on CC 9/10/12,
+so the R=4 accumulator pressure does not vanish on larger parts; shared memory is 99 KiB/block on CC 12.x vs 227 KiB
+on CC 9.0/10.x, which is what makes BN=128 testable there.
+
+| hardware | CC | start | first challengers |
+| --- | --- | --- | --- |
+| GB10 / DGX Spark | 12.1 | R2 BN32 w4 | validated (finding 111/115) |
+| RTX 5090 / RTX PRO Blackwell | 12.0 | R2 BN32 w4 | R2 BN64 w4, R2 BN32 w8, R4 BN64 w4 |
+| GB200 / GB300 | 10.0 / 10.3 | R2 BN32 w4 | R2 BN64 w4, R2 BN128 w4, R4 BN64 w4, R2 BN32 w2 |
+| H100 / H200 | 9.0 | R2 BN64 w4 | R2 BN32 w4, R2 BN128 w4, R4 BN64 w4/w8 |
+| A100 | 8.0 | R2 BN64 w4 | BN32 w4, BN64 w8; BN128 only if the compiled smem fits |
+| RTX 4090 / L40S | 8.9 | R2 BN32 w4 | BN64 w4, BN32 w8 |
+
+Six-arm matrix per architecture, on the three standard chunks (8k early, ~7.5k-context chunk, long-context tail)
+with the cold-cache setup: A R2 BN32 w4 · B R2 BN64 w4 · C R2 BN32 w8 · D R4 BN64 w4 · E R4 BN64 w8 · F R2 BN128 w4
+(where smem permits). `min_rows` start: 512 on SM12.x/Ada, 1024 on H100/A100/GB200/GB300; sweep 256/512/1024/2048
+(the GB10's 283-row tail already runs 1.42× at R2, so 1024 is conservative there, but on faster parts the ~0.1 ms
+build/launch weighs more). Expected outcome: R2 everywhere, BN/warps per architecture — recorded in
+`_TILE_UNION_TABLE` as measurements arrive; the PR ships SM121 only.
+
