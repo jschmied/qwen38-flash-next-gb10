@@ -178,3 +178,26 @@ Chained on the box after `chunkredo` → `qsadump2` → `blockdrop`:
   BF16 offload tables + swap dependency; quality check vs the BF16 divergence reference.
 - myllmbox `Qwen3.8-Flash-Next-hibrid46` (91 GiB) + bilikaz kit image — A/B vs our FP8-mix + MTP for single-stream
   speed (their 44 tok/s claim) and quality (GDN NVFP4, int3 resident PLE).
+
+### 2026-09-04 — the warm-turn intercept is the 1,600-token align block; upstream state
+
+`hitprobe` (main build, MTP n=3, flag on): hit TTFT = 0.59 s + 0.37 ms × new tokens. The 0.59 s is mostly
+the re-prefill of the un-hit tail (prompt mod 1,600 ≈ 1,240 tokens ≈ 0.46 s): vLLM sets the attention block
+to 1,600 tokens so one attention page ≥ one GDN state page (`interface.py:918`); `--mamba-block-size` is
+overridden in align mode, `MambaDType` has no fp8, so no supported knob changes it. Upstream, checked 09-04:
+
+- **#45702 RFC "Partial Cache Hits for Hybrid Models"** (ZJY0516, 06-15, 23 comments): `hash_block_size` <
+  block size + copy-on-write for the partial tail block — exactly this intercept. Scope narrowed (06-23) to
+  "re-use the full prompt when its length is not block-aligned" (no SSM checkpoint per fine boundary, so no
+  memory blow-up). PoC by Xuan-yi-yan (07-03, DAG-based CoW of SSM state); no PR yet. This is the fix.
+- **#52959 RFC "Internal State Checkpoints for Mamba Align Mode"** (ZJY0516, 08-19): one forward instead of
+  the split at the last boundary — saves the second full-model pass, not the tail recompute. KDA has it
+  (#52789 merged); GDN does not (PR #53614 is Kimi-K3 only).
+- **#54458** (net-snix, 08-30, giant pages on GLM-5.3-Flash — we commented 08-30 with the 1,600 number),
+  **#45238**, **#40696**, **#53749**, **#50235**: the same mechanism reported five ways (0 % hits below one
+  block, misses at exact boundaries, per-request page footprint). Nobody has the warm-turn cost number.
+- **#50172** (anuragdutt, GDN `mamba_cache_mode="all"` + MTP on V1, needs rebase): "all" checkpoints every
+  block — granularity unchanged (`attn_block_size` still ≥ page ratio), so not a fix for this.
+
+Our contribution: the measured per-turn cost of the granularity on a real agent loop (0.46 s of 1.52 s) and,
+if `hitprobe3` confirms it, the boundary-padding workaround for static system prompts — evidence for #45702.
