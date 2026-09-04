@@ -664,3 +664,25 @@
     standalone at R=2 — the dispatch table of the review's lever 4), and the kernel itself sits at 2.5× while the
     dot at M=32 is far from the tensor-core roofline. Default tile is now R=2 (`VLLM_QSA_UNION_R`).
 
+117. **Upstream branch head 8c09f0c5 at the server (`tuval`, `notes/data/tuval-8c09f0c5.txt`): −2.6 % TTFT at 8k,
+    −2 % at 30k, concurrent pairs −2.5 % / −3 %, warm turns unchanged; two starts; path verified by the dispatch,
+    warmup and prefix-caching lines per arm.** First valid server number for the branch (the first two runs on it
+    measured stock: a layout guard, then the int64 positions contract — findings 114/116's lesson, again).
+
+    | | union (auto) | off | Δ |
+    | --- | --- | --- | --- |
+    | 7,503 tok | 2.59 / 2.59 s | 2.67 / 2.65 s | −2.6 % |
+    | 29,263 tok | 10.15 / 10.14 s | 10.40 / 10.30 s | −2.1 % |
+    | 8k + 8k concurrent, pair wall | 5.21 / 5.19 s | 5.37 / 5.32 s | −2.7 % |
+    | 30k + 8k concurrent, pair wall | 12.57 / 12.74 s | 13.07 / 12.84 s | −2.3 % |
+    | 8-turn agent loop, MTP 3 + prefix cache, s/turn | 1.68 | 1.63 | +3 % (one start; turns 1.2–1.6 s both, noise) |
+
+    The union arm reproduces v9 exactly (2.59 / 10.15 vs 2.59–2.60 / 10.17–10.18): the review's preprocessing did
+    not cost anything. The gain shrank because the **reference moved**: this run's off arm runs current main's QSA
+    files (#54873 and later) instead of the dev401 nightly's, and those are 2–3 % faster on their own (2.67 vs 2.73
+    at 8k, 10.30–10.40 vs 10.55–10.59 at 30k). So the honest PR claim on today's main is −2.6 % / −2 %, not
+    −4.7 % / −3.7 %. Concurrent batches with mixed requests keep the same ratio (the per-request tile map works
+    at no cost), warm agent turns are unaffected (below the 1,024-row gate; acceptance identical). Next: the same
+    A/B on head 07a6d2a3 (expansion skipped for non-reused layers, tail-only zeroing, shared layout and workspace,
+    int64 tails) — chain 2, queued.
+
