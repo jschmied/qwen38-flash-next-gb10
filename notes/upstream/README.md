@@ -82,3 +82,4 @@ Gotcha (2026-09-04): `gh pr edit` on vllm-project/vllm fails with a "Projects (c
 silently changes nothing — edit title/body with `gh api -X PATCH repos/vllm-project/vllm/pulls/<n> --input body.json`. The PR
 branch's push remote is the fork (`jschmied/vllm`), and GitHub's "update branch" adds merge commits there that a local
 branch lacks — fetch + rebase before pushing.
+25. 2026-09-04 16:22 — PR #55180 follow-up commit (activation-bytes gate, balanced reference slices, comment); body v3; comment → https://github.com/vllm-project/vllm/pull/55180#issuecomment-5541812440
