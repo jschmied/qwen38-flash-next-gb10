@@ -557,3 +557,39 @@
     server gain vs v2 (finding 105) came from the halved precompute; the remaining gap to the finding-104 target
     (~8 %) is the 4,096-wide build (three tail entries per row) and the R choice, which v4 removes.
 
+107. **Union v5 standalone sweep (`qsaunion8`, `tools/qsa_union_v3.py`, `notes/data/qsaunion8.txt`): R=2 at BN=32
+    is the best tile so far, R=4 collapses in this form.** v5 = union built from the 512 block ids directly (no
+    expansion), R-bit membership mask per union block (`atomic_or`), physical pages pre-resolved in the
+    precompute, causal tail from the query positions; sweep R ∈ {4, 2} × BN ∈ {32, 64, 128} × warps ∈ {4, 8}
+    (BN=128 needs 147–164 KiB of smem, over the 99 KiB cap at either R). Kernel / total (with precompute) vs stock:
+
+    | chunk | R=2 BN=32 w4 | R=2 BN=64 w4 | R=4 BN=64 w4 | R=4 BN=64 w8 | R=4 BN=32 | precompute |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | 8k, 3,813 rows | **2.36 / 1.88** | 2.02 / 1.66 | 1.51 / 1.30 | 1.27 / 1.12 | 0.06–0.17 | 1.55 ms |
+    | 30k chunk, 3,407 rows at 7.5k | **1.75 / 1.49** | 1.51 / 1.31 | 1.03 / 0.93 | 0.94 / 0.86 | 0.04–0.11 | 1.42 ms |
+    | 30k tail, 283 rows at 12k | **1.44 / 1.06** | 1.26 / 0.96 | 0.72 / 0.61 | 0.66 / 0.57 | 0.03–0.09 | 0.30 ms |
+
+    Against the v2 kernel (finding 104: R=4 2.78×, R=2 2.09× at 8k) the v5 form gains at R=2 with the narrower
+    tile (2.09 → 2.36) and loses badly at R=4 (2.78 → 1.51; the BN=32 arm is 60× slower than stock — the
+    signature of register spilling once the 64×256 fp32 accumulator shares the file with the mask expansion and
+    the pre-resolved int64 addresses). The v4.3 kernel (finding 108) has the same tail pass but the int8
+    membership matrix and the in-kernel page lookup, and keeps R=4 ahead of R=2 — so the loss is in the bitmask
+    or the pre-resolved addressing, not in the tail pass. Precompute doubled vs v2 (0.7 → 1.5 ms): the page
+    pre-resolution and the tail gather are extra torch ops. Bisect queued (v6: bitmask vs matrix × pre-resolved
+    vs table, at R=4 BN=64 and R=2 BN=32).
+
+108. **Union v4.3 integrated: asserting test green on three dumps, standalone 1.82× / 1.36× / 1.07×
+    (`qsaunion12` test lines; `tools/qsa_union_test.py`).** v4 as reviewed (block-only union at exact 2,048/1,024,
+    causal tail as a separate 16-column pass in the same online softmax, ratio/top-k/context/request count from
+    the owner's metadata, no device reads, stock request validation), plus three fixes the new test forced:
+    the tile's block-table row comes from any valid row of the tile (the first row may be padding); rows with an
+    invalid request id are excluded from the softmax (a zero query still attends uniformly otherwise) and are
+    written as zeros like the stock kernel. The test uses a peaked softmax (|q| ≈ 2, scores ~N(0, 4)) so a
+    dropped or leaked token moves the output by ~0.1 against ~1e-3 of bf16 noise; a negative control (one block
+    swapped per row) asserts that power; every tail length 0..3, both R, a permuted physical-page table with
+    two decoy requests, the +1 count column of newer main, invalid-request rows, and the CPU-only eligibility.
+    Whole-path timing (split + build + kernel) vs stock at R=4 / R=2: 8k 1.82× / 1.55×, 30k chunk 1.36× / 1.23×,
+    tail 0.91× / 1.07× — below v2's 2.43× and v3's 1.97× at 8k although the sort is narrower, so the torch glue of
+    the split and build (a dozen small ops) now costs more than the kernel gains; next the components are timed
+    separately and the split goes away (lever 1: build from `block_indices`). Server A/B running.
+

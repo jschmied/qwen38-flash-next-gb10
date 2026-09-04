@@ -1,0 +1,50 @@
+preflight OK 18:43
+=== sel_002_3813.pt 18:43
+sel_002_3813.pt: rows=3813 ctx=3816 stock  14686.0 us
+  R=4: union mean 420 blocks/tile (x1.12 of a row), precompute  1551.9 us
+    R=4 BNB= 8 (BN= 32) warps=4: kernel 238879.5 + pre 1551.9 = 240431.5 us -> x0.06 (kernel x0.06)  max|diff|=0.0010
+    R=4 BNB= 8 (BN= 32) warps=8: kernel  88667.1 + pre 1551.9 =  90219.1 us -> x0.16 (kernel x0.17)  max|diff|=0.0010
+    R=4 BNB=16 (BN= 64) warps=4: kernel   9740.6 + pre 1551.9 =  11292.5 us -> x1.30 (kernel x1.51)  max|diff|=0.0010
+    R=4 BNB=16 (BN= 64) warps=8: kernel  11547.2 + pre 1551.9 =  13099.1 us -> x1.12 (kernel x1.27)  max|diff|=0.0010
+    R=4 BNB=32 warps=4: ERR out of resource: shared memory, Required: 163840, Hardware limit: 101376. Reducing block sizes or `num_stages`
+    R=4 BNB=32 warps=8: ERR out of resource: shared memory, Required: 163840, Hardware limit: 101376. Reducing block sizes or `num_stages`
+  R=2: union mean 396 blocks/tile (x1.06 of a row), precompute  1583.3 us
+    R=2 BNB= 8 (BN= 32) warps=4: kernel   6219.7 + pre 1583.3 =   7803.0 us -> x1.88 (kernel x2.36)  max|diff|=0.0010
+    R=2 BNB= 8 (BN= 32) warps=8: kernel  10771.4 + pre 1583.3 =  12354.8 us -> x1.19 (kernel x1.36)  max|diff|=0.0010
+    R=2 BNB=16 (BN= 64) warps=4: kernel   7267.0 + pre 1583.3 =   8850.4 us -> x1.66 (kernel x2.02)  max|diff|=0.0010
+    R=2 BNB=16 (BN= 64) warps=8: kernel   7412.1 + pre 1583.3 =   8995.5 us -> x1.63 (kernel x1.98)  max|diff|=0.0010
+    R=2 BNB=32 warps=4: ERR out of resource: shared memory, Required: 147456, Hardware limit: 101376. Reducing block sizes or `num_stages`
+    R=2 BNB=32 warps=8: ERR out of resource: shared memory, Required: 147456, Hardware limit: 101376. Reducing block sizes or `num_stages`
+=== sel_024_3407.pt 18:44
+sel_024_3407.pt: rows=3407 ctx=7504 stock  14235.2 us
+  R=4: union mean 713 blocks/tile (x1.39 of a row), precompute  1418.9 us
+    R=4 BNB= 8 (BN= 32) warps=4: kernel 361329.2 + pre 1418.9 = 362748.1 us -> x0.04 (kernel x0.04)  max|diff|=0.0001
+    R=4 BNB= 8 (BN= 32) warps=8: kernel 129049.7 + pre 1418.9 = 130468.6 us -> x0.11 (kernel x0.11)  max|diff|=0.0001
+    R=4 BNB=16 (BN= 64) warps=4: kernel  13808.5 + pre 1418.9 =  15227.4 us -> x0.93 (kernel x1.03)  max|diff|=0.0001
+    R=4 BNB=16 (BN= 64) warps=8: kernel  15131.7 + pre 1418.9 =  16550.5 us -> x0.86 (kernel x0.94)  max|diff|=0.0001
+    R=4 BNB=32 warps=4: ERR out of resource: shared memory, Required: 163840, Hardware limit: 101376. Reducing block sizes or `num_stages`
+    R=4 BNB=32 warps=8: ERR out of resource: shared memory, Required: 163840, Hardware limit: 101376. Reducing block sizes or `num_stages`
+  R=2: union mean 592 blocks/tile (x1.16 of a row), precompute  1443.4 us
+    R=2 BNB= 8 (BN= 32) warps=4: kernel   8128.8 + pre 1443.4 =   9572.2 us -> x1.49 (kernel x1.75)  max|diff|=0.0001
+    R=2 BNB= 8 (BN= 32) warps=8: kernel  14029.0 + pre 1443.4 =  15472.5 us -> x0.92 (kernel x1.01)  max|diff|=0.0001
+    R=2 BNB=16 (BN= 64) warps=4: kernel   9403.4 + pre 1443.4 =  10846.8 us -> x1.31 (kernel x1.51)  max|diff|=0.0001
+    R=2 BNB=16 (BN= 64) warps=8: kernel   9572.0 + pre 1443.4 =  11015.4 us -> x1.29 (kernel x1.49)  max|diff|=0.0001
+    R=2 BNB=32 warps=4: ERR out of resource: shared memory, Required: 147456, Hardware limit: 101376. Reducing block sizes or `num_stages`
+    R=2 BNB=32 warps=8: ERR out of resource: shared memory, Required: 147456, Hardware limit: 101376. Reducing block sizes or `num_stages`
+=== sel_089_283.pt 18:44
+sel_089_283.pt: rows=283 ctx=12291 stock   1190.7 us
+  R=4: union mean 957 blocks/tile (x1.87 of a row), precompute   301.0 us
+    R=4 BNB= 8 (BN= 32) warps=4: kernel  40985.8 + pre  301.0 =  41286.8 us -> x0.03 (kernel x0.03)  max|diff|=0.0001
+    R=4 BNB= 8 (BN= 32) warps=8: kernel  13823.8 + pre  301.0 =  14124.7 us -> x0.08 (kernel x0.09)  max|diff|=0.0001
+    R=4 BNB=16 (BN= 64) warps=4: kernel   1653.8 + pre  301.0 =   1954.8 us -> x0.61 (kernel x0.72)  max|diff|=0.0001
+    R=4 BNB=16 (BN= 64) warps=8: kernel   1802.1 + pre  301.0 =   2103.0 us -> x0.57 (kernel x0.66)  max|diff|=0.0001
+    R=4 BNB=32 warps=4: ERR out of resource: shared memory, Required: 163840, Hardware limit: 101376. Reducing block sizes or `num_stages`
+    R=4 BNB=32 warps=8: ERR out of resource: shared memory, Required: 163840, Hardware limit: 101376. Reducing block sizes or `num_stages`
+  R=2: union mean 689 blocks/tile (x1.35 of a row), precompute   296.2 us
+    R=2 BNB= 8 (BN= 32) warps=4: kernel    824.3 + pre  296.2 =   1120.6 us -> x1.06 (kernel x1.44)  max|diff|=0.0001
+    R=2 BNB= 8 (BN= 32) warps=8: kernel   1418.4 + pre  296.2 =   1714.6 us -> x0.69 (kernel x0.84)  max|diff|=0.0001
+    R=2 BNB=16 (BN= 64) warps=4: kernel    943.8 + pre  296.2 =   1240.0 us -> x0.96 (kernel x1.26)  max|diff|=0.0001
+    R=2 BNB=16 (BN= 64) warps=8: kernel    974.1 + pre  296.2 =   1270.3 us -> x0.94 (kernel x1.22)  max|diff|=0.0001
+    R=2 BNB=32 warps=4: ERR out of resource: shared memory, Required: 147456, Hardware limit: 101376. Reducing block sizes or `num_stages`
+    R=2 BNB=32 warps=8: ERR out of resource: shared memory, Required: 147456, Hardware limit: 101376. Reducing block sizes or `num_stages`
+== ALL DONE ==

@@ -1,40 +1,185 @@
 #!/usr/bin/env python3
-"""Correctness + timing of the integrated union path (qsa_union_patch.py) against the stock kernel, on a real
-selection dump run through vLLM's own expand_qsa_block_indices (so the causal tail tokens are exercised).
-Usage: qsa_union_test.py <sel_*.pt>  (v3: single union by context, exact-width sort)   (run with the patched venv; VLLM_QSA_UNION may be unset — calls the union
-function directly)."""
-import sys, statistics, torch
+"""Asserting test of the integrated QSA union path (tools/main/qsa_union_patch.py v4) against the stock kernel.
+
+Runs on real selection dumps (qsadump2: `blocks` [rows, block_topk], `visible_blocks` [rows]) pushed through vLLM's
+own expand_qsa_block_indices, so the causal tail of the open block is exercised for every tail length 0..CR-1.
+Softmax is deliberately peaked (|q| large) so that a leaked or dropped token moves the output by O(0.1), far above
+the bf16 order-of-summation noise (~1e-3); a negative control proves the test has that power.
+
+Usage:  qsa_union_test.py <sel_*.pt> [<sel_*.pt> ...]     (patched venv; VLLM_QSA_UNION may be unset)
+        pytest tools/qsa_union_test.py                     (QSA_DUMPS=<dir or files>, default results/qsadump2)
+Exit status 1 on the first failed assertion."""
+import glob, os, statistics, sys
+import torch
 import vllm  # noqa
 from vllm.models.qwen4_exp.nvidia.ops import qsa as Q
 from vllm.models.qwen4_exp.nvidia.ops.qsa_indexer import expand_qsa_block_indices
-dev="cuda"; torch.manual_seed(0); f=sys.argv[1]
+
+DEV = "cuda"
 HQ, HKV, D, PAGE, CR, TOPK = 24, 2, 256, 1600, 4, 2048
-d=torch.load(f); blocks=d["blocks"].to(dev).to(torch.int32).contiguous(); vis=d["visible_blocks"].to(dev).to(torch.int32)
-rows=blocks.shape[0]
-# query positions: last-but-one token of the open group -> a 3-token causal tail per row
-qpos=(vis*CR + 2).to(torch.int32)
-# the real expansion wants block indices [rows, 512] (any order, -1 padded) -> tokens [rows, 2051]
-logical=torch.empty((rows, TOPK + CR - 1), device=dev, dtype=torch.int32)
-expand_qsa_block_indices(blocks, qpos, vis, CR, TOPK, logical)
-ctx=int(qpos.max().item())+1; npages=(ctx+PAGE-1)//PAGE
-q=(torch.randn(rows, HQ, D, device=dev)*0.2).to(torch.bfloat16)
-kc=(torch.randn(npages, PAGE, HKV, D, device=dev)*0.2).to(torch.bfloat16); vc=(torch.randn(npages, PAGE, HKV, D, device=dev)*0.2).to(torch.bfloat16)
-bt=torch.arange(npages, device=dev, dtype=torch.int32)[None, :].contiguous(); t2r=torch.zeros(rows, device=dev, dtype=torch.int32)
+TOL = 2e-2          # max |union - stock| on bf16 outputs with peaked softmax (measured noise ~1e-3)
+NEG_MIN = 5e-2      # a single swapped block per row must move the output by at least this much (test power)
+
+
+def _dumps():
+    spec = os.environ.get("QSA_DUMPS", "/opt/llm/runners/results/qsadump2")
+    files = []
+    for s in spec.split(":"):
+        files += sorted(glob.glob(os.path.join(s, "sel_*.pt"))) if os.path.isdir(s) else [s]
+    return files[:3]
+
+
 def timeit(fn, n=5, reps=5):
-    fn(); torch.cuda.synchronize(); o=[]
+    fn(); torch.cuda.synchronize(); o = []
     for _ in range(reps):
-        s=torch.cuda.Event(enable_timing=True); e=torch.cuda.Event(enable_timing=True); s.record()
-        for _ in range(n): fn()
-        e.record(); torch.cuda.synchronize(); o.append(s.elapsed_time(e)*1000/n)
+        s = torch.cuda.Event(enable_timing=True); e = torch.cuda.Event(enable_timing=True); s.record()
+        for _ in range(n):
+            fn()
+        e.record(); torch.cuda.synchronize(); o.append(s.elapsed_time(e) * 1000 / n)
     return statistics.median(o)
-Q._QSA_UNION=False
-out_ref=torch.empty_like(q); Q.qsa_sparse_paged_attention(q, kc, vc, logical, bt, t2r, out_ref); torch.cuda.synchronize()
-t_ref=timeit(lambda: Q.qsa_sparse_paged_attention(q, kc, vc, logical, bt, t2r, out_ref))
-out=torch.empty_like(q); Q.qsa_sparse_paged_attention_union(q, kc, vc, logical, bt, t2r, out); torch.cuda.synchronize()
-t_u=timeit(lambda: Q.qsa_sparse_paged_attention_union(q, kc, vc, logical, bt, t2r, out))
-ent=Q._qsa_union_entries(logical, CR, TOPK); ntail=int(((ent>=0)&(ent%2==1)).sum()); nblk=int(((ent>=0)&(ent%2==0)).sum())
-diff=(out.float()-out_ref.float()).abs().max(); tails_ok = ntail == int(((logical>=0).sum(1) - (blocks>=0).sum(1)*CR).sum())
-print(f"{f.split('/')[-1]}: rows={rows} ctx={ctx} entries: blocks={nblk} tails={ntail} (tail count consistent: {tails_ok})", flush=True)
-print(f"  union path {t_u:8.1f} us (incl. both precomputes + R choice) vs stock {t_ref:8.1f} us -> x{t_ref/t_u:4.2f}   max|diff|={float(diff):.4f}", flush=True)
-# gate check: eligible with env on, single request
-Q._QSA_UNION=True; print("  eligible:", Q._qsa_union_eligible(q, logical, t2r), flush=True)
+
+
+class Case:
+    """One dump at one tail length, with a random physical-page permutation and a 3-row block table."""
+
+    def __init__(self, f, tail_len, seed=0, nreq=3, req=1):
+        g = torch.Generator(device=DEV).manual_seed(seed)
+        d = torch.load(f)
+        self.blocks = d["blocks"].to(DEV).to(torch.int32).contiguous()
+        vis = d["visible_blocks"].to(DEV).to(torch.int32)
+        self.rows = rows = self.blocks.shape[0]
+        # query position inside its open block: tail_len tokens (0..CR-1) of that block precede-or-are the query
+        self.qpos = (vis * CR + tail_len - 1).clamp(min=0).to(torch.int32) if tail_len else (vis * CR - 1).clamp(min=0).to(torch.int32)
+        self.tail_len = tail_len
+        self.logical = torch.empty((rows, TOPK + CR - 1), device=DEV, dtype=torch.int32)
+        expand_qsa_block_indices(self.blocks, self.qpos, vis, CR, TOPK, self.logical)
+        ctx = int(self.qpos.max().item()) + 1
+        npages = (ctx + PAGE - 1) // PAGE
+        # peaked softmax: scores ~ N(0, 2^2) over 2048 tokens -> a handful of tokens carry the output
+        self.q = (torch.randn(rows, HQ, D, device=DEV, generator=g) * 2.0).to(torch.bfloat16)
+        phys = npages * nreq + 2
+        self.kc = torch.randn(phys, PAGE, HKV, D, device=DEV, generator=g).to(torch.bfloat16)
+        self.vc = (torch.randn(phys, PAGE, HKV, D, device=DEV, generator=g) * 0.2).to(torch.bfloat16)
+        perm = torch.randperm(phys, device=DEV, generator=g)[: npages * nreq].view(nreq, npages).to(torch.int32)
+        self.bt = perm.contiguous()                      # rows 0 and 2 are other requests' (decoy) pages
+        self.nreq, self.req = nreq, req
+        self.t2r = torch.full((rows,), req, device=DEV, dtype=torch.int32)
+
+    def stock(self, logical=None, t2r=None):
+        out = torch.empty_like(self.q)
+        Q.qsa_sparse_paged_attention(self.q, self.kc, self.vc, self.logical if logical is None else logical,
+                                     self.bt, self.t2r if t2r is None else t2r, out)
+        return out
+
+    def union(self, R, t2r=None):
+        out = torch.empty_like(self.q)
+        Q.qsa_sparse_paged_attention_union(self.q, self.kc, self.vc, self.logical, self.bt,
+                                           self.t2r if t2r is None else t2r, out,
+                                           compress_ratio=CR, token_topk=TOPK, R=R, num_requests=self.nreq)
+        return out
+
+
+def maxdiff(a, b):
+    return float((a.float() - b.float()).abs().max())
+
+
+def test_split_matches_expansion():
+    """_qsa_union_split recovers exactly the whole blocks and the tail tokens the expansion emitted."""
+    for f in _dumps():
+        for tail_len in range(CR):
+            c = Case(f, tail_len)
+            blocks, tail = Q._qsa_union_split(c.logical, CR, TOPK)
+            n_sel = (c.logical >= 0).sum(1)
+            n_blk = (blocks >= 0).sum(1)
+            n_tail = (tail >= 0).sum(1)
+            assert torch.equal(n_sel, n_blk * CR + n_tail), f"{f}: token count mismatch at tail {tail_len}"
+            assert int(n_tail.max()) <= CR - 1
+            # every tail token lies inside the query's open block, at or before the query
+            tv = tail[tail >= 0]
+            rq = c.qpos[:, None].expand_as(tail)[tail >= 0]
+            assert bool(((tv <= rq) & (tv // CR == rq // CR)).all()), "tail token outside the open block"
+            # the whole blocks are exactly the dump's selection (as a set per row)
+            sb, _ = torch.sort(torch.where(blocks >= 0, blocks, torch.full_like(blocks, 1 << 30)), 1)
+            db, _ = torch.sort(torch.where(c.blocks >= 0, c.blocks, torch.full_like(c.blocks, 1 << 30)), 1)
+            assert torch.equal(sb, db), "whole-block set differs from the dump"
+            # the newer main appends a count column: the split must accept width + 1 unchanged
+            wide = torch.cat([c.logical, n_sel.to(torch.int32)[:, None]], 1)
+            b2, t2 = Q._qsa_union_split(wide, CR, TOPK)
+            assert torch.equal(b2, blocks) and torch.equal(t2, tail)
+
+
+def test_union_matches_stock_all_tails():
+    """Union output == stock output (peaked softmax) for tail lengths 0..CR-1, R=4 and R=2, permuted pages."""
+    for f in _dumps():
+        for tail_len in range(CR):
+            c = Case(f, tail_len, seed=tail_len)
+            ref = c.stock()
+            for R in (4, 2):
+                d = maxdiff(c.union(R), ref)
+                assert d < TOL, f"{os.path.basename(f)} tail {tail_len} R={R}: max|diff| {d:.4f} >= {TOL}"
+
+
+def test_negative_control_has_power():
+    """Swapping one selected block per row for a random other block moves the stock output by >> TOL."""
+    f = _dumps()[0]
+    c = Case(f, 2)
+    ref = c.stock()
+    bad = c.logical.clone()
+    rows = torch.arange(c.rows, device=DEV)
+    # replace the first whole block (columns 0..CR-1) by a block from far away in the context (still < qpos)
+    victim = (c.qpos // CR) // 2
+    bad[:, :CR] = (victim[:, None] * CR + torch.arange(CR, device=DEV)[None, :]).to(torch.int32)
+    d = maxdiff(c.stock(logical=bad), ref)
+    assert d > NEG_MIN, f"negative control moved the output by only {d:.4f}: the tolerance {TOL} is not meaningful"
+
+
+def test_invalid_request_rows_masked():
+    """Rows whose request id is invalid produce the same (zero) output as in the stock kernel."""
+    c = Case(_dumps()[0], 3)
+    t2r = c.t2r.clone()
+    t2r[::7] = -1
+    t2r[3::11] = c.nreq + 5
+    ref = c.stock(t2r=t2r)
+    assert float(ref[::7].float().abs().max()) == 0.0
+    for R in (4, 2):
+        out = c.union(R, t2r=t2r)
+        assert float(out[::7].float().abs().max()) == 0.0
+        assert float(out[3::11].float().abs().max()) == 0.0
+        assert maxdiff(out, ref) < TOL
+
+
+def test_eligibility_is_cpu_only():
+    on = Q._QSA_UNION
+    try:
+        Q._QSA_UNION = True
+        assert Q.qsa_union_eligible(4096, 1, CR, TOPK)
+        assert not Q.qsa_union_eligible(Q._QSA_UNION_MIN_ROWS - 1, 1, CR, TOPK)
+        assert not Q.qsa_union_eligible(4096, 2, CR, TOPK)          # tiles must not straddle requests
+        assert not Q.qsa_union_eligible(4096, 1, CR, 1536)         # block_topk 384: sort width not a power of two
+        assert not Q.qsa_union_eligible(4096, 1, 3, 2049)
+        assert Q.qsa_union_pick_r(Q._QSA_UNION_R4_MAX_CTX) == 4 and Q.qsa_union_pick_r(Q._QSA_UNION_R4_MAX_CTX + 1) == 2
+        Q._QSA_UNION = False
+        assert not Q.qsa_union_eligible(4096, 1, CR, TOPK)
+    finally:
+        Q._QSA_UNION = on
+
+
+def report_timing():
+    for f in _dumps():
+        c = Case(f, 2)
+        ctx = int(c.qpos.max().item()) + 1
+        t_ref = timeit(c.stock)
+        line = f"{os.path.basename(f)}: rows={c.rows} ctx={ctx} stock {t_ref:8.1f} us"
+        for R in (4, 2):
+            t_u = timeit(lambda: c.union(R))
+            line += f" | R={R} union {t_u:8.1f} us x{t_ref / t_u:4.2f}"
+        print(line, flush=True)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        os.environ["QSA_DUMPS"] = ":".join(sys.argv[1:])
+    for t in (test_split_matches_expansion, test_negative_control_has_power, test_union_matches_stock_all_tails,
+              test_invalid_request_rows_masked, test_eligibility_is_cpu_only):
+        t(); print(f"  PASS {t.__name__}", flush=True)
+    report_timing()

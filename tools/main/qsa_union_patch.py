@@ -73,8 +73,9 @@ def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cn
     request = tl.load(token_to_req_ptr + tl.minimum(row, num_rows - 1), mask=row < num_rows, other=-1)
     req_ok = (request >= 0) & (request < num_requests)
     safe_request = tl.minimum(tl.maximum(request, 0), num_requests - 1)
-    tile_request = tl.load(token_to_req_ptr + tl.minimum(tile * R, num_rows - 1))
-    tile_request = tl.minimum(tl.maximum(tile_request, 0), num_requests - 1)
+    # the tile's block-table row: any valid row of the tile (the owner guarantees one request per batch; rows with
+    # an invalid id, e.g. padding, are masked above and must not pick the table row)
+    tile_request = tl.minimum(tl.max(tl.where(req_ok, request, 0), axis=0), num_requests - 1)
     qmask = (row < num_rows) & (h_of_m < GROUP_SIZE) & req_ok
     first_head = kv_head * GROUP_SIZE
     query = tl.load(q_ptr + row[:, None] * stride_q_row + (first_head + h_of_m[:, None]) * stride_q_head
@@ -105,7 +106,7 @@ def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cn
         memb = tl.load(mem_ptr + tile * stride_mem_t + r_of_m[:, None] * stride_mem_r + t + b_off[None, :],
                        mask=emask[None, :], other=0)
         memt = tl.reshape(tl.broadcast_to(memb[:, :, None], (M, BNB, CR)), (M, BN))
-        active = (memt > 0) & valid[None, :]
+        active = (memt > 0) & valid[None, :] & req_ok[:, None]
         scores = tl.dot(query, keys) * softmax_scale_log2
         scores = tl.where(active, scores, -1.0e20)
         next_max = tl.maximum(max_value, tl.max(scores, axis=1))
@@ -130,7 +131,7 @@ def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cn
                    + kv_head * stride_k_head + dim_offsets[:, None], mask=valid[None, :], other=0.0)
     values = tl.load(v_cache_ptr + safe_page[:, None] * stride_v_block + page_offset[:, None] * stride_v_token
                      + kv_head * stride_v_head + dim_offsets[None, :], mask=valid[:, None], other=0.0)
-    active = (r_of_m[:, None] == slot_row[None, :]) & valid[None, :]
+    active = (r_of_m[:, None] == slot_row[None, :]) & valid[None, :] & req_ok[:, None]
     scores = tl.dot(query, keys) * softmax_scale_log2
     scores = tl.where(active, scores, -1.0e20)
     next_max = tl.maximum(max_value, tl.max(scores, axis=1))
@@ -140,8 +141,10 @@ def _qsa_union_attn_kernel(q_ptr, k_cache_ptr, v_cache_ptr, uni_ptr, mem_ptr, cn
     normalizer = normalizer * alpha + tl.sum(probabilities, axis=1)
     has_values = normalizer > 0
     out = tl.where(has_values[:, None], accumulator / tl.maximum(normalizer[:, None], 1.0e-20), 0.0)
+    # stock contract: rows with an invalid request are written as zeros (their query was masked to 0 above)
+    smask = (row < num_rows) & (h_of_m < GROUP_SIZE)
     tl.store(out_ptr + row[:, None] * stride_out_row + (first_head + h_of_m[:, None]) * stride_out_head
-             + dim_offsets[None, :], out.to(tl.bfloat16), mask=qmask[:, None])
+             + dim_offsets[None, :], out.to(tl.bfloat16), mask=smask[:, None])
 
 
 def _qsa_union_split(logical_indices: torch.Tensor, compress_ratio: int, token_topk: int):
