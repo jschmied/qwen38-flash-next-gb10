@@ -255,3 +255,12 @@
     the venv was reverted cleanly at the end. Redo runner `chunkredo` is staged (waits for the
     whole chain), **not started** — needs the go.
 
+85. **`qsadump` produced no dump (02:07–02:20).** Both probes returned 200, the hook site
+    (`qsa_select_paged_tokens`, the only selection path with metadata present) is right, but the patch
+    capped itself at 16 dumps counted from process start: the warmup/profiling passes consumed the
+    budget, the runner then deleted those files as intended and the real prompts found the counter
+    exhausted. v2 (`tools/determinism/qsadump_patch_v2.py`) dumps only while `<dir>/ARM` exists (the
+    runner creates it once the server is up), names files by row count, budget 96; the redo runner
+    `qsadump2` also runs `--enforce-eager` so no compile cache can serve a stale graph. Staged behind
+    the chain, **not started** — needs the go.
+
