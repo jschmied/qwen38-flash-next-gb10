@@ -1,0 +1,31 @@
+  qsaunion INSTALLED in /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/qsa.py
+preflight OK 17:15
+=== test sel_002_3813.pt 17:15
+sel_002_3813.pt: rows=3813 ctx=3815 entries: blocks=1427456 tails=11439 (tail count consistent: True)
+  union path   9524.6 us (incl. both precomputes + R choice) vs stock  14372.3 us -> x1.51   max|diff|=0.0005
+  eligible: True
+=== test sel_024_3407.pt 17:15
+sel_024_3407.pt: rows=3407 ctx=7503 entries: blocks=1744384 tails=10221 (tail count consistent: True)
+  union path  11499.2 us (incl. both precomputes + R choice) vs stock  13449.1 us -> x1.17   max|diff|=0.0001
+  eligible: True
+=== test sel_089_283.pt 17:15
+sel_089_283.pt: rows=283 ctx=12291 entries: blocks=144896 tails=849 (tail count consistent: True)
+  union path   1299.9 us (incl. both precomputes + R choice) vs stock   1112.6 us -> x0.86   max|diff|=0.0001
+  eligible: True
+=== QU1_a  union=1  17:15 ===
+    activation: 1 lines
+  QU1_a TTFT 8k: prompt_tokens=7503 median=2.67s  all=3.95 2.66 2.67
+  QU1_a TTFT 30k: prompt_tokens=29263 median=10.57s  all=11.19 10.57 10.57
+=== QU0_a  union=0  17:25 ===
+    activation: 0 lines
+  QU0_a TTFT 8k: prompt_tokens=7503 median=2.72s  all=2.85 2.70 2.72
+  QU0_a TTFT 30k: prompt_tokens=29263 median=10.54s  all=10.53 10.54 10.58
+=== QU1_b  union=1  17:36 ===
+    activation: 1 lines
+  QU1_b TTFT 8k: prompt_tokens=7503 median=2.67s  all=2.83 2.67 2.67
+  QU1_b TTFT 30k: prompt_tokens=29263 median=10.59s  all=10.59 10.54 10.59
+=== QU0_b  union=0  17:47 ===
+    activation: 0 lines
+  QU0_b TTFT 8k: prompt_tokens=7503 median=2.73s  all=2.86 2.73 2.72
+  QU0_b TTFT 30k: prompt_tokens=29263 median=10.58s  all=10.58 10.57 10.60
+== ALL DONE ==

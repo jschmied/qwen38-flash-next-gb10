@@ -540,3 +540,13 @@
     saved. Next: integration behind `VLLM_QSA_UNION=1` in the nightly venv (single-request prefill chunks first,
     per-request tiles later), then the server-level TTFT.
 
+105. **Union v2 integrated, server level: −2 % TTFT at 8k, 0 at 30k (`qsaunion5`, nightly venv, batch 4096, two
+    interleaved starts; `notes/data/qsaunion5.txt`).** 8k: 2.67 / 2.67 s on vs 2.72 / 2.73 off; 30k: 10.57 / 10.59 vs
+    10.54 / 10.58. Standalone the same code was 1.51× on the 8k chunk, 1.17× at 30k and 0.86× on the 283-row tail
+    (`qsaunion5` test lines): the per-call fixed cost — two unions per call with 4,096-wide sorts (the three tail
+    entries pushed R·E past 2,048), three device→host reads — ate most of the kernel's gain. The 2026-09-04 review
+    named the fixes; v3 (exact-width sort, one union by context, gate 1,024 rows) and v4 (block-only union at
+    2,048/1,024, tail as a separate 16-column pass, ratio/metadata threaded, no device reads, request validation,
+    asserting test) are queued behind this run, then the v5 standalone (union from block ids, R-bit membership,
+    pre-resolved physical pages, R=2 tile sweep).
+
