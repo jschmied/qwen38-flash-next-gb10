@@ -355,3 +355,26 @@
     (finding 70) for anyone on the vendor image: install the patch, run batch 8192. Handed to blazux
     (posting-log item 21). The venv was reverted after the run.
 
+96. **QSA union-kernel pre-test: the sparse-attention loop is 3× faster at M=64 — GO, with a shape
+    constraint (`qsablockm2`, two starts, `notes/data/qsablockm2.txt`).** A stripped copy of
+    `_qsa_sparse_paged_gqa_splitk_kernel`'s loop (gather K/V by index, QK dot, online softmax, PV dot; synthetic
+    data at the model's shapes, 4,096 query rows × 16 heads × 2,048 selected tokens × head_dim 256) with ROWS
+    query rows per program sharing one index list, i.e. dot M = 16·ROWS:
+
+    | ROWS | M | tiles / stages | µs per row (a / b) | TFLOPS |
+    | --- | --- | --- | --- | --- |
+    | 1 (today) | 16 | 64 / 2 | 2.91 / 2.9 | 11.5 |
+    | 2 | 32 | 64 / 1 | 1.52 | 22 |
+    | 4 | 64 | 64 / 1 | **0.92–0.94** | **36** |
+    | 8 | 128 | 32 / 1 | 0.93 | 36 |
+    | 8 | 128 | 16 / 1 | 1.48 | 23 |
+
+    M=16 reproduces the real kernel's measured ~12.7 TFLOPS, so the loop is representative. The gain saturates at
+    M=64: **GB10's 99 KiB shared memory** holds q[M,256] + K[256,BN] + V[BN,256] in bf16 only up to M=64 at
+    BN=64 with one pipeline stage (M=128 needs BN=32; two stages fit only at M≤32), and 16 warps or narrower
+    tiles lose it again. Design that follows: **4 consecutive query rows per program, 64-column tiles, one
+    stage, 8 warps, per-row masks over the tile's union** — union overhead at 4 rows is ≤ 1.15× columns
+    (consecutive-row Jaccard 0.87–0.94 at 8k, finding 92), so ~2.5× net on the kernel ≈ −8 % TTFT at 8k,
+    −9 % at 30k. Effort: new Triton kernel + union/mask precompute + integration on the indexer path +
+    correctness vs the dumped selections, 2–3 days. Decision pending.
+

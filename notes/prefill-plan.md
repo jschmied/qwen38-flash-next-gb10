@@ -110,7 +110,7 @@ expected TTFT effect in the agent loop ÷ effort:
    at all. If the profile shows the CPU gather inside prefill time, prefetch the next chunk's rows
    during the current chunk (one-chunk pipeline) and skip rows for cached blocks. Cheap, and the
    worker already streams H2D asynchronously (`ple_offload/worker.py`), so the plumbing exists.
-3. **Index sharing across query positions in prefill.** The QSA indexer scores every query token
+3. **Index sharing across query positions in prefill.** *(2026-09-04: measured GO — findings 92 + 96: gather saved 90–98 %, loop 3× faster at M=64; design fixed at 4 rows/program, BN 64, 1 stage by the 99 KiB smem; ~−8/−9 % TTFT; awaiting the go for 2–3 days of kernel work.)* The QSA indexer scores every query token
    against every block (O(T × blocks); at 30k that is the bulk of the indexer cost). vLLM already
    shares one selection across MTP draft positions (`index_share_for_mtp_iteration`); for prefill,
    compute the selection every s-th query position and reuse it for neighbours. A quality trade —

@@ -1,0 +1,28 @@
+preflight OK 14:24
+=== start a 14:24 ===
+N=4096 query rows, 16 heads, TOPK=2048, D=256: 137 GFLOP
+  ROWS= 1 (M= 16) warps= 4 stages=2 BN=64:   11580.6 us   2.827 us/row    11.9 TFLOPS
+  ROWS= 1 (M= 16) warps= 4 stages=1 BN=64:   11296.6 us   2.758 us/row    12.2 TFLOPS
+  ROWS= 2 (M= 32) warps= 4 stages=1 BN=64:    6256.6 us   1.527 us/row    22.0 TFLOPS
+  ROWS= 2 (M= 32) warps= 4 stages=2 BN=32:    7032.5 us   1.717 us/row    19.5 TFLOPS
+  ROWS= 4 (M= 64) warps= 4 stages=1 BN=64:    3887.7 us   0.949 us/row    35.4 TFLOPS
+  ROWS= 4 (M= 64) warps= 8 stages=1 BN=64:    3748.1 us   0.915 us/row    36.7 TFLOPS
+  ROWS= 4 (M= 64) warps= 8 stages=1 BN=32:    5085.5 us   1.242 us/row    27.0 TFLOPS
+  ROWS= 4 (M= 64) warps= 8 stages=2 BN=32:    4685.5 us   1.144 us/row    29.3 TFLOPS
+  ROWS= 8 (M=128) warps= 8 stages=1 BN=32:    3801.8 us   0.928 us/row    36.2 TFLOPS
+  ROWS= 8 (M=128) warps=16 stages=1 BN=32:    8440.8 us   2.061 us/row    16.3 TFLOPS
+  ROWS= 8 (M=128) warps= 8 stages=1 BN=16:    6111.1 us   1.492 us/row    22.5 TFLOPS
+=== start b 14:24 ===
+N=4096 query rows, 16 heads, TOPK=2048, D=256: 137 GFLOP
+  ROWS= 1 (M= 16) warps= 4 stages=2 BN=64:   11916.0 us   2.909 us/row    11.5 TFLOPS
+  ROWS= 1 (M= 16) warps= 4 stages=1 BN=64:   11533.0 us   2.816 us/row    11.9 TFLOPS
+  ROWS= 2 (M= 32) warps= 4 stages=1 BN=64:    6243.7 us   1.524 us/row    22.0 TFLOPS
+  ROWS= 2 (M= 32) warps= 4 stages=2 BN=32:    6942.6 us   1.695 us/row    19.8 TFLOPS
+  ROWS= 4 (M= 64) warps= 4 stages=1 BN=64:    3849.5 us   0.940 us/row    35.7 TFLOPS
+  ROWS= 4 (M= 64) warps= 8 stages=1 BN=64:    3774.4 us   0.921 us/row    36.4 TFLOPS
+  ROWS= 4 (M= 64) warps= 8 stages=1 BN=32:    5074.0 us   1.239 us/row    27.1 TFLOPS
+  ROWS= 4 (M= 64) warps= 8 stages=2 BN=32:    4555.9 us   1.112 us/row    30.2 TFLOPS
+  ROWS= 8 (M=128) warps= 8 stages=1 BN=32:    3833.6 us   0.936 us/row    35.9 TFLOPS
+  ROWS= 8 (M=128) warps=16 stages=1 BN=32:    8377.9 us   2.045 us/row    16.4 TFLOPS
+  ROWS= 8 (M=128) warps= 8 stages=1 BN=16:    6068.2 us   1.481 us/row    22.6 TFLOPS
+== ALL DONE ==
