@@ -28,18 +28,30 @@ def call(seed, tail, max_tokens=1, stream=True):
             if ch and ch.get("delta",{}).get("content") and ttft is None: ttft=time.perf_counter()-t0
             if d.get("usage"): pt=d["usage"].get("prompt_tokens")
     return ttft or (time.perf_counter()-t0), pt
-# filler unit: 1 token each?
-_, p0 = call(SEED, "a", stream=False); _, p4 = call(SEED+" x"*4, "a", stream=False); unit_tok=(p4-p0)/4
-print(f"  {label} prompt_tokens(tail 'a') = {p0}; ' x' = {unit_tok:.2f} tok/unit", flush=True)
-assert unit_tok==1.0, "filler is not 1 token"
+# The tokenizer merges repeated fillers unevenly, so do not assume tokens per unit: binary-search the pad count
+# on the measured prompt_tokens (monotone in pad). Shared prefix = prompt_tokens - 1 (tail "a") - S, S = template
+# suffix after the tail (unknown, swept 2..13); for each S the target total is 1600k + 1 + S.
+_, p0 = call(SEED, "a", stream=False)
+print(f"  {label} prompt_tokens(tail 'a') = {p0}", flush=True)
+cache={}
+def tokens(pad):
+    if pad not in cache: cache[pad]=call(SEED+" x"*pad, "a", stream=False)[1]
+    return cache[pad]
 best=None
 for S in range(2, 14):
-    shared = p0 - 1 - S
-    pad = (BLOCK - shared % BLOCK) % BLOCK
+    target = ((p0 - 1 - S + BLOCK - 1)//BLOCK)*BLOCK + 1 + S
+    lo, hi = 0, 2*BLOCK
+    while lo < hi:
+        mid=(lo+hi)//2
+        if tokens(mid) < target: lo=mid+1
+        else: hi=mid
+    pad=lo; pt=tokens(pad)
+    if pt != target: print(f"  {label} S={S:2d}: no exact pad (got {pt}, want {target}) — skip", flush=True); continue
     seed = SEED + " x"*pad
-    tc,_ = call(seed, "a"); th,pt = call(seed, "b")
-    print(f"  {label} S={S:2d} pad={pad:4d} prompt_tokens={pt}: cold {tc:5.2f} s  hit(tail 'b') {th:6.3f} s", flush=True)
+    tc,_ = call(seed, "a"); th,pth = call(seed, "b")
+    print(f"  {label} S={S:2d} pad={pad:4d} prompt_tokens={pth}: cold {tc:5.2f} s  hit(tail 'b') {th:6.3f} s", flush=True)
     if best is None or th < best[0]: best=(th,S,pad,seed)
+assert best is not None, "no aligned pad found"
 th,S,pad,seed=best; print(f"  {label} BEST: S={S} pad={pad} -> hit with 1 new token {th:.3f} s (shared prefix on the {BLOCK} boundary)", flush=True)
 res={}
 for rep in range(3):
