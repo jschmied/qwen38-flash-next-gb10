@@ -996,4 +996,10 @@ chunks) and the honest route is upstream.
   graph capture. **SGLang** #37995 (Jiminator) cookbook for NVFP4 TP=2 on 2× Spark with PLE offload *off* on unified memory.
 - HF today: primitive-ai NVFP4 at 12k downloads, Baekpica SSD-PLE GGUF 14k, arnomatic W4A16-PLE8, tcclaviger MXFP4-FP8,
   lychee888 NVFP4-FP8PLE.
+- **Mia issue #4 reply (malvavisc0, 21:02)**: deployed the kit (512k YaRN, fp8 KV, MTP 3); confirms the MAX_NUM_SEQS trap
+  (blazux measured the same flatline: 33 tok/s at 2 seqs vs 267 at 48); **found that `start.sh` passes
+  `--compilation-config`, `--hf-overrides` and `--speculative-config` wrapped in literal single quotes**, so the compile
+  mode may never be applied — our point 2's compile row is unmeasured on their kit; warns that prefix caching on the Mia
+  kit is unsafe (engine block = 8-token QSA ring instead of the 1,600-token Mamba block → zeroed Mamba state on hits;
+  blazux has the two-file fix). Offers to run the batch/compile A/B once the quoting is fixed. Reply drafted.
 

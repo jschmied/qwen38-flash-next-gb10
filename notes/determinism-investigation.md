@@ -1279,3 +1279,20 @@ Plus whatever drives the separate generation-side path.
     the target with `--max-num-seqs 1` and top-5 logprobs at q_len 1 vs 8 through the same prefix — which is what
     their instrumented run already did, with the same outcome.
 
+116. **Field, vllm#54521 (davidcanar, 2026-09-04 21:19): on gfx1151 the divergence survives strictly sequential, idle,
+    prefix-cache-off runs (5/5 distinct at every length), so an order-nondeterministic kernel is in their path; the
+    batch-shape channel is not their mechanism.** They corrected their own earlier claim (their determinism harnesses
+    had prefix caching on; the re-run without it holds). Narrowing by our criterion: MoE combine excluded bitwise
+    (`moe_sum` is inside the op they tested), the Triton ragged sparse-MLA decode has no atomics (two-stage split-KV),
+    the collective is the open one (`NCCL_PROTO` unpinned — next). Two new facts: (a) the outcome set is *discrete* —
+    specific output hashes recur across independent runs — which fits a reduction-order variable and not garbage reads;
+    (b) `--max-num-seqs 1` hard-faults the engine in `_deepgemm_fp8_paged_mqa_logits` (the GLM sparse indexer's paged
+    MQA logits kernel) on the first request — an indexing bug that faults only when the access leaves a mapped page
+    would be consistent with silent wrong reads at larger max_num_seqs. Their gfx1151 rows for our M-invariance table:
+    ROCm BF16 (hipBLASLt) row 0 is M-invariant for M = 1…64 (1…32 on the narrowest shape) and switches kernel at
+    M ≥ 128; the int4 W4A16 Triton fused MoE is bit-identical at every M despite per-M tuned tiles. So on their stack the
+    E == V ≠ A channel of #54928 is inactive at MTP verification widths, unlike sm_121 where BF16 cuBLAS and blockwise
+    FP8 differ from M = 2. They offer `tools/gemm_m_invariance_rocm.py` as a PR to our repo. Reply drafted
+    (`notes/upstream/comment-54521-davidcanar-2.md`): accept the PR, the recurring-hash argument, the fault deserves its
+    own issue, and the GB10 two-node comparison offer stands if the collective is the channel.
+
