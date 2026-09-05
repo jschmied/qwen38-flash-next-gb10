@@ -1,4 +1,4 @@
-DRAFT PR body — open on the user's go. gau-nernst asked for the PR on the RFC (2026-09-05 01:38). Branch: https://github.com/jschmied/vllm/compare/main...feat/qsa-tile-union-sm121 (2 commits, 8 files, rebased on 8369affa)
+POSTED as https://github.com/vllm-project/vllm/pull/55430 (2026-09-05). Branch: https://github.com/jschmied/vllm/compare/main...feat/qsa-tile-union-sm121 (2 commits, 8 files, rebased on 8369affa)
 
 # [Kernel][Qwen3.8-Flash-Next] Tile-union QSA sparse attention for prefill on SM121
 
