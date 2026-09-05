@@ -938,3 +938,15 @@
     30k 10.91 s, pairs 8k+8k 4.99 s, 30k+8k 13.43 s — consistent with gb10tune's stock arms. stack1 restarted 22:48 from
     the first arm. Not a finding about the kernel; the vLLM PR (#55180) integrates in C++ and has neither problem.
 
+135. **stack1's first pass is INVALID for the 16k swizzle arm and crashed the FLA arm: all arms shared one torch.compile
+    cache, and the cache key does not see an env-gated Python branch.** Sequence on the overlay venv (`stack1`, 22:48–23:35):
+    stock-16k compiled the blockwise-FP8 wrapper with the swizzle branch False (key = batch 16384); swz-4k compiled it
+    True (key = batch 4096); swz-16k then *hit the stock-16k graph* and never called the swizzled op — hence 2.50 / 10.95 s,
+    identical to stock (finding 134's table); FLA-wide-4k hit the swz-4k graph and died at startup with
+    `'_OpNamespace' 'fnswz' object has no attribute 'blockwise_sm120'` because that process had not registered the op.
+    The swz-4k arm was a genuine stock re-run for a different reason: the extension's gate needs a ≥12 MiB activation
+    slab and a 4k chunk at K=2560 is 10 MiB. Same class as `[[spec-compile-cache-key-omits-nspec]]`. Fix: every env-gated
+    arm gets its own `FN_CACHE_ROOT` (`vllm-swz`, `vllm-fla`) in `stack1.sh`/`stack2.sh`; the poisoned shared
+    `torch_compile_cache` (2.2 GB) was purged so the reverted-code arms (dv) cannot load the swizzle graph. stack1
+    restarted 23:37 from the first arm; nothing from its first pass is quotable except the stock-16k numbers.
+
