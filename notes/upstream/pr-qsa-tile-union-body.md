@@ -1,4 +1,4 @@
-DRAFT PR body — open only on the user's go (plan: after RFC #55394 feedback or on 2026-09-11). Branch: https://github.com/jschmied/vllm/compare/main...feat/qsa-tile-union-sm121
+DRAFT PR body — open on the user's go. gau-nernst asked for the PR on the RFC (2026-09-05 01:38). Branch: https://github.com/jschmied/vllm/compare/main...feat/qsa-tile-union-sm121 (2 commits, 8 files, rebased on 8369affa)
 
 # [Kernel][Qwen3.8-Flash-Next] Tile-union QSA sparse attention for prefill on SM121
 
@@ -33,6 +33,13 @@ Kernel-level on real selection dumps: 2.5–2.7× the split-K kernel time on 8k 
 ## Tests
 
 `tests/models/qwen4_exp/test_qsa_tile_union.py` (14 cases, CUDA): single and multi-request batches with odd lengths and a 1-row request, zero-length requests, padding rows past `query_start_loc[-1]` (both synthetic and production-shaped: `token_to_req` 0, position −1, ids −1), a one-page context with padded selections, invalid-request rows at request boundaries, the gate (decode rows, small batch, fragmented batch, env off → error), config parsing and validation, static/tensor contracts, the shared layout, warmup, production dtypes (int64 positions) with a spy asserting the path executed, and a negative control proving the tolerance has power (one swapped block per row moves the output by > 0.05).
+
+## On the RFC feedback (@gau-nernst)
+
+- *Split prefill from decode/spec-decode like #54513* — the path is selected only under `use_prefill_config`; decode and spec-decode rows never see it (batches with decode rows are ineligible and stay on the split-K kernel).
+- *Permanent prefill kernel selection if it is always faster* — it is faster on every prefill shape we measured on SM121, so there it is the default prefill kernel; on other parts it is untuned and stays off until someone measures (the override exists for that). Happy to drop the env knob entirely once a second architecture is in the table.
+- *Inputs from the metadata* — yes: `logical_positions`, `query_start_loc`, `num_decode_tokens`, `num_prefills` come from the QSA forward metadata; the compact selection comes from the indexer's top-k output before expansion (a per-device workspace), which is not in the metadata today.
+- *Multiple requests are a must* — done: tiles are built from `query_start_loc` and never straddle requests; measured with two concurrent prompts above and tested with uneven, 1-row and zero-length requests.
 
 ## Not in this PR (follow-ups, in the RFC)
 
