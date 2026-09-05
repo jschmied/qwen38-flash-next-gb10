@@ -1371,3 +1371,14 @@ Plus whatever drives the separate generation-side path.
     batch-composition log run (`acceptcell6`). Candidate mechanism per that review: slot/metadata ownership of the
     second request in the reused metadata; the store kernels themselves carry no request notion and can only execute
     a wrong slot mapping faithfully.
+
+129. **Batch-composition log (`acceptcell6`, `notes/data/acceptcell6.txt`, `acceptcell6-BL.jsonl`; one env-gated log line
+    in the V2 runner, request ids sent explicitly): the corruption is deterministic on the step's shape. A step whose
+    batch consists of prefills only corrupts every prefill after batch row 0 (5/5 such steps: `[545,545]` → row 1
+    dead, three times; `[545,545,545]` → rows 1 and 2 dead, twice). A step with a speculating decode row in front and
+    two prefills behind it (`[4,545,545]`, 3/3) is clean, and prefills in separate steps are clean (8/8).** Overlay
+    venv, MTP n=3, 16 cells. This is why the earlier c=16 cells looked healthy (their first prefill ran alone and every
+    later prefill joined behind decode rows) and why the stagger of 150 ms cures it. Whether the two-prefill step is
+    poisoned by the drafter's writes or by the target's own state handling under the speculative configuration (ring
+    capacity 8 instead of 4, spec-sized conv-state windows) is what the queued arms separate: draft indexer unfused
+    (`U1`), draft-prefill ring commit withheld (`R1`), and drafter never run at all with the spec config on (`ND`).

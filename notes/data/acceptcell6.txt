@@ -1,0 +1,1123 @@
+applied /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/v1/worker/gpu/model_runner.py
+=== BL_mtp3  venv=fnmain2(dev401+overlay, union off) MTP3 batchlog  13:43 ===
+  BL CELL3 c=2 rep=0: rate=73.8% | chatcmpl-BL-2-0-0:4.3s:ok chatcmpl-BL-2-0-1:4.1s:ok
+  BL CELL3 c=2 rep=1: rate=68.7% | chatcmpl-BL-2-1-0:4.1s:ok chatcmpl-BL-2-1-1:3.7s:ok
+  BL CELL3 c=2 rep=2: rate=71.5% | chatcmpl-BL-2-2-0:4.0s:ok chatcmpl-BL-2-2-1:3.8s:ok
+  BL CELL3 c=2 rep=3: rate=18.3% | chatcmpl-BL-2-3-0:8.9s:G chatcmpl-BL-2-3-1:4.3s:ok
+  BL CELL3 c=2 rep=4: rate=67.5% | chatcmpl-BL-2-4-0:4.0s:ok chatcmpl-BL-2-4-1:4.0s:ok
+  BL CELL3 c=2 rep=5: rate=21.2% | chatcmpl-BL-2-5-0:3.8s:ok chatcmpl-BL-2-5-1:8.7s:G
+  BL CELL3 c=2 rep=6: rate=66.7% | chatcmpl-BL-2-6-0:4.1s:ok chatcmpl-BL-2-6-1:4.1s:ok
+  BL CELL3 c=2 rep=7: rate=20.2% | chatcmpl-BL-2-7-0:4.1s:ok chatcmpl-BL-2-7-1:8.8s:G
+  BL CELL3 c=2 rep=8: rate=65.5% | chatcmpl-BL-2-8-0:4.1s:ok chatcmpl-BL-2-8-1:4.0s:ok
+  BL CELL3 c=2 rep=9: rate=64.0% | chatcmpl-BL-2-9-0:4.2s:ok chatcmpl-BL-2-9-1:4.2s:ok
+  BL CELL3 c=3 rep=0: rate=73.6% | chatcmpl-BL-3-0-0:4.9s:ok chatcmpl-BL-3-0-1:4.2s:ok chatcmpl-BL-3-0-2:4.5s:ok
+  BL CELL3 c=3 rep=1: rate=71.2% | chatcmpl-BL-3-1-0:4.5s:ok chatcmpl-BL-3-1-1:4.5s:ok chatcmpl-BL-3-1-2:4.6s:ok
+  BL CELL3 c=3 rep=2: rate=71.9% | chatcmpl-BL-3-2-0:4.6s:ok chatcmpl-BL-3-2-1:4.8s:ok chatcmpl-BL-3-2-2:4.6s:ok
+  BL CELL3 c=3 rep=3: rate=68.0% | chatcmpl-BL-3-3-0:4.7s:ok chatcmpl-BL-3-3-1:4.6s:ok chatcmpl-BL-3-3-2:5.0s:ok
+  BL CELL3 c=3 rep=4: rate=12.5% | chatcmpl-BL-3-4-0:10.5s:G chatcmpl-BL-3-4-1:4.5s:ok chatcmpl-BL-3-4-2:10.6s:G
+  BL CELL3 c=3 rep=5: rate=12.8% | chatcmpl-BL-3-5-0:10.6s:G chatcmpl-BL-3-5-1:10.4s:G chatcmpl-BL-3-5-2:4.6s:ok
+--- FNBATCH lines with >=1 chatcmpl-BL request
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d'] toks=[4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 545] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-1-8df9d60d', 'chatcmpl-BL-2-0-0-bed292e2'] toks=[4, 4] drafts={'chatcmpl-BL-2-0-1-8df9d60d': 3, 'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-0-0-bed292e2'] toks=[4] drafts={'chatcmpl-BL-2-0-0-bed292e2': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81'] toks=[4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 545] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-1-87f72f81', 'chatcmpl-BL-2-1-0-aa1d148b'] toks=[4, 4] drafts={'chatcmpl-BL-2-1-1-87f72f81': 3, 'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-0-aa1d148b'] toks=[4] drafts={'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-0-aa1d148b'] toks=[4] drafts={'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-0-aa1d148b'] toks=[4] drafts={'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-0-aa1d148b'] toks=[4] drafts={'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-1-0-aa1d148b'] toks=[4] drafts={'chatcmpl-BL-2-1-0-aa1d148b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 545] drafts={'chatcmpl-BL-2-2-0-8d911384': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384', 'chatcmpl-BL-2-2-1-841956b9'] toks=[4, 4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3, 'chatcmpl-BL-2-2-1-841956b9': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384'] toks=[4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384'] toks=[4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384'] toks=[4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3}
+FNBATCH reqs=['chatcmpl-BL-2-2-0-8d911384'] toks=[4] drafts={'chatcmpl-BL-2-2-0-8d911384': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[545, 545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-1-85e4a8ae', 'chatcmpl-BL-2-3-0-94452234'] toks=[4, 4] drafts={'chatcmpl-BL-2-3-1-85e4a8ae': 3, 'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-3-0-94452234'] toks=[4] drafts={'chatcmpl-BL-2-3-0-94452234': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 545] drafts={'chatcmpl-BL-2-4-1-85506874': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874', 'chatcmpl-BL-2-4-0-ac14bfb3'] toks=[4, 4] drafts={'chatcmpl-BL-2-4-1-85506874': 3, 'chatcmpl-BL-2-4-0-ac14bfb3': 3}
+FNBATCH reqs=['chatcmpl-BL-2-4-1-85506874'] toks=[4] drafts={'chatcmpl-BL-2-4-1-85506874': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[545, 545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-0-b03b72de', 'chatcmpl-BL-2-5-1-870de42e'] toks=[4, 4] drafts={'chatcmpl-BL-2-5-0-b03b72de': 3, 'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-5-1-870de42e'] toks=[4] drafts={'chatcmpl-BL-2-5-1-870de42e': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b'] toks=[4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 545] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-6-0-ae280c5b', 'chatcmpl-BL-2-6-1-96e4bded'] toks=[4, 4] drafts={'chatcmpl-BL-2-6-0-ae280c5b': 3, 'chatcmpl-BL-2-6-1-96e4bded': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[545, 545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-0-95af70c7', 'chatcmpl-BL-2-7-1-8d764f49'] toks=[4, 4] drafts={'chatcmpl-BL-2-7-0-95af70c7': 3, 'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-7-1-8d764f49'] toks=[4] drafts={'chatcmpl-BL-2-7-1-8d764f49': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32'] toks=[4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 545] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-1-8c50ef32', 'chatcmpl-BL-2-8-0-955ae991'] toks=[4, 4] drafts={'chatcmpl-BL-2-8-1-8c50ef32': 3, 'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-8-0-955ae991'] toks=[4] drafts={'chatcmpl-BL-2-8-0-955ae991': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac'] toks=[4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 545] drafts={'chatcmpl-BL-2-9-1-83401dac': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-2-9-1-83401dac', 'chatcmpl-BL-2-9-0-9d9220bf'] toks=[4, 4] drafts={'chatcmpl-BL-2-9-1-83401dac': 3, 'chatcmpl-BL-2-9-0-9d9220bf': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d'] toks=[4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 545, 545] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-1-9a59444d', 'chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-0-1-9a59444d': 3, 'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4] drafts={'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-2-ab4c3ad9', 'chatcmpl-BL-3-0-0-94628501'] toks=[4, 4] drafts={'chatcmpl-BL-3-0-2-ab4c3ad9': 3, 'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-0-94628501'] toks=[4] drafts={'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-0-94628501'] toks=[4] drafts={'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-0-94628501'] toks=[4] drafts={'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-0-94628501'] toks=[4] drafts={'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-0-94628501'] toks=[4] drafts={'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-0-94628501'] toks=[4] drafts={'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-0-0-94628501'] toks=[4] drafts={'chatcmpl-BL-3-0-0-94628501': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad'] toks=[4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 545, 545] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86', 'chatcmpl-BL-3-1-1-aff89a45'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3, 'chatcmpl-BL-3-1-1-aff89a45': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad', 'chatcmpl-BL-3-1-0-8af5cd86'] toks=[4, 4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3, 'chatcmpl-BL-3-1-0-8af5cd86': 3}
+FNBATCH reqs=['chatcmpl-BL-3-1-2-b7f915ad'] toks=[4] drafts={'chatcmpl-BL-3-1-2-b7f915ad': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6'] toks=[4, 545] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 545] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6', 'chatcmpl-BL-3-2-0-b483ca4a'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3, 'chatcmpl-BL-3-2-0-b483ca4a': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-2-92e6a2ff', 'chatcmpl-BL-3-2-1-97824df6'] toks=[4, 4] drafts={'chatcmpl-BL-3-2-2-92e6a2ff': 3, 'chatcmpl-BL-3-2-1-97824df6': 3}
+FNBATCH reqs=['chatcmpl-BL-3-2-1-97824df6'] toks=[4] drafts={'chatcmpl-BL-3-2-1-97824df6': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31'] toks=[545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31'] toks=[4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 545, 545] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-1-ad9d8b31', 'chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-3-1-ad9d8b31': 3, 'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-0-99e27014', 'chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4, 4] drafts={'chatcmpl-BL-3-3-0-99e27014': 3, 'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4] drafts={'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4] drafts={'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4] drafts={'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4] drafts={'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4] drafts={'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4] drafts={'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-3-2-bd2af4f7'] toks=[4] drafts={'chatcmpl-BL-3-3-2-bd2af4f7': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[545, 545, 545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-1-9fa087d4', 'chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-4-1-9fa087d4': 3, 'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702', 'chatcmpl-BL-3-4-0-91ec594c'] toks=[4, 4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3, 'chatcmpl-BL-3-4-0-91ec594c': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702'] toks=[4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3}
+FNBATCH reqs=['chatcmpl-BL-3-4-2-b4eca702'] toks=[4] drafts={'chatcmpl-BL-3-4-2-b4eca702': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[545, 545, 545] drafts={}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-2-a2b36298', 'chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4, 4] drafts={'chatcmpl-BL-3-5-2-a2b36298': 3, 'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0', 'chatcmpl-BL-3-5-1-aea1e404'] toks=[4, 4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3, 'chatcmpl-BL-3-5-1-aea1e404': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0'] toks=[4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0'] toks=[4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3}
+FNBATCH reqs=['chatcmpl-BL-3-5-0-84d549f0'] toks=[4] drafts={'chatcmpl-BL-3-5-0-84d549f0': 3}
+reverted /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/v1/worker/gpu/model_runner.py
+== ALL DONE ==
