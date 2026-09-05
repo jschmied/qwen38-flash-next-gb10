@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. Comment on vllm#53051 (prompt length == 1 + num_speculative_tokens misclassified as uniform decode). Data: finding 133.
+POSTED 2026-09-05 18:4x as https://github.com/vllm-project/vllm/issues/53051#issuecomment-5553280049. Comment on vllm#53051 (prompt length == 1 + num_speculative_tokens misclassified as uniform decode). Data: finding 133.
 
 GB10 (DGX Spark, sm_121, TP1) data point for the scope question, on Qwen3.8-Flash-Next (hybrid GDN + QSA + PLE), which runs on **Model Runner V2** (`vllm/v1/worker/gpu/`) in current nightlies, `cudagraph_mode=PIECEWISE`, MTP n=3:
 
