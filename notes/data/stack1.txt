@@ -1,0 +1,51 @@
+applied
+=== SW_stock16k_1  batch=16384 swz=0 flawide=0  23:38 ===
+    swz_line=0 batched=max_num_batched_tokens=16384
+  SW_stock16k_1 TTFT 8k: prompt_tokens=7503 median=2.59s  all=4.06 2.59 2.47
+  SW_stock16k_1 TTFT 30k: prompt_tokens=29263 median=10.81s  all=12.92 10.80 10.81
+  SW_stock16k_1 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.00s  ttft_a=2.55 2.49 2.52  ttft_b=5.07 4.98 5.00
+  SW_stock16k_1 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=13.35s  ttft_a=10.86 10.95 10.86  ttft_b=13.32 13.41 13.35
+=== SW_swz4k_1  batch=4096 swz=1 flawide=0  23:50 ===
+    swz_line=4 batched=max_num_batched_tokens=4096
+  SW_swz4k_1 TTFT 8k: prompt_tokens=7503 median=2.65s  all=2.75 2.65 2.65
+  SW_swz4k_1 TTFT 30k: prompt_tokens=29263 median=10.41s  all=10.41 10.41 10.42
+  SW_swz4k_1 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.34s  ttft_a=2.83 5.34 2.68  ttft_b=5.49 2.68 5.34
+  SW_swz4k_1 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=13.08s  ttft_a=13.08 11.51 13.09  ttft_b=2.69 12.94 2.68
+=== SW_swz16k_1  batch=16384 swz=1 flawide=0  00:03 ===
+    swz_line=4 batched=max_num_batched_tokens=16384
+  SW_swz16k_1 TTFT 8k: prompt_tokens=7503 median=2.46s  all=2.57 2.46 2.46
+  SW_swz16k_1 TTFT 30k: prompt_tokens=29263 median=9.52s  all=9.52 9.51 9.52
+  SW_swz16k_1 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=4.98s  ttft_a=2.59 2.48 2.51  ttft_b=5.06 4.95 4.98
+  SW_swz16k_1 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.03s  ttft_a=12.02 9.57 9.57  ttft_b=2.49 12.02 12.02
+=== FLA_wide4k_1  batch=4096 swz=0 flawide=1  00:17 ===
+    swz_line=0 batched=max_num_batched_tokens=4096
+  FLA_wide4k_1 TTFT 8k: prompt_tokens=7503 median=2.67s  all=2.77 2.67 2.66
+  FLA_wide4k_1 TTFT 30k: prompt_tokens=29263 median=10.41s  all=10.41 10.41 10.42
+  FLA_wide4k_1 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.37s  ttft_a=5.43 2.68 2.70  ttft_b=2.78 5.34 5.37
+  FLA_wide4k_1 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.95s  ttft_a=11.53 11.47 13.09  ttft_b=12.95 12.89 2.69
+=== SW_stock16k_2  batch=16384 swz=0 flawide=0  00:33 ===
+    swz_line=0 batched=max_num_batched_tokens=16384
+  SW_stock16k_2 TTFT 8k: prompt_tokens=7503 median=2.47s  all=3.35 2.47 2.45
+  SW_stock16k_2 TTFT 30k: prompt_tokens=29263 median=10.84s  all=11.31 10.83 10.84
+  SW_stock16k_2 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=4.93s  ttft_a=5.02 2.47 2.48  ttft_b=2.59 4.92 4.93
+  SW_stock16k_2 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=13.33s  ttft_a=13.32 10.94 10.89  ttft_b=2.48 13.37 13.33
+=== SW_swz4k_2  batch=4096 swz=1 flawide=0  00:45 ===
+    swz_line=4 batched=max_num_batched_tokens=4096
+  SW_swz4k_2 TTFT 8k: prompt_tokens=7503 median=2.63s  all=2.77 2.63 2.62
+  SW_swz4k_2 TTFT 30k: prompt_tokens=29263 median=10.29s  all=10.28 10.29 10.30
+  SW_swz4k_2 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.29s  ttft_a=5.38 2.65 2.66  ttft_b=2.75 5.28 5.29
+  SW_swz4k_2 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.81s  ttft_a=11.41 12.95 11.41  ttft_b=12.81 2.66 12.81
+=== SW_swz16k_2  batch=16384 swz=1 flawide=0  00:57 ===
+    swz_line=4 batched=max_num_batched_tokens=16384
+  SW_swz16k_2 TTFT 8k: prompt_tokens=7503 median=2.76s  all=3.86 2.76 2.45
+  SW_swz16k_2 TTFT 30k: prompt_tokens=29263 median=9.50s  all=11.57 9.50 9.50
+  SW_swz16k_2 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.19s  ttft_a=2.53 2.47 5.19  ttft_b=4.97 5.22 2.75
+  SW_swz16k_2 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=11.98s  ttft_a=11.96 9.54 9.91  ttft_b=2.48 11.98 12.35
+=== FLA_wide4k_2  batch=4096 swz=0 flawide=1  01:09 ===
+    swz_line=0 batched=max_num_batched_tokens=4096
+  FLA_wide4k_2 TTFT 8k: prompt_tokens=7503 median=2.64s  all=2.84 2.64 2.64
+  FLA_wide4k_2 TTFT 30k: prompt_tokens=29263 median=10.29s  all=10.29 10.29 10.31
+  FLA_wide4k_2 CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.29s  ttft_a=5.41 2.66 2.66  ttft_b=2.78 5.28 5.29
+  FLA_wide4k_2 CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.76s  ttft_a=11.38 11.35 11.35  ttft_b=12.79 12.76 12.76
+reverted
+== ALL DONE ==

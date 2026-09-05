@@ -950,3 +950,29 @@
     `torch_compile_cache` (2.2 GB) was purged so the reverted-code arms (dv) cannot load the swizzle graph. stack1
     restarted 23:37 from the first arm; nothing from its first pass is quotable except the stock-16k numbers.
 
+136. **Swizzled blockwise-FP8 GEMM at the server: −12 % TTFT at 30k with 16k chunks, null at 8k, null at 4k chunks;
+    the wide FLA autotune space is null everywhere (`stack1`, two starts per arm after the finding-135 restart,
+    `notes/data/stack1.txt`; overlay venv, no spec, prefix cache off; stock-4k reference = gb10tune's TB_stock_1..3).**
+
+    | arm | 8k TTFT | 30k TTFT | 8k+8k wall | 30k+8k wall |
+    | --- | --- | --- | --- | --- |
+    | stock 4k (TB_stock, 3 starts) | 2.62–2.66 | 10.31–10.40 | 5.32–5.34 | 12.83–12.91 |
+    | swizzle 4k | 2.65 / 2.63 | 10.41 / 10.29 | 5.34 / 5.29 | 13.08 / 12.81 |
+    | FLA wide autotune 4k | 2.67 / 2.64 | 10.41 / 10.29 | 5.37 / 5.29 | 12.95 / 12.76 |
+    | stock 16k | 2.59 / 2.47 | 10.81 / 10.84 | 5.00 / 4.93 | 13.35 / 13.33 |
+    | **swizzle 16k** | 2.46 / 2.76 | **9.52 / 9.50** | 4.98 / 5.19 | **12.03 / 11.98** |
+
+    Reading. (a) At 4k chunks the swizzle never engages: the extension gates on ≥12 MiB of activation and a 4k chunk at
+    K=2560 is 10 MiB, so that arm is a stock re-run and reproduces TB_stock to the second. (b) At 16k chunks the gate
+    opens for the weights above the 24 MiB L2 — the 36 GDN `in_proj_qkv` (25 MiB) and the 12 attention `q_proj`
+    (30 MiB) — and the 30k prompt drops 10.82 → 9.51 s (−12 %, 6/6 requests within 20 ms); the 30k+8k pair drops
+    13.34 → 12.0 s (−10 %). (c) At 8k the prompt is one 7.5k chunk, where the stock kernel is only mildly degraded
+    (96 TF vs 150 standalone, finding 100), so the 3 % it should give is inside the 2.45–2.76 s start-to-start
+    noise. (d) Combined with chunk size: swizzle-16k beats the best stock configuration (stock-4k, 10.3 s) by 8 % at
+    30k and 6 % at 8k, i.e. the 16k chunk is now strictly better at every size, whereas stock-16k lost to stock-4k at
+    30k (finding on prefill-batch-size). (e) The wider Triton autotune space for the GDN chunk kernels changes
+    nothing at either size; the autotuner already sits at its optimum inside the vendored kernels, so the GDN lever is
+    the fla-core fused intra-chunk kernel (finding 77), sized by the pr12 attribution. Third start for the swizzle =
+    the profiled `stack2` run. PR #55180 server-level paragraph drafted in `notes/upstream/comment-55180-server.md`
+    (not posted).
+
