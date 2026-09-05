@@ -925,3 +925,16 @@
     correct and `persistent_topk` stays. Conclusion: no GB10 profile on the QSA path pays at the server. The stacked
     prefill levers with real weight are the swizzled blockwise GEMM with larger chunks, the GDN autotune spaces, and
     the MoE grouped GEMM (31 % of prefill at 51 TFLOPS) — `stack1` measures the first two.
+
+134. **Swizzled blockwise-FP8 GEMM inside the compiled server: the overlay must load the extension at import time and
+    expose the kernel as a registered custom op, or every swizzle arm dies at startup.** `stack1`'s first swizzle arm
+    (`SW_swz4k_1`, 22:32) failed in `determine_available_memory` with Dynamo's "Attempted to call function marked as
+    skipped": the overlay called `torch.ops.load_library` lazily inside `apply_block_scaled_mm`, i.e. inside the traced
+    forward. Two defects, both fixed in `stack_patch.py`: (a) the `.so` is now loaded at module import (the branch inside the
+    forward is a module-level constant, which is what vLLM's compile freezes anyway); (b) `_C_swz2.blockwise_sm120` is
+    registered only for CUDA (`STABLE_TORCH_LIBRARY`, no fake kernel), so it is wrapped as
+    `torch.library.custom_op("fnswz::blockwise_sm120", mutates_args=("out",))` with a `register_fake`. Verified under
+    `FakeTensorMode` before the restart. The stock-16k arm of the aborted run (22:17) measured 8k 2.47 s (2.57/2.47/2.47),
+    30k 10.91 s, pairs 8k+8k 4.99 s, 30k+8k 13.43 s — consistent with gb10tune's stock arms. stack1 restarted 22:48 from
+    the first arm. Not a finding about the kernel; the vLLM PR (#55180) integrates in C++ and has neither problem.
+
