@@ -22,6 +22,7 @@ End to end on a GB10 (DGX Spark, sm_121, TP1, nightly dev401), simultaneous pair
 
 ## Notes for reviewers
 
+- Same class as #51682 (merged 2026-08-10), which threaded `stride_state_indices` into the AMD KDA packed-decode kernel for the same `block_table_tensor[:, 0]` view; #52207 and #51680 tried `.contiguous()` coercion for it and were closed in favour of passing the stride. Those kernels rejected a strided input; the PLE kernels used the wrong slot silently, which is why this one surfaced as output corruption rather than an error.
 - The builder-side view is shared by every Mamba-style backend; `causal_conv1d_fn` and the GDN paths are stride-aware or index through torch, so only the PLE kernels were affected here. A `.contiguous()` at the builder would also hide it, at the cost of a copy per step; the kernel change is the precise fix.
 - The draft model is not involved: the corruption reproduces with the drafter's forward skipped entirely (zero drafts), with the draft indexer on the unfused path, and with the drafter's ring commit withheld.
 
