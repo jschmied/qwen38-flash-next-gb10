@@ -192,3 +192,8 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   chunks + boundary shapes to attribute the union's gain (representation vs cross-row sharing). Design and experiment in
   `notes/prefill-plan.md` (follow-up section). Candidate for the smaller upstream PR.
 
+- **[parked 2026-09-05] `nvidia/Qwen3.8-Flash-Next-NVFP4`** — same bits as RadixArk on the experts (NVFP4 g16, MSE scales),
+  BF16 dense (no FP8-dense lever), FP8 PLE/MTP byte-identical to Qwen FP8; their FP8-vs-NVFP4 table is within ±1 point on
+  nine benchmarks. Decision: ignore for now — no expected intelligence difference; only a long-generation divergence check
+  would tell, and that costs 74 GiB + a day. Revisit only on a concrete quality problem with RadixArk's experts.
+
