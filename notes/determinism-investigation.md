@@ -1421,3 +1421,17 @@ Plus whatever drives the separate generation-side path.
     loads, `state_idx_stride = state_indices.stride(0)`, maintainer-approved, CI running) — found after ours was posted. #55467 closed as
     duplicate; the GB10 evidence (no-drafter arm, row mapping, 0/20, strided decode-mode test) is on #55375. Their test covers the strided
     prefill path only; our decode-mode case stays on the branch as a follow-up offer.
+
+133. **vllm#53051 (prefill of exactly 1 + n_spec tokens misclassified as uniform decode → GDN state loss) does not
+    reproduce on the GB10 with Model Runner V2 (`bug53051`, `notes/data/bug53051*.txt/jsonl`).** MTP n=3 versus no
+    speculation, same token-id prompts via `/v1/completions`, temperature 0, 48 new tokens, two repetitions each, prompt
+    lengths 3, 4 (= 1 + n_spec), 5, 6, 8 and chunk tails 4095–4100 and 8191–8193 (max_num_batched_tokens 4096):
+    every output coherent, no degenerate text at any length, and the ≥ 4095-token prompts byte-identical between
+    repetitions and between the MTP and the no-spec server in 6 of 8 lengths. By construction: the V2 runner's
+    `get_uniform_decode_token_count` requires `has_prefill == False`, and a request is prefilling while
+    `num_computed_prefill_tokens < prefill_len` (`vllm/v1/worker/gpu/model_runner.py`), so a 4-token prompt or a
+    4-token chunk tail can never be dispatched as a uniform decode; the V1 runner's shape-only `_is_uniform_decode`
+    is the affected path, fixed by #53059. Side observation, not this bug: the 3–8-token prompts diverge between
+    repetitions at temperature 0 in *both* arms from the second token on, and 4096/4098 diverge in one arm — the
+    near-tie nondeterminism of finding 116 / #54521, visible here because a 3-token prompt has no context to break
+    ties. Draft for the thread: `notes/upstream/comment-53051-gb10-v2.md` (needs go).

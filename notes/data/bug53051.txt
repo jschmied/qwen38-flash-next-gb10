@@ -1,0 +1,71 @@
+=== MTP spec=on  17:55 ===
+    cudagraph=PIECEWISE runner=0
+  MTP N=3 rep=0: ok | ' of the City of London has a long and storied history, with the first '
+  MTP N=3 rep=1: ok | ' of a certain city has six members—F, G, H, J, K, and M. The council u'
+  MTP N=4 rep=0: ok | ' on Tuesday, 12 November 2019, and approved the 2020 budget, which inc'
+  MTP N=4 rep=1: ok | ' in a special session to discuss the proposed changes to the zoning la'
+  MTP N=5 rep=0: ok | ' Tuesday, and the mayor gave a speech.\n\nWho gave the speech?\n\n<think>\n'
+  MTP N=5 rep=1: ok | ' a Tuesday, and the mayor gave a speech.\n\nDoes it follow that "The cit'
+  MTP N=6 rep=0: ok | ' to discuss the proposed budget for the upcoming fiscal year. The mayo'
+  MTP N=6 rep=1: ok | ', 25th June 2019, at 7: 30 pm in the Council Chamber, Civic Centre, Fr'
+  MTP N=8 rep=0: ok | ' the proposed budget.\nThe city council will meet on Tuesday to discuss'
+  MTP N=8 rep=1: ok | ' the proposed budget for the fiscal year 2023-2024. The budget proposa'
+  MTP N=4095 rep=0: ok | ' to discuss the new bridge. Engineers presented three designs, each wi'
+  MTP N=4095 rep=1: ok | ' to discuss the new bridge. Engineers presented three designs, each wi'
+  MTP N=4096 rep=0: ok | ' discuss the new bridge. Engineers presented three designs, each with '
+  MTP N=4096 rep=1: ok | ' discuss the new bridge. Engineers presented three designs, each with '
+  MTP N=4097 rep=0: ok | ' the new bridge. Engineers presented three designs, each with differen'
+  MTP N=4097 rep=1: ok | ' the new bridge. Engineers presented three designs, each with differen'
+  MTP N=4098 rep=0: ok | ' new bridge. Engineers presented three designs, each with different co'
+  MTP N=4098 rep=1: ok | ' new bridge. Engineers presented three designs, each with different co'
+  MTP N=4100 rep=0: ok | '. Engineers presented three designs, each with different costs and tim'
+  MTP N=4100 rep=1: ok | '. Engineers presented three designs, each with different costs and tim'
+  MTP N=8191 rep=0: ok | ' presented three designs, each with different costs and timelines. Res'
+  MTP N=8191 rep=1: ok | ' presented three designs, each with different costs and timelines. Res'
+  MTP N=8192 rep=0: ok | ' three designs, each with different costs and timelines. Residents ask'
+  MTP N=8192 rep=1: ok | ' three designs, each with different costs and timelines. Residents ask'
+  MTP N=8193 rep=0: ok | ' designs, each with different costs and timelines. Residents asked abo'
+  MTP N=8193 rep=1: ok | ' designs, each with different costs and timelines. Residents asked abo'
+=== NOSPEC spec=off  18:09 ===
+    cudagraph=PIECEWISE runner=0
+  NOSPEC N=3 rep=0: ok | ' has decided to limit the amount of water that can be used per day by '
+  NOSPEC N=3 rep=1: ok | ' of the city of Monroe has decided to build a new library. The library'
+  NOSPEC N=4 rep=0: ok | ' on Tuesday, and the mayor announced that the new park would be comple'
+  NOSPEC N=4 rep=1: ok | ' to discuss the proposed ordinance.\n\nWhat is the cause of the sentence'
+  NOSPEC N=5 rep=0: ok | ' Tuesday to discuss the proposed budget for the fiscal year 2024. The '
+  NOSPEC N=5 rep=1: ok | ' Tuesday to discuss the proposed budget for the next fiscal year. The '
+  NOSPEC N=6 rep=0: ok | ' to discuss the proposed budget cuts.\n\nA.\n\nThe city council met on Tue'
+  NOSPEC N=6 rep=1: ok | ' to discuss the proposed budget.\nThe city council met on Tuesday to di'
+  NOSPEC N=8 rep=0: ok | ' the proposed budget for the fiscal year 2023. The budget proposal inc'
+  NOSPEC N=8 rep=1: ok | ' the proposed budget for the next fiscal year. The mayor presented a p'
+  NOSPEC N=4095 rep=0: ok | ' to discuss the new bridge. Engineers presented three designs, each wi'
+  NOSPEC N=4095 rep=1: ok | ' to discuss the new bridge. Engineers presented three designs, each wi'
+  NOSPEC N=4096 rep=0: ok | ' discuss the new bridge. Engineers presented three designs, each with '
+  NOSPEC N=4096 rep=1: ok | ' discuss the new bridge. Engineers presented three designs, each with '
+  NOSPEC N=4097 rep=0: ok | ' the new bridge. Engineers presented three designs, each with differen'
+  NOSPEC N=4097 rep=1: ok | ' the new bridge. Engineers presented three designs, each with differen'
+  NOSPEC N=4098 rep=0: ok | ' new bridge. Engineers presented three designs, each with different co'
+  NOSPEC N=4098 rep=1: ok | ' new bridge. Engineers presented three designs, each with different co'
+  NOSPEC N=4100 rep=0: ok | '. Engineers presented three designs, each with different costs and tim'
+  NOSPEC N=4100 rep=1: ok | '. Engineers presented three designs, each with different costs and tim'
+  NOSPEC N=8191 rep=0: ok | ' presented three designs, each with different costs and timelines. Res'
+  NOSPEC N=8191 rep=1: ok | ' presented three designs, each with different costs and timelines. Res'
+  NOSPEC N=8192 rep=0: ok | ' three designs, each with different costs and timelines. Residents ask'
+  NOSPEC N=8192 rep=1: ok | ' three designs, each with different costs and timelines. Residents ask'
+  NOSPEC N=8193 rep=0: ok | ' designs, each with different costs and timelines. Residents asked abo'
+  NOSPEC N=8193 rep=1: ok | ' designs, each with different costs and timelines. Residents asked abo'
+--- SUMMARY: N | MTP rep0==rep1 | NOSPEC rep0==rep1 | MTP==NOSPEC (rep0) | garbage(MTP)
+  N=    3 | False | False | False | [False, False]
+  N=    4 | False | False | False | [False, False]
+  N=    5 | False | False | False | [False, False]
+  N=    6 | False | False | False | [False, False]
+  N=    8 | False | False | False | [False, False]
+  N= 4095 | True | True | True | [False, False]
+  N= 4096 | True | False | False | [False, False]
+  N= 4097 | True | True | True | [False, False]
+  N= 4098 | False | False | False | [False, False]
+  N= 4100 | True | True | True | [False, False]
+  N= 8191 | True | True | True | [False, False]
+  N= 8192 | True | True | True | [False, False]
+  N= 8193 | True | True | True | [False, False]
+== ALL DONE ==
