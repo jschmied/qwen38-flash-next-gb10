@@ -1,0 +1,37 @@
+=== B1_mtp1  venv=fnmain(dev352) MTP n=1 extra='' share=true  13:01 ===
+    spec=num_spec_tokens=1  eager=0 share=index_share_for_mtp_iteration': True
+  B1_mtp1 CELL c=2 rep=0:   40.8 tok/s | drafts=137 draft_tok=137 accepted=118 rate=86.1% mean_len=1.86 preempt=0 | per-req: 6.3s 6.1s | prompt=548
+  B1_mtp1 CELL c=2 rep=1:   52.7 tok/s | drafts=137 draft_tok=137 accepted=118 rate=86.1% mean_len=1.86 preempt=0 | per-req: 4.8s 4.9s | prompt=548
+  B1_mtp1 CELL c=2 rep=2:   51.5 tok/s | drafts=139 draft_tok=139 accepted=116 rate=83.5% mean_len=1.83 preempt=0 | per-req: 4.8s 5.0s | prompt=548
+  B1_mtp1 CELL c=2 rep=3:   52.1 tok/s | drafts=140 draft_tok=140 accepted=114 rate=81.4% mean_len=1.81 preempt=0 | per-req: 4.9s 4.9s | prompt=548
+  B1_mtp1 CELL c=2 rep=4:   32.0 tok/s | drafts=190 draft_tok=190 accepted=65 rate=34.2% mean_len=1.34 preempt=0 | per-req: 8.0s 5.1s | prompt=548 <<< COLLAPSE
+  B1_mtp1 CELL c=2 rep=5:   53.0 tok/s | drafts=136 draft_tok=136 accepted=119 rate=87.5% mean_len=1.88 preempt=0 | per-req: 4.8s 4.8s | prompt=548
+  B1_mtp1 CELL c=2 rep=6:   34.8 tok/s | drafts=188 draft_tok=188 accepted=67 rate=35.6% mean_len=1.36 preempt=0 | per-req: 7.4s 4.8s | prompt=548 <<< COLLAPSE
+  B1_mtp1 CELL c=2 rep=7:   51.7 tok/s | drafts=140 draft_tok=140 accepted=115 rate=82.1% mean_len=1.82 preempt=0 | per-req: 5.0s 4.7s | prompt=548
+  B1_mtp1 CELL c=2 rep=8:   52.5 tok/s | drafts=138 draft_tok=138 accepted=117 rate=84.8% mean_len=1.85 preempt=0 | per-req: 4.8s 4.9s | prompt=548
+  B1_mtp1 CELL c=2 rep=9:   52.8 tok/s | drafts=137 draft_tok=137 accepted=119 rate=86.9% mean_len=1.87 preempt=0 | per-req: 4.8s 4.8s | prompt=548
+=== B2_eager  venv=fnmain(dev352) MTP n=3 extra='--enforce-eager' share=true  13:17 ===
+    spec=num_spec_tokens=3  eager=1 share=index_share_for_mtp_iteration': True
+  B2_eager CELL c=2 rep=0:   41.3 tok/s | drafts=84 draft_tok=252 accepted=171 rate=67.9% mean_len=3.04 preempt=0 | per-req: 6.2s 5.7s | prompt=547
+  B2_eager CELL c=2 rep=1:   49.6 tok/s | drafts=79 draft_tok=237 accepted=177 rate=74.7% mean_len=3.24 preempt=0 | per-req: 4.9s 5.2s | prompt=547
+  B2_eager CELL c=2 rep=2:   24.0 tok/s | drafts=158 draft_tok=474 accepted=96 rate=20.3% mean_len=1.61 preempt=0 | per-req: 10.7s 5.2s | prompt=547 <<< COLLAPSE
+  B2_eager CELL c=2 rep=3:   59.2 tok/s | drafts=83 draft_tok=249 accepted=172 rate=69.1% mean_len=3.07 preempt=0 | per-req: 4.3s 4.1s | prompt=547
+  B2_eager CELL c=2 rep=4:   25.8 tok/s | drafts=158 draft_tok=474 accepted=97 rate=20.5% mean_len=1.61 preempt=0 | per-req: 9.9s 4.3s | prompt=547 <<< COLLAPSE
+  B2_eager CELL c=2 rep=5:   58.1 tok/s | drafts=83 draft_tok=249 accepted=175 rate=70.3% mean_len=3.11 preempt=0 | per-req: 4.4s 4.2s | prompt=547
+  B2_eager CELL c=2 rep=6:   60.1 tok/s | drafts=81 draft_tok=243 accepted=178 rate=73.3% mean_len=3.20 preempt=0 | per-req: 4.3s 4.0s | prompt=547
+  B2_eager CELL c=2 rep=7:   56.2 tok/s | drafts=87 draft_tok=261 accepted=168 rate=64.4% mean_len=2.93 preempt=0 | per-req: 4.3s 4.6s | prompt=547
+  B2_eager CELL c=2 rep=8:   25.5 tok/s | drafts=160 draft_tok=480 accepted=97 rate=20.2% mean_len=1.61 preempt=0 | per-req: 10.0s 4.4s | prompt=547 <<< COLLAPSE
+  B2_eager CELL c=2 rep=9:   59.2 tok/s | drafts=82 draft_tok=246 accepted=176 rate=71.5% mean_len=3.15 preempt=0 | per-req: 4.3s 4.2s | prompt=547
+=== B3_noshare  venv=fnmain(dev352) MTP n=3 extra='' share=false  13:31 ===
+    spec=num_spec_tokens=3  eager=0 share=index_share_for_mtp_iteration': False
+  B3_noshare CELL c=2 rep=0:   59.4 tok/s | drafts=80 draft_tok=240 accepted=174 rate=72.5% mean_len=3.17 preempt=0 | per-req: 4.2s 4.3s | prompt=548
+  B3_noshare CELL c=2 rep=1:   27.7 tok/s | drafts=161 draft_tok=483 accepted=93 rate=19.3% mean_len=1.58 preempt=0 | per-req: 4.1s 9.3s | prompt=548 <<< COLLAPSE
+  B3_noshare CELL c=2 rep=2:   57.9 tok/s | drafts=86 draft_tok=258 accepted=171 rate=66.3% mean_len=2.99 preempt=0 | per-req: 4.1s 4.4s | prompt=548
+  B3_noshare CELL c=2 rep=3:   60.5 tok/s | drafts=85 draft_tok=255 accepted=171 rate=67.1% mean_len=3.01 preempt=0 | per-req: 4.2s 4.2s | prompt=548
+  B3_noshare CELL c=2 rep=4:   27.8 tok/s | drafts=161 draft_tok=483 accepted=95 rate=19.7% mean_len=1.59 preempt=0 | per-req: 9.2s 4.2s | prompt=548 <<< COLLAPSE
+  B3_noshare CELL c=2 rep=5:   58.5 tok/s | drafts=87 draft_tok=261 accepted=170 rate=65.1% mean_len=2.95 preempt=0 | per-req: 4.3s 4.4s | prompt=548
+  B3_noshare CELL c=2 rep=6:   59.3 tok/s | drafts=84 draft_tok=252 accepted=172 rate=68.3% mean_len=3.05 preempt=0 | per-req: 4.1s 4.3s | prompt=548
+  B3_noshare CELL c=2 rep=7:   27.8 tok/s | drafts=163 draft_tok=489 accepted=92 rate=18.8% mean_len=1.56 preempt=0 | per-req: 4.4s 9.2s | prompt=548 <<< COLLAPSE
+  B3_noshare CELL c=2 rep=8:   59.4 tok/s | drafts=85 draft_tok=255 accepted=171 rate=67.1% mean_len=3.01 preempt=0 | per-req: 4.2s 4.3s | prompt=548
+  B3_noshare CELL c=2 rep=9:   59.7 tok/s | drafts=83 draft_tok=249 accepted=174 rate=69.9% mean_len=3.10 preempt=0 | per-req: 4.1s 4.3s | prompt=548
+== ALL DONE ==

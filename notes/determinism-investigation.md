@@ -1348,3 +1348,26 @@ Plus whatever drives the separate generation-side path.
     exactly that.** Mitigation until fixed: serve without MTP, or serialise prefills. Bisect running
     (`acceptcell4/5`): equal vs unequal prompt lengths, MTP n=1, `--enforce-eager`, `index_share_for_mtp_iteration`
     off → finding 128.
+
+128. **Bisect of the multi-prefill MTP corruption (`acceptcell4/5`, `notes/data/acceptcell4.txt`, `acceptcell5.txt`): none of
+    prompt length, draft depth, CUDA graphs or the shared step-0 selection matters — the drafter's prefill step over
+    two prompts is sufficient.** Production venv (dev352), simultaneous pairs, 128 tokens, temperature 0:
+
+    | arm | corrupted |
+    |---|---|
+    | equal length (543/543), one token apart (544/545), 34 apart (545/511), 100 apart (545/443), equal again | 3/8, 2/8, 3/8, 4/8, 3/8 |
+    | MTP **n=1** (no multi-step draft decode) | 2/10 |
+    | MTP n=3, `--enforce-eager` | 3/10 |
+    | MTP n=3, `index_share_for_mtp_iteration=false` | 3/10 |
+    | control, MTP n=3 (127) | 5/10 |
+
+    Reading: the draft's prefill over a multi-request batch, reusing the target's attention metadata and slot mappings
+    (`AutoRegressiveSpeculator._prefill`), corrupts the state of all but one of those requests; the decode steps, the
+    graph mode and the top-k reuse are innocent. A second opinion (2026-09-05) sharpened the next cut: not "skip every
+    store" but (a) force the draft indexer onto the unfused reference path, and (b) withhold only the raw 8-row ring
+    and its RoPE tail during the drafter's prefill (compressed keys, top-k and attention untouched), through the
+    prefill lifecycle hooks; the fused pre-indexer commits the ring inside `qsa_pre_indexer.py`, so a patch on the
+    visible `qsa_store_cache_rows` calls would have gated nothing. Both arms are queued (`acceptcell7`), behind a
+    batch-composition log run (`acceptcell6`). Candidate mechanism per that review: slot/metadata ownership of the
+    second request in the reused metadata; the store kernels themselves carry no request notion and can only execute
+    a wrong slot mapping faithfully.
