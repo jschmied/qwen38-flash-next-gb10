@@ -1,0 +1,97 @@
+=== P1_prod_mtp  venv=fnmain(dev352) spec=on  12:11 ===
+    spec=speculative_config=SpeculativeConfig  version=v0.28.1rc1.dev352+gbb363db9a
+  P1_prod_mtp CELL c=2 rep=0:   46.2 tok/s | drafts=84 draft_tok=252 accepted=171 rate=67.9% mean_len=3.04 preempt=0 | per-req: 5.5s 5.5s | prompt=548
+  P1_prod_mtp CELL c=2 rep=1:   26.7 tok/s | drafts=160 draft_tok=480 accepted=96 rate=20.0% mean_len=1.60 preempt=0 | per-req: 4.6s 9.6s | prompt=548 <<< COLLAPSE
+  P1_prod_mtp CELL c=2 rep=2:   28.5 tok/s | drafts=159 draft_tok=477 accepted=95 rate=19.9% mean_len=1.60 preempt=0 | per-req: 4.3s 9.0s | prompt=548 <<< COLLAPSE
+  P1_prod_mtp CELL c=2 rep=3:   57.0 tok/s | drafts=88 draft_tok=264 accepted=167 rate=63.3% mean_len=2.90 preempt=0 | per-req: 4.5s 4.2s | prompt=548
+  P1_prod_mtp CELL c=2 rep=4:   27.7 tok/s | drafts=161 draft_tok=483 accepted=93 rate=19.3% mean_len=1.58 preempt=0 | per-req: 9.2s 4.2s | prompt=548 <<< COLLAPSE
+  P1_prod_mtp CELL c=2 rep=5:   62.1 tok/s | drafts=82 draft_tok=246 accepted=173 rate=70.3% mean_len=3.11 preempt=0 | per-req: 4.1s 4.1s | prompt=548
+  P1_prod_mtp CELL c=2 rep=6:   28.4 tok/s | drafts=159 draft_tok=477 accepted=98 rate=20.5% mean_len=1.62 preempt=0 | per-req: 9.0s 4.4s | prompt=548 <<< COLLAPSE
+  P1_prod_mtp CELL c=2 rep=7:   60.5 tok/s | drafts=85 draft_tok=255 accepted=172 rate=67.5% mean_len=3.02 preempt=0 | per-req: 4.2s 4.2s | prompt=548
+  P1_prod_mtp CELL c=2 rep=8:   61.1 tok/s | drafts=83 draft_tok=249 accepted=171 rate=68.7% mean_len=3.06 preempt=0 | per-req: 4.1s 4.2s | prompt=548
+  P1_prod_mtp CELL c=2 rep=9:   28.9 tok/s | drafts=156 draft_tok=468 accepted=99 rate=21.2% mean_len=1.63 preempt=0 | per-req: 4.3s 8.9s | prompt=548 <<< COLLAPSE
+  P1_prod_mtp CELL c=3 rep=0:   73.5 tok/s | drafts=133 draft_tok=399 accepted=252 rate=63.2% mean_len=2.89 preempt=0 | per-req: 4.9s 5.2s 5.0s | prompt=548
+  P1_prod_mtp CELL c=3 rep=1:   75.5 tok/s | drafts=132 draft_tok=396 accepted=252 rate=63.6% mean_len=2.91 preempt=0 | per-req: 5.1s 5.0s 4.6s | prompt=548
+  P1_prod_mtp CELL c=3 rep=2:   34.5 tok/s | drafts=282 draft_tok=846 accepted=100 rate=11.8% mean_len=1.35 preempt=0 | per-req: 4.9s 11.1s 11.1s | prompt=548 <<< COLLAPSE
+  P1_prod_mtp CELL c=3 rep=3:   78.1 tok/s | drafts=125 draft_tok=375 accepted=259 rate=69.1% mean_len=3.07 preempt=0 | per-req: 4.7s 4.9s 4.9s | prompt=548
+  P1_prod_mtp CELL c=3 rep=4:   34.8 tok/s | drafts=279 draft_tok=837 accepted=103 rate=12.3% mean_len=1.37 preempt=0 | per-req: 10.9s 5.0s 11.0s | prompt=548 <<< COLLAPSE
+  P1_prod_mtp CELL c=3 rep=5:   75.4 tok/s | drafts=124 draft_tok=372 accepted=263 rate=70.7% mean_len=3.12 preempt=0 | per-req: 4.6s 5.0s 5.1s | prompt=548
+  P1_prod_mtp PAIR delay=0.00s rep=0: A 4.0s ok | B 4.2s ok | rate=71.5%
+  P1_prod_mtp PAIR delay=0.00s rep=1: A 4.3s ok | B 9.3s GARBAGE | rate=18.5%
+  P1_prod_mtp PAIR delay=0.00s rep=2: A 4.2s ok | B 4.3s ok | rate=64.4%
+  P1_prod_mtp PAIR delay=0.00s rep=3: A 9.1s GARBAGE | B 4.3s ok | rate=20.5%
+  P1_prod_mtp PAIR delay=0.00s rep=4: A 4.1s ok | B 4.2s ok | rate=70.7%
+  P1_prod_mtp PAIR delay=0.00s rep=5: A 4.2s ok | B 9.0s GARBAGE | rate=20.5%
+  P1_prod_mtp PAIR delay=0.15s rep=0: A 4.2s ok | B 4.1s ok | rate=67.1%
+  P1_prod_mtp PAIR delay=0.15s rep=1: A 4.2s ok | B 4.3s ok | rate=65.5%
+  P1_prod_mtp PAIR delay=0.15s rep=2: A 4.4s ok | B 4.2s ok | rate=64.0%
+  P1_prod_mtp PAIR delay=0.15s rep=3: A 4.0s ok | B 4.2s ok | rate=69.9%
+  P1_prod_mtp PAIR delay=0.15s rep=4: A 4.1s ok | B 4.1s ok | rate=69.9%
+  P1_prod_mtp PAIR delay=0.15s rep=5: A 4.3s ok | B 4.0s ok | rate=67.9%
+  P1_prod_mtp PAIR delay=0.40s rep=0: A 4.3s ok | B 3.9s ok | rate=66.3%
+  P1_prod_mtp PAIR delay=0.40s rep=1: A 4.4s ok | B 3.9s ok | rate=67.1%
+  P1_prod_mtp PAIR delay=0.40s rep=2: A 4.4s ok | B 4.3s ok | rate=61.5%
+  P1_prod_mtp PAIR delay=0.40s rep=3: A 4.2s ok | B 3.9s ok | rate=69.5%
+  P1_prod_mtp PAIR delay=0.40s rep=4: A 4.2s ok | B 3.9s ok | rate=68.7%
+  P1_prod_mtp PAIR delay=0.40s rep=5: A 4.1s ok | B 4.0s ok | rate=67.5%
+  P1_prod_mtp PAIR delay=1.00s rep=0: A 4.3s ok | B 4.1s ok | rate=61.5%
+  P1_prod_mtp PAIR delay=1.00s rep=1: A 4.2s ok | B 3.9s ok | rate=69.0%
+  P1_prod_mtp PAIR delay=1.00s rep=2: A 4.1s ok | B 4.1s ok | rate=64.4%
+  P1_prod_mtp PAIR delay=1.00s rep=3: A 4.1s ok | B 3.8s ok | rate=69.9%
+  P1_prod_mtp PAIR delay=1.00s rep=4: A 4.4s ok | B 4.2s ok | rate=64.0%
+  P1_prod_mtp PAIR delay=1.00s rep=5: A 4.4s ok | B 3.9s ok | rate=71.1%
+  P1_prod_mtp PAIR delay=3.00s rep=0: A 3.8s ok | B 3.6s ok | rate=64.0%
+  P1_prod_mtp PAIR delay=3.00s rep=1: A 3.5s ok | B 3.5s ok | rate=65.5%
+  P1_prod_mtp PAIR delay=3.00s rep=2: A 3.7s ok | B 3.2s ok | rate=69.1%
+  P1_prod_mtp PAIR delay=3.00s rep=3: A 4.0s ok | B 3.3s ok | rate=62.9%
+  P1_prod_mtp PAIR delay=3.00s rep=4: A 3.1s ok | B 3.0s ok | rate=75.2%
+  P1_prod_mtp PAIR delay=3.00s rep=5: A 3.7s ok | B 3.4s ok | rate=65.1%
+=== P2_prod_nospec  venv=fnmain(dev352) spec=off  12:29 ===
+    spec=speculative_config=None  version=v0.28.1rc1.dev352+gbb363db9a
+  P2_prod_nospec CELL c=2 rep=0:   33.7 tok/s | no spec counters | per-req: 7.5s 7.6s | prompt=549
+  P2_prod_nospec CELL c=2 rep=1:   40.7 tok/s | no spec counters | per-req: 6.3s 6.2s | prompt=549
+  P2_prod_nospec CELL c=2 rep=2:   41.6 tok/s | no spec counters | per-req: 6.1s 6.1s | prompt=549
+  P2_prod_nospec CELL c=2 rep=3:   40.8 tok/s | no spec counters | per-req: 6.3s 6.2s | prompt=549
+  P2_prod_nospec CELL c=2 rep=4:   40.7 tok/s | no spec counters | per-req: 6.3s 6.2s | prompt=549
+  P2_prod_nospec CELL c=2 rep=5:   39.3 tok/s | no spec counters | per-req: 6.5s 6.4s | prompt=549
+  P2_prod_nospec CELL c=2 rep=6:   39.3 tok/s | no spec counters | per-req: 6.5s 6.5s | prompt=549
+  P2_prod_nospec CELL c=2 rep=7:   38.9 tok/s | no spec counters | per-req: 6.5s 6.6s | prompt=549
+  P2_prod_nospec CELL c=2 rep=8:   40.3 tok/s | no spec counters | per-req: 6.3s 6.3s | prompt=549
+  P2_prod_nospec CELL c=2 rep=9:   40.6 tok/s | no spec counters | per-req: 6.2s 6.3s | prompt=549
+  P2_prod_nospec CELL c=3 rep=0:   53.5 tok/s | no spec counters | per-req: 7.2s 7.2s 7.1s | prompt=549
+  P2_prod_nospec CELL c=3 rep=1:   52.6 tok/s | no spec counters | per-req: 7.2s 7.3s 7.3s | prompt=549
+  P2_prod_nospec CELL c=3 rep=2:   54.8 tok/s | no spec counters | per-req: 7.0s 7.0s 6.9s | prompt=549
+  P2_prod_nospec CELL c=3 rep=3:   55.9 tok/s | no spec counters | per-req: 6.8s 6.9s 6.9s | prompt=549
+  P2_prod_nospec CELL c=3 rep=4:   54.1 tok/s | no spec counters | per-req: 7.0s 7.1s 7.1s | prompt=549
+  P2_prod_nospec CELL c=3 rep=5:   54.2 tok/s | no spec counters | per-req: 7.0s 7.1s 7.1s | prompt=549
+  P2_prod_nospec PAIR delay=0.00s rep=0: A 6.3s ok | B 6.4s ok | no-spec
+  P2_prod_nospec PAIR delay=0.00s rep=1: A 6.5s ok | B 6.5s ok | no-spec
+  P2_prod_nospec PAIR delay=0.00s rep=2: A 6.5s ok | B 6.4s ok | no-spec
+  P2_prod_nospec PAIR delay=0.00s rep=3: A 6.4s ok | B 6.5s ok | no-spec
+  P2_prod_nospec PAIR delay=0.00s rep=4: A 6.4s ok | B 6.5s ok | no-spec
+  P2_prod_nospec PAIR delay=0.00s rep=5: A 6.4s ok | B 6.5s ok | no-spec
+  P2_prod_nospec PAIR delay=0.15s rep=0: A 6.4s ok | B 6.4s ok | no-spec
+  P2_prod_nospec PAIR delay=0.15s rep=1: A 6.5s ok | B 6.4s ok | no-spec
+  P2_prod_nospec PAIR delay=0.15s rep=2: A 6.3s ok | B 6.2s ok | no-spec
+  P2_prod_nospec PAIR delay=0.15s rep=3: A 6.3s ok | B 6.3s ok | no-spec
+  P2_prod_nospec PAIR delay=0.15s rep=4: A 6.2s ok | B 6.1s ok | no-spec
+  P2_prod_nospec PAIR delay=0.15s rep=5: A 6.3s ok | B 6.3s ok | no-spec
+  P2_prod_nospec PAIR delay=0.40s rep=0: A 6.4s ok | B 6.2s ok | no-spec
+  P2_prod_nospec PAIR delay=0.40s rep=1: A 6.3s ok | B 6.0s ok | no-spec
+  P2_prod_nospec PAIR delay=0.40s rep=2: A 6.3s ok | B 6.1s ok | no-spec
+  P2_prod_nospec PAIR delay=0.40s rep=3: A 6.3s ok | B 6.1s ok | no-spec
+  P2_prod_nospec PAIR delay=0.40s rep=4: A 6.4s ok | B 6.2s ok | no-spec
+  P2_prod_nospec PAIR delay=0.40s rep=5: A 6.3s ok | B 6.1s ok | no-spec
+  P2_prod_nospec PAIR delay=1.00s rep=0: A 6.3s ok | B 6.0s ok | no-spec
+  P2_prod_nospec PAIR delay=1.00s rep=1: A 6.2s ok | B 6.0s ok | no-spec
+  P2_prod_nospec PAIR delay=1.00s rep=2: A 6.4s ok | B 6.1s ok | no-spec
+  P2_prod_nospec PAIR delay=1.00s rep=3: A 6.2s ok | B 5.9s ok | no-spec
+  P2_prod_nospec PAIR delay=1.00s rep=4: A 6.2s ok | B 5.9s ok | no-spec
+  P2_prod_nospec PAIR delay=1.00s rep=5: A 6.2s ok | B 6.0s ok | no-spec
+  P2_prod_nospec PAIR delay=3.00s rep=0: A 6.3s ok | B 6.0s ok | no-spec
+  P2_prod_nospec PAIR delay=3.00s rep=1: A 6.2s ok | B 6.0s ok | no-spec
+  P2_prod_nospec PAIR delay=3.00s rep=2: A 6.3s ok | B 6.1s ok | no-spec
+  P2_prod_nospec PAIR delay=3.00s rep=3: A 6.3s ok | B 5.7s ok | no-spec
+  P2_prod_nospec PAIR delay=3.00s rep=4: A 5.9s ok | B 5.6s ok | no-spec
+  P2_prod_nospec PAIR delay=3.00s rep=5: A 5.9s ok | B 5.9s ok | no-spec
+== ALL DONE ==

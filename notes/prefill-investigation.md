@@ -898,5 +898,5 @@
     model: the MTP layer carries a PLE short-conv state with a spec-step rollback and a reused step-0 QSA selection
     (`compact_topk_indices`), either of which can go stale for a request without touching the target. Same family as
     DJLougen's batch-geometry acceptance collapse. Per-request attribution (latency, full text, preemption counter)
-    over 10 repetitions at c = 1, 2, 3, 4, 5, 8 on three configs is running as `acceptcell2` → next finding. Until
+    over 10 repetitions at c = 1, 2, 3, 4, 5, 8 is in **finding 127 (determinism-investigation.md): it is the target output that is corrupted, for all but one of the requests prefilled in the same step; MTP-specific, production build affected.** Until
     then, **no MTP c ≥ 4 number is quotable** and the union/table decision rests on TTFT and the no-spec decode cells.

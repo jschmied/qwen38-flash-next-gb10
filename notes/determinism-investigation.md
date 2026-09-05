@@ -1314,3 +1314,37 @@ Plus whatever drives the separate generation-side path.
     all three shapes; per-channel FP8 identical; BF16 cuBLAS differs from M = 2 on (0.25–2.0 unscaled). Finding 112's
     table is replaced by this one; the withdrawn row is confirmed an artifact on sm_121 as on sm_120.
 
+
+127. **MTP corrupts the output of every request but one when two or more prompts are prefilled in the same step — the
+    production build, prefix cache on or off, temperature 0; clean without speculation and clean whenever the prompts
+    arrive 150 ms apart (`acceptcell2/3`, `notes/data/acceptcell2*.{txt,jsonl}`, `acceptcell3*`).** This is what
+    finding 126 called a "drafter collapse": the corrupted request's own text is garbage from its second token on
+    (`"Basedsumsumsumsum…"`, mixed-script noise; the first token is the right one), so the target's state is wrong,
+    and the 9 % draft acceptance is the consequence. Probe: c concurrent chat requests, identical 549-token prompt up
+    to a salt, 128 new tokens, `temperature 0`, `ignore_eos`; a request is "corrupted" if its text repeats `sum`,
+    is > 5 % non-ASCII, or has < 40 % distinct words (the flag agreed with the acceptance flag on all 60 cells).
+
+    | build | config | cells with ≥ 1 corrupted request | corrupted per collapsed cell |
+    |---|---|---|---|
+    | dev401 + our overlay (union disabled), MTP n=3, cache on | c = 1 / 2 / 3 / 4 / 5 / 8, 10 cells each | 0/10, 3/10, 4/10, 4/10, 4/10, 5/10 | 1 / 2 / 3 / 3 / 3 (never all) |
+    | dev401, MTP n=3, GB10 table, cache on (126) | c=4 ×3 | 1/3 | 3 |
+    | dev401, MTP n=3, cache **off** (126) | c=4 ×3 | 1/3 | 3 |
+    | **production dev352, no overlay, MTP n=3, cache on** | c=2 ×10, c=3 ×6 | **5/10, 2/6** | 1, 2 |
+    | production dev352, MTP n=3, staggered pairs | delay 0 / 0.15 / 0.4 / 1.0 / 3.0 s, 6 each | **3/6, 0/6, 0/6, 0/6, 0/6** | 1 |
+    | production dev352, **no speculation** | c=2 ×10, c=3 ×6, pairs at all five delays | **0/46** | — |
+
+    Reading: (1) the trigger is a scheduler step that prefills two or more requests; with speculation off the same
+    batches are clean, and with 150 ms between arrivals (the second prompt joins as a prefill next to the first
+    request's decode) they are clean too. Which request survives varies (A or B); the number corrupted per cell is
+    c−1 up to three and then stays at three at c = 5 and 8, where the KV budget lets five requests run and the
+    late ones join singly. (2) Not our code: the production venv (dev352, no overlay) shows it at the same rate.
+    Not the prefix cache, not the split-K table, not preemption (counter 0), nothing in the log. Not prompt-length
+    padding: every prompt is 549 tokens. (3) The nightly's c=16 cells were healthy because the old probe started
+    threads sequentially, so the first prefill ran alone — a probe artifact that hid the defect all week. (4) Same
+    disease as vllm#55357 (tgmerritt, 2× RTX PRO 6000, NVFP4 checkpoint, MTP n=3: episodic 0 % acceptance with
+    degenerate output for the life of a request, hours long); they lack a reproducer and suspect the prefix cache —
+    our cache-off run rules that out. **Impact: every MTP-on serve on this box, including the production
+    configuration, garbles requests whose prefill shares a step; agent clients that fire parallel tool calls hit
+    exactly that.** Mitigation until fixed: serve without MTP, or serialise prefills. Bisect running
+    (`acceptcell4/5`): equal vs unequal prompt lengths, MTP n=1, `--enforce-eager`, `index_share_for_mtp_iteration`
+    off → finding 128.
