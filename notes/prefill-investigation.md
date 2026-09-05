@@ -761,3 +761,27 @@
     2.24× was measured against the DRAM-bound stock, and an 8k prompt's K/V (~25 MiB) straddles the L2 in the server.
     The in-situ profile (`tuprof`) settles what the union kernel and the stock kernel actually cost per call there.
 
+121. **In situ, the tile-union kernel is 1.45× the split-K kernel, not the replay's 2.7×; the integration loses
+    nothing (`tuprof`, `notes/data/tuprof.txt`; traces in `/opt/llm/runners/results/traces/`;
+    `tools/prof_summary.py`, `tools/prof_border.py`).** One 7,507-token request per arm under the torch profiler,
+    same branch, union auto vs 0, batch 4096 (two chunks: 4,096 + 3,411 rows), 12 QSA layers = 24 calls:
+
+    | | union on | off |
+    | --- | --- | --- |
+    | attention kernel, 24 calls | 182.3 ms (7.6 ms/call; 6.4–7.1 first chunk, 8.3–9.2 second) | 265.1 ms (11.0 ms/call) |
+    | glue kernels between top-k and attention | 10.4 ms (sort 3.8, layout ops 2.0, pack 1.35, build 1.23; + KV write 2.0 in both) | 6.3 ms (expand 4.2) |
+    | GPU idle inside that window | 3.6 ms (1.9 %, 0.15 ms/call) | 0.2 ms |
+    | gap before the attention kernel | 3 µs | 3 µs |
+    | QSA-related kernels, share of GPU time | 7.4 % of 2.55 s | 10.5 % of 2.59 s |
+    | TTFT of the profiled request | 2.64 s | 2.69 s |
+
+    Arithmetic: −83 ms of attention kernel, +4 ms of glue, +3 ms of idle = −76 ms ≈ 2.9 % — exactly the e2e gain of
+    findings 117/118. **Where the replay's 2.7× went:** the split-K kernel runs the same chunk in 11.0 ms in the
+    server vs 14.6 ms in the DRAM-bound replay (an 8k prompt's ~25 MiB of K/V straddles the 24 MiB L2, so its
+    gathers are cheaper than with an 18-page cache), while the union kernel takes 7.6 ms vs 5.4 ms in the replay
+    (it does not benefit from L2 the same way, and the second chunk's union is wider). Both replays were honest
+    measurements of the wrong cache state. The host side is not a factor: 0.15 ms idle per call, 3 µs launch gap.
+    Consequence for the RFC: the union's real edge on this box is ~1.45× on a kernel that is 10 % of prefill — the
+    ~3 % end to end is the ceiling of this design here, not an integration loss. A three-way (stock / GB10-tuned /
+    union) under both cache states follows (`threeway`), then the server A/B of the tuned table (`tuchoice`).
+

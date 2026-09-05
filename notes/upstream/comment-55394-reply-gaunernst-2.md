@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. Reply on RFC #55394 to gau-nernst (2026-09-05 06:44). Fill the [OFF] numbers from `tuprof` (PROF0 arm) before posting.
+DRAFT — needs the user's go. Reply on RFC #55394 to gau-nernst (2026-09-05 06:44). Numbers complete (findings 120/121). Part 3's e2e numbers for the tuned table come from `tuchoice`.
 
 Agreed on all three points, and thanks for the direction — numbers below.
 
@@ -16,12 +16,13 @@ Agreed on all three points, and thanks for the direction — numbers below.
 
 | | union on | off |
 | --- | --- | --- |
-| QSA attention kernel, 24 calls (2 chunks × 12 layers) | 182 ms (7.6 ms/call) | [OFF] ms ([OFF]/call) |
-| union pack + build kernels | 2.5 ms | — |
-| all QSA-related kernels, share of GPU time | 7.4 % of 2.55 s | [OFF] % of [OFF] s |
-| TTFT of the profiled request | 2.64 s | [OFF] s |
+| QSA attention kernel, 24 calls (2 chunks × 12 layers) | 182 ms (7.6 ms/call) | 265 ms (11.0 ms/call) |
+| kernels between top-k and attention | 10.4 ms (sort 3.8, pack 1.4, build 1.2, layout ops 2.0) | 6.3 ms (expansion 4.2) |
+| GPU idle in that window | 3.6 ms (0.15 ms per call, 3 µs launch gap) | 0.2 ms |
+| all QSA-related kernels, share of GPU time | 7.4 % of 2.55 s | 10.5 % of 2.59 s |
+| TTFT of the profiled request | 2.64 s | 2.69 s |
 
-So in situ the union kernel is ~[OFF]× the split-K kernel, not 2.7×: the server's K/V for an 8k prompt (~25 MiB) straddles the L2, the split-K kernel's gathers are cheaper there than in the DRAM-bound replay, and the attention is [OFF] % of prefill to begin with. That is the whole story of the ~3 %: the kernel gain is real, the kernel's share is small, and the replay overstated the gap. I would not merge #55430 on that basis either; I'll mark it draft and leave it as the reference for the design, unless the SM120/GB300 numbers someone else collects with the override say otherwise.
+So in situ the union kernel is 1.45× the split-K kernel, not 2.7×, and the integration costs nothing (0.15 ms idle per call, 3 µs launch gap): −83 ms of kernel, +4 ms of glue, +3 ms idle = −76 ms = the 2.9 % we see. The replay was an honest measurement of the wrong cache state in both directions: with 18 pages in the cache the split-K kernel's gathers all miss L2 (14.6 ms), while an 8k prompt's ~25 MiB of K/V straddles the 24 MiB L2 in the server (11.0 ms); the union kernel gains less from that and its second chunk's union is wider (7.6 vs 5.4 ms). And the attention is 10 % of prefill to begin with. So ~3 % is this design's ceiling on this box, not an integration loss. I would not merge #55430 on that basis either; I'll mark it draft and leave it as the reference for the design, unless the SM120/GB300 numbers someone else collects with the override say otherwise.
 
 **3. Retuning the split-K kernel on GB10 — done as a sweep, and it is the better first PR.** `_select_config` swept over BN ∈ {16, 32, 64, 128} × warps ∈ {1, 2, 4, 8} × target splits ∈ {1 … 64} per dispatch region, on the same captured prefill chunks plus synthetic uniform decode/verify batches (one run per cell so far):
 

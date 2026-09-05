@@ -1,0 +1,88 @@
+=== PROFauto  tile_union=auto  08:53 ===
+  PROFauto-warm TTFT 8k: prompt_tokens=7503 median=2.60s  all=2.82 2.59 2.60
+  PROFauto-warm TTFT 30k: prompt_tokens=29263 median=10.14s  all=10.20 10.14 10.14
+  profiled request: prompt_tokens=7507 ttft=2.64s
+  trace: /opt/llm/prof-tuauto/dp0_pp0_tp0_dcp0_ep0_rank0.1788591844620938300.pt.trace.json.gz
+kernel-sum 2.549 s over span 2.593 s, 5050 launches
+kernel                                                                                ms      %  calls   us/call
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa     251.3    9.9    192    1308.9
+_hc_combine_norm_kernel                                                            208.8    8.2    190    1099.0
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     201.6    7.9     48    4200.6
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     199.9    7.8     48    4164.0
+_qsa_tile_union_attn_kernel                                                        182.3    7.2     24    7595.2
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     154.9    6.1     48    3227.3
+_hc_gate_mix_kernel                                                                154.6    6.1    194     797.0
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     136.6    5.4     48    2846.3
+nvjet_sm121_tst_mma_128x128x64_3_32x64x64_tmaAB_bz_TNNN                             99.0    3.9    194     510.3
+chunk_gated_delta_rule_fwd_kernel_h_blockdim64                                      86.5    3.4     72    1201.1
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32      76.0    3.0    157     484.3
+chunk_fwd_kernel_o                                                                  74.2    2.9     72    1029.9
+recompute_w_u_fwd_kernel                                                            63.8    2.5     72     886.2
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__nv_fp4_e2m1,      59.7    2.3     96     621.7
+_causal_conv1d_fwd_kernel                                                           55.2    2.2     72     766.2
+_fused_post_conv_kernel                                                             53.8    2.1     72     747.2
+nvjet_sm121_tst_mma_128x208x64_2_32x104x64_tmaAB_bz_TNNN                            50.9    2.0     99     513.9
+triton_poi_fused__to_copy__unsafe_view_add_clone_mean_mul_per_token_group_fp8_      45.0    1.8     72     625.5
+void tensorrt_llm::kernels::cutlass_kernels::expandInputRowsKernel<__nv_fp4_e2      43.7    1.7     96     454.8
+void per_token_group_quant_8bit_kernel<c10::BFloat16, c10::Float8_e4m3fn, true      38.0    1.5    192     197.7
+merge_16x16_to_64x64_inverse_kernel                                                 30.4    1.2     72     422.4
+_fused_qk_rmsnorm_rope_gate_kernel                                                  22.0    0.9     24     917.5
+chunk_scaled_dot_kkt_fwd_kernel                                                     21.5    0.8     72     298.1
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32      18.7    0.7     96     194.4
+nvjet_sm121_tst_mma_128x176x64_2_32x88x64_tmaAB_bz_TNNN                             17.3    0.7     48     359.7
+triton_poi_fused_add_2                                                              15.5    0.6     72     215.7
+void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast      14.8    0.6     96     154.1
+triton_poi_fused_mul_per_token_group_fp8_quant_permute_sigmoid_view_0               14.3    0.6     24     593.8
+triton_per_fused__to_copy_mean_pow_view_0                                           12.9    0.5     72     178.5
+std::enable_if<!(false), void>::type internal::gemvx::kernel<int, int, __nv_bf      12.1    0.5     96     126.5
+QSA-related kernels: 188.1 ms = 7.4 % of kernel time
+    _qsa_tile_union_attn_kernel                                                        182.3 ms     24 calls
+    _qsa_mqa_paged_prefill_kernel                                                        2.9 ms     24 calls
+    _qsa_tile_union_pack_kernel                                                          1.3 ms     24 calls
+    _qsa_tile_union_build_kernel                                                         1.2 ms     24 calls
+    _qsa_pre_indexer_kernel                                                              0.3 ms     24 calls
+    _build_qsa_metadata_kernel                                                           0.0 ms      4 calls
+=== PROF0  tile_union=0  09:15 ===
+  PROF0-warm TTFT 8k: prompt_tokens=7503 median=2.64s  all=2.78 2.64 2.64
+  PROF0-warm TTFT 30k: prompt_tokens=29263 median=10.32s  all=10.28 10.36 10.32
+  profiled request: prompt_tokens=7507 ttft=2.69s
+  trace: /opt/llm/prof-tu0/dp0_pp0_tp0_dcp0_ep0_rank0.1788593197629521681.pt.trace.json.gz
+kernel-sum 2.589 s over span 2.629 s, 4878 launches
+kernel                                                                                ms      %  calls   us/call
+_qsa_sparse_paged_gqa_splitk_kernel                                                265.1   10.2     24   11045.8
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa     242.7    9.4    192    1264.1
+_hc_combine_norm_kernel                                                            203.3    7.9    190    1070.3
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     200.4    7.7     48    4174.0
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     199.3    7.7     48    4151.5
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     153.4    5.9     48    3195.9
+_hc_gate_mix_kernel                                                                152.8    5.9    194     787.5
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     133.6    5.2     48    2784.3
+nvjet_sm121_tst_mma_128x128x64_3_32x64x64_tmaAB_bz_TNNN                            100.0    3.9    194     515.2
+chunk_gated_delta_rule_fwd_kernel_h_blockdim64                                      83.8    3.2     72    1163.5
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32      75.2    2.9    157     478.8
+chunk_fwd_kernel_o                                                                  74.3    2.9     72    1032.2
+recompute_w_u_fwd_kernel                                                            63.9    2.5     72     888.0
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__nv_fp4_e2m1,      59.0    2.3     96     614.5
+_causal_conv1d_fwd_kernel                                                           54.6    2.1     72     759.0
+_fused_post_conv_kernel                                                             53.6    2.1     72     745.0
+nvjet_sm121_tst_mma_128x208x64_2_32x104x64_tmaAB_bz_TNNN                            49.5    1.9     99     500.4
+void tensorrt_llm::kernels::cutlass_kernels::expandInputRowsKernel<__nv_fp4_e2      42.6    1.6     96     443.8
+triton_poi_fused__to_copy__unsafe_view_add_clone_mean_mul_per_token_group_fp8_      41.8    1.6     72     580.3
+void per_token_group_quant_8bit_kernel<c10::BFloat16, c10::Float8_e4m3fn, true      36.1    1.4    192     188.2
+merge_16x16_to_64x64_inverse_kernel                                                 30.0    1.2     72     416.7
+_fused_qk_rmsnorm_rope_gate_kernel                                                  21.8    0.8     24     908.4
+chunk_scaled_dot_kkt_fwd_kernel                                                     21.5    0.8     72     299.0
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32      18.3    0.7     96     190.8
+nvjet_sm121_tst_mma_128x176x64_2_32x88x64_tmaAB_bz_TNNN                             17.6    0.7     48     366.7
+triton_poi_fused_add_2                                                              15.2    0.6     72     211.1
+void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast      14.7    0.6     96     153.4
+triton_poi_fused_mul_per_token_group_fp8_quant_permute_sigmoid_view_0               13.5    0.5     24     561.2
+triton_per_fused__to_copy_mean_pow_view_0                                           12.7    0.5     72     176.5
+std::enable_if<!(false), void>::type internal::gemvx::kernel<int, int, __nv_bf      11.8    0.5     96     123.2
+QSA-related kernels: 272.6 ms = 10.5 % of kernel time
+    _qsa_sparse_paged_gqa_splitk_kernel                                                265.1 ms     24 calls
+    _expand_qsa_indices_kernel                                                           4.2 ms     24 calls
+    _qsa_mqa_paged_prefill_kernel                                                        3.0 ms     24 calls
+    _qsa_pre_indexer_kernel                                                              0.3 ms     24 calls
+    _build_qsa_metadata_kernel                                                           0.0 ms      4 calls
+== ALL DONE ==
