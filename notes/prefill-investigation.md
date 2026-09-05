@@ -728,3 +728,36 @@
     fifth field lets other parts move it. Evidence for the PR body's "mixed-request batches the same": yes at 8k+8k
     (finding 117/118), neutral below.
 
+120. **The stock split-K QSA kernel's config table, retuned on GB10 (`tune`, `tools/qsa_splitk_tune.py`,
+    `notes/data/tune-splitk-gb10.txt`): the GB300 table over-splits on 48 SMs; batched decode/verify gains 1.1–1.6×,
+    prefill 1.05× (1.25× on tail chunks).** One run per cell, medians of 5×5, real prefill dumps + synthetic uniform
+    decode batches; outputs within 1e-4 of the stock config. gau-nernst's suggestion (RFC #55394, 06:44).
+
+    | shape (rows × requests) | base programs | stock (BN, splits, warps) | best | gain |
+    | --- | --- | --- | --- | --- |
+    | 1 × 1, 8k ctx | 2 | 32, 64, 4 | 32, 16, 1 | 1.02× |
+    | 4 × 1 | 8 | 32, 64, 4 | 32, 8, 1 | 1.07× |
+    | 4 × 4 | 8 | 32, 64, 4 | 16, 16, 4 (32, 8, 1 within 1 %) | **1.61×** |
+    | 16 × 4 | 32 | 32, 16, 1 | 64, 1, 2 | **1.34×** |
+    | 32 × 8, 32k | 64 | 32, 8, 1 | 64, 1, 4 | 1.12× |
+    | 64 × 16 | 128 | 32, 4, 1 | 64, 1, 2 | 1.11× |
+    | 128 × 32 | 256 | 32, 8, 1 | 64, 1, 2 | **1.21×** |
+    | 512 × 128 | 1024 | 64, 1, 2 | same | 1.01× |
+    | prefill 3,813 / 3,407 rows | > 2048 (prefill) | 32, 1, 1 | 32, 1, 8 | 1.05× |
+    | prefill tail 283 rows | 566 (prefill) | 64, 1, 2 | 16, 1, 4 | **1.25×** |
+
+    Reading: the GB300 table's 64-way split at ≤ 24 base programs makes 512 tiny programs plus a merge on a 48-SM
+    part; 8–16 splits are enough here. From 32 base programs up, no split at all with BN = 64 wins, and the prefill
+    branch wants 8 warps at BN = 32. A GB10 table therefore: bp ≤ 24 → (32, 8, 1); ≤ 256 → (64, 1, 2) (4 warps at
+    64); ≤ 1024 → prefill (16, 1, 4) / decode (64, 1, 2); > 2048 prefill → (32, 1, 8). **Caveats before a PR:** one
+    run per cell; the decode cells' K/V (6–20 pages) sit in the 24 MiB L2, unlike a real decode step; bp 512 and
+    decode at > 1024 rows unmeasured; the merge kernel's cost under CUDA graphs differs from eager timing. Needs
+    2–3 repeats, the missing shapes, and a server A/B (decode c=1/4/16 tok/s + TTFT) before the numbers are claimed.
+    A device-keyed table (CC 12.x) in `_select_config` plus this sweep under `benchmarks/kernels/` is the short PR
+    he offered to take.
+
+    Side observation that matters for the union question: the same 8k dump runs the stock kernel at 9.4 ms here
+    (3-page, L2-resident cache) vs 14.6 ms in `test_qsa_tile_union.py` (18 pages, DRAM) — the union's standalone
+    2.24× was measured against the DRAM-bound stock, and an 8k prompt's K/V (~25 MiB) straddles the L2 in the server.
+    The in-situ profile (`tuprof`) settles what the union kernel and the stock kernel actually cost per call there.
+
