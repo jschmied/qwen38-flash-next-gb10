@@ -135,3 +135,13 @@ Deferred, with reason:
   keys-only sort (torch.sort writes a hidden int64 index tensor, ~15 MiB per call) — profile the build first.
 - Fragmented-batch benchmark (1×4096 / 4×1024 / 16×256 / 64×64) — evidence for the `min_rows_per_request=64` gate.
 
+## PR #55430 — state 2026-09-05 08:40
+
+Open, two commits (`d65244b8` kernel/integration, `798b24e4` tests) on main 8369affa, nine files. CodeRabbit's one
+finding (non-power-of-two pad width in the pack kernel's `tl.arange`) fixed and covered by a 1,280-token-budget test;
+vLLM's pre-commit (incl. mypy) passes locally; CI's pre-commit waits for a maintainer's `ready` label. The metadata
+class carries the shared per-forward layout as an explicit optional field. Smoke serve of the final head
+(`notes/data/tusmoke-798b24e4.txt`): 2.59 s at 7.5k, 10.14 s at 29k, dispatch/warmup/path lines present — identical
+to findings 117/118. Fragmented batches: finding 119 (neutral). Open on the maintainer's side: the prefill/decode
+structural split (#54513 style), dropping the env knob, whatever the kernel-design concern is.
+

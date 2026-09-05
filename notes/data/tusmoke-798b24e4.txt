@@ -1,0 +1,6 @@
+preflight OK 08:15
+=== TSauto_a  tile_union=auto cold  08:15 ===
+    init: 08:15:35 [qsa_tile_union.py:161] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;08:15:40 [qsa_tile_union.py:161] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;08:25:20 [qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4).; prefix_caching=enable_prefix_caching=False 
+  TSauto_a TTFT 8k: prompt_tokens=7503 median=2.59s  all=2.94 2.59 2.58
+  TSauto_a TTFT 30k: prompt_tokens=29263 median=10.14s  all=10.14 10.12 11.41
+== ALL DONE ==
