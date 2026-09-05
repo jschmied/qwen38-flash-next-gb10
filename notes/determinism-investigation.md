@@ -1416,3 +1416,8 @@ Plus whatever drives the separate generation-side path.
     `fix/mamba-prefill-state-indices-contiguous`, one file + a regression test that runs the prefill store with a
     strided column view of a 2- and 4-column table against the contiguous copy). MTP c ≥ 2 numbers become quotable
     again once the serving venvs carry the patch; production can re-enable MTP with the one-file overlay.
+
+    **Upstream (2026-09-05 16:xx):** the identical fix was already open as vllm#55375 (peakcrosser7, opened 2026-09-04, same two
+    loads, `state_idx_stride = state_indices.stride(0)`, maintainer-approved, CI running) — found after ours was posted. #55467 closed as
+    duplicate; the GB10 evidence (no-drafter arm, row mapping, 0/20, strided decode-mode test) is on #55375. Their test covers the strided
+    prefill path only; our decode-mode case stays on the branch as a follow-up offer.

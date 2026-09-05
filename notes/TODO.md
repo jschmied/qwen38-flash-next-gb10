@@ -199,5 +199,5 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 - **[2026-09-05] MTP multi-prefill output corruption — ROOT-CAUSED AND FIXED** (findings 126–131): strided `state_indices_p[:, 0]`
   view (1+n_spec columns under spec config) read with unit stride by the PLE short-conv kernels → rows ≥1 of a prefill-only
   step write their conv state into request 0's checkpoint blocks. Fix = stride-aware kernels (branch
-  `fix/mamba-prefill-state-indices-contiguous`, 20/20 clean). OPEN: open the PR + post the #55357 follow-up (need go);
+  `fix/mamba-prefill-state-indices-contiguous`, 20/20 clean). Upstream fix = vllm#55375 (ours #55467 closed as duplicate; evidence + decode-mode test offered there);
   overlay the one-file fix onto the prod venv before re-enabling MTP; re-measure the MTP c≥2 cells (123/126) on the fixed build.
