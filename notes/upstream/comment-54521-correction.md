@@ -1,4 +1,4 @@
-DRAFT — needs the user's go (a correction of our own wrong row; post promptly). Reply on #54521 to jahnclawdmonet (07:28).
+POSTED https://github.com/vllm-project/vllm/issues/54521#issuecomment-5550651254 (short form). Reply on #54521 to jahnclawdmonet (07:28).
 
 You are right, and thank you for running it to the ground: the blockwise row in my table is an artifact of my script's scale layouts, exactly as you describe — row-major scales where the sm120 blockwise kernel deduces M-major/K-major from the shapes. Withdrawn. Per-channel FP8 (identical at every M) and BF16 cuBLAS (1 ulp, M-dependent) stand; the script is fixed to the production layouts (`tools/gemm_m_invariance.py` v2 in the repo) and I will replace the GB10 row with the corrected run [fill: GB10 v2 result] rather than assume it moves the same way.
 

@@ -90,3 +90,4 @@ branch lacks — fetch + rebase before pushing.
 30. 2026-09-04 23:4x — MiaAI #4 reply to malvavisc0: quoting bug makes the compile row unmeasured, prefix-cache caveat (`comment-mia4-malvavisc0.md`) → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/4#issuecomment-5546669405
 31. 2026-09-05 07:5x — **PR OPENED** #55430 (tile-union QSA prefill kernel, SM121; 2 commits on 8369affa; body `pr-qsa-tile-union-body.md`) → https://github.com/vllm-project/vllm/pull/55430
 32. 2026-09-05 07:5x — RFC #55394 reply linking the PR → https://github.com/vllm-project/vllm/issues/55394#issuecomment-5549779240
+33. 2026-09-05 10:5x — #54521 CORRECTION: our blockwise-FP8 M-invariance row withdrawn (scale-layout artifact, finding 122); GB10 rerun pending (`comment-54521-correction.md`) → https://github.com/vllm-project/vllm/issues/54521#issuecomment-5550651254
