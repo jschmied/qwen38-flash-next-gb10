@@ -1296,3 +1296,17 @@ Plus whatever drives the separate generation-side path.
     (`notes/upstream/comment-54521-davidcanar-2.md`): accept the PR, the recurring-hash argument, the fault deserves its
     own issue, and the GB10 two-node comparison offer stands if the collective is the channel.
 
+122. **Finding 112's blockwise-FP8 row is WITHDRAWN — a scale-layout artifact of our own script (found by jahnclawdmonet on
+    #54521, 2026-09-05 07:28, on an RTX PRO 6000).** `gemm_m_invariance.py` v1 passed the activation scales row-major
+    `[m, K/128]` and the weight scales row-major `[K/128, N/128]`; the sm120 CUTLASS blockwise kernel reads no strides
+    and deduces the layouts from the shapes (M-major for A, K-major for B), so the cell computed a different GEMM whose
+    row 0 depends on m — 53–126 ulp off the intended product at every M, per their float64 check. With the production
+    layouts (column-major activation scales, weight scales built `[N/128, K/128]` and passed transposed) **blockwise FP8
+    row 0 is bit-identical at every M on sm_120**; per-channel FP8 (identical) and BF16 cuBLAS (1 ulp, M-dependent) stand.
+    Their fixed-M repeat check (36 cells × 30 calls, three processes) found no call-to-call divergence in any dense path.
+    Consequences: (1) `tools/gemm_m_invariance.py` v2 uses the production layouts; rerun on the GB10 queued (`gemminv2`)
+    to replace finding 112's table; (2) our #54521 reply of 23:4x (posting 29) carried the wrong row — correction to post;
+    (3) the unposted #54928 draft loses its blockwise sentence: on this evidence the E == V ≠ A channel on an FP8-dense
+    stack cannot come from the blockwise GEMM, only from BF16 cuBLAS paths (1 ulp) or elsewhere. Lesson for the harness:
+    a `stride(0) == 1` assertion on 2-D scales, and a float64 reference on the first cell before any table is quoted.
+

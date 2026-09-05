@@ -1,4 +1,4 @@
-DRAFT — post only after the user's go and after `gemminv` has a result (fill the bracketed line).
+DRAFT — ON HOLD 2026-09-05: the blockwise-FP8 row below is WITHDRAWN (finding 122, scale-layout artifact); rewrite before any post.
 
 Thanks — that is diagnostic 2 from above with the attribution done properly, and it lands where we ended up on the GB10: the drafter is exposing a batch-shape dependence of the target, E == V ≠ A at sub-0.13-nat margins.
 

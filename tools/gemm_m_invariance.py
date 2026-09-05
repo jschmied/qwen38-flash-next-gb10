@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Is the FP8 GEMM's row 0 the same for M=1 (single-token decode) and M=8 (block verification)?
 
+v2 (2026-09-05): blockwise scale layouts fixed to the production ones — v1's blockwise row was an artifact.
+
 Issue vllm#54928 (Windless84, 2026-09-04): on a dense Qwen3.8-27B-FP8 the verifier's block-shaped forward ranks a
 different token than the single-token forward at near-tie positions (E == V != A), eager or compiled. The cheapest
 place for such a batch-shape dependence is the GEMM: the sm120 CUTLASS dispatch picks different tile shapes / a
@@ -31,13 +33,20 @@ def per_channel(n, k):
 
 
 def blockwise(n, k):
+    """Scale layouts as the production caller builds them (CutlassFp8BlockScaledMMKernel):
+    activation scales [m, K/128] column-major (M-major), weight scales built as
+    [N/128, K/128] and passed transposed (K-major). The sm120 CUTLASS blockwise kernel
+    deduces the layouts from the shapes and reads no strides, so row-major scales here
+    silently compute a different GEMM whose row 0 depends on m (jahnclawdmonet, #54521,
+    2026-09-05): the first version of this script had exactly that defect."""
     a = (torch.randn(max(MS), k, device=dev) * 0.5).to(FP8)
-    sa = (torch.rand(max(MS), k // 128, device=dev) * 0.02 + 0.01).float()
+    sa_rows = (torch.rand(max(MS), k // 128, device=dev) * 0.02 + 0.01).float()
     w = (torch.randn(n, k, device=dev) * 0.5).to(FP8)
-    sb = (torch.rand(k // 128, n // 128, device=dev) * 0.02 + 0.01).float()
+    sb_nk = (torch.rand(n // 128, k // 128, device=dev) * 0.02 + 0.01).float()
     b = w.t()
     def run(m):
-        return ops.cutlass_scaled_mm(a[:m], b, sa[:m], sb, torch.bfloat16)
+        sa = sa_rows[:m].t().contiguous().t()  # column-major [m, K/128]
+        return ops.cutlass_scaled_mm(a[:m], b, sa, sb_nk.t(), torch.bfloat16)
     return run
 
 
