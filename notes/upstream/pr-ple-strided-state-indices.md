@@ -18,7 +18,7 @@ Both PLE conv kernels take `state_idx_stride` and index `state_idx_ptr + r * sta
 
 `tests/models/qwen4_exp/test_ple_conv_strided_state_indices.py`: prefill store with a strided column view of a 2- and 4-column table against the contiguous copy; identical residual and state, primary slots written, checkpoint slots untouched. Before the fix the strided run writes requests 1 and 2 into request 0's columns.
 
-End to end on a GB10 (DGX Spark, sm_121, TP1, nightly dev401), simultaneous pairs/triples, `temperature 0`, 128 tokens: stock 30–50 % of cells with a corrupted request (finding 127); with this change: **N/M** (`acceptcell9`, to fill).
+End to end on a GB10 (DGX Spark, sm_121, TP1, nightly dev401), simultaneous pairs/triples, `temperature 0`, 128 tokens: stock 30–50 % of cells with a corrupted request (finding 127); with this change: **0 corrupted of 20 cells** (c=2 ×10, c=3 ×6, c=5 ×4; `acceptcell9`), and the state-index vector was observed arriving with stride 4 in both prefill and decode mode.
 
 ## Notes for reviewers
 

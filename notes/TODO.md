@@ -196,8 +196,8 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   BF16 dense (no FP8-dense lever), FP8 PLE/MTP byte-identical to Qwen FP8; their FP8-vs-NVFP4 table is within ±1 point on
   nine benchmarks. Decision: ignore for now — no expected intelligence difference; only a long-generation divergence check
   would tell, and that costs 74 GiB + a day. Revisit only on a concrete quality problem with RadixArk's experts.
-- **[2026-09-05] MTP multi-prefill output corruption** (findings 126, 127): NOT a drafter collapse — the target's output is
-  garbage from token 2 for all but one request whenever ≥2 prompts prefill in one step, with MTP on. Production build,
-  cache on/off, temp 0. Clean without speculation; clean with 150 ms arrival stagger. Same disease as vllm#55357.
-  Bisect `acceptcell4/5` (lengths, n=1, eager, no index share) → finding 128; then post the reproducer on #55357 (needs go).
-  **Prod decision needed: MTP off, or serialise prefills, until fixed.** MTP c≥2 numbers are not quotable.
+- **[2026-09-05] MTP multi-prefill output corruption — ROOT-CAUSED AND FIXED** (findings 126–131): strided `state_indices_p[:, 0]`
+  view (1+n_spec columns under spec config) read with unit stride by the PLE short-conv kernels → rows ≥1 of a prefill-only
+  step write their conv state into request 0's checkpoint blocks. Fix = stride-aware kernels (branch
+  `fix/mamba-prefill-state-indices-contiguous`, 20/20 clean). OPEN: open the PR + post the #55357 follow-up (need go);
+  overlay the one-file fix onto the prod venv before re-enabling MTP; re-measure the MTP c≥2 cells (123/126) on the fixed build.

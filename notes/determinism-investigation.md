@@ -1406,3 +1406,13 @@ Plus whatever drives the separate generation-side path.
     stride-blind load exists in the other short-conv consumers of `state_indices_tensor_p` and deserves a check.
     **Fix candidate under test (`acceptcell9`): `.contiguous()` on the state-index vector before the PLE conv
     kernels, drafter on; expected 0 corrupted of 20 cells.**
+
+131. **Fix confirmed (`acceptcell9`, `notes/data/acceptcell9.txt`): with the state-index vector made contiguous before
+    the PLE short-conv kernels, 20/20 cells are clean with the drafter on — c=2 ×10, c=3 ×6, c=5 ×4, simultaneous
+    arrival, temperature 0 — against 30–50 % corrupted cells stock. The log line added for the run shows the vector
+    arriving with stride 4 (= 1 + `num_speculative_tokens`) in both `prefill` and `decode` mode, so non-speculating
+    decode rows after row 0 were exposed the same way.** Upstream form of the fix: the two kernels take
+    `state_idx_stride` and index `state_idx_ptr + r * state_idx_stride` (branch
+    `fix/mamba-prefill-state-indices-contiguous`, one file + a regression test that runs the prefill store with a
+    strided column view of a 2- and 4-column table against the contiguous copy). MTP c ≥ 2 numbers become quotable
+    again once the serving venvs carry the patch; production can re-enable MTP with the one-file overlay.
