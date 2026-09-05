@@ -186,3 +186,9 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 - **Acceptance correlation** (queued as unit `accepcorr`): 5 starts of MTP n=5 pairing `ms/tok`
   with `mean_accept_len`, to test whether acceptance is the channel turning divergence into a
   1.83x throughput spread. See `prefill-divergence.md`.
+
+- **[queued 2026-09-05] Block-native R=1 split-K QSA kernel** — compact block ids in, page resolved once per block,
+  4 tokens loaded per block, no sort/union/membership; benchmark against #54873's kernel and tile-union on the captured
+  chunks + boundary shapes to attribute the union's gain (representation vs cross-row sharing). Design and experiment in
+  `notes/prefill-plan.md` (follow-up section). Candidate for the smaller upstream PR.
+

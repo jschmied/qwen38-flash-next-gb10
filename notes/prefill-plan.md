@@ -219,3 +219,34 @@ Feedback until 2026-09-11. Before a PR, in this order: (3) per-request tile boun
 
 Implementation plan for the PR (steps 1–8, effort, scope): `notes/upstream/pr-qsa-union-plan.md`.
 
+## Follow-up queued 2026-09-05: block-native R=1 split-K kernel (between #54873 and tile-union)
+
+Review input (2026-09-05, after gau-nernst's RFC reply; the referenced "#54863" is the Intel CI PR — meant is #54873).
+#54873 optimises the existing representation (expanded token ids, `valid_count` trims the padded suffix, split-K per
+row) and is near its natural limit once every row carries the full 2,048-token selection (its gain falls to ~1.1× at
+long prefill). What it does not remove, and what tile-union does: the same K/V block gathered once per neighbouring
+row, the M = 16 dot, a page lookup per token instead of per block, ~2,051 int32 index reads per row.
+
+**The intermediate to build and measure — a block-native R=1 kernel:** consume the indexer's compact `[rows, 512]`
+block ids (plus the causal tail from the positions), per block resolve the page once (`PAGE % CR == 0`: a compressed
+block never straddles a page) and load its CR = 4 consecutive K/V tokens; no sort, no union, no membership matrix, no
+tile layout. Expected wins even at R = 1: ~4× smaller selection-buffer traffic, the expansion kernel skipped on
+non-MTP-reused layers, one block-table lookup per four tokens, less address arithmetic (the bisect of finding 111 put
+pre-resolved addressing at +5–8 % on its own).
+
+| kernel | removes padding | block-native | shares K/V across rows |
+| --- | --- | --- | --- |
+| old split-K | no | no | no |
+| #54873 | yes | no | no |
+| **R=1 block-native (to build)** | yes | yes | no |
+| tile-union (#55430) | yes | yes | yes |
+
+**Experiment:** the same three captured chunks plus the boundary shapes, against #54873's kernel and the tile-union,
+in the `qsa_three_way.py` harness (add the R=1 arm). It attributes the union's 1.45–1.5× between representation /
+addressing and cross-row sharing; expectation: a meaningful intermediate, not the union's number at mature contexts
+(the ~90 % inter-row overlap stays unused). If the maintainers judge tile-union's ~900 lines too much for ~3 %, the
+R=1 kernel is the smaller PR; it also reuses most of tile-union's pack/build machinery minus the sort and membership.
+Third item of the same review, already done: the GB10 split-K sweep (finding 120; e2e in `tuchoice`).
+Order after the current queue (choice run, boundary run): (1) R=1 kernel in the three-way harness, (2) if it holds,
+a server A/B, (3) decide which of the two goes forward as the PR.
+
