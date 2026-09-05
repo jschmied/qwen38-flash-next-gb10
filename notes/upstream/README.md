@@ -91,3 +91,4 @@ branch lacks — fetch + rebase before pushing.
 31. 2026-09-05 07:5x — **PR OPENED** #55430 (tile-union QSA prefill kernel, SM121; 2 commits on 8369affa; body `pr-qsa-tile-union-body.md`) → https://github.com/vllm-project/vllm/pull/55430
 32. 2026-09-05 07:5x — RFC #55394 reply linking the PR → https://github.com/vllm-project/vllm/issues/55394#issuecomment-5549779240
 33. 2026-09-05 10:5x — #54521 CORRECTION: our blockwise-FP8 M-invariance row withdrawn (scale-layout artifact, finding 122); GB10 rerun pending (`comment-54521-correction.md`) → https://github.com/vllm-project/vllm/issues/54521#issuecomment-5550651254
+34. 2026-09-05 11:2x — PR #55180: pushed f945fa34 (tests folded) + af52cd77 (gate = weight > L2 only) and replied with the 10-shape sweep (`comment-55180-reply-gaunernst-2.md`) → https://github.com/vllm-project/vllm/pull/55180#issuecomment-5550814597

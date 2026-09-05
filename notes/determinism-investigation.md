@@ -1310,3 +1310,7 @@ Plus whatever drives the separate generation-side path.
     stack cannot come from the blockwise GEMM, only from BF16 cuBLAS paths (1 ulp) or elsewhere. Lesson for the harness:
     a `stride(0) == 1` assertion on 2-D scales, and a float64 reference on the first cell before any table is quoted.
 
+    **GB10 rerun (`gemminv2`, `notes/data/gemminv2.txt`, script v2):** blockwise FP8 row 0 bit-identical at every M on
+    all three shapes; per-channel FP8 identical; BF16 cuBLAS differs from M = 2 on (0.25–2.0 unscaled). Finding 112's
+    table is replaced by this one; the withdrawn row is confirmed an artifact on sm_121 as on sm_120.
+
