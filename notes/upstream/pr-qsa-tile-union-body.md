@@ -10,6 +10,10 @@ In prefill, consecutive query rows of Qwen3.8-Flash-Next select nearly the same 
 
 **Enabled by default on SM121 only** (the part it is tuned on). `VLLM_QSA_TILE_UNION=1` forces the SM121 tile on any device, `R,BNB,warps,min_rows[,min_rows_per_request]` forces an explicit tile for bring-up elsewhere, `0` disables. No behaviour change for other GPUs, no persistent memory there.
 
+## Baseline
+
+The branch is based on main 8369affa, which already includes #54873 (the valid-count-bounded split-K kernel and its prefill tuning; 31a8a266 is 36 commits below the base). Every number below is the tile-union path against that kernel on the same branch — an incremental improvement over #54873, not over the kernel it replaced. The two attack different redundancies: #54873 prunes the padded part of each row's selection, the tile-union shares one gather between neighbouring rows and runs the dot at M = 32 instead of 16; at contexts above the sparse budget every row's selection is full and #54873's pruning has nothing left to prune, which is where the union's gain is measured.
+
 ## Measured (GB10 / DGX Spark, sm_121, TP1, this branch vs the same branch with the path disabled, two server starts per arm, medians of three, prefix caching off, `--max-num-batched-tokens 4096`)
 
 | | tile-union | split-K | Δ |
@@ -20,7 +24,7 @@ In prefill, consecutive query rows of Qwen3.8-Flash-Next select nearly the same 
 | 30k + 8k concurrently, pair wall | 12.61 / 12.55 s | 12.80 / 12.79 s | −1.6 % |
 | 8-turn agent loop, MTP 3 + prefix cache | 1.69 s/turn | 1.72 s/turn | unchanged (below the row gate; decode untouched) |
 
-Kernel-level on real selection dumps: 2.5–2.7× the split-K kernel time on 8k chunks, 1.9× at 7.5k context, 1.4× on a 283-row tail chunk (standalone, whole path incl. the union build).
+Kernel-level on captured selections against #54873's kernel: 1.50× on an 8k chunk and 1.42× on a 7.5k-context chunk (whole path incl. the union build; `tools/qsa_three_way.py`); in situ under the torch profiler the attention kernel is 1.45× (11.0 → 7.6 ms per call) with 0.15 ms of host-side idle per call.
 
 ## Design
 
