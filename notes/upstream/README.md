@@ -100,3 +100,4 @@ branch lacks — fetch + rebase before pushing.
 40. 2026-09-05 15:0x — PR #55467 body: precedent note (#51682 stride fix merged; #52207/#51680 coercions closed) → https://github.com/vllm-project/vllm/pull/55467
 41. 2026-09-05 15:0x — vllm#53488 pointer: same class possible (subset of requests under MTP; strided state_indices_p view) (`comment-53488-strided-pointer.md`) → https://github.com/vllm-project/vllm/issues/53488#issuecomment-5552039168
 42. 2026-09-05 15:0x — vllm#53912 pointer: check concurrent-arrival dependence vs cache hits; mechanism + fix links (`comment-53912-strided-pointer.md`) → https://github.com/vllm-project/vllm/issues/53912#issuecomment-5552039251
+43. 2026-09-05 15:1x — PR #55467 audit comment with search keywords: all state-index consumers checked; MiniMax `lightning_attn.py` decode flagged as the remaining unit-stride load (`comment-55467-audit.md`) → https://github.com/vllm-project/vllm/pull/55467#issuecomment-5552058914

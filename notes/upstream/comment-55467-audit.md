@@ -1,0 +1,9 @@
+POSTED 2026-09-05 15:1x as https://github.com/vllm-project/vllm/pull/55467#issuecomment-5552058914 — audit note on PR #55467: stride-aware kernels listed, MiniMax lightning-attention decode flagged as the remaining unit-stride consumer (untested).
+
+Audit note for anyone searching this defect class — keywords: **strided `state_indices`**, **`block_table_tensor[:, 0]`**, **`num_speculative_blocks`**, **unit-stride `tl.load(state_idx_ptr + r)`**, **MTP / ngram speculative decoding + hybrid Mamba/GDN/short-conv**, **garbage output for the second request in a batch**, **row 0 correct, later rows corrupted**.
+
+I went through every Triton kernel in `main` that loads a per-request state or cache index and where its vector comes from:
+
+- **Stride-aware (not affected):** the GDN recurrent kernels (FLA `fused_recurrent` / `fused_sigmoid_gating`, GLM5-next and Kimi-K3 copies, AMD KDA since #51682), `causal_conv1d_fn` / `causal_conv1d_update`, Mamba-1 `selective_state_update`, Bailing's linear attention; Mamba-2 SSD, Olmo GDN and LFM2 short conv reach the state through torch indexing or a stride-aware kernel; Kimi-K3 checkpoint indices are built by advanced indexing / `torch.where` (contiguous by construction).
+- **Fixed here:** the Qwen4-exp PLE short-conv kernels (`ops/ple.py`, conv + writeback).
+- **Same pattern, untested:** MiniMax lightning-attention decode — `slot_id = tl.load(slot_idx + pid_b)` in `vllm/model_executor/layers/lightning_attn.py` receives `mamba_get_block_table_tensor(...)[:, 0]` from `vllm/v1/attention/backends/linear_attn.py` with no coercion in between. MiniMax-M2 drops its own MTP layers, but a model-agnostic speculator (n-gram) widens the table the same way; then decode rows after batch row 0 would read the wrong recurrent state. I have no MiniMax weights here, so this is a static finding — happy to leave it to a separate PR/issue if the maintainers prefer.
