@@ -900,3 +900,28 @@
     DJLougen's batch-geometry acceptance collapse. Per-request attribution (latency, full text, preemption counter)
     over 10 repetitions at c = 1, 2, 3, 4, 5, 8 is in **finding 127 (determinism-investigation.md): it is the target output that is corrupted, for all but one of the requests prefilled in the same step; MTP-specific, production build affected.** Until
     then, **no MTP c ≥ 4 number is quotable** and the union/table decision rests on TTFT and the no-spec decode cells.
+
+132. **GB10 tuning profiles, measured (`gb10tune`, `gb10tune2`; `notes/data/gb10tune*.txt`): the split-K table is at the
+    kernel-level optimum on every production shape and has NO server-level effect at three starts; the pre-indexer and the
+    scoring kernel are microseconds; the cooperative top-k cannot launch on sm_121. Finding 123's table numbers are
+    withdrawn as one-start noise, and the table PR is dropped.** All on the overlay venv with the PLE stride fix applied.
+
+    Kernel level, three sweep passes each, captured selections + synthetic decode shapes: the GB10 table entry is
+    within 0.98–1.05× of the best swept config on every shape up to 512 rows (the only miss is a 2048-row
+    decode-config cell at 1.22×, a geometry production never produces). Against the stock GB300 table pinned in the
+    same harness: prefill chunks 1.01–1.03×, the 283-row tail 1.22–1.25×, decode 1×1 1.02–1.05×, 4×1 1.08–1.22×,
+    4×4 **1.64–2.25×**, 16×4 1.30×, 32–256 rows 1.09–1.19×, 512 rows 1.00× — consistent with finding 120.
+
+    Server level, cold, three starts per arm (medians): TTFT 7.5k 2.65 → 2.64 s, 29k 10.31 → 10.26 s, pairs
+    8k+8k 5.32 → 5.29 s, 30k+8k 12.83 → 12.73 s, no-spec decode c=1 22.6 → 22.8, c=4 67.7 → 66.5, c=16
+    148.0 → 148.5 tok/s. Every difference is inside the run-to-run band (single-stream decode alone spans
+    22.4–24.7 across stock starts). Arithmetic agrees: the 4×4 verify shape saves ~45 µs × 12 layers ≈ 0.5 ms of a
+    ~130 ms four-stream MTP step. Warm MTP n=3 on the fixed kernel, both tables: c=1 37.6–42.7 tok/s at 61–74 %
+    acceptance, c=4 93–102, c=16 (five-wide) 95–99; **0 corrupted requests in 16 cells** — the multi-stream MTP
+    numbers are quotable again.
+
+    Fused pre-indexer: 18 µs at 3.8k tokens, 33 µs at 8k, tiles within 2 % of the best; decode scoring kernel 10 µs
+    with 3 % headroom; `cooperative_topk` fails at launch on sm_121 (`launch_cooperative_cluster`), so the 12x gate is
+    correct and `persistent_topk` stays. Conclusion: no GB10 profile on the QSA path pays at the server. The stacked
+    prefill levers with real weight are the swizzled blockwise GEMM with larger chunks, the GDN autotune spaces, and
+    the MoE grouped GEMM (31 % of prefill at 51 TFLOPS) — `stack1` measures the first two.

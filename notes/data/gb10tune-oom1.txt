@@ -1,0 +1,86 @@
+ple stride fix present: 2  15:36
+=== SPLITK run 1  15:36 ===
+prefill sel_002_3813.pt: stock BN=32 w=8 splits=1   8927.1 us | best BN=16 w=4 splits=1   9012.7 us (x0.99) max|diff|=0.0009765625
+    BN= 16 w=4 splits= 1:   9012.7 us  
+    BN= 32 w=8 splits= 1:   9109.3 us  
+    BN= 16 w=2 splits= 1:   9372.9 us  
+    BN= 32 w=1 splits= 1:   9388.9 us  
+    BN= 32 w=4 splits= 1:   9625.0 us  
+    BN= 64 w=8 splits= 1:  10489.4 us  
+prefill sel_024_3407.pt: stock BN=32 w=8 splits=1  10871.8 us | best BN=16 w=4 splits=1  11070.8 us (x0.98) max|diff|=0.0001220703125
+    BN= 16 w=4 splits= 1:  11070.8 us  
+    BN= 32 w=8 splits= 1:  11079.0 us  
+    BN= 32 w=1 splits= 1:  11377.8 us  
+    BN= 16 w=2 splits= 1:  11414.0 us  
+    BN= 32 w=4 splits= 1:  11907.8 us  
+    BN= 64 w=8 splits= 1:  13036.7 us  
+prefill sel_089_283.pt: stock BN=16 w=4 splits=1    910.4 us | best BN=16 w=4 splits=1    907.6 us (x1.00) max|diff|=0.0
+    BN= 16 w=4 splits= 1:    907.6 us  
+    BN= 32 w=8 splits= 1:    923.1 us  
+    BN= 32 w=1 splits= 1:    934.2 us  
+    BN= 16 w=2 splits= 1:    962.9 us  
+    BN= 32 w=4 splits= 1:    976.3 us  
+    BN= 32 w=2 splits= 1:   1022.5 us  
+decode rows=1 ctx=8192 reqs=1: stock BN=32 w=1 splits=8     35.5 us | best BN=64 w=2 splits=16     34.6 us (x1.03) max|diff|=6.103515625e-05
+    BN= 64 w=2 splits=16:     34.6 us  
+    BN= 32 w=1 splits=16:     34.7 us  
+    BN= 32 w=1 splits=32:     34.8 us  
+    BN= 32 w=4 splits=32:     34.9 us  
+    BN= 32 w=1 splits=64:     34.9 us  
+    BN= 64 w=4 splits=64:     35.0 us  
+decode rows=4 ctx=8192 reqs=1: stock BN=32 w=1 splits=8     36.5 us | best BN=32 w=1 splits=8     35.1 us (x1.04) max|diff|=0.0
+    BN= 32 w=1 splits= 8:     35.1 us  
+    BN= 32 w=4 splits= 8:     35.4 us  
+    BN= 64 w=2 splits= 4:     35.4 us  
+    BN= 16 w=2 splits=16:     35.7 us  
+    BN= 16 w=4 splits=16:     35.7 us  
+    BN= 64 w=4 splits= 4:     35.8 us  
+decode rows=4 ctx=8192 reqs=4: stock BN=32 w=1 splits=8     36.1 us | best BN=16 w=4 splits=16     35.3 us (x1.02) max|diff|=6.103515625e-05
+    BN= 16 w=4 splits=16:     35.3 us  
+    BN= 32 w=4 splits= 8:     35.8 us  
+    BN= 16 w=2 splits=16:     35.9 us  
+    BN= 64 w=2 splits= 4:     36.2 us  
+    BN= 16 w=4 splits=32:     36.3 us  
+    BN= 32 w=1 splits=16:     36.3 us  
+decode rows=16 ctx=8192 reqs=4: stock BN=64 w=4 splits=1    220.2 us | best BN=64 w=2 splits=1    219.0 us (x1.01) max|diff|=3.0517578125e-05
+    BN= 64 w=2 splits= 1:    219.0 us  
+    BN= 64 w=4 splits= 1:    220.1 us  
+    BN= 32 w=4 splits= 2:    226.4 us  
+    BN= 16 w=4 splits= 2:    226.8 us  
+    BN= 32 w=4 splits= 1:    227.8 us  
+    BN= 32 w=2 splits= 2:    229.0 us  
+decode rows=32 ctx=32768 reqs=8: stock BN=64 w=4 splits=1    568.7 us | best BN=16 w=4 splits=1    568.2 us (x1.00) max|diff|=6.103515625e-05
+    BN= 16 w=4 splits= 1:    568.2 us  
+    BN= 64 w=4 splits= 1:    568.7 us  
+    BN= 64 w=2 splits= 1:    571.6 us  
+    BN= 16 w=2 splits= 1:    572.0 us  
+    BN= 32 w=2 splits= 1:    573.8 us  
+    BN= 32 w=1 splits= 1:    576.2 us  
+decode rows=64 ctx=32768 reqs=16: stock BN=64 w=2 splits=1   1126.0 us | best BN=64 w=2 splits=1   1119.2 us (x1.01) max|diff|=0.0
+    BN= 64 w=2 splits= 1:   1119.2 us  
+    BN= 64 w=4 splits= 1:   1123.7 us  
+    BN= 64 w=1 splits= 1:   1139.2 us  
+    BN= 32 w=1 splits= 1:   1143.3 us  
+    BN= 32 w=4 splits= 1:   1145.2 us  
+    BN= 16 w=4 splits= 1:   1152.9 us  
+decode rows=128 ctx=32768 reqs=32: stock BN=64 w=2 splits=1   2243.1 us | best BN=64 w=2 splits=1   2237.2 us (x1.00) max|diff|=0.0
+    BN= 64 w=2 splits= 1:   2237.2 us  
+    BN= 64 w=4 splits= 1:   2238.9 us  
+    BN= 32 w=1 splits= 1:   2281.0 us  
+    BN= 32 w=4 splits= 1:   2282.7 us  
+    BN= 32 w=2 splits= 1:   2282.9 us  
+    BN= 64 w=1 splits= 1:   2286.4 us  
+decode rows=256 ctx=32768 reqs=64: stock BN=64 w=2 splits=1   4456.6 us | best BN=64 w=2 splits=1   4457.5 us (x1.00) max|diff|=0.0
+    BN= 64 w=2 splits= 1:   4457.5 us  
+    BN= 64 w=4 splits= 1:   4489.2 us  
+    BN= 64 w=1 splits= 1:   4521.9 us  
+    BN= 32 w=1 splits= 1:   4559.4 us  
+    BN= 32 w=2 splits= 1:   4565.7 us  
+    BN= 16 w=4 splits= 1:   4579.0 us  
+decode rows=512 ctx=32768 reqs=128: stock BN=64 w=2 splits=1   9017.4 us | best BN=64 w=2 splits=1   8945.2 us (x1.01) max|diff|=0.0
+    BN= 64 w=2 splits= 1:   8945.2 us  
+    BN= 64 w=4 splits= 1:   9000.3 us  
+    BN= 64 w=1 splits= 1:   9068.3 us  
+    BN= 32 w=1 splits= 1:   9140.4 us  
+    BN= 32 w=4 splits= 1:   9145.0 us  
+    BN= 32 w=2 splits= 1:   9147.8 us  

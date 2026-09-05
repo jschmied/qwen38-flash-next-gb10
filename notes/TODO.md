@@ -201,3 +201,4 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   step write their conv state into request 0's checkpoint blocks. Fix = stride-aware kernels (branch
   `fix/mamba-prefill-state-indices-contiguous`, 20/20 clean). Upstream fix = vllm#55375 (ours #55467 closed as duplicate; evidence + decode-mode test offered there);
   overlay the one-file fix onto the prod venv before re-enabling MTP; re-measure the MTP c≥2 cells (123/126) on the fixed build.
+- **[2026-09-05] GB10 split-K table PR — DROPPED** (finding 132): kernel gains real (up to 2.25× on 4×4) but 0.4 % of a step; no server-level effect at three starts. Keep the stacked branch as reference only.
