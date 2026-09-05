@@ -708,3 +708,23 @@
     alike, no effect on decode or warm turns**; the −4.7 % / −3.7 % of finding 115 was against the older nightly's
     stock kernel and is not the claim.
 
+119. **Fragmented prefill batches (`tufrag`, `notes/data/tufrag.txt`): the union is neutral on short-context
+    multi-request batches — no loss where it is eligible, no gain either; the gate is not costing anything.** Same
+    branch, `--max-num-seqs 128`, batch 4096, N salted prompts fired together, pair wall, medians of 3, one start each.
+
+    | batch | tokens | union | off | eligible? |
+    | --- | --- | --- | --- | --- |
+    | 1 × 4k | 4,106 | 1.47 s | 1.49 s | yes |
+    | 4 × 1k | 4,180 | 1.54 s | 1.53 s | yes |
+    | 16 × 260 | 4,214 | 1.73 s | 1.71 s | yes (260 rows/request) |
+    | 64 × 94 | 6,006 | 3.03 s | 3.01 s | yes (94 ≥ 64) |
+    | 128 × 61 | 7,826 | 4.46 s | 4.41 s | no (61 < 64 → stock) |
+
+    All within ±1.5 %, one start, so noise. Reading: at these context lengths every row's selection is the whole
+    (short) context, so the union saves gathers but the split-K kernel is already cheap there — the union's gain is a
+    long-context effect (finding 111's cost model: it scales with the selection width, which is ≤ context/CR here).
+    The per-request gate of 64 rows therefore neither protects nor costs anything measurable on this box; it stays as
+    the conservative default (a fragmented batch's tiles share little, and the build is fixed cost) and the override's
+    fifth field lets other parts move it. Evidence for the PR body's "mixed-request batches the same": yes at 8k+8k
+    (finding 117/118), neutral below.
+

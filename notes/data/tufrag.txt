@@ -1,0 +1,16 @@
+preflight OK 07:51
+=== TFauto_a  tile_union=auto cold  07:51 ===
+    init: 07:51:35 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;07:51:39 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;08:01:28 [qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4).; prefix_caching=enable_prefix_caching=False 
+  TFauto_a FRAG 1x120: total_prompt_tokens=4106 wall_median=1.47s  all=1.58 1.47 1.46
+  TFauto_a FRAG 4x30: total_prompt_tokens=4180 wall_median=1.54s  all=1.55 1.54 1.54
+  TFauto_a FRAG 16x7: total_prompt_tokens=4214 wall_median=1.73s  all=2.05 1.73 1.72
+  TFauto_a FRAG 64x2: total_prompt_tokens=6006 wall_median=3.03s  all=3.04 3.03 3.03
+  TFauto_a FRAG 128x1: total_prompt_tokens=7826 wall_median=4.46s  all=4.46 4.48 4.46
+=== TF0_a  tile_union=0 cold  08:03 ===
+    init:  prefix_caching=enable_prefix_caching=False 
+  TF0_a FRAG 1x120: total_prompt_tokens=4106 wall_median=1.49s  all=1.63 1.49 1.49
+  TF0_a FRAG 4x30: total_prompt_tokens=4180 wall_median=1.53s  all=1.57 1.53 1.53
+  TF0_a FRAG 16x7: total_prompt_tokens=4214 wall_median=1.71s  all=2.04 1.71 1.71
+  TF0_a FRAG 64x2: total_prompt_tokens=6006 wall_median=3.01s  all=3.01 3.01 3.00
+  TF0_a FRAG 128x1: total_prompt_tokens=7826 wall_median=4.41s  all=4.41 4.38 4.41
+== ALL DONE ==
