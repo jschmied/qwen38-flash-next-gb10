@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. PR against vllm-project/vllm main from branch `fix/mamba-prefill-state-indices-contiguous` (fork jschmied/vllm; worktree ~/git/vllm-mambafix). Fix-run numbers (`acceptcell9`) to be filled in before posting.
+POSTED 2026-09-05 15:0x as https://github.com/vllm-project/vllm/pull/55467 (head 77d70c7d). PR against vllm-project/vllm main from branch `fix/mamba-prefill-state-indices-contiguous` (fork jschmied/vllm; worktree ~/git/vllm-mambafix). Fix-run numbers (`acceptcell9`) to be filled in before posting.
 
 # [Bugfix][Qwen3.8-Flash-Next] Honour the state_indices stride in the PLE short-conv kernels
 

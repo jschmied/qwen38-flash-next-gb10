@@ -13,7 +13,7 @@ fixes of ours now in vLLM or under review there.
 | decode, 16 / 32 streams | ~100 / 110 tok/s aggregate | [load and waits](notes/load-and-waits.md) |
 | TTFT, 7.5k / 29k tokens | **2.6 s / 10.1 s** (≈ 2,800 tok/s prefill) | [prefill findings 117–118](notes/prefill-investigation.md) |
 | warm agent turn (prefix cache + MTP) | **1.5 s** per 130-token turn, from 2.05 | [finding 94](notes/prefill-investigation.md), [mtp vs prefix cache](notes/mtp-vs-prefix-cache.md) |
-| greedy determinism | reproducible sequentially after three kernel fixes; not under concurrency | [determinism](notes/determinism-investigation.md) |
+| greedy determinism | reproducible sequentially after three kernel fixes; not under concurrency. **MTP + parallel prefills corrupted output until vllm#55467** | [determinism](notes/determinism-investigation.md) |
 
 Decode numbers are a different configuration from the prefill ones and not comparable across rows;
 each link says how its number was produced. Nothing here is quoted from one run: decode noise is
@@ -36,6 +36,7 @@ each link says how its number was produced. Nothing here is quoted from one run:
 
 | | what | state |
 | --- | --- | --- |
+| [vllm#55467](https://github.com/vllm-project/vllm/pull/55467) | **MTP output corruption fixed**: with speculation configured, prefills after batch row 0 wrote their PLE conv state into request 0's checkpoint blocks (strided index view read with unit stride); one-file kernel fix + test, 0/20 corrupted after | PR, review |
 | [vllm#55430](https://github.com/vllm-project/vllm/pull/55430) | tile-union QSA prefill kernel: consecutive rows share one K/V gather; −2.8 % TTFT at 8k, −1.7 % at 30k on SM121 | PR, review |
 | [vllm#55394](https://github.com/vllm-project/vllm/issues/55394) | the RFC behind it: design, GB10 numbers, bring-up table for other parts | open |
 | [vllm#55122](https://github.com/vllm-project/vllm/pull/55122) | deterministic `persistent_topk` (index-ranked ties): greedy prefill reproducible at no cost; shipped by blazux as their patch 8 | PR, review |
