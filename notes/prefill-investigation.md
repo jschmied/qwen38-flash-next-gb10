@@ -806,14 +806,19 @@
     | decode MTP 3, c = 16 | 95.0 / 95.1 | 98.1 then 78.2 | — |
     | agent loop, s/turn | 1.72 | 1.66 | — |
 
-    Reading: on prefill the union is worth twice the table (each is a 10 %-of-prefill kernel moved 1.05× vs 1.45×);
-    on decode only the table acts, and its real win is the MTP verify shape (4 rows per step): +8 % single-stream, the
-    one number a user of this box feels. No-spec decode at c=4 gains 4 %; c=1 and c=16 are within the 6.9 % decode noise
-    band (the union arm's 22.7 at c=1 included — the union never runs on decode rows; repeat before reading anything
-    into it). **Anomaly, both warm arms:** the MTP c=4 cell is bimodal — 95–98 tok/s on the first repetition, ~42 on the
+    Reading: on prefill the union is worth twice the table (each is a 10 %-of-prefill kernel moved 1.05× vs 1.45×).
+    On decode only the table acts. **The MTP c=1 "+8 %" (39.2 → 42.4) is NOT attributable to the table's kernel time:**
+    at the verify shape (4 rows per request) the sweep's saving is 2.7 µs per call, ~35 µs per 25 ms step across 12
+    layers (0.1 %), and the drafter's 1-row steps are unchanged. Byte-identical prompts, but a different BLOCK_N /
+    split count changes the summation order, near-tie tokens flip, the text diverges and the accepted draft length
+    with it — the channel of our #54521 measurement (32.8 vs 64.2 ms/tok on acceptance alone) — on top of the 6.9 %
+    decode noise band. Unattributed until acceptance is read per arm (`accept.py`) and the cell repeated. No-spec
+    decode at c=4 gains 4 % (67.7 vs 65.1, tight reps; the 4×4 shape where the sweep found 1.61× at kernel level —
+    plausible but one start); c=1 and c=16 are within noise (the union arm's 22.7 at c=1 included — the union never
+    runs on decode rows). **Anomaly, both warm arms:** the MTP c=4 cell is bimodal — 95–98 tok/s on the first repetition, ~42 on the
     second, with prefix caching on; c=16 on the GB10 arm shows the same drop (98 → 78). Not a table effect. Same shape as
     DJLougen's acceptance collapse on batch geometry; the probe does not log acceptance — a dedicated check (acceptance
     per repetition, cache on/off) is queued in the TODO before that cell is quoted anywhere.
-    Decision input: the table is the cheap PR (a device-keyed entry, +8 % MTP decode, −1.5 % TTFT); the union adds
-    −2 % TTFT on top for ~900 lines. Both are honest against #54873's kernel.
+    Decision input: the table is the cheap PR (a device-keyed entry; −1.5 % TTFT, +4 % no-spec decode at c=4, MTP
+    effect unproven); the union adds −2 % TTFT on top for ~900 lines. Both are honest against #54873's kernel.
 
