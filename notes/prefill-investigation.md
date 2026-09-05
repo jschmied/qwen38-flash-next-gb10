@@ -822,3 +822,22 @@
     Decision input: the table is the cheap PR (a device-keyed entry; −1.5 % TTFT, +4 % no-spec decode at c=4, MTP
     effect unproven); the union adds −2 % TTFT on top for ~900 lines. Both are honest against #54873's kernel.
 
+124. **Boundary shapes where #54873 has the most headroom (`tubound`, `notes/data/tubound.txt`): the union never
+    loses, and below ~2k context it does not win either.** Union auto vs 0, one start each, three repetitions, pair wall.
+
+    | batch | tokens | union | off | note |
+    | --- | --- | --- | --- | --- |
+    | 1 × 1,011 | 1,011 | 0.48 s | 0.48 s | below the 1,024-row gate → stock in both arms |
+    | 2 × 501 | 1,002 | 0.63 s | 0.63 s | below the gate → stock |
+    | 1 × 1,521 | 1,521 | 0.62 s | 0.62 s | eligible; neutral |
+    | 1 × 2,031 | 2,031 | 0.77 s | 0.78 s | eligible; neutral |
+    | 1 × 4,106 | 4,106 | 1.45 s | 1.49 s | eligible; −2.7 % |
+    | 16 × 59 | 950 | 0.69 s | 0.70 s | below both gates → stock |
+
+    The 1×1024 cell missed the gate by 13 tokens (the filler unit is 34 tokens); an exact-boundary cell (1×1,045) is
+    the one shape not covered — but 1,521 and 2,031 rows, where every row's selection is still short of the sparse
+    budget and #54873's `valid_count` pruning is strongest, come out exactly even, so the union's sort/build at the
+    fixed 1,024-key width does not lose against the pruned split-K there. The gain starts where the selection
+    saturates (4k: −2.7 %; 8k: −2.8 %). No gate change needed; the `effective_block_topk` sort-width idea stays
+    unimplemented (it would only matter below 1k context, which the gate excludes).
+

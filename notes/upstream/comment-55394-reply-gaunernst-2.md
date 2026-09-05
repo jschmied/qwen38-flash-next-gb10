@@ -24,6 +24,8 @@ Agreed on all three points, and thanks for the direction — numbers below.
 
 So in situ the union kernel is 1.45× the split-K kernel — consistent with the corrected replay — and the integration costs nothing (0.15 ms idle per call, 3 µs launch gap): −83 ms of kernel, +4 ms of glue, +3 ms idle = −76 ms = the 2.9 % we see. The attention is 10 % of prefill, so ~3 % is this design's ceiling on this box. I would not merge #55430 on that basis either; I'll mark it draft and leave it as the reference for the design, unless the SM120/GB300 numbers someone else collects with the override say otherwise.
 
+**2b. Short-context boundary, where #54873's pruning is strongest** (same branch, union vs off, three reps, pair wall): 1×1,521 tokens 0.62 vs 0.62 s, 1×2,031 0.77 vs 0.78 s, 1×4,106 1.45 vs 1.49 s; batches under the 1,024-row gate run stock in both arms and match. So the union does not lose where every row's selection is still short of the budget, and starts paying from ~4k where the selection saturates.
+
 **3. Retuning the split-K kernel on GB10 — done as a sweep, and it is the better first PR.** `_select_config` swept over BN ∈ {16, 32, 64, 128} × warps ∈ {1, 2, 4, 8} × target splits ∈ {1 … 64} per dispatch region, on the same captured prefill chunks plus synthetic uniform decode/verify batches (one run per cell so far):
 
 | shape (rows × requests) | base programs | stock (BN, splits, warps) | best on GB10 | gain |

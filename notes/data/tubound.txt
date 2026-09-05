@@ -1,0 +1,18 @@
+preflight OK 10:49
+=== TBauto_a  tile_union=auto cold  10:49 ===
+    init: 10:49:28 [qsa_tile_union.py:161] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;10:49:33 [qsa_tile_union.py:161] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;10:59:54 [qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4).; prefix_caching=enable_prefix_caching=False 
+  TBauto_a BOUND 1x29: total_prompt_tokens=1011 wall_median=0.48s  all=0.61 0.47 0.48
+  TBauto_a BOUND 2x14: total_prompt_tokens=1002 wall_median=0.63s  all=0.66 0.63 0.63
+  TBauto_a BOUND 1x44: total_prompt_tokens=1521 wall_median=0.62s  all=0.65 0.61 0.62
+  TBauto_a BOUND 1x59: total_prompt_tokens=2031 wall_median=0.77s  all=0.77 0.76 0.77
+  TBauto_a BOUND 1x120: total_prompt_tokens=4106 wall_median=1.45s  all=1.47 1.45 1.45
+  TBauto_a BOUND 16x1: total_prompt_tokens=950 wall_median=0.69s  all=0.70 0.69 0.69
+=== TB0_a  tile_union=0 cold  11:00 ===
+    init:  prefix_caching=enable_prefix_caching=False 
+  TB0_a BOUND 1x29: total_prompt_tokens=1011 wall_median=0.48s  all=0.65 0.48 0.47
+  TB0_a BOUND 2x14: total_prompt_tokens=1002 wall_median=0.63s  all=0.65 0.63 0.62
+  TB0_a BOUND 1x44: total_prompt_tokens=1521 wall_median=0.62s  all=0.63 0.62 0.62
+  TB0_a BOUND 1x59: total_prompt_tokens=2031 wall_median=0.78s  all=0.82 0.78 0.78
+  TB0_a BOUND 1x120: total_prompt_tokens=4106 wall_median=1.49s  all=1.56 1.49 1.49
+  TB0_a BOUND 16x1: total_prompt_tokens=950 wall_median=0.70s  all=0.71 0.70 0.70
+== ALL DONE ==
