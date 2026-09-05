@@ -1,0 +1,20 @@
+applied
+=== ND_nodraft  venv=fnmain2 MTP3 FN_SKIP_DRAFT_PREFILL=1  14:24 ===
+  ND CELL3 c=2 rep=0: rate=0.0% | chatcmpl-ND-2-0-0:8.0s:ok chatcmpl-ND-2-0-1:7.9s:ok
+  ND CELL3 c=2 rep=1: rate=0.0% | chatcmpl-ND-2-1-0:8.0s:ok chatcmpl-ND-2-1-1:7.9s:ok
+  ND CELL3 c=2 rep=2: rate=0.0% | chatcmpl-ND-2-2-0:8.2s:ok chatcmpl-ND-2-2-1:8.2s:G
+  ND CELL3 c=2 rep=3: rate=0.0% | chatcmpl-ND-2-3-0:8.1s:ok chatcmpl-ND-2-3-1:8.1s:ok
+  ND CELL3 c=2 rep=4: rate=0.0% | chatcmpl-ND-2-4-0:8.1s:ok chatcmpl-ND-2-4-1:8.0s:ok
+  ND CELL3 c=2 rep=5: rate=0.0% | chatcmpl-ND-2-5-0:7.9s:ok chatcmpl-ND-2-5-1:8.0s:ok
+  ND CELL3 c=2 rep=6: rate=0.0% | chatcmpl-ND-2-6-0:8.1s:ok chatcmpl-ND-2-6-1:8.0s:ok
+  ND CELL3 c=2 rep=7: rate=0.0% | chatcmpl-ND-2-7-0:8.1s:ok chatcmpl-ND-2-7-1:8.0s:ok
+  ND CELL3 c=2 rep=8: rate=0.0% | chatcmpl-ND-2-8-0:8.1s:ok chatcmpl-ND-2-8-1:8.2s:ok
+  ND CELL3 c=2 rep=9: rate=0.0% | chatcmpl-ND-2-9-0:8.1s:ok chatcmpl-ND-2-9-1:8.0s:ok
+  ND CELL3 c=3 rep=0: rate=0.0% | chatcmpl-ND-3-0-0:9.3s:ok chatcmpl-ND-3-0-1:9.4s:ok chatcmpl-ND-3-0-2:9.3s:ok
+  ND CELL3 c=3 rep=1: rate=0.0% | chatcmpl-ND-3-1-0:9.2s:ok chatcmpl-ND-3-1-1:9.1s:ok chatcmpl-ND-3-1-2:9.2s:ok
+  ND CELL3 c=3 rep=2: rate=0.0% | chatcmpl-ND-3-2-0:9.5s:ok chatcmpl-ND-3-2-1:9.5s:ok chatcmpl-ND-3-2-2:9.3s:ok
+  ND CELL3 c=3 rep=3: rate=0.0% | chatcmpl-ND-3-3-0:9.2s:ok chatcmpl-ND-3-3-1:9.3s:ok chatcmpl-ND-3-3-2:9.3s:ok
+  ND CELL3 c=3 rep=4: rate=0.0% | chatcmpl-ND-3-4-0:9.2s:ok chatcmpl-ND-3-4-1:9.3s:ok chatcmpl-ND-3-4-2:9.3s:ok
+  ND CELL3 c=3 rep=5: rate=0.0% | chatcmpl-ND-3-5-0:9.4s:ok chatcmpl-ND-3-5-1:9.4s:ok chatcmpl-ND-3-5-2:9.3s:ok
+reverted
+== ALL DONE ==

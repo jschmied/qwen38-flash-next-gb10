@@ -1382,3 +1382,27 @@ Plus whatever drives the separate generation-side path.
     poisoned by the drafter's writes or by the target's own state handling under the speculative configuration (ring
     capacity 8 instead of 4, spec-sized conv-state windows) is what the queued arms separate: draft indexer unfused
     (`U1`), draft-prefill ring commit withheld (`R1`), and drafter never run at all with the spec config on (`ND`).
+
+130. **The drafter is innocent; the defect is a strided state-index view fed to a stride-blind kernel (`acceptcell7/8`,
+    `notes/data/acceptcell7.txt`, `acceptcell8.txt`).** Three arms on the overlay venv, simultaneous pairs, MTP n=3:
+    draft indexer forced onto the unfused reference path — **3/10** corrupted; draft-prefill commit of the raw ring and
+    RoPE tail withheld through the prefill lifecycle hooks — **2/10**; **drafter never executed** (zero drafts returned
+    before any draft forward, acceptance 0 % throughout) — **1/10 at c=2** plus the c=3 cells clean. So the corruption
+    needs only the speculative *configuration* and a prefill-only step with ≥2 requests; nothing the drafter computes
+    or writes is involved.
+
+    Mechanism (code, both venvs — dev352 and dev401): with speculation configured, the Mamba-style block table has
+    `1 + num_speculative_blocks` columns per request (`mamba_get_block_table_tensor`, mode "none"). The base Mamba
+    metadata builder takes the prefill state indices as the first column, `state_indices_tensor_p = state_indices_tensor_p[:, 0]`
+    (`vllm/v1/attention/backends/mamba_attn.py:570`), a **strided view**. The PLE short-conv kernels load the
+    per-request state slot as `sid = tl.load(state_idx_ptr + r)` (`ops/ple.py:389`, `:504`), unit stride assumed, so
+    prefill row r ≥ 1 resolves `block_table[0, r]` — request 0's speculative checkpoint blocks — instead of
+    `block_table[r, 0]`. The prefill writes its conv state there; request 0's own speculative steps overwrite those
+    blocks; the request's decode reads its correct block, never written. Row 0 is right; rows 1..3 die (four columns);
+    row 4 lands in request 1's unused primary block and survives — the 3/2 split seen at c=5 (127). Without
+    speculation the table has one column and the view is contiguous; with a speculating decode row in the batch the
+    spec branch gathers indices by advanced indexing (contiguous) — the two clean cases of 129. GDN is unaffected:
+    `causal_conv1d_fn` takes `stride_cache_indices`, and the recurrent state is indexed through torch. The same
+    stride-blind load exists in the other short-conv consumers of `state_indices_tensor_p` and deserves a check.
+    **Fix candidate under test (`acceptcell9`): `.contiguous()` on the state-index vector before the PLE conv
+    kernels, drafter on; expected 0 corrupted of 20 cells.**
