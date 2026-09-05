@@ -36,7 +36,7 @@ each link says how its number was produced. Nothing here is quoted from one run:
 
 | | what | state |
 | --- | --- | --- |
-| [vllm#55375](https://github.com/vllm-project/vllm/pull/55375) | **MTP output corruption, root-caused here** (findings 126–131): with speculation configured, prefills after batch row 0 wrote their PLE conv state into request 0's checkpoint blocks — a strided index view read with unit stride; the fix (same as our closed duplicate [#55467](https://github.com/vllm-project/vllm/pull/55467)) is peakcrosser7's, our evidence and the strided decode test are on it | PR, approved |
+| [vllm#55375](https://github.com/vllm-project/vllm/pull/55375) | **MTP output corruption, root-caused here** (findings 126–131): with speculation configured, prefills after batch row 0 wrote their PLE conv state into request 0's checkpoint blocks — a strided index view read with unit stride; the fix (same as our closed duplicate [#55467](https://github.com/vllm-project/vllm/pull/55467)) is peakcrosser7's, our evidence and the strided decode test are on it | **merged 2026-09-05** |
 | [vllm#55430](https://github.com/vllm-project/vllm/pull/55430) | tile-union QSA prefill kernel: consecutive rows share one K/V gather; −2.8 % TTFT at 8k, −1.7 % at 30k on SM121 | PR, review |
 | [vllm#55394](https://github.com/vllm-project/vllm/issues/55394) | the RFC behind it: design, GB10 numbers, bring-up table for other parts | open |
 | [vllm#55122](https://github.com/vllm-project/vllm/pull/55122) | deterministic `persistent_topk` (index-ranked ties): greedy prefill reproducible at no cost; shipped by blazux as their patch 8 | PR, review |

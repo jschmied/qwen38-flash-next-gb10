@@ -1435,3 +1435,5 @@ Plus whatever drives the separate generation-side path.
     repetitions at temperature 0 in *both* arms from the second token on, and 4096/4098 diverge in one arm — the
     near-tie nondeterminism of finding 116 / #54521, visible here because a 3-token prompt has no context to break
     ties. Draft for the thread: `notes/upstream/comment-53051-gb10-v2.md` (needs go).
+
+    **vllm#55375 merged 2026-09-05 14:02 UTC.** Nightlies after that carry the fix; the overlay venv carries it as `ops/ple.py.orig-dev401`-backed overlay; the production venv (dev352) still needs the one-file overlay or a nightly bump.
