@@ -869,3 +869,34 @@
     so the kernel launch is unchanged there by construction. PR updated (gate = weight > L2 only; tests folded into
     the existing blockwise test with two prefill-sized cases).
 
+
+126. **MTP decode cells with acceptance per repetition (`acceptcell`, `notes/data/acceptcell.txt`): the split-K table
+    has no MTP decode effect, every tok/s difference is acceptance, and the c=4 collapse is a real drafter failure that
+    reproduces on two of three arms, with the prefix cache on and off.** Stock table / GB10 table (both prefix cache on)
+    / stock with cache off; MTP n=3, trailing-block drop disabled, 4 GiB KV, 128 new tokens, 543-token prompt, three
+    repetitions at c=1 and c=4, two at c=16; acceptance from `/metrics` deltas around each cell.
+
+    | cell | stock | GB10 table | stock, cache off |
+    |---|---|---|---|
+    | c=1 tok/s (acceptance) | 37.1 (60 %), 44.0 (75 %), 42.9 (74 %) | 39.6 (65 %), 43.4 (73 %), 39.2 (61 %) | 40.3 (75 %), 40.9 (69 %), 40.9 (68 %) |
+    | c=1 mean | 41.3 | 40.7 | 40.7 |
+    | c=4 tok/s (acceptance) | 94.2 (71 %), 93.9 (66 %), 94.5 (70 %) | 94.6 (68 %), 96.9 (72 %), **42.8 (9 %)** | 89.5 (66 %), **42.3 (9 %)**, 93.9 (70 %) |
+    | c=16 tok/s (acceptance) | 98.5 (67 %), 101.3 (68 %) | 97.3 (68 %), 97.3 (68 %) | 98.6 (68 %), 98.5 (69 %) |
+
+    Reading: (1) c=1 spans 37–44 tok/s *within one arm* and the order is the acceptance order (60 → 75 % is
+    37.1 → 44.0); the arm means are within 0.6 tok/s. Finding 123's "+8 % MTP c=1 from the table" was this channel,
+    as suspected there; withdrawn. (2) The healthy c=4 cells are 94–97 on every arm, c=16 is 97–101 — and c=16 runs
+    five wide: the 4 GiB KV budget holds five requests (18.8 % usage each, `Running: 5, Waiting: 11` in the log), so
+    those cells are queue-limited and not a 16-stream number. (3) **The collapse:** one c=4 cell per arm on two arms
+    drops to 42 tok/s with 9.1 % draft acceptance (per-position 0.09 / 0.06 / 0.05), then the next cell is normal
+    again. Not the table (stock arm 3/3 healthy, GB10 arm rep 2), not the prefix cache (cache-off arm rep 1), not
+    preemption or any logged event (nothing in the server log for the window; KV at 56–75 %). The two collapsed cells
+    have the same structure to within one step — 400 / 401 draft steps, 109 / 110 accepted for 512 tokens — which is
+    what three requests with a dead drafter (≈1 token per step) plus one healthy request (≈42 steps) produce, and
+    the log shows `Running: 3` mid-cell where four were started. The target's text is unaffected as far as the probe
+    shows (the same 60-character opening as the healthy cells), so this is the drafter's per-request state, not the
+    model: the MTP layer carries a PLE short-conv state with a spec-step rollback and a reused step-0 QSA selection
+    (`compact_topk_indices`), either of which can go stale for a request without touching the target. Same family as
+    DJLougen's batch-geometry acceptance collapse. Per-request attribution (latency, full text, preemption counter)
+    over 10 repetitions at c = 1, 2, 3, 4, 5, 8 on three configs is running as `acceptcell2` → next finding. Until
+    then, **no MTP c ≥ 4 number is quotable** and the union/table decision rests on TTFT and the no-spec decode cells.

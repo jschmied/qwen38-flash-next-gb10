@@ -196,7 +196,7 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   BF16 dense (no FP8-dense lever), FP8 PLE/MTP byte-identical to Qwen FP8; their FP8-vs-NVFP4 table is within ±1 point on
   nine benchmarks. Decision: ignore for now — no expected intelligence difference; only a long-generation divergence check
   would tell, and that costs 74 GiB + a day. Revisit only on a concrete quality problem with RadixArk's experts.
-- **[2026-09-05] MTP c=4 second-repetition collapse** (finding 123): 95–98 tok/s then ~42 with prefix caching on, both
-  tables; log acceptance per repetition, repeat with cache off and with `FN_SPEC_NODROP=0`; compare to DJLougen's
-  batch-geometry acceptance collapse. Until then the MTP c≥4 cells are not quotable.
-
+- **[2026-09-05] MTP c=4 drafter collapse** (findings 123, 126): reproduced on 2 of 3 arms — table and prefix cache ruled
+  out, no preemption; structure = three dead drafters + one healthy request per collapsed cell. `acceptcell2` running:
+  per-request latency/text, 10 reps × c=1..8, trailing-block drop on/off, cache off. Then: read the PLE spec rollback
+  and `compact_topk_indices` against the trigger; compare with DJLougen's report. MTP c≥4 cells not quotable until closed.

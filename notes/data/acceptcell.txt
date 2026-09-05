@@ -1,0 +1,31 @@
+=== AC_stock  table=gb300 cache=on MTP3  11:13 ===
+    prefix_caching=enable_prefix_caching=True 
+  AC_stock CELL c=1 rep=0:   37.1 tok/s | drafts=46 draft_tok=138 accepted=83 rate=60.1% mean_len=2.80 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock CELL c=1 rep=1:   44.0 tok/s | drafts=39 draft_tok=117 accepted=88 rate=75.2% mean_len=3.26 | text0='# Code Review: `handler()` Function\n\n## Overview\n\nThe `handl'
+  AC_stock CELL c=1 rep=2:   42.9 tok/s | drafts=40 draft_tok=120 accepted=89 rate=74.2% mean_len=3.23 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock CELL c=4 rep=0:   94.2 tok/s | drafts=164 draft_tok=492 accepted=347 rate=70.5% mean_len=3.12 | text0='# Detailed Explanation of `handler()`\n\n## The Code\n\n```pytho'
+  AC_stock CELL c=4 rep=1:   93.9 tok/s | drafts=171 draft_tok=513 accepted=340 rate=66.3% mean_len=2.99 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock CELL c=4 rep=2:   94.5 tok/s | drafts=167 draft_tok=501 accepted=348 rate=69.5% mean_len=3.08 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock CELL c=16 rep=0:   98.5 tok/s | drafts=681 draft_tok=2043 accepted=1369 rate=67.0% mean_len=3.01 | text0='# Detailed Explanation of `handler()`\n\n## The Code\n\n```pytho'
+  AC_stock CELL c=16 rep=1:  101.3 tok/s | drafts=673 draft_tok=2019 accepted=1381 rate=68.4% mean_len=3.05 | text0='# Detailed Explanation of `handler()`\n\n## The Code\n\n```pytho'
+=== AC_gb10  table=gb10 cache=on MTP3  11:25 ===
+    prefix_caching=enable_prefix_caching=True 
+  AC_gb10 CELL c=1 rep=0:   39.6 tok/s | drafts=43 draft_tok=129 accepted=84 rate=65.1% mean_len=2.95 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_gb10 CELL c=1 rep=1:   43.4 tok/s | drafts=40 draft_tok=120 accepted=87 rate=72.5% mean_len=3.17 | text0='# Code Review: `handler()` Function\n\n## The Code\n\n```python\n'
+  AC_gb10 CELL c=1 rep=2:   39.2 tok/s | drafts=45 draft_tok=135 accepted=82 rate=60.7% mean_len=2.82 | text0='# Detailed Explanation of `handler()`\n\n## The Code\n\n```pytho'
+  AC_gb10 CELL c=4 rep=0:   94.6 tok/s | drafts=168 draft_tok=504 accepted=342 rate=67.9% mean_len=3.04 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_gb10 CELL c=4 rep=1:   96.9 tok/s | drafts=163 draft_tok=489 accepted=352 rate=72.0% mean_len=3.16 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_gb10 CELL c=4 rep=2:   42.8 tok/s | drafts=400 draft_tok=1200 accepted=109 rate=9.1% mean_len=1.27 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_gb10 CELL c=16 rep=0:   97.3 tok/s | drafts=674 draft_tok=2022 accepted=1382 rate=68.3% mean_len=3.05 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_gb10 CELL c=16 rep=1:   97.3 tok/s | drafts=678 draft_tok=2034 accepted=1373 rate=67.5% mean_len=3.03 | text0='Based on the code snippet provided, here is a detailed, step'
+=== AC_stock_nocache  table=gb300 cache=off MTP3  11:37 ===
+    prefix_caching=enable_prefix_caching=False 
+  AC_stock_nocache CELL c=1 rep=0:   40.3 tok/s | drafts=39 draft_tok=117 accepted=88 rate=75.2% mean_len=3.26 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock_nocache CELL c=1 rep=1:   40.9 tok/s | drafts=42 draft_tok=126 accepted=87 rate=69.0% mean_len=3.07 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock_nocache CELL c=1 rep=2:   40.9 tok/s | drafts=42 draft_tok=126 accepted=85 rate=67.5% mean_len=3.02 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock_nocache CELL c=4 rep=0:   89.5 tok/s | drafts=172 draft_tok=516 accepted=339 rate=65.7% mean_len=2.97 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock_nocache CELL c=4 rep=1:   42.3 tok/s | drafts=401 draft_tok=1203 accepted=110 rate=9.1% mean_len=1.27 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock_nocache CELL c=4 rep=2:   93.9 tok/s | drafts=165 draft_tok=495 accepted=347 rate=70.1% mean_len=3.10 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock_nocache CELL c=16 rep=0:   98.6 tok/s | drafts=672 draft_tok=2016 accepted=1378 rate=68.4% mean_len=3.05 | text0='Based on the code snippet provided, here is a detailed, step'
+  AC_stock_nocache CELL c=16 rep=1:   98.5 tok/s | drafts=668 draft_tok=2004 accepted=1385 rate=69.1% mean_len=3.07 | text0='# Detailed Explanation of `handler()`\n\n## The Code\n\n```pytho'
+== ALL DONE ==
