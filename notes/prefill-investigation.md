@@ -789,3 +789,31 @@
     ~3 % end to end is the ceiling of this design here, not an integration loss. A three-way (stock / GB10-tuned /
     union) under both cache states follows (`threeway`), then the server A/B of the tuned table (`tuchoice`).
 
+123. **Tuning vs union at the server (`tuchoice`, `notes/data/tuchoice.txt`): the GB10 split-K table gives −1.5 % / −1.3 %
+    TTFT and +8 % MTP single-stream decode; the union on top gives a further −1.9 % / −1.4 % TTFT; they stack.** One start
+    per arm, `--max-num-seqs 16`, 4 GiB KV, batch 4096. Cold arms: stock table, GB10 table, GB10 table + tile-union.
+    Warm arms (MTP n=3, prefix cache on): stock table, GB10 table.
+
+    | | stock table | GB10 table | GB10 table + union |
+    | --- | --- | --- | --- |
+    | TTFT 7,503 tok | 2.66 s | 2.62 s (−1.5 %) | 2.57 s (−3.4 %) |
+    | TTFT 29,263 tok | 10.38 s | 10.24 s (−1.3 %) | 10.10 s (−2.7 %) |
+    | 8k + 8k pair | 5.34 s | 5.29 s | 5.17 s (−3.2 %) |
+    | 30k + 8k pair | 13.02 s | 12.70 s (−2.5 %) | 12.56 s (−3.5 %) |
+    | decode no-spec, c = 1 / 4 / 16 | 24.7 / 65.1 / 146.0 | 24.2 / 67.7 / 147.1 | 22.7 / 68.9 / 149.0 |
+    | decode MTP 3, c = 1 | 39.2 | **42.4 (+8 %)** | — |
+    | decode MTP 3, c = 4 | 98.0 then 42.1 | 94.9 then 42.8 | — |
+    | decode MTP 3, c = 16 | 95.0 / 95.1 | 98.1 then 78.2 | — |
+    | agent loop, s/turn | 1.72 | 1.66 | — |
+
+    Reading: on prefill the union is worth twice the table (each is a 10 %-of-prefill kernel moved 1.05× vs 1.45×);
+    on decode only the table acts, and its real win is the MTP verify shape (4 rows per step): +8 % single-stream, the
+    one number a user of this box feels. No-spec decode at c=4 gains 4 %; c=1 and c=16 are within the 6.9 % decode noise
+    band (the union arm's 22.7 at c=1 included — the union never runs on decode rows; repeat before reading anything
+    into it). **Anomaly, both warm arms:** the MTP c=4 cell is bimodal — 95–98 tok/s on the first repetition, ~42 on the
+    second, with prefix caching on; c=16 on the GB10 arm shows the same drop (98 → 78). Not a table effect. Same shape as
+    DJLougen's acceptance collapse on batch geometry; the probe does not log acceptance — a dedicated check (acceptance
+    per repetition, cache on/off) is queued in the TODO before that cell is quoted anywhere.
+    Decision input: the table is the cheap PR (a device-keyed entry, +8 % MTP decode, −1.5 % TTFT); the union adds
+    −2 % TTFT on top for ~900 lines. Both are honest against #54873's kernel.
+
