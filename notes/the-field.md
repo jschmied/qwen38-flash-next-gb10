@@ -1003,3 +1003,21 @@ chunks) and the honest route is upstream.
   kit is unsafe (engine block = 8-token QSA ring instead of the 1,600-token Mamba block → zeroed Mamba state on hits;
   blazux has the two-file fix). Offers to run the batch/compile A/B once the quoting is fixed. Reply drafted.
 
+## 2026-09-05 — `nvidia/Qwen3.8-Flash-Next-NVFP4` (official NVIDIA release)
+
+Created 09-02, published 08-31 per the card, 123.6 GiB: 10 main shards (73.6 GiB) + one 50 GiB `model-fp8-mtp-ple.safetensors`.
+ModelOpt v0.46 MIXED_PRECISION: **routed experts W4A4 NVFP4 (group 16, MSE-calibrated weight scales, calibration =
+cnn_dailymail + Nemotron-Post-Training-Dataset-v2), everything else in the main model BF16** (attention, GDN, shared
+experts, hyper-connections, lm_head all in `exclude_modules`), MTP routed experts FP8 128×128 block-scaled, PLE per-tensor
+FP8; MTP + PLE byte-identical to `Qwen/Qwen3.8-Flash-Next-FP8`. Needs vLLM ≥ d4d703ca (= #54882, the mixed-ModelOpt FP8 PLE
+fix — in our dev401). Sample command is TP8. Their accuracy table (FP8 → NVFP4): GPQA 92.0 → 91.5, HLE 34.7 → 35.4,
+τ²-Telecom 90.8 → 90.1, MMMU Pro 77.1 → 78.3, SciCode 16.3 → 18.8, AA-LCR 71.9 → 74.1, IFBench 80.5 → 81.0, Omniscience
+28.1 → 27.6, Terminal-Bench 2.1 83.3 → 82.9 — within noise of FP8 on all nine.
+
+Against our stack: it is RadixArk's shape (NVFP4 experts + FP8 PLE) with **BF16 dense layers**, i.e. without our +39 %
+FP8-dense lever and the FP8 lm_head — so as shipped it decodes like the RadixArk baseline (~17–24 tok/s c=1), not like
+fp8head. What it may bring: better-calibrated expert scales (MSE + a richer set; primitive-ai/local-inference-lab argued
+the same) → a quality comparison by our logprob-divergence method, and an official MTP module. To use it at our speed we
+would apply the FP8-dense conversion on top. Disk: 60 GB free; the main shards alone are 73.6 GiB, the PLE/MTP file 50 GiB
+(ours is RadixArk's FP8 PLE — identity to Qwen FP8's not verified). **Not downloaded; needs the go and ~80–130 GB freed.**
+
