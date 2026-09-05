@@ -1,0 +1,12 @@
+trajs 86 (held-out 10); assistant tokens train 1,381,681 held 88,845; 4s
+code files 14066, tokens 41,631,829; 52s
+train occurrences 154,400,534 distinct 48,133; held-out assistant occurrences 88,845 distinct 2,048
+  size   8192: train coverage  95.90%   held-out assistant coverage  95.54%
+  size  16384: train coverage  98.80%   held-out assistant coverage  98.07%
+  size  32768: train coverage  99.88%   held-out assistant coverage  99.62%
+  size  65536: train coverage 100.00%   held-out assistant coverage  99.96%
+  size 131072: train coverage 100.00%   held-out assistant coverage  99.96%
+  size 16384: 98 kept tokens contain non-Latin chars (0.6%)
+  size 32768: 574 kept tokens contain non-Latin chars (1.8%)
+  size 65536: 1802 kept tokens contain non-Latin chars (2.7%)
+done /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/dv
