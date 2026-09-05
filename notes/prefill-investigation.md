@@ -686,3 +686,25 @@
     A/B on head 07a6d2a3 (expansion skipped for non-reused layers, tail-only zeroing, shared layout and workspace,
     int64 tails) — chain 2, queued.
 
+118. **Branch head 30f3446d (deferred items) at the server (`tuval2`, `notes/data/tuval2-30f3446d.txt`): −2.8 % TTFT
+    at 8k, −1.7 % at 30k, pairs −2.2 % / −1.6 %, warm turns unchanged; two starts; path lines per arm.** Same harness
+    as finding 117, one hour later, same off reference.
+
+    | | union (auto) | off | Δ | finding 117 (union) |
+    | --- | --- | --- | --- | --- |
+    | 7,503 tok | 2.58 / 2.57 s | 2.65 / 2.65 s | −2.8 % | 2.59 / 2.59 |
+    | 29,263 tok | 10.13 / 10.09 s | 10.28 / 10.28 s | −1.7 % | 10.15 / 10.14 |
+    | 8k + 8k pair | 5.20 / 5.19 s | 5.31 / 5.31 s | −2.2 % | 5.21 / 5.19 |
+    | 30k + 8k pair | 12.61 / 12.55 s | 12.80 / 12.79 s | −1.6 % | 12.57 / 12.74 |
+    | agent loop, s/turn | 1.69 | 1.72 | noise | 1.68 |
+
+    The deferred items — expansion skipped for layers the proposer never flags for reuse, tail-only output zeroing,
+    one row → tile layout per forward, one selection workspace per device, int64 tails — are worth 10–50 ms per
+    request (0.4 %), inside the run-to-run band but never negative, and the warm loop with MTP 3 confirms the
+    reuse flag: the drafter's layers kept their expansion, acceptance and turn times unchanged. Two defects the
+    kernel test cannot see surfaced only at the serve start (a `register_buffer` name clash, a `head_size` on the
+    wrong object); both are layer-construction/forward issues — the pytest never builds the owner layer.
+    Verdict for the PR body: **−2.8 % / −1.7 % TTFT on today's main, single-request and mixed-request batches
+    alike, no effect on decode or warm turns**; the −4.7 % / −3.7 % of finding 115 was against the older nightly's
+    stock kernel and is not the claim.
+

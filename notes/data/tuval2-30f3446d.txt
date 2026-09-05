@@ -1,0 +1,50 @@
+preflight OK 01:06
+=== TVauto_a  tile_union=auto cold  01:06 ===
+    init: 01:07:00 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;01:07:04 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;01:16:30 [qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4).; prefix_caching=enable_prefix_caching=False 
+  TVauto_a TTFT 8k: prompt_tokens=7503 median=2.58s  all=2.75 2.58 2.58
+  TVauto_a TTFT 30k: prompt_tokens=29263 median=10.13s  all=10.13 10.12 10.14
+  TVauto_a CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.20s  ttft_a=5.24 2.61 2.62  ttft_b=2.67 5.19 5.20
+  TVauto_a CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.61s  ttft_a=11.24 11.23 11.19  ttft_b=12.62 12.61 12.57
+=== TV0_a  tile_union=0 cold  01:18 ===
+    init:  prefix_caching=enable_prefix_caching=False 
+  TV0_a TTFT 8k: prompt_tokens=7503 median=2.65s  all=2.77 2.65 2.64
+  TV0_a TTFT 30k: prompt_tokens=29263 median=10.28s  all=10.28 10.28 10.31
+  TV0_a CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.31s  ttft_a=5.39 2.68 5.30  ttft_b=2.76 5.31 2.66
+  TV0_a CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.80s  ttft_a=11.40 11.38 11.38  ttft_b=12.81 12.79 12.79
+=== TVauto_b  tile_union=auto cold  01:30 ===
+    init: 01:30:42 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;01:30:47 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;01:39:41 [qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4).; prefix_caching=enable_prefix_caching=False 
+  TVauto_b TTFT 8k: prompt_tokens=7503 median=2.57s  all=2.71 2.57 2.56
+  TVauto_b TTFT 30k: prompt_tokens=29263 median=10.09s  all=10.07 10.09 10.09
+  TVauto_b CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.19s  ttft_a=2.71 2.60 2.62  ttft_b=5.28 5.17 5.19
+  TVauto_b CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.55s  ttft_a=11.20 11.17 11.15  ttft_b=12.57 12.55 12.52
+=== TV0_b  tile_union=0 cold  01:41 ===
+    init:  prefix_caching=enable_prefix_caching=False 
+  TV0_b TTFT 8k: prompt_tokens=7503 median=2.65s  all=2.78 2.64 2.65
+  TV0_b TTFT 30k: prompt_tokens=29263 median=10.28s  all=10.28 10.27 10.30
+  TV0_b CONC 8k+8k: prompt_tokens=7514 + 7514 wall_median=5.31s  ttft_a=2.76 5.31 2.67  ttft_b=5.39 2.67 5.30
+  TV0_b CONC 30k+8k: prompt_tokens=29275 + 7515 wall_median=12.79s  ttft_a=11.41 11.38 11.38  ttft_b=12.79 12.79 12.79
+=== WVauto  tile_union=auto warm  01:53 ===
+    init: 01:54:03 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;01:54:07 [qsa_tile_union.py:160] QSA tile-union prefill path enabled: QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, mi;02:05:27 [qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4).; prefix_caching=enable_prefix_caching=True 
+  WVauto turn 1:   3.70 s    28 tok  hits+      0  acc  51.5% len 2.55
+  WVauto turn 2:   1.44 s    37 tok  hits+   6400  acc  66.7% len 3.00
+  WVauto turn 3:   1.27 s    29 tok  hits+   6400  acc  70.4% len 3.11
+  WVauto turn 4:   1.29 s    19 tok  hits+   6400  acc  40.7% len 2.22
+  WVauto turn 5:   1.38 s    29 tok  hits+   6400  acc  63.3% len 2.90
+  WVauto turn 6:   1.58 s    30 tok  hits+   6400  acc  46.2% len 2.38
+  WVauto turn 7:   1.40 s    26 tok  hits+   6400  acc  50.0% len 2.50
+  WVauto turn 8:   1.49 s    31 tok  hits+   6400  acc  63.6% len 2.91
+  WVauto TOTAL 13.5 s over 8 turns  (1.69 s/turn)  229 tok  59.13 ms/tok
+  ACCEPT WVauto-post: drafts=85 draft_tok=255 accepted=144 rate=56.5%  mean_accept_len=2.69
+=== WV0  tile_union=0 warm  02:06 ===
+    init:  prefix_caching=enable_prefix_caching=True 
+  WV0 turn 1:   3.72 s    30 tok  hits+      0  acc  60.6% len 2.82
+  WV0 turn 2:   1.43 s    40 tok  hits+   6400  acc  83.3% len 3.50
+  WV0 turn 3:   1.27 s    26 tok  hits+   6400  acc  59.3% len 2.78
+  WV0 turn 4:   1.42 s    27 tok  hits+   6400  acc  48.5% len 2.45
+  WV0 turn 5:   1.25 s    28 tok  hits+   6400  acc  87.5% len 3.62
+  WV0 turn 6:   1.52 s    34 tok  hits+   6400  acc  63.9% len 2.92
+  WV0 turn 7:   1.68 s    32 tok  hits+   6400  acc  42.9% len 2.29
+  WV0 turn 8:   1.50 s    32 tok  hits+   6400  acc  66.7% len 3.00
+  WV0 TOTAL 13.8 s over 8 turns  (1.72 s/turn)  249 tok  55.38 ms/tok
+  ACCEPT WV0-post: drafts=88 draft_tok=264 accepted=166 rate=62.9%  mean_accept_len=2.89
+== ALL DONE ==
