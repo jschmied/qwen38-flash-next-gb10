@@ -10,7 +10,7 @@ Agreed on all three points, and thanks for the direction — numbers below.
 | 30k chunk, 3,407 rows at 7.5k ctx | 14.2 ms | 7.3 ms (1.9×) | 8.3 ms (1.71×) |
 | tail, 283 rows at 12k ctx | 1.19 ms | 0.73 ms (1.6×) | 0.84 ms (1.41×) |
 
-(`tools/qsa_union_test.py` in the repo linked from the RFC; data `notes/data/qsaunion15.txt`, `tuval*.txt`.) One caveat we found on the way, which is the answer to your "depends on the input data": these replays put the K/V of 18 pages in the cache, i.e. beyond the 24 MiB L2. With a 3-page cache the split-K kernel runs the same 8k chunk in 9.4 ms, not 14.6, and the union's edge shrinks accordingly — the union pays off when the gathers miss L2.
+(`tools/qsa_union_test.py` in the repo linked from the RFC; data `notes/data/qsaunion15.txt`, `tuval*.txt`.) One correction to those numbers that I only found while preparing this: the 14.6 ms baseline is the **pre-#54873** split-K kernel — our nightly (`dev401`, 8340fe1bb) was built an hour before your improvement merged, and the venv carried the old kernel until we overlaid the branch onto it. Your kernel runs the same 8k chunk in 9.4 ms. Against it the union is 1.50× (6.3 ms) on the 8k chunk and 1.42× on the 7.5k-context chunk (`tools/qsa_three_way.py`, same dumps, cache spread over 64 pages or not — no difference, so this is not an L2 effect). So the honest kernel-level number for the union over current main is ~1.5×, not 2.7×.
 
 **2. Where the 2.7× goes end to end — torch-profiler traces of one 7.5k-token request in the server, union on vs off, same branch:**
 
@@ -22,7 +22,7 @@ Agreed on all three points, and thanks for the direction — numbers below.
 | all QSA-related kernels, share of GPU time | 7.4 % of 2.55 s | 10.5 % of 2.59 s |
 | TTFT of the profiled request | 2.64 s | 2.69 s |
 
-So in situ the union kernel is 1.45× the split-K kernel, not 2.7×, and the integration costs nothing (0.15 ms idle per call, 3 µs launch gap): −83 ms of kernel, +4 ms of glue, +3 ms idle = −76 ms = the 2.9 % we see. The replay was an honest measurement of the wrong cache state in both directions: with 18 pages in the cache the split-K kernel's gathers all miss L2 (14.6 ms), while an 8k prompt's ~25 MiB of K/V straddles the 24 MiB L2 in the server (11.0 ms); the union kernel gains less from that and its second chunk's union is wider (7.6 vs 5.4 ms). And the attention is 10 % of prefill to begin with. So ~3 % is this design's ceiling on this box, not an integration loss. I would not merge #55430 on that basis either; I'll mark it draft and leave it as the reference for the design, unless the SM120/GB300 numbers someone else collects with the override say otherwise.
+So in situ the union kernel is 1.45× the split-K kernel — consistent with the corrected replay — and the integration costs nothing (0.15 ms idle per call, 3 µs launch gap): −83 ms of kernel, +4 ms of glue, +3 ms idle = −76 ms = the 2.9 % we see. The attention is 10 % of prefill, so ~3 % is this design's ceiling on this box. I would not merge #55430 on that basis either; I'll mark it draft and leave it as the reference for the design, unless the SM120/GB300 numbers someone else collects with the override say otherwise.
 
 **3. Retuning the split-K kernel on GB10 — done as a sweep, and it is the better first PR.** `_select_config` swept over BN ∈ {16, 32, 64, 128} × warps ∈ {1, 2, 4, 8} × target splits ∈ {1 … 64} per dispatch region, on the same captured prefill chunks plus synthetic uniform decode/verify batches (one run per cell so far):
 

@@ -1,0 +1,20 @@
+INFO 09-05 09:38:41 [qsa_tile_union.py:144] QSA tile-union path forced on (VLLM_QSA_TILE_UNION=1) with tile QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, num_warps=4, min_rows=1024, min_rows_per_request=64); not tuned for this device unless you measured it.
+sel_002_3813.pt rows=3813 ctx=3815 [L2-resident, 3 pages]: stock   9445.0 us | tuned(BN32,w8)   8977.4 us (x1.05, diff 5e-04) | union   6291.5 us (x1.50, diff 1e-03)
+sel_002_3813.pt rows=3813 ctx=3815 [DRAM-bound, 64 pages]: stock   9412.5 us | tuned(BN32,w8)   8944.5 us (x1.05, diff 2e-04) | union   6287.8 us (x1.50, diff 1e-03)
+sel_024_3407.pt rows=3407 ctx=7503 [L2-resident, 5 pages]: stock  11365.7 us | tuned(BN32,w8)  11019.3 us (x1.03, diff 6e-05) | union   7976.0 us (x1.42, diff 1e-04)
+sel_024_3407.pt rows=3407 ctx=7503 [DRAM-bound, 64 pages]: stock  11374.5 us | tuned(BN32,w8)  10984.7 us (x1.04, diff 6e-05) | union   8043.4 us (x1.41, diff 1e-04)
+Traceback (most recent call last):
+  File "/opt/llm/runners/qsa_three_way.py", line 73, in <module>
+    t_union = timeit(lambda: Q.qsa_sparse_paged_attention(q, k, v, logical, bt, t2r, True, out, tile_union=inputs))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/llm/runners/qsa_three_way.py", line 28, in timeit
+    fn(); torch.cuda.synchronize(); out = []
+    ^^^^
+  File "/opt/llm/runners/qsa_three_way.py", line 73, in <lambda>
+    t_union = timeit(lambda: Q.qsa_sparse_paged_attention(q, k, v, logical, bt, t2r, True, out, tile_union=inputs))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/qsa.py", line 530, in qsa_sparse_paged_attention
+    raise RuntimeError("QSA tile-union inputs given for an ineligible batch")
+RuntimeError: QSA tile-union inputs given for an ineligible batch
+  FAILED (rc=1)
+== ALL DONE ==

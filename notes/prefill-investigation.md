@@ -776,11 +776,15 @@
     | TTFT of the profiled request | 2.64 s | 2.69 s |
 
     Arithmetic: −83 ms of attention kernel, +4 ms of glue, +3 ms of idle = −76 ms ≈ 2.9 % — exactly the e2e gain of
-    findings 117/118. **Where the replay's 2.7× went:** the split-K kernel runs the same chunk in 11.0 ms in the
-    server vs 14.6 ms in the DRAM-bound replay (an 8k prompt's ~25 MiB of K/V straddles the 24 MiB L2, so its
-    gathers are cheaper than with an 18-page cache), while the union kernel takes 7.6 ms vs 5.4 ms in the replay
-    (it does not benefit from L2 the same way, and the second chunk's union is wider). Both replays were honest
-    measurements of the wrong cache state. The host side is not a factor: 0.15 ms idle per call, 3 µs launch gap.
+    findings 117/118. **Where the replay's 2.7× went — corrected by the three-way run (`threeway`,
+    `notes/data/threeway.txt`):** not the L2. With the cache spread over 64 pages the stock kernel still takes 9.4 ms
+    on the 8k dump, the same as with 3 pages; the 14.6 ms baseline of every union replay up to finding 115 was the
+    **pre-#54873 split-K kernel** (the dev401 nightly is 8340fe1bb, built 12:27 UTC on 09-04; #54873 "Improve QSA
+    sparse GQA for prefill and short-ctx decode" merged 13:08 UTC; the venv carried the old kernel until the branch
+    overlay that evening — its `ops/qsa.py.orig-dev401` has no packed count column). gau-nernst's kernel is 1.55×
+    faster than the one we measured against. Against it: replay 9.4 → 6.3 ms (1.50×), 7.5k-context chunk 11.4 → 8.0 ms
+    (1.42×), in situ 11.0 → 7.6 ms (1.45×) — consistent. The GB10-tuned config of finding 120 adds 1.03–1.05× on
+    top of stock in the same replay. The host side is not a factor: 0.15 ms idle per call, 3 µs launch gap.
     Consequence for the RFC: the union's real edge on this box is ~1.45× on a kernel that is 10 % of prefill — the
     ~3 % end to end is the ceiling of this design here, not an integration loss. A three-way (stock / GB10-tuned /
     union) under both cache states follows (`threeway`), then the server A/B of the tuned table (`tuchoice`).
