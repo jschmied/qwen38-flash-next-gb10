@@ -1483,3 +1483,15 @@ Plus whatever drives the separate generation-side path.
     One garbage flag (16k, start 1, c=4) was a false positive: coherent reasoning text repeating "Let me look at …".
     Lossless by construction — the verifier sees the full head; the slice only changes proposals.
 
+
+136. **cudagraph_mode is not a decode lever here: PIECEWISE, FULL_AND_PIECEWISE and FULL_DECODE_ONLY give the same MTP-3
+    decode on real agent prompts (`cg`, one start per arm, `notes/data/cg.txt`).** c=1 medians 26.5 / 26.2 / 26.5 tok/s,
+    c=4 46.9 / 43.4 / 45.4 tok/s (aggregate), acceptance 48–51 % in all arms — every difference inside the 5 % start-to-start
+    noise. The config echoed each mode, but the logs carry no capture messages for any arm, so whether the FULL modes
+    actually captured the hybrid GDN/QSA + PLE-offload forward or fell back silently is not established; either way the
+    dial does nothing as shipped. Together with the unprofiled step time (≈ AL / tok/s ≈ 72 ms at c=1, equal to the
+    73.5 ms of GPU-busy time in det-134) this closes the "46 % idle" question: it was profiler overhead, the c=1 decode
+    step is GPU-bound. Remaining decode levers in order: the small-M blockwise-FP8 GEMM (32 % of the step at 2.5× its byte
+    floor), the draft-vocab slice (det-135, measured +6–7 %), FP8 for the BF16 leftovers (shared expert, hc, router, MTP
+    dense; 16.5 %), and drafter quality (acceptance 41–50 % on agent traffic).
+

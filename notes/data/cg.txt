@@ -1,0 +1,34 @@
+=== CG_piecewise  cudagraph_mode=PIECEWISE MTP3  06:48 ===
+    mode_in_log=cudagraph_mode': <CUDAGraphMode.PIECEWISE captured=0
+  CG_CG_piecewise DV c=1 rep=0: accept=53.2% AL=2.60 | 200 tok in 7.5s = 26.5 tok/s agg, 26.5 per stream | garbage 0/1
+  CG_CG_piecewise DV c=1 rep=1: accept=47.6% AL=2.43 | 200 tok in 7.5s = 26.6 tok/s agg, 26.6 per stream | garbage 0/1
+  CG_CG_piecewise DV c=1 rep=2: accept=42.9% AL=2.29 | 200 tok in 7.9s = 25.5 tok/s agg, 25.5 per stream | garbage 0/1
+  CG_CG_piecewise DV c=1 rep=3: accept=68.7% AL=3.06 | 200 tok in 6.4s = 31.3 tok/s agg, 31.3 per stream | garbage 0/1
+  CG_CG_piecewise DV c=1 rep=4: accept=63.3% AL=2.90 | 200 tok in 6.7s = 30.0 tok/s agg, 30.0 per stream | garbage 0/1
+  CG_CG_piecewise DV c=1 rep=5: accept=48.4% AL=2.45 | 200 tok in 7.6s = 26.3 tok/s agg, 26.3 per stream | garbage 0/1
+  CG_CG_piecewise DV c=4 rep=0: accept=46.7% AL=2.40 | 800 tok in 10.6s = 75.6 tok/s agg, 18.9 per stream | garbage 0/4
+  CG_CG_piecewise DV c=4 rep=1: accept=52.6% AL=2.58 | 800 tok in 17.1s = 46.9 tok/s agg, 11.7 per stream | garbage 0/4
+  CG_CG_piecewise DV c=4 rep=2: accept=42.6% AL=2.28 | 800 tok in 18.7s = 42.9 tok/s agg, 10.7 per stream | garbage 0/4
+=== CG_fullpiece  cudagraph_mode=FULL_AND_PIECEWISE MTP3  07:03 ===
+    mode_in_log=cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE captured=0
+  CG_CG_fullpiece DV c=1 rep=0: accept=50.4% AL=2.51 | 200 tok in 7.8s = 25.6 tok/s agg, 25.6 per stream | garbage 0/1
+  CG_CG_fullpiece DV c=1 rep=1: accept=50.0% AL=2.50 | 200 tok in 7.5s = 26.8 tok/s agg, 26.8 per stream | garbage 0/1
+  CG_CG_fullpiece DV c=1 rep=2: accept=49.6% AL=2.49 | 200 tok in 7.4s = 27.0 tok/s agg, 27.0 per stream | garbage 0/1
+  CG_CG_fullpiece DV c=1 rep=3: accept=44.1% AL=2.32 | 200 tok in 7.8s = 25.5 tok/s agg, 25.5 per stream | garbage 0/1
+  CG_CG_fullpiece DV c=1 rep=4: accept=61.5% AL=2.85 | 200 tok in 6.8s = 29.4 tok/s agg, 29.4 per stream | garbage 0/1
+  CG_CG_fullpiece DV c=1 rep=5: accept=42.0% AL=2.26 | 200 tok in 8.0s = 25.1 tok/s agg, 25.1 per stream | garbage 0/1
+  CG_CG_fullpiece DV c=4 rep=0: accept=52.5% AL=2.57 | 800 tok in 10.3s = 77.5 tok/s agg, 19.4 per stream | garbage 0/4
+  CG_CG_fullpiece DV c=4 rep=1: accept=52.6% AL=2.58 | 800 tok in 18.4s = 43.4 tok/s agg, 10.8 per stream | garbage 0/4
+  CG_CG_fullpiece DV c=4 rep=2: accept=47.5% AL=2.43 | 800 tok in 18.7s = 42.8 tok/s agg, 10.7 per stream | garbage 0/4
+=== CG_fulldecode  cudagraph_mode=FULL_DECODE_ONLY MTP3  07:19 ===
+    mode_in_log=cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY captured=0
+  CG_CG_fulldecode DV c=1 rep=0: accept=51.1% AL=2.53 | 200 tok in 7.7s = 26.0 tok/s agg, 26.0 per stream | garbage 0/1
+  CG_CG_fulldecode DV c=1 rep=1: accept=49.8% AL=2.49 | 200 tok in 7.6s = 26.3 tok/s agg, 26.3 per stream | garbage 0/1
+  CG_CG_fulldecode DV c=1 rep=2: accept=40.4% AL=2.21 | 200 tok in 8.0s = 24.9 tok/s agg, 24.9 per stream | garbage 0/1
+  CG_CG_fulldecode DV c=1 rep=3: accept=55.6% AL=2.67 | 200 tok in 7.0s = 28.6 tok/s agg, 28.6 per stream | garbage 0/1
+  CG_CG_fulldecode DV c=1 rep=4: accept=74.7% AL=3.24 | 200 tok in 6.2s = 32.1 tok/s agg, 32.1 per stream | garbage 0/1
+  CG_CG_fulldecode DV c=1 rep=5: accept=54.1% AL=2.62 | 200 tok in 7.5s = 26.6 tok/s agg, 26.6 per stream | garbage 0/1
+  CG_CG_fulldecode DV c=4 rep=0: accept=52.9% AL=2.59 | 800 tok in 10.4s = 76.7 tok/s agg, 19.2 per stream | garbage 0/4
+  CG_CG_fulldecode DV c=4 rep=1: accept=51.9% AL=2.56 | 800 tok in 17.8s = 44.9 tok/s agg, 11.2 per stream | garbage 0/4
+  CG_CG_fulldecode DV c=4 rep=2: accept=48.1% AL=2.44 | 800 tok in 17.6s = 45.4 tok/s agg, 11.4 per stream | garbage 0/4
+== ALL DONE == 07:34
