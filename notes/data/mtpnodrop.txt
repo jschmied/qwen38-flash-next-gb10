@@ -1,0 +1,23 @@
+=== arm ON  20:46 ===
+  cmdline_spec: 
+  cfg_nodrop:   
+  spec_method:     QSADET=1
+  toolcall: [{"id": "chatcmpl-tool-8f6431e3fc4fccf5", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Berlin\"}"}}] | finish= tool_calls
+  turn1 total=2.494255s
+  turn2 total=2.333031s
+vllm:spec_decode_num_draft_tokens_total{engine="0",model_name="flashnext"} 219.0
+vllm:spec_decode_num_accepted_tokens_total{engine="0",model_name="flashnext"} 210.0
+vllm:prefix_cache_queries_total{engine="0",model_name="flashnext"} 319.0
+vllm:prefix_cache_hits_total{engine="0",model_name="flashnext"} 0.0
+=== arm OFF  20:57 ===
+  cmdline_spec: 
+  cfg_nodrop:   
+  spec_method:     QSADET=1
+  toolcall: [{"id": "chatcmpl-tool-a2dd40307e7eb9c9", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Berlin\"}"}}] | finish= tool_calls
+  turn1 total=2.482792s
+  turn2 total=2.335999s
+vllm:spec_decode_num_draft_tokens_total{engine="0",model_name="flashnext"} 219.0
+vllm:spec_decode_num_accepted_tokens_total{engine="0",model_name="flashnext"} 210.0
+vllm:prefix_cache_queries_total{engine="0",model_name="flashnext"} 319.0
+vllm:prefix_cache_hits_total{engine="0",model_name="flashnext"} 0.0
+== ALL DONE == 21:09

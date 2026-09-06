@@ -1577,3 +1577,21 @@ Plus whatever drives the separate generation-side path.
     (full 1,460-position vector hash `17450eec` ×16; 32-token completions 16/16), a tool-call request returns a well-formed
     `tool_calls` finish, speculation live (single-sample acceptance not quoted). Every quality number taken on this build
     between the #53899 port (2026-09-03) and now was measured one PLE step behind and is due for a re-measure.
+
+140. **`FN_MTP` now defaults `disable_eagle_block_drop` on — installed, but the validation start did NOT
+    exercise it (2026-09-06 20:46–21:09, `mtpnodrop`, `notes/data/mtpnodrop.txt`).** The launcher
+    (`/opt/llm/serve-fnmain.sh`, backup `.pre-mtpnodrop`) builds the MTP shortcut's JSON through
+    `FN_SPEC_NODROP:-1`, so the prod recipe now emits
+    `{"method":"mtp","num_speculative_tokens":3,"disable_eagle_block_drop":true}`; `FN_SPEC_NODROP=0`
+    drops the key again. Parsing verified offline against the fnmain2 venv (`EngineArgs.add_cli_args`
+    → `{'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True}` vs `<absent>`).
+    **What the two server arms proved and did not prove:** both started, tool calls parsed
+    (`finish_reason: tool_calls`), acceptance 210/219 draft tokens, `QSADET active` — but the ON and OFF
+    arms returned *byte-identical* counters (219/210 draft/accepted, 319 prefix-cache queries,
+    **0 hits in both**), because the probe sent only two identical turns and the first repetition never
+    hits (memory `prefix-cache-align-mode-dead`). With zero cache hits the flag has nothing to act on,
+    so the arms cannot differ. Two further traps found: the engine's `speculative_config=SpeculativeConfig(...)`
+    summary line **truncates before** `disable_eagle_block_drop`, and the launcher `exec`s vLLM so the
+    command line never reaches the log — neither is a usable gate. **Open:** a warm-turn probe of ≥4
+    identical turns (or `agentloop2.py`, which grows its prefix) × 3 starts, on the re-measurement stack
+    of item 3 — finding 141's −26 % is itself inside the one-PLE-step-behind window.
