@@ -1107,3 +1107,28 @@
     TTFT). That is the ask for FlashInfer (issue #4990 needs a correction: not occupancy, DRAM-bound + missing fusions;
     follow-up drafted in `notes/upstream/comment-fi-4990-correction.md`, not posted).
 
+    **Correction (same day, finding 145):** the "never fused on SM120" statement in (c) was an artefact of my harness:
+    FlashInfer's `profile_ids` is dead in 0.6.17 and, outside an `autotune()` context, the runner uses the fallback
+    tactic (-1), which has no finalize fusion. The served vLLM path autotunes at warmup and the server traces show the
+    fused-finalize GEMM2 (scatter epilogue) on every prefill layer with no `finalizeMoeRoutingKernel`; the decode buckets
+    mostly pick the plain GEMM2 + finalize kernel. The activation-fusion ask stands; the finalize ask does not.
+
+
+145. **A genuine FlashInfer MoE tactic sweep (through the autotuner, forcing one candidate at a time) shows the autotuner
+    already finds the best GEMM2 tactic, and that every earlier "tactic sweep" on this box measured the fallback tactic
+    (`tools/moe_fin4.py`, `notes/data/moe_fin4.txt`, M=7503).** Mechanics: `cutlass_fused_moe(..., profile_ids=[t1, t2])`
+    accepts the argument and ignores it (the tactics come from `AutoTuner.choose_one`; outside `autotune(True)` that is the
+    fallback tactic −1, i.e. the first config of each GEMM's list), so finding 78's "tactics 0–31 / 0–63 all within ±2 %"
+    and today's `moe_fin2` were all the same fallback run. Forcing works only by monkeypatching `MoERunner.get_valid_tactics`
+    (closure class, reached via `inspect.getclosurevars(module.cutlass_fused_moe)`) inside `autotune(True)`. GB10 has 20
+    GEMM1 and 40 GEMM2 tactics (all occupancy 1). Results per layer call: fallback 14,070 µs (GEMM2 4.26 ms + separate
+    finalize 1.82 ms); **autotuned 13,466 µs** (−4.3 %): GEMM2 with the fused-finalize scatter epilogue 5.12 ms, no finalize
+    kernel; the best forced id (56, same epilogue) 13,485. The fused variants are interleaved in the list (rel 16, 32, 36 …),
+    not a contiguous half; the swap-AB scatter variant is slower (6.5 ms). Numerics: the fused finalize changes the output
+    checksum by −0.58 % (L1 sum 6.1368e11 → 6.1013e11) against the unfused path — the scatter accumulates the top-10
+    partials with atomics in a different precision/order; that is the nondeterminism our PR #54948 gates, and it is also a
+    small precision difference worth a logprob check on real prompts. Served prefill uses the fused variant (trace: 96 scatter
+    GEMM2 launches per 30k prefill, zero finalize kernels); served decode buckets mostly use the plain GEMM2 + finalize kernel
+    (2,736 plain vs 48 scatter launches in the c=1 trace). MoE lever status after this: GEMM1 at the DRAM floor (144),
+    finalize fusion already on, activation fusion into GEMM1's epilogue (~1.2 ms/layer) is the one remaining kernel ask.
+

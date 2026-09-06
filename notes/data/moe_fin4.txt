@@ -1,0 +1,14 @@
+arch 121: gemm1 tactics 20, gemm2 tactics 40; occupancy of gemm2 ids: [1, 1, 1, 1, 1, 1, 1, 1]
+  default: total   14070 us | GEMM   9844 us: 9844us[LinearCombination]x2 | finalize  1824 us | act 1178 | checksum 6.136755e+11
+  autotuned: total   13466 us | GEMM  10899 us: 5775us[LinearCombination]x1 5124us[ScaledAccPerRowBiasPerColScaleScatterINS]x1 | finalize     0 us | act 1136 | checksum 6.101278e+11
+  gemm2 id  20 (rel  0): total   14138 us | GEMM   9883 us: 5623us[LinearCombination]x1 4259us[LinearCombination]x1 | finalize  1853 us | act 1202 | checksum 6.136755e+11
+  gemm2 id  24 (rel  4): total   14410 us | GEMM  10140 us: 5877us[LinearCombination]x1 4264us[LinearCombination]x1 | finalize  1868 us | act 1181 | checksum 6.136755e+11
+  gemm2 id  28 (rel  8): total   14270 us | GEMM  10071 us: 5496us[LinearCombination]x1 4575us[LinearCombination]x1 | finalize  1853 us | act 1147 | checksum 6.136755e+11
+  gemm2 id  32 (rel 12): total   14107 us | GEMM   9862 us: 5606us[LinearCombination]x1 4256us[LinearCombination]x1 | finalize  1840 us | act 1174 | checksum 6.136755e+11
+  gemm2 id  36 (rel 16): total   14677 us | GEMM  12116 us: 6512us[ScaledAccPerColBiasPerRowScaleScatterINS]x1 5604us[LinearCombination]x1 | finalize     0 us | act 1181 | checksum 6.101280e+11
+  gemm2 id  40 (rel 20): total   14035 us | GEMM   9762 us: 5549us[LinearCombination]x1 4212us[LinearCombination]x1 | finalize  1871 us | act 1181 | checksum 6.136755e+11
+  gemm2 id  44 (rel 24): total   14260 us | GEMM   9939 us: 5613us[LinearCombination]x1 4326us[LinearCombination]x1 | finalize  1876 us | act 1202 | checksum 6.136755e+11
+  gemm2 id  48 (rel 28): total   14059 us | GEMM   9839 us: 9839us[LinearCombination]x2 | finalize  1859 us | act 1168 | checksum 6.136755e+11
+  gemm2 id  52 (rel 32): total   15591 us | GEMM  12965 us: 7321us[ScaledAccPerRowBiasPerColScaleScatterINS]x1 5644us[LinearCombination]x1 | finalize     0 us | act 1166 | checksum 6.101277e+11
+  gemm2 id  56 (rel 36): total   13485 us | GEMM  10917 us: 5586us[LinearCombination]x1 5331us[ScaledAccPerRowBiasPerColScaleScatterINS]x1 | finalize     0 us | act 1177 | checksum 6.101279e+11
+best GEMM2 tactics: [(56, 13485), (40, 14035), (48, 14059), (32, 14107), (20, 14138)] | default total 14070
