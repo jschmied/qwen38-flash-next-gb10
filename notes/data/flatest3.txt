@@ -1,0 +1,30 @@
+--- 7503 1 ar
+vendored A ok
+--- 7503 1 an
+fused A ok
+--- 7503 1 c
+T=7503 varlen=True A: max|diff| 1.953e-03 mean 1.21e-05 |A|max 1.000 nan_new=False
+unfused forward ok: |o|max 1.445 nan=False
+fused forward ok: |o|max 1.445 nan=False
+forward o max|diff| 7.812e-03  state max|diff| 4.617e-03
+--- 2048 0 c
+T=2048 varlen=False A: max|diff| 1.953e-03 mean 1.22e-05 |A|max 1.000 nan_new=False
+unfused forward ok: |o|max 1.367 nan=False
+fused forward ok: |o|max 1.367 nan=False
+forward o max|diff| 7.812e-03  state max|diff| 3.623e-03
+--- 16384 1 c
+T=16384 varlen=True A: max|diff| 1.953e-03 mean 1.21e-05 |A|max 1.000 nan_new=False
+unfused forward ok: |o|max 1.492 nan=False
+fused forward ok: |o|max 1.492 nan=False
+forward o max|diff| 7.812e-03  state max|diff| 4.613e-03
+--- 333 1 c
+T=333 varlen=True A: max|diff| 1.953e-03 mean 1.16e-05 |A|max 1.000 nan_new=False
+unfused forward ok: |o|max 1.133 nan=False
+fused forward ok: |o|max 1.133 nan=False
+forward o max|diff| 3.906e-03  state max|diff| 4.191e-03
+--- 5000 1 c
+T=5000 varlen=True A: max|diff| 1.953e-03 mean 1.21e-05 |A|max 1.000 nan_new=False
+unfused forward ok: |o|max 1.391 nan=False
+fused forward ok: |o|max 1.391 nan=False
+forward o max|diff| 7.812e-03  state max|diff| 4.181e-03
+== ALL DONE ==

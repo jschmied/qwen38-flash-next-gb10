@@ -1,0 +1,81 @@
+applied
+=== BLK512  FN_KEEP_BLOCK=1 --block-size 512  MTP3 prefix-cache on KV 16G  08:58 ===
+(Worker pid=3341394) INFO 09-06 09:09:59 [interface.py:937] FN_KEEP_BLOCK: keeping attention block size 512 (derived minimum was 2048); attention pages will be padded to the mamba page.
+(EngineCore pid=3341292) INFO 09-06 09:10:54 [kv_cache_utils.py:2345] GPU KV cache size: 348,195 tokens, Maximum concurrency for 32,768 tokens per request: 10.63x
+  BLK512 A base: prompt_tokens=20076 cold=8.25s second=0.25s hits/queries=19968/20076
+  BLK512 A N=   16: prompt_tokens=20109 ttft median=0.274s all=0.287 0.274 0.272 hits/queries(last)=19968/20109
+  BLK512 A N=   64: prompt_tokens=20215 ttft median=0.305s all=0.315 0.305 0.304 hits/queries(last)=19968/20215
+  BLK512 A N=  256: prompt_tokens=20628 ttft median=0.545s all=0.556 0.544 0.545 hits/queries(last)=19968/20628
+  BLK512 A N= 1024: prompt_tokens=22320 ttft median=1.112s all=1.112 1.112 1.111 hits/queries(last)=19968/22320
+  BLK512 A N= 4096: prompt_tokens=29046 ttft median=3.575s all=3.575 3.565 3.577 hits/queries(last)=19968/29046
+  BLK512 A FIT: ttft = 265 ms + new_tokens / 2728 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  BLK512 C tokenize(+template) of 20149 tokens: 37 ms
+  BLK512 C tokenize(+template) of 86 tokens: 3 ms
+  BLK512 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.103s hits/queries=0/1840
+  BLK512 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.338s hits/queries=1536/1936
+  BLK512 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.914s hits/queries=1536/2856
+  BLK512 B turn= 4: prompt_tokens=  3650 new=  794 ttft=0.766s hits/queries=2560/3650
+  BLK512 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.366s hits/queries=3584/4025
+  BLK512 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.616s hits/queries=3584/4216
+  BLK512 B turn= 7: prompt_tokens=  5011 new=  795 ttft=0.752s hits/queries=4096/5011
+  BLK512 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.515s hits/queries=4608/5139
+  BLK512 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.638s hits/queries=4608/5264
+  BLK512 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.661s hits/queries=5120/5748
+  BLK512 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.305s hits/queries=5632/5857
+  BLK512 B turn=12: prompt_tokens=  6612 new=  755 ttft=0.802s hits/queries=5632/6612
+  BLK512 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.750s hits/queries=6144/7004
+  BLK512 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.643s hits/queries=6656/7286
+  BLK512 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.352s hits/queries=7168/7520
+  BLK512 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.527s hits/queries=7168/7702
+  BLK512 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.721s hits/queries=7168/7912
+  BLK512 B turn=18: prompt_tokens=  8147 new=  235 ttft=0.405s hits/queries=7680/8147
+  BLK512 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.580s hits/queries=7680/8246
+  BLK512 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.337s hits/queries=8192/8459
+  BLK512 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.631s hits/queries=8192/8784
+  BLK512 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.361s hits/queries=8704/9026
+  BLK512 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.715s hits/queries=8704/9413
+  BLK512 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.036s hits/queries=9216/10923
+  BLK_BLK512 DV c=1 rep=0: accept=41.6% AL=2.25 | 200 tok in 8.0s = 25.0 tok/s agg, 25.0 per stream | garbage 0/1
+  BLK_BLK512 DV c=1 rep=1: accept=45.0% AL=2.35 | 200 tok in 7.9s = 25.4 tok/s agg, 25.4 per stream | garbage 0/1
+  BLK_BLK512 DV c=1 rep=2: accept=70.3% AL=3.11 | 200 tok in 6.4s = 31.3 tok/s agg, 31.3 per stream | garbage 0/1
+=== BLK1024  FN_KEEP_BLOCK=1 --block-size 1024  MTP3 prefix-cache on KV 16G  09:13 ===
+(Worker pid=3345680) INFO 09-06 09:24:34 [interface.py:937] FN_KEEP_BLOCK: keeping attention block size 1024 (derived minimum was 2048); attention pages will be padded to the mamba page.
+(EngineCore pid=3345594) INFO 09-06 09:25:29 [kv_cache_utils.py:2345] GPU KV cache size: 317,797 tokens, Maximum concurrency for 32,768 tokens per request: 9.70x
+  BLK1024 A base: prompt_tokens=20076 cold=8.92s second=0.43s hits/queries=19456/20076
+  BLK1024 A N=   16: prompt_tokens=20109 ttft median=0.452s all=0.468 0.452 0.443 hits/queries(last)=19456/20109
+  BLK1024 A N=   64: prompt_tokens=20215 ttft median=0.488s all=0.495 0.488 0.483 hits/queries(last)=19456/20215
+  BLK1024 A N=  256: prompt_tokens=20628 ttft median=0.748s all=0.754 0.745 0.748 hits/queries(last)=19456/20628
+  BLK1024 A N= 1024: prompt_tokens=22320 ttft median=1.288s all=1.281 1.288 1.289 hits/queries(last)=19456/22320
+  BLK1024 A N= 4096: prompt_tokens=29046 ttft median=3.812s all=3.823 3.812 3.811 hits/queries(last)=19456/29046
+  BLK1024 A FIT: ttft = 444 ms + new_tokens / 2679 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  BLK1024 C tokenize(+template) of 20149 tokens: 23 ms
+  BLK1024 C tokenize(+template) of 86 tokens: 2 ms
+  BLK1024 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.107s hits/queries=0/1840
+  BLK1024 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.510s hits/queries=1024/1936
+  BLK1024 B turn= 3: prompt_tokens=  2856 new=  920 ttft=1.075s hits/queries=1024/2856
+  BLK1024 B turn= 4: prompt_tokens=  3650 new=  794 ttft=0.992s hits/queries=2048/3650
+  BLK1024 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.547s hits/queries=3072/4025
+  BLK1024 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.812s hits/queries=3072/4216
+  BLK1024 B turn= 7: prompt_tokens=  5011 new=  795 ttft=0.547s hits/queries=4096/5011
+  BLK1024 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.709s hits/queries=4096/5139
+  BLK1024 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.918s hits/queries=4096/5264
+  BLK1024 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.488s hits/queries=5120/5748
+  BLK1024 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.516s hits/queries=5120/5857
+  BLK1024 B turn=12: prompt_tokens=  6612 new=  755 ttft=0.995s hits/queries=5120/6612
+  BLK1024 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.529s hits/queries=6144/7004
+  BLK1024 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.837s hits/queries=6144/7286
+  BLK1024 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.353s hits/queries=7168/7520
+  BLK1024 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.417s hits/queries=7168/7702
+  BLK1024 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.487s hits/queries=7168/7912
+  BLK1024 B turn=18: prompt_tokens=  8147 new=  235 ttft=0.576s hits/queries=7168/8147
+  BLK1024 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.766s hits/queries=7168/8246
+  BLK1024 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.335s hits/queries=8192/8459
+  BLK1024 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.457s hits/queries=8192/8784
+  BLK1024 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.537s hits/queries=8192/9026
+  BLK1024 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.887s hits/queries=8192/9413
+  BLK1024 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.056s hits/queries=9216/10923
+  BLK_BLK1024 DV c=1 rep=0: accept=50.0% AL=2.50 | 200 tok in 7.4s = 26.9 tok/s agg, 26.9 per stream | garbage 0/1
+  BLK_BLK1024 DV c=1 rep=1: accept=46.0% AL=2.38 | 200 tok in 7.9s = 25.2 tok/s agg, 25.2 per stream | garbage 0/1
+  BLK_BLK1024 DV c=1 rep=2: accept=46.8% AL=2.40 | 200 tok in 7.7s = 26.0 tok/s agg, 26.0 per stream | garbage 0/1
+reverted
+== ALL DONE == 09:29

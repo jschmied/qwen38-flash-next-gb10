@@ -1050,3 +1050,37 @@
     span k attention pages so the attention block can stay small (≈ −0.4 s per warm turn, −65 %). The small-M MoE
     inefficiency is the second half of the same turn.
 
+
+142. **Small prefix-cache block on the hybrid (`blk`, FN_KEEP_BLOCK overlay: keep `--block-size`, pad attention pages to the
+    Mamba page; block 512 and 1024 vs the forced 1600; MTP-3, prefix cache on, 16 GB KV, one start each, `notes/data/blk.txt`):
+    the overlay works and the regression intercept falls as designed, but the real-turn median does not follow.**
+    Server: "keeping attention block size 512 (derived minimum was 2048)"; KV capacity 348k tokens at 512 / 318k at 1024
+    (vs 76k at 1600 with 4 GB, i.e. the padding costs far less than my per-block estimate — the QSA ring pages scale by
+    block instead of padding). Generation sanity clean (acceptance 42–70 %, no garbage). Regression over the 20k cached
+    prefix: 1600 → `485 ms + N/2613`; **512 → `265 ms + N/2728`** (108 instead of 876 tokens recomputed on the base);
+    1024 → `444 ms + N/2679` (620 residual on that base). Trajectory replay, 23 warm turns, new tokens median 242:
+
+    | block | recomputed tokens (median) | TTFT median | TTFT mean |
+    | --- | --- | --- | --- |
+    | 1600 (finding 141) | 1,026 | 0.592 s | 0.660 s |
+    | 1024 | 953 | **0.547 s** | 0.667 s |
+    | 512 | 628 | 0.631 s | 0.597 s |
+
+    Reading: halving the recomputed tokens does not halve the turn because the remaining ~600-token prefill runs at the
+    small-M rate (finding 141: ~1.7k tok/s at M≈900, MoE grouped GEMM latency-bound, finding 137) plus ~100 ms of extra
+    per-turn cost at 3× the block count; the fixed 20k-prefix regression sees the full gain (−220 ms), real turns see
+    −10 % on the mean at 512 and −8 % on the median at 1024, inside one-start noise. Verdict: the block lever is real but
+    gated on small-M prefill efficiency; not worth an upstream proposal until the MoE small-M problem moves. The overlay
+    (`tools/blk_patch.py`) is kept for that day.
+
+143. **FLA fused kkt+solve port: correct and −7…−12 % on the whole GDN chunked forward (`flatest`/`flatest3`, branch
+    `fla-fused-kkt-solve` in vllm-mambafix, `notes/data/flatest*.txt`).** Two porting traps, both mine: fla-core scales the
+    gate cumsum by 1/ln2 and uses exp2, the vendored pipeline keeps the natural log and exp — with exp2 the A tensor was
+    5e-2 off and the forward wrong; and fla-core hard-wires tf32 in the solve where the vendored `solve_tril` reads
+    `FLA_TRIL_PRECISION` (default ieee) — the port now reads the same knob. With both fixed, A matches the two-kernel path
+    within 1.95e-3 (a quarter bf16 ulp) and the full `chunk_gated_delta_rule` output within one bf16 ulp (7.8e-3 at |o|≈1.4)
+    at T = 333, 2048, 5000, 7503, 16384, varlen included. Timing (H=16, HV=48, K=V=128): kkt+solve 394 → 189 µs at 2048,
+    1,466 → 799 at 7503, 3,274 → 1,823 at 16384, 6,814 → 3,687 at 29263 (1.8–2.1×); whole forward −11.8 / −9.5 / −7.4 /
+    −8.7 %. My first two test harnesses produced NaN and an illegal address by giving q the value-head count; q shares the
+    16 key heads. PR body drafted (`notes/upstream/pr-fla-fused-kkt-solve.md`); opening it needs the user's go.
+

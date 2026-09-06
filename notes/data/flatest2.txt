@@ -1,0 +1,39 @@
+=== FLA_TRIL_PRECISION=ieee 09:33 ===
+[ieee] T= 7503 varlen=True: A max|diff| 5.273e-02 (rel 5.3e-02, mean 1.7e-03) | forward o max|diff| nan of |o|max nan, state max|diff| 4.670e-02 | forward   8193.9 ->   7473.7 us (1.096x)
+[ieee] T= 2048 varlen=False: A max|diff| 4.883e-02 (rel 4.9e-02, mean 1.7e-03) | forward o max|diff| nan of |o|max nan, state max|diff| 4.928e-02 | forward   2259.3 ->   2021.9 us (1.117x)
+Traceback (most recent call last):
+  File "/opt/llm/runners/test_kkt_solve2.py", line 36, in <module>
+    fused(False); o1,s1=fwd(); t1=timeit(fwd)
+                                  ^^^^^^^^^^^
+  File "/opt/llm/runners/test_kkt_solve2.py", line 12, in timeit
+    fn(); torch.cuda.synchronize(); o=[]
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/cuda/__init__.py", line 1219, in synchronize
+    return torch._C._cuda_synchronize()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: an illegal memory access was encountered
+Search for `cudaErrorIllegalAddress' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+
+  FAILED rc=1
+=== FLA_TRIL_PRECISION=tf32 09:33 ===
+[tf32] T= 7503 varlen=True: A max|diff| 5.273e-02 (rel 5.3e-02, mean 1.7e-03) | forward o max|diff| nan of |o|max nan, state max|diff| 4.718e-02 | forward   8105.9 ->   7261.1 us (1.116x)
+[tf32] T= 2048 varlen=False: A max|diff| 4.785e-02 (rel 4.8e-02, mean 1.7e-03) | forward o max|diff| nan of |o|max nan, state max|diff| 4.932e-02 | forward   2256.4 ->   1977.9 us (1.141x)
+Traceback (most recent call last):
+  File "/opt/llm/runners/test_kkt_solve2.py", line 36, in <module>
+    fused(False); o1,s1=fwd(); t1=timeit(fwd)
+                                  ^^^^^^^^^^^
+  File "/opt/llm/runners/test_kkt_solve2.py", line 12, in timeit
+    fn(); torch.cuda.synchronize(); o=[]
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/cuda/__init__.py", line 1219, in synchronize
+    return torch._C._cuda_synchronize()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: an illegal memory access was encountered
+Search for `cudaErrorIllegalAddress' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1
+
+  FAILED rc=1
+== ALL DONE ==

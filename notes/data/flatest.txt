@@ -1,0 +1,11 @@
+=== fused kkt+solve port test 09:30 ===
+/opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/triton/language/core.py:2284: UserWarning: tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.
+  warn("tl.make_block_ptr is deprecated. Use TensorDescriptor or tl.make_tensor_descriptor instead.")
+T= 7503 H=16 HV=48 varlen=True: A shape (1, 7503, 48, 64) max|diff| 5.225e-02 (rel 5.22e-02) mean 1.67e-03 | kkt+solve   1488.5 us -> fused    642.2 us (2.32x)
+T= 7503 H=48 HV=48 varlen=True: A shape (1, 7503, 48, 64) max|diff| 4.980e-02 (rel 4.98e-02) mean 1.67e-03 | kkt+solve   1802.3 us -> fused    886.0 us (2.03x)
+T= 2048 H=16 HV=48 varlen=False: A shape (1, 2048, 48, 64) max|diff| 4.395e-02 (rel 4.39e-02) mean 1.67e-03 | kkt+solve    416.0 us -> fused    132.7 us (3.14x)
+T=16384 H=16 HV=48 varlen=True: A shape (1, 16384, 48, 64) max|diff| 5.225e-02 (rel 5.22e-02) mean 1.67e-03 | kkt+solve   3251.2 us -> fused   1437.5 us (2.26x)
+T=  333 H=16 HV=48 varlen=True: A shape (1, 333, 48, 64) max|diff| 3.955e-02 (rel 3.96e-02) mean 1.51e-03 | kkt+solve     56.5 us -> fused     26.2 us (2.15x)
+fla-core comparison skipped: q and k must have the same number of heads, but got q.shape[2]=48 and k.shape[2]=16
+RESULT FAIL
+== ALL DONE == 09:31
