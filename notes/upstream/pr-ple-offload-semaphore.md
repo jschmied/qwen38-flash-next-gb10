@@ -1,4 +1,4 @@
-# DRAFT — PR against peakcrosser7/vllm:release/qwen38next_offload (the #53899 branch): "[Bugfix][Qwen4Exp] Reset the PLE offload semaphore before each real request"
+# OPENED 2026-09-06 (user go "create pr"): https://github.com/peakcrosser7/vllm/pull/13 — body below is the live text
 # Branch: jschmied/vllm:ple-offload-wait-fix (1 commit on top of 357e0544, signed off). Open on go, after the validation run.
 
 ## Purpose
