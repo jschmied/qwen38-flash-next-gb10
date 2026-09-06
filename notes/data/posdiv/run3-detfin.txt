@@ -1,0 +1,24 @@
+  qsadet already installed
+  detfin already installed
+=== PD_detfin  det_topk=0 det_finalize=1  no-spec, prefix cache off, batch 16384  12:24 ===
+    det_lines=0
+=== PD_detfin prompt 1500 (prompt_tokens=1460) sequential x8
+  PD_detfin seq1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 758/1459; positions with logprob spread>1e-3: 1459 (max spread 2.157e+01, mean 5.29e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_detfin conc1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 693/1459; positions with logprob spread>1e-3: 1458 (max spread 2.100e+01, mean 4.83e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_detfin e2e64_1500: 4 distinct completions / 8
+=== PD_detfin prompt 2039 (prompt_tokens=1999) sequential x8
+  PD_detfin seq2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 788/1998; positions with logprob spread>1e-3: 1996 (max spread 2.309e+01, mean 4.24e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/9
+  PD_detfin conc2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 1237/1998; positions with logprob spread>1e-3: 1994 (max spread 2.509e+01, mean 7.20e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 1/9
+  PD_detfin e2e64_2039: 2 distinct completions / 8
+=== PD_detfin prompt 6000 (prompt_tokens=5960) sequential x8
+  PD_detfin seq6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 2660/5959; positions with logprob spread>1e-3: 5931 (max spread 2.310e+01, mean 4.50e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 28/111
+  PD_detfin conc6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 3215/5959; positions with logprob spread>1e-3: 5924 (max spread 3.084e+01, mean 5.42e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 39/111
+  PD_detfin e2e64_6000: 5 distinct completions / 8
+=== PD_detboth  det_topk=1 det_finalize=1  no-spec, prefix cache off, batch 16384  12:37 ===
+  DIED after 710s
+(APIServer pid=3498016) Traceback (most recent call last):
+(APIServer pid=3498016)     raise RuntimeError(
+(APIServer pid=3498016) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 12:49

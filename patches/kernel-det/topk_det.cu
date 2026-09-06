@@ -85,9 +85,15 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
     STD_TORCH_CHECK(ctas_per_group <= P::kDetMaxCtasPerGroup,
                     "persistent_topk_det: ctas_per_group ", ctas_per_group,
                     " exceeds ", P::kDetMaxCtasPerGroup);
-    STD_TORCH_CHECK(chunk_size >= static_cast<uint32_t>(TopK),
+    // v2.4: only the cooperative large path (max_seq_len > RADIX_THRESHOLD)
+    // sorts the final candidates in CTA 0's chunk buffer. Rows at or below
+    // the threshold run det_select_row / the trivial seq_len <= TopK case in
+    // one CTA and never touch the chunk buffer, so a short row (e.g. 256
+    // blocks at TopK 512 on the main build's block-level indexer) is legal.
+    STD_TORCH_CHECK(static_cast<uint32_t>(max_seq_len) <= P::RADIX_THRESHOLD ||
+                        chunk_size >= static_cast<uint32_t>(TopK),
                     "persistent_topk_det: chunk_size ", chunk_size,
-                    " smaller than TopK ", TopK);
+                    " smaller than TopK ", TopK, " on the cooperative path");
     if (smem_size < P::kSmemMedium) smem_size = P::kSmemMedium;
     // DETERMINISM: let det_select_row keep the row's keys in shared memory
     // (single-CTA rows are <= RADIX_THRESHOLD); capped by the device optin.

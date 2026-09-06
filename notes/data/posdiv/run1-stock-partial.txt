@@ -1,0 +1,11 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+=== PD_stock  det=0  no-spec, prefix cache off, batch 16384  11:42 ===
+    det_lines=0
+=== PD_stock prompt 1500 (prompt_tokens=1460) sequential x8
+  PD_stock seq1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 924/1459; positions with logprob spread>1e-3: 1455 (max spread 2.589e+01, mean 6.35e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_stock conc1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 954/1459; positions with logprob spread>1e-3: 1456 (max spread 2.469e+01, mean 6.53e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_stock e2e64_1500: 8 distinct completions / 8
+=== PD_stock prompt 2039 (prompt_tokens=1999) sequential x8
+  PD_stock seq2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 1069/1998; positions with logprob spread>1e-3: 1989 (max spread 2.522e+01, mean 5.79e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/9
+  PD_stock conc2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 1179/1998; positions with logprob spread>1e-3: 1993 (max spread 3.054e+01, mean 7.08e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 2/9
+  PD_stock e2e64_2039: 8 distinct completions / 8

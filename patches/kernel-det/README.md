@@ -35,6 +35,16 @@ whether the stock op reproduces itself on the same inputs.
 
 **Upstream: PR https://github.com/vllm-project/vllm/pull/55122 (2026-09-03).** `test_upstream_top_k_per_row.py` is the PR's test file; `detplugin.py` runs its new cases against the standalone `_C_det`.
 
+Status (2026-09-06): **v2.4** — host-guard fix. v2.3 rejected every call whose row is shorter than
+`TopK` (`persistent_topk_det: chunk_size 256 smaller than TopK 512`): the main build's block-level
+QSA indexer calls `TopK = token_topk / compress_ratio = 512` with 256-block rows at warm-up, so the
+server never started. The `chunk_size >= TopK` requirement only exists on the cooperative large path
+(`max_seq_len > RADIX_THRESHOLD`, where CTA 0 sorts the candidates in its chunk buffer); rows at or
+below the threshold take the single-CTA `det_select_row` / trivial `seq_len <= TopK` case and never
+touch that buffer. The guard is now conditional on the path. `test_det.py` gained 33 short-row cases
+(rows ≤ k, all three TopK); the old matrix skipped `k >= cols` and so never saw the shape. 210/210
+pass (`test_results_v24.txt`), built in ~1 min against torch 2.13 / CUDA 13 on the box.
+
 Status (2026-09-03): v2.3 builds and links against torch 2.13 / CUDA 13 on the box; `test_det.py`
 177 / 177 (`test_results.txt`); `bench_det.py` in `bench_results.txt` — det costs 1.3–4× the stock
 call (8→10 µs at n=1k, 18.5→72 µs at n=32k/k=2048, single row), the multi-CTA path (> 32k) is the

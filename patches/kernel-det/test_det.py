@@ -42,6 +42,14 @@ for rows, cols, k, kind in itertools.product((1, 8, 64), (1024, 4096, 8192, 2000
     logits = torch.randn(rows, cols, generator=g, device=dev) if kind == "rand" else torch.randint(0, 5, (rows, cols), generator=g, device=dev).float()
     lengths = torch.full((rows,), cols, dtype=torch.int32, device=dev); lengths[0] = cols - 3
     check(f"rows={rows:2d} cols={cols:5d} k={k:4d} {kind}", logits, lengths, k)
+# 1b. rows SHORTER than or equal to k (v2.4 regression): the main build's block-level indexer calls
+#     TopK 512 with 256-block rows at warm-up; the old host guard rejected every such call.
+for rows, cols, k in itertools.product((1, 8, 64), (256, 512, 700, 1024, 2048), (512, 1024, 2048)):
+    if cols > k: continue
+    g = torch.Generator(device=dev).manual_seed(rows * 11 + cols + k)
+    logits = torch.randn(rows, cols, generator=g, device=dev)
+    lengths = torch.full((rows,), cols, dtype=torch.int32, device=dev); lengths[0] = max(cols - 3, 1)
+    check(f"short rows={rows:2d} cols={cols:5d} k={k:4d}", logits, lengths, k)
 # 2. all values equal -> must be exactly [0..k) every time (100 repeats), every path
 for rows, cols in ((1, 8192), (1, 20000), (1, 40000), (64, 8192), (64, 40000)):
     for k in (512, 1024, 2048):
