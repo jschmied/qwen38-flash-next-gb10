@@ -1,0 +1,84 @@
+patched /opt/llm/runners/fi-csrc/nv_internal/tensorrt_llm/kernels/cutlass_kernels/moe_gemm/launchers/moe_gemm_tma_ws_launcher.inl
+preflight OK 02:16  MemAvailable=118G
+=== baseline AOT module, M=7503 02:16 ===
+AOT module (baseline)
+M=7503: 14021.3 us per layer, 52.6 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+=== JIT build of the patched launcher (first call compiles) 02:16 ===
+JIT from /opt/llm/runners/fi-csrc swz 1 raster N
+M=7503: 13918.2 us per layer, 53.0 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+build done 02:28
+--- M=7503 raster=N swz=1 02:28
+M=7503: 13941.6 us per layer, 52.9 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=7503 raster=N swz=2 02:28
+M=7503: 13976.9 us per layer, 52.8 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=7503 raster=N swz=4 02:28
+M=7503: 13872.3 us per layer, 53.2 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=7503 raster=N swz=8 02:28
+M=7503: 13997.1 us per layer, 52.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=7503 raster=M swz=1 02:28
+M=7503: 14083.9 us per layer, 52.4 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=7503 raster=M swz=2 02:28
+M=7503: 13860.0 us per layer, 53.2 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=7503 raster=M swz=4 02:28
+M=7503: 13991.0 us per layer, 52.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=7503 raster=M swz=8 02:28
+M=7503: 13887.5 us per layer, 53.1 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- M=29263 raster=N swz=1 02:29
+M=29263: 38325.2 us per layer, 75.1 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=29263 raster=N swz=2 02:29
+M=29263: 38933.6 us per layer, 73.9 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=29263 raster=N swz=4 02:29
+M=29263: 44240.8 us per layer, 65.0 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=29263 raster=N swz=8 02:29
+M=29263: 44313.3 us per layer, 64.9 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=29263 raster=M swz=1 02:29
+M=29263: 37731.6 us per layer, 76.2 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=29263 raster=M swz=2 02:29
+M=29263: 39633.0 us per layer, 72.6 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=29263 raster=M swz=4 02:29
+M=29263: 44745.6 us per layer, 64.3 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=29263 raster=M swz=8 02:29
+M=29263: 44802.6 us per layer, 64.2 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- M=4 raster=N swz=1 02:29
+M=4: 531.5 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+--- M=4 raster=N swz=2 02:29
+M=4: 533.1 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+--- M=4 raster=N swz=4 02:29
+M=4: 534.4 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+--- M=4 raster=N swz=8 02:29
+M=4: 531.5 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+--- M=4 raster=M swz=1 02:29
+M=4: 533.4 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+--- M=4 raster=M swz=2 02:29
+M=4: 528.1 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+--- M=4 raster=M swz=4 02:29
+M=4: 532.1 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+--- M=4 raster=M swz=8 02:30
+M=4: 529.8 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+== ALL DONE == 02:30

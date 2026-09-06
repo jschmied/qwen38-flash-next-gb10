@@ -1003,3 +1003,15 @@
     dispatch in the vendored `chunk.py`; the wide autotune space (finding 136) was never going to find it. Worth on TTFT:
     the GDN share (~16 %) × 10 % ≈ 1.5–2 %. Small, but a clean sync PR.
 
+
+139. **Grouped-GEMM tile-scheduler swizzle/raster: null at prefill and decode shapes, harmful at 29k (`pr12c`, FlashInfer
+    0.6.17 `fused_moe_120` JIT-rebuilt from a copied csrc tree with env-driven `TileScheduler::Arguments`,
+    `notes/data/pr12c.txt`; venv untouched, AOT module bypassed in-process).** Bit-identical checksums to the AOT module
+    at every arm. M=7503: all eight (raster N/M × swizzle 1/2/4/8) within 52.4–53.2 TFLOPS. M=4: 528–534 µs, flat.
+    M=29263: swizzle 1 → 75.1 (N) / 76.2 (M) TFLOPS, swizzle 2 → 73.9 / 72.6, **swizzle 4 and 8 → 64–65 (−14 %)**:
+    grouping tiles for L2 reuse only makes the latency-bound kernel (finding 137) wait longer. Closes the L2/scheduler
+    route for the MoE: the remaining lever is structural (a second CTA per SM, i.e. ≤ 84 registers and ≤ 49 KB smem,
+    or a different grouped-GEMM design for 512 × ~150-row problems) and belongs to FlashInfer/CUTLASS. Issue text with
+    the ncu evidence drafted in `notes/upstream/issue-flashinfer-sm120-grouped-gemm.md` (not posted). The JIT rebuild
+    of the module takes 12 min at MAX_JOBS=4 on an idle box.
+

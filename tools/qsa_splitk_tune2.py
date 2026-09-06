@@ -137,6 +137,6 @@ DECODE_CONFIGS = [
 
 for f in sys.argv[1:]:
     report(f"prefill {f.split('/')[-1]}", *bench(make_prefill(f), True, PREFILL_CONFIGS))
-for rows, ctx, nreq in ((1, 8192, 1), (4, 8192, 1), (4, 8192, 4), (16, 8192, 4), (32, 32768, 8), (64, 32768, 16), (128, 32768, 32), (256, 32768, 64), (512, 32768, 128), (2048, 32768, 512)):
+for rows, ctx, nreq in ((1, 8192, 1), (4, 8192, 1), (4, 8192, 4), (16, 8192, 4), (32, 32768, 8), (64, 32768, 16), (128, 32768, 32), (256, 32768, 64), (512, 32768, 128), (2048, 8192, 16)):
     torch.manual_seed(rows)
     report(f"decode rows={rows} ctx={ctx} reqs={nreq}", *bench(make_decode(rows, ctx, nreq), False, DECODE_CONFIGS))
