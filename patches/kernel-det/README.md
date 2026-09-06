@@ -43,7 +43,9 @@ server never started. The `chunk_size >= TopK` requirement only exists on the co
 below the threshold take the single-CTA `det_select_row` / trivial `seq_len <= TopK` case and never
 touch that buffer. The guard is now conditional on the path. `test_det.py` gained 33 short-row cases
 (rows ≤ k, all three TopK); the old matrix skipped `k >= cols` and so never saw the shape. 210/210
-pass (`test_results_v24.txt`), built in ~1 min against torch 2.13 / CUDA 13 on the box.
+pass (`test_results_v24.txt`), built in ~1 min against torch 2.13 / CUDA 13 on the box. **On the PR since
+2026-09-06** as `c564e5c1`, with `test_persistent_topk_short_rows` (33 cases: rows 256..2048 at TopK 512/1024/2048);
+the same push finally carried the 09-03 review commit `afd92810`, which had never reached the PR.
 
 Status (2026-09-03): v2.3 builds and links against torch 2.13 / CUDA 13 on the box; `test_det.py`
 177 / 177 (`test_results.txt`); `bench_det.py` in `bench_results.txt` — det costs 1.3–4× the stock
