@@ -1,4 +1,4 @@
-# DRAFT — comment on vllm-project/vllm#38315 (post on go; substitute for opening our own PR, which would duplicate this one)
+# POSTED 2026-09-06 (user go "post to 38315"): https://github.com/vllm-project/vllm/pull/38315#issuecomment-5559027143
 
 Data point from a different part, in case it changes the calculus here: on GB10 (sm_121, one Blackwell-family SoC with
 273 GB/s LPDDR5X, no FlashInfer GDN path) the fused kkt+solve is not within measurement error.
