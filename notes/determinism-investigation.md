@@ -1457,3 +1457,29 @@ Plus whatever drives the separate generation-side path.
     20 ms, MTP-layer dense ~25 ms per 28 steps); GDN update 2 %; QSA 0.7 %. The c=4 profile was lost: `/stop_profile`
     took longer than the client's 900 s timeout to export the shaped trace.
 
+
+135. **Reduced-vocabulary MTP drafting on the FP8 head: +6.4–6.8 % single-stream decode at every slice size, +2–3 % at
+    c=4, acceptance unchanged at 32k (`dv`, three server starts × four arms, 8 real held-out agent prompts at c=1 and 3×4 at
+    c=4 per start, MTP-3, `notes/data/dv.txt`, per-request JSONL in `notes/data/dv/`).** The drafter's argmax runs over an
+    exact BF16 dequant of the FP8_PB_WO head rows listed in `FN_DRAFT_VOCAB` (`tools/draft_vocab/dv_patch.py`, hooked
+    into the V2 speculator's `_validate_local_argmax_reduction`, engaged via `use_local_argmax_reduction`); the vocabulary
+    is frequency-ranked on our own agent output (finding: `notes/data/draft-vocab-coverage.txt`; held-out coverage 95.5 /
+    98.1 / 99.6 % at 8k / 16k / 32k). Draft head per draft step: 606 MiB → 40 / 80 / 160 MiB.
+
+    | arm | c=1 tok/s median (3 starts) | paired Δ vs full | Δ acceptance | wins | c=4 paired Δ |
+    | --- | --- | --- | --- | --- | --- |
+    | full head (local argmax) | 25.4 (25.3 / 25.6 / 25.4) | — | 45.5 % | — | — |
+    | 8k | 27.1 | **+6.8 %** | −1.9 pp | 22/24 | +2.2 % |
+    | 16k | 27.3 | **+6.8 %** | −1.1 pp | 21/24 | +2.9 % |
+    | 32k | 27.4 | **+6.4 %** | +0.5 pp | 20/24 | +3.0 % |
+
+    Wall time includes ~1.7 s of prefill per 5k-token prompt, so the decode-only gain is ~8–9 %, matching the byte model
+    (3 × ~0.5 GB less per step at 273 GB/s on a ~72 ms step). Size does not matter for speed because even 32k (160 MiB) is
+    small against the 606 MiB it replaces; it matters for acceptance only below 16k. **Pick 32k for prod**: same gain, no
+    acceptance loss, 99.6 % coverage and the most headroom against traffic drift. Baseline on this traffic, for the record:
+    acceptance 41–50 % of draft tokens, accept length 2.2–2.5 — the MTP head is weak on agent output, which puts drafter
+    quality (online fine-tune) above further byte shaving. Start-to-start noise on identical configs was ~5 % (the first,
+    hook-less run gave two full-head starts: 25.0 vs 26.2 tok/s), so the +6–7 % with 20–22 of 24 paired wins is above it.
+    One garbage flag (16k, start 1, c=4) was a false positive: coherent reasoning text repeating "Let me look at …".
+    Lossless by construction — the verifier sees the full head; the slice only changes proposals.
+

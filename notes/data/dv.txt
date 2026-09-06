@@ -1,0 +1,168 @@
+applied
+=== DV_full_1  vocab=full  02:59 ===
+    fndv_lines=0 localargmax=1
+  DV_full_1 DV c=1 rep=0: accept=44.2% AL=2.33 | 200 tok in 8.2s = 24.5 tok/s agg, 24.5 per stream | garbage 0/1
+  DV_full_1 DV c=1 rep=1: accept=49.6% AL=2.49 | 200 tok in 7.6s = 26.2 tok/s agg, 26.2 per stream | garbage 0/1
+  DV_full_1 DV c=1 rep=2: accept=48.4% AL=2.45 | 200 tok in 7.7s = 25.9 tok/s agg, 25.9 per stream | garbage 0/1
+  DV_full_1 DV c=1 rep=3: accept=64.2% AL=2.93 | 200 tok in 6.6s = 30.2 tok/s agg, 30.2 per stream | garbage 0/1
+  DV_full_1 DV c=1 rep=4: accept=60.1% AL=2.80 | 200 tok in 7.1s = 28.3 tok/s agg, 28.3 per stream | garbage 0/1
+  DV_full_1 DV c=1 rep=5: accept=41.2% AL=2.24 | 200 tok in 8.2s = 24.3 tok/s agg, 24.3 per stream | garbage 0/1
+  DV_full_1 DV c=1 rep=6: accept=44.7% AL=2.34 | 200 tok in 7.9s = 25.2 tok/s agg, 25.2 per stream | garbage 0/1
+  DV_full_1 DV c=1 rep=7: accept=47.4% AL=2.42 | 200 tok in 7.8s = 25.5 tok/s agg, 25.5 per stream | garbage 0/1
+  DV_full_1 DV c=4 rep=0: accept=47.6% AL=2.43 | 800 tok in 12.6s = 63.6 tok/s agg, 15.9 per stream | garbage 0/4
+  DV_full_1 DV c=4 rep=1: accept=51.5% AL=2.55 | 800 tok in 17.1s = 46.7 tok/s agg, 11.7 per stream | garbage 0/4
+  DV_full_1 DV c=4 rep=2: accept=45.7% AL=2.37 | 800 tok in 17.9s = 44.7 tok/s agg, 11.2 per stream | garbage 0/4
+=== DV_8192_1  vocab=/opt/llm/runners/dv/draft_vocab_8192.txt  03:11 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3024566) INFO 09-06 03:23:34 [mtp.py:96] FNDV draft vocab: 8192 of 248320 rows (3.3%); draft head 606 -> 40 MiB per draft step (BF16 slice of the FP8 head)
+  DV_8192_1 DV c=1 rep=0: accept=42.8% AL=2.28 | 200 tok in 7.7s = 26.1 tok/s agg, 26.1 per stream | garbage 0/1
+  DV_8192_1 DV c=1 rep=1: accept=44.7% AL=2.34 | 200 tok in 7.3s = 27.5 tok/s agg, 27.5 per stream | garbage 0/1
+  DV_8192_1 DV c=1 rep=2: accept=39.6% AL=2.19 | 200 tok in 7.7s = 26.0 tok/s agg, 26.0 per stream | garbage 0/1
+  DV_8192_1 DV c=1 rep=3: accept=67.7% AL=3.03 | 200 tok in 5.9s = 34.2 tok/s agg, 34.2 per stream | garbage 0/1
+  DV_8192_1 DV c=1 rep=4: accept=56.8% AL=2.70 | 200 tok in 6.7s = 29.9 tok/s agg, 29.9 per stream | garbage 0/1
+  DV_8192_1 DV c=1 rep=5: accept=37.2% AL=2.12 | 200 tok in 7.8s = 25.5 tok/s agg, 25.5 per stream | garbage 0/1
+  DV_8192_1 DV c=1 rep=6: accept=41.5% AL=2.24 | 200 tok in 7.6s = 26.3 tok/s agg, 26.3 per stream | garbage 0/1
+  DV_8192_1 DV c=1 rep=7: accept=45.6% AL=2.37 | 200 tok in 7.4s = 27.1 tok/s agg, 27.1 per stream | garbage 0/1
+  DV_8192_1 DV c=4 rep=0: accept=44.2% AL=2.33 | 800 tok in 11.5s = 69.4 tok/s agg, 17.3 per stream | garbage 0/4
+  DV_8192_1 DV c=4 rep=1: accept=52.6% AL=2.58 | 800 tok in 16.7s = 47.9 tok/s agg, 12.0 per stream | garbage 0/4
+  DV_8192_1 DV c=4 rep=2: accept=43.1% AL=2.29 | 800 tok in 17.4s = 46.1 tok/s agg, 11.5 per stream | garbage 0/4
+=== DV_16384_1  vocab=/opt/llm/runners/dv/draft_vocab_16384.txt  03:25 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3029093) INFO 09-06 03:37:07 [mtp.py:96] FNDV draft vocab: 16384 of 248320 rows (6.6%); draft head 606 -> 80 MiB per draft step (BF16 slice of the FP8 head)
+  DV_16384_1 DV c=1 rep=0: accept=52.6% AL=2.58 | 200 tok in 7.2s = 28.0 tok/s agg, 28.0 per stream | garbage 0/1
+  DV_16384_1 DV c=1 rep=1: accept=43.7% AL=2.31 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  DV_16384_1 DV c=1 rep=2: accept=42.4% AL=2.27 | 200 tok in 7.6s = 26.5 tok/s agg, 26.5 per stream | garbage 0/1
+  DV_16384_1 DV c=1 rep=3: accept=64.3% AL=2.93 | 200 tok in 6.1s = 32.8 tok/s agg, 32.8 per stream | garbage 0/1
+  DV_16384_1 DV c=1 rep=4: accept=43.8% AL=2.31 | 200 tok in 7.4s = 26.9 tok/s agg, 26.9 per stream | garbage 0/1
+  DV_16384_1 DV c=1 rep=5: accept=47.4% AL=2.42 | 200 tok in 7.3s = 27.5 tok/s agg, 27.5 per stream | garbage 0/1
+  DV_16384_1 DV c=1 rep=6: accept=51.7% AL=2.55 | 200 tok in 7.0s = 28.7 tok/s agg, 28.7 per stream | garbage 0/1
+  DV_16384_1 DV c=1 rep=7: accept=51.1% AL=2.53 | 200 tok in 7.0s = 28.4 tok/s agg, 28.4 per stream | garbage 0/1
+  DV_16384_1 DV c=4 rep=0: accept=48.3% AL=2.45 | 800 tok in 12.3s = 64.9 tok/s agg, 16.2 per stream | garbage 1/4
+  DV_16384_1 DV c=4 rep=1: accept=53.4% AL=2.60 | 800 tok in 16.7s = 47.8 tok/s agg, 11.9 per stream | garbage 0/4
+  DV_16384_1 DV c=4 rep=2: accept=48.0% AL=2.44 | 800 tok in 16.7s = 47.8 tok/s agg, 11.9 per stream | garbage 0/4
+=== DV_32768_1  vocab=/opt/llm/runners/dv/draft_vocab_32768.txt  03:39 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3033722) INFO 09-06 03:50:34 [mtp.py:96] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+  DV_32768_1 DV c=1 rep=0: accept=47.4% AL=2.42 | 200 tok in 7.5s = 26.5 tok/s agg, 26.5 per stream | garbage 0/1
+  DV_32768_1 DV c=1 rep=1: accept=57.2% AL=2.72 | 200 tok in 6.8s = 29.3 tok/s agg, 29.3 per stream | garbage 0/1
+  DV_32768_1 DV c=1 rep=2: accept=44.7% AL=2.34 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  DV_32768_1 DV c=1 rep=3: accept=42.8% AL=2.28 | 200 tok in 7.3s = 27.4 tok/s agg, 27.4 per stream | garbage 0/1
+  DV_32768_1 DV c=1 rep=4: accept=69.7% AL=3.09 | 200 tok in 6.3s = 31.7 tok/s agg, 31.7 per stream | garbage 0/1
+  DV_32768_1 DV c=1 rep=5: accept=50.4% AL=2.51 | 200 tok in 7.2s = 27.8 tok/s agg, 27.8 per stream | garbage 0/1
+  DV_32768_1 DV c=1 rep=6: accept=48.0% AL=2.44 | 200 tok in 7.3s = 27.4 tok/s agg, 27.4 per stream | garbage 0/1
+  DV_32768_1 DV c=1 rep=7: accept=41.2% AL=2.24 | 200 tok in 7.8s = 25.7 tok/s agg, 25.7 per stream | garbage 0/1
+  DV_32768_1 DV c=4 rep=0: accept=47.9% AL=2.44 | 800 tok in 12.0s = 66.5 tok/s agg, 16.6 per stream | garbage 0/4
+  DV_32768_1 DV c=4 rep=1: accept=56.3% AL=2.69 | 800 tok in 16.4s = 48.7 tok/s agg, 12.2 per stream | garbage 0/4
+  DV_32768_1 DV c=4 rep=2: accept=48.9% AL=2.47 | 800 tok in 18.1s = 44.2 tok/s agg, 11.1 per stream | garbage 0/4
+=== DV_full_2  vocab=full  03:52 ===
+    fndv_lines=0 localargmax=1
+  DV_full_2 DV c=1 rep=0: accept=60.1% AL=2.80 | 200 tok in 7.1s = 28.1 tok/s agg, 28.1 per stream | garbage 0/1
+  DV_full_2 DV c=1 rep=1: accept=44.6% AL=2.34 | 200 tok in 7.9s = 25.2 tok/s agg, 25.2 per stream | garbage 0/1
+  DV_full_2 DV c=1 rep=2: accept=43.7% AL=2.31 | 200 tok in 8.0s = 25.0 tok/s agg, 25.0 per stream | garbage 0/1
+  DV_full_2 DV c=1 rep=3: accept=41.9% AL=2.26 | 200 tok in 7.8s = 25.7 tok/s agg, 25.7 per stream | garbage 0/1
+  DV_full_2 DV c=1 rep=4: accept=58.4% AL=2.75 | 200 tok in 7.1s = 28.0 tok/s agg, 28.0 per stream | garbage 0/1
+  DV_full_2 DV c=1 rep=5: accept=47.6% AL=2.43 | 200 tok in 7.7s = 25.9 tok/s agg, 25.9 per stream | garbage 0/1
+  DV_full_2 DV c=1 rep=6: accept=44.7% AL=2.34 | 200 tok in 7.9s = 25.4 tok/s agg, 25.4 per stream | garbage 0/1
+  DV_full_2 DV c=1 rep=7: accept=40.4% AL=2.21 | 200 tok in 8.2s = 24.4 tok/s agg, 24.4 per stream | garbage 0/1
+  DV_full_2 DV c=4 rep=0: accept=46.3% AL=2.39 | 800 tok in 12.8s = 62.6 tok/s agg, 15.7 per stream | garbage 0/4
+  DV_full_2 DV c=4 rep=1: accept=47.8% AL=2.43 | 800 tok in 17.3s = 46.2 tok/s agg, 11.6 per stream | garbage 0/4
+  DV_full_2 DV c=4 rep=2: accept=51.1% AL=2.53 | 800 tok in 16.9s = 47.3 tok/s agg, 11.8 per stream | garbage 0/4
+=== DV_8192_2  vocab=/opt/llm/runners/dv/draft_vocab_8192.txt  04:06 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3077884) INFO 09-06 04:17:27 [mtp.py:96] FNDV draft vocab: 8192 of 248320 rows (3.3%); draft head 606 -> 40 MiB per draft step (BF16 slice of the FP8 head)
+  DV_8192_2 DV c=1 rep=0: accept=45.5% AL=2.36 | 200 tok in 7.5s = 26.6 tok/s agg, 26.6 per stream | garbage 0/1
+  DV_8192_2 DV c=1 rep=1: accept=46.0% AL=2.38 | 200 tok in 7.2s = 27.6 tok/s agg, 27.6 per stream | garbage 0/1
+  DV_8192_2 DV c=1 rep=2: accept=38.8% AL=2.16 | 200 tok in 7.8s = 25.5 tok/s agg, 25.5 per stream | garbage 0/1
+  DV_8192_2 DV c=1 rep=3: accept=36.8% AL=2.10 | 200 tok in 7.6s = 26.3 tok/s agg, 26.3 per stream | garbage 0/1
+  DV_8192_2 DV c=1 rep=4: accept=56.8% AL=2.70 | 200 tok in 6.7s = 30.0 tok/s agg, 30.0 per stream | garbage 0/1
+  DV_8192_2 DV c=1 rep=5: accept=49.0% AL=2.47 | 200 tok in 7.1s = 28.3 tok/s agg, 28.3 per stream | garbage 0/1
+  DV_8192_2 DV c=1 rep=6: accept=47.6% AL=2.43 | 200 tok in 7.1s = 28.1 tok/s agg, 28.1 per stream | garbage 0/1
+  DV_8192_2 DV c=1 rep=7: accept=49.0% AL=2.47 | 200 tok in 7.1s = 28.2 tok/s agg, 28.2 per stream | garbage 0/1
+  DV_8192_2 DV c=4 rep=0: accept=43.6% AL=2.31 | 800 tok in 12.0s = 66.6 tok/s agg, 16.6 per stream | garbage 0/4
+  DV_8192_2 DV c=4 rep=1: accept=49.6% AL=2.49 | 800 tok in 17.7s = 45.3 tok/s agg, 11.3 per stream | garbage 0/4
+  DV_8192_2 DV c=4 rep=2: accept=44.9% AL=2.35 | 800 tok in 17.0s = 47.0 tok/s agg, 11.7 per stream | garbage 0/4
+=== DV_16384_2  vocab=/opt/llm/runners/dv/draft_vocab_16384.txt  04:19 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3082089) INFO 09-06 04:30:47 [mtp.py:96] FNDV draft vocab: 16384 of 248320 rows (6.6%); draft head 606 -> 80 MiB per draft step (BF16 slice of the FP8 head)
+  DV_16384_2 DV c=1 rep=0: accept=48.4% AL=2.45 | 200 tok in 7.4s = 27.1 tok/s agg, 27.1 per stream | garbage 0/1
+  DV_16384_2 DV c=1 rep=1: accept=42.0% AL=2.26 | 200 tok in 7.5s = 26.6 tok/s agg, 26.6 per stream | garbage 0/1
+  DV_16384_2 DV c=1 rep=2: accept=38.4% AL=2.15 | 200 tok in 7.9s = 25.5 tok/s agg, 25.5 per stream | garbage 0/1
+  DV_16384_2 DV c=1 rep=3: accept=55.1% AL=2.65 | 200 tok in 6.4s = 31.0 tok/s agg, 31.0 per stream | garbage 0/1
+  DV_16384_2 DV c=1 rep=4: accept=58.9% AL=2.77 | 200 tok in 6.7s = 29.8 tok/s agg, 29.8 per stream | garbage 0/1
+  DV_16384_2 DV c=1 rep=5: accept=45.6% AL=2.37 | 200 tok in 7.3s = 27.4 tok/s agg, 27.4 per stream | garbage 0/1
+  DV_16384_2 DV c=1 rep=6: accept=45.5% AL=2.36 | 200 tok in 7.4s = 27.1 tok/s agg, 27.1 per stream | garbage 0/1
+  DV_16384_2 DV c=1 rep=7: accept=39.6% AL=2.19 | 200 tok in 7.8s = 25.8 tok/s agg, 25.8 per stream | garbage 0/1
+  DV_16384_2 DV c=4 rep=0: accept=46.7% AL=2.40 | 800 tok in 12.3s = 65.2 tok/s agg, 16.3 per stream | garbage 0/4
+  DV_16384_2 DV c=4 rep=1: accept=49.5% AL=2.49 | 800 tok in 16.9s = 47.2 tok/s agg, 11.8 per stream | garbage 0/4
+  DV_16384_2 DV c=4 rep=2: accept=47.8% AL=2.43 | 800 tok in 17.4s = 45.9 tok/s agg, 11.5 per stream | garbage 0/4
+=== DV_32768_2  vocab=/opt/llm/runners/dv/draft_vocab_32768.txt  04:33 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3086411) INFO 09-06 04:44:31 [mtp.py:96] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+  DV_32768_2 DV c=1 rep=0: accept=38.0% AL=2.14 | 200 tok in 8.1s = 24.6 tok/s agg, 24.6 per stream | garbage 0/1
+  DV_32768_2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 8.0s = 25.2 tok/s agg, 25.2 per stream | garbage 0/1
+  DV_32768_2 DV c=1 rep=2: accept=47.6% AL=2.43 | 200 tok in 7.3s = 27.4 tok/s agg, 27.4 per stream | garbage 0/1
+  DV_32768_2 DV c=1 rep=3: accept=59.3% AL=2.78 | 200 tok in 6.4s = 31.5 tok/s agg, 31.5 per stream | garbage 0/1
+  DV_32768_2 DV c=1 rep=4: accept=69.7% AL=3.09 | 200 tok in 6.3s = 31.9 tok/s agg, 31.9 per stream | garbage 0/1
+  DV_32768_2 DV c=1 rep=5: accept=45.1% AL=2.35 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  DV_32768_2 DV c=1 rep=6: accept=45.6% AL=2.37 | 200 tok in 7.5s = 26.8 tok/s agg, 26.8 per stream | garbage 0/1
+  DV_32768_2 DV c=1 rep=7: accept=58.0% AL=2.74 | 200 tok in 6.8s = 29.5 tok/s agg, 29.5 per stream | garbage 0/1
+  DV_32768_2 DV c=4 rep=0: accept=45.0% AL=2.35 | 800 tok in 11.9s = 67.2 tok/s agg, 16.8 per stream | garbage 0/4
+  DV_32768_2 DV c=4 rep=1: accept=48.9% AL=2.47 | 800 tok in 17.9s = 44.8 tok/s agg, 11.2 per stream | garbage 0/4
+  DV_32768_2 DV c=4 rep=2: accept=50.3% AL=2.51 | 800 tok in 16.6s = 48.2 tok/s agg, 12.0 per stream | garbage 0/4
+=== DV_full_3  vocab=full  04:46 ===
+    fndv_lines=0 localargmax=1
+  DV_full_3 DV c=1 rep=0: accept=45.5% AL=2.36 | 200 tok in 8.2s = 24.5 tok/s agg, 24.5 per stream | garbage 0/1
+  DV_full_3 DV c=1 rep=1: accept=43.7% AL=2.31 | 200 tok in 8.1s = 24.7 tok/s agg, 24.7 per stream | garbage 0/1
+  DV_full_3 DV c=1 rep=2: accept=48.8% AL=2.46 | 200 tok in 7.7s = 25.8 tok/s agg, 25.8 per stream | garbage 0/1
+  DV_full_3 DV c=1 rep=3: accept=53.9% AL=2.62 | 200 tok in 7.0s = 28.7 tok/s agg, 28.7 per stream | garbage 0/1
+  DV_full_3 DV c=1 rep=4: accept=67.2% AL=3.02 | 200 tok in 6.8s = 29.6 tok/s agg, 29.6 per stream | garbage 0/1
+  DV_full_3 DV c=1 rep=5: accept=45.5% AL=2.36 | 200 tok in 8.0s = 25.0 tok/s agg, 25.0 per stream | garbage 0/1
+  DV_full_3 DV c=1 rep=6: accept=42.3% AL=2.27 | 200 tok in 8.2s = 24.3 tok/s agg, 24.3 per stream | garbage 0/1
+  DV_full_3 DV c=1 rep=7: accept=49.6% AL=2.49 | 200 tok in 7.6s = 26.2 tok/s agg, 26.2 per stream | garbage 0/1
+  DV_full_3 DV c=4 rep=0: accept=49.6% AL=2.49 | 800 tok in 12.4s = 64.7 tok/s agg, 16.2 per stream | garbage 0/4
+  DV_full_3 DV c=4 rep=1: accept=50.5% AL=2.52 | 800 tok in 17.2s = 46.4 tok/s agg, 11.6 per stream | garbage 0/4
+  DV_full_3 DV c=4 rep=2: accept=48.5% AL=2.46 | 800 tok in 18.3s = 43.7 tok/s agg, 10.9 per stream | garbage 0/4
+=== DV_8192_3  vocab=/opt/llm/runners/dv/draft_vocab_8192.txt  05:00 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3130829) INFO 09-06 05:11:11 [mtp.py:96] FNDV draft vocab: 8192 of 248320 rows (3.3%); draft head 606 -> 40 MiB per draft step (BF16 slice of the FP8 head)
+  DV_8192_3 DV c=1 rep=0: accept=41.9% AL=2.26 | 200 tok in 7.7s = 26.0 tok/s agg, 26.0 per stream | garbage 0/1
+  DV_8192_3 DV c=1 rep=1: accept=42.0% AL=2.26 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  DV_8192_3 DV c=1 rep=2: accept=44.2% AL=2.33 | 200 tok in 7.4s = 26.9 tok/s agg, 26.9 per stream | garbage 0/1
+  DV_8192_3 DV c=1 rep=3: accept=43.3% AL=2.30 | 200 tok in 7.0s = 28.4 tok/s agg, 28.4 per stream | garbage 0/1
+  DV_8192_3 DV c=1 rep=4: accept=56.3% AL=2.69 | 200 tok in 6.7s = 30.0 tok/s agg, 30.0 per stream | garbage 0/1
+  DV_8192_3 DV c=1 rep=5: accept=49.4% AL=2.48 | 200 tok in 7.0s = 28.4 tok/s agg, 28.4 per stream | garbage 0/1
+  DV_8192_3 DV c=1 rep=6: accept=49.8% AL=2.49 | 200 tok in 7.1s = 28.3 tok/s agg, 28.3 per stream | garbage 0/1
+  DV_8192_3 DV c=1 rep=7: accept=58.8% AL=2.76 | 200 tok in 6.6s = 30.4 tok/s agg, 30.4 per stream | garbage 0/1
+  DV_8192_3 DV c=4 rep=0: accept=43.1% AL=2.29 | 800 tok in 12.6s = 63.7 tok/s agg, 15.9 per stream | garbage 0/4
+  DV_8192_3 DV c=4 rep=1: accept=44.3% AL=2.33 | 800 tok in 17.2s = 46.4 tok/s agg, 11.6 per stream | garbage 0/4
+  DV_8192_3 DV c=4 rep=2: accept=45.3% AL=2.36 | 800 tok in 17.8s = 44.8 tok/s agg, 11.2 per stream | garbage 0/4
+=== DV_16384_3  vocab=/opt/llm/runners/dv/draft_vocab_16384.txt  05:13 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3134959) INFO 09-06 05:24:44 [mtp.py:96] FNDV draft vocab: 16384 of 248320 rows (6.6%); draft head 606 -> 80 MiB per draft step (BF16 slice of the FP8 head)
+  DV_16384_3 DV c=1 rep=0: accept=38.8% AL=2.16 | 200 tok in 8.0s = 25.0 tok/s agg, 25.0 per stream | garbage 0/1
+  DV_16384_3 DV c=1 rep=1: accept=42.4% AL=2.27 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  DV_16384_3 DV c=1 rep=2: accept=42.0% AL=2.26 | 200 tok in 7.5s = 26.6 tok/s agg, 26.6 per stream | garbage 0/1
+  DV_16384_3 DV c=1 rep=3: accept=50.0% AL=2.50 | 200 tok in 6.7s = 29.8 tok/s agg, 29.8 per stream | garbage 0/1
+  DV_16384_3 DV c=1 rep=4: accept=66.2% AL=2.99 | 200 tok in 6.3s = 31.6 tok/s agg, 31.6 per stream | garbage 0/1
+  DV_16384_3 DV c=1 rep=5: accept=50.4% AL=2.51 | 200 tok in 7.1s = 28.3 tok/s agg, 28.3 per stream | garbage 0/1
+  DV_16384_3 DV c=1 rep=6: accept=52.1% AL=2.56 | 200 tok in 6.9s = 28.9 tok/s agg, 28.9 per stream | garbage 0/1
+  DV_16384_3 DV c=1 rep=7: accept=38.4% AL=2.15 | 200 tok in 7.9s = 25.4 tok/s agg, 25.4 per stream | garbage 0/1
+  DV_16384_3 DV c=4 rep=0: accept=49.4% AL=2.48 | 800 tok in 11.6s = 68.9 tok/s agg, 17.2 per stream | garbage 0/4
+  DV_16384_3 DV c=4 rep=1: accept=51.3% AL=2.54 | 800 tok in 17.1s = 46.8 tok/s agg, 11.7 per stream | garbage 0/4
+  DV_16384_3 DV c=4 rep=2: accept=42.8% AL=2.28 | 800 tok in 17.6s = 45.6 tok/s agg, 11.4 per stream | garbage 0/4
+=== DV_32768_3  vocab=/opt/llm/runners/dv/draft_vocab_32768.txt  05:27 ===
+    fndv_lines=1 localargmax=1
+(Worker pid=3139315) INFO 09-06 05:38:52 [mtp.py:96] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+  DV_32768_3 DV c=1 rep=0: accept=52.1% AL=2.56 | 200 tok in 7.2s = 27.6 tok/s agg, 27.6 per stream | garbage 0/1
+  DV_32768_3 DV c=1 rep=1: accept=48.0% AL=2.44 | 200 tok in 7.3s = 27.5 tok/s agg, 27.5 per stream | garbage 0/1
+  DV_32768_3 DV c=1 rep=2: accept=41.9% AL=2.26 | 200 tok in 7.7s = 26.0 tok/s agg, 26.0 per stream | garbage 0/1
+  DV_32768_3 DV c=1 rep=3: accept=48.8% AL=2.46 | 200 tok in 6.9s = 28.9 tok/s agg, 28.9 per stream | garbage 0/1
+  DV_32768_3 DV c=1 rep=4: accept=68.7% AL=3.06 | 200 tok in 6.4s = 31.3 tok/s agg, 31.3 per stream | garbage 0/1
+  DV_32768_3 DV c=1 rep=5: accept=43.8% AL=2.31 | 200 tok in 7.6s = 26.3 tok/s agg, 26.3 per stream | garbage 0/1
+  DV_32768_3 DV c=1 rep=6: accept=47.8% AL=2.43 | 200 tok in 7.4s = 27.1 tok/s agg, 27.1 per stream | garbage 0/1
+  DV_32768_3 DV c=1 rep=7: accept=36.5% AL=2.09 | 200 tok in 8.2s = 24.4 tok/s agg, 24.4 per stream | garbage 0/1
+  DV_32768_3 DV c=4 rep=0: accept=47.5% AL=2.43 | 800 tok in 12.0s = 66.6 tok/s agg, 16.6 per stream | garbage 0/4
+  DV_32768_3 DV c=4 rep=1: accept=46.1% AL=2.38 | 800 tok in 17.3s = 46.1 tok/s agg, 11.5 per stream | garbage 0/4
+  DV_32768_3 DV c=4 rep=2: accept=53.1% AL=2.59 | 800 tok in 16.5s = 48.5 tok/s agg, 12.1 per stream | garbage 0/4
+reverted
+== ALL DONE == 05:41
