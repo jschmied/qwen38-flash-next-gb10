@@ -1,4 +1,4 @@
-# DRAFT — flashinfer-ai/flashinfer performance issue (do not post without go)
+# POSTED 2026-09-06 — https://github.com/flashinfer-ai/flashinfer/issues/4990
 
 **Title:** SM120/SM121 CUTLASS grouped MoE GEMM (`fused_moe_120`) is latency-bound at one CTA per SM on many-expert
 small-N MoEs (Qwen3.8-Flash-Next: 512 experts, N=640, ~150 rows per expert)
