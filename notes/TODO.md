@@ -202,3 +202,20 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   `fix/mamba-prefill-state-indices-contiguous`, 20/20 clean). Upstream fix = vllm#55375 (ours #55467 closed as duplicate; evidence + decode-mode test offered there);
   overlay the one-file fix onto the prod venv before re-enabling MTP; re-measure the MTP c≥2 cells (123/126) on the fixed build.
 - **[2026-09-05] GB10 split-K table PR — DROPPED** (finding 132): kernel gains real (up to 2.25× on 4×4) but 0.4 % of a step; no server-level effect at three starts. Keep the stacked branch as reference only.
+
+## Actionable after the 2026-09-06 determinism closure (ranked; state of the box: idle, prod venv carries the four fixes)
+
+1. **Our upstream PR vllm#55122 (deterministic `persistent_topk`) carries the v2.3 guard bug**: the `chunk_size >= TopK` check is
+   unconditional (PR diff line ~632); the main build's block-level indexer (TopK 512, 256-block rows at warm-up) dies at start.
+   Fix + 33 short-row tests are in `patches/kernel-det` (v2.4). Push to the PR branch — needs the go.
+2. **Prod MTP recipe lacks `disable_eagle_block_drop`**: only the `FN_SPEC_METHOD` path honours `FN_SPEC_NODROP`; the `FN_MTP`
+   shortcut does not. Measured −26 % per warm turn with MTP + prefix cache (3 starts, 2026-09-04). Extend the `FN_MTP` path,
+   default it on, one validation start — prod change, needs the go.
+3. **Re-measure everything taken one PLE step behind (2026-09-03 .. 09-06)**: MTP acceptance on agent traffic (41–50 %), the
+   draft-vocab +6 % (det-135/137), the warm-turn cost (finding 141), any SWE figures. One dvrate-style cell, 3 starts, fixed stack.
+4. **Draft-vocab 32k slice into prod**: decide after 3.
+5. **Upstream watch**: peakcrosser7's response on fork PR #13; when #53899 merges into main, re-port the overlay and open the
+   semaphore fix against main; #38315 auto-closes ~2026-09-10 → then open our FLA kkt+solve PR (branch ready); ZC502 on #54521.
+6. **Batch-shape non-invariance** (identical prompts in one batch differ: 416 flips at 1,999 tokens): separate lever, only if
+   batch-invariant evals matter.
+7. **Disk**: /opt 56 GB free; today's per-arm caches < 1 GB, something else is large — check before the next model pull.
