@@ -1,0 +1,17 @@
+preflight OK 02:14
+=== M=1 plain timing 02:14 ===
+M=1: 140.8 us per layer, 0.7 TFLOPS (measured window, 20 calls after 5 warmups)
+--- M=1 ncu DRAM bytes + duration per kernel (cold L2), measured call only
+=== M=4 plain timing 02:14 ===
+M=4: 526.2 us per layer, 0.7 TFLOPS (measured window, 20 calls after 5 warmups)
+--- M=4 ncu DRAM bytes + duration per kernel (cold L2), measured call only
+=== M=16 plain timing 02:15 ===
+M=16: 1748.4 us per layer, 0.9 TFLOPS (measured window, 20 calls after 5 warmups)
+--- M=16 ncu DRAM bytes + duration per kernel (cold L2), measured call only
+=== M=64 plain timing 02:15 ===
+M=64: 4562.4 us per layer, 1.4 TFLOPS (measured window, 20 calls after 5 warmups)
+--- M=64 ncu DRAM bytes + duration per kernel (cold L2), measured call only
+=== M=256 plain timing 02:15 ===
+M=256: 6519.9 us per layer, 3.9 TFLOPS (measured window, 20 calls after 5 warmups)
+--- M=256 ncu DRAM bytes + duration per kernel (cold L2), measured call only
+== ALL DONE == 02:16

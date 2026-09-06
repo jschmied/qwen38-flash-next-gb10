@@ -990,7 +990,9 @@
     a config. `dram__` metrics do not exist on GB10 (unified memory), so DRAM bytes are not measurable with ncu here.
     Decode shapes (`pr12b`, plain timing, random routing): M=1 141–144 µs per layer vs the 90 µs expert-byte floor
     (10 experts × 2.46 MB at 273 GB/s) = 1.6×; M=4 (the MTP-3 verify) 526–546 µs vs 360 µs (40 experts) = 1.5×;
-    M=16 1,723 µs vs 1,440 µs = 1.2×.
+    M=16 1,723–1,748 µs vs 1,440 µs = 1.2×; M=64 4,562 µs vs ~3.2 ms (≈360 distinct experts) = 1.4×; M=256 6,520 µs vs
+    4.6 ms (all 512 experts, 1.26 GB) = 1.4× (`notes/data/pr12b.txt`). So at every decode shape the MoE sits 1.2–1.6× above
+    its expert-byte floor, with the expand/finalize kernels inside that number.
 
 138. **GDN chunked prefill: the whole fla-core gap is ONE kernel — the fused kkt+solve (`pr12`, per-kernel attribution,
     H=48, K=V=128, one sequence).** At T=7503 vendored 9,156 µs vs fla-core 8,245 µs (−10 %); at 29,263 37,076 vs
