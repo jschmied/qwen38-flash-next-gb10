@@ -219,7 +219,9 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 3b. **QUEUED 2026-09-06 (user: "queue re-measurement and page update for later on the prod stack with all fixes"): the MTP
    cells + the published Quant Map.** Full spec in `notes/mtp-remeasure-plan.md` — 5 cell groups, ~51 starts, an overnight job;
    the prod venv already carries every fix it needs (#55375 stride, PLE semaphore, det overlays, `disable_eagle_block_drop`).
-   The page keeps its affected cells until this runs; that is the accepted trade.
+   The page keeps its affected cells until this runs; that is the accepted trade. **Group 0 added 2026-09-06:** every
+   tok/s on the page is from the PREVIEW build (`fnext`, 0.1.dev20073) while prod serves the MAIN build (`fnmain2`,
+   0.28.1rc1.dev401) — the non-MTP ladder is stale for that reason alone, and no preview-vs-main decode comparison exists.
 5. **Upstream watch**: peakcrosser7's response on fork PR #13; when #53899 merges into main, re-port the overlay and open the
    semaphore fix against main; #38315 auto-closes ~2026-09-10 → then open our FLA kkt+solve PR (branch ready); ZC502 on #54521.
 6. **Batch-shape non-invariance** (identical prompts in one batch differ: 416 flips at 1,999 tokens): separate lever, only if

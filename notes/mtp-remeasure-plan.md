@@ -26,6 +26,30 @@ cells until this runs — that is the accepted trade, not an oversight.
 - Per-arm `FN_CACHE_ROOT` and a purge: the compile-cache key omits `num_speculative_tokens` and
   env-gated branches, so an n-sweep otherwise shares one graph.
 
+## The build gap: it is not only the MTP cells
+
+**Every tok/s figure on the page was measured on the preview build** — `vllm-venv-fnext` =
+`0.1.dev20073+g8e685d198`, which is what the footer states. Prod serves the **main build**,
+`vllm-venv-fnmain2` = `0.28.1rc1.dev401+g8340fe1bb`. So the page describes a stack we no longer run,
+and that covers the **non-MTP** numbers too — the c=1 quantization ladder (17.1 / 23.7 / 26.1) and
+the FP8 KV c=1 arms, none of which the MTP groups below touch.
+
+**No decode tok/s comparison between the two builds exists in these notes.** What exists is a
+TTFT-side "preview/main gap" (finding 74: the fixed main build 2.71 s at 8k against the preview's
+2.84 s with the pad — small), and the det overlays now defaulted on cost nothing per turn at the
+server level (finding 82, three starts per arm). Neither settles decode.
+
+What survives a build change regardless: the **ratios**, because both arms of every comparison ran
+on one build the same day, and everything structural (byte accounting, the block deficit, the three
+`lm_head` blockers, the two mandatory env vars).
+
+**Group 0 — the c=1 ladder on the main build (6 starts, do first; it is the number people quote).**
+No speculation, so three starts is enough (no-spec spread 1.10×). `qwen38-flash-next-nvfp4`
+(RadixArk) and `qwen38-flash-next-fp8head` are both on disk in full (hardlinked, ~130 GB each).
+⚠️ The middle rung — lovedheart NVFP4-FP8 with the BF16 `lm_head` — has **no separate directory**;
+`fp8head` is its derivative. Check before scheduling: that rung may need a re-download, which is a
+large pull and needs the user's go.
+
 ## Cells, in the order they pay
 
 **1 — the page's headline agent-loop claim (~18 starts).** Fixed-work loop, `ignore_eos`, 8 × 130
