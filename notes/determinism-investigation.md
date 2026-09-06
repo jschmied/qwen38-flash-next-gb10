@@ -1595,3 +1595,43 @@ Plus whatever drives the separate generation-side path.
     command line never reaches the log — neither is a usable gate. **Open:** a warm-turn probe of ≥4
     identical turns (or `agentloop2.py`, which grows its prefix) × 3 starts, on the re-measurement stack
     of item 3 — finding 141's −26 % is itself inside the one-PLE-step-behind window.
+
+141. **`disable_eagle_block_drop` on the fixed prod stack: −19 % per agent turn, three starts per arm,
+    ranges non-overlapping (`mtpnodrop2`, 2026-09-06 21:14–22:28, `notes/data/mtpnodrop2.txt`).**
+    Prod recipe (fp8head, 32k, seqs 16, batch 16384, util 0.80, MTP 3, prefix cache on) on
+    `vllm-venv-fnmain2` with every fix in place — #55375 stride, PLE semaphore reset, det top-k v2.4,
+    det finalize. Probe `agentloop2.py`: 8 turns over a growing ~7.5k prefix, hits from
+    `prefix_cache_hits_total` deltas. Arms interleaved ON/OFF/ON/OFF/ON/OFF.
+
+    | arm | s/turn (3 starts) | tokens/loop | acceptance | mean accept len |
+    | --- | --- | --- | --- | --- |
+    | ON (`FN_SPEC_NODROP=1`, the new default) | **1.76 / 1.74 / 1.75** | 215 | 51.8 % | 2.55 |
+    | OFF (`=0`, vLLM's default) | **2.16 / 2.17 / 2.15** | 131 | 42.2 % | 2.27 |
+
+    **The mechanism is visible per turn, and it is what finding 94 predicted.** ON: turn 1 cold
+    (`hits+0`, 3.70 s), then `hits+6400` on every turn. OFF: turn 1 **and turn 2** cold (`hits+0`,
+    3.63 / 3.40 s), then `hits+4800` — exactly one 1,600-token block less, on every warm turn, plus
+    a whole extra cold turn per loop. That hit delta is the gate det-140 lacked: the engine's
+    `SpeculativeConfig` log line truncates before the field and the launcher `exec`s vLLM, so neither
+    the log nor the command line can confirm the flag — the 4,800 → 6,400 step can.
+
+    **Which number to quote.** The arms take different trajectories (215 against 131 tokens per loop),
+    so `ms/tok` (65.3 against 131.8) is **not** like-for-like and must not be quoted as a 2× win. The
+    whole-loop figure is **s/turn: 1.750 against 2.160 mean, −19.0 %**. Warm turns only, ON 1.48
+    against OFF 1.69 s, is **−12.4 %** — and OFF is slower there while emitting *fewer* tokens per
+    turn (11–16 against 22–35), so the fixed-cost gap is wider than that percentage. Finding 94's
+    −26 % (2.05 → 1.52 s) is confirmed in direction; ON's warm turn matches (1.48 vs 1.52) while OFF
+    has got faster (1.69 vs 2.05), which is what the stride and semaphore fixes should do.
+
+    **Second result, and it may matter more: the MTP restart spread is not reproducing.** All three
+    ON starts are identical *to the digit* — 215 tokens, 85 drafts, 255 draft tokens, 132 accepted,
+    51.8 %, 2.55 — and so are all three OFF starts; s/turn varies 1.01× within each arm. The 1.83×
+    spread that forced the "three starts, report ranges" protocol was measured on the **preview**
+    stack (2026-09-01, 66 arms) with the multi-prefill corruption and the PLE semaphore both live.
+    This is one workload on one build and does not retire that protocol — it is a reason to test it
+    directly in the queued re-measurement (`notes/mtp-remeasure-plan.md`), where cheap stability
+    would cut the run substantially.
+
+    Also seen: 268 `NVRM … NV_ERR_NO_MEMORY from _memdescAllocInternal` kernel lines in one burst at
+    21:25:59, at an arm transition. No process was killed and no `oom-kill` entry exists; every
+    subsequent arm started and completed normally. Read as teardown noise, not a failure.
