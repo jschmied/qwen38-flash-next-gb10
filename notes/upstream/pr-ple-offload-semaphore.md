@@ -1,41 +1,42 @@
 # OPENED 2026-09-06 (user go "create pr"): https://github.com/peakcrosser7/vllm/pull/13 — body below is the live text
-# Branch: jschmied/vllm:ple-offload-wait-fix (1 commit on top of 357e0544, signed off). Open on go, after the validation run.
 
 ## Purpose
 
-With CUDA graphs enabled (`cudagraph_mode` PIECEWISE, FULL_DECODE_ONLY, …) every forward of Qwen3.8-Flash-Next with
-`VLLM_PLE_CPU_OFFLOAD=1` consumes the **previous step's** PLE outputs. `capture_model()` signals dummy PLE outputs and then
-runs real steps through `execute_model()` that submit real requests to the offload worker. The first real wait passes on the
-dummy signal (buffer still zero), its release resets the flag, and the worker's copy for that step raises the flag for the
-*next* step — the semaphore is one step ahead from then on. `cudagraph_mode=NONE` never hits this (no dummy signal outside
-`execute_model`) and is correct.
+Fix a one-step-behind read of the PLE CPU-offload outputs whenever CUDA graphs are enabled (`cudagraph_mode` PIECEWISE, FULL_DECODE_ONLY, …) on this branch.
 
-Symptom that led here: identical sequential requests fall into two classes (cold first request vs all later ones,
-bit-identical among themselves), so the defect is invisible to "same prompt twice" checks and only shows when consecutive
-steps differ — i.e. always, in real serving (position-resolved logprobs: 758/1,459 top-1 flips at 1,460 tokens between
-a request that followed a different request and one that followed an identical one).
+`capture_model()` signals dummy PLE outputs and then runs real steps through `execute_model()` that submit real requests to the offload worker. The first real wait passes on the dummy signal (the buffer is still zero), its release resets the flag, and the worker's copy for that step raises the flag for the *next* step. From then on every forward consumes the **previous step's** per-layer embeddings; only identical consecutive requests hide it. `cudagraph_mode=NONE` never signals dummy outputs outside `execute_model` and is correct.
 
-## Fix
+Fix: reset every layer's semaphore on the model stream before a real request is launched (`PleOffloadConnector.prepare_forward`), so the GPU-side `ple_offload_wait` can only be satisfied by this step's copy. Per rank, before the `tp_rank` check in `_launch`, because each TP rank owns its buffer and semaphore. 11 lines; the worker already waits for the reset before copying, so its protocol is unchanged.
 
-Reset every layer's semaphore on the model stream before a real request is launched (`PleOffloadConnector.prepare_forward`),
-so the GPU-side `ple_offload_wait` can only be satisfied by this step's copy. Per rank, before the `tp_rank` check in
-`_launch`, because each TP rank owns its buffer and semaphore. 11 lines, no protocol change for the worker (it already waits
-for the reset before copying).
+## Test Plan
 
-## Evidence (GB10 / sm_121, TP=1, FP8 PLE shards, no spec, prefix cache off)
+GB10 (sm_121, TP=1), FP8 PLE shards, `VLLM_PLE_CPU_OFFLOAD=1`, no speculation, prefix cache off, `cudagraph_mode=PIECEWISE` (default) and `NONE` as the reference:
 
-- PLE output buffer read back after each real forward (hash + non-zero rows), PIECEWISE: first real step 0 rows, cold
-  1,460-token request 32 rows (= previous step), next identical request 1,460 rows, cold 1,999-token request exactly 1,460
-  rows. NONE: every step exactly its own rows; the NONE hash equals PIECEWISE's *warm* hash.
-- Semaphore trace (every reset/signal/wait with caller, both processes): `signal via signal_dummy_outputs <- capture_model`,
-  then `execute_model` steps at 32/16/2/1 tokens with worker requests; the 32-token wait sees flag=1 and 0 rows; the
-  16-token wait blocks on 0 and is released by the worker's signal *for the 32-token step*; after that every release is
-  immediately followed by the previous step's late signal.
-- With the reset: every real step consumes exactly its own rows from the first one (32/16/2/1 at init, then 1,460 ×3, 1,999 ×2; hashes equal to the NONE run's), the cold first request gives the warm logprob (−0.2638), 16 identical requests = 1 class, and the position-resolved set is bit-exact sequentially at 1,460 / 1,999 / 5,960 tokens (0 flips, spread 0.000, 1/8 distinct 64-token completions each); the concurrent batches keep 0 / 416 / 665 flips, identical to the cudagraph-off run — the batch-shape axis, not this defect.
+1. Read back every PLE layer's GPU output buffer after each real forward (hash + non-zero row count), unfixed vs fixed.
+2. 16 identical sequential chat requests with `prompt_logprobs=5`, full per-position vector hashed and grouped into classes.
+3. Position-resolved comparison of 8 sequential + 8 concurrent identical requests on 1,460 / 1,999 / 5,960-token prompts (first divergent position, top-1 flips, logprob spread), plus 8 greedy 64-token completions per prompt.
+4. A trace of every semaphore reset/signal/wait with caller, in both processes, to locate the unmatched signal.
 
-## Test plan
+## Test Result
 
-Served the model with `cudagraph_mode=PIECEWISE` (default) and NONE; per-step PLE buffer probe; 16 identical sequential
-requests (full prompt-logprob vector hashed); position-resolved logprob comparison on 1,460 / 1,999 / 5,960-token prompts.
+Unfixed, PIECEWISE: first real step 0 non-zero rows; a cold 1,460-token request 32 rows (= the previous step); the next identical request 1,460 rows; a cold 1,999-token request exactly 1,460 rows. 16 identical requests fall into two classes (cold first, then 15 bit-identical). Trace: `signal via signal_dummy_outputs <- capture_model`, then `execute_model` steps at 32/16/2/1 tokens with worker requests; the 32-token wait sees flag=1 and 0 rows; the 16-token wait blocks and is released by the worker's signal *for the 32-token step*; every later release is followed by the previous step's late signal.
 
-_Written with AI assistance (Claude Code); every line reviewed by the author._
+`cudagraph_mode=NONE`: every step exactly its own rows; the NONE buffer hash equals PIECEWISE's *warm* hash, i.e. the warm class is the correct computation.
+
+Fixed, PIECEWISE: every real step consumes exactly its own rows from the first one (32/16/2/1 at init, then 1,460 ×3, 1,999 ×2), hashes equal to the NONE run's; the cold first request gives the same first-token logprob as the warm ones (−0.2638); 16 identical requests = **one** class; the position-resolved set is bit-exact sequentially at 1,460 / 1,999 / 5,960 tokens (0 flips, spread 0.000, 1/8 distinct completions each). The concurrent batches keep 0 / 416 / 665 flips, identical to the NONE run — the batch-shape axis, unrelated to this fix.
+
+---
+<details>
+<summary> Essential Elements of an Effective PR Description Checklist </summary>
+
+- [x] The purpose of the PR, such as "Fix some issue (link existing issues this PR will resolve)".
+- [x] The test plan, such as providing test command.
+- [x] The test results, such as pasting the results comparison before and after, or e2e results
+- [ ] (Optional) The necessary documentation update, such as updating `supported_models.md` and `examples` for a new model.
+</details>
+
+_This PR includes AI-generated code (Claude Code); every changed line was reviewed and the behavior validated end-to-end by the author._
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+https://claude.ai/code/session_011SuBgdp87NbfLbiigmzn1z

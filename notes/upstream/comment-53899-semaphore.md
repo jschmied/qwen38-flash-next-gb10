@@ -1,4 +1,4 @@
-# DRAFT — comment on vllm-project/vllm#53899 (post on go, together with the PR)
+# POSTED 2026-09-06 (user go "post it"): https://github.com/vllm-project/vllm/pull/53899#issuecomment-5560263095
 
 One more finding on this branch, GB10 / sm_121, TP=1, with graphs enabled (the default PIECEWISE, also FULL_DECODE_ONLY):
 **every forward consumes the previous step's PLE outputs.** `capture_model()` signals dummy PLE outputs and then runs real

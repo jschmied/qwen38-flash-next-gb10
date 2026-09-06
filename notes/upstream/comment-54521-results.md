@@ -1,4 +1,4 @@
-# DRAFT — results follow-up on vllm-project/vllm#54521 (post on go)
+# POSTED 2026-09-06 (user go "post it"): https://github.com/vllm-project/vllm/issues/54521#issuecomment-5560263227
 
 Position-resolved regression on sm_121 as requested (main dev401, no spec, prefix cache off, batch 16384, temperature 0,
 `prompt_logprobs=5`, 8 sequential + 8 concurrent identical requests, 64-token greedy hashes; 1,460 / 1,999 / 5,960-token
