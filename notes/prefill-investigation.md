@@ -1015,3 +1015,16 @@
     the ncu evidence drafted in `notes/upstream/issue-flashinfer-sm120-grouped-gemm.md` (not posted). The JIT rebuild
     of the module takes 12 min at MAX_JOBS=4 on an idle box.
 
+
+140. **Swizzle in the server, kernel-level (`stack2`, one profiled 30k prefill per arm, 16k chunks, `notes/data/stack2.txt`,
+    traces on the box): the blockwise-FP8 GEMM kernel goes 2,532 → 1,011 ms over the request (192 calls, 13.2 → 5.3 ms
+    per call, 2.5×), kernel-sum 12.23 → 9.48 s, profiled TTFT 13.08 → 9.83 s; third start for the swizzle arm.** The
+    op attribution shows the swizzled path is the one that runs (`_C_swz2::blockwise_sm120` via `_fn_swz_mm`, 36+36+48+48+12
+    calls at the GDN 16384-wide fused in-proj [M×2560 → 16384], the 6144-wide out-proj and the 13312-wide attention
+    projection) and that stock's biggest single shape, [16384, 2560] × [2560, 16384] (the fused qkv+z, a 40 MiB weight),
+    runs 27.9 ms per call stock vs 8.8 ms swizzled (3.2×). Everything else is unchanged within noise (QSA 1.17 → 1.08 s,
+    hc 0.83 → 0.83 s, MoE grouped 1.91 → 1.61 s — the MoE difference is the same kernel finishing sooner once the FP8
+    GEMMs stop thrashing the L2 around it, not a change in the MoE path). With stack1's 9.52 / 9.50 s this makes three
+    starts at 30k: **10.82 → 9.5 s, −12 %**; the #55180 server paragraph (`notes/upstream/comment-55180-server.md`) is
+    updated with these numbers and is ready to post on go.
+

@@ -1,0 +1,207 @@
+applied
+=== ST2_stock16k  batch=16384 swz=0  05:41 ===
+    swz_line=0
+  ST2_stock16k warm 8k: 4.11s
+  ST2_stock16k start_profile -> 200
+  ST2_stock16k profiled 30k prefill: prompt_tokens=29263 ttft=13.08s
+  ST2_stock16k stop_profile -> 200
+--- trace dp0_pp0_tp0_dcp0_ep0_rank0.1788666744920890928.pt.trace.json.gz
+kernel-sum 12.227 s over span 12.979 s, 4878 launches
+kernel                                                                                ms      %  calls   us/call
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa    2531.7   20.7    192   13186.1
+_qsa_sparse_paged_gqa_splitk_kernel                                               1171.8    9.6     24   48824.8
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh    1072.0    8.8     96   11166.8
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     841.1    6.9     96    8761.2
+_hc_combine_norm_kernel                                                            827.8    6.8    190    4356.6
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32     611.8    5.0    338    1810.1
+_hc_gate_mix_kernel                                                                587.2    4.8    194    3026.6
+nvjet_sm121_tst_mma_128x208x64_2_32x104x64_tmaAB_bz_TNNN                           517.8    4.2    196    2641.6
+chunk_fwd_kernel_o                                                                 407.2    3.3     72    5655.0
+chunk_gated_delta_rule_fwd_kernel_h_blockdim64                                     398.5    3.3     72    5535.2
+recompute_w_u_fwd_kernel                                                           370.3    3.0     72    5143.1
+_causal_conv1d_fwd_kernel                                                          340.5    2.8     72    4729.4
+void tensorrt_llm::kernels::cutlass_kernels::expandInputRowsKernel<__nv_fp4_e2     306.7    2.5     96    3194.9
+_fused_post_conv_kernel                                                            294.6    2.4     72    4091.3
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__nv_fp4_e2m1,     274.7    2.2     96    2861.3
+QSA-related kernels: 1236.9 ms = 10.1 % of kernel time
+    _qsa_sparse_paged_gqa_splitk_kernel                                               1171.8 ms     24 calls
+    _qsa_mqa_paged_prefill_kernel                                                       39.5 ms     24 calls
+    _expand_qsa_indices_kernel                                                          21.8 ms     24 calls
+    _qsa_pre_indexer_kernel                                                              3.8 ms     24 calls
+    _build_qsa_metadata_kernel                                                           0.0 ms      4 calls
+--- attribution: every kernel by launching op (top 25)
+matched kernels: 4878, 12226.5 ms
+   306.5 ms    11  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[16384, 16384], [16384, 2560], [2560, 16384 | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   281.7 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   267.3 ms    36  chunk_fwd_kernel_o                       | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   251.0 ms    36  chunk_gated_delta_rule_fwd_kernel_       | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   247.3 ms    36  recompute_w_u_fwd_kernel                 | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   231.0 ms    11  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[12879, 16384], [12879, 2560], [2560, 16384 | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   157.3 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[12879, 2560], [12879, 2560], [12879, 2560] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   147.6 ms    36  chunk_gated_delta_rule_fwd_kernel_       | ChunkGatedDe [[1, 12879, 16, 128], [1, 12879, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   139.8 ms    36  chunk_fwd_kernel_o                       | ChunkGatedDe [[1, 12879, 16, 128], [1, 12879, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   123.0 ms    36  recompute_w_u_fwd_kernel                 | ChunkGatedDe [[1, 12879, 16, 128], [1, 12879, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   112.4 ms    36  merge_16x16_to_64x64_inverse_kerne       | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   108.5 ms    22  _hc_combine_norm_kernel                  | vllm::qwen4_ [[16384, 10240], [16384, 2560], [16384, 4],  | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   100.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cetdezkzmt7o7uhdi3zu5rgds5xdpd4g25av73jglddo2xpu6pj3
+    98.7 ms     1  _qsa_sparse_paged_gqa_splitk_kerne       | vllm::qwen4_ [[16384, 2560], [16384], [16384, 24, 256], [ | <string>(20): __vllm_inlined_submods__9
+    91.5 ms    22  nvjet_sm121_tst_mma_128x208x64_2_3       | aten::mm [[16384, 10240], [10240, 336], [16384, 336]] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    89.2 ms    55  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    88.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | c5bqwwfiyloghvbpdnlt36vyibpgoihuy27v5ewyp7z6lxh47jsk
+    82.0 ms    22  _hc_combine_norm_kernel                  | vllm::qwen4_ [[12879, 10240], [12879, 2560], [12879, 4],  | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    77.9 ms    48  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 2560], [2560, 1280]] | parameter.py(122): __torch_function__
+    77.7 ms    22  _hc_gate_mix_kernel                      | vllm::qwen4_ [[16384, 10240], [16384, 10240], []] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    72.9 ms     1  _qsa_sparse_paged_gqa_splitk_kerne       | vllm::qwen4_ [[16384, 2560], [16384], [16384, 24, 256], [ | <string>(68): __vllm_inlined_submods__33
+    72.2 ms    36  chunk_scaled_dot_kkt_fwd_kernel          | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+    61.8 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cwenym5nrbjntjcofgp5p6f4msfa4z36qd74bpujlu6k4afhx2qe
+    59.8 ms    22  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 320], [320, 10240], [16384, 10240]] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    57.8 ms     1  _qsa_sparse_paged_gqa_splitk_kerne       | vllm::qwen4_ [[16384, 2560], [16384], [16384, 24, 256], [ | <string>(84): __vllm_inlined_submods__41
+--- attribution: GEMM-like kernels (device_kernel|gemm|Gemm|nvjet|cutlass)
+matched kernels: 1740, 6376.0 ms
+   306.5 ms    11  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[16384, 16384], [16384, 2560], [2560, 16384 | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   281.7 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   231.0 ms    11  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[12879, 16384], [12879, 2560], [2560, 16384 | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   157.3 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[12879, 2560], [12879, 2560], [12879, 2560] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+   100.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cetdezkzmt7o7uhdi3zu5rgds5xdpd4g25av73jglddo2xpu6pj3
+    91.5 ms    22  nvjet_sm121_tst_mma_128x208x64_2_3       | aten::mm [[16384, 10240], [10240, 336], [16384, 336]] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    89.2 ms    55  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    88.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | c5bqwwfiyloghvbpdnlt36vyibpgoihuy27v5ewyp7z6lxh47jsk
+    77.9 ms    48  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 2560], [2560, 1280]] | parameter.py(122): __torch_function__
+    61.8 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cwenym5nrbjntjcofgp5p6f4msfa4z36qd74bpujlu6k4afhx2qe
+    59.8 ms    22  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 320], [320, 10240], [16384, 10240]] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    49.6 ms     5  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | c5bqwwfiyloghvbpdnlt36vyibpgoihuy27v5ewyp7z6lxh47jsk
+    49.5 ms    55  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[12879, 2560], [12879, 2560], [12879, 2560] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    45.8 ms    48  nvjet_sm121_tst_mma_192x160x64_2_4       | aten::mm [[12879, 2560], [2560, 1280]] | parameter.py(122): __torch_function__
+    44.9 ms    22  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[12879, 320], [320, 10240], [12879, 10240]] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    42.9 ms    48  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 640], [640, 2560]] | parameter.py(122): __torch_function__
+    39.6 ms     5  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cetdezkzmt7o7uhdi3zu5rgds5xdpd4g25av73jglddo2xpu6pj3
+    36.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | ccuazwgok2jd6i5ec44bs7r3apjrvax7qet4gzw6oam4pcopyxzh
+    35.7 ms     2  nvjet_sm121_tst_mma_128x208x64_2_3       | aten::mm [[16384, 10240], [10240, 336], [16384, 336]] | c5bqwwfiyloghvbpdnlt36vyibpgoihuy27v5ewyp7z6lxh47jsk
+    35.6 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cma62cq4bjuwxhzksuxwsr7dpzagcuojf7tv45g2ynxuu3jyuwwb
+    35.4 ms     1  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[16384, 16384], [16384, 2560], [2560, 16384 | c5bqwwfiyloghvbpdnlt36vyibpgoihuy27v5ewyp7z6lxh47jsk
+    35.4 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | ctfmayw457rxnck5wdf3w33nononhillzpr7raae7wrech23vh4s
+    35.2 ms     1  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[16384, 16384], [16384, 2560], [2560, 16384 | cefnmm3pa6ej5gajndzoslpccs5k7ahamxtezmqyxdwtwykrh4ap
+    34.9 ms    22  nvjet_sm121_tst_mma_128x208x64_2_3       | aten::mm [[12879, 10240], [10240, 336], [12879, 336]] | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+    34.4 ms    11  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[16384, 2560], [16384, 6144], [6144, 2560], | c3pdfzue66yiwu2752orndsyhpx62mc2n4l2vdpptfk3yxhude6n
+=== ST2_swz16k  batch=16384 swz=1  05:54 ===
+    swz_line=4
+  ST2_swz16k warm 8k: 3.04s
+  ST2_swz16k start_profile -> 200
+  ST2_swz16k profiled 30k prefill: prompt_tokens=29263 ttft=9.83s
+Traceback (most recent call last):
+  File "/opt/llm/runners/prof30k.py", line 13, in <module>
+    print(f"  {label} stop_profile -> {post('/stop_profile')}", flush=True); time.sleep(20)
+                                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/llm/runners/prof30k.py", line 8, in post
+    def post(p): return urllib.request.urlopen(urllib.request.Request(URL+p,b"{}",H),timeout=600).status
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1373, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/urllib/request.py", line 1348, in do_open
+    r = h.getresponse()
+        ^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 1457, in getresponse
+    response.begin()
+  File "/usr/lib/python3.12/http/client.py", line 336, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/http/client.py", line 297, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/socket.py", line 707, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: timed out
+--- trace dp0_pp0_tp0_dcp0_ep0_rank0.1788667525962726253.pt.trace.json.gz
+kernel-sum 9.481 s over span 9.761 s, 4878 launches
+kernel                                                                                ms      %  calls   us/call
+_qsa_sparse_paged_gqa_splitk_kernel                                               1082.3   11.4     24   45097.2
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa    1010.6   10.7    192    5263.6
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     879.5    9.3     96    9161.4
+_hc_combine_norm_kernel                                                            827.9    8.7    190    4357.3
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     732.1    7.7     96    7625.6
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32     595.9    6.3    338    1763.1
+_hc_gate_mix_kernel                                                                575.0    6.1    194    2963.9
+nvjet_sm121_tst_mma_128x208x64_2_32x104x64_tmaAB_bz_TNNN                           376.8    4.0    196    1922.5
+chunk_fwd_kernel_o                                                                 346.4    3.7     72    4810.5
+chunk_gated_delta_rule_fwd_kernel_h_blockdim64                                     341.8    3.6     72    4746.9
+recompute_w_u_fwd_kernel                                                           293.1    3.1     72    4070.3
+void tensorrt_llm::kernels::cutlass_kernels::expandInputRowsKernel<__nv_fp4_e2     232.2    2.4     96    2419.0
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__nv_fp4_e2m1,     228.6    2.4     96    2381.7
+_fused_post_conv_kernel                                                            226.8    2.4     72    3149.4
+_causal_conv1d_fwd_kernel                                                          218.0    2.3     72    3027.2
+QSA-related kernels: 1142.7 ms = 12.1 % of kernel time
+    _qsa_sparse_paged_gqa_splitk_kernel                                               1082.3 ms     24 calls
+    _qsa_mqa_paged_prefill_kernel                                                       37.5 ms     24 calls
+    _expand_qsa_indices_kernel                                                          19.2 ms     24 calls
+    _qsa_pre_indexer_kernel                                                              3.6 ms     24 calls
+    _build_qsa_metadata_kernel                                                           0.0 ms      4 calls
+--- attribution: every kernel by launching op (top 25)
+matched kernels: 4878, 9480.9 ms
+   318.0 ms    36  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[16384, 16384], [16384, 2560], [2560, 16384 | cutlass.py(356): _fn_swz_mm
+   232.0 ms    36  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[12879, 16384], [12879, 2560], [2560, 16384 | cutlass.py(356): _fn_swz_mm
+   204.4 ms    36  chunk_fwd_kernel_o                       | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   197.4 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+   194.8 ms    36  chunk_gated_delta_rule_fwd_kernel_       | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   169.2 ms    36  recompute_w_u_fwd_kernel                 | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   167.1 ms    48  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[16384, 2560], [16384, 6144], [6144, 2560], | cutlass.py(356): _fn_swz_mm
+   163.6 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[12879, 2560], [12879, 2560], [12879, 2560] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+   147.0 ms    36  chunk_gated_delta_rule_fwd_kernel_       | ChunkGatedDe [[1, 12879, 16, 128], [1, 12879, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   142.0 ms    36  chunk_fwd_kernel_o                       | ChunkGatedDe [[1, 12879, 16, 128], [1, 12879, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   135.1 ms    48  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[12879, 2560], [12879, 6144], [6144, 2560], | cutlass.py(356): _fn_swz_mm
+   123.9 ms    36  recompute_w_u_fwd_kernel                 | ChunkGatedDe [[1, 12879, 16, 128], [1, 12879, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+   106.4 ms    22  _hc_combine_norm_kernel                  | vllm::qwen4_ [[16384, 10240], [16384, 2560], [16384, 4],  | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    94.4 ms    12  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[16384, 13312], [16384, 2560], [2560, 13312 | cutlass.py(356): _fn_swz_mm
+    83.7 ms    22  _hc_combine_norm_kernel                  | vllm::qwen4_ [[12879, 10240], [12879, 2560], [12879, 4],  | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    72.5 ms    48  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 2560], [2560, 1280]] | parameter.py(122): __torch_function__
+    71.8 ms    22  _hc_gate_mix_kernel                      | vllm::qwen4_ [[16384, 10240], [16384, 10240], []] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    64.4 ms    36  merge_16x16_to_64x64_inverse_kerne       | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+    64.0 ms    12  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[12879, 13312], [12879, 2560], [2560, 13312 | cutlass.py(356): _fn_swz_mm
+    63.7 ms    55  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    57.0 ms    22  _hc_gate_mix_kernel                      | vllm::qwen4_ [[12879, 10240], [12879, 10240], []] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    56.1 ms    22  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 320], [320, 10240], [16384, 10240]] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    53.8 ms     1  _qsa_sparse_paged_gqa_splitk_kerne       | vllm::qwen4_ [[16384, 2560], [16384], [16384, 24, 256], [ | <string>(84): __vllm_inlined_submods__41
+    51.8 ms    36  merge_16x16_to_64x64_inverse_kerne       | ChunkGatedDe [[1, 12879, 16, 128], [1, 12879, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+    51.7 ms    36  chunk_scaled_dot_kkt_fwd_kernel          | ChunkGatedDe [[1, 16384, 16, 128], [1, 16384, 16, 128], [ | chunk.py(137): chunk_gated_delta_rule
+--- attribution: GEMM-like kernels (device_kernel|gemm|Gemm|nvjet|cutlass)
+matched kernels: 1740, 4264.8 ms
+   318.0 ms    36  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[16384, 16384], [16384, 2560], [2560, 16384 | cutlass.py(356): _fn_swz_mm
+   232.0 ms    36  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[12879, 16384], [12879, 2560], [2560, 16384 | cutlass.py(356): _fn_swz_mm
+   197.4 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+   167.1 ms    48  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[16384, 2560], [16384, 6144], [6144, 2560], | cutlass.py(356): _fn_swz_mm
+   163.6 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[12879, 2560], [12879, 2560], [12879, 2560] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+   135.1 ms    48  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[12879, 2560], [12879, 6144], [6144, 2560], | cutlass.py(356): _fn_swz_mm
+    94.4 ms    12  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[16384, 13312], [16384, 2560], [2560, 13312 | cutlass.py(356): _fn_swz_mm
+    72.5 ms    48  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 2560], [2560, 1280]] | parameter.py(122): __torch_function__
+    64.0 ms    12  void cutlass::device_kernel<vllm::       | _C_swz2::blo [[12879, 13312], [12879, 2560], [2560, 13312 | cutlass.py(356): _fn_swz_mm
+    63.7 ms    55  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    56.1 ms    22  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 320], [320, 10240], [16384, 10240]] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    49.9 ms    55  void tensorrt_llm::kernels::cutlas       | vllm::moe_fo [[12879, 2560], [12879, 2560], [12879, 2560] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    47.0 ms    48  nvjet_sm121_tst_mma_192x160x64_2_4       | aten::mm [[12879, 2560], [2560, 1280]] | parameter.py(122): __torch_function__
+    45.0 ms    22  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[12879, 320], [320, 10240], [12879, 10240]] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    43.0 ms    22  nvjet_sm121_tst_mma_128x208x64_2_3       | aten::mm [[16384, 10240], [10240, 336], [16384, 336]] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    41.0 ms    48  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[16384, 640], [640, 2560]] | parameter.py(122): __torch_function__
+    34.2 ms    22  nvjet_sm121_tst_mma_128x208x64_2_3       | aten::mm [[12879, 10240], [10240, 336], [12879, 336]] | ctxvuec3zil5ns2kcpu7talm24hgf3skwmyi4pmfab6jbqdyan2d
+    33.3 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cdpvabvnmwm5xbjamd5douaxoblezwvuqz7lzphu2umcyoktp6cz
+    32.8 ms    48  void cutlass::Kernel2<cutlass_80_t       | aten::mm [[12879, 640], [640, 2560]] | parameter.py(122): __torch_function__
+    29.0 ms    48  nvjet_sm121_tst_mma_192x160x64_2_4       | aten::mm [[16384, 2560], [2560, 512]] | parameter.py(122): __torch_function__
+    22.5 ms    48  nvjet_sm121_tst_mma_128x224x64_2_6       | aten::mm [[12879, 2560], [2560, 512]] | parameter.py(122): __torch_function__
+    21.9 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | csnmw7ygmlgyhypawykgnuvib7ef7boq3lzoca3le36q43whaw24
+    21.4 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cu3brdjkq6h2c22nihqzbxnfkohfutm6f3d6qqccgd62vsmalmsa
+    20.9 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cn2pqpfr56lxbmuol6cjk6cqvpe5bwlydkgmmxklwtsy4ni6ooj6
+    20.1 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[16384, 2560], [16384, 2560], [16384, 2560] | cwu4bnlplov3wttkcfm723m6xbwsssw35o6xkt6rmwvbga7kntpx
+reverted
+== ALL DONE == 06:17
