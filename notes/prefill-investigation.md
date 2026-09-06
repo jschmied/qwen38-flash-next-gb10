@@ -976,3 +976,28 @@
     the profiled `stack2` run. PR #55180 server-level paragraph drafted in `notes/upstream/comment-55180-server.md`
     (not posted).
 
+
+137. **The FlashInfer SM120 grouped MoE GEMM is latency-bound, not bandwidth- or compute-bound (`pr12`, ncu `--set full`
+    on the standalone layer at M=7503, `notes/data/pr12.txt`, reports `pr12_gemm_{cold,warm}.ncu-rep` on the box).**
+    GEMM1 4.19 ms / GEMM2 5.61 ms per layer (the 9.8 ms of finding 78). Both: grid = **48 CTAs, one per SM** (persistent),
+    384 threads, **168 registers/thread and 89 KB smem, so the occupancy limit is 1 block by registers AND by smem**;
+    achieved warps active 22.9 %; **issue slots busy 12 % (GEMM1) / 9.6 % (GEMM2); "No Eligible" 87.7 %; 2.6 active
+    warps per scheduler, 0.16 eligible**; tensor pipe 28 %; L2 hit 74 % / 70 %; memory throughput 32–35 % of peak.
+    Cold vs warm L2 across replay passes changes nothing (4.19 vs 4.22 ms). Reading: the SMs sit idle waiting on loads
+    with too few warps to hide the latency; the tactic table is flat (finding 78) because every tile shares the same
+    1-CTA/SM occupancy. What could move it: pipeline depth / L2 locality (the scheduler-swizzle experiment `pr12c`),
+    or a kernel with two CTAs per SM (≤ 84 regs, ≤ 49 KB smem), i.e. a structural change in FlashInfer/CUTLASS, not
+    a config. `dram__` metrics do not exist on GB10 (unified memory), so DRAM bytes are not measurable with ncu here.
+    Decode shapes (`pr12b`, plain timing, random routing): M=1 141–144 µs per layer vs the 90 µs expert-byte floor
+    (10 experts × 2.46 MB at 273 GB/s) = 1.6×; M=4 (the MTP-3 verify) 526–546 µs vs 360 µs (40 experts) = 1.5×;
+    M=16 1,723 µs vs 1,440 µs = 1.2×.
+
+138. **GDN chunked prefill: the whole fla-core gap is ONE kernel — the fused kkt+solve (`pr12`, per-kernel attribution,
+    H=48, K=V=128, one sequence).** At T=7503 vendored 9,156 µs vs fla-core 8,245 µs (−10 %); at 29,263 37,076 vs
+    32,605 (−12 %). `chunk_gated_delta_rule_fwd_kernel_h`, `chunk_fwd_kernel_o` and `recompute_w_u_fwd_kernel` are
+    identical to the microsecond in both; the difference is vendored `chunk_scaled_dot_kkt_fwd_kernel` (876 µs) +
+    `merge_16x16_to_64x64_inverse_kernel` (689 µs) = 1,565 µs against fla-core's single
+    `chunk_gated_delta_rule_fwd_kkt_solve_kernel` (704 µs). So the port is one Triton kernel plus the `chunk_size==64`
+    dispatch in the vendored `chunk.py`; the wide autotune space (finding 136) was never going to find it. Worth on TTFT:
+    the GDN share (~16 %) × 10 % ≈ 1.5–2 %. Small, but a clean sync PR.
+

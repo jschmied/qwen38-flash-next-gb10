@@ -1437,3 +1437,23 @@ Plus whatever drives the separate generation-side path.
     ties. Draft for the thread: `notes/upstream/comment-53051-gb10-v2.md` (needs go).
 
     **vllm#55375 merged 2026-09-05 14:02 UTC.** Nightlies after that carry the fix; the overlay venv carries it as `ops/ple.py.orig-dev401`-backed overlay; the production venv (dev352) still needs the one-file overlay or a nightly bump.
+
+134. **c=1 MTP-3 decode under the profiler: the GPU is busy 73.5 ms of a 159.6 ms step; the PLE offload handshake is
+    fully hidden; the idle is ~2,600 launches per step in PIECEWISE cudagraph mode (`plewait`, overlay venv, record_shapes,
+    28 steps, `notes/data/plewait.txt`, trace on the box).** Per step: kernel busy 73.5 ms, idle 85.7 ms (medians);
+    kernels per step 2,636; the gap immediately before the first PLE kernel (`_ple_conv_kernel`, `_ple_gate_kernel`,
+    0.3 ms each per 28 steps) is **0.00 ms** — the host gather + H2D is entirely behind the embedding and layers 0–1,
+    so PLE prefetch under speculation has nothing to buy. The largest single gaps sit before
+    `triton_poi_fused__to_copy_embedding_repeat_0` (the first kernel of a forward; 2.3 ms per step = sampler/scheduler
+    host time); the rest of the idle is spread thinly between launches — the server runs
+    `cudagraph_mode=PIECEWISE` with capture sizes [1,2,4,8], so ~110 compiled pieces per step are called from Python
+    (`## Call CompiledFxGraph ##` ×109/step) and every piece boundary pays host time. Caveat: the profiler itself adds
+    per-op host overhead, so the 46 % duty cycle is an upper bound on the idle; the unprofiled step time from the `dv`
+    run (tok/s and accept length at c=1) decides how much is real, and the `cg` A/B (PIECEWISE vs FULL_AND_PIECEWISE vs
+    FULL_DECODE_ONLY) measures the lever directly. GPU-time budget inside the step: blockwise-FP8 dense GEMMs 31.8 %
+    (2,804 calls at 237 µs each; at M=4 the ~25 MiB projections have a ~96 µs byte floor → ~2.5× above it, the largest
+    kernel-level waste in decode); MoE grouped GEMMs 32 % (at their expert-byte floor, finding 137); BF16 GEMMs on
+    unquantized weights 16.5 % (shared expert 2560→1280 + 640→2560 = 72 ms, hyper-connection low-rank 42 ms, router
+    20 ms, MTP-layer dense ~25 ms per 28 steps); GDN update 2 %; QSA 0.7 %. The c=4 profile was lost: `/stop_profile`
+    took longer than the client's 900 s timeout to export the shaped trace.
+
