@@ -1,4 +1,4 @@
-# DRAFT — PR #55180 server-level evidence (three starts done; post on go)
+# POSTED 2026-09-06 — PR #55180 server-level evidence (https://github.com/vllm-project/vllm/pull/55180#issuecomment-5557288939)
 
 Server-level numbers for the swizzle, since the review asked what it does end to end rather than in a microbench.
 
