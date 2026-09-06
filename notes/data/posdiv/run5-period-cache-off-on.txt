@@ -1,0 +1,71 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+=== PD_db_off  det_topk=1 det_finalize=1  no-spec, prefix cache --no-enable-prefix-caching, batch 16384  13:16 ===
+    det_lines=1
+  PD_db_off r00: full=07a98c3a p1=('846', -0.523) p700=('69', -1.216) sampled=('Let', -0.543)
+  PD_db_off r01: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r02: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r03: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r04: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r05: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r06: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r07: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r08: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r09: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r10: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r11: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r12: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r13: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r14: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off r15: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_off FULL-VECTOR classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  PD_db_off PROBE-SIG classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  PD_db_off E2E32 classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+=== PD_db_off prompt 1500 (prompt_tokens=1460) sequential x8
+  PD_db_off seq1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 270/1459; positions with logprob spread>1e-3: 1456 (max spread 1.388e+01, mean 2.59e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_db_off conc1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 693/1459; positions with logprob spread>1e-3: 1458 (max spread 2.100e+01, mean 4.83e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_db_off e2e64_1500: 4 distinct completions / 8
+=== PD_db_off prompt 2039 (prompt_tokens=1999) sequential x8
+  PD_db_off seq2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 788/1998; positions with logprob spread>1e-3: 1996 (max spread 2.309e+01, mean 4.24e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/9
+  PD_db_off conc2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 1237/1998; positions with logprob spread>1e-3: 1994 (max spread 2.509e+01, mean 7.20e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 1/9
+  PD_db_off e2e64_2039: 2 distinct completions / 8
+=== PD_db_off prompt 6000 (prompt_tokens=5960) sequential x8
+  PD_db_off seq6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 2253/5959; positions with logprob spread>1e-3: 5943 (max spread 2.203e+01, mean 3.85e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 22/111
+  PD_db_off conc6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 3101/5959; positions with logprob spread>1e-3: 5931 (max spread 3.084e+01, mean 5.24e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 34/111
+  PD_db_off e2e64_6000: 3 distinct completions / 8
+=== PD_db_on  det_topk=1 det_finalize=1  no-spec, prefix cache ON, batch 16384  13:31 ===
+    det_lines=1
+  PD_db_on r00: full=07a98c3a p1=('846', -0.523) p700=('69', -1.216) sampled=('Let', -0.543)
+  PD_db_on r01: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r02: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r03: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r04: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r05: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r06: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r07: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r08: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r09: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r10: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r11: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r12: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r13: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r14: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on r15: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_db_on FULL-VECTOR classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  PD_db_on PROBE-SIG classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  PD_db_on E2E32 classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+=== PD_db_on prompt 1500 (prompt_tokens=1460) sequential x8
+  PD_db_on seq1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 270/1459; positions with logprob spread>1e-3: 1456 (max spread 1.388e+01, mean 2.59e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_db_on conc1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 693/1459; positions with logprob spread>1e-3: 1458 (max spread 2.100e+01, mean 4.83e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_db_on e2e64_1500: 4 distinct completions / 8
+=== PD_db_on prompt 2039 (prompt_tokens=1999) sequential x8
+  PD_db_on seq2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 701/1998; positions with logprob spread>1e-3: 1997 (max spread 2.007e+01, mean 3.96e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 1/9
+  PD_db_on conc2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 1125/1998; positions with logprob spread>1e-3: 1996 (max spread 2.677e+01, mean 6.67e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 1/9
+  PD_db_on e2e64_2039: 2 distinct completions / 8
+=== PD_db_on prompt 6000 (prompt_tokens=5960) sequential x8
+  PD_db_on seq6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 1671/5959; positions with logprob spread>1e-3: 5955 (max spread 1.944e+01, mean 3.23e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 18/111
+  PD_db_on conc6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 3200/5959; positions with logprob spread>1e-3: 5938 (max spread 2.636e+01, mean 5.50e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 61/111
+  PD_db_on e2e64_6000: 1 distinct completions / 8
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 13:46

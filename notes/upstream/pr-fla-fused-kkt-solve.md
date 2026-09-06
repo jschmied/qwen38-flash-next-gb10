@@ -1,4 +1,6 @@
-# DRAFT — vLLM PR: [Kernel][GDN] Port fla-core's fused kkt+solve kernel into the vendored FLA chunked forward (open on go)
+# NOT OPENED (2026-09-06): duplicates vllm-project/vllm#38315 (ZJY0516, open since 2026-03-27, stale + needs-rebase; maintainer vadiklyutiy: gain within noise on B300, FI backend faster). Substitute: `comment-38315-gb10.md`. Original draft below.
+#
+# DRAFT — vLLM PR: [Kernel][GDN] Port fla-core's fused kkt+solve kernel into the vendored FLA chunked forward
 
 Branch: `jschmied/vllm:fla-fused-kkt-solve` (3 commits, signed off).
 

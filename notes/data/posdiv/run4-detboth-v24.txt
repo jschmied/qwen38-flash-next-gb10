@@ -1,0 +1,19 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+=== PD_detboth  det_topk=1 det_finalize=1  no-spec, prefix cache off, batch 16384  13:03 ===
+    det_lines=1
+=== PD_detboth prompt 1500 (prompt_tokens=1460) sequential x8
+  PD_detboth seq1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 758/1459; positions with logprob spread>1e-3: 1459 (max spread 2.157e+01, mean 5.29e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_detboth conc1500: positions 1460; first divergent pos 1; top-1 disagreeing positions 693/1459; positions with logprob spread>1e-3: 1458 (max spread 2.100e+01, mean 4.83e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_detboth e2e64_1500: 4 distinct completions / 8
+=== PD_detboth prompt 2039 (prompt_tokens=1999) sequential x8
+  PD_detboth seq2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 788/1998; positions with logprob spread>1e-3: 1996 (max spread 2.309e+01, mean 4.24e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/9
+  PD_detboth conc2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 1237/1998; positions with logprob spread>1e-3: 1994 (max spread 2.509e+01, mean 7.20e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 1/9
+  PD_detboth e2e64_2039: 2 distinct completions / 8
+=== PD_detboth prompt 6000 (prompt_tokens=5960) sequential x8
+  PD_detboth seq6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 2253/5959; positions with logprob spread>1e-3: 5943 (max spread 2.203e+01, mean 3.85e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 22/111
+  PD_detboth conc6000: positions 5960; first divergent pos 1; top-1 disagreeing positions 3101/5959; positions with logprob spread>1e-3: 5931 (max spread 3.084e+01, mean 5.24e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 34/111
+  PD_detboth e2e64_6000: 3 distinct completions / 8
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 13:16
