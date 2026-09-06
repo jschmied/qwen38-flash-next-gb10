@@ -43,6 +43,14 @@ What survives a build change regardless: the **ratios**, because both arms of ev
 on one build the same day, and everything structural (byte accounting, the block deficit, the three
 `lm_head` blockers, the two mandatory env vars).
 
+**Group 0a — settle the restart spread first (3 starts, ~free).** det-141 (2026-09-06) ran three
+starts per arm of one agent-loop workload on the fixed stack and got results **identical to the
+digit** — 215 tokens, 85 drafts, 132 accepted, 51.8 % on every ON start; s/turn varied 1.01×. The
+1.83× spread that forces "three starts, report ranges" everywhere below was measured on the
+**preview** stack with the corruption and the semaphore both live. If it is gone, most groups drop
+from three starts to one or two and the whole run shrinks by more than half. Test it on the cell
+that showed the worst spread (MTP2, 47.8→77.5 ms/tok) before scheduling anything else.
+
 **Group 0 — the c=1 ladder on the main build (6 starts, do first; it is the number people quote).**
 No speculation, so three starts is enough (no-spec spread 1.10×). `qwen38-flash-next-nvfp4`
 (RadixArk) and `qwen38-flash-next-fp8head` are both on disk in full (hardlinked, ~130 GB each).
