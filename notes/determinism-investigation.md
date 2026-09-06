@@ -1567,3 +1567,13 @@ Plus whatever drives the separate generation-side path.
     (`chunk_size 256 smaller than TopK 512`): its host guard applied the cooperative path's sort-buffer constraint to every
     call; v2.4 makes it conditional on `max_seq_len > RADIX_THRESHOLD`, 33 short-row tests added, 210/210 pass
     (`patches/kernel-det/`).
+
+139. **Prod carries the four fixes (2026-09-06 17:4x; `prodcheck`, `notes/data/posdiv/prodcheck.txt`).** `prod_det_overlays.sh`
+    installed on `vllm-venv-fnmain2`: deterministic `persistent_topk` (kernel-det v2.4), bit-stable MoE finalize, the FlashInfer
+    autotune cache-key backport (needed by the non-fused runner), and the PLE offload semaphore reset (PR #13); the launcher
+    defaults the two env-gated ones on (`FN_DET_TOPK=0 FN_DET_FINALIZE=0` = stock arm). Validation start with the documented
+    prod configuration (fp8head, 32k context, 16 seqs, batch 16384, **MTP 3, prefix cache on**, PIECEWISE): `QSADET active`
+    logged, MoE backend `FLASHINFER_CUTLASS`, 16 identical sequential requests = **one class including the cold first one**
+    (full 1,460-position vector hash `17450eec` ×16; 32-token completions 16/16), a tool-call request returns a well-formed
+    `tool_calls` finish, speculation live (single-sample acceptance not quoted). Every quality number taken on this build
+    between the #53899 port (2026-09-03) and now was measured one PLE step behind and is due for a re-measure.

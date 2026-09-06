@@ -1,0 +1,27 @@
+=== PRODCHECK prod recipe + 4 fixes  17:42 ===
+    QSADET_lines=1 spec='method': 'mtp' moe=Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend
+  PD_prod r00: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r01: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r02: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r03: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r04: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r05: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r06: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r07: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r08: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r09: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r10: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r11: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r12: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r13: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r14: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod r15: full=17450eec p1=('846', -0.576) p700=('88', -0.628) sampled=('```', -0.391)
+  PD_prod FULL-VECTOR classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+  PD_prod PROBE-SIG classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+  PD_prod E2E32 classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+  toolcall: [{"id": "chatcmpl-tool-b69a64f3c3aed17e", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Berlin\"}"}}] | finish= tool_calls
+acceptance rate: 0.875
+Draft acceptance rate: 74.4
+vllm:spec_decode_num_draft_tokens_total{engine="0",model_name="flashnext"} 357.0
+vllm:spec_decode_num_accepted_tokens_total{engine="0",model_name="flashnext"} 260.0
+== ALL DONE == 17:56

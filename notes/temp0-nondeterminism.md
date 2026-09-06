@@ -184,3 +184,17 @@ distinction has produced a silent correctness bug, a deadlock, and a fault.
 **Mechanism: still open, but no longer without a suspect.** Four explanations were measured and
 discarded; the fifth arrived with a verified dispatch path and a matching upstream report, and now
 needs a correctness harness rather than another determinism run.
+
+## Closed (2026-09-06): the residual divergence was never noise
+
+With the deterministic `persistent_topk` and the bit-stable MoE finalize installed, identical requests still "diverged" from
+position 1 by whole nats — but bit-identically across server starts. Sixteen identical sequential requests fall into two
+classes: the cold first request and fifteen bit-identical warm ones. Eager mode and `cudagraph_mode=NONE` give one class and
+a bit-exact forward at every length. The carrier is the PLE CPU-offload branch (vllm#53899): with CUDA graphs enabled,
+`capture_model()` signals dummy PLE outputs and then runs real steps, the first real wait passes on the dummy signal, and
+from then on every forward consumes the **previous step's** PLE outputs. Only identical consecutive requests look right.
+Fix: reset the semaphore before each real request — [PR #13 on the #53899 branch](https://github.com/peakcrosser7/vllm/pull/13).
+Full chain (period test → bisect → buffer read-back → wait probes → semaphore trace): finding 138 in
+[determinism-investigation.md](determinism-investigation.md). What remains is batch-shape dependence under concurrency.
+Rule learned: a "same prompt twice" check is blind to this whole class — always compare a cold request against a warm one,
+and a request that followed a *different* request.

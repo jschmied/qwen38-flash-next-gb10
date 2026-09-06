@@ -13,7 +13,7 @@ fixes of ours now in vLLM or under review there.
 | decode, 16 / 32 streams | ~100 / 110 tok/s aggregate | [load and waits](notes/load-and-waits.md) |
 | TTFT, 7.5k / 29k tokens | **2.6 s / 10.1 s** (≈ 2,800 tok/s prefill) | [prefill findings 117–118](notes/prefill-investigation.md) |
 | warm agent turn (prefix cache + MTP) | **1.5 s** per 130-token turn, from 2.05 | [finding 94](notes/prefill-investigation.md), [mtp vs prefix cache](notes/mtp-vs-prefix-cache.md) |
-| greedy determinism | reproducible sequentially after three kernel fixes; not under concurrency. **MTP + parallel prefills corrupted output until vllm#55375** | [determinism](notes/determinism-investigation.md) |
+| greedy determinism | reproducible sequentially — cold and warm, at every length — with four fixes: deterministic `persistent_topk`, bit-stable MoE finalize, the PLE state-stride fix (vllm#55375) and the **PLE offload semaphore reset** ([PR #13 on the #53899 branch](https://github.com/peakcrosser7/vllm/pull/13): with CUDA graphs on, every forward used the *previous* step's PLE outputs — the residual "noise" of four days, finding 138); still not batch-invariant under concurrency |
 
 Decode numbers are a different configuration from the prefill ones and not comparable across rows;
 each link says how its number was produced. Nothing here is quoted from one run: decode noise is
@@ -42,7 +42,7 @@ each link says how its number was produced. Nothing here is quoted from one run:
 | [vllm#55122](https://github.com/vllm-project/vllm/pull/55122) | deterministic `persistent_topk` (index-ranked ties): greedy prefill reproducible at no cost; shipped by blazux as their patch 8 | PR, review |
 | [vllm#55180](https://github.com/vllm-project/vllm/pull/55180) | blockwise-FP8 GEMM on GB10: CTA swizzle restores 150–168 TF at every M (stock collapses to 52) | PR, review |
 | [vllm#54521](https://github.com/vllm-project/vllm/issues/54521), [#54928](https://github.com/vllm-project/vllm/issues/54928) | greedy non-determinism: the three GB10 causes, the batch-shape channel, the GEMM M-invariance table | evidence posted |
-| [vllm#53899](https://github.com/vllm-project/vllm/pull/53899) | PLE offload worker: GB10 validation, the `--cap-add=SYS_PTRACE` and KV-profiling notes | validated |
+| [vllm#53899](https://github.com/vllm-project/vllm/pull/53899) | PLE offload worker: GB10 validation, the `--cap-add=SYS_PTRACE` and KV-profiling notes | validated; **PR #13 on that branch**: the offload semaphore runs one step ahead with CUDA graphs, fix + evidence |
 | [blazux#3](https://github.com/blazux/qwen3.8-Flash-DGX/issues/3), [MiaAI#4](https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/4) | the config items and drop-ins for the community recipes | posted |
 
 Earlier items and the posting log: [notes/upstream/](notes/upstream/README.md),
