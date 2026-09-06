@@ -1084,3 +1084,26 @@
     −8.7 %. My first two test harnesses produced NaN and an illegal address by giving q the value-head count; q shares the
     16 key heads. PR body drafted (`notes/upstream/pr-fla-fused-kkt-solve.md`); opening it needs the user's go.
 
+
+144. **MoE grouped GEMM, corrected: GEMM1 is at the DRAM floor, the "latency-bound" reading was ncu's DRAM percentage
+    against the wrong peak; the contiguous-tile-run scheduler is bit-identical and −26…−29 %; the real headroom is GEMM2's
+    write path and three elementwise kernels, including a finalize that is never fused on SM120 (`pr12d`, `moe_fin`,
+    `notes/data/pr12d.txt`, `notes/data/moe_fin.txt`).** (a) Byte floor at M=7503: GEMM1 moves 0.84 GB of expert weights
+    + 0.10 GB of fp4 activations + 0.19 GB of bf16 output = 1.13 GB, which is 4.13 ms at 273 GB/s; it measures 4.19 ms.
+    Every scheduling experiment on it (tactics, swizzle, raster, cold/warm L2) was null because there is nothing left.
+    GEMM2's floor is 0.82 GB = 3.0 ms; it measures 5.6 ms (~150 GB/s effective) — that is the only GEMM headroom, and it
+    sits in the K=640 short loop + bf16 output write, not in scheduling. (b) The scheduler stall reason "sleeping" (mbarrier
+    wait) is consumers waiting for DRAM-bound TMA loads; making each CTA take runs of 16 consecutive tiles (a permutation
+    of the strided order, `tools/moe_sched_patch.py`) is bit-identical and **slower**: 53.9 → 38.5 TFLOPS at 7503,
+    75.4 → 55.7 at 29263, 525 → 562 µs at M=4 — the strided order lets the 48 CTAs share one expert's weight tiles in L2,
+    which is worth more than the per-tile tensormap switch. RUN=8/40 arms stopped as moot. (c) Per-kernel budget of one
+    MoE layer call at M=7503 (torch profiler, `moe_fin.py`): grouped GEMMs 9.99 ms (2 launches), `finalizeMoeRoutingKernel`
+    1.86, `doActivationKernel` 1.16, `expandInputRowsKernel` 0.99, routing/prefix 0.25 → 14.25 ms; at 29263: 21.6 + 7.15 +
+    4.62 + 4.69 + 0.96 = 39.1 ms. `use_fused_finalize=True` and `False` give the same kernel list and times (14,251 vs
+    14,143 µs): on SM120 the finalize is never fused into GEMM2's epilogue (`mayHaveFinalizeFused` is sm ≥ 90, but the
+    SM120 block-scaled dispatch does not carry the FINALIZE epilogue), so GEMM2 writes 0.38 GB of bf16 that the finalize
+    reads straight back, and GEMM1 writes 0.19 GB that the activation reads back. Fusing activation into GEMM1's epilogue
+    and finalize into GEMM2's would remove ~1.1 GB of traffic ≈ 3 ms of the 14.25 (≈ 20 % of the MoE layer, ≈ 6 % of
+    TTFT). That is the ask for FlashInfer (issue #4990 needs a correction: not occupancy, DRAM-bound + missing fusions;
+    follow-up drafted in `notes/upstream/comment-fi-4990-correction.md`, not posted).
+

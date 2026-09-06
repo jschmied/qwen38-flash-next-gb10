@@ -1,0 +1,26 @@
+preflight OK 10:47
+=== AOT stock baseline ===
+--- stock M=7503 10:47
+M=7503: 13688.2 us per layer, 53.9 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- stock M=29263 10:47
+M=29263: 38128.2 us per layer, 75.4 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- stock M=4 10:47
+M=4: 525.4 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+patched /opt/llm/runners/fi-cutlass-r16/include/cutlass/gemm/kernel/sm90_tile_scheduler_group.hpp RUN= 16
+=== RUN=16 (JIT build first) 10:47 ===
+--- run16 M=7503 10:47
+M=7503: 19176.0 us per layer, 38.5 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 6.1367550e+11 max=3.76832e+05 nan=False
+--- run16 M=29263 11:00
+M=29263: 51601.9 us per layer, 55.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 2.4001113e+12 max=3.80928e+05 nan=False
+--- run16 M=4 11:00
+M=4: 562.1 us per layer, 0.7 TFLOPS (measured window, 10 calls after 3 warmups)
+checksum 3.0528205e+08 max=1.76128e+05 nan=False
+  build+bench done 11:00
+patched /opt/llm/runners/fi-cutlass-r8/include/cutlass/gemm/kernel/sm90_tile_scheduler_group.hpp RUN= 8
+=== RUN=8 (JIT build first) 11:00 ===
+--- run8 M=7503 11:00

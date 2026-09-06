@@ -1,0 +1,48 @@
+USDT:2026-09-06 11:03:12 3435716:3435716 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-06 11:03:12 3435716:3435716 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-09-06 11:03:12 3435716:3435716 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-06 11:03:12 3435716:3435716 SyncActivityProfilerHandler.cpp:59] profiler_stop
+
+=== M=7503 use_fused_finalize=True: 14251 us GPU per layer call
+    9994.1 us x2  grouped GEMM (GemmUniversal)
+    1861.3 us x1  finalizeMoeRoutingKernel
+    1156.2 us x1  doActivationKernel
+     991.6 us x1  expandInputRowsKernel
+     134.1 us x1  blockExpertPrefixSumKernel
+      57.4 us x1  mergeExpertPrefixSumKernel(int const*, int const*, int const
+      53.1 us x1  computeStridesTmaWarpSpecializedKernel
+       3.1 us x1  globalExpertPrefixSumLargeKernel
+
+=== M=7503 use_fused_finalize=False: 14143 us GPU per layer call
+    9838.4 us x2  grouped GEMM (GemmUniversal)
+    1877.3 us x1  finalizeMoeRoutingKernel
+    1186.2 us x1  doActivationKernel
+     989.0 us x1  expandInputRowsKernel
+     137.9 us x1  blockExpertPrefixSumKernel
+      57.1 us x1  mergeExpertPrefixSumKernel(int const*, int const*, int const
+      53.5 us x1  computeStridesTmaWarpSpecializedKernel
+       3.2 us x1  globalExpertPrefixSumLargeKernel
+USDT:2026-09-06 11:03:16 3435823:3435823 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-06 11:03:16 3435823:3435823 SyncActivityProfilerHandler.cpp:59] profiler_stop
+USDT:2026-09-06 11:03:16 3435823:3435823 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-09-06 11:03:17 3435823:3435823 SyncActivityProfilerHandler.cpp:59] profiler_stop
+
+=== M=29263 use_fused_finalize=True: 39058 us GPU per layer call
+   21638.2 us x2  grouped GEMM (GemmUniversal)
+    7150.3 us x1  finalizeMoeRoutingKernel
+    4692.1 us x1  expandInputRowsKernel
+    4616.6 us x1  doActivationKernel
+     479.1 us x1  blockExpertPrefixSumKernel
+     258.5 us x1  computeStridesTmaWarpSpecializedKernel
+     209.2 us x1  mergeExpertPrefixSumKernel(int const*, int const*, int const
+      14.3 us x1  globalExpertPrefixSumLargeKernel
+
+=== M=29263 use_fused_finalize=False: 39566 us GPU per layer call
+   21900.8 us x2  grouped GEMM (GemmUniversal)
+    7230.7 us x1  finalizeMoeRoutingKernel
+    4757.1 us x1  doActivationKernel
+    4616.7 us x1  expandInputRowsKernel
+     504.7 us x1  blockExpertPrefixSumKernel
+     292.3 us x1  computeStridesTmaWarpSpecializedKernel
+     239.9 us x1  mergeExpertPrefixSumKernel(int const*, int const*, int const
+      23.9 us x1  globalExpertPrefixSumLargeKernel
