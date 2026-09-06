@@ -208,7 +208,8 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 1. ~~**Our upstream PR vllm#55122 carries the v2.3 guard bug**~~ — **DONE 2026-09-06 20:3x** (upstream log 57). Pushed `afd92810`
    (the 09-03 CodeRabbit round, which had never reached the PR) + `c564e5c1` (guard conditional on the cooperative path,
    `test_persistent_topk_short_rows`, 33 cases). 134 passed against `_C_det` v2.4; 24/33 fail against v2.3, so the test catches it.
-   **Open follow-up:** no comment posted on the PR yet, and CI on the new commits is unread.
+   Comment posted (upstream log 58). CI: `pre-run-check` fails on vLLM's label policy (no `ready`/`verified` label, 0 merged PRs
+   by this author) — not a code signal, and the workflow says not to ask for the label; nothing else runs until then.
 2. **Prod MTP recipe lacks `disable_eagle_block_drop`**: only the `FN_SPEC_METHOD` path honours `FN_SPEC_NODROP`; the `FN_MTP`
    shortcut does not. Measured −26 % per warm turn with MTP + prefix cache (3 starts, 2026-09-04). Extend the `FN_MTP` path,
    default it on, one validation start — prod change, needs the go.
