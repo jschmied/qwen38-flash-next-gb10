@@ -216,6 +216,10 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 3. **Re-measure everything taken one PLE step behind (2026-09-03 .. 09-06)**: MTP acceptance on agent traffic (41–50 %), the
    draft-vocab +6 % (det-135/137), the warm-turn cost (finding 141), any SWE figures. One dvrate-style cell, 3 starts, fixed stack.
 4. **Draft-vocab 32k slice into prod**: decide after 3.
+3b. **QUEUED 2026-09-06 (user: "queue re-measurement and page update for later on the prod stack with all fixes"): the MTP
+   cells + the published Quant Map.** Full spec in `notes/mtp-remeasure-plan.md` — 5 cell groups, ~51 starts, an overnight job;
+   the prod venv already carries every fix it needs (#55375 stride, PLE semaphore, det overlays, `disable_eagle_block_drop`).
+   The page keeps its affected cells until this runs; that is the accepted trade.
 5. **Upstream watch**: peakcrosser7's response on fork PR #13; when #53899 merges into main, re-port the overlay and open the
    semaphore fix against main; #38315 auto-closes ~2026-09-10 → then open our FLA kkt+solve PR (branch ready); ZC502 on #54521.
 6. **Batch-shape non-invariance** (identical prompts in one batch differ: 416 flips at 1,999 tokens): separate lever, only if
