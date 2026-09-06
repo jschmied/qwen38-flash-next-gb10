@@ -1,0 +1,55 @@
+applied
+=== DR_full_1  vocab=full  07:54 ===
+    fndv_lines=0
+  DR_full_1 RATE c=1 rep=0: accept=48.5% AL=2.45 | ttft med 2.53s | decode-only 37.7 tok/s per stream (agg 37.7) | 400 tok
+  DR_full_1 RATE c=1 rep=1: accept=56.2% AL=2.68 | ttft med 2.16s | decode-only 40.9 tok/s per stream (agg 40.9) | 400 tok
+  DR_full_1 RATE c=1 rep=2: accept=46.2% AL=2.39 | ttft med 2.14s | decode-only 36.1 tok/s per stream (agg 36.1) | 400 tok
+  DR_full_1 RATE c=1 rep=3: accept=54.2% AL=2.62 | ttft med 1.98s | decode-only 40.1 tok/s per stream (agg 40.1) | 400 tok
+  DR_full_1 RATE c=1 rep=4: accept=54.2% AL=2.62 | ttft med 2.10s | decode-only 40.0 tok/s per stream (agg 40.0) | 400 tok
+  DR_full_1 RATE c=1 rep=5: accept=47.7% AL=2.43 | ttft med 2.09s | decode-only 37.0 tok/s per stream (agg 37.0) | 400 tok
+  DR_full_1 RATE c=4 rep=0: accept=49.2% AL=2.48 | ttft med 1.32s | decode-only 22.6 tok/s per stream (agg 86.5) | 1600 tok
+  DR_full_1 RATE c=4 rep=1: accept=51.5% AL=2.55 | ttft med 8.30s | decode-only 22.0 tok/s per stream (agg 69.0) | 1600 tok
+  DR_full_1 RATE c=4 rep=2: accept=51.7% AL=2.55 | ttft med 8.46s | decode-only 21.8 tok/s per stream (agg 67.4) | 1600 tok
+  DR_full_1 RATE c=8 rep=0: accept=51.5% AL=2.55 | ttft med 26.86s | decode-only 19.7 tok/s per stream (agg 127.7) | 3200 tok
+  DR_full_1 RATE c=8 rep=1: accept=50.9% AL=2.53 | ttft med 25.97s | decode-only 19.7 tok/s per stream (agg 125.5) | 3200 tok
+=== DR_32k_1  vocab=/opt/llm/runners/dv/draft_vocab_32768.txt  08:10 ===
+    fndv_lines=1
+  DR_32k_1 RATE c=1 rep=0: accept=44.4% AL=2.33 | ttft med 2.36s | decode-only 39.1 tok/s per stream (agg 39.1) | 400 tok
+  DR_32k_1 RATE c=1 rep=1: accept=48.5% AL=2.45 | ttft med 2.18s | decode-only 40.6 tok/s per stream (agg 40.6) | 400 tok
+  DR_32k_1 RATE c=1 rep=2: accept=42.9% AL=2.29 | ttft med 2.07s | decode-only 37.8 tok/s per stream (agg 37.8) | 400 tok
+  DR_32k_1 RATE c=1 rep=3: accept=57.8% AL=2.73 | ttft med 1.97s | decode-only 44.9 tok/s per stream (agg 44.9) | 400 tok
+  DR_32k_1 RATE c=1 rep=4: accept=53.2% AL=2.60 | ttft med 2.07s | decode-only 42.8 tok/s per stream (agg 42.8) | 400 tok
+  DR_32k_1 RATE c=1 rep=5: accept=54.2% AL=2.62 | ttft med 2.08s | decode-only 43.3 tok/s per stream (agg 43.3) | 400 tok
+  DR_32k_1 RATE c=4 rep=0: accept=46.6% AL=2.40 | ttft med 1.25s | decode-only 22.9 tok/s per stream (agg 89.2) | 1600 tok
+  DR_32k_1 RATE c=4 rep=1: accept=52.1% AL=2.56 | ttft med 8.43s | decode-only 23.2 tok/s per stream (agg 70.4) | 1600 tok
+  DR_32k_1 RATE c=4 rep=2: accept=46.9% AL=2.41 | ttft med 8.46s | decode-only 21.6 tok/s per stream (agg 72.1) | 1600 tok
+  DR_32k_1 RATE c=8 rep=0: accept=57.7% AL=2.73 | ttft med 23.44s | decode-only 22.1 tok/s per stream (agg 112.9) | 3200 tok
+  DR_32k_1 RATE c=8 rep=1: accept=56.1% AL=2.68 | ttft med 26.60s | decode-only 21.4 tok/s per stream (agg 130.2) | 3200 tok
+=== DR_full_2  vocab=full  08:26 ===
+    fndv_lines=0
+  DR_full_2 RATE c=1 rep=0: accept=46.2% AL=2.39 | ttft med 2.33s | decode-only 36.4 tok/s per stream (agg 36.4) | 400 tok
+  DR_full_2 RATE c=1 rep=1: accept=50.9% AL=2.53 | ttft med 2.24s | decode-only 38.2 tok/s per stream (agg 38.2) | 400 tok
+  DR_full_2 RATE c=1 rep=2: accept=44.4% AL=2.33 | ttft med 2.04s | decode-only 35.5 tok/s per stream (agg 35.5) | 400 tok
+  DR_full_2 RATE c=1 rep=3: accept=67.7% AL=3.03 | ttft med 2.01s | decode-only 46.0 tok/s per stream (agg 46.0) | 400 tok
+  DR_full_2 RATE c=1 rep=4: accept=58.6% AL=2.76 | ttft med 2.10s | decode-only 41.6 tok/s per stream (agg 41.6) | 400 tok
+  DR_full_2 RATE c=1 rep=5: accept=51.8% AL=2.55 | ttft med 2.11s | decode-only 38.3 tok/s per stream (agg 38.3) | 400 tok
+  DR_full_2 RATE c=4 rep=0: accept=50.8% AL=2.53 | ttft med 1.33s | decode-only 23.6 tok/s per stream (agg 85.8) | 1600 tok
+  DR_full_2 RATE c=4 rep=1: accept=51.1% AL=2.53 | ttft med 8.57s | decode-only 21.6 tok/s per stream (agg 69.2) | 1600 tok
+  DR_full_2 RATE c=4 rep=2: accept=49.9% AL=2.50 | ttft med 8.51s | decode-only 21.6 tok/s per stream (agg 67.8) | 1600 tok
+  DR_full_2 RATE c=8 rep=0: accept=52.3% AL=2.57 | ttft med 27.04s | decode-only 20.1 tok/s per stream (agg 125.8) | 3200 tok
+  DR_full_2 RATE c=8 rep=1: accept=53.5% AL=2.60 | ttft med 27.05s | decode-only 19.9 tok/s per stream (agg 112.8) | 3200 tok
+=== DR_32k_2  vocab=/opt/llm/runners/dv/draft_vocab_32768.txt  08:42 ===
+    fndv_lines=1
+  DR_32k_2 RATE c=1 rep=0: accept=46.3% AL=2.39 | ttft med 2.34s | decode-only 39.7 tok/s per stream (agg 39.7) | 400 tok
+  DR_32k_2 RATE c=1 rep=1: accept=52.7% AL=2.58 | ttft med 2.17s | decode-only 42.6 tok/s per stream (agg 42.6) | 400 tok
+  DR_32k_2 RATE c=1 rep=2: accept=45.1% AL=2.35 | ttft med 2.08s | decode-only 38.7 tok/s per stream (agg 38.7) | 400 tok
+  DR_32k_2 RATE c=1 rep=3: accept=46.8% AL=2.40 | ttft med 1.99s | decode-only 39.5 tok/s per stream (agg 39.5) | 400 tok
+  DR_32k_2 RATE c=1 rep=4: accept=54.7% AL=2.64 | ttft med 2.09s | decode-only 43.4 tok/s per stream (agg 43.4) | 400 tok
+  DR_32k_2 RATE c=1 rep=5: accept=48.3% AL=2.45 | ttft med 2.09s | decode-only 40.4 tok/s per stream (agg 40.4) | 400 tok
+  DR_32k_2 RATE c=4 rep=0: accept=51.0% AL=2.53 | ttft med 1.32s | decode-only 24.3 tok/s per stream (agg 93.6) | 1600 tok
+  DR_32k_2 RATE c=4 rep=1: accept=53.2% AL=2.60 | ttft med 8.30s | decode-only 23.2 tok/s per stream (agg 76.5) | 1600 tok
+  DR_32k_2 RATE c=4 rep=2: accept=50.4% AL=2.51 | ttft med 8.35s | decode-only 22.7 tok/s per stream (agg 73.5) | 1600 tok
+  DR_32k_2 RATE c=8 rep=0: accept=49.3% AL=2.48 | ttft med 26.42s | decode-only 20.2 tok/s per stream (agg 115.4) | 3200 tok
+  DR_32k_2 RATE c=8 rep=1: accept=51.8% AL=2.55 | ttft med 26.10s | decode-only 20.6 tok/s per stream (agg 122.8) | 3200 tok
+reverted
+== ALL DONE == 08:58

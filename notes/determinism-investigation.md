@@ -1495,3 +1495,13 @@ Plus whatever drives the separate generation-side path.
     floor), the draft-vocab slice (det-135, measured +6–7 %), FP8 for the BF16 leftovers (shared expert, hc, router, MTP
     dense; 16.5 %), and drafter quality (acceptance 41–50 % on agent traffic).
 
+
+137. **Draft-vocab slice, decode-only (streaming, TTFT subtracted): +6 % per stream at c=1 and c=8, +4 % at c=4, two starts
+    per arm (`dvrate`, 32k slice vs full head, MTP-3, 400 output tokens on the held-out agent prompts, `notes/data/dvrate.txt`,
+    per-request JSONL in `notes/data/dvrate/`).** Answers "what tok/s": single-stream decode on this traffic is **38.3 tok/s
+    with the full head and 40.5 tok/s with the 32k slice** (per-start medians 38.9/38.3 vs 41.7/40.0); c=4 21.9 → 23.0 per
+    stream (88 → 92 aggregate); c=8 19.8 → 21.0 (158 → 168 aggregate). Paired by prompt: +5.8 % mean at c=1 (10/12 wins),
+    +3.7 % at c=4 (5/6), +6.2 % at c=8 (4/4); acceptance −2.6 pp at c=1, flat at c=4/8. TTFT of the 5k prompts is 2.1 s at
+    c=1 and unchanged by the slice. Consistent with det-135's wall-clock +6.4 % (which included that prefill). The c=8 TTFT
+    of 26 s is eight cold 5k prefills serialised at 16k chunks — a scheduling artefact of the cell, not a decode effect.
+
