@@ -1028,3 +1028,25 @@
     starts at 30k: **10.82 → 9.5 s, −12 %**; the #55180 server paragraph (`notes/upstream/comment-55180-server.md`) is
     updated with these numbers and is ready to post on go.
 
+
+141. **Warm agent turns are dominated by prefix-cache granularity, not by host overhead: the attention block size is forced
+    to 1,600 tokens (1,568 without speculation) to match the Mamba state page, so the median turn recomputes 1,026 tokens it
+    already had for 242 new ones (`turn`, overlay venv, prefix cache on, 16k chunks, one start per arm, `notes/data/turn.txt`,
+    traces on the box).** (a) Regression over a 20k cached prefix + N fresh tokens (N = 16…4096, 3 each): MTP-3
+    `TTFT = 485 ms + N / 2,613 tok/s`; no-spec `633 ms + N / 2,798 tok/s`. (b) The intercept is mostly recompute: the cache
+    hits only at multiples of the block (19,200 of 20,076 tokens with spec; 18,816 without), so 876 / 1,260 tokens are
+    prefilled again on every request — 335 / 450 ms of the intercept — leaving ~150–180 ms. (c) The profiled 16-token turn
+    shows that remainder is GPU work too: kernel-sum 0.522 s over a 0.538 s span (97 % busy) for the 910-token recompute,
+    i.e. 1.7k tok/s because at M≈900 the MoE grouped GEMM runs 3.2 + 1.8 ms per layer (finding 137's latency-bound kernel
+    at ~18 rows per expert) = 46 % of the turn; true host + HTTP + template overhead is ~40 ms (tokenize + chat template of
+    a 20k prompt: 24 ms). (d) Real trajectory replay, 23 warm turns: new tokens median 242, recomputed median 1,026 (spec) /
+    1,080 (no-spec), TTFT median 0.59 s in both arms; recomputed/new ratio 2.65× / 3.4×. Mechanism (`platforms/interface.py`):
+    `attn_block_size = align × ceil(mamba_page / (align × attn_bytes_per_token))`; in align mode the Mamba checkpoint block
+    equals it; the log says "Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page
+    size" and "Padding mamba page size by 0.25%". Consequences: (1) `disable_eagle_block_drop` (finding on #53388) was
+    worth −26 % per warm turn because a dropped block is 1,600 tokens, not 16; (2) the KV budget of 4 GB is only 47 blocks
+    (75,678 tokens), so LRU churn is coarse too. Levers: halve the Mamba page (fp8 SSM state → ~800-token blocks → ~−0.2 s
+    per warm turn, quality to be checked by logprob divergence), or an allocator change upstream that lets one Mamba page
+    span k attention pages so the attention block can stay small (≈ −0.4 s per warm turn, −65 %). The small-M MoE
+    inefficiency is the second half of the same turn.
+

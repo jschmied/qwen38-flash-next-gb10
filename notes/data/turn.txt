@@ -1,0 +1,151 @@
+=== TURN_mtp3  spec=mtp prefix-cache on batch=16384  06:17 ===
+  TURN_mtp3 A base: prompt_tokens=20076 cold=8.28s second=0.50s hits/queries=19200/20076
+  TURN_mtp3 A N=   16: prompt_tokens=20109 ttft median=0.534s all=0.556 0.530 0.534 hits/queries(last)=19200/20109
+  TURN_mtp3 A N=   64: prompt_tokens=20215 ttft median=0.570s all=0.577 0.568 0.570 hits/queries(last)=19200/20215
+  TURN_mtp3 A N=  256: prompt_tokens=20628 ttft median=0.701s all=0.697 0.704 0.701 hits/queries(last)=19200/20628
+  TURN_mtp3 A N= 1024: prompt_tokens=22320 ttft median=1.376s all=1.370 1.376 1.384 hits/queries(last)=19200/22320
+  TURN_mtp3 A N= 4096: prompt_tokens=29046 ttft median=3.938s all=3.938 3.920 3.960 hits/queries(last)=19200/29046
+  TURN_mtp3 A FIT: ttft = 485 ms + new_tokens / 2613 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  TURN_mtp3 C tokenize(+template) of 20149 tokens: 24 ms
+  TURN_mtp3 C tokenize(+template) of 86 tokens: 2 ms
+  TURN_mtp3 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.201s hits/queries=0/1840
+  TURN_mtp3 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.329s hits/queries=1600/1936
+  TURN_mtp3 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.666s hits/queries=1600/2856
+  TURN_mtp3 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.155s hits/queries=1600/3650
+  TURN_mtp3 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.501s hits/queries=3200/4025
+  TURN_mtp3 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.561s hits/queries=3200/4216
+  TURN_mtp3 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.057s hits/queries=3200/5011
+  TURN_mtp3 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.334s hits/queries=4800/5139
+  TURN_mtp3 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.376s hits/queries=4800/5264
+  TURN_mtp3 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.578s hits/queries=4800/5748
+  TURN_mtp3 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.592s hits/queries=4800/5857
+  TURN_mtp3 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.092s hits/queries=4800/6612
+  TURN_mtp3 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.447s hits/queries=6400/7004
+  TURN_mtp3 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.549s hits/queries=6400/7286
+  TURN_mtp3 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.623s hits/queries=6400/7520
+  TURN_mtp3 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.681s hits/queries=6400/7702
+  TURN_mtp3 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.750s hits/queries=6400/7912
+  TURN_mtp3 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.069s hits/queries=6400/8147
+  TURN_mtp3 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.319s hits/queries=8000/8246
+  TURN_mtp3 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.402s hits/queries=8000/8459
+  TURN_mtp3 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.529s hits/queries=8000/8784
+  TURN_mtp3 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.594s hits/queries=8000/9026
+  TURN_mtp3 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.723s hits/queries=8000/9413
+  TURN_mtp3 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.499s hits/queries=8000/10923
+  TURN_mtp3 P start_profile -> 200
+  TURN_mtp3 P profiled turn N=16: prompt_tokens=20110 ttft=0.576s hits/queries=19200/20110
+  TURN_mtp3 P stop_profile -> 200
+--- trace dp0_pp0_tp0_dcp0_ep0_rank0.1788669120383363900.pt.trace.json.gz
+kernel-sum 0.522 s over span 0.538 s, 2758 launches
+kernel                                                                                ms      %  calls   us/call
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     153.3   29.4     48    3194.6
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh      85.7   16.4     48    1785.6
+_qsa_sparse_paged_gqa_splitk_kernel                                                 42.5    8.1     15    2831.4
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa      35.1    6.7     96     365.5
+_hc_combine_norm_kernel                                                             24.5    4.7    104     235.7
+_hc_gate_mix_kernel                                                                 18.0    3.4    106     169.5
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_128x256_32      15.1    2.9    149     101.6
+nvjet_sm121_tst_mma_128x128x64_3_64x32x64_tmaAB_splitK_TNNN                         15.0    2.9    100     150.4
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa      10.9    2.1      4    2724.7
+chunk_gated_delta_rule_fwd_kernel_h_blockdim64                                      10.5    2.0     36     291.7
+chunk_fwd_kernel_o                                                                   9.2    1.8     36     256.1
+void fused_moe::run_global<fused_moe::Fused_Moe_Kernel_sm80<cutlass::bfloat16_       7.9    1.5      1    7878.1
+QSA-related kernels: 45.0 ms = 8.6 % of kernel time
+    _qsa_sparse_paged_gqa_splitk_kernel                                                 42.5 ms     15 calls
+    _qsa_mqa_paged_prefill_kernel                                                        1.8 ms     13 calls
+    _expand_qsa_indices_kernel                                                           0.5 ms     15 calls
+    _qsa_pre_indexer_kernel                                                              0.1 ms     15 calls
+    _qsa_mqa_paged_uniform_kernel                                                        0.0 ms      2 calls
+    _build_qsa_metadata_kernel                                                           0.0 ms      7 calls
+    _qsa_merge_splitk_kernel                                                             0.0 ms      2 calls
+matched kernels: 2758, 522.2 ms
+    55.9 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | cydajrp7fsndtz2pj4ylsxmj47mbagob6y3hhcntsbp3ky4pwlvn
+    10.9 ms     4  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[1, 248320], [1, 2560], [2560, 248320], [1, | _custom_ops.py(820): cutlass_scaled_mm
+    10.5 ms    36  chunk_gated_delta_rule_fwd_kernel_       | ChunkGatedDe [[1, 910, 16, 128], [1, 910, 16, 128], [1, 9 | chunk.py(137): chunk_gated_delta_rule
+     9.2 ms    36  chunk_fwd_kernel_o                       | ChunkGatedDe [[1, 910, 16, 128], [1, 910, 16, 128], [1, 9 | chunk.py(137): chunk_gated_delta_rule
+     7.9 ms     1  void fused_moe::run_global<fused_m       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | cnf3c6yvq65xwoelmmh2i6oudsvsdv4gg4fviosk7we5xttjiqoe
+     6.9 ms    36  recompute_w_u_fwd_kernel                 | ChunkGatedDe [[1, 910, 16, 128], [1, 910, 16, 128], [1, 9 | chunk.py(137): chunk_gated_delta_rule
+     6.1 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | cutii6h5wacz7cr4kaoro7mpz26d46wmujotns3gewmykajnwulf
+     5.9 ms    11  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[910, 16384], [910, 2560], [2560, 16384], [ | cydajrp7fsndtz2pj4ylsxmj47mbagob6y3hhcntsbp3ky4pwlvn
+     5.7 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | cahtze3rnaijgsob2n2hlr5orwc4fpgawlvsjymuh7xtv4qtnr46
+     5.7 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | cktkvlvdvmlcgadyns3cmjxvwtn4qobgzryolytohwutjalxitqk
+     5.7 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | chmliliahoovo5wukynvsdg5jpyzykneswc7zuol66z2sknks2nx
+     5.7 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | c6u4egsdtftvwodqfxbgupf2h7jj7ekk2rbtlaweezljyzyc75l4
+     5.6 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | cczux2bvoxrw45nrtrejywjhqd2vbyqn6udzzfqsarsxxpnzhmzh
+     5.6 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | c4nlg62xze74lvxq4tfoffsgvswfbiwwxvs2rahcz6ysschniq2f
+     5.5 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[910, 2560], [910, 2560], [910, 2560], [],  | c346hev2ed3hy6oemm2mklaayigif34nsqt4hkdw3bqi467wfv54
+=== TURN_nospec  spec=none prefix-cache on batch=16384  06:34 ===
+  TURN_nospec A base: prompt_tokens=20076 cold=7.68s second=0.62s hits/queries=18816/20076
+  TURN_nospec A N=   16: prompt_tokens=20109 ttft median=0.649s all=0.648 0.649 0.649 hits/queries(last)=18816/20109
+  TURN_nospec A N=   64: prompt_tokens=20215 ttft median=0.682s all=0.686 0.682 0.677 hits/queries(last)=18816/20215
+  TURN_nospec A N=  256: prompt_tokens=20628 ttft median=0.919s all=0.924 0.916 0.919 hits/queries(last)=18816/20628
+  TURN_nospec A N= 1024: prompt_tokens=22320 ttft median=1.439s all=1.435 1.440 1.439 hits/queries(last)=18816/22320
+  TURN_nospec A N= 4096: prompt_tokens=29046 ttft median=3.861s all=3.855 3.861 3.870 hits/queries(last)=18816/29046
+  TURN_nospec A FIT: ttft = 633 ms + new_tokens / 2798 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  TURN_nospec C tokenize(+template) of 20149 tokens: 26 ms
+  TURN_nospec C tokenize(+template) of 86 tokens: 4 ms
+  TURN_nospec B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.066s hits/queries=0/1840
+  TURN_nospec B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.321s hits/queries=1568/1936
+  TURN_nospec B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.671s hits/queries=1568/2856
+  TURN_nospec B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.111s hits/queries=1568/3650
+  TURN_nospec B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.513s hits/queries=3136/4025
+  TURN_nospec B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.569s hits/queries=3136/4216
+  TURN_nospec B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.023s hits/queries=3136/5011
+  TURN_nospec B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.355s hits/queries=4704/5139
+  TURN_nospec B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.401s hits/queries=4704/5264
+  TURN_nospec B turn=10: prompt_tokens=  5748 new=  484 ttft=0.589s hits/queries=4704/5748
+  TURN_nospec B turn=11: prompt_tokens=  5857 new=  109 ttft=0.612s hits/queries=4704/5857
+  TURN_nospec B turn=12: prompt_tokens=  6612 new=  755 ttft=1.067s hits/queries=4704/6612
+  TURN_nospec B turn=13: prompt_tokens=  7004 new=  392 ttft=0.481s hits/queries=6272/7004
+  TURN_nospec B turn=14: prompt_tokens=  7286 new=  282 ttft=0.579s hits/queries=6272/7286
+  TURN_nospec B turn=15: prompt_tokens=  7520 new=  234 ttft=0.647s hits/queries=6272/7520
+  TURN_nospec B turn=16: prompt_tokens=  7702 new=  182 ttft=0.715s hits/queries=6272/7702
+  TURN_nospec B turn=17: prompt_tokens=  7912 new=  210 ttft=0.926s hits/queries=6272/7912
+  TURN_nospec B turn=18: prompt_tokens=  8147 new=  235 ttft=0.331s hits/queries=7840/8147
+  TURN_nospec B turn=19: prompt_tokens=  8246 new=   99 ttft=0.361s hits/queries=7840/8246
+  TURN_nospec B turn=20: prompt_tokens=  8459 new=  213 ttft=0.442s hits/queries=7840/8459
+  TURN_nospec B turn=21: prompt_tokens=  8784 new=  325 ttft=0.554s hits/queries=7840/8784
+  TURN_nospec B turn=22: prompt_tokens=  9026 new=  242 ttft=0.632s hits/queries=7840/9026
+  TURN_nospec B turn=23: prompt_tokens=  9413 new=  387 ttft=0.824s hits/queries=7840/9413
+  TURN_nospec B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.477s hits/queries=7840/10923
+  TURN_nospec P start_profile -> 200
+  TURN_nospec P profiled turn N=16: prompt_tokens=20110 ttft=0.671s hits/queries=18816/20110
+  TURN_nospec P stop_profile -> 200
+--- trace dp0_pp0_tp0_dcp0_ep0_rank0.1788670040404765500.pt.trace.json.gz
+kernel-sum 0.603 s over span 0.617 s, 2473 launches
+kernel                                                                                ms      %  calls   us/call
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     159.8   26.5     48    3328.4
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh      96.3   16.0     48    2006.1
+_qsa_sparse_paged_gqa_splitk_kernel                                                 50.3    8.3     12    4192.9
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa      43.4    7.2     96     452.5
+_hc_combine_norm_kernel                                                             36.8    6.1     95     387.1
+_hc_gate_mix_kernel                                                                 28.4    4.7     97     293.2
+nvjet_sm121_tst_mma_96x128x64_3_48x32x64_tmaAB_bz_TNNN                              19.8    3.3     97     204.4
+nvjet_sm121_tst_mma_128x224x64_2_64x56x64_tmaAB_bz_TNNN                             18.4    3.0     97     189.3
+chunk_gated_delta_rule_fwd_kernel_h_blockdim64                                      15.1    2.5     36     419.3
+chunk_fwd_kernel_o                                                                  12.9    2.1     36     357.5
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__nv_fp4_e2m1,      11.1    1.8     48     230.5
+recompute_w_u_fwd_kernel                                                            10.5    1.7     36     291.8
+QSA-related kernels: 53.4 ms = 8.9 % of kernel time
+    _qsa_sparse_paged_gqa_splitk_kernel                                                 50.3 ms     12 calls
+    _qsa_mqa_paged_prefill_kernel                                                        2.5 ms     12 calls
+    _expand_qsa_indices_kernel                                                           0.5 ms     12 calls
+    _qsa_pre_indexer_kernel                                                              0.1 ms     12 calls
+    _build_qsa_metadata_kernel                                                           0.0 ms      2 calls
+matched kernels: 2473, 603.1 ms
+    59.3 ms    22  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | c6iz5zgvfthm75ggychgh3k5lmtxyb62r4ln5e5co3sdrqycsjsk
+    15.1 ms    36  chunk_gated_delta_rule_fwd_kernel_       | ChunkGatedDe [[1, 1294, 16, 128], [1, 1294, 16, 128], [1, | chunk.py(137): chunk_gated_delta_rule
+    12.9 ms    36  chunk_fwd_kernel_o                       | ChunkGatedDe [[1, 1294, 16, 128], [1, 1294, 16, 128], [1, | chunk.py(137): chunk_gated_delta_rule
+    10.5 ms    36  recompute_w_u_fwd_kernel                 | ChunkGatedDe [[1, 1294, 16, 128], [1, 1294, 16, 128], [1, | chunk.py(137): chunk_gated_delta_rule
+     8.6 ms    22  _hc_combine_norm_kernel                  | vllm::qwen4_ [[1294, 10240], [1294, 2560], [1294, 4], [10 | c6iz5zgvfthm75ggychgh3k5lmtxyb62r4ln5e5co3sdrqycsjsk
+     7.4 ms    11  void cutlass::device_kernel<vllm::       | _C::cutlass_ [[1294, 16384], [1294, 2560], [2560, 16384], | c6iz5zgvfthm75ggychgh3k5lmtxyb62r4ln5e5co3sdrqycsjsk
+     6.4 ms    22  _hc_gate_mix_kernel                      | vllm::qwen4_ [[1294, 10240], [1294, 10240], []] | c6iz5zgvfthm75ggychgh3k5lmtxyb62r4ln5e5co3sdrqycsjsk
+     6.2 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | cucn4a5l2hwg2kiv3uexexh4prkfybacdhbepxbweemnzbdgiqux
+     6.2 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | c32mwd3x3g46xzc7sjctsiuxw2xphtvgv7piexzgdog7oxc4xjh6
+     6.1 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | cbd4y74ew4mq2euercvrwyg6ltrwtbp2sevnrthmheyyo2qi6rt2
+     6.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | cwk3rcxznoz4fea42wo35zygmbildwgmxn4nhx5q2rphntzxfwdx
+     6.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | cdadoovaenamc7lfgzbrxqmofnptp3wfnp3o4kcmjbqinu7rxqmj
+     6.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | ctgdq6omidoxckg42c6lfjoawftkwgsugrl4alo3w3blbopfgbmg
+     6.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | cbinv6yccqct4lgp7wzsiba3xo6elmr56k7mznavulgyk774ztuj
+     6.0 ms     2  _ZN7cutlass13device_kernelINS_4gem       | vllm::moe_fo [[1294, 2560], [1294, 2560], [1294, 2560], [ | csq5dwrvh6pxqczvk6gdslplqqqncdeajou7oxufobefcym43fib
+== ALL DONE == 06:48
