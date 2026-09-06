@@ -1,0 +1,56 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  plecheck INSTALLED (inert unless VLLM_PLE_CHECK=1)
+  plewait probe INSTALLED (inert unless VLLM_PLE_CHECK=1)
+  pleflag INSTALLED (inert unless VLLM_PLE_CHECK=1)
+=== PC_PIECEWISE  cudagraph=PIECEWISE  det-both, cache off, VLLM_PLE_CHECK=1  15:50 ===
+    det_lines=1
+  req 1500 r0: prompt_tokens=1460 sampled='Let' lp=-0.6757
+  req 1500 r1: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 1500 r2: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 2039 r0: prompt_tokens=1999 sampled='```' lp=-0.5423
+  req 2039 r1: prompt_tokens=1999 sampled='```' lp=-0.2140
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x0 tokens=16384
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x0 tokens=16384
+  PC_PIECEWISE   PLEFLAG entry tokens=32 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x0 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=32
+  PC_PIECEWISE   PLECHECK tokens=32 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=0 absmean=0.0000e+00 hash=dae4d3dce1
+  PC_PIECEWISE   PLEFLAG after_release tokens=32 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=16 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=16
+  PC_PIECEWISE   PLECHECK tokens=16 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=16 absmean=3.5765e+01 hash=e39f46cf10
+  PC_PIECEWISE   PLEFLAG after_release tokens=16 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=2 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=2
+  PC_PIECEWISE   PLECHECK tokens=2 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=2 absmean=3.1786e+01 hash=a70cae192d
+  PC_PIECEWISE   PLEFLAG after_release tokens=2 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=1
+  PC_PIECEWISE   PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.3207e+01 hash=7827b6b30d
+  PC_PIECEWISE   PLEFLAG after_release tokens=1 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=1460
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=32 absmean=7.3785e-01 hash=2a4a0e2e24
+  PC_PIECEWISE   PLEFLAG after_release tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=1460
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_PIECEWISE   PLEFLAG after_release tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=1460
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_PIECEWISE   PLEFLAG after_release tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=1999
+  PC_PIECEWISE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=2.4748e+01 hash=8fbf2cf77b
+  PC_PIECEWISE   PLEFLAG after_release tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x2097fd80 default=0x0 copy=0x207d2860
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x2097fd80 tokens=1999
+  PC_PIECEWISE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1999 absmean=3.3919e+01 hash=333d260f80
+  PC_PIECEWISE   PLEFLAG after_release tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  pleflag REMOVED
+  plewait probe REMOVED
+  plecheck REMOVED
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 16:01

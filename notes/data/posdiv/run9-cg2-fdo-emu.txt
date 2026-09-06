@@ -1,0 +1,47 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+=== CG_FDO  cudagraph=FULL_DECODE_ONLY extra=''  det-both, cache off  14:38 ===
+    det_lines=1 moe_backend=NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM'
+  CG_FDO r00: full=07a98c3a p1=('846', -0.523) p700=('69', -1.216) sampled=('Let', -0.543)
+  CG_FDO r01: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r02: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r03: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r04: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r05: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r06: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r07: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r08: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r09: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r10: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r11: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r12: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r13: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r14: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO r15: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  CG_FDO FULL-VECTOR classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  CG_FDO PROBE-SIG classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  CG_FDO E2E32 classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+=== CG_EMU  cudagraph=PIECEWISE extra='--moe-backend emulation'  det-both, cache off  14:50 ===
+    det_lines=1 moe_backend=NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM'
+  CG_EMU r00: full=a3abdee8 p1=('846', -0.523) p700=('69', -3.028) sampled=('Let', -0.263)
+  CG_EMU r01: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r02: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r03: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r04: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r05: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r06: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r07: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r08: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r09: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r10: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r11: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r12: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r13: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r14: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU r15: full=31824bcf p1=('846', -0.523) p700=('72', -0.215) sampled=('Let', -0.197)
+  CG_EMU FULL-VECTOR classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  CG_EMU PROBE-SIG classes: 2 distinct / 16;  sequence: A B B B B B B B B B B B B B B B
+  CG_EMU E2E32 classes: 5 distinct / 16;  sequence: A B C D E E E E E E E E E E E E
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 15:03

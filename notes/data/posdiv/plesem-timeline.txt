@@ -1,0 +1,84 @@
+Worker           SEM signal     t=  84.414 stream=0x0 cap=False via signal_dummy_outputs<-prepare_forward<-execute_model
+Worker           SEM gpu_wait   t=  87.438 stream=0x0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x0 tokens=16384
+Worker           --- Initial profiling/warmup run took 9.54 s
+Worker           SEM reset      t=  95.910 stream=0x0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           --- Running FlashInfer autotune with 16384 tokens.
+Worker           SEM signal     t=  96.934 stream=0x0 cap=False via signal_dummy_outputs<-prepare_forward<-execute_model
+Worker           SEM gpu_wait   t=  97.401 stream=0x0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x0 tokens=16384
+Worker           SEM reset      t= 100.242 stream=0x0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           SEM signal     t= 100.279 stream=0x0 cap=False via signal_dummy_outputs<-capture_model<-decorate_context
+Worker           FLAG entry          tokens=32 flag=1
+Worker           SEM gpu_wait   t= 102.821 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=32
+Worker           BUFFER tokens=32 nonzero_rows=0
+Worker           SEM reset      t= 102.986 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=32 flag=0
+Worker           FLAG entry          tokens=16 flag=0
+Worker           SEM gpu_wait   t= 103.116 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=0 stream=0x46266be0 tokens=16
+PleOffloadWorker SEM wait_reset t= 103.860 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+PleOffloadWorker SEM signal     t= 103.930 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+PleOffloadWorker SEM wait_reset t= 103.940 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+PleOffloadWorker SEM signal     t= 103.951 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           BUFFER tokens=16 nonzero_rows=16
+Worker           SEM reset      t= 104.003 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=16 flag=1
+Worker           FLAG entry          tokens=2 flag=1
+PleOffloadWorker SEM wait_reset t= 104.019 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           SEM gpu_wait   t= 104.028 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=2
+PleOffloadWorker SEM signal     t= 104.030 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           BUFFER tokens=2 nonzero_rows=2
+Worker           SEM reset      t= 104.079 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=2 flag=1
+Worker           FLAG entry          tokens=1 flag=1
+PleOffloadWorker SEM wait_reset t= 104.097 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+PleOffloadWorker SEM signal     t= 104.107 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           SEM gpu_wait   t= 104.151 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=1
+Worker           BUFFER tokens=1 nonzero_rows=1
+Worker           SEM reset      t= 104.201 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=1 flag=1
+EngineCore       --- init engine (profile, create kv cache, warmup model) took 20.77 s (compilation: 0.88 s)
+Worker           FLAG entry          tokens=1460 flag=1
+PleOffloadWorker SEM wait_reset t= 117.405 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           SEM gpu_wait   t= 117.537 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=1460
+PleOffloadWorker SEM signal     t= 117.573 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           BUFFER tokens=1460 nonzero_rows=32
+Worker           SEM reset      t= 118.370 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=1460 flag=1
+Worker           FLAG entry          tokens=1460 flag=1
+PleOffloadWorker SEM wait_reset t= 119.042 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           SEM gpu_wait   t= 119.051 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=1460
+PleOffloadWorker SEM signal     t= 119.052 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           BUFFER tokens=1460 nonzero_rows=1460
+Worker           SEM reset      t= 119.728 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=1460 flag=1
+Worker           FLAG entry          tokens=1460 flag=1
+PleOffloadWorker SEM wait_reset t= 119.763 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           SEM gpu_wait   t= 119.772 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=1460
+PleOffloadWorker SEM signal     t= 119.774 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           BUFFER tokens=1460 nonzero_rows=1460
+Worker           SEM reset      t= 120.430 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=1460 flag=1
+Worker           FLAG entry          tokens=1999 flag=1
+PleOffloadWorker SEM wait_reset t= 120.472 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           SEM gpu_wait   t= 120.499 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=1999
+PleOffloadWorker SEM signal     t= 120.750 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           BUFFER tokens=1999 nonzero_rows=1460
+Worker           SEM reset      t= 122.476 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=1999 flag=1
+Worker           FLAG entry          tokens=1999 flag=1
+PleOffloadWorker SEM wait_reset t= 122.519 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+PleOffloadWorker SEM signal     t= 122.530 stream=0x11c43040 cap=False via _handle_requests_impl<-_handle_requests<-busy_loop
+Worker           SEM gpu_wait   t= 122.534 stream=0x46266be0 cap=False via __call__<-forward<-_call_impl
+Worker           GPUWAIT sees flag=1 stream=0x46266be0 tokens=1999
+Worker           BUFFER tokens=1999 nonzero_rows=1999
+Worker           SEM reset      t= 123.827 stream=0x46266be0 cap=False via release_offloaded_output<-release_outputs<-execute_model
+Worker           FLAG after_release  tokens=1999 flag=1

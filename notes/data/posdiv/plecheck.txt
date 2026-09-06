@@ -1,0 +1,39 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  plecheck INSTALLED (inert unless VLLM_PLE_CHECK=1)
+=== PC_PIECEWISE  cudagraph=PIECEWISE  det-both, cache off, VLLM_PLE_CHECK=1  15:05 ===
+    det_lines=1
+  req 1500 r0: prompt_tokens=1460 sampled='Let' lp=-0.5431
+  req 1500 r1: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 1500 r2: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 2039 r0: prompt_tokens=1999 sampled='```' lp=-0.5423
+  req 2039 r1: prompt_tokens=1999 sampled='```' lp=-0.2140
+  PC_PIECEWISE   PLECHECK tokens=32 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=0 absmean=0.0000e+00 hash=dae4d3dce1
+  PC_PIECEWISE   PLECHECK tokens=16 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=16 absmean=3.5765e+01 hash=e39f46cf10
+  PC_PIECEWISE   PLECHECK tokens=2 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=2 absmean=3.0949e+01 hash=14b6dc3546
+  PC_PIECEWISE   PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.1996e+01 hash=d6d5242358
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=32 absmean=7.3636e-01 hash=f3b5a320df
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_PIECEWISE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=2.4748e+01 hash=8fbf2cf77b
+  PC_PIECEWISE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1999 absmean=3.3919e+01 hash=333d260f80
+=== PC_NONE  cudagraph=NONE  det-both, cache off, VLLM_PLE_CHECK=1  15:17 ===
+    det_lines=1
+  req 1500 r0: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 1500 r1: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 1500 r2: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 2039 r0: prompt_tokens=1999 sampled='```' lp=-0.2140
+  req 2039 r1: prompt_tokens=1999 sampled='```' lp=-0.2140
+  PC_NONE   PLECHECK tokens=32 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=32 absmean=3.5765e+01 hash=bc6100c71f
+  PC_NONE   PLECHECK tokens=16 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=16 absmean=3.2481e+01 hash=6f9baae0ae
+  PC_NONE   PLECHECK tokens=2 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=2 absmean=3.5988e+01 hash=caf022c4fc
+  PC_NONE   PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.6467e+01 hash=e6be5986a8
+  PC_NONE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_NONE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_NONE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_NONE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1999 absmean=3.3919e+01 hash=333d260f80
+  PC_NONE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1999 absmean=3.3919e+01 hash=333d260f80
+  plecheck REMOVED
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 15:29

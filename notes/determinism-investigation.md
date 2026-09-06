@@ -1505,3 +1505,65 @@ Plus whatever drives the separate generation-side path.
     c=1 and unchanged by the slice. Consistent with det-135's wall-clock +6.4 % (which included that prefill). The c=8 TTFT
     of 26 s is eight cold 5k prefills serialised at 16k chunks — a scheduling artefact of the cell, not a decode effect.
 
+
+138. **ZC502's position-resolved regression on sm_121 (`posdiv`, main build dev401, no spec, prefix cache off, batch 16384,
+    temperature 0, `prompt_logprobs=5`, 8 sequential + 8 concurrent identical requests per prompt, 64-token greedy hashes;
+    `notes/data/posdiv/`). The residual divergence after both fixes is NOT noise: it is a deterministic leak from the previous
+    forward that exists only with CUDA graphs enabled.** Three arms per prompt (1,460 / 1,999 / 5,960 rendered tokens),
+    stock vs `VLLM_MOE_DET_FINALIZE=1` vs det-finalize + `VLLM_QSA_DET_TOPK=1` (kernel-det v2.4, see below):
+
+    | arm | prompt | seq: first div. pos / top-1 flips / mean spread | conc: flips | 64-tok distinct/8 |
+    | --- | --- | --- | --- | --- |
+    | stock (2 starts) | 1,460 | 1 / 924–988 / 6.4–6.9 | 896–954 | 8 |
+    | stock | 1,999 | 1 / 1,042–1,069 / 5.8–5.9 | 1,179–1,258 | 7–8 |
+    | stock | 5,960 | 1 / 2,974 / 4.9 | 3,391 | 8 |
+    | det-finalize | 1,460 | 1 / 758 / 5.3 | 693 | 4 |
+    | det-finalize | 1,999 | 1 / 788 / 4.2 | 1,237 | 2 |
+    | det-finalize | 5,960 | 1 / 2,660 / 4.5 | 3,215 | 5 |
+    | det-both | 1,460 | 1 / 758 / 5.3 | 693 | 4 |
+    | det-both | 1,999 | 1 / 788 / 4.2 | 1,237 | 2 |
+    | det-both | 5,960 | 1 / 2,253 / 3.9 | 3,101 | 3 |
+
+    Three readings. (a) Below the 2,048 budget det-both equals det-finalize **to the digit** across two server starts — the
+    top-k kernel cannot matter there, and bit-identical statistics rule out any random source. (b) Above the budget the
+    deterministic top-k removes a further 15 % of the flips and 2 of 5 distinct completions — ZC502's regression sees the
+    #55122 defect. (c) The det arms still "diverge" from position 1 (two tokens of context!) with spreads of whole nats.
+    That is not floating point: it is history. `period.py` (16 identical sequential requests, full 1,460-position vector
+    hashed): **cold first request = class A, the fifteen after it = class B, bit-identical**; 32-token completions 16/16
+    identical; prefix cache on/off makes no difference (prompt-logprob requests bypass it, and a cache-on request that got
+    pristine blocks still lands in B, so KV/state *slots* are not the carrier). The eight "sequential" requests of `posdiv`
+    disagree only because request 1 followed a different kind of request than 2–8. The sampled-token route shows the same
+    thing (`pdiag`: first token 'Let' at −1.19 / −0.03 / −0.54 across three cold-to-warm stock requests), so it is not the
+    prompt-logprobs path either.
+
+    Localisation by elimination, each arm a fresh server with det-both and the period test:
+
+    | arm | 16 identical requests | posdiv seq (all 3 prompts) |
+    | --- | --- | --- |
+    | `--enforce-eager` + per-layer hashes (`lhbis`, 50 modules) | 1 class; 0/50 module hashes differ cold vs warm at 1,460 and 1,999 | — |
+    | `--enforce-eager`, no hooks | 1 class | 0 flips, spread 0.000, 1/8 distinct |
+    | compile ON, `cudagraph_mode NONE` | 1 class | 0 flips, spread 0.000, 1/8 distinct |
+    | compile ON, `cudagraph_mode PIECEWISE` (prod) | 2 classes (A, then B×15) | 758 / 788 / 2,253 flips |
+    | compile ON, `FULL_DECODE_ONLY` | 2 classes (A, then B×15) | — |
+    | `PIECEWISE` + `--moe-backend emulation` (log-verified) | 2 classes (A, then B×15); 32-tok completions A B C D E then E×11 | — |
+
+    So with the two fixes the forward is bit-exact sequentially in eager and in compiled-without-graphs mode, at every length,
+    and every module's output hashes equal — the leak needs cudagraph mode even though a 1,460-token prefill never replays a
+    graph (capture sizes 1–8). FULL_DECODE_ONLY leaks the same way, so the trigger is graph capture as such, not the piecewise splitting; the MoE-emulation arm leaks too, so the FlashInfer MoE path is not the carrier, and its 32-token completions *converging* over five requests is the signature of a buffer that fills with traffic. **The carrier is the PLE CPU-offload output buffer** (`plecheck`, `notes/data/posdiv/plecheck.txt`: hash and non-zero
+    row count of every PLE layer's GPU output buffer right after each real forward, before the runner releases it). In
+    PIECEWISE mode the model consumes the buffer *one step behind*: the first real step (a 32-token warm-up request) saw
+    0 non-zero rows, the cold 1,460-token request saw exactly 32 (the previous step's rows), the second and third 1,460
+    requests saw all 1,460 rows (the first request's copy, landed late — identical prompt, so "correct" by accident),
+    the cold 1,999 request saw exactly 1,460 rows and zeros above. With `cudagraph_mode NONE` every step sees exactly its own rows, and its 1,460-row buffer hash (`101706c574`) and first-token logprob (−0.2638) equal PIECEWISE's *warm* values — so B is the correct computation and the cold A is the broken one: in the served configuration every step runs with the previous step's per-layer embeddings, and only identical consecutive requests hide it. That is class A vs B: the cold request runs with the
+    PLE contribution missing for all but a few rows, the warm ones with the previous identical request's rows. The GPU
+    side's `vllm::ple_offload_wait` (cuStreamWaitValue32 on the cross-process semaphore) does not hold before the read
+    in this mode; a probe inside the wait op (`plewait2`, `pleflag`) shows why: in PIECEWISE every real wait finds the flag already at 1, and the runner-side probe reads 1 at the entry of the very first real step, before any request was submitted, and 1 again after every release — the CPU worker's signal for step k lands after the GPU consumed on the stale 1 and after the release's reset, so the flag is perpetually one step ahead; in NONE mode the first real wait finds 0 and blocks correctly, and later waits see 0 or 1 depending on whether the worker was faster than the launch, with correct rows either way. The unmatched raise originates in engine init, which NONE performs without graph capture. A trace of every semaphore operation in both processes (`plesem`, `notes/data/posdiv/plesem.txt`) names it: `capture_model()` signals dummy outputs (flag 1) and then runs real steps through `execute_model()` — 32, 16, 2, 1 tokens — that submit real requests to the offload worker. The 32-token wait passes on the dummy signal (0 rows), its release resets the flag, the 16-token wait blocks on 0 and is released by the worker's signal *for the 32-token step* (consumes 16 of its 32 rows), and from then on every release is followed within milliseconds by the previous step's late signal. NONE never signals dummy outputs outside `execute_model` and is correct. **Fix:** reset every layer's semaphore on the model stream before a real request is launched (`PleOffloadConnector.prepare_forward`, 11 lines), so the wait can only be satisfied by this step's copy; committed on `jschmied/vllm:ple-offload-wait-fix` on top of the #53899 head. Validation (PIECEWISE, `plefix`): every real step consumes exactly its own rows from the first one (32/16/2/1 at init, then 1,460 ×3, 1,999 ×2; hashes equal to the NONE run's), the cold first request gives the warm logprob (−0.2638), 16 identical requests = 1 class, and the position-resolved set is bit-exact sequentially at 1,460 / 1,999 / 5,960 tokens (0 flips, spread 0.000, 1/8 distinct 64-token completions each); the concurrent batches keep 0 / 416 / 665 flips, identical to the cudagraph-off run — the batch-shape axis, not this defect. What remains after that is the batch-shape axis only: 8 identical prompts in
+    one prefill batch diverge from each other (1,460: eager from position 429 / 194 flips, compiled 0; 1,999: from position 1
+    in both), the known non-batch-invariance, a separate issue.
+
+    Two traps this run paid for. The FlashInfer autotune cache is keyed on the same `compute_hash()` as the compile cache, so
+    the det-finalize arm reused the fused-finalize tactic table and died with `Invalid gemm2 profile id: 59` (per-arm
+    `FN_CACHE_ROOT` fixes both caches; see finding 135). And kernel-det v2.3 rejected the main build's block-level indexer
+    (`chunk_size 256 smaller than TopK 512`): its host guard applied the cooperative path's sort-buffer constraint to every
+    call; v2.4 makes it conditional on `max_seq_len > RADIX_THRESHOLD`, 33 short-row tests added, 210/210 pass
+    (`patches/kernel-det/`).

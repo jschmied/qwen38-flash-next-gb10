@@ -1,0 +1,38 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+=== EAGERP det-both + eager, NO hashes, cache off  14:09 ===
+    det_lines=1
+  PD_eager r00: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r01: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r02: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r03: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r04: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r05: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r06: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r07: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r08: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r09: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r10: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r11: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r12: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r13: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r14: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager r15: full=3e243ec8 p1=('846', -0.523) p700=('79', -0.22) sampled=('<', -0.264)
+  PD_eager FULL-VECTOR classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+  PD_eager PROBE-SIG classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+  PD_eager E2E32 classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+=== PD_eager prompt 1500 (prompt_tokens=1460) sequential x8
+  PD_eager seq1500: positions 1460; first divergent pos None; top-1 disagreeing positions 0/1459; positions with logprob spread>1e-3: 0 (max spread 0.000e+00, mean 0.00e+00); min top-5 Jaccard 1.00; boundary band 1990-2100 disagreeing 0/0
+  PD_eager conc1500: positions 1460; first divergent pos 429; top-1 disagreeing positions 194/1459; positions with logprob spread>1e-3: 1031 (max spread 1.794e+01, mean 1.75e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/0
+  PD_eager e2e64_1500: 1 distinct completions / 8
+=== PD_eager prompt 2039 (prompt_tokens=1999) sequential x8
+  PD_eager seq2039: positions 1999; first divergent pos None; top-1 disagreeing positions 0/1998; positions with logprob spread>1e-3: 0 (max spread 0.000e+00, mean 0.00e+00); min top-5 Jaccard 1.00; boundary band 1990-2100 disagreeing 0/9
+  PD_eager conc2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 373/1998; positions with logprob spread>1e-3: 1995 (max spread 1.874e+01, mean 2.81e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/9
+  PD_eager e2e64_2039: 1 distinct completions / 8
+=== PD_eager prompt 6000 (prompt_tokens=5960) sequential x8
+  PD_eager seq6000: positions 5960; first divergent pos None; top-1 disagreeing positions 0/5959; positions with logprob spread>1e-3: 0 (max spread 0.000e+00, mean 0.00e+00); min top-5 Jaccard 1.00; boundary band 1990-2100 disagreeing 0/111
+  PD_eager conc6000: positions 5960; first divergent pos 2969; top-1 disagreeing positions 658/5959; positions with logprob spread>1e-3: 2990 (max spread 1.919e+01, mean 9.21e-01); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/111
+  PD_eager e2e64_6000: 1 distinct completions / 8
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 14:23

@@ -1,0 +1,19 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  layerhash INSTALLED (inert unless VLLM_LAYER_HASH=1)
+=== LHBIS det-both + eager + layer hashes, cache off  13:47 ===
+    det_lines=1 lh_installed=1
+  req 1500 r0: prompt_tokens=1460 sampled='<' lp=-0.2643
+  req 1500 r1: prompt_tokens=1460 sampled='<' lp=-0.2643
+  req 1500 r2: prompt_tokens=1460 sampled='<' lp=-0.2643
+  req 2039 r0: prompt_tokens=1999 sampled='```' lp=-0.2582
+  req 2039 r1: prompt_tokens=1999 sampled='```' lp=-0.2582
+== N=1460: real passes [7, 8, 9]
+   pass 7 vs 8: modules differing 0/50; FIRST differing = None
+   pass 7 vs 9: modules differing 0/50; FIRST differing = None
+== N=1999: real passes [10, 11]
+   pass 10 vs 11: modules differing 0/50; FIRST differing = None
+  layerhash REMOVED
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 14:09

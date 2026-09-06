@@ -1,0 +1,87 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  plecheck INSTALLED (inert unless VLLM_PLE_CHECK=1)
+  plefix INSTALLED (reset-before-launch)
+=== PLEFIX  cudagraph=PIECEWISE  det-both + reset-before-launch, cache off, VLLM_PLE_CHECK=1  16:18 ===
+    det_lines=1
+  req 1500 r0: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 1500 r1: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 1500 r2: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 2039 r0: prompt_tokens=1999 sampled='```' lp=-0.2140
+  req 2039 r1: prompt_tokens=1999 sampled='```' lp=-0.2140
+  PD_fix r00: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r01: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r02: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r03: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r04: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r05: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r06: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r07: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r08: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r09: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r10: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r11: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r12: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r13: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r14: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix r15: full=de270e2b p1=('846', -0.576) p700=('69', -0.214) sampled=('Let', -0.264)
+  PD_fix FULL-VECTOR classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+  PD_fix PROBE-SIG classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+  PD_fix E2E32 classes: 1 distinct / 16;  sequence: A A A A A A A A A A A A A A A A
+=== PD_fix prompt 1500 (prompt_tokens=1460) sequential x8
+  PD_fix seq1500: positions 1460; first divergent pos None; top-1 disagreeing positions 0/1459; positions with logprob spread>1e-3: 0 (max spread 0.000e+00, mean 0.00e+00); min top-5 Jaccard 1.00; boundary band 1990-2100 disagreeing 0/0
+  PD_fix conc1500: positions 1460; first divergent pos None; top-1 disagreeing positions 0/1459; positions with logprob spread>1e-3: 0 (max spread 0.000e+00, mean 0.00e+00); min top-5 Jaccard 1.00; boundary band 1990-2100 disagreeing 0/0
+  PD_fix e2e64_1500: 1 distinct completions / 8
+=== PD_fix prompt 2039 (prompt_tokens=1999) sequential x8
+  PD_fix seq2039: positions 1999; first divergent pos None; top-1 disagreeing positions 0/1998; positions with logprob spread>1e-3: 0 (max spread 0.000e+00, mean 0.00e+00); min top-5 Jaccard 1.00; boundary band 1990-2100 disagreeing 0/9
+  PD_fix conc2039: positions 1999; first divergent pos 1; top-1 disagreeing positions 416/1998; positions with logprob spread>1e-3: 1995 (max spread 1.932e+01, mean 3.13e+00); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/9
+  PD_fix e2e64_2039: 1 distinct completions / 8
+=== PD_fix prompt 6000 (prompt_tokens=5960) sequential x8
+  PD_fix seq6000: positions 5960; first divergent pos None; top-1 disagreeing positions 0/5959; positions with logprob spread>1e-3: 0 (max spread 0.000e+00, mean 0.00e+00); min top-5 Jaccard 1.00; boundary band 1990-2100 disagreeing 0/111
+  PD_fix conc6000: positions 5960; first divergent pos 2969; top-1 disagreeing positions 665/5959; positions with logprob spread>1e-3: 2987 (max spread 1.592e+01, mean 9.25e-01); min top-5 Jaccard 0.00; boundary band 1990-2100 disagreeing 0/111
+  PD_fix e2e64_6000: 1 distinct completions / 8
+  PLECHECK tokens=32 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=32 absmean=3.5765e+01 hash=bc6100c71f
+  PLECHECK tokens=16 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=16 absmean=3.2481e+01 hash=6f9baae0ae
+  PLECHECK tokens=2 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=2 absmean=3.5988e+01 hash=caf022c4fc
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.6467e+01 hash=e6be5986a8
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1999 absmean=3.3919e+01 hash=333d260f80
+  PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1999 absmean=3.3919e+01 hash=333d260f80
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.2422e+01 hash=8a85e08d4d
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.7194e+01 hash=791afa1406
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.4981e+01 hash=c609f0cc8d
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.4240e+01 hash=5c9e4d0347
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.2198e+01 hash=6e21755d09
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.2750e+01 hash=bb4a2072da
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.0935e+01 hash=7a0648f537
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.0302e+01 hash=b777cca289
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.4437e+01 hash=cb2c98257b
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.3853e+01 hash=ddcd8e2035
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.1768e+01 hash=33b18d61ff
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.4434e+01 hash=07060ea8fc
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.6861e+01 hash=6a82b89dc8
+  PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.3099e+01 hash=d821fa520e
+  plefix REMOVED
+  plecheck REMOVED
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 16:31

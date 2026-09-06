@@ -1,0 +1,104 @@
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  plecheck INSTALLED (inert unless VLLM_PLE_CHECK=1)
+  plewait probe INSTALLED (inert unless VLLM_PLE_CHECK=1)
+  pleflag INSTALLED (inert unless VLLM_PLE_CHECK=1)
+  plesem INSTALLED (inert unless VLLM_PLE_CHECK=1)
+=== PC_PIECEWISE  cudagraph=PIECEWISE  det-both, cache off, VLLM_PLE_CHECK=1  16:04 ===
+    det_lines=1
+  req 1500 r0: prompt_tokens=1460 sampled='I' lp=-0.5581
+  req 1500 r1: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 1500 r2: prompt_tokens=1460 sampled='Let' lp=-0.2638
+  req 2039 r0: prompt_tokens=1999 sampled='```' lp=-0.5423
+  req 2039 r1: prompt_tokens=1999 sampled='```' lp=-0.2140
+  PC_PIECEWISE   PLESEM signal pid=3705468 t=84.414 stream=0x0 sem=0x341769a00 capturing=False via signal_dummy_outputs<-prepare_forward<-execute_model
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=87.438 stream=0x0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x0 tokens=16384
+  PC_PIECEWISE (Worker pid=3705468) INFO 09-06 16:14:55 [monitor.py:81] Initial profiling/warmup run took 9.54 s
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=95.910 stream=0x0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE (Worker pid=3705468) INFO 09-06 16:14:56 [kernel_warmup.py:290] Running FlashInfer autotune with 16384 tokens.
+  PC_PIECEWISE   PLESEM signal pid=3705468 t=96.934 stream=0x0 sem=0x341769a00 capturing=False via signal_dummy_outputs<-prepare_forward<-execute_model
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=97.401 stream=0x0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x0 tokens=16384
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=100.242 stream=0x0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLESEM signal pid=3705468 t=100.279 stream=0x0 sem=0x341769a00 capturing=False via signal_dummy_outputs<-capture_model<-decorate_context
+  PC_PIECEWISE   PLEFLAG entry tokens=32 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=102.821 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=32
+  PC_PIECEWISE   PLECHECK tokens=32 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=0 absmean=0.0000e+00 hash=dae4d3dce1
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=102.986 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=32 flags={'language_model.model.layers.1.ple.ple_embedding': 0}
+  PC_PIECEWISE   PLEFLAG entry tokens=16 flags={'language_model.model.layers.1.ple.ple_embedding': 0} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=103.116 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=0 stream=0x46266be0 tokens=16
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=103.860 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=103.930 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=103.940 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=103.951 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLECHECK tokens=16 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=16 absmean=3.1573e+01 hash=8e8ab662b5
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=104.003 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=16 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=2 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=104.019 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=104.028 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=2
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=104.030 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLECHECK tokens=2 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=2 absmean=3.1786e+01 hash=a70cae192d
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=104.079 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=2 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=104.097 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=104.107 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=104.151 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=1
+  PC_PIECEWISE   PLECHECK tokens=1 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1 absmean=3.2722e+01 hash=8513b578f5
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=104.201 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=1 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE (EngineCore pid=3705386) INFO 09-06 16:15:04 [core.py:372] init engine (profile, create kv cache, warmup model) took 20.77 s (compilation: 0.88 s)
+  PC_PIECEWISE   PLEFLAG entry tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=117.405 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=117.537 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=1460
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=117.573 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=32 absmean=6.8346e-01 hash=c9dda86185
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=118.370 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=119.042 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=119.051 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=1460
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=119.052 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=119.728 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=119.763 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=119.772 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=1460
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=119.774 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLECHECK tokens=1460 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=3.3884e+01 hash=101706c574
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=120.430 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=1460 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=120.472 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=120.499 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=1999
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=120.750 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1460 absmean=2.4748e+01 hash=8fbf2cf77b
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=122.476 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  PC_PIECEWISE   PLEFLAG entry tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1} cur=0x46266be0 default=0x0 copy=0x45bf0b90
+  PC_PIECEWISE   PLESEM wait_reset pid=3705714 t=122.519 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM signal pid=3705714 t=122.530 stream=0x11c43040 sem=0x47c0169a00 capturing=False via _handle_requests_impl<-_handle_requests<-busy_loop
+  PC_PIECEWISE   PLESEM gpu_wait pid=3705468 t=122.534 stream=0x46266be0 sem=0x341769a00 capturing=False via __call__<-forward<-_call_impl
+  PC_PIECEWISE   PLEWAIT flag_before_wait=1 stream=0x46266be0 tokens=1999
+  PC_PIECEWISE   PLECHECK tokens=1999 layer=language_model.model.layers.1.ple.ple_embedding nonzero_rows=1999 absmean=3.3919e+01 hash=333d260f80
+  PC_PIECEWISE   PLESEM reset pid=3705468 t=123.827 stream=0x46266be0 sem=0x341769a00 capturing=False via release_offloaded_output<-release_outputs<-execute_model
+  PC_PIECEWISE   PLEFLAG after_release tokens=1999 flags={'language_model.model.layers.1.ple.ple_embedding': 1}
+  plesem REMOVED
+  pleflag REMOVED
+  plewait probe REMOVED
+  plecheck REMOVED
+  qsadet REMOVED
+  detfin REMOVED
+== ALL DONE == 16:15
