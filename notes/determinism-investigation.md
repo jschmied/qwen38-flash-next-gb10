@@ -2151,3 +2151,26 @@ Plus whatever drives the separate generation-side path.
     - Different operating point from ours in ways that matter when comparing: `--max-num-seqs 1`,
       `--kv-cache-memory-bytes 8G` (explicit rather than a utilisation fraction),
       `--mamba-cache-mode align --prefix-cache-retention-interval 1600`, MTP **2** not 3.
+
+162. **GROUP 0a: the 1.83× MTP restart spread is GONE — 1.15× on the fixed stack (2026-09-07,
+    3 starts × 3 reps, `mtprem` group 0a).** The plan's whole "three starts, report ranges" protocol
+    was written against a 1.83× within-config spread (MTP2, 47.8 → 77.5 ms/tok) measured on the
+    **preview** stack with the multi-prefill corruption and the PLE semaphore both live.
+    | start | c=1 tok/s | acceptance |
+    | --- | --- | --- |
+    | 1 | 26.7 / 28.0 / 27.9 | 60.7–67.5 % |
+    | 2 | 24.7 / 27.8 / 25.8 | 60.7–71.5 % |
+    | 3 | 26.1 / 28.3 / 27.1 | 60.1–65.9 % |
+    **Across all nine: 24.7–28.3 tok/s, spread 1.15×** — and the within-start spread (1.05–1.13×) is
+    most of it, so restart-to-restart adds almost nothing. That is the no-spec/ngram regime (1.09–1.10×),
+    not the old MTP regime.
+    - **Consequence for the plan:** three starts per MTP cell was a defence against a defect that has
+      since been fixed. Later groups could drop to two starts, roughly halving the remaining run.
+      **Not changing `mtprem` mid-flight** — it is already running groups 1–3 at three starts, and
+      re-cutting the protocol while the job is in progress would make the groups incomparable to each
+      other. Apply it to the *next* MTP run, not this one.
+    - This also retires [[mtp-restart-instability]] as a live constraint: it was real, it was caused by
+      the corruption and the semaphore, and both are fixed in `vllm-venv-fnmain2`.
+    - Caveat: one workload (short agent-style prompt, 551 tokens, c=1). The old 1.83× was measured at a
+      different cell. A single workload closing the spread is strong evidence, not proof, that it
+      closed everywhere.
