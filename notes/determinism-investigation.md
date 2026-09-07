@@ -1898,3 +1898,26 @@ Plus whatever drives the separate generation-side path.
     smem sizing bug, and an out-of-bounds read on the Filtered path. That trade is defensible in review;
     concealing a measured 5 % is not.
 
+
+151. **`torch.topk` and the MiniMax-M3 MSA bitonic top-k both fix the determinism bug and both cost
+    4.4–35.6× the PR kernel on GB10 (2026-09-07, `notes/data/alt-torchtopk-bitonic.txt`).** Asked by
+    gau-nernst on #55122. Harness `/opt/llm/runners/alt_cmp.py`, 27-shape cost grid + 58-shape
+    correctness grid, `_C_det.so` from build34 (branch head), 5 × 50 launches.
+    - **`torch.topk`: 0 failures on all 58 shapes** — bit-identical over 6 calls, exact set, and after
+      an ascending-index sort it equals the index-canonical reference even on the tie-heavy and
+      all-equal cases. It would fix the bug. Cost is what rules it out: **4.4–9.9×** with the ragged
+      mask and the sort the op's contract needs, and still **1.9–4.7×** stripped bare on a dense row,
+      so the gap is the algorithm, not the wrapper. Do not quote the tie behaviour as a contract —
+      it is undocumented and this is one PyTorch build on one device.
+    - **The bitonic top-k is deterministic and exact by value.** Its 29/58 "set mismatches" against
+      our reference are a *tie-choice* difference, not a wrong answer: the selected values equal the
+      exact top-k multiset on every case checked, with no duplicates and no out-of-range indices. The
+      network breaks ties by position, we break them by lowest index. For reproducibility either is
+      sufficient. Cost **5.0–35.6×**, and **8.9–20.8×** at the best cell of a `BLOCK_SIZE_K` ×
+      `num_warps` sweep, so it is not a config handicap.
+    - **M3's kernel structurally cannot serve k = 2048**: `BLOCK_SIZE_T = next_pow2(topk)` under
+      `static_assert(BLOCK_SIZE_K > BLOCK_SIZE_T)` needs `BLOCK_SIZE_K ≥ 4096`, and its autotune
+      configs stop at 2048. QSA runs k = 2048. Compiling the 4096/8192-wide network by hand takes
+      minutes of Triton time per config.
+    - Why the gap is that large: both alternatives materialise and order data this op never needs
+      ordered. The PR's single-CTA path rescans the row per key byte and writes into final positions.

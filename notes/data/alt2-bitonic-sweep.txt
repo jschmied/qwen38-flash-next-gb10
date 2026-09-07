@@ -1,0 +1,111 @@
+== CORRECTNESS / DETERMINISM (self x6, and vs the exact reference) ==
+case                                     | torch.topk self   set  ord |   bitonic self   set  ord |       det self   set  ord |     stock self   set  ord
+rows=  1 n=  1024 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n=  1024 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n=  4096 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n=  4096 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n=  4096 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n=  4096 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n=  8192 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n=  8192 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n=  8192 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n=  8192 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n= 20000 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n= 20000 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n= 20000 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n= 20000 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n= 40000 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n= 40000 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  1 n= 40000 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  1 n= 40000 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n=  1024 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n=  1024 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n=  4096 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n=  4096 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n=  4096 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n=  4096 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n=  8192 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n=  8192 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n=  8192 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n=  8192 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n= 20000 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n= 20000 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n= 20000 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n= 20000 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n= 40000 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n= 40000 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows=  8 n= 40000 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows=  8 n= 40000 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n=  1024 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n=  1024 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n=  4096 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n=  4096 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n=  4096 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n=  4096 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n=  8192 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n=  8192 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n=  8192 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n=  8192 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n= 20000 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n= 20000 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n= 20000 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n= 20000 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n= 40000 k=  512 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n= 40000 k=  512 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n= 40000 k= 2048 rand      |           True  True True |           True  True True |           True  True True |          False  True False
+rows= 64 n= 40000 k= 2048 ties      |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n=  8192 k= 2048 allequal  |           True  True True |           True False False |           True  True True |          False False False
+rows= 64 n= 40000 k= 2048 allequal  |           True  True True |           True False False |           True  True True |          False False False
+FAILS: {'torch.topk': 0, 'bitonic': 29, 'det': 0, 'stock': 56}
+
+== COST (median us of 5 x 50 launches) ==
+rows      n     k |  torch.topk     bitonic         det       stock   torch.raw bitonic.raw | vs det
+   1   1024   512 |        67.9        39.1         7.9         9.2        22.6        16.5 | torch.topk=8.62x bitonic=4.96x det=1.00x stock=1.17x torch.raw=2.88x bitonic.raw=2.10x
+   1   4096   512 |        74.1        90.3         8.3         8.3        28.8        67.7 | torch.topk=8.93x bitonic=10.88x det=1.00x stock=1.00x torch.raw=3.47x bitonic.raw=8.17x
+   1   4096  2048 |        76.1        99.0         7.7         6.4        28.8        76.8 | torch.topk=9.90x bitonic=12.89x det=1.00x stock=0.83x torch.raw=3.75x bitonic.raw=10.01x
+   1   8192   512 |        86.3       158.0        10.5        10.3        41.1       135.3 | torch.topk=8.19x bitonic=14.98x det=1.00x stock=0.98x torch.raw=3.89x bitonic.raw=12.84x
+   1   8192  2048 |        96.6       191.4        10.5        10.3        49.2       168.0 | torch.topk=9.20x bitonic=18.22x det=1.00x stock=0.98x torch.raw=4.68x bitonic.raw=16.00x
+   1  16384   512 |       104.7       295.0        16.5        12.4        59.2       272.3 | torch.topk=6.34x bitonic=17.87x det=1.00x stock=0.75x torch.raw=3.59x bitonic.raw=16.50x
+   1  16384  2048 |       110.9       370.9        16.5        14.4        63.5       348.2 | torch.topk=6.72x bitonic=22.47x det=1.00x stock=0.87x torch.raw=3.85x bitonic.raw=21.10x
+   1  32768   512 |       127.7       567.8        20.6        18.5        82.2       544.7 | torch.topk=6.20x bitonic=27.57x det=1.00x stock=0.90x torch.raw=3.99x bitonic.raw=26.45x
+   1  32768  2048 |       131.6       733.0        20.6        20.6        84.2       710.2 | torch.topk=6.39x bitonic=35.58x det=1.00x stock=1.00x torch.raw=4.09x bitonic.raw=34.48x
+   8   1024   512 |        69.0        40.0         7.1         8.3        22.6        16.5 | torch.topk=9.66x bitonic=5.59x det=1.00x stock=1.16x torch.raw=3.16x bitonic.raw=2.32x
+   8   4096   512 |        76.9        90.7        10.3        10.4        30.8        67.7 | torch.topk=7.47x bitonic=8.81x det=1.00x stock=1.01x torch.raw=2.99x bitonic.raw=6.58x
+   8   4096  2048 |        79.5       101.9         8.3         9.7        30.8        76.8 | torch.topk=9.53x bitonic=12.21x det=1.00x stock=1.16x torch.raw=3.69x bitonic.raw=9.20x
+   8   8192   512 |        92.2       158.4        12.9        12.4        45.2       135.3 | torch.topk=7.15x bitonic=12.28x det=1.00x stock=0.96x torch.raw=3.50x bitonic.raw=10.49x
+   8   8192  2048 |        94.2       194.1        12.4        12.3        45.2       168.0 | torch.topk=7.60x bitonic=15.68x det=1.00x stock=1.00x torch.raw=3.65x bitonic.raw=13.56x
+   8  16384   512 |       114.5       295.3        18.5        14.4        65.7       272.4 | torch.topk=6.18x bitonic=15.94x det=1.00x stock=0.78x torch.raw=3.55x bitonic.raw=14.70x
+   8  16384  2048 |       122.4       374.1        19.2        16.5        71.7       348.2 | torch.topk=6.39x bitonic=19.52x det=1.00x stock=0.86x torch.raw=3.74x bitonic.raw=18.17x
+   8  32768   512 |       139.8       567.9        22.6        18.6        87.4       544.8 | torch.topk=6.18x bitonic=25.10x det=1.00x stock=0.82x torch.raw=3.86x bitonic.raw=24.08x
+   8  32768  2048 |       144.3       735.1        22.7        20.7        89.1       709.2 | torch.topk=6.36x bitonic=32.43x det=1.00x stock=0.91x torch.raw=3.93x bitonic.raw=31.29x
+  64   1024   512 |        79.6        49.2         8.4        11.7        28.4        24.7 | torch.topk=9.54x bitonic=5.90x det=1.00x stock=1.40x torch.raw=3.40x bitonic.raw=2.95x
+  64   4096   512 |       106.1       131.2        14.6        16.5        47.4       106.7 | torch.topk=7.27x bitonic=8.99x det=1.00x stock=1.13x torch.raw=3.25x bitonic.raw=7.31x
+  64   4096  2048 |       114.6       181.5        14.2        12.4        47.2       147.7 | torch.topk=8.09x bitonic=12.81x det=1.00x stock=0.88x torch.raw=3.33x bitonic.raw=10.42x
+  64   8192   512 |       149.6       239.9        20.6        18.5        89.0       215.5 | torch.topk=7.27x bitonic=11.66x det=1.00x stock=0.90x torch.raw=4.32x bitonic.raw=10.47x
+  64   8192  2048 |       170.4       357.4        20.6        18.6        93.8       321.9 | torch.topk=8.28x bitonic=17.37x det=1.00x stock=0.90x torch.raw=4.56x bitonic.raw=15.64x
+  64  16384   512 |       200.1       460.0        32.9        26.5       114.6       437.3 | torch.topk=6.09x bitonic=13.99x det=1.00x stock=0.81x torch.raw=3.49x bitonic.raw=13.30x
+  64  16384  2048 |       236.4       705.8        32.9        30.8       116.8       675.6 | torch.topk=7.18x bitonic=21.44x det=1.00x stock=0.93x torch.raw=3.55x bitonic.raw=20.52x
+  64  32768   512 |       330.7       905.8        75.9        49.3       141.3       881.3 | torch.topk=4.36x bitonic=11.94x det=1.00x stock=0.65x torch.raw=1.86x bitonic.raw=11.61x
+  64  32768  2048 |       362.7      1413.3        77.9        57.3       146.9      1378.8 | torch.topk=4.66x bitonic=18.14x det=1.00x stock=0.74x torch.raw=1.89x bitonic.raw=17.70x
+== ALL DONE ==
+== (1) bitonic set mismatch: wrong values, or a different tie choice? ==
+rows=  8 n=  8192 k=  512 ties       values==exact top-k values: True   indices in range: True   no duplicates: True
+rows= 64 n=  8192 k= 2048 allequal   values==exact top-k values: True   indices in range: True   no duplicates: True
+rows=  1 n=  4096 k= 2048 ties       values==exact top-k values: True   indices in range: True   no duplicates: True
+rows= 64 n= 40000 k=  512 ties       values==exact top-k values: True   indices in range: True   no duplicates: True
+
+== (2) bitonic config sweep (median us of 5 x 50), vs det ==
+rows=  1 n=  8192 k=  512  det=10.6us  best 117.8us (K=1024,warps=16) = 11.1x det
+     K=1024,w=2:197  K=1024,w=4:121  K=1024,w=8:135  K=1024,w=16:118  K=2048,w=2:227  K=2048,w=4:162  K=2048,w=8:146  K=2048,w=16:154
+rows=  8 n=  8192 k=  512  det=12.4us  best 117.9us (K=1024,warps=16) = 9.5x det
+     K=1024,w=2:197  K=1024,w=4:121  K=1024,w=8:135  K=1024,w=16:118  K=2048,w=2:228  K=2048,w=4:162  K=2048,w=8:145  K=2048,w=16:154
+rows= 64 n=  8192 k=  512  det=20.6us  best 182.5us (K=1024,warps=4) = 8.9x det
+     K=1024,w=2:190  K=1024,w=4:182  K=1024,w=8:217  K=1024,w=16:236  K=2048,w=2:220  K=2048,w=4:232  K=2048,w=8:265  K=2048,w=16:307
+rows=  8 n= 32768 k=  512  det=22.7us  best 472.4us (K=1024,warps=16) = 20.8x det
+     K=1024,w=2:801  K=1024,w=4:486  K=1024,w=8:545  K=1024,w=16:472  K=2048,w=2:930  K=2048,w=4:668  K=2048,w=8:596  K=2048,w=16:631
+rows=  8 n=  8192 k= 2048  det=12.4us  best 168.1us (K=4096,warps=8) = 13.6x det
+     K=4096,w=2:325  K=4096,w=4:191  K=4096,w=8:168  K=4096,w=16:180  K=8192,w=2:1354  K=8192,w=4:296  K=8192,w=8:189  K=8192,w=16:211
+rows=  8 n= 32768 k= 2048  det=22.7us  best 710.6us (K=4096,warps=8) = 31.4x det
+     K=4096,w=2:1352  K=4096,w=4:802  K=4096,w=8:711  K=4096,w=16:767  K=8192,w=2:5762  K=8192,w=4:1267  K=8192,w=8:844  K=8192,w=16:947
+== ALL DONE ==
+== RUNNER DONE == 14:29
