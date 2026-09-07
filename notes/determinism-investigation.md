@@ -2041,3 +2041,21 @@ Plus whatever drives the separate generation-side path.
     `setsid` (ppid=1) and it survived. Use `setsid` or systemd-run for anything longer than a turn,
     and never trust a `pgrep` that can match its own command line — that produced two false
     "still running" reports in a row.
+
+157. **CONFIRMED BY CODE, NOT YET BY MEASUREMENT: prod's decode path runs EAGER at c≥4 under MTP
+    (2026-09-07, LOW-1 premise check, read-only).** MiaAI's lead, and it holds.
+    `CudagraphDispatcher.dispatch()` (`vllm/v1/cudagraph_dispatcher.py`) keys on **`num_tokens`**, not
+    on request count, and `num_tokens > max_size` returns `CUDAGraphMode.NONE` — eager, with no
+    fallback to a smaller graph. `max_cudagraph_capture_size` is the largest entry of
+    `cudagraph_capture_sizes` (`config/compilation.py:695`), which prod sets to `[1,2,4,8]` → 8.
+    Under MTP n=3 a verify step submits 1+3 = 4 query tokens per sequence, so c=1 → 4 (captured),
+    c=2 → 8 (captured), **c=4 → 16, c=8 → 32, c=16 → 64 — all eager**.
+    - **Consequence for a PUBLISHED number:** the Quant Map's "~100 tok/s at c=16 is a bandwidth
+      ceiling" was measured on an eager decode path. The ceiling claim is not safe until re-measured
+      with capture sizes that cover 4×S.
+    - **Explains det-136** (cudagraph A/B null): it ran at c=1, the one width already captured. The
+      null was real and also uninformative about c≥4.
+    - This is a code-reading result. It predicts that widening `FN_CG_SIZES` to cover 4×S changes c≥4
+      throughput and changes nothing at c=1. **Do not quote it as a measurement until that A/B runs**
+      — it is exactly the shape of claim that has been wrong before.
+    - Owed to a public thread: our MiaAI #19 comment made the c=16 ceiling provisional on this test.
