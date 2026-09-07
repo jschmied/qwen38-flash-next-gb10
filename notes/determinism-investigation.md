@@ -1877,3 +1877,24 @@ Plus whatever drives the separate generation-side path.
     Whole grid: v2.7 0.83–2.45×, **v3.2 0.74–2.14×** — better at both ends, with these cells worse.
     ⚠️ The "N of 43 at or below stock" statistic (14 → 9) is not robust: the stock arm is re-timed each
     run and several cells sit within 1 % of 1.00. Quote the range, not the count.
+
+150. **The v3.1 regression is not explained, and the code-layout hypothesis is refuted (2026-09-07).**
+    Chasing det-149's ~5 % on single-CTA k=2048 cells, three candidate causes were eliminated by
+    experiment rather than argument:
+
+    | hypothesis | test | result |
+    | --- | --- | --- |
+    | the signed-zero branch in `convert_to_uint32_v2` | build with it removed | **no change** (19.8 vs 19.4 µs) |
+    | register pressure / occupancy | `cuobjdump --dump-resource-usage` | **identical**: REG:64, SHARED:5280 on every instantiation, v3.0 and v3.2 |
+    | launch geometry for the affected shape | arithmetic | **identical**: `ctas_per_group=1, chunk=16384` either way |
+    | code layout — the inlined CTA-prefix block inflating the shared path | `__noinline__` helper | **refuted, and worse**: 20.3 µs against v3.2's 19.3 and v3.0's 18.5 |
+
+    The `__noinline__` split was reverted; the branch keeps the v3.2 kernel. Measurements are three
+    fresh processes per build, within-build spread ±0.1 µs.
+
+    **Disposition: disclose, do not keep hunting.** The effect is 0.8–0.9 µs on n ≤ 16,384 at k=2048
+    while 18 of 43 cells improve in absolute time and the grid range moves 0.83–2.45× → 0.74–2.14×.
+    It was bought for a determinism guarantee that previously had a reachable hole, a launch-rejecting
+    smem sizing bug, and an out-of-bounds read on the Filtered path. That trade is defensible in review;
+    concealing a measured 5 % is not.
+
