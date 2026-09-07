@@ -234,6 +234,24 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **PLE mmap as an alternative to CPU offload — could revive the ngram comparison (found 2026-09-07
+  in [Radar105/qwen38-flash-next-nvfp4-spark](https://github.com/Radar105/qwen38-flash-next-nvfp4-spark)).**
+  det-160 established that `VLLM_PLE_CPU_OFFLOAD` forces a V1 conflict that makes ngram/ngram_gpu
+  impossible on our stack, which is why the published page's ngram cells are unreproducible. Radar105
+  runs the SAME model in production with `VLLM_QWEN4_PLE_MMAP=1` instead. **Verified: that env var is
+  in neither our venv nor upstream main** — it is in their local patch ("the existing PLE mmap
+  reader"), on a newer base (`7fbd44cb`, 2026-09-05) than our merge-base `d9105ea8`.
+  **Steps:** (1) read `patches/vllm-complete.patch` and isolate the PLE mmap reader — do NOT apply the
+  whole 23-file patch, it stacks five upstream PRs and local adaptations; (2) check whether the mmap
+  path avoids the `uniproc_executor.py:71` / `parallel.py:491` V1 rejection; (3) if it does, it
+  unblocks the ngram arms AND is a second PLE implementation to A/B against the offload worker (our
+  offload takes 16 page faults per token — LOW-3). Requires a venv patch, so it waits for an idle box.
+  **Also from that repo, no action needed but worth knowing:** they run `--enforce-eager` in
+  production (independent support for det-158 — cudagraphs may be doing nothing here); they carry
+  #53798 + #54076, the two still-open legs of our determinism chain, plus #54713 and #55390 which are
+  new to us; and they do NOT carry #55122, so their production has the QSA top-k nondeterminism.
+  Their decode numbers (26.8 tok/s @47.6k, 33.8 @30k, production median 22.7) agree with ours.
+
 - **NVFP4 kernel selection on sm_121 — we run W4A16 where W4A4 exists (det-159, upstream #55397 /
   fix #55405).** VERIFIED in the prod venv: first match on sm_121 is
   `FlashInferCuteDslNvFp4W4A16LinearKernel`; three native W4A4 kernels sit below it unreached.

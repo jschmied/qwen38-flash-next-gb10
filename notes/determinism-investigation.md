@@ -2129,3 +2129,25 @@ Plus whatever drives the separate generation-side path.
     - Untested alternative if the comparison is ever wanted: `FN_PLE_OFFLOAD=0` puts the tables on the
       GPU. Whether they fit alongside a 0.80 utilisation KV pool is unknown, and it would no longer be
       the same configuration as every other arm — so it is a different measurement, not a repair.
+
+161. **A production Flash-Next NVFP4 deployment on GB10 exists with a different PLE path and no
+    cudagraphs (2026-09-07, [Radar105/qwen38-flash-next-nvfp4-spark](https://github.com/Radar105/qwen38-flash-next-nvfp4-spark)).**
+    Same model, same NVFP4 weights, same class of box, 262K context, three hours a day of agentic use.
+    - **`VLLM_QWEN4_PLE_MMAP=1` instead of `VLLM_PLE_CPU_OFFLOAD`.** Checked: that variable exists in
+      neither our venv nor upstream main, so it is theirs, carried on a newer base (`7fbd44cb`) than
+      our merge-base. If it avoids the V1 rejection at `uniproc_executor.py:71`, it repairs what
+      det-160 declared impossible — the ngram/ngram_gpu arms — and gives us a second PLE
+      implementation to compare against the offload worker's 16 page faults per token.
+    - **`--enforce-eager` in production.** Independent support for det-158: an operator running this
+      model daily turned cudagraphs off. Our own capture-width A/B was void because no graphs were
+      captured in either arm; this suggests that may be the normal state rather than a misconfiguration.
+    - **Their patch stack is our determinism chain**: #55375 (merged), #53798 and #54076 (the two legs
+      still open, both of which we have read this week), plus #54713 and #55390, which are new to us.
+      **They do not carry #55122**, so their production retains the QSA top-k nondeterminism — a
+      concrete answer to "who else needs this fix".
+    - **Cross-check on our numbers, and they agree**: 26.83 tok/s decode at 47,643 input, 33.84 at
+      29,985, production median 22.7 / peak 35.1 over 392 decode windows. Our c=1 cells the same night
+      are 26.7–28.0 at short prompts. No discrepancy to chase.
+    - Different operating point from ours in ways that matter when comparing: `--max-num-seqs 1`,
+      `--kv-cache-memory-bytes 8G` (explicit rather than a utilisation fraction),
+      `--mamba-cache-mode align --prefix-cache-retention-interval 1600`, MTP **2** not 3.
