@@ -75,7 +75,8 @@ def bench(op, logits, lengths, k, iters=50, batches=5):
 print("\n== COST (median us of 5 x 50; base measured twice, best taken, to expose drift) ==", flush=True)
 print(f"{'rows':>4} {'n':>6} {'k':>5} | {'base med':>8} {'det med':>8} | {'det/base':>8}  (min..max)")
 for rows, n, k in [(r, n, k) for r, n, k in
-                   itertools.product((64,), (4096, 8192, 20000, 40000), (512, 2048)) if k < n]:
+                   itertools.product((64, 128, 256), (4096, 8192, 20000, 40000, 65536),
+                                     (512, 1024, 2048)) if k < n]:
     logits = torch.randn(rows, n, device=dev)
     lengths = torch.full((rows,), n, dtype=torch.int32, device=dev)
     a = bench(BASE, logits, lengths, k)
@@ -87,7 +88,7 @@ for rows, n, k in [(r, n, k) for r, n, k in
 
 # Rows just below and above the rows>32 switch: the Filtered path turns on here.
 print("\n== the rows>32 switch (same n, k) ==", flush=True)
-for rows in (16, 32, 33, 48, 64, 96):
+for rows in (16, 32, 33, 48, 64, 96, 128, 256):
     logits = torch.randn(rows, 16384, device=dev)
     lengths = torch.full((rows,), 16384, dtype=torch.int32, device=dev)
     a = bench(BASE, logits, lengths, 2048)

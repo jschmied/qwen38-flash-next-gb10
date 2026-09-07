@@ -1942,3 +1942,28 @@ Plus whatever drives the separate generation-side path.
       shows 1.31×, against the 0.74–2.14× whole-grid range the PR body quotes from GB10.
     - Affected regime is `rows > 32` — not the c=1 QSA decode shape (4 query rows at MTP n=3), but
       large-batch and prefill. That is the regime H100/A100 deployments actually run.
+
+153. **Fix 1 (device-sized Filtered smem): −23…−30 % at n=40,000, nothing anywhere else — exactly as
+    predicted (2026-09-07, 3 starts H100 / 2 SXM4 starts A100, `notes/data/fix1-*.txt`).**
+    `FILTERED_TOPK_SMEM_DYNAMIC` was a compile-time 128 KB — the size of the two candidate buffers
+    the PR deleted. The smem now caches the row for `det_select_row`, which re-reads GLOBAL memory on
+    all four radix passes when the row does not fit, so the useful size is `fixed + n*4`, not a
+    constant. 128 KB caches n <= ~32,200; the launcher now queries
+    `cudaDevAttrMaxSharedMemoryPerBlockOptin` (cached PER DEVICE), subtracts the per-instantiation
+    static smem via `cudaFuncGetAttributes`, and asks for what the widest row needs, floored at the
+    old 128 KB.
+    - **n=40,000: H100 2.41 → 1.74, A100 2.66 → 2.00** (−23…−30 % on every row count and every k).
+    - **n <= 20,000 unchanged** (already cached) and **n=65,536 unchanged** (256 KB of keys exceeds
+      every device's opt-in, so it cannot be cached at any request size). Both predicted before the
+      run from `det_select_row_bytes`, which is what makes this a confirmed mechanism rather than a
+      correlation.
+    - Headline barely moves — H100 1.03–2.73 → 1.11–2.72, A100 0.99–3.04 → 1.07–3.04 — because
+      n=65,536 sets the maximum. Small-n cells wander a few per cent between runs; the ranges overlap
+      and none of it is signal.
+    - Correctness: 0 failures on all six post-fix runs, plus GB10's 210-case suite at fails=0 (GB10
+      cannot reach this path, so that run proves the change disturbed nothing else).
+    - **What is left is fix 2**: after pass 0 only the pivot bin's keys matter (~n/256 on random
+      data), so passes 1–3 should be O(n/256), not O(n). That is what upstream's candidate buffers
+      did; they were removed because their overflow DROPPED keys. Reintroducing compaction *exactly*
+      — sized so it cannot drop, with a deterministic rescan fallback when it would — is the only
+      route at n=65,536 and would also cut the 1.0→2.2× climb inside the cached range.
