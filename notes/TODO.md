@@ -235,9 +235,12 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 ### HIGH — our own findings and PRs
 
 - **PR #55122 (det top-k):** ~~v2.7 not pushed~~ **PUSHED 2026-09-07 as `b8d09ecb`** (upstream log 66). Still owed:
-  the cost table in the PR body is the v2.4 one and now understates the kernel; a reply to gau-nernst's
-  `top_k_per_row_decode` thread; and prod still runs v2.4 (`/opt/llm/kernel-det/_C_det.so`). Original note:
-  v2.7 is built and verified. Whole grid 1.00–2.45× (was 1.25–4.31×),
+  ~~the cost table~~ (body rewritten 2026-09-07, log 67), ~~a reply on the tkprd thread~~ (correction posted,
+  log 68). **Still open:** prod runs v2.4 while the branch is at v2.8 (`/opt/llm/kernel-det/_C_det.so`);
+  no human review yet and `pre-run-check` blocks CI on the label gate; **and two contacts drafted but NOT
+  approved** — a post on #51782 (the open bug this fixes, with three active debuggers and a third dispatch
+  path Leonccaa found that we have not checked against our kernel) and a single ping to ywang96, who merged
+  our #55180. `/csrc/libtorch_stable` has no CODEOWNERS entry, which is why this PR has no owner. Whole grid 1.00–2.45× (was 1.25–4.31×),
   14 of 43 cells at or below stock, 210/210 + the PR's own 134 pytest cases, bit-identical throughout.
   Needs: push to the branch, rewrite the cost table a third time, reply to gau-nernst. Prod still runs v2.4.
 - **PR #55661 (swizzle gate):** blocked on the `swzab2` server A/B. Decision rule from the user:
