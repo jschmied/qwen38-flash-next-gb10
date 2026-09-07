@@ -2084,3 +2084,29 @@ Plus whatever drives the separate generation-side path.
       recorded rather than hidden.
     - **Owed:** the MiaAI #19 commitment ("our c=16 numbers are provisional until this is tested") is
       NOT discharged by this run. Nothing to post until the NONE arm settles what is actually running.
+
+159. **Our prod has been serving dense NVFP4 linears through a W4A16 kernel, not W4A4 (2026-09-07,
+    verified in the prod venv; upstream #55397, fix #55405).** `_POSSIBLE_NVFP4_KERNELS[CUDA]` is
+    scanned first-match-wins. Position 1 (`FlashInferCuteDslNvFp4LinearKernel`, W4A4) is gated to
+    sm_10x and rejects GB10; position 2 (`FlashInferCuteDslNvFp4W4A16LinearKernel`) has the gate
+    `cc not in (100,103) and not (120 <= cc < 130)` → **sm_121 passes**, so the scan stops there and
+    the three native W4A4 kernels below (FlashInferCutlass, B12x, Cutlass) are never reached.
+    Confirmed by calling `is_supported(121)` down the list in `vllm-venv-fnmain2`, not inferred from
+    the source: first match is the W4A16 kernel.
+    - **Scope:** dense/attention projections, not the MoE experts (those take the fused MoE path,
+      `moe_backend='auto'` → `fused_moe`). Flash-Next carries substantial dense weight, so it is not
+      a small surface — [[flashnext-single-stream-limit-and-mtp]] put 69 % of single-stream in BF16
+      GEMV on unquantized dense weights.
+    - **Effect upstream calls it:** a prefill regression on GB10. Our TTFT numbers are measured
+      through this path.
+    - **HYPOTHESIS, not yet tested — this could confound [[w4a16-vs-w4a4-measured]].** That finding
+      compared two *checkpoints* (W4A16 vs W4A4 quantization schemes) and concluded W4A4 stays
+      because W4A16 buys only 0.42 pp of BF16 fidelity for 15 % decode and +8.7 s TTFT. If the
+      "W4A4" checkpoint's dense linears were being served by a 16-bit-activation kernel anyway, the
+      fidelity gap would be compressed toward zero — which is roughly what we measured. **Do not
+      restate that finding until this is checked**; equally, do not withdraw it, because the MoE
+      path (which dominates the parameter count) is unaffected.
+    - **Action, queued behind `mtprem`:** apply #55405 (reorder the list so W4A16 ranks below the
+      native W4A4 kernels), confirm `is_supported` selection flips, then A/B prefill/TTFT and the
+      c=1 decode ladder. We have the affected hardware and the issue author does not appear to —
+      this is a cheap, high-value contribution to a fix that is already written.

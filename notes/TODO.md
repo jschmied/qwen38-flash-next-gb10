@@ -234,6 +234,20 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **NVFP4 kernel selection on sm_121 — we run W4A16 where W4A4 exists (det-159, upstream #55397 /
+  fix #55405).** VERIFIED in the prod venv: first match on sm_121 is
+  `FlashInferCuteDslNvFp4W4A16LinearKernel`; three native W4A4 kernels sit below it unreached.
+  Queued behind `mtprem`: apply #55405, confirm the selection flips, A/B prefill/TTFT + c=1 decode.
+  **Then re-examine [[w4a16-vs-w4a4-measured]]** — if the W4A4 arm's dense linears ran through a
+  16-bit-activation kernel, the 0.42 pp fidelity gap we measured is suspect (MoE path unaffected, so
+  the finding is questionable, not dead). We have the hardware; the issue author appears not to.
+  Triage of the other five new issues: **#55506** needs PP>=2 (we run PP=1) — does NOT affect us, but
+  it is the same fault family as our #55375 (poisoned recurrent state, all-NaN logits, token 1023).
+  **#55507** claims to fix #53142 — OUR bisection thread — and is the same territory as the still-open
+  #53798; check whether our `cache_config.block_size` differs from `MambaSpec.block_size`.
+  **#55514** touches only the grouped_topk PYTHON fallback; we use the fused kernel — does NOT affect us.
+  **#55518** is a cosmetic warning about our own `disable_eagle_block_drop` flag — harmless, low value.
+
 - **Triage the six new upstream issues in our areas** (found 2026-09-07, log 83). None actioned:
   **#55518** prefix-cache warning fires even with `disable_eagle_block_drop` (our flag — likely a
   cosmetic warning bug, cheap to confirm), **#55506/#55507** mamba spec-decode block tables and align
