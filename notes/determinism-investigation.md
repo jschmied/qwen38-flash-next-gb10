@@ -1990,3 +1990,22 @@ Plus whatever drives the separate generation-side path.
       tree reproduces that exactly. Fix 1 ships; fix 2 stays on the patch above, where the next
       thing to try is templating the compaction on a `bool` so the cached path compiles to the
       original code.
+
+155. **ZC502's `vllm-position-parity` collector cannot run Flash-Next on GB10: offline `LLM()` only
+    (2026-09-07, `notes/data/vpp*.txt`).** Asked for on #54521 as an sm_121 validation of their
+    collector. Code review clean — only subprocess is `git rev-parse HEAD` (arg list, no shell, 2 s
+    timeout), no network, no `eval`/`exec`/`pickle`, writes only to `--out`.
+    **Three attempts, all stopped by hand before the box hung**, each from a clean start:
+    `gpu_memory_utilization` 0.85 → 10 GB free / pressure avg10 34; 0.55 → 0 GB free / 34 GB swap /
+    avg10 67; 0.55 after `drop_caches` (119 GB free at start) → 2 GB free / avg10 40 by 15 % of the
+    load. Page cache was never the constraint.
+    **Cause:** `collect_vllm.py:253` builds its own `LLM(...)`, and a fresh offline engine loads the
+    checkpoint through `EngineCore` AND `PleOffloadWorker` concurrently. The PLE half does not scale
+    with `gpu_memory_utilization`, so no value of that knob fits it in 128 GB unified. The same model
+    serves fine indefinitely as a long-lived server — this is the offline-construction path, not the
+    model.
+    **Method note:** the harness killed my *shells* on the first attempt for host memory pressure
+    while the systemd unit kept running — a background-shell death is a symptom to investigate, not
+    the event itself. Check `systemctl is-active` and `free` before concluding anything died.
+    **Owed:** if ZC502 adds a server/OpenAI-endpoint mode, run it the same day on the #55122 cases
+    (see upstream log 80).
