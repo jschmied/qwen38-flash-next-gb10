@@ -235,8 +235,8 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 ### HIGH — our own findings and PRs
 
 - **PR #55122 (det top-k):** ~~v2.7 not pushed~~ **PUSHED 2026-09-07 as `b8d09ecb`** (upstream log 66). Still owed:
-  ~~the cost table~~ (body rewritten 2026-09-07, log 67), ~~a reply on the tkprd thread~~ (correction posted,
-  log 68). **Still open:** prod runs v2.4 while the branch is at v2.8 (`/opt/llm/kernel-det/_C_det.so`);
+  ~~the cost table~~, ~~the tkprd reply~~, ~~the local-review items~~ — all done and **pushed 2026-09-07**
+  (log 72; 13 commits, body carries the risks). **Still open:** prod runs v2.4 while the branch is at v2.8 (`/opt/llm/kernel-det/_C_det.so`);
   no human review yet and `pre-run-check` blocks CI on the label gate; **and two contacts drafted but NOT
   approved** — ~~a post on #51782~~ (POSTED, log 69; the third path is bypassed, verified) and a single ping to
   ywang96, who merged our #55180 — still not approved. **Held, not pushed:** the 2048-bin decode-path removal (275 lines, tested 210/210 + 142) sits on
