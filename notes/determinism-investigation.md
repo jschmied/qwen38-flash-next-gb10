@@ -1967,3 +1967,26 @@ Plus whatever drives the separate generation-side path.
       did; they were removed because their overflow DROPPED keys. Reintroducing compaction *exactly*
       — sized so it cannot drop, with a deterministic rescan fallback when it would — is the only
       route at n=65,536 and would also cut the 1.0→2.2× climb inside the cached range.
+
+154. **Fix 2 (survivor compaction) WORKS where predicted and is REJECTED anyway — it charges the
+    decode shape to pay for long-context prefill (2026-09-07, `notes/data/kdet3[78].txt`,
+    `kdet4[0-3].txt`, `fix2-*.txt`; patch kept at `notes/data/fix2-survivor-compaction.patch`).**
+    Pass 1 already reads the row and filters to the threshold bin, so it appended that set to a
+    shared-memory survivor buffer at no extra traffic; passes 2-3 then read the buffer (~n/256)
+    instead of rescanning. Buffer overflow is impossible by construction (`bin_pop` from pass 0 is
+    exactly the append count), and an all-equal row falls back to rescanning.
+    - **It delivers on the uncached case**: H100 n=65,536 2.67-2.72 → 2.23-2.27, A100 2.92-2.95 →
+      2.54-2.60. Compaction demonstrably arms.
+    - **It costs the cached case**: +9-15 % on GB10 and at H100 n=20,000. Gating on `!cached` did
+      NOT remove the GB10 cost — 3 cells still regress with compaction switched OFF, at identical
+      REG:64 / SHARED:5280 (`cuobjdump`), so it is codegen, not traffic or occupancy.
+    - **The regressing cells are `rows=1, n=4096/8192` — the decode shape.** The win is at
+      `rows>32, n=65,536`, large-batch long-context prefill. Wrong trade; reverted.
+    - **Method note, and the reason this was nearly called wrong twice:** a 1-start-vs-3-start
+      comparison invented four regressions that a 3-vs-3 comparison did not reproduce. The control
+      that settles it is the SAME BINARY run twice — build34 vs build34, 3+3 starts, **0 of 43
+      cells** non-overlapping. Only after that control did the remaining differences count as real.
+    - **Fix 1 alone: 0 of 43 cells non-overlapping against a 6-start baseline**, and the reverted
+      tree reproduces that exactly. Fix 1 ships; fix 2 stays on the patch above, where the next
+      thing to try is templating the compaction on a `bool` so the cached path compiles to the
+      original code.
