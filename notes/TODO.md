@@ -346,6 +346,15 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 4. **Cap the draft context** — they report −17 % single-stream step drafting over 65k rather than 248k.
 
 ### Hygiene
+- **Secret scan must cover Modal tokens too.** The documented pre-commit scan
+  (`git grep -nI -E "sk-[A-Za-z0-9_-]{16,}|develop8\.|BEGIN [A-Z ]*PRIVATE KEY" -- .`) does not match
+  Modal's `ak-…` / `as-…` shapes. Use
+  `git grep -nI -E "sk-[A-Za-z0-9_-]{16,}|\b(ak|as)-[A-Za-z0-9]{20,}|develop8\.|BEGIN [A-Z ]*PRIVATE KEY" -- .`
+  Audited 2026-09-07 after the token was pasted into the session: **no literal token in any repo,
+  working tree or history** (notes, vllm fork, flashdgx clone), none in `/tmp/claude-1000`,
+  `/opt/llm/runners`, `/opt/llm/*.log` or `.bash_history`. The only copy is `~/.modal.toml`, which was
+  mode **644** and is now **600** — servers here run as `uid=llm` and could read it. Rotate at
+  modal.com/settings/tokens if the transcript ever leaves this machine.
 - ~~The swizzle harness and its 223 MiB CUTLASS tree still live in an old session's `/tmp` scratchpad~~
   **DONE 2026-09-07**: harness rescued to `/opt/llm/runners/swzharness` (5.6 MB, world-readable, with a
   README). The CUTLASS tree was deliberately NOT copied — it was a pristine NVIDIA checkout at `cb42473`
