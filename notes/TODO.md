@@ -239,7 +239,9 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   log 68). **Still open:** prod runs v2.4 while the branch is at v2.8 (`/opt/llm/kernel-det/_C_det.so`);
   no human review yet and `pre-run-check` blocks CI on the label gate; **and two contacts drafted but NOT
   approved** — ~~a post on #51782~~ (POSTED, log 69; the third path is bypassed, verified) and a single ping to
-  ywang96, who merged our #55180 — still not approved. **Also found:** #53287 (LopezCastroRoberto, open since
+  ywang96, who merged our #55180 — still not approved. **Held, not pushed:** the 2048-bin decode-path removal (275 lines, tested 210/210 + 142) sits on
+  `wip/topk-remove-decode-path`; pushed once by mistake and reverted on request, awaiting a go.
+  **Also found:** #53287 (LopezCastroRoberto, open since
   08-21) argues the opposite conclusion — no measurable accuracy regression in MAIN — so it is a related open
   PR with a different stance, not a duplicate. And `histogram_2048_topk` is now dead code on our branch, the
   same way `det_sort_row` was; a mechanical follow-up commit, not folded in. `/csrc/libtorch_stable` has no CODEOWNERS entry, which is why this PR has no owner. Whole grid 1.00–2.45× (was 1.25–4.31×),
