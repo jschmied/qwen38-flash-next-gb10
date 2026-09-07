@@ -234,6 +234,12 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **Permalink hygiene before every upstream post** (2026-09-07, log 82 correction). Four links in the
+  #55122 routing comment 404'd because the SHA was captured before the commit that added the files.
+  Capture the SHA *after* commit+push, then
+  `curl -s -o /dev/null -w '%{http_code}' -L <url>` each one and require 200 before posting. A full
+  audit of the #55122 body and all nine comments found only those four; everything else resolves.
+
 - **After ANY kernel change, rebuild from `patches/kernel-det/` before trusting it** (2026-09-07,
   upstream log 81). The published launcher had drifted from the tested build and HEAD did not
   compile; blazux/qwen3.8-Flash-DGX fetches those exact files by pinned SHA + sha256. `cmp` each file
