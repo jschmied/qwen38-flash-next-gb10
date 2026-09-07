@@ -1921,3 +1921,24 @@ Plus whatever drives the separate generation-side path.
       minutes of Triton time per config.
     - Why the gap is that large: both alternatives materialise and order data this op never needs
       ordered. The PR's single-CTA path rescans the row per key byte and writes into final positions.
+
+152. **The Filtered path IS the PR's weak spot, measured on a rented H100 (2026-09-07, 3 starts,
+    `notes/data/filtered-H100-run{1,2,3}.txt`).** The one branch GB10 cannot execute
+    (`num_rows > 32 && sharedMemPerBlockOptin >= 128 KiB`; GB10 has 99 KiB, H100 227 KiB). Bundle
+    `bench/h100-filtered/`, both arms built from source on the box — ours at branch head, upstream at
+    the merge-base `d9105ea8` — so the numbers are a ratio, not an absolute. Modal, H100 80GB HBM3,
+    sm_90, 132 SMs, torch 2.13.0+cu130.
+    - **Correctness: the PR fixes this path too.** det = 0 failures on all 48 shapes in all three
+      runs: bit-identical over 6 calls and exactly equal to the reference. Upstream is
+      non-reproducible on every shape and loses the SET on every tie-heavy and all-equal case. The
+      bug is present on Hopper, not just on GB10.
+    - **Cost: 1.01–2.43× over three starts, and it grows with n.** 64 rows: 1.01–1.45× at n=4096,
+      1.47–1.85× at 8192, 2.13–2.24× at 20000 (k=512), **2.31–2.43× at 40000** (k=512). The large-n
+      cells are stable to ±0.05; only the n=4096 cells move run to run.
+    - **Why: the Filtered path is a big win for upstream and a small one for us.** Crossing rows
+      32→33 at n=16384, upstream drops 17.5 → 11.4 µs while we drop 23.0 → 18.0, so the ratio opens
+      from 1.31× to 1.55–1.58× exactly where the path turns on.
+    - **The GB10 grid does not transfer.** Even below the switch (rows ≤ 32, persistent path) H100
+      shows 1.31×, against the 0.74–2.14× whole-grid range the PR body quotes from GB10.
+    - Affected regime is `rows > 32` — not the c=1 QSA decode shape (4 query rows at MTP n=3), but
+      large-batch and prefill. That is the regime H100/A100 deployments actually run.

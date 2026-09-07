@@ -11,10 +11,13 @@ import modal
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCH = {"H100": "90a", "H200": "90a", "A100": "80", "A100-80GB": "80", "A100-40GB": "80", "B200": "100a"}
 
+# torch 2.13.0 + CUDA 13.0, matching the GB10 the bundle was validated on. Do NOT drop the torch
+# version: `torch/csrc/stable/accelerator.h` (torch_utils.h:4) does not exist before ~2.10, and
+# torch 2.8 fails the build with "No such file or directory" after the image has already been pulled.
 image = (
-    modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_python="3.12")
-    .pip_install("torch==2.8.0", index_url="https://download.pytorch.org/whl/cu128")
-    .pip_install("ninja")
+    modal.Image.from_registry("nvidia/cuda:13.0.1-devel-ubuntu24.04", add_python="3.12")
+    .pip_install("torch==2.13.0", index_url="https://download.pytorch.org/whl/cu130")
+    .pip_install("ninja", "numpy")
     .add_local_dir(HERE, remote_path="/bundle", ignore=["build", "results", "__pycache__"])
 )
 app = modal.App("topk-filtered-bench", image=image)
@@ -43,6 +46,8 @@ def main(gpu: str = "H100"):
     arch = ARCH.get(gpu.split(":")[0], "90a")
     out = bench.with_options(gpu=gpu).remote(arch)
     print(out)
+    if out.startswith("BUILD FAILED") or "ALL DONE" not in out:
+        raise SystemExit("run did not complete -- see the output above")
     os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
     path = os.path.join(HERE, "results", f"filtered-{gpu.replace(':', 'x')}.txt")
     with open(path, "w") as fh:

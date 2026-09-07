@@ -1,0 +1,76 @@
+device: NVIDIA H100 80GB HBM3  sm_90  SMs=132
+sharedMemPerBlockOptin: 232448 bytes (227 KiB)  -> Filtered path REACHABLE
+torch 2.13.0+cu130, cuda 13.0
+
+== CORRECTNESS, rows > 32 (Filtered path) ==
+case                                   | det self x6  exact | base self x3 base set
+rows= 48 n=  4096 k=  512 rand      |        True   True |        False     True
+rows= 48 n=  4096 k=  512 ties      |        True   True |        False    False
+rows= 48 n=  4096 k=  512 allequal  |        True   True |        False    False
+rows= 48 n=  4096 k= 2048 rand      |        True   True |        False     True
+rows= 48 n=  4096 k= 2048 ties      |        True   True |        False    False
+rows= 48 n=  4096 k= 2048 allequal  |        True   True |        False    False
+rows= 48 n=  8192 k=  512 rand      |        True   True |        False     True
+rows= 48 n=  8192 k=  512 ties      |        True   True |        False    False
+rows= 48 n=  8192 k=  512 allequal  |        True   True |        False    False
+rows= 48 n=  8192 k= 2048 rand      |        True   True |        False     True
+rows= 48 n=  8192 k= 2048 ties      |        True   True |        False    False
+rows= 48 n=  8192 k= 2048 allequal  |        True   True |        False    False
+rows= 48 n= 20000 k=  512 rand      |        True   True |        False     True
+rows= 48 n= 20000 k=  512 ties      |        True   True |        False    False
+rows= 48 n= 20000 k=  512 allequal  |        True   True |        False    False
+rows= 48 n= 20000 k= 2048 rand      |        True   True |        False     True
+rows= 48 n= 20000 k= 2048 ties      |        True   True |        False    False
+rows= 48 n= 20000 k= 2048 allequal  |        True   True |        False    False
+rows= 48 n= 40000 k=  512 rand      |        True   True |        False     True
+rows= 48 n= 40000 k=  512 ties      |        True   True |        False    False
+rows= 48 n= 40000 k=  512 allequal  |        True   True |        False    False
+rows= 48 n= 40000 k= 2048 rand      |        True   True |        False     True
+rows= 48 n= 40000 k= 2048 ties      |        True   True |        False    False
+rows= 48 n= 40000 k= 2048 allequal  |        True   True |        False    False
+rows= 64 n=  4096 k=  512 rand      |        True   True |        False     True
+rows= 64 n=  4096 k=  512 ties      |        True   True |        False    False
+rows= 64 n=  4096 k=  512 allequal  |        True   True |        False    False
+rows= 64 n=  4096 k= 2048 rand      |        True   True |        False     True
+rows= 64 n=  4096 k= 2048 ties      |        True   True |        False    False
+rows= 64 n=  4096 k= 2048 allequal  |        True   True |        False    False
+rows= 64 n=  8192 k=  512 rand      |        True   True |        False     True
+rows= 64 n=  8192 k=  512 ties      |        True   True |        False    False
+rows= 64 n=  8192 k=  512 allequal  |        True   True |        False    False
+rows= 64 n=  8192 k= 2048 rand      |        True   True |        False     True
+rows= 64 n=  8192 k= 2048 ties      |        True   True |        False    False
+rows= 64 n=  8192 k= 2048 allequal  |        True   True |        False    False
+rows= 64 n= 20000 k=  512 rand      |        True   True |        False     True
+rows= 64 n= 20000 k=  512 ties      |        True   True |        False    False
+rows= 64 n= 20000 k=  512 allequal  |        True   True |        False    False
+rows= 64 n= 20000 k= 2048 rand      |        True   True |        False     True
+rows= 64 n= 20000 k= 2048 ties      |        True   True |        False    False
+rows= 64 n= 20000 k= 2048 allequal  |        True   True |        False    False
+rows= 64 n= 40000 k=  512 rand      |        True   True |        False     True
+rows= 64 n= 40000 k=  512 ties      |        True   True |        False    False
+rows= 64 n= 40000 k=  512 allequal  |        True   True |        False    False
+rows= 64 n= 40000 k= 2048 rand      |        True   True |        False     True
+rows= 64 n= 40000 k= 2048 ties      |        True   True |        False    False
+rows= 64 n= 40000 k= 2048 allequal  |        True   True |        False    False
+CORRECTNESS FAILS (det): 0
+
+== COST (median us of 5 x 50; base measured twice, best taken, to expose drift) ==
+rows      n     k | base med  det med | det/base  (min..max)
+  64   4096   512 |      7.8      7.9 |     1.01  (7.8..8.3 vs 7.6..8.2)
+  64   4096  2048 |      7.8      7.9 |     1.01  (7.6..8.0 vs 7.5..8.0)
+  64   8192   512 |      7.6     11.6 |     1.53  (11.5..11.6 vs 7.3..7.8)
+  64   8192  2048 |      7.6     11.6 |     1.52  (11.5..11.6 vs 7.4..8.1)
+  64  20000   512 |      9.3     20.9 |     2.24  (20.8..20.9 vs 9.3..9.4)
+  64  20000  2048 |     13.0     21.3 |     1.64  (21.3..21.4 vs 13.0..13.1)
+  64  40000   512 |     20.2     48.8 |     2.42  (48.8..48.8 vs 20.2..20.3)
+  64  40000  2048 |     24.7     51.8 |     2.10  (51.8..51.9 vs 24.6..24.7)
+
+== the rows>32 switch (same n, k) ==
+rows= 16 n=16384 k=2048 | base    16.7 det    22.0 | 1.31x | Filtered=no
+rows= 32 n=16384 k=2048 | base    17.7 det    23.1 | 1.31x | Filtered=no
+rows= 33 n=16384 k=2048 | base    11.5 det    18.1 | 1.57x | Filtered=yes
+rows= 48 n=16384 k=2048 | base    11.6 det    18.2 | 1.56x | Filtered=yes
+rows= 64 n=16384 k=2048 | base    11.7 det    18.1 | 1.54x | Filtered=yes
+rows= 96 n=16384 k=2048 | base    11.8 det    18.3 | 1.54x | Filtered=yes
+
+== ALL DONE ==
