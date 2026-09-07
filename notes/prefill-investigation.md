@@ -1247,3 +1247,40 @@
     condition is false by one byte, and at M=6144 that costs **138 %** (69.5 vs 165.6 TF). That is a
     separate, better-motivated change against merged code.
 
+
+148. **The L2 boundary sweep says the merged gate tests the wrong variable: across 232 cells from three
+    sweeps, `weight > L2` leaves 939.6 pp on the table and the activation slab alone leaves 137.3
+    (`swzL2`, 2026-09-07, 3 starts, 87 new cells, `notes/data/swzL2.txt`).** Ratios weight/L2 = 0.70 →
+    1.71 at K ∈ {2560, 4096, 5120}, M ∈ {2048, 4096, 6144}, both orders forced at each shape,
+    bit-identical everywhere.
+
+    Grouping the new cells by activation slab **A = M·K and ignoring weight/L2 entirely**:
+
+    | A (MiB) | 5 | 8 | 10 | 15 | 16 | 20 | 24 | 30 |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    | median sw8 gain | +1.6 % | −5.5 % | −4.6 % | **+7.2 %** | +4.8 % | **+38.0 %** | **+124.3 %** | **+68.4 %** |
+
+    A clean sign flip between 10 and 15 MiB — the same knee as `bd84b180`'s 14 MiB — and the weight/L2
+    ratio does not order the data at all. Scored over the union of all three sweeps:
+
+    | gate | all 232 cells | the 168 with weight > L2 | the 64 with weight ≤ L2 |
+    | --- | --- | --- | --- |
+    | **merged `weight > L2`** | 939.6 pp, 101 bad | 279.0, 66 | **660.6, 35** |
+    | **slab only `M·K ≥ 14 MiB`** | **137.3 pp, 36 bad** | **96.6, 25** | **40.7, 11** |
+    | `weight > L2` **and** slab | 757.2, 60 | 96.6, 25 | 660.6, 35 |
+    | always swizzle | 410.3, 94 | 279.0, 66 | 131.3, 28 |
+
+    Slab-only is **6.8× better overall and better in both halves**. The L2 term contributes nothing above
+    the boundary and does real damage below it: it vetoes the swizzle on sub-L2 weights with large
+    activations, where the swizzle wins up to **+150 %** (5632×4096, weight 0.92×L2, M=6144: 95.7 %).
+
+    **Why three of us missed this.** Both earlier sweeps chose shapes with weight > L2 — the tuning set has
+    no sub-L2 shape at all — so the condition was constant-true and therefore untestable. It looked
+    necessary because it never varied. My own #55661 kept it as a precondition, which is why that gate
+    could not reach the sub-L2 cells either.
+
+    ⚠️ **Slab-only is not the final answer.** Counter-example in finding 137: `2560×6144` (weight 15 MiB,
+    0.62×L2, narrow N) has the *default* order winning 1–8 % at every M from 2048 to 16384, with A from
+    24 to 96 MiB. N is only 2560 there — few column tiles to reorder — so the raster likely needs a
+    minimum tile count, i.e. N belongs in the predictor. **Do not open a PR on slab-only before a sweep
+    that varies N at fixed K and A.** That is the same trap #55661 was closed for.
