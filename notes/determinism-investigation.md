@@ -1635,3 +1635,32 @@ Plus whatever drives the separate generation-side path.
     Also seen: 268 `NVRM … NV_ERR_NO_MEMORY from _memdescAllocInternal` kernel lines in one burst at
     21:25:59, at an arm transition. No process was killed and no `oom-kill` entry exists; every
     subsequent arm started and completed normally. Read as teardown noise, not a failure.
+
+142. **`top_k_per_row_decode` is faster than our deterministic kernel and is not deterministic — it
+    fails the first of the two requirements (`tkprd`, 2026-09-07 06:4x, `notes/data/tkprd.txt`).**
+    Asked by gau-nernst on PR #55122 ("deterministic + at least not slower than this PR"). Driven
+    through the call convention the model's own AMD QSA path uses (`qwen4_exp/amd/ops/qsa.py:800`,
+    where it is the `else` branch to `persistent_topk` on identical inputs), on `vllm-venv-fnmain2`.
+
+    - **Determinism: 0 of 56 shapes.** Six identical calls never reproduce, on every
+      rows {1, 8, 64} × n {1k … 40k} × k {512, 2048} × {random, ties} cell, plus all-equal.
+    - **Not a buffer artefact.** Re-run with the output pre-filled with two different sentinels
+      (−1 and −7): **0 unwritten slots either way**, and the sets agree between sentinels. The
+      differences are the kernel's, not uninitialised memory — 9,824 differing slots over five
+      pairs at rows=1/n=8k/k=2048, 634,059 at rows=64.
+    - **Exactness: same defect class as stock.** Set equals the exact reference on random inputs
+      (order does not), but **differs from it on every tie-heavy shape** — precisely #51782 / #54521.
+    - **Speed: it is the faster kernel.** Against our det kernel, 0.15–0.92× everywhere. Against
+      stock `persistent_topk`, 0.40–0.80× at n ≤ 8k and at 64 rows, but **1.10–1.48× (slower)** at
+      16k–32k with 1–8 rows, so it is not a free win against stock either.
+
+    Our own det/stock ratios on this grid are 1.33–4.31×, consistent with the PR body's "1.3–3× per
+    call" — which is the number the reviewer read as a "3× regression". The server-level answer is
+    already in the thread (finding 82, three starts per arm): **no TTFT and no per-turn cost**.
+
+    **Reading:** the suggestion does not give a shortcut — the fast kernel has the bug the PR exists
+    to fix. The constructive direction is the reverse one: the same index-ordered emission and exact
+    pivot could be applied to `top_k_per_row_decode`, which is already the non-CUDA branch for this
+    model, and would then be both deterministic and faster than what we propose. That is a separate
+    PR, not a change to this one. Not offered upstream yet — draft in
+    `notes/upstream/comment-55122-tkprd.md`, awaiting the go.
