@@ -1132,3 +1132,49 @@
     (2,736 plain vs 48 scatter launches in the c=1 trace). MoE lever status after this: GEMM1 at the DRAM floor (144),
     finalize fusion already on, activation fusion into GEMM1's epilogue (~1.2 ms/layer) is the one remaining kernel ask.
 
+
+146. **The merged `weight > L2` swizzle gate is not Pareto-optimal, the activation-slab term should come
+    back, and its small-M island is at M ≤ 1024, not 2048 (`swzM`, 2026-09-07, four starts,
+    `notes/data/swzM.txt` + `notes/data/swzM_cd.txt`).** Standalone `_C_swzM` = the merged #55180
+    dispatch with the swizzle exposed as an argument, so both orders are measured *at the same shape*
+    rather than inferred across a gate. 6 shapes × M ∈ {1024…6144, step 512} = 66 cells,
+    bit-identical on every cell and every arm.
+
+    Gate scoring, medians of four starts, "regret" = summed % left on the table across all 66 cells:
+
+    | gate | regret | worst cell |
+    | --- | --- | --- |
+    | never swizzle | 732.7 pp | 69.1 % |
+    | **merged `weight > L2`** (what shipped) | **118.8 pp** | 9.9 % |
+    | `+ (M ≤ 2560 ‖ A ≥ 14 MiB)` | 90.2 pp | 9.9 % |
+    | slab only, `+ A ≥ 14 MiB` | 54.0 pp | 7.4 % |
+    | `+ (M ≤ 2048 ‖ A ≥ 14 MiB)` (as proposed) | 48.6 pp | 8.7 % |
+    | **`+ (M ≤ 1536 ‖ A ≥ 14 MiB)`** | **35.2 pp** | 5.8 % |
+    | **`+ (M ≤ 1024 ‖ A ≥ 14 MiB)`** | **35.3 pp** | 5.8 % |
+
+    (`A` = activation slab = M·K bytes, FP8.) **X = 1024 and 1536 are indistinguishable; 2048 is
+    measurably worse; the 14 MiB knee from `bd84b180` survives unchanged.** The island is real —
+    dropping it costs 54.0 vs 35.2 — so re-introducing the slab term that review removed is justified,
+    but only with the island attached.
+
+    **What the coarse grid had wrong.** The regression was recorded as an M=4096 band on 2560-wide
+    weights. At M=4096 it is real and reproducible (16384×2560 −5.4 %, 12288×2560 −4.7 %,
+    10240×2560 −3.0 %), but the *worst* reproducible losses are at **M=2560**, which the old grid
+    never sampled: 5120×5120 −10.4 %, 10240×2560 −9.4 %, 16384×2560 −6.4 %.
+
+    **The island is K-dependent, which is why X=2048 fails.** At K=2560 swizzle-8 wins at low M; at
+    K=5120 the default order wins there, so an island reaching to 2048 takes reproducible losses of
+    −8.5 % (7168×5120 M=2048) and −6.9 % (5120×5120 M=2048). Pulling X down to 1024 avoids them.
+
+    **Noise, and why this needed four starts.** The winner flips between starts in **14 of 66 cells**;
+    the default-order arm's start-to-start spread is median 4.7 % and **max 26.1 %**, while the
+    swizzled arm is far steadier. At n=2 the X candidates scored 34.0 / 31.3 / 39.0 pp and could not be
+    separated; at n=4 they are 35.3 / 35.2 / 48.6 and 2048 separates cleanly. The swizzled order being
+    the *stable* one is itself an argument for it.
+
+    **What must not be lost by any gate:** the large reproducible swizzle-8 wins, all at A ≳ 22 MiB —
+    7168×5120 M=6144 **+223 %**, M=5632 +199 %, 14336×4096 M=6144 +158 %, 5120×5120 M=4608 +93 %.
+
+    ⚠️ The harness and its 223 MiB CUTLASS tree live in an old session's `/tmp` scratchpad — the kind
+    the 2026-09-03 reboot wiped. Move both to `/opt/llm/runners` before the next reboot or reproducing
+    any of this costs a fresh CUTLASS clone.

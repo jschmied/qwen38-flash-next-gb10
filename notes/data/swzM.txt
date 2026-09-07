@@ -1,0 +1,173 @@
+== build 08:04
+[1/3] c++ -MMD -MF bindings_chunk.o.d -DTORCH_EXTENSION_NAME=_C_swzM -DTORCH_API_INCLUDE_EXTENSION_H -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/swzM -I/home/jschmied/git/vllm-fp8chunk/csrc -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable/quantization/w8a8/cutlass/c3x -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/include -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/tools/util/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -fPIC -std=c++20 -O3 -std=c++17 -DUSE_CUDA -DTORCH_STABLE_ONLY -DTORCH_TARGET_VERSION=0x020B000000000000ULL -c /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/swzM/bindings_chunk.cpp -o bindings_chunk.o 
+[2/3] /usr/local/cuda/bin/nvcc -MD -MF scaled_mm_blockwise_sm120_fp8.cuda.o.d -DTORCH_EXTENSION_NAME=_C_swzM -DTORCH_API_INCLUDE_EXTENSION_H -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/swzM -I/home/jschmied/git/vllm-fp8chunk/csrc -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable -I/home/jschmied/git/vllm-fp8chunk/csrc/libtorch_stable/quantization/w8a8/cutlass/c3x -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/include -I/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/c5ecde82-2840-4944-bce7-68e07b289e98/scratchpad/cutlass/tools/util/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -std=c++17 -gencode=arch=compute_121a,code=sm_121a --expt-relaxed-constexpr --expt-extended-lambda --use_fast_math -DENABLE_SCALED_MM_SM120=1 -DTORCH_STABLE_ONLY -DUSE_CUDA -DTORCH_TARGET_VERSION=0x020B000000000000ULL -c /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/swzM/scaled_mm_blockwise_sm120_fp8.cu -o scaled_mm_blockwise_sm120_fp8.cuda.o 
+[3/3] c++ scaled_mm_blockwise_sm120_fp8.cuda.o bindings_chunk.o -shared -L/opt/llm/runtime/vllm-venv-fnext/lib/python3.12/site-packages/torch/lib -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch -ltorch_python -L/usr/local/cuda/lib64 -lcudart -o _C_swzM.so
+built: /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/swzM/build/_C_swzM.so
+op: _C_swzM.blockwise_sm120
+=== start a 08:04 ===
+     N     K  wMiB     M  A MiB |  sw1 TF  sw8 TF | best  gain8% | ident
+ 16384  2560    40  1024    2.5 |   153.3   172.1 |    8   +12.3 | True
+ 16384  2560    40  1536    3.8 |   164.1   164.8 |    8    +0.5 | True
+ 16384  2560    40  2048    5.0 |   154.3   162.8 |    8    +5.5 | True
+ 16384  2560    40  2560    6.2 |   182.5   171.2 |    1    -6.2 | True
+ 16384  2560    40  3072    7.5 |   157.0   154.7 |    1    -1.5 | True
+ 16384  2560    40  3584    8.8 |   171.3   166.4 |    1    -2.8 | True
+ 16384  2560    40  4096   10.0 |   163.5   156.7 |    1    -4.2 | True
+ 16384  2560    40  4608   11.2 |   169.7   161.8 |    1    -4.7 | True
+ 16384  2560    40  5120   12.5 |   158.5   156.6 |    1    -1.2 | True
+ 16384  2560    40  5632   13.8 |   161.7   163.9 |    8    +1.3 | True
+ 16384  2560    40  6144   15.0 |   124.3   154.4 |    8   +24.2 | True
+ 12288  2560    30  1024    2.5 |   166.7   177.7 |    8    +6.6 | True
+ 12288  2560    30  1536    3.8 |   165.4   161.9 |    1    -2.1 | True
+ 12288  2560    30  2048    5.0 |   157.0   160.7 |    8    +2.4 | True
+ 12288  2560    30  2560    6.2 |   171.4   170.1 |    1    -0.8 | True
+ 12288  2560    30  3072    7.5 |   150.4   156.3 |    8    +3.9 | True
+ 12288  2560    30  3584    8.8 |   167.7   164.5 |    1    -1.9 | True
+ 12288  2560    30  4096   10.0 |   161.5   151.5 |    1    -6.2 | True
+ 12288  2560    30  4608   11.2 |   162.5   162.4 |    1    -0.1 | True
+ 12288  2560    30  5120   12.5 |   166.7   156.5 |    1    -6.1 | True
+ 12288  2560    30  5632   13.8 |   164.1   163.7 |    1    -0.3 | True
+ 12288  2560    30  6144   15.0 |   151.0   153.7 |    8    +1.7 | True
+ 10240  2560    25  1024    2.5 |   158.5   170.2 |    8    +7.4 | True
+ 10240  2560    25  1536    3.8 |   152.3   171.0 |    8   +12.3 | True
+ 10240  2560    25  2048    5.0 |   152.8   165.8 |    8    +8.5 | True
+ 10240  2560    25  2560    6.2 |   182.1   166.4 |    1    -8.6 | True
+ 10240  2560    25  3072    7.5 |   159.7   152.5 |    1    -4.5 | True
+ 10240  2560    25  3584    8.8 |   166.5   164.6 |    1    -1.1 | True
+ 10240  2560    25  4096   10.0 |   159.5   155.3 |    1    -2.6 | True
+ 10240  2560    25  4608   11.2 |   160.6   160.4 |    1    -0.1 | True
+ 10240  2560    25  5120   12.5 |   159.1   153.0 |    1    -3.8 | True
+ 10240  2560    25  5632   13.8 |   157.4   163.2 |    8    +3.7 | True
+ 10240  2560    25  6144   15.0 |   129.3   153.3 |    8   +18.6 | True
+ 14336  4096    56  1024    4.0 |   173.5   177.5 |    8    +2.3 | True
+ 14336  4096    56  1536    6.0 |   175.1   171.7 |    1    -1.9 | True
+ 14336  4096    56  2048    8.0 |   171.8   167.1 |    1    -2.7 | True
+ 14336  4096    56  2560   10.0 |   172.9   172.0 |    1    -0.6 | True
+ 14336  4096    56  3072   12.0 |   174.2   167.5 |    1    -3.9 | True
+ 14336  4096    56  3584   14.0 |   167.4   169.0 |    8    +0.9 | True
+ 14336  4096    56  4096   16.0 |   161.0   166.3 |    8    +3.3 | True
+ 14336  4096    56  4608   18.0 |   134.6   167.0 |    8   +24.1 | True
+ 14336  4096    56  5120   20.0 |   112.2   167.0 |    8   +48.8 | True
+ 14336  4096    56  5632   22.0 |    76.6   171.6 |    8  +124.0 | True
+ 14336  4096    56  6144   24.0 |    62.3   167.0 |    8  +168.1 | True
+  5120  5120    25  1024    5.0 |   182.6   182.9 |    8    +0.2 | True
+  5120  5120    25  1536    7.5 |   186.7   179.3 |    1    -4.0 | True
+  5120  5120    25  2048   10.0 |   178.8   161.4 |    1    -9.7 | True
+  5120  5120    25  2560   12.5 |   180.0   168.0 |    1    -6.7 | True
+  5120  5120    25  3072   15.0 |   177.1   167.1 |    1    -5.6 | True
+  5120  5120    25  3584   17.5 |   148.3   168.0 |    8   +13.3 | True
+  5120  5120    25  4096   20.0 |   119.6   161.3 |    8   +34.9 | True
+  5120  5120    25  4608   22.5 |    84.8   171.1 |    8  +101.8 | True
+  5120  5120    25  5120   25.0 |   105.1   172.2 |    8   +63.9 | True
+  5120  5120    25  5632   27.5 |   101.7   163.7 |    8   +60.9 | True
+  5120  5120    25  6144   30.0 |   102.0   174.0 |    8   +70.5 | True
+  7168  5120    35  1024    5.0 |   180.7   179.1 |    1    -0.9 | True
+  7168  5120    35  1536    7.5 |   190.6   175.0 |    1    -8.2 | True
+  7168  5120    35  2048   10.0 |   177.2   167.0 |    1    -5.7 | True
+  7168  5120    35  2560   12.5 |   169.2   165.3 |    1    -2.3 | True
+  7168  5120    35  3072   15.0 |   168.8   161.8 |    1    -4.1 | True
+  7168  5120    35  3584   17.5 |   147.6   168.9 |    8   +14.5 | True
+  7168  5120    35  4096   20.0 |   110.0   161.2 |    8   +46.6 | True
+  7168  5120    35  4608   22.5 |    99.5   169.8 |    8   +70.6 | True
+  7168  5120    35  5120   25.0 |    74.3   172.3 |    8  +131.8 | True
+  7168  5120    35  5632   27.5 |    58.7   176.5 |    8  +200.6 | True
+  7168  5120    35  6144   30.0 |    53.1   173.6 |    8  +227.3 | True
+
+== gate evaluation ==
+merged  weight>L2: 29/66 suboptimal, regret 114.7 pp, worst 9.7% at 5120x5120 M=2048
+    5120x5120 M=2048: -9.7%
+    10240x2560 M=2560: -8.6%
+    7168x5120 M=1536: -8.2%
+    5120x5120 M=2560: -6.7%
+    12288x2560 M=4096: -6.2%
+proposed +island: 13/66 suboptimal, regret 53.7 pp, worst 9.7% at 5120x5120 M=2048
+    5120x5120 M=2048: -9.7%
+    7168x5120 M=1536: -8.2%
+    7168x5120 M=2048: -5.7%
+    5120x5120 M=3072: -5.6%
+    7168x5120 M=3072: -4.1%
+== ALL DONE ==
+=== start b 08:05 ===
+     N     K  wMiB     M  A MiB |  sw1 TF  sw8 TF | best  gain8% | ident
+ 16384  2560    40  1024    2.5 |   161.9   179.7 |    8   +11.0 | True
+ 16384  2560    40  1536    3.8 |   156.4   168.9 |    8    +8.0 | True
+ 16384  2560    40  2048    5.0 |   154.0   159.9 |    8    +3.8 | True
+ 16384  2560    40  2560    6.2 |   177.8   166.0 |    1    -6.7 | True
+ 16384  2560    40  3072    7.5 |   156.1   159.6 |    8    +2.2 | True
+ 16384  2560    40  3584    8.8 |   174.4   165.4 |    1    -5.1 | True
+ 16384  2560    40  4096   10.0 |   161.8   151.0 |    1    -6.6 | True
+ 16384  2560    40  4608   11.2 |   161.4   160.3 |    1    -0.7 | True
+ 16384  2560    40  5120   12.5 |   160.5   154.2 |    1    -3.9 | True
+ 16384  2560    40  5632   13.8 |   159.9   162.4 |    8    +1.5 | True
+ 16384  2560    40  6144   15.0 |   136.6   153.0 |    8   +12.0 | True
+ 12288  2560    30  1024    2.5 |   164.2   177.2 |    8    +7.9 | True
+ 12288  2560    30  1536    3.8 |   163.7   165.5 |    8    +1.1 | True
+ 12288  2560    30  2048    5.0 |   157.3   160.0 |    8    +1.7 | True
+ 12288  2560    30  2560    6.2 |   178.1   168.1 |    1    -5.6 | True
+ 12288  2560    30  3072    7.5 |   151.9   155.7 |    8    +2.5 | True
+ 12288  2560    30  3584    8.8 |   174.4   163.9 |    1    -6.1 | True
+ 12288  2560    30  4096   10.0 |   159.5   154.4 |    1    -3.2 | True
+ 12288  2560    30  4608   11.2 |   158.7   158.9 |    8    +0.2 | True
+ 12288  2560    30  5120   12.5 |   160.6   154.3 |    1    -3.9 | True
+ 12288  2560    30  5632   13.8 |   159.3   161.1 |    8    +1.1 | True
+ 12288  2560    30  6144   15.0 |   130.5   155.6 |    8   +19.2 | True
+ 10240  2560    25  1024    2.5 |   157.7   168.6 |    8    +6.9 | True
+ 10240  2560    25  1536    3.8 |   162.8   170.0 |    8    +4.4 | True
+ 10240  2560    25  2048    5.0 |   160.0   161.1 |    8    +0.7 | True
+ 10240  2560    25  2560    6.2 |   179.7   161.3 |    1   -10.2 | True
+ 10240  2560    25  3072    7.5 |   154.9   157.1 |    8    +1.4 | True
+ 10240  2560    25  3584    8.8 |   168.0   160.7 |    1    -4.3 | True
+ 10240  2560    25  4096   10.0 |   159.0   153.5 |    1    -3.5 | True
+ 10240  2560    25  4608   11.2 |   160.5   157.8 |    1    -1.7 | True
+ 10240  2560    25  5120   12.5 |   160.8   152.3 |    1    -5.3 | True
+ 10240  2560    25  5632   13.8 |   160.6   155.0 |    1    -3.5 | True
+ 10240  2560    25  6144   15.0 |   148.7   146.6 |    1    -1.4 | True
+ 14336  4096    56  1024    4.0 |   182.6   177.7 |    1    -2.7 | True
+ 14336  4096    56  1536    6.0 |   170.3   171.8 |    8    +0.9 | True
+ 14336  4096    56  2048    8.0 |   170.2   164.4 |    1    -3.4 | True
+ 14336  4096    56  2560   10.0 |   178.6   166.7 |    1    -6.7 | True
+ 14336  4096    56  3072   12.0 |   175.9   167.8 |    1    -4.6 | True
+ 14336  4096    56  3584   14.0 |   167.0   168.1 |    8    +0.7 | True
+ 14336  4096    56  4096   16.0 |   149.9   165.9 |    8   +10.6 | True
+ 14336  4096    56  4608   18.0 |   135.6   167.6 |    8   +23.6 | True
+ 14336  4096    56  5120   20.0 |   113.6   163.6 |    8   +44.0 | True
+ 14336  4096    56  5632   22.0 |    83.7   169.7 |    8  +102.8 | True
+ 14336  4096    56  6144   24.0 |    66.7   165.5 |    8  +148.0 | True
+  5120  5120    25  1024    5.0 |   182.8   182.0 |    1    -0.4 | True
+  5120  5120    25  1536    7.5 |   179.6   178.8 |    1    -0.4 | True
+  5120  5120    25  2048   10.0 |   177.8   170.5 |    1    -4.1 | True
+  5120  5120    25  2560   12.5 |   183.7   157.8 |    1   -14.1 | True
+  5120  5120    25  3072   15.0 |   173.5   164.5 |    1    -5.2 | True
+  5120  5120    25  3584   17.5 |   149.3   161.9 |    8    +8.5 | True
+  5120  5120    25  4096   20.0 |   130.1   165.9 |    8   +27.5 | True
+  5120  5120    25  4608   22.5 |    91.1   167.8 |    8   +84.2 | True
+  5120  5120    25  5120   25.0 |   103.2   169.6 |    8   +64.3 | True
+  5120  5120    25  5632   27.5 |   101.7   162.8 |    8   +60.0 | True
+  5120  5120    25  6144   30.0 |   101.8   172.3 |    8   +69.3 | True
+  7168  5120    35  1024    5.0 |   178.7   178.0 |    1    -0.4 | True
+  7168  5120    35  1536    7.5 |   184.6   179.3 |    1    -2.9 | True
+  7168  5120    35  2048   10.0 |   177.4   157.5 |    1   -11.2 | True
+  7168  5120    35  2560   12.5 |   170.8   161.5 |    1    -5.4 | True
+  7168  5120    35  3072   15.0 |   162.5   166.1 |    8    +2.2 | True
+  7168  5120    35  3584   17.5 |   153.9   166.9 |    8    +8.4 | True
+  7168  5120    35  4096   20.0 |   118.0   166.4 |    8   +40.9 | True
+  7168  5120    35  4608   22.5 |    86.0   168.1 |    8   +95.4 | True
+  7168  5120    35  5120   25.0 |    70.6   168.3 |    8  +138.4 | True
+  7168  5120    35  5632   27.5 |    59.3   175.8 |    8  +196.7 | True
+  7168  5120    35  6144   30.0 |    55.1   176.1 |    8  +219.7 | True
+
+== gate evaluation ==
+merged  weight>L2: 26/66 suboptimal, regret 132.0 pp, worst 14.1% at 5120x5120 M=2560
+    5120x5120 M=2560: -14.1%
+    7168x5120 M=2048: -11.2%
+    10240x2560 M=2560: -10.2%
+    14336x4096 M=2560: -6.7%
+    16384x2560 M=2560: -6.7%
+proposed +island: 12/66 suboptimal, regret 39.6 pp, worst 11.2% at 7168x5120 M=2048
+    7168x5120 M=2048: -11.2%
+    5120x5120 M=3072: -5.2%
+    5120x5120 M=2048: -4.1%
+    14336x4096 M=2048: -3.4%
+    7168x5120 M=1536: -2.9%
+== ALL DONE ==
+== RUNNER DONE == 08:05
