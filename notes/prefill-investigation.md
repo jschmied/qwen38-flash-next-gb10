@@ -1329,3 +1329,44 @@
     differences here are up to **+233 %**, two orders of magnitude larger than the 4–11 % that gate
     argued over, and our own model cannot test it (K=2560, N=16384 → weight 40 MiB > L2, where merged
     already picks correctly).
+
+150. **Mechanism for findings 148–149: the gate tests total weight, but what overflows the L2 is the
+    co-resident CTA wave's working set — and that is set by SM count, tile N and K, none of which the
+    gate looks at (2026-09-07, arithmetic; tile shape verified from the dispatch header).**
+    `scaled_mm_blockwise_sm120_fp8_dispatch.cuh:142` — `TileShape = Shape<_128, _128, _128>` (and
+    `<_64,_128,_128>` for the swap-AB path), so **tileN = 128 in both**; GB10 reports 48 SMs and
+    25,165,824 B of L2.
+
+    With one CTA per SM, an N-major raster puts **48 distinct N-tiles in flight at once**, each needing
+    its own K-length weight column. Instantaneous weight working set = `48 × 128 × K`:
+
+    | K | linear raster | vs L2 | swizzle-8 | vs L2 |
+    | --- | --- | --- | --- | --- |
+    | 2560 | 15.0 MiB | 0.62× | 2.5 MiB | 0.10× |
+    | **4096** | **24.0 MiB** | **1.00×** | 4.0 MiB | 0.17× |
+    | 5120 | 30.0 MiB | 1.25× | 5.0 MiB | 0.21× |
+    | 6144 | 36.0 MiB | 1.50× | 6.0 MiB | 0.25× |
+
+    The swizzle does not make the weight fit; it shrinks the **concurrent** footprint ~6× by making
+    co-resident CTAs share tiles. This accounts for both empirical terms of finding 149 with **no fitted
+    constants**:
+
+    - **The N term is a tile-count condition.** N=1280 → 10 tiles, N=2560 → 20 — both fewer than the 48
+      SMs, so the wave cannot spread that wide, wraps in M instead, and its footprint is already small:
+      nothing for the swizzle to fix. N=7168 → 56 ≥ 48, full-width wave, biggest win. Exactly the shape
+      of the measured table (N ≤ 2560 never wins; N ≥ 7168 wins +130…230 %).
+    - **K=4096 is violent because its linear wave working set is 24.0 MiB — identical to L2.** That is a
+      *second* quantity landing on the same number as `6144×4096`'s total weight, and it is the one that
+      matters. The coincidence at that shape is arithmetic, not luck.
+
+    A principled gate would therefore be ≈ `sm_count × tileN × K > l2CacheSize` **and**
+    `N / tileN ≳ sm_count` **and** enough M work — every term hardware-derived, which also answers the
+    portability objection that sank #55661's fitted constants.
+
+    Also note L2 is shared with the activation tiles, the output writes and any concurrent kernel or
+    co-tenant, so the linear raster overflows it **earlier** than this arithmetic says, never later —
+    the "does the weight fit" framing is a sequential question asked of a parallel machine.
+
+    **Untested prediction, and the way to falsify it:** the crossover should move with `sm_count` and
+    `tileN`, not with total weight. Forcing the 64×128×128 tile (swap-AB path) should shift the K at
+    which the flip occurs by 1×, and capping CTAs per launch should shift it linearly. Neither is done.
