@@ -2110,3 +2110,22 @@ Plus whatever drives the separate generation-side path.
       native W4A4 kernels), confirm `is_supported` selection flips, then A/B prefill/TTFT and the
       c=1 decode ladder. We have the affected hardware and the issue author does not appear to —
       this is a cheap, high-value contribution to a fix that is already written.
+
+160. **ngram / ngram_gpu speculation is IMPOSSIBLE on this stack: it forces model runner V1, and
+    `VLLM_PLE_CPU_OFFLOAD` refuses V1 (2026-09-07, `mtprem` group 1).** Both ngram arms died at engine
+    init after 50 s with:
+    `Model Runner V2 does not yet support ngram/ngram_gpu speculative decoding; using the V1 model
+    runner instead` → `ValueError: VLLM_PLE_CPU_OFFLOAD does not support the requested configuration.
+    Unsupported settings: model runner V1`.
+    - **Not a misconfiguration.** PLE offload is not optional for Flash-Next on a 128 GB GB10 (the PLE
+      tables are ~51 GB), so ngram and this model cannot coexist on the main build.
+    - **Consequence for the published page:** the Quant Map's ngram / ngram_gpu comparison **cannot be
+      re-measured on the current stack at all**. It was measured on the preview build
+      (`vllm-venv-fnext`), where this restriction evidently did not apply. Those cells are therefore
+      not merely stale — they are unreproducible without either a V1-capable PLE path or a build that
+      does not need the offload. State that on the page rather than silently dropping the rows.
+    - `mtprem` group 1 therefore runs 3 of 5 arms (nospec / MTP k=2 / MTP k=3), which are the arms the
+      headline claim rests on; 6 starts are saved and the run finishes sooner.
+    - Untested alternative if the comparison is ever wanted: `FN_PLE_OFFLOAD=0` puts the tables on the
+      GPU. Whether they fit alongside a 0.80 utilisation KV pool is unknown, and it would no longer be
+      the same configuration as every other arm — so it is a different measurement, not a repair.
