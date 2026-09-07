@@ -2,7 +2,7 @@ DRAFT — needs the user's go. GitHub vllm-project/vllm PR #55122, reply to gau-
 
 Good question, and I had not measured either — so I did. GB10 / sm_121, TP1, `_C_det.so` built from
 this branch's head, 5 × 50 launches, median µs. Harness and full output:
-[`alt_cmp.py`](LINK_CMP) / [`alt.txt`](LINK_ALT), config sweep [`alt2.txt`](LINK_ALT2).
+[`alt_cmp.py`](https://github.com/jschmied/qwen38-flash-next-gb10/blob/95a0d963220a6c272a04c8b480719122cb087803/tools/determinism/alt_topk_compare.py) / [`alt.txt`](https://github.com/jschmied/qwen38-flash-next-gb10/blob/95a0d963220a6c272a04c8b480719122cb087803/notes/data/alt-torchtopk-bitonic.txt), config sweep [`alt2.txt`](https://github.com/jschmied/qwen38-flash-next-gb10/blob/95a0d963220a6c272a04c8b480719122cb087803/notes/data/alt2-bitonic-sweep.txt).
 
 **Both are deterministic. Both are much slower here.**
 
