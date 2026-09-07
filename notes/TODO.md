@@ -234,7 +234,10 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
-- **PR #55122 (det top-k):** v2.7 is built, verified and NOT pushed. Whole grid 1.00–2.45× (was 1.25–4.31×),
+- **PR #55122 (det top-k):** ~~v2.7 not pushed~~ **PUSHED 2026-09-07 as `b8d09ecb`** (upstream log 66). Still owed:
+  the cost table in the PR body is the v2.4 one and now understates the kernel; a reply to gau-nernst's
+  `top_k_per_row_decode` thread; and prod still runs v2.4 (`/opt/llm/kernel-det/_C_det.so`). Original note:
+  v2.7 is built and verified. Whole grid 1.00–2.45× (was 1.25–4.31×),
   14 of 43 cells at or below stock, 210/210 + the PR's own 134 pytest cases, bit-identical throughout.
   Needs: push to the branch, rewrite the cost table a third time, reply to gau-nernst. Prod still runs v2.4.
 - **PR #55661 (swizzle gate):** blocked on the `swzab2` server A/B. Decision rule from the user:
