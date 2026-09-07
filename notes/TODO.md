@@ -248,9 +248,9 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 - **MTP re-measurement + the published Quant Map** — `notes/mtp-remeasure-plan.md`, groups 0a/0/1–5.
 - **Draft-vocab 32k slice:** re-measure on the fixed stack (det-135/137 are inside the one-step-behind
   window, det-137 is 2 starts), then it is worth publishing.
-- **Awaiting the user's go, drafted only:** comments for MiaAI single-Spark #23 (FP8 KV buys pool not speed —
-  QSA is sparse; their NVRM burst matches our benign teardown signature) and #19 (the SEQS knee: 16→64 null,
-  ~100 tok/s ceiling, the 267 figure is the baseline checkpoint with spec off and short prompts).
+- ~~Drafted comments for MiaAI single-Spark #23 and #19~~ **POSTED 2026-09-07** (upstream log 64/65). #19 carries
+  a public commitment: our c=16 ceiling is provisional until LOW-1 (cudagraph capture widths) is tested, so that
+  item is now owed to a thread, not just to us.
 
 ### LOW — leads taken from MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark, run when the box is idle
 
