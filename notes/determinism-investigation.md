@@ -1748,3 +1748,35 @@ Plus whatever drives the separate generation-side path.
     **All remaining cost is the large path** (`n > RADIX_THRESHOLD` = 16,384), unchanged across
     v2.4–v2.6 as the control: 24 rows / 32,768 / k=2048 at 3.73×, 48 rows at 3.20×,
     1 / 65,536 / 2048 at 2.32×, 64 / 32,768 / 2048 at 2.18×. v2.7 addresses it.
+
+145. **v2.7: the large path's `gt` emission is index-ordered, so it merges too — worst cell across
+    the whole grid 4.31× → 2.45×, 14 of 43 cells at or below stock (`kdet27`, 2026-09-07 07:38,
+    `notes/data/kdet27.txt`). 210/210 `test_det.py`, and the PR's own file 134 passed / 26 skipped.**
+    The `> pivot` group took its output slots with `atomicAdd(&local_histogram[0], 1)` — thread
+    arrival order — which left that region unsorted and made `det_sort_row` load-bearing for
+    determinism (det-143 flagged this as the reason not to touch it). Ranking by index with the same
+    packed `BlockScan` the eq group uses makes each CTA's slice ascending; CTA *c* covers a lower
+    index range than CTA *c+1*, so the region is globally ascending and the merge applies.
+
+    | shape (rows / n / k) | v2.4 | v2.6 | **v2.7** |
+    | --- | --- | --- | --- |
+    | 1 / 32,768 / 2048 | 1.82× | 1.81× | **1.10×** |
+    | 1 / 65,536 / 2048 | 2.36× | 2.32× | **1.49×** |
+    | 64 / 32,768 / 2048 | 2.25× | 2.18× | **1.44×** |
+    | 64 / 65,536 / 2048 | 2.13× | 2.11× | **1.47×** |
+    | 24 / 32,768 / 2048 | 3.72× | 3.73× | **2.45×** |
+    | 48 / 32,768 / 2048 | 3.20× | 3.20× | **2.05×** |
+
+    **Whole grid now 1.00–2.45×** (v2.4 was 1.25–4.31×), 14 of 43 cells at or below stock.
+
+    **The two cells still above 2× are a stock-side artefact, not ours.** At n=32,768 / k=2048 our
+    kernel takes 55.4 µs at both 24 and 32 rows, while *stock* jumps 22.6 → 39.0 between them. The
+    ratio spikes at 24 rows because stock is at a favourable point on its own row-count staircase,
+    not because we slow down: our curve is the smoother of the two. Same at 48 rows.
+
+    Cumulative over v2.5–v2.7, nothing given up: same guarantee, same 210 adversarial cases, same
+    upstream test file, and the output is bit-identical to the sorted version throughout — every
+    change replaces a sort with a merge over data already in order, removes block syncs, or skips
+    radix passes that provably cannot change the pivot.
+
+    **Not installed on prod, not pushed to PR #55122** — both await the go.
