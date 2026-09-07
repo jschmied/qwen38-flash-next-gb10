@@ -1,0 +1,10 @@
+detplug: persistent_topk -> _C_det.persistent_topk
+.....................................................................sss [ 29%]
+............sss...........................sss............sss............ [ 58%]
+......sssssssss............sss.......................................... [ 87%]
+.....................s.s.......                                          [100%]
+221 passed, 26 skipped, 136 deselected in 1.28s
+--- cooperative_topk only ---
+FAILED ../opt/llm/runners/test_tk.py::test_workspace_topk_padded_stride[cooperative_topk-2048]
+51 failed, 6 skipped, 326 deselected in 2.07s
+== ALL DONE == 14:38
