@@ -253,7 +253,10 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   measurements in `bench/h100-filtered`. The path is 1.1–2.7× upstream, worst at n=65,536. Bundle and
   Modal harness are built and validated; each measurement round is minutes and cents.
 
-  1. **Routing first — is `rows > 32 → FilteredTopK` stale?** `FilteredTopKUnifiedKernel` launches one
+  1. ~~**Routing — is `rows > 32 → FilteredTopK` stale?**~~ **CLOSED 2026-09-07, it is sound** (det-156,
+     3 starts each arm; persistent wins 3 of 45 cells, all at 64x65,536, and loses at 128/256 rows even
+     there — an occupancy artifact, not a dispatch bug). Upstream comment edited to say so. Skip to 3.
+     Original text: **is `rows > 32 → FilteredTopK` stale?** `FilteredTopKUnifiedKernel` launches one
      CTA per row, so 64 rows on a 132-SM H100 idles more than half the machine, while the persistent
      path splits a row across CTAs. Our own scaling is sublinear 64→256 rows on both arms, which fits.
      **Prerequisite, do this before any benchmark:** verify the workspace and `RadixRowState` sizing

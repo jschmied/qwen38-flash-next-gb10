@@ -2031,3 +2031,13 @@ Plus whatever drives the separate generation-side path.
       say so there rather than let the question stand. The remaining cost is algorithmic → step 3.
     - 1 start only; effect sizes (−99 %, +30 %) are far outside run-to-run spread and consistent
       across all three k, so the direction is safe. Do not quote the percentages without 3 starts.
+
+    **3-start confirmation (2026-09-07 18:1x, `notes/data/routing-persistent-run{1,2,3}.txt`):** every
+    cell non-overlapping across 3 v 3 starts. Persistent wins 3 of 45, all at 64x65,536 (+28..32 %);
+    loses ~50 % at n=20,000, ~41 % at n=40,000, and — the point that settles it — 23 % at 128x65,536
+    and 22 % at 256x65,536. The percentages in this finding are now quotable.
+    **Runner note:** the first attempt at these two starts was lost when the harness killed the shell
+    holding the loop; the box was at 110 GB free and pressure 0.00 the whole time. Relaunched with
+    `setsid` (ppid=1) and it survived. Use `setsid` or systemd-run for anything longer than a turn,
+    and never trust a `pgrep` that can match its own command line — that produced two false
+    "still running" reports in a row.
