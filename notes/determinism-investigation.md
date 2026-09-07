@@ -1810,3 +1810,37 @@ Plus whatever drives the separate generation-side path.
     **Owed:** a short correction on PR #55122 — our own comment currently tells a reviewer the
     alternative dominates us, which is no longer true and is an argument against our own PR. Not posted;
     awaiting the go.
+
+147. **Launcher bug: the chunk is sized from the opt-in rather than the dynamic budget, and 8 of 40
+    wide-row shapes cannot launch at all on GB10 (found 2026-09-07 while re-sweeping RADIX_THRESHOLD;
+    `notes/data/thresh.txt`).** `max_chunk_elements` came from
+    `effective_max_smem - kFixedSmemLarge`, but the dynamic limit is the opt-in **minus the kernel's
+    static `__shared__`** (4,256 B here), so the chunk is ~1,064 elements too large. Wherever
+    `ctas_per_group` resolves to 1 the request overshoots and the launch is **rejected**:
+    `dynamic smem 100384 exceeds 97120`, for every row of 24,576 or 49,152 elements at 32 or 64 rows.
+
+    **Not introduced by this week's work** — v2.7 and v3.0 fail on the identical 8 shapes, so it dates
+    from the original PR. Our own smem-cap guard (v2.3) is what turns a silent oversubscription into a
+    loud error, which is how it surfaced at all. Fixed by querying `cudaFuncGetAttributes` for the
+    instantiation that will actually launch and subtracting the static size before sizing the chunk:
+    **v3.2 runs all 40 shapes, and row 0 matches the exact reference on every one.**
+
+148. **RADIX_THRESHOLD re-sweep after the merge/scan work: 16384 is still right on GB10, and 32768
+    would be worse (`thresh`, 2026-09-07).** Two builds of the same v3.1 kernel differing only in the
+    threshold — 131072 (single-CTA throughout the range) and 4096 (cooperative throughout) — timed at
+    identical shapes. Median µs, winner and margin:
+
+    | rows | 8k | 12k | 16k | 24k | 32k | 64k |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | 1 | single +90 % | single +29 % | **single +25 %** | **multi +60 %** | multi +100 % | multi +236 % |
+    | 8 | single +66 % | single +33 % | **single +22 %** | **multi +49 %** | multi +94 % | multi +65 % |
+    | 64 | single +86 % | single +69 % | **single +47 %** | (blocked by finding 147) | | |
+
+    The crossover sits **between 16,384 and 24,576**, so the current constant is correct and restoring
+    upstream's 32768 would cost **60–100 % at n = 24,576–32,768**. I expected the optimisations to have
+    pushed the crossover past 32768 and would have argued for reverting the constant on that basis; the
+    measurement says the opposite. It does mean the software-barrier exposure that the lower threshold
+    creates cannot be reduced by raising it back — that concern stands on its own.
+
+    ⚠️ The 64-row column above 16k is missing because finding 147's launch failure aborted that arm.
+    Re-run it on v3.2 before quoting a 64-row crossover.

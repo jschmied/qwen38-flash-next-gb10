@@ -1,0 +1,89 @@
+=== build T=131072 (single-CTA everywhere ) 13:47
+=== build T=4096 (multi-CTA everywhere ) 13:47
+=== timings T=131072 ===
+  rows=  1 n=  8192 k=  512      10.5 us
+  rows=  1 n=  8192 k= 2048      10.4 us
+  rows=  1 n= 12288 k=  512      14.4 us
+  rows=  1 n= 12288 k= 2048      14.4 us
+  rows=  1 n= 16384 k=  512      16.5 us
+  rows=  1 n= 16384 k= 2048      16.5 us
+  rows=  1 n= 24576 k=  512      32.9 us
+  rows=  1 n= 24576 k= 2048      32.9 us
+  rows=  1 n= 32768 k=  512      41.2 us
+  rows=  1 n= 32768 k= 2048      42.4 us
+  rows=  1 n= 49152 k=  512      59.5 us
+  rows=  1 n= 49152 k= 2048      59.7 us
+  rows=  1 n= 65536 k=  512      75.9 us
+  rows=  1 n= 65536 k= 2048      77.9 us
+  rows=  8 n=  8192 k=  512      12.4 us
+  rows=  8 n=  8192 k= 2048      12.4 us
+  rows=  8 n= 12288 k=  512      15.5 us
+  rows=  8 n= 12288 k= 2048      15.7 us
+  rows=  8 n= 16384 k=  512      18.5 us
+  rows=  8 n= 16384 k= 2048      18.5 us
+  rows=  8 n= 24576 k=  512      33.7 us
+  rows=  8 n= 24576 k= 2048      38.9 us
+  rows=  8 n= 32768 k=  512      48.0 us
+  rows=  8 n= 32768 k= 2048      43.1 us
+  rows=  8 n= 49152 k=  512      59.7 us
+  rows=  8 n= 49152 k= 2048      69.6 us
+  rows=  8 n= 65536 k=  512      77.9 us
+  rows=  8 n= 65536 k= 2048      80.0 us
+  rows= 64 n=  8192 k=  512      20.6 us
+  rows= 64 n=  8192 k= 2048      20.6 us
+  rows= 64 n= 12288 k=  512      26.7 us
+  rows= 64 n= 12288 k= 2048      26.7 us
+  rows= 64 n= 16384 k=  512      34.9 us
+  rows= 64 n= 16384 k= 2048      32.9 us
+  rows= 64 n= 24576 k=  512      67.7 us
+  rows= 64 n= 24576 k= 2048      67.7 us
+  rows= 64 n= 32768 k=  512      86.2 us
+  rows= 64 n= 32768 k= 2048      84.1 us
+  rows= 64 n= 49152 k=  512     122.4 us
+  rows= 64 n= 49152 k= 2048     129.1 us
+  rows= 64 n= 65536 k=  512     164.1 us
+  rows= 64 n= 65536 k= 2048     172.2 us
+=== timings T=4096 ===
+  rows=  1 n=  8192 k=  512      19.9 us
+  rows=  1 n=  8192 k= 2048      20.5 us
+  rows=  1 n= 12288 k=  512      18.5 us
+  rows=  1 n= 12288 k= 2048      18.6 us
+  rows=  1 n= 16384 k=  512      20.6 us
+  rows=  1 n= 16384 k= 2048      20.6 us
+  rows=  1 n= 24576 k=  512      20.6 us
+  rows=  1 n= 24576 k= 2048      20.6 us
+  rows=  1 n= 32768 k=  512      20.6 us
+  rows=  1 n= 32768 k= 2048      20.8 us
+  rows=  1 n= 49152 k=  512      21.9 us
+  rows=  1 n= 49152 k= 2048      22.6 us
+  rows=  1 n= 65536 k=  512      22.6 us
+  rows=  1 n= 65536 k= 2048      22.6 us
+  rows=  8 n=  8192 k=  512      20.6 us
+  rows=  8 n=  8192 k= 2048      20.6 us
+  rows=  8 n= 12288 k=  512      20.6 us
+  rows=  8 n= 12288 k= 2048      20.6 us
+  rows=  8 n= 16384 k=  512      22.6 us
+  rows=  8 n= 16384 k= 2048      22.6 us
+  rows=  8 n= 24576 k=  512      22.6 us
+  rows=  8 n= 24576 k= 2048      22.6 us
+  rows=  8 n= 32768 k=  512      24.7 us
+  rows=  8 n= 32768 k= 2048      24.7 us
+  rows=  8 n= 49152 k=  512      24.8 us
+  rows=  8 n= 49152 k= 2048      24.7 us
+  rows=  8 n= 65536 k=  512      47.2 us
+  rows=  8 n= 65536 k= 2048      47.2 us
+  rows= 64 n=  8192 k=  512      38.4 us
+  rows= 64 n=  8192 k= 2048      39.0 us
+  rows= 64 n= 12288 k=  512      45.2 us
+  rows= 64 n= 12288 k= 2048      45.2 us
+  rows= 64 n= 16384 k=  512      51.3 us
+  rows= 64 n= 16384 k= 2048      51.3 us
+Traceback (most recent call last):
+  File "<string>", line 18, in <module>
+  File "<string>", line 10, in bench
+  File "<string>", line 9, in <lambda>
+  File "/opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/torch/_ops.py", line 1279, in __call__
+    return self._op(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: launch_persistent_topk, /opt/llm/runners/kdet_build/topk_det.cu:130, persistent_topk_det: dynamic smem 100384 exceeds 97120 (optin 101376 - static 4256)
+== RUNNER DONE == 13:47
