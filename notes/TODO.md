@@ -234,6 +234,13 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **Watchdog thread list is missing #53670** (found 2026-09-07, upstream log 79). The hourly watchdog
+  checks 13 issue numbers; #53670 is not among them although `upstream-post`'s venue table lists it and
+  we post there. Two human comments went unseen for eight hours. **Add #53670**, and diff the whole
+  watchdog list against the venue table + our posting log for other gaps before the next tick that
+  matters. Also watch #54360 (prefix-cache hits to ZERO on hybrid GDN) — named in that thread as a
+  separate, larger failure than the trailing block, and we have not looked at it.
+
 - **Filtered-path speed on ≥128 KiB parts (H100/A100) — three steps, in this order.** Context: det-153
   (fix 1 shipped, `3e399815` + `995cd99f`), det-154 (fix 2 built and rejected), and the H100/A100
   measurements in `bench/h100-filtered`. The path is 1.1–2.7× upstream, worst at n=65,536. Bundle and
