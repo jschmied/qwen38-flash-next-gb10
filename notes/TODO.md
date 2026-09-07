@@ -234,6 +234,13 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **After ANY kernel change, rebuild from `patches/kernel-det/` before trusting it** (2026-09-07,
+  upstream log 81). The published launcher had drifted from the tested build and HEAD did not
+  compile; blazux/qwen3.8-Flash-DGX fetches those exact files by pinned SHA + sha256. `cmp` each file
+  against `/opt/llm/runners/kdet_build/`, then run `build_det.py` over a copy of the directory the way
+  a consumer does. Open: blazux invites PRs for their #5 (CI for the PLE test) and a guard-counter
+  metric (#8) — both small, ours to pick up if we want them.
+
 - **Watchdog thread list is missing #53670** (found 2026-09-07, upstream log 79). The hourly watchdog
   checks 13 issue numbers; #53670 is not among them although `upstream-post`'s venue table lists it and
   we post there. Two human comments went unseen for eight hours. **Add #53670**, and diff the whole
