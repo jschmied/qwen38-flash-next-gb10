@@ -234,6 +234,50 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **Filtered-path speed on ≥128 KiB parts (H100/A100) — three steps, in this order.** Context: det-153
+  (fix 1 shipped, `3e399815` + `995cd99f`), det-154 (fix 2 built and rejected), and the H100/A100
+  measurements in `bench/h100-filtered`. The path is 1.1–2.7× upstream, worst at n=65,536. Bundle and
+  Modal harness are built and validated; each measurement round is minutes and cents.
+
+  1. **Routing first — is `rows > 32 → FilteredTopK` stale?** `FilteredTopKUnifiedKernel` launches one
+     CTA per row, so 64 rows on a 132-SM H100 idles more than half the machine, while the persistent
+     path splits a row across CTAs. Our own scaling is sublinear 64→256 rows on both arms, which fits.
+     **Prerequisite, do this before any benchmark:** verify the workspace and `RadixRowState` sizing
+     support `num_rows > 32` (`kDetMaxCtasPerGroup` = 64, `num_groups` from occupancy) — that path has
+     never been entered with more than 32 rows on a ≥128 KiB part. Then force both paths at rows
+     {48, 64, 128, 256} × n {16k, 20k, 40k, 65k} × k {512, 2048} on H100 and find the crossover.
+     **Counter-evidence to respect:** at n=16,384 our filtered path already beats our persistent path
+     (17.9 µs at 33 rows vs 21.9 at 32), so any fix is shape-dependent on `n`, never on row count
+     alone. If persistent wins at the long rows this is a dispatch condition — small, in scope for
+     #55122. Question posted to the PR 2026-09-07 (upstream log 78); a maintainer answer on the
+     history of the 32 may settle it without measuring.
+
+  2. **Templated survivor compaction — only if 1 does not carry it.** The rejected patch is at
+     `notes/data/fix2-survivor-compaction.patch`; it delivers (H100 65k 2.70 → 2.25) but merely
+     compiling the runtime-disabled branch costs GB10 decode 9–15 % at identical REG/SHARED. Fix is a
+     compile-time specialisation — `det_select_row<bool Compact>`, with the compacting variant
+     referenced only by a separate filtered-kernel instantiation so it cannot perturb the persistent
+     kernel; the host already knows `cached = fixed + n*4 <= cap` and can pick before launch.
+     **Known limit, and the reason this is second not first:** pass-0 compaction is weak on narrow QSA
+     score distributions where many keys share the high FP32 byte — the threshold bin can be a large
+     fraction of the row, so it would rarely arm on exactly the #51782 inputs that motivated the PR.
+     Ceiling is ~2.25×, so this does not solve the path either.
+
+  3. **The real fix: an exact filtered algorithm — separate PR, not #55122.** n=20,000 on H100 is
+     *cached* and still 2.2× (20.3 vs 9.2 µs), so the remaining cost is repeated histogram/atomic
+     work, not memory traffic — the four-pass generic radix is the floor. Design: 4096-bin coarse
+     histogram (12 key bits) → one more full-row scan that emits definitely-selected indices and
+     threshold-bin candidates **both in index order via the packed `BlockScan`, never `atomicAdd`
+     slots** → exact refinement over the candidates only → merge two ascending runs of at most K.
+     Two full-row scans plus O(K), against today's four radix passes plus a full-row emission.
+     **The exactness comes from the fallback, not the histogram width:** `threshold_bin_count` is
+     known before collection, so `count <= capacity` takes the fast path and anything else falls back
+     to `det_select_row`. That is the distinction from #53287, which widens the histogram to make
+     overflow rarer rather than harmless — worth stating that way if this is ever written up.
+     Plausible ~1.1–1.4×; do not promise it before measuring. Land #55122 on correctness first unless
+     a reviewer blocks on cost.
+
+
 - **PR #55122 (det top-k):** ~~v2.7 not pushed~~ **PUSHED 2026-09-07 as `b8d09ecb`** (upstream log 66). Still owed:
   ~~the cost table~~, ~~the tkprd reply~~, ~~the local-review items~~ — all done and **pushed 2026-09-07**
   (log 72; 13 commits, body carries the risks). **Still open:** prod runs v2.4 while the branch is at v2.8 (`/opt/llm/kernel-det/_C_det.so`);
