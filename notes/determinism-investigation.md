@@ -1844,3 +1844,36 @@ Plus whatever drives the separate generation-side path.
 
     ⚠️ The 64-row column above 16k is missing because finding 147's launch failure aborted that arm.
     Re-run it on v3.2 before quoting a 64-row crossover.
+
+149. **The single/multi-CTA crossover is row-count dependent on one GPU, so no scalar RADIX_THRESHOLD
+    is right everywhere — and v3.1 costs ~5 % on some single-CTA cells (`thresh64` + bisect,
+    2026-09-07, `notes/data/thresh64.txt`).** Same two-build method as det-148, now with the smem fix
+    so the 64-row arm runs. Winner and margin at k=2048:
+
+    | rows | 8k | 12k | 16k | 24k | 32k | 48k | 64k |
+    | --- | --- | --- | --- | --- | --- | --- | --- |
+    | 1 | S 62 % | S 29 % | S 19 % | **M 61 %** | M 107 % | M 185 % | M 233 % |
+    | 8 | S 66 % | S 30 % | S 28 % | **M 72 %** | M 90 % | M 181 % | M 69 % |
+    | **32** | S 67 % | S 50 % | S 49 % | **S 35 %** | **S 8 %** | **S 10 %** | **S 15 %** |
+    | 64 | S 89 % | S 70 % | S 52 % | M 0 % | **M 11 %** | M 3 % | M 12 % |
+
+    Crossover: **24,576 at 1–8 rows, never at 32 rows, ~32,768 at 64 rows.** `RADIX_THRESHOLD = 16384`
+    is therefore correct for 1–8 rows, roughly right at 64, and **wrong at 32 rows, where it sends every
+    row ≥ 24,576 to the cooperative path that loses 8–35 %**. This sharpens the portability objection:
+    the constant is not merely GPU-dependent, it is row-count dependent on a single GPU, so no scalar
+    value is optimal. Making it a function of rows would be another fitted heuristic — the kind #55661
+    was closed for — so this is documented, not fixed.
+
+    **Regression found while re-benching, and it is ours.** Bisecting the four builds on
+    8 rows / 16,384 / k=2048: v2.7 18.5 µs, v3.0 18.5, **v3.1 19.3–19.5**, v3.2 19.3–19.5, with a
+    within-build spread of ±0.1 over three fresh processes — far outside noise. 14 of 43 grid cells
+    regress by >0.02 in ratio; the worst absolute cases are 64/4096/2048 (12.4 → 14.3 µs) and several
+    n ≤ 16,384 k=2048 cells (+1 µs). **It is not the signed-zero branch** — a build with that branch
+    removed measures the same. It entered with v3.1, whose other changes are the `force_single_cta`
+    parameter and kernel branch, the active-width geometry (which computes an *identical* chunk for
+    these cells), and the CTA-prefix change (multi-CTA only, not executed here). Most likely register
+    pressure shifting occupancy under `__launch_bounds__(1024, 2)`; not isolated further.
+
+    Whole grid: v2.7 0.83–2.45×, **v3.2 0.74–2.14×** — better at both ends, with these cells worse.
+    ⚠️ The "N of 43 at or below stock" statistic (14 → 9) is not robust: the stock arm is re-timed each
+    run and several cells sit within 1 % of 1.00. Quote the range, not the count.
