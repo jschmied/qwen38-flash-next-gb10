@@ -229,3 +229,46 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 6. **Batch-shape non-invariance** (identical prompts in one batch differ: 416 flips at 1,999 tokens): separate lever, only if
    batch-invariant evals matter.
 7. **Disk**: /opt 56 GB free; today's per-arm caches < 1 GB, something else is large — check before the next model pull.
+
+## Work queue as of 2026-09-07 (user: "higher prio has work on our own findings and PRs, run when idle")
+
+### HIGH — our own findings and PRs
+
+- **PR #55122 (det top-k):** v2.7 is built, verified and NOT pushed. Whole grid 1.00–2.45× (was 1.25–4.31×),
+  14 of 43 cells at or below stock, 210/210 + the PR's own 134 pytest cases, bit-identical throughout.
+  Needs: push to the branch, rewrite the cost table a third time, reply to gau-nernst. Prod still runs v2.4.
+- **PR #55661 (swizzle gate):** blocked on the `swzab2` server A/B. Decision rule from the user:
+  ≥1–2 % TTFT at 2.5–5k with no losses → defend; <1 % → close. **Independently of the A/B, drop the
+  small-M island** — it buys 18.7 pp on the tuned set and *exactly zero* out of sample (slab-only and
+  island both score 236.3 pp on 88 held-out cells), which is the reviewer's "overfitting" point, proven.
+- **`perf/gemm-launch-hwinfo` (local, unpushed):** KernelHardwareInfo + indexed `get_device_prop` +
+  zero-byte workspace. Correct and fixes a latent multi-GPU bug, but measured at ~0.7 µs against a 10.9 µs
+  submission that is itself hidden behind 150 µs kernels, and decode replays cudagraphs — submit as hygiene,
+  not as a decode win, or not at all.
+- **MTP re-measurement + the published Quant Map** — `notes/mtp-remeasure-plan.md`, groups 0a/0/1–5.
+- **Draft-vocab 32k slice:** re-measure on the fixed stack (det-135/137 are inside the one-step-behind
+  window, det-137 is 2 starts), then it is worth publishing.
+- **Awaiting the user's go, drafted only:** comments for MiaAI single-Spark #23 (FP8 KV buys pool not speed —
+  QSA is sparse; their NVRM burst matches our benign teardown signature) and #19 (the SEQS knee: 16→64 null,
+  ~100 tok/s ceiling, the 267 figure is the baseline checkpoint with spec off and short prompts).
+
+### LOW — leads taken from MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark, run when the box is idle
+
+1. **Cudagraph capture widths under MTP — the one worth doing first of these.** Prod captures
+   `[1, 2, 4, 8]`; with MTP n=3 the decode batch is 4×S rows, so S=4→16, S=8→32 and S=16→64 are **not**
+   captured and those steps may be running eager. They report a full decode graph at every verify width
+   (4→32) is what made their 8-stream column reachable. ⚠️ Verify the premise first — that vLLM's capture
+   sizes are the padded token count and that no capture means eager here — before drawing conclusions.
+   If it holds, our c=16 "~100 tok/s is a bandwidth ceiling" was measured on an uncaptured decode path,
+   and our null cudagraph A/B (det-136) is consistent because it ran at c=1, the one width already covered.
+2. **`MAMBA_SSM_CACHE_DTYPE=bfloat16`** — they measure +8.5 % at 8 streams in a matched pair, needles 15/15
+   and per-position acceptance unchanged. We have never tested the recurrent-state dtype outside determinism.
+3. **Batch the PLE gather's page faults** — our PLE offload takes 16 page faults per token; never attacked.
+4. **Cap the draft context** — they report −17 % single-stream step drafting over 65k rather than 248k.
+
+### Hygiene
+- The swizzle harness and its 223 MiB CUTLASS tree still live in an old session's `/tmp` scratchpad, the kind
+  the 2026-09-03 reboot wiped. Move both to `/opt/llm/runners` before the next reboot.
+- `/tmp/claude-1000` is `drwx------ jschmied` and servers run as `uid=llm`: anything a server must read goes
+  in `/opt/llm/runners`, world-readable. This silently invalidated four A/B arms on 2026-09-07.
+
