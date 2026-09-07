@@ -152,6 +152,47 @@ __device__ __forceinline__ void det_block_sort_asc(int* data, int n, int cap) {
     }
   }
 }
+// Merge two ascending runs, [0, a) and [a, k), of `row` in place through
+// `scratch`. det_select_row's emission already writes both the `> pivot` group
+// and the `== pivot` group in ascending index order, so the row is two sorted
+// runs and a full sort is not needed. Values are row indices and therefore
+// distinct, so a lower-bound rank is exact and the result is bit-identical to
+// sorting. One pass over k with a binary search, instead of the
+// log2(next_pow2(k)) * (log2+1) / 2 sync-separated bitonic stages.
+template <int N_THREADS>
+__device__ __forceinline__ void det_merge_runs(int32_t* row, int k, int a,
+                                               int* scratch) {
+  for (int i = threadIdx.x; i < k; i += N_THREADS) scratch[i] = row[i];
+  __syncthreads();
+  const int b = k - a;
+  for (int i = threadIdx.x; i < k; i += N_THREADS) {
+    const int v = scratch[i];
+    int pos;
+    if (i < a) {  // element of the first run: rank = i + |{second run} < v|
+      int lo = 0, hi = b;
+      while (lo < hi) {
+        const int mid = (lo + hi) >> 1;
+        if (scratch[a + mid] < v)
+          lo = mid + 1;
+        else
+          hi = mid;
+      }
+      pos = i + lo;
+    } else {  // element of the second run
+      int lo = 0, hi = a;
+      while (lo < hi) {
+        const int mid = (lo + hi) >> 1;
+        if (scratch[mid] < v)
+          lo = mid + 1;
+        else
+          hi = mid;
+      }
+      pos = (i - a) + lo;
+    }
+    row[pos] = v;
+  }
+  __syncthreads();
+}
 template <int N_THREADS>
 __device__ __forceinline__ void det_sort_row(int32_t* row, int k,
                                              int* scratch) {
@@ -306,7 +347,8 @@ __device__ void det_select_row(const float* __restrict__ row, int n,
     run_eq += teq;
     __syncthreads();
   }
-  det_sort_row<N_THREADS>(out, TopK, scratch);
+  // Two ascending runs (`> pivot` then `== pivot`) -> one merge, not a sort.
+  det_merge_runs<N_THREADS>(out, TopK, static_cast<int>(gt_total), scratch);
 }
 
 // ============================================================================

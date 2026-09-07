@@ -1664,3 +1664,48 @@ Plus whatever drives the separate generation-side path.
     model, and would then be both deterministic and faster than what we propose. That is a separate
     PR, not a change to this one. Not offered upstream yet — draft in
     `notes/upstream/comment-55122-tkprd.md`, awaiting the go.
+
+143. **v2.5: the single-CTA path's final sort was a merge all along — worst-case cost ratio 4.31× →
+    1.97×, and the shapes this model runs 2.9–3.1× → 1.5× (`kdet25`, 2026-09-07 07:15,
+    `notes/data/kdet25.txt`). 210/210 tests pass.** `det_select_row`'s emission writes the
+    `> pivot` group at `out[run_gt + rgt]` with `i` ascending under an exclusive prefix sum, and the
+    `== pivot` group the same way into its own region — so the row is **two ascending runs** and the
+    kernel was running a general bitonic sort (`next_pow2(k)` padded, ~66 sync-separated stages at
+    k=2048) over already-sorted data. `det_merge_runs` replaces it: one pass over k, a binary-search
+    lower-bound rank in the other run, no inter-stage syncs. Values are row indices, so distinct, so
+    the rank is exact and the output is bit-identical to sorting.
+
+    | shape (rows / n / k) | v2.4 det µs | v2.5 det µs | ratio to stock, v2.4 → v2.5 |
+    | --- | --- | --- | --- |
+    | 1 / 4,096 / 2048 | 26.5 | **11.7** | 4.31× → **1.97×** |
+    | 1 / 8,192 / 2048 | 30.4 | **15.3** | 2.95× → **1.48×** |
+    | 1 / 16,384 / 2048 | 37.2 | **22.6** | 2.58× → **1.57×** |
+    | 64 / 4,096 / 2048 | 49.3 | **20.6** | 3.41× → **1.43×** |
+    | 64 / 8,192 / 2048 | 57.5 | **28.8** | 3.10× → **1.51×** |
+    | 64 / 16,384 / 2048 | 73.9 | **45.2** | 2.41× → **1.57×** |
+    | 64 / 32,768 / 2048 | 126.1 | 125.2 | 2.25× → 2.26× (large path, untouched) |
+
+    **The pattern is the mechanism's signature:** only cells at or below `RADIX_THRESHOLD` (16,384)
+    move, and they move most where `k/n` is largest — sort cost scales with k, not n. Every large-path
+    cell is unchanged to within noise, which is the control.
+
+    **The large path was deliberately left alone, and the reason matters.** Its `> pivot` emission
+    takes output slots with `atomicAdd(&local_histogram[0], 1)` — arrival order, not index order — so
+    that region is genuinely unsorted and `det_sort_row` is what makes it deterministic. Merging
+    there would have silently reintroduced the ordering bug this whole PR fixes. It looked like a
+    symmetric optimisation and was not.
+
+    **Where the remaining cost now sits:** the large path, which holds every ratio above 2× —
+    including the new worst cell, 24 rows / 32,768 / k=2048 at 3.72× (and 48 rows at 3.20×, which is
+    non-monotonic in row count, so CTA-group packing is involved). Making its gt emission
+    index-ordered (BlockScan instead of atomicAdd) would let the merge apply there too. Not attempted.
+
+    Three levers named in the same review and **not** taken yet: the 4 radix passes are unconditional
+    (an early exit on `remaining == 0` cannot fire — the bin-selection condition guarantees
+    `suf_b1 < remaining`, so remaining never reaches 0; a working exit needs the "threshold bin holds
+    exactly `remaining` elements" test instead); the 256-bin suffix scan costs 8 block syncs and runs
+    4× where a warp scan would need 1–2; and the emission runs two `BlockScan`s per tile for the
+    mutually exclusive `fgt`/`feq` flags where one packed scan would do.
+
+    **Not installed on prod** (`/opt/llm/kernel-det/_C_det.so` is still v2.4) and not pushed to
+    PR #55122 — both await the go.
