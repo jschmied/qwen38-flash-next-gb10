@@ -2059,3 +2059,28 @@ Plus whatever drives the separate generation-side path.
       throughput and changes nothing at c=1. **Do not quote it as a measurement until that A/B runs**
       — it is exactly the shape of claim that has been wrong before.
     - Owed to a public thread: our MiaAI #19 comment made the c=16 ceiling provisional on this test.
+
+158. **The capture-width A/B is VACUOUS — no cudagraphs were captured in EITHER arm (2026-09-07,
+    6 arms, `notes/data/cgsize2.txt`).** Ran det-157's prediction: prod `[1,2,4,8]` vs wide
+    `[1,2,4,8,16,32,64]`, 3 starts each, interleaved, c=1/4/16.
+    - **Config took effect**: `max_cudagraph_capture_size` reads **8** on all three prod arms and
+      **64** on all three wide arms. That check passed.
+    - **Result was null everywhere**, control included: c=1 prod 16.6–21.4 vs wide 16.7–21.5 (n=12
+      each), c=4 36.3–62.4 vs 36.7–63.8, c=16 46.6–61.3 vs 47.5–65.1. Every range overlaps.
+    - **But the null is uninformative**, and this is the point: the wide arm's startup report says
+      `0.0 GiB for CUDAGraph memory`, and **no arm logged a single `Capturing CUDA graphs` line**.
+      Those are tqdm bars, and the same logs DO contain the checkpoint-loading tqdm bars — so tqdm is
+      captured and the absence is real evidence, not a logging artefact. **Neither arm built graphs.**
+      The experiment compared no-graphs to no-graphs.
+    - **The interesting question is now different**: does prod capture cudagraphs *at all*? If not,
+      det-136's null cudagraph A/B has a second possible explanation, and det-157's dispatcher
+      reading — correct as source analysis, and confirmed by `max_cudagraph_capture_size: 8` in the
+      live log — describes a path that may be moot because nothing is captured anyway.
+    - **Decisive next test, queued, cheap:** add a third arm at `FN_CG_MODE=NONE`. If NONE lands in
+      the same range as PIECEWISE and wide, cudagraphs are inert in this configuration entirely and
+      the whole line of inquiry resolves differently. Do NOT re-run the width sweep before that.
+    - Start 3 of both arms ran during heavy host filesystem IO (my own disk audit). prod3 measured
+      56.1/48.9 at c=16, inside the prod1/prod2 range, so it is not an outlier — but the asymmetry is
+      recorded rather than hidden.
+    - **Owed:** the MiaAI #19 commitment ("our c=16 numbers are provisional until this is tested") is
+      NOT discharged by this run. Nothing to post until the NONE arm settles what is actually running.

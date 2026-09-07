@@ -1,0 +1,67 @@
+=== prod1  capture_sizes=[1,2,4,8]  19:11 ===
+    graph_gib=  maxcap=max_cudagraph_capture_size': 8  sizes_in_log=cudagraph_capture_sizes': [1
+  prod1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  prod1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  prod1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 20.0 tok/s agg, 20.0 per stream | garbage 0/1
+  prod1 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.4s = 21.4 tok/s agg, 21.4 per stream | garbage 0/1
+  prod1 DV c=4 rep=0: accept=45.8% AL=2.37 | 800 tok in 13.8s = 58.0 tok/s agg, 14.5 per stream | garbage 0/4
+  prod1 DV c=4 rep=1: accept=44.2% AL=2.33 | 800 tok in 22.0s = 36.3 tok/s agg, 9.1 per stream | garbage 0/4
+  prod1 DV c=4 rep=2: accept=47.3% AL=2.42 | 800 tok in 21.3s = 37.5 tok/s agg, 9.4 per stream | garbage 0/4
+  prod1 DV c=16 rep=0: accept=51.6% AL=2.55 | 3200 tok in 59.7s = 53.6 tok/s agg, 3.3 per stream | garbage 0/16
+  prod1 DV c=16 rep=1: accept=48.5% AL=2.45 | 3200 tok in 68.7s = 46.6 tok/s agg, 2.9 per stream | garbage 0/16
+=== wide1  capture_sizes=[1,2,4,8,16,32,64]  19:27 ===
+    graph_gib=  maxcap=max_cudagraph_capture_size': 64  sizes_in_log=cudagraph_capture_sizes': [1
+  wide1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.4s = 19.2 tok/s agg, 19.2 per stream | garbage 0/1
+  wide1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.9 tok/s agg, 16.9 per stream | garbage 0/1
+  wide1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 20.0 tok/s agg, 20.0 per stream | garbage 0/1
+  wide1 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.3s = 21.5 tok/s agg, 21.5 per stream | garbage 0/1
+  wide1 DV c=4 rep=0: accept=54.9% AL=2.65 | 800 tok in 12.5s = 63.8 tok/s agg, 16.0 per stream | garbage 0/4
+  wide1 DV c=4 rep=1: accept=50.4% AL=2.51 | 800 tok in 21.3s = 37.6 tok/s agg, 9.4 per stream | garbage 0/4
+  wide1 DV c=4 rep=2: accept=52.9% AL=2.59 | 800 tok in 21.1s = 38.0 tok/s agg, 9.5 per stream | garbage 0/4
+  wide1 DV c=16 rep=0: accept=51.7% AL=2.55 | 3200 tok in 49.1s = 65.1 tok/s agg, 4.1 per stream | garbage 0/16
+  wide1 DV c=16 rep=1: accept=52.0% AL=2.56 | 3200 tok in 64.3s = 49.8 tok/s agg, 3.1 per stream | garbage 0/16
+=== prod2  capture_sizes=[1,2,4,8]  19:45 ===
+    graph_gib=  maxcap=max_cudagraph_capture_size': 8  sizes_in_log=cudagraph_capture_sizes': [1
+  prod2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.0 tok/s agg, 19.0 per stream | garbage 0/1
+  prod2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  prod2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 20.0 tok/s agg, 20.0 per stream | garbage 0/1
+  prod2 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.4s = 21.3 tok/s agg, 21.3 per stream | garbage 0/1
+  prod2 DV c=4 rep=0: accept=48.7% AL=2.46 | 800 tok in 12.8s = 62.4 tok/s agg, 15.6 per stream | garbage 0/4
+  prod2 DV c=4 rep=1: accept=49.1% AL=2.47 | 800 tok in 21.0s = 38.1 tok/s agg, 9.5 per stream | garbage 0/4
+  prod2 DV c=4 rep=2: accept=44.5% AL=2.34 | 800 tok in 21.9s = 36.6 tok/s agg, 9.1 per stream | garbage 0/4
+  prod2 DV c=16 rep=0: accept=50.2% AL=2.51 | 3200 tok in 52.2s = 61.3 tok/s agg, 3.8 per stream | garbage 0/16
+  prod2 DV c=16 rep=1: accept=52.7% AL=2.58 | 3200 tok in 66.6s = 48.1 tok/s agg, 3.0 per stream | garbage 0/16
+=== wide2  capture_sizes=[1,2,4,8,16,32,64]  20:04 ===
+    graph_gib=  maxcap=max_cudagraph_capture_size': 64  sizes_in_log=cudagraph_capture_sizes': [1
+  wide2 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 10.5s = 19.0 tok/s agg, 19.0 per stream | garbage 0/1
+  wide2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.7 tok/s agg, 16.7 per stream | garbage 0/1
+  wide2 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.3s = 19.3 tok/s agg, 19.3 per stream | garbage 0/1
+  wide2 DV c=1 rep=3: accept=59.7% AL=2.79 | 200 tok in 9.8s = 20.3 tok/s agg, 20.3 per stream | garbage 0/1
+  wide2 DV c=4 rep=0: accept=51.7% AL=2.55 | 800 tok in 13.5s = 59.1 tok/s agg, 14.8 per stream | garbage 0/4
+  wide2 DV c=4 rep=1: accept=48.7% AL=2.46 | 800 tok in 21.8s = 36.7 tok/s agg, 9.2 per stream | garbage 0/4
+  wide2 DV c=4 rep=2: accept=48.6% AL=2.46 | 800 tok in 21.3s = 37.6 tok/s agg, 9.4 per stream | garbage 0/4
+  wide2 DV c=16 rep=0: accept=48.2% AL=2.45 | 3200 tok in 57.4s = 55.8 tok/s agg, 3.5 per stream | garbage 0/16
+  wide2 DV c=16 rep=1: accept=50.8% AL=2.52 | 3200 tok in 66.6s = 48.0 tok/s agg, 3.0 per stream | garbage 1/16
+=== prod3  capture_sizes=[1,2,4,8]  20:23 ===
+    graph_gib=  maxcap=max_cudagraph_capture_size': 8  sizes_in_log=cudagraph_capture_sizes': [1
+  prod3 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 10.6s = 18.9 tok/s agg, 18.9 per stream | garbage 0/1
+  prod3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.6 tok/s agg, 16.6 per stream | garbage 0/1
+  prod3 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.1s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  prod3 DV c=1 rep=3: accept=59.7% AL=2.79 | 200 tok in 9.4s = 21.2 tok/s agg, 21.2 per stream | garbage 0/1
+  prod3 DV c=4 rep=0: accept=51.7% AL=2.55 | 800 tok in 13.5s = 59.4 tok/s agg, 14.8 per stream | garbage 0/4
+  prod3 DV c=4 rep=1: accept=52.4% AL=2.57 | 800 tok in 20.7s = 38.6 tok/s agg, 9.6 per stream | garbage 0/4
+  prod3 DV c=4 rep=2: accept=49.1% AL=2.47 | 800 tok in 20.9s = 38.2 tok/s agg, 9.6 per stream | garbage 0/4
+  prod3 DV c=16 rep=0: accept=53.2% AL=2.60 | 3200 tok in 57.0s = 56.1 tok/s agg, 3.5 per stream | garbage 0/16
+  prod3 DV c=16 rep=1: accept=53.3% AL=2.60 | 3200 tok in 65.5s = 48.9 tok/s agg, 3.1 per stream | garbage 0/16
+=== wide3  capture_sizes=[1,2,4,8,16,32,64]  20:41 ===
+    graph_gib=  maxcap=max_cudagraph_capture_size': 64  sizes_in_log=cudagraph_capture_sizes': [1
+  wide3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  wide3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  wide3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 20.0 tok/s agg, 20.0 per stream | garbage 0/1
+  wide3 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.4s = 21.3 tok/s agg, 21.3 per stream | garbage 0/1
+  wide3 DV c=4 rep=0: accept=51.7% AL=2.55 | 800 tok in 13.4s = 59.6 tok/s agg, 14.9 per stream | garbage 0/4
+  wide3 DV c=4 rep=1: accept=48.7% AL=2.46 | 800 tok in 20.9s = 38.4 tok/s agg, 9.6 per stream | garbage 0/4
+  wide3 DV c=4 rep=2: accept=47.3% AL=2.42 | 800 tok in 21.3s = 37.5 tok/s agg, 9.4 per stream | garbage 0/4
+  wide3 DV c=16 rep=0: accept=49.2% AL=2.48 | 3200 tok in 54.5s = 58.7 tok/s agg, 3.7 per stream | garbage 0/16
+  wide3 DV c=16 rep=1: accept=48.6% AL=2.46 | 3200 tok in 67.4s = 47.5 tok/s agg, 3.0 per stream | garbage 0/16
+== ALL DONE == 20:59

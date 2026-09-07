@@ -234,6 +234,13 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **Does prod capture cudagraphs at all? (det-158, queued, ~3 starts)** The capture-width A/B came
+  back null because **neither arm captured graphs** — `0.0 GiB for CUDAGraph memory`, zero
+  `Capturing CUDA graphs` tqdm lines while checkpoint-loading bars are present in the same logs.
+  Add an `FN_CG_MODE=NONE` arm: if NONE == PIECEWISE == wide, cudagraphs are inert in this config and
+  det-136's null has a second explanation. Until this settles, the MiaAI #19 commitment is NOT
+  discharged and the capture-width sweep must not be re-run.
+
 - **Permalink hygiene before every upstream post** (2026-09-07, log 82 correction). Four links in the
   #55122 routing comment 404'd because the SHA was captured before the commit that added the files.
   Capture the SHA *after* commit+push, then
