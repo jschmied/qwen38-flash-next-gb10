@@ -215,7 +215,9 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
    default it on, one validation start — prod change, needs the go.
 3. **Re-measure everything taken one PLE step behind (2026-09-03 .. 09-06)**: MTP acceptance on agent traffic (41–50 %), the
    draft-vocab +6 % (det-135/137), the warm-turn cost (finding 141), any SWE figures. One dvrate-style cell, 3 starts, fixed stack.
-4. **Draft-vocab 32k slice into prod**: decide after 3.
+4. **Draft-vocab 32k slice into prod**: decide after 3. **Not publishable until then** (asked 2026-09-07): det-135/137 are
+   inside the one-PLE-step-behind window AND det-137 is only two starts per arm against our own three-start rule. Re-measure
+   on the fixed stack first, then it is worth a post — +6 % single-stream decode from a 32k draft-vocab slice is a real result.
 3b. **QUEUED 2026-09-06 (user: "queue re-measurement and page update for later on the prod stack with all fixes"): the MTP
    cells + the published Quant Map.** Full spec in `notes/mtp-remeasure-plan.md` — 5 cell groups, ~51 starts, an overnight job;
    the prod venv already carries every fix it needs (#55375 stride, PLE semaphore, det overlays, `disable_eagle_block_drop`).
