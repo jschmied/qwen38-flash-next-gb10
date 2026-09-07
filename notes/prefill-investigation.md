@@ -1191,3 +1191,38 @@
 
     **Upstream: PR https://github.com/vllm-project/vllm/pull/55661 (2026-09-07).**
 
+
+147. **Server A/B of the swizzle GATE: no measurable end-to-end effect. The one true control moves as much
+    as the cells that changed (`swzab2`, 2026-09-07, six arms, `notes/data/swzab.txt`).** Both arms route
+    the blockwise FP8 GEMM through the same standalone op via a `sitecustomize` patch, differing only in the
+    swizzle the policy picks, so the gate is the single variable. `FN_BATCH=8192` so each prompt is one chunk
+    and M is the prompt length; MTP off; UUID-prefixed prompts so the prefix cache never contributes; 5
+    requests per size, first dropped; 3 starts per arm, interleaved.
+
+    | prompt | tokens | gate picks | merged picks | merged median | gate median | gate faster |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | 1k | 1,066 | 1 | 8 | 0.529 s | 0.524 s | +0.95 % |
+    | 2.5k | 2,596 | 1 | 8 | 1.135 s | 1.124 s | +0.97 % |
+    | 3k | 3,102 | 1 | 8 | 1.291 s | 1.280 s | +0.85 % |
+    | 4k | 4,125 | 1 | 8 | 1.582 s | 1.571 s | +0.70 % |
+    | 5k | 5,143 | 1 | 8 | 1.869 s | 1.857 s | +0.64 % |
+    | **7.5k** | 7,691 | **8** | **8** | 2.663 s | 2.638 s | **+0.94 %** |
+
+    **7.5k is the control: both policies emit the identical launch, and it "improves" by +0.94 %** — as much
+    as or more than every cell where the policies actually differ. The whole signal is a systematic offset
+    (the gate arm always ran second in each pair), and the gate's true effect is inside noise of zero.
+    Within-arm spread is 1.00–1.02×, so the harness is stable; it simply has nothing to resolve.
+
+    ⚠️ Note 1k is **not** a control: at 1,066 prompt tokens the `M <= 1024` island does not apply, so the
+    policies differ there too. Only 7.5k (activation slab 19.0 MiB ≥ 14) is identical-config.
+
+    **Verdict against the pre-registered rule** (≥1–2 % at 2.5–5k with no losses → defend; <1 % → close):
+    the changed region averages +0.79 % *before* subtracting a +0.94 % control offset, i.e. ≈0 after.
+    **This is the answer to "likely not noticeable e2e": the reviewer was right.** The kernel-level 3–10 %
+    on these GEMMs does not reach TTFT, because the blockwise FP8 GEMMs are only a fraction of prefill.
+
+    Methodology note that nearly cost the whole run: the first attempt (`swzab`) produced four complete,
+    plausible arms that measured **nothing** — `PYTHONPATH` pointed into `/tmp/claude-1000`, which is
+    `drwx------ jschmied`, while the server runs as `uid=llm`, so `sitecustomize` was never importable and
+    `site` swallows that error silently. My own check passed because I ran it as myself. The rerun added a
+    hard gate: an arm without `SWZPATCH active` in its log aborts the run instead of emitting numbers.

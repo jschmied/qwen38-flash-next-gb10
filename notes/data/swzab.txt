@@ -1,0 +1,49 @@
+=== policy=merged start 1  10:38 ===
+  patch: (Worker pid=315174) SWZPATCH active: policy=merged first shape M=16 N=248320 K=2560 swz=8
+  merged1    1k: prompt_tokens=  1066 median= 0.531s  all=0.531 0.536 0.529 0.531
+  merged1  2.5k: prompt_tokens=  2596 median= 1.142s  all=1.141 1.144 1.143 1.123
+  merged1    3k: prompt_tokens=  3102 median= 1.298s  all=1.296 1.307 1.301 1.291
+  merged1    4k: prompt_tokens=  4125 median= 1.582s  all=1.581 1.583 1.578 1.593
+  merged1    5k: prompt_tokens=  5143 median= 1.869s  all=1.869 1.866 1.872 1.869
+  merged1  7.5k: prompt_tokens=  7691 median= 2.663s  all=2.661 2.665 2.669 2.658
+=== policy=gate start 1  10:49 ===
+  patch: (Worker pid=318434) SWZPATCH active: policy=gate first shape M=16 N=248320 K=2560 swz=8
+  gate1    1k: prompt_tokens=  1067 median= 0.531s  all=0.539 0.531 0.531 0.529
+  gate1  2.5k: prompt_tokens=  2596 median= 1.138s  all=1.142 1.129 1.133 1.143
+  gate1    3k: prompt_tokens=  3104 median= 1.280s  all=1.298 1.280 1.281 1.275
+  gate1    4k: prompt_tokens=  4127 median= 1.571s  all=1.566 1.572 1.574 1.570
+  gate1    5k: prompt_tokens=  5144 median= 1.857s  all=1.859 1.849 1.856 1.859
+  gate1  7.5k: prompt_tokens=  7692 median= 2.638s  all=2.637 2.639 2.627 2.645
+=== policy=merged start 2  11:00 ===
+  patch: (Worker pid=357102) SWZPATCH active: policy=merged first shape M=16 N=248320 K=2560 swz=8
+  merged2    1k: prompt_tokens=  1064 median= 0.526s  all=0.532 0.525 0.525 0.526
+  merged2  2.5k: prompt_tokens=  2591 median= 1.126s  all=1.125 1.121 1.126 1.140
+  merged2    3k: prompt_tokens=  3108 median= 1.282s  all=1.293 1.284 1.280 1.281
+  merged2    4k: prompt_tokens=  4123 median= 1.576s  all=1.599 1.576 1.569 1.577
+  merged2    5k: prompt_tokens=  5147 median= 1.867s  all=1.860 1.871 1.866 1.868
+  merged2  7.5k: prompt_tokens=  7694 median= 2.657s  all=2.659 2.656 2.661 2.653
+=== policy=gate start 2  11:11 ===
+  patch: (Worker pid=360290) SWZPATCH active: policy=gate first shape M=16 N=248320 K=2560 swz=8
+  gate2    1k: prompt_tokens=  1067 median= 0.522s  all=0.530 0.523 0.521 0.515
+  gate2  2.5k: prompt_tokens=  2594 median= 1.122s  all=1.129 1.125 1.115 1.119
+  gate2    3k: prompt_tokens=  3107 median= 1.283s  all=1.280 1.288 1.274 1.286
+  gate2    4k: prompt_tokens=  4125 median= 1.572s  all=1.577 1.571 1.573 1.562
+  gate2    5k: prompt_tokens=  5144 median= 1.860s  all=1.859 1.854 1.861 1.868
+  gate2  7.5k: prompt_tokens=  7694 median= 2.641s  all=2.814 2.639 2.628 2.643
+=== policy=merged start 3  11:22 ===
+  patch: (Worker pid=363417) SWZPATCH active: policy=merged first shape M=16 N=248320 K=2560 swz=8
+  merged3    1k: prompt_tokens=  1064 median= 0.529s  all=0.647 0.529 0.522 0.529
+  merged3  2.5k: prompt_tokens=  2591 median= 1.135s  all=1.135 1.137 1.131 1.136
+  merged3    3k: prompt_tokens=  3107 median= 1.291s  all=1.278 1.300 1.290 1.291
+  merged3    4k: prompt_tokens=  4123 median= 1.589s  all=1.592 1.596 1.583 1.586
+  merged3    5k: prompt_tokens=  5146 median= 1.873s  all=1.870 1.876 1.871 1.880
+  merged3  7.5k: prompt_tokens=  7693 median= 2.666s  all=2.655 2.670 2.661 2.671
+=== policy=gate start 3  11:33 ===
+  patch: (Worker pid=368871) SWZPATCH active: policy=gate first shape M=16 N=248320 K=2560 swz=8
+  gate3    1k: prompt_tokens=  1067 median= 0.524s  all=0.538 0.521 0.526 0.520
+  gate3  2.5k: prompt_tokens=  2593 median= 1.124s  all=1.125 1.138 1.121 1.123
+  gate3    3k: prompt_tokens=  3104 median= 1.277s  all=1.270 1.283 1.280 1.274
+  gate3    4k: prompt_tokens=  4125 median= 1.569s  all=1.574 1.563 1.577 1.560
+  gate3    5k: prompt_tokens=  5143 median= 1.851s  all=1.850 1.854 1.848 1.852
+  gate3  7.5k: prompt_tokens=  7698 median= 2.628s  all=2.629 2.628 2.623 2.635
+== RUNNER DONE == 11:44
