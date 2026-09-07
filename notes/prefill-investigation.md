@@ -1284,3 +1284,48 @@
     24 to 96 MiB. N is only 2560 there — few column tiles to reorder — so the raster likely needs a
     minimum tile count, i.e. N belongs in the predictor. **Do not open a PR on slab-only before a sweep
     that varies N at fixed K and A.** That is the same trap #55661 was closed for.
+
+149. **N is the missing term, and it is a conjunction with the activation slab: swizzle iff A ≥ 14 MiB
+    AND N ≥ ~3840. Over 368 cells from four sweeps the merged `weight > L2` rule leaves 1,263 pp and this
+    leaves 218 (`swzN`, 2026-09-07, 3 starts × 160 cells, `notes/data/swzN.txt`).** Grid designed so every
+    variable moves independently: N ∈ 1280…20480 (16×), K ∈ {2560, 4096, 5120, 6144}, M ∈ 2048…8192,
+    weight/L2 from 0.13 to 5.0. Bit-identical on all 480 measurements, 0 skipped.
+
+    Median sw8 gain, rows = N, columns = A = M·K (MiB), pooled over K:
+
+    | N \ A | 5 | 10 | 15 | 20 | 24 | 30 | 40 | 48 |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    | 1,280 | +0 | +1 | +1 | +1 | −1 | −1 | −3 | −5 |
+    | 2,560 | +2 | −1 | −7 | −8 | −6 | −6 | −4 | −5 |
+    | 3,840 | +4 | −9 | −8 | +2 | +12 | +18 | +15 | +49 |
+    | 5,120 | +7 | −9 | −8 | +14 | +54 | +60 | +115 | +154 |
+    | 7,168 | +0 | −7 | +9 | +32 | +129 | +230 | +210 | +137 |
+    | 10,240 | +4 | −5 | +5 | +55 | +122 | +213 | +227 | +232 |
+    | 20,480 | −3 | −3 | +7 | +49 | +133 | +221 | +230 | +232 |
+
+    **At N ≤ 2,560 the swizzle never wins at any activation size** (median −1.9 % and −5.8 % in the
+    A ≥ 20 MiB band) — the `2560×6144` counter-example of finding 148 was not a quirk, it is the whole
+    narrow-N region. **Below A ≈ 14 MiB it never wins at any N.** Both conditions are necessary; neither
+    is sufficient. Mechanically that fits: the raster reorders CTAs to reuse the weight across the N
+    dimension, and with few column tiles there is nothing to reorder.
+
+    Fitted on the N sweep alone, then tested on the three earlier sweeps untouched:
+
+    | gate | N-sweep (fit) | tuning | held-out | boundary | **all 368** |
+    | --- | --- | --- | --- | --- | --- |
+    | merged `weight > L2` | 363.6 | 118.8 | 299.1 | 598.5 | **1,263.2 pp, 138 bad** |
+    | slab only, A ≥ 14 MiB | 199.5 | 54.0 | 57.1 | 27.3 | 324.9 pp, 79 bad |
+    | **A ≥ 14 MiB and N ≥ 3,840** | **90.3** | 54.0 | 57.1 | 29.3 | **217.7 pp, 59 bad** |
+    | always swizzle | 379.8 | 118.8 | 149.5 | 161.5 | 750.1 pp |
+
+    The N term costs nothing where it was not fitted (tuning and held-out are unchanged to the decimal,
+    boundary 27.3 → 29.3) and halves the regret where narrow N actually occurs. **No L2 term appears in
+    the winning rule at all.**
+
+    ⚠️ Two things before this becomes a PR. (1) **Portability is now a bigger question, not a smaller
+    one**: dropping `weight > L2` means the swizzle would activate on parts where it currently never
+    fires (96–128 MiB L2), which we cannot test. Expressing the slab threshold as ≈0.58 × L2 would at
+    least keep one term hardware-derived. (2) **The e2e lesson from #55661 still applies** — but the
+    differences here are up to **+233 %**, two orders of magnitude larger than the 4–11 % that gate
+    argued over, and our own model cannot test it (K=2560, N=16384 → weight 40 MiB > L2, where merged
+    already picks correctly).
