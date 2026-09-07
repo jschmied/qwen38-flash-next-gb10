@@ -36,7 +36,8 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
         vllm::FilteredTopKRaggedTransform<float, int32_t, TopK>(
             logits.const_data_ptr<float>(), output.mutable_data_ptr<int32_t>(),
             lengths.const_data_ptr<int32_t>(), static_cast<uint32_t>(num_rows),
-            static_cast<uint32_t>(TopK), static_cast<uint32_t>(stride), stream);
+            static_cast<uint32_t>(TopK), static_cast<uint32_t>(stride),
+            static_cast<uint32_t>(max_seq_len), max_smem_per_block, stream);
     STD_TORCH_CHECK(status == cudaSuccess,
                     "FilteredTopK failed: ", cudaGetErrorString(status));
   } else {
@@ -56,26 +57,57 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
       effective_max_smem = max_smem_per_block;
     }
 
-    size_t available_for_ordered =
-        static_cast<size_t>(effective_max_smem) - P::kFixedSmemLarge;
-    uint32_t max_chunk_elements =
-        static_cast<uint32_t>(available_for_ordered / sizeof(uint32_t));
-
     uint32_t vec_size = 1;
     if (stride % 4 == 0)
       vec_size = 4;
     else if (stride % 2 == 0)
       vec_size = 2;
 
+    // The dynamic shared-memory budget is the opt-in minus the kernel's own
+    // static __shared__, not the opt-in itself. Sizing the chunk from the
+    // opt-in overshoots by exactly that much, and when the row needs only one
+    // CTA the resulting request exceeds the cap and the launch is rejected --
+    // on this part that is every row of 24576 or 49152 elements at 32 or 64
+    // rows. Subtract the static size, queried for the instantiation that will
+    // actually launch.
+    cudaFuncAttributes chunk_fa{};
+    cudaError_t chunk_fa_err =
+        (vec_size == 4)
+            ? cudaFuncGetAttributes(&chunk_fa, P::persistent_topk_kernel<TopK, 4>)
+        : (vec_size == 2)
+            ? cudaFuncGetAttributes(&chunk_fa, P::persistent_topk_kernel<TopK, 2>)
+            : cudaFuncGetAttributes(&chunk_fa, P::persistent_topk_kernel<TopK, 1>);
+    STD_TORCH_CHECK(chunk_fa_err == cudaSuccess,
+                    "persistent_topk_det: cudaFuncGetAttributes failed: ",
+                    cudaGetErrorString(chunk_fa_err));
+    const size_t static_smem = chunk_fa.sharedSizeBytes;
+    size_t available_for_ordered =
+        static_cast<size_t>(effective_max_smem) - P::kFixedSmemLarge -
+        static_smem;
+    uint32_t max_chunk_elements =
+        static_cast<uint32_t>(available_for_ordered / sizeof(uint32_t));
+
     max_chunk_elements = (max_chunk_elements / vec_size) * vec_size;
     uint32_t min_chunk = vec_size * P::kThreadsPerBlock;
     if (max_chunk_elements < min_chunk) max_chunk_elements = min_chunk;
 
+    // Schedule from the active width, not the padded pitch. The kernel
+    // guarantees seq_len <= min(stride, max_seq_len), so sizing groups by the
+    // pitch launches CTAs that immediately return -- a 163,840-wide padded
+    // tensor whose rows are 3k-12k long would otherwise build its geometry as
+    // if every row were 163,840 elements. Below RADIX_THRESHOLD no row can take
+    // the cooperative path at all, so one CTA per row is the whole geometry.
+    uint32_t force_single_cta = 0u;
+    const uint32_t active_width =
+        std::min(static_cast<uint32_t>(stride),
+                 static_cast<uint32_t>(std::max<int64_t>(max_seq_len, 0)));
     uint32_t ctas_per_group =
-        (static_cast<uint32_t>(stride) + max_chunk_elements - 1) /
-        max_chunk_elements;
-    uint32_t chunk_size =
-        (static_cast<uint32_t>(stride) + ctas_per_group - 1) / ctas_per_group;
+        (active_width <= P::RADIX_THRESHOLD)
+            ? 1u
+            : (active_width + max_chunk_elements - 1) / max_chunk_elements;
+    if (ctas_per_group == 0) ctas_per_group = 1;
+    uint32_t chunk_size = (active_width + ctas_per_group - 1) / ctas_per_group;
+    if (chunk_size == 0) chunk_size = max_chunk_elements;
     chunk_size = ((chunk_size + vec_size - 1) / vec_size) * vec_size;
     if (chunk_size > max_chunk_elements) chunk_size = max_chunk_elements;
 
@@ -169,24 +201,28 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
     // If the cooperative launch wouldn't fit, fall back to FilteredTopK
     // instead of deadlocking. Only relevant when needs_cooperative.
     if (needs_cooperative && total_ctas > hw_resident_cap) {
-      STD_TORCH_CHECK(
-          max_smem_per_block >= 128 * 1024,
-          "persistent_topk would oversubscribe and the FilteredTopK "
-          "fallback requires >=128KB smem per block (have ",
-          max_smem_per_block, "). total_ctas=", total_ctas,
-          " > num_sms*occupancy=", hw_resident_cap, " (TopK=", TopK,
-          ", vec_size=", vec_size, ", ctas_per_group=", ctas_per_group,
-          ", smem=", smem_size, ").");
+      if (max_smem_per_block < 128 * 1024) {
+        // Deterministic single-CTA fallback (mirrors topk.cu).
+        force_single_cta = 1u;
+        ctas_per_group = 1u;
+        chunk_size = max_chunk_elements;
+        num_groups =
+            std::min(max_resident_ctas, static_cast<uint32_t>(num_rows));
+        if (num_groups == 0) num_groups = 1;
+        total_ctas = num_groups;
+      } else {
       cudaError_t status =
           vllm::FilteredTopKRaggedTransform<float, int32_t, TopK>(
               logits.const_data_ptr<float>(),
               output.mutable_data_ptr<int32_t>(),
               lengths.const_data_ptr<int32_t>(),
               static_cast<uint32_t>(num_rows), static_cast<uint32_t>(TopK),
-              static_cast<uint32_t>(stride), stream);
+              static_cast<uint32_t>(stride),
+              static_cast<uint32_t>(max_seq_len), max_smem_per_block, stream);
       STD_TORCH_CHECK(status == cudaSuccess, "FilteredTopK fallback failed: ",
                       cudaGetErrorString(status));
       return;
+      }
     }
 
     size_t state_bytes = num_groups * sizeof(P::RadixRowState);
@@ -238,6 +274,7 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
     params.ctas_per_group = ctas_per_group;
     params.max_seq_len = static_cast<uint32_t>(max_seq_len);
     params.det_smem_bytes = static_cast<uint32_t>(smem_size);
+    params.force_single_cta = force_single_cta;
 
   #define LAUNCH_PERSISTENT(TOPK_VAL, VS)                                     \
     do {                                                                      \
