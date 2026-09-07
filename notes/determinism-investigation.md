@@ -1780,3 +1780,33 @@ Plus whatever drives the separate generation-side path.
     radix passes that provably cannot change the pivot.
 
     **Not installed on prod, not pushed to PR #55122** — both await the go.
+
+146. **Re-measured `top_k_per_row_decode` against v2.8: it no longer beats us everywhere, and our own
+    posted comparison is now stale in our disfavour (`tkprd2`, 2026-09-07, `notes/data/tkprd2.txt`).**
+    det-142 measured it against **v2.4** and we posted "0.15–0.92× of our det kernel" on PR #55122.
+    v2.5–v2.8 made our kernel 2–4× faster on the worst shapes, so that ratio is obsolete.
+
+    | shape (rows/n/k) | tkprd / ours, v2.4 (posted) | **tkprd / ours, v2.8** |
+    | --- | --- | --- |
+    | 1 / 16,384 / 2048 | 0.50 | **1.18 — ours faster** |
+    | 1 / 16,384 / 512 | 0.74 | **1.14 — ours faster** |
+    | 8 / 16,384 / 2048 | — | **1.13 — ours faster** |
+    | 1 / 32,768 / 2048 | 0.66 | **1.08 — ours faster** |
+    | 1 / 32,768 / 512 | 0.92 | 1.00 — parity |
+    | 64 / 16,384 / 2048 | 0.39 | 0.98 — parity |
+    | 1 / 8,192 / 2048 | 0.27 | 0.80 |
+    | 64 / 8,192 / 2048 | 0.18 | 0.53 |
+    | 64 / 32,768 / 2048 | 0.28 | 0.43 |
+
+    **Range 0.42–1.18× (was 0.15–0.92×).** The split is structural: we are faster on **few rows × long
+    rows** (1–8 rows at n ≥ 16k), it is faster on **many rows × short rows** (64 rows at n ≤ 8k, and at
+    n=32k/64 rows). The QSA decode shape on this model is few rows — MTP n=3 at c=1 gives 4 query rows —
+    so the regime that matters here is the one where we are at parity or ahead.
+
+    Unchanged: it is still **not deterministic on any of the 56 shapes**, and its set still differs from
+    the exact reference on every tie-heavy shape. The correctness argument for #55122 is untouched; only
+    the speed comparison moved.
+
+    **Owed:** a short correction on PR #55122 — our own comment currently tells a reviewer the
+    alternative dominates us, which is no longer true and is an argument against our own PR. Not posted;
+    awaiting the go.
