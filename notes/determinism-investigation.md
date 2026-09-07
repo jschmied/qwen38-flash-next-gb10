@@ -1709,3 +1709,42 @@ Plus whatever drives the separate generation-side path.
 
     **Not installed on prod** (`/opt/llm/kernel-det/_C_det.so` is still v2.4) and not pushed to
     PR #55122 — both await the go.
+
+144. **v2.6: three more single-CTA levers — the deterministic kernel now runs at or below stock on
+    every shape it owns (`kdet26`, 2026-09-07 07:36, `notes/data/kdet26.txt`). 210/210 pass.**
+    All three are output-preserving; none touches the guarantee.
+
+    - **Warp-level bin scan.** The 256-bin suffix sum was 8 double-buffered steps with a
+      `__syncthreads()` each, run once per radix pass — **32 block syncs per call**. Now one warp
+      does it: lane *l* owns bins [8*l*, 8*l*+8), sums them serially, and a Hillis-Steele suffix scan
+      over the 32 lane totals (`__shfl_down_sync`) supplies what lies above each lane. The threshold
+      search folds into the same warp, because `suf` of the next lane's first bin *is* that lane's
+      `above`. Block syncs here: **zero**.
+    - **A working early exit.** The `remaining == 0` test proposed in det-143 provably cannot fire —
+      the bin search requires `suf_b1 < remaining`, so the subtraction always leaves ≥ 1. The correct
+      test is available once the warp also returns the bin population: when the threshold bin holds
+      *exactly* `remaining`, all of it is selected and the lower key bytes cannot change the answer.
+      The selection becomes `key >= prefix`, i.e. `key > prefix - 1` with no ties to rank, so
+      `prefix -= 1; remaining = 0; break` and the post-loop code is unchanged. Guarded on
+      `prefix != 0`.
+    - **One packed emission scan.** `fgt`/`feq` are mutually exclusive and a tile holds ≤ N_THREADS
+      elements, so both counts fit in 16 bits of one `uint32`: one `ExclusiveSum` and one sync per
+      tile instead of two. `static_assert(N_THREADS <= 0xFFFF)` so the packing cannot silently
+      overflow if the block size changes.
+
+    | shape (rows / n / k) | v2.4 | v2.5 | **v2.6** |
+    | --- | --- | --- | --- |
+    | 1 / 4,096 / 2048 | 4.31× | 1.97× | **1.33×** |
+    | 1 / 8,192 / 2048 | 2.95× | 1.48× | **1.00×** |
+    | 1 / 16,384 / 2048 | 2.58× | 1.57× | **1.14×** |
+    | 64 / 1,024 / 512 | 1.66× | 1.17× | **0.71×** |
+    | 64 / 4,096 / 2048 | 3.41× | 1.43× | **0.88×** |
+    | 64 / 8,192 / 2048 | 3.10× | 1.51× | **1.10×** |
+    | 64 / 16,384 / 2048 | 2.41× | 1.57× | **1.07×** |
+
+    Several cells are now **faster than the stock kernel** while being exact and reproducible. The
+    worst single-CTA cell is 1.33×.
+
+    **All remaining cost is the large path** (`n > RADIX_THRESHOLD` = 16,384), unchanged across
+    v2.4–v2.6 as the control: 24 rows / 32,768 / k=2048 at 3.73×, 48 rows at 3.20×,
+    1 / 65,536 / 2048 at 2.32×, 64 / 32,768 / 2048 at 2.18×. v2.7 addresses it.
