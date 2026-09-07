@@ -1226,3 +1226,24 @@
     `drwx------ jschmied`, while the server runs as `uid=llm`, so `sitecustomize` was never importable and
     `site` swallows that error silently. My own check passed because I ran it as myself. The rerun added a
     hard gate: an arm without `SWZPATCH active` in its log aborts the run instead of emitting numbers.
+
+    **Why the null was structural, not a sample-size problem (added after the A/B).** Splitting all 154
+    swept cells by whether the slab gate changes the decision:
+
+    | | cells | median \|Δ\| between the two orders | p90 | max |
+    | --- | --- | --- | --- | --- |
+    | the gate CHANGES the decision | 74 | **3.9 %** | 8.9 % | 11.0 % |
+    | both policies agree | 80 | **18.8 %** | 173.5 % | 230.8 % |
+
+    **The merged `weight > L2` rule already captures every large effect.** Every one of the top differences
+    in the grid (+197 % to +231 %) sits in the agree bucket. The gate only ever operates where the two
+    orders are within ~4 % of each other, capped at 11 % — so even a *perfect* gate over that region is
+    worth at most ~11 % on the worst single GEMM shape, on a kernel that is a fraction of prefill. A null
+    at the server is what that predicts, and no amount of extra starts would change it. This closes the
+    question for both the three-condition and the simplified two-condition form.
+
+    **Where the value actually is:** the `weight > L2` boundary itself, which is in the agree bucket and
+    which both policies get wrong — `6144x4096` weighs exactly `l2CacheSize` (25,165,824 B) so the
+    condition is false by one byte, and at M=6144 that costs **138 %** (69.5 vs 165.6 TF). That is a
+    separate, better-motivated change against merged code.
+
