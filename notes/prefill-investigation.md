@@ -1178,3 +1178,16 @@
     ⚠️ The harness and its 223 MiB CUTLASS tree live in an old session's `/tmp` scratchpad — the kind
     the 2026-09-03 reboot wiped. Move both to `/opt/llm/runners` before the next reboot or reproducing
     any of this costs a fresh CUTLASS clone.
+
+    **Verification of the gate as committed (`swzG`, `notes/data/swzG.txt`):** bit-identical to the
+    stock op on **66/66 cells, twice**; on the 26 cells where the two orders differ by >30 % the gated
+    launch tracks the arm the predicate selects, **26/26**; the predicate's decisions score **37.0 pp**
+    against the merged rule's 118.8 pp, matching the policy scoring. ⚠️ The runner's own performance
+    check printed 141 pp and flagged 36 "gate picks the slower order" cells — **that estimator is
+    invalid**: it sums `max(0, loss)` against arms timed in the same noisy run, so per-cell noise (up
+    to 26 %) can only ever add, and it inferred which arm ran by comparing timings that are often
+    within a few percent. Score a gate on medians across starts and on the deterministic predicate,
+    never on same-run timing attribution.
+
+    **Upstream: PR https://github.com/vllm-project/vllm/pull/55661 (2026-09-07).**
+
