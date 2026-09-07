@@ -234,6 +234,16 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **Triage the six new upstream issues in our areas** (found 2026-09-07, log 83). None actioned:
+  **#55518** prefix-cache warning fires even with `disable_eagle_block_drop` (our flag — likely a
+  cosmetic warning bug, cheap to confirm), **#55506/#55507** mamba spec-decode block tables and align
+  state-index seeding (overlaps #53798, which is still open and one of the three legs of our
+  determinism chain), **#55514** deterministic expert selection in `grouped_topk` (our determinism
+  area — check whether it collides with our det finalize overlay), **#55397/#55405** NVFP4 kernel
+  selection on SM12x (our hardware, W4A16 vs W4A4 ranking — relevant to
+  [[w4a16-vs-w4a4-measured]]), **#55452/#55406** cudagraph capture/replay faults (adjacent to det-158).
+  Also watch **#55314** for a reply.
+
 - **Does prod capture cudagraphs at all? (det-158, queued, ~3 starts)** The capture-width A/B came
   back null because **neither arm captured graphs** — `0.0 GiB for CUDAGraph memory`, zero
   `Capturing CUDA graphs` tqdm lines while checkpoint-loading bars are present in the same logs.
