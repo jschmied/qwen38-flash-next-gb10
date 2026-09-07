@@ -3,6 +3,7 @@
 
 #include <cuda_runtime.h>
 #include <algorithm>
+#include <cstdlib>
 
 #include "torch_utils.h"
 
@@ -31,7 +32,16 @@ void launch_persistent_topk(const torch::stable::Tensor& logits,
   const int num_sms = device_prop->multiProcessorCount;
   const int max_smem_per_block = device_prop->sharedMemPerBlockOptin;
 
-  if (num_rows > 32 && max_smem_per_block >= 128 * 1024) {
+  // BENCH ONLY (not in the PR): KDET_NO_FILTERED=1 forces rows > 32 through the
+  // persistent multi-CTA path instead of FilteredTopK, to test whether that
+  // dispatch condition is still the right one. Read once; the workspace is
+  // large enough for the resulting group count on every part (1 MiB holds 292
+  // RadixRowState, and num_groups can never exceed the SM count).
+  static const bool kNoFiltered = [] {
+    const char* e = getenv("KDET_NO_FILTERED");
+    return e != nullptr && e[0] == '1';
+  }();
+  if (!kNoFiltered && num_rows > 32 && max_smem_per_block >= 128 * 1024) {
     cudaError_t status =
         vllm::FilteredTopKRaggedTransform<float, int32_t, TopK>(
             logits.const_data_ptr<float>(), output.mutable_data_ptr<int32_t>(),

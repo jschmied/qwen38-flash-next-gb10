@@ -24,14 +24,18 @@ app = modal.App("topk-filtered-bench", image=image)
 
 
 @app.function(gpu="H100", timeout=60 * 30)
-def bench(arch: str = "90a") -> str:
+def bench(arch: str = "90a", routing_ab: str = "0") -> str:
     import subprocess, sys
+    os.environ["ROUTING_AB"] = routing_ab
     env = {**os.environ, "DET_ARCH": arch, "DET_BUILD_DIR": "/tmp/build",
            "TORCH_CUDA_ARCH_LIST": {"90a": "9.0a", "80": "8.0", "100a": "10.0a"}[arch]}
     build = subprocess.run([sys.executable, "/bundle/build.py"], env=env,
                            capture_output=True, text=True, cwd="/bundle")
     if build.returncode != 0:
         return "BUILD FAILED\n" + build.stdout[-4000:] + "\n" + build.stderr[-8000:]
+    # Second arm: the same build with rows>32 forced through the persistent path.
+    if os.environ.get("ROUTING_AB") == "1":
+        env["KDET_NO_FILTERED"] = "1"
     run = subprocess.run([sys.executable, "-c",
                           "import torch;"
                           "torch.ops.load_library('/tmp/build/_C_det/_C_det.so');"
@@ -44,12 +48,12 @@ def bench(arch: str = "90a") -> str:
 @app.local_entrypoint()
 def main(gpu: str = "H100"):
     arch = ARCH.get(gpu.split(":")[0], "90a")
-    out = bench.with_options(gpu=gpu).remote(arch)
+    out = bench.with_options(gpu=gpu).remote(arch, os.environ.get("ROUTING_AB", "0"))
     print(out)
     if out.startswith("BUILD FAILED") or "ALL DONE" not in out:
         raise SystemExit("run did not complete -- see the output above")
     os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
-    path = os.path.join(HERE, "results", f"filtered-{gpu.replace(':', 'x')}.txt")
+    path = os.path.join(HERE, "results", f"filtered-{gpu.replace(':', 'x')}{'-persistent' if os.environ.get('ROUTING_AB')=='1' else ''}.txt")
     with open(path, "w") as fh:
         fh.write(out)
     print("\nsaved:", path)

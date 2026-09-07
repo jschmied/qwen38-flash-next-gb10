@@ -2009,3 +2009,25 @@ Plus whatever drives the separate generation-side path.
     the event itself. Check `systemctl is-active` and `free` before concluding anything died.
     **Owed:** if ZC502 adds a server/OpenAI-endpoint mode, run it the same day on the #55122 cases
     (see upstream log 80).
+
+156. **Routing is NOT the fix: the `rows > 32 → FilteredTopK` dispatch is sound (2026-09-07, 1 start,
+    `notes/data/routing-ab-H100-persistent.txt`).** Step 1 of the filtered-path plan, and it closes it.
+    **Prerequisite, checked first and clean:** there is no row-count limit in the persistent path —
+    `num_groups = min(max_resident_ctas / ctas_per_group, num_rows)` is bounded by occupancy, and
+    `kDetMaxCtasPerGroup` = 64 caps CTAs per *group*, not rows. `sizeof(RadixRowState)` = 3,588 B
+    against vLLM's 1 MiB `RADIX_TOPK_WORKSPACE_SIZE` = room for 292 groups, while `num_groups` can
+    never exceed the SM count (132 on H100 → 474 KB). The existing
+    `STD_TORCH_CHECK(workspace.numel() >= state_bytes)` would raise rather than corrupt anyway. So
+    forcing the routing needed no sizing change — only a bench-only `KDET_NO_FILTERED` env gate in
+    `bench/h100-filtered/topk_det.cu` (deliberately NOT in the PR sources).
+    - **Persistent wins 3 of 45 cells**, all at 64 rows × 65,536 (77.3 → 53.8 µs, +30 %). It loses
+      everywhere else, by up to 99 % at n=20,000 and 70 % at n=40,000.
+    - **The killer:** at **128 and 256 rows × 65,536 the persistent path LOSES** (−30 %, −26 %). The
+      lone win is an occupancy artifact — at 64 rows the Filtered path's one-CTA-per-row launch uses
+      64 of 132 SMs, so the multi-CTA split helps; past the SM count Filtered already fills the
+      machine. The window is `num_rows < SMs` AND a very long row, and a dispatch rule for it would
+      be SM-count dependent and fragile.
+    - The occupancy argument posted to #55122 was therefore **right in mechanism and wrong in scope**;
+      say so there rather than let the question stand. The remaining cost is algorithmic → step 3.
+    - 1 start only; effect sizes (−99 %, +30 %) are far outside run-to-run spread and consistent
+      across all three k, so the direction is safe. Do not quote the percentages without 3 starts.
