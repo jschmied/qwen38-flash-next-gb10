@@ -314,10 +314,12 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   same way `det_sort_row` was; a mechanical follow-up commit, not folded in. `/csrc/libtorch_stable` has no CODEOWNERS entry, which is why this PR has no owner. Whole grid 1.00–2.45× (was 1.25–4.31×),
   14 of 43 cells at or below stock, 210/210 + the PR's own 134 pytest cases, bit-identical throughout.
   Needs: push to the branch, rewrite the cost table a third time, reply to gau-nernst. Prod still runs v2.4.
-- **PR #55661 (swizzle gate):** blocked on the `swzab2` server A/B. Decision rule from the user:
-  ≥1–2 % TTFT at 2.5–5k with no losses → defend; <1 % → close. **Independently of the A/B, drop the
-  small-M island** — it buys 18.7 pp on the tuned set and *exactly zero* out of sample (slab-only and
-  island both score 236.3 pp on 88 held-out cells), which is the reviewer's "overfitting" point, proven.
+- ~~**PR #55661 (swizzle gate)**~~ **CLOSED BY US 2026-09-07 09:57** (upstream log 63). The A/B answered
+  it: the 7.5k control — where gate and merged pick the SAME swizzle, so it cannot be the variable —
+  moved +0.94 %, the same as every changed cell. That is drift, not the gate. Posted "the objection was
+  right — closing" with the six-arm table. The small-M island question is moot with the PR withdrawn;
+  the hold-out result (island and slab-only both 236.3 pp on 88 held-out cells) stands as the record of
+  why, and is worth reusing if the swizzle is ever revisited.
 - **`perf/gemm-launch-hwinfo` (local, unpushed):** KernelHardwareInfo + indexed `get_device_prop` +
   zero-byte workspace. Correct and fixes a latent multi-GPU bug, but measured at ~0.7 µs against a 10.9 µs
   submission that is itself hidden behind 150 µs kernels, and decode replays cudagraphs — submit as hygiene,
@@ -344,8 +346,10 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 4. **Cap the draft context** — they report −17 % single-stream step drafting over 65k rather than 248k.
 
 ### Hygiene
-- The swizzle harness and its 223 MiB CUTLASS tree still live in an old session's `/tmp` scratchpad, the kind
-  the 2026-09-03 reboot wiped. Move both to `/opt/llm/runners` before the next reboot.
+- ~~The swizzle harness and its 223 MiB CUTLASS tree still live in an old session's `/tmp` scratchpad~~
+  **DONE 2026-09-07**: harness rescued to `/opt/llm/runners/swzharness` (5.6 MB, world-readable, with a
+  README). The CUTLASS tree was deliberately NOT copied — it was a pristine NVIDIA checkout at `cb42473`
+  with zero local edits, so it is a one-line re-clone, not an artefact. Pin recorded in the README.
 - `/tmp/claude-1000` is `drwx------ jschmied` and servers run as `uid=llm`: anything a server must read goes
   in `/opt/llm/runners`, world-readable. This silently invalidated four A/B arms on 2026-09-07.
 
