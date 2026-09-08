@@ -2174,3 +2174,50 @@ Plus whatever drives the separate generation-side path.
     - Caveat: one workload (short agent-style prompt, 551 tokens, c=1). The old 1.83× was measured at a
       different cell. A single workload closing the spread is strong evidence, not proof, that it
       closed everywhere.
+
+163. **MTP RE-MEASUREMENT COMPLETE on the fixed prod stack (2026-09-07/08, `mtprem`, 69 cells,
+    `notes/data/mtprem.txt`).** Groups 0a/1/2/3, three starts each, arms interleaved across starts,
+    per-arm `FN_CACHE_ROOT`, `vllm-venv-fnmain2` with the multi-prefill fix (#55375), the PLE
+    semaphore reset and `disable_eagle_block_drop` all in place. FN_UTIL 0.80, 8k context, batch 4096,
+    max-num-seqs 16, prompt ~550 tokens.
+
+    | group | cell | n | tok/s | acceptance | accept-len |
+    | --- | --- | --- | --- | --- | --- |
+    | 1 | c=1 no-spec | 6 | **15.1–15.9** | — | — |
+    | 1 | c=1 MTP k=2 | 6 | **25.7–28.8** | 68–81 % | 2.35–2.61 |
+    | 1 | c=1 MTP k=3 | 6 | **26.4–27.5** | 61–70 % | 2.82–3.10 |
+    | 2 | c=16 off | 6 | **115.5–130.6** | — | — |
+    | 2 | c=16 MTP k=2 | 6 | **154.1–169.8** | 73–75 % | 2.46–2.49 |
+    | 2 | c=16 MTP k=3 | 6 | **156.8–164.4** | 65–67 % | 2.94–3.01 |
+    | 3 | c=1 n=2 | 6 | 25.7–28.0 | 71–80 % | 2.42–2.59 |
+    | 3 | c=1 n=3 | 6 | 25.0–28.5 | 62–70 % | 2.84–3.10 |
+    | 3 | c=1 n=4 | 6 | 24.1–29.9 | 51–64 % | 3.02–3.56 |
+    | 3 | c=1 n=9 | 6 | **18.7–24.6** | 28–38 % | 3.56–4.45 |
+
+    **What is now established.**
+    - **MTP over no-spec at c=1 is 1.62–1.91× (k=2) and 1.66–1.82× (k=3)** — both arms cleanly
+      non-overlapping with no-spec. The page's headline claim survives, on a stack that is not
+      corrupting its own output.
+    - **At c=16 the gain shrinks to 1.18–1.47×.** Batching already fills the machine, so speculation
+      has less idle to reclaim. Health checks pass: accept-length sits below its ceiling rather than
+      pinned at it (the corruption signature), zero preemptions, per-request times clustered within
+      0.4 s across all sixteen streams.
+    - **The published c=16 cells (99.1 / 100.5 tok/s) are BELOW even our no-spec arm (115.5–130.6).**
+      Those cells were measured while the multi-prefill corruption was live and are understated, not
+      merely stale.
+    - **Depth: flat through n=2–4, then falls.** Acceptance rate decays monotonically (80 % → 28 %)
+      while accepted length rises (2.4 → 4.5); the two cancel to n=4 and the rate collapse wins by
+      n=9, costing ~25 %. n=2/3/4 overlap each other completely, so the honest statement is "flat to
+      4", not an ordering. **n=5–8 remain unmeasurable** (the `block_size`/`compress_ratio` hole), so
+      the curve has a permanent gap between 4 and 9.
+    - **k=2 vs k=3 is unresolved at both concurrencies** — the ranges overlap. What differs is the
+      mechanism, consistently: k=3 buys ~0.45 more accepted tokens per draft at ~8 pp lower acceptance.
+
+    **What could NOT be measured, and why it matters for the page.**
+    - **ngram / ngram_gpu: impossible on this stack** (det-160) — they force model runner V1 and
+      `VLLM_PLE_CPU_OFFLOAD` rejects V1. 6 of the run's 6 deaths are these arms, 2 per start. Those
+      page cells are unreproducible, not stale.
+    - Group 4 (the ~68-token threshold) and group 5 (FP8-KV c=1) were left out of this run by choice —
+      lowest value in the plan, and I preferred the night to finish clean.
+    - Every figure here is the **main** build (`0.28.1rc1.dev401`). The page was measured on the
+      **preview** build, so the non-MTP ladder on the page is still owed a re-run for the same reason.
