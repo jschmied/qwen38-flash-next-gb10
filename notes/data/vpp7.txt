@@ -1,0 +1,71 @@
+== prompts: p_repeat.txt=13639B p_prose.txt=13639B 
+
+--- overlays -> off for arm truestock
+target venv: /opt/llm/runtime/vllm-venv-fnmain2
+-- plefix
+  plefix REMOVED
+-- cachekey
+  cache-key extras REMOVED
+-- detfin
+  detfin REMOVED
+-- qsadet
+  qsadet REMOVED
+state: qsadet=0 detfin=0 cachekey=0 plefix=0
+    installed: /opt/llm/runners/results/vpp7.txt:0
+
+=== arm truestock  FN_DET_TOPK=0 FN_DET_FINALIZE=0 overlays=off  17:42
+   up. QSADET=0  enable_prefix_caching=True  spec=method='mtp'
+sending requests (endpoint_label='sm121-truestock', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out7/truestock_repeat.json
+arm=truestock_repeat mode=sequential repeats=8 tokens=2447
+   repeat exit=0 size=13581515
+sending requests (endpoint_label='sm121-truestock', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out7/truestock_prose.json
+arm=truestock_prose mode=sequential repeats=8 tokens=2504
+   prose exit=0 size=13989344
+
+--- overlays -> on for arm allfixes
+target venv: /opt/llm/runtime/vllm-venv-fnmain2
+-- qsadet
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+-- detfin
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+-- cachekey
+  cache-key extras INSTALLED on MoERunner
+-- plefix
+  plefix INSTALLED (reset-before-launch)
+state: qsadet=1 detfin=1 cachekey=1 plefix=1
+    installed: /opt/llm/runners/results/vpp7.txt:0
+
+=== arm allfixes  FN_DET_TOPK=1 FN_DET_FINALIZE=1 overlays=on  17:57
+   up. QSADET=1  enable_prefix_caching=True  spec=method='mtp'
+sending requests (endpoint_label='sm121-allfixes', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out7/allfixes_repeat.json
+arm=allfixes_repeat mode=sequential repeats=8 tokens=2447
+   repeat exit=0 size=13577855
+sending requests (endpoint_label='sm121-allfixes', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out7/allfixes_prose.json
+arm=allfixes_prose mode=sequential repeats=8 tokens=2504
+   prose exit=0 size=14002653
+
+=== analyzer: truestock (reference) vs allfixes (candidate) ===
+   repeat analyze exit=0
+     truestock_repeat       disagreeing_positions=   122  max_spread=4.510923618567176  first@=3
+     allfixes_repeat        disagreeing_positions=     0  max_spread=0.0  first@=None
+     cross-arm modal-top1 mismatches=17
+   prose analyze exit=0
+     truestock_prose        disagreeing_positions=   335  max_spread=10.634275872376747  first@=2
+     allfixes_prose         disagreeing_positions=     0  max_spread=0.0  first@=None
+     cross-arm modal-top1 mismatches=104
+== ALL DONE == 18:12
+== restoring det overlays ON in /opt/llm/runtime/vllm-venv-fnmain2
+target venv: /opt/llm/runtime/vllm-venv-fnmain2
+-- qsadet
+  qsadet already installed
+-- detfin
+  detfin already installed
+-- cachekey
+  cache-key extras already installed
+-- plefix
+  plefix already installed
+state: qsadet=1 detfin=1 cachekey=1 plefix=1

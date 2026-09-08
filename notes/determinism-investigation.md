@@ -2928,3 +2928,40 @@ Plus whatever drives the separate generation-side path.
     **and** `prod_det_overlays.sh off` to remove the two ungated patches — against the full-fix arm.
     That isolates whether any of the four is load-bearing here, and it is the run that should have
     been done first.
+
+181. **TRUE STOCK IS BADLY NON-REPRODUCIBLE END TO END; ALL FOUR FIXES TOGETHER MAKE IT EXACT
+    (2026-09-08, `vpp7`, raw `notes/data/vpp7.txt`).** The comparison det-180 said should have come
+    first: `truestock` = `prod_det_overlays.sh off` **and** `FN_DET_TOPK=0` **and**
+    `FN_DET_FINALIZE=0` (none of the four fixes) against `allfixes` (all four). Prefix caching ON,
+    MTP=3, prompts 2,447 / 2,504 tokens, sequential, 8 repeats. Mechanism check on the stock arm:
+    `QSADET=0`, `enable_prefix_caching=True`, `spec=method='mtp'`.
+
+    | prompt | truestock | allfixes | cross-arm modal-top1 mismatches |
+    | --- | --- | --- | --- |
+    | `repeat` | **122** disagreeing positions, max forced-logprob spread **4.51**, first at position 3 | **0**, spread 0.0 | 17 |
+    | `prose` | **335** disagreeing positions, max spread **10.63**, first at position 2 | **0**, spread 0.0 | 104 |
+
+    Divergence starts at position 2–3 — effectively immediately — and the modal top-1 token differs
+    at 17 and 104 positions respectively, so this is not sub-threshold logprob noise: the model emits
+    different tokens run to run.
+
+    **This settles the eight nulls of det-178/179/180.** They were not evidence that the defect is
+    unreachable; they were measured with three of the four fixes silently active. Remove all four and
+    the same prompts, the same config, the same harness produce immediate, large divergence.
+
+    **It also means the concession drafted from det-180 was wrong in its framing and must not be
+    posted as written.** "The top-k fix alone was not required" remains literally true — this run
+    does not isolate which fix carries the weight — but the impression it gives, that end-to-end
+    reproducibility is not a real problem here, is refuted by this run. Draft revised.
+
+    **The question this opens, and it decides how #55122 should be argued:** *which* of the four is
+    load-bearing? Four one-at-a-time arms against true stock answer it:
+    `qsadet` (our PR), `detfin`, `cachekey`, `plefix`. If `qsadet` alone closes it, #55122 is the
+    fix and the reproducibility argument stands as originally made. If `plefix` alone closes it — the
+    PLE offload semaphore, finding 138's "residual noise of four days" — then our own PR is *not* the
+    load-bearing one for end-to-end reproducibility, and we should say so on the thread before anyone
+    merges anything on our account. Queued as `isolate4`.
+
+    **Venv hygiene held.** The EXIT trap restored the overlays: `state: qsadet=1 detfin=1 cachekey=1
+    plefix=1` in the results file. Worth noting because a killed run here would have left fnmain2
+    stripped and silently poisoned every later measurement.
