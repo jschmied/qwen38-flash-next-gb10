@@ -2750,3 +2750,49 @@ Plus whatever drives the separate generation-side path.
     server loads (~30 min) would have told me *whether* fnmain3 was broken; a five-minute AST diff
     against the known-good venv told me *what changed*, which is the question that actually mattered.
     Verify the thing you changed against a reference before inferring it from end-to-end behaviour.
+
+177. **fnmain3 (dev524 + the hand-ported overlay) IS PROVED WORKING (2026-09-08, `emptydiag`, raw
+    `notes/data/emptydiag.txt`).** Same three request shapes against fnmain2 (dev401, known good) as
+    control and fnmain3, dumping raw JSON rather than a parsed field. All five criteria:
+
+    1. **Starts, and the log names the right venv** — `/opt/llm/runtime/vllm-venv-fnmain3`, the
+       `venv-copy-shebang-trap` proof (fn3smoke).
+    2. **Static** — 0 `.rej`, 17 overlay files compile, 5 markers, registry True, PLE port
+       AST-identical to fnmain2 bar the intended rebase (det-176).
+    3. **Real content**, all three shapes, `finish_reason: stop`.
+    4. **Equivalence with the control:**
+
+       | shape | fnmain2 | fnmain3 |
+       | --- | --- | --- |
+       | short | `\n\nHello!` | **byte-identical** |
+       | effort | `\n\nHello! 👋 How are you doing today? …` | **byte-identical** |
+       | long, 3,018 tok | coherent summary | coherent summary, different wording |
+
+       `system_fingerprint` confirms `dev401+g8340fe1bb` vs `dev524+g5db652225`, so these really are
+       different builds. The long-shape wording difference is **not** evidence of a defect: the two
+       builds differ by 123 dev revisions including the removal of torch.compile for this model, and
+       memory `temp0-not-reproducible-under-load` records that Flash-Next diverges at temperature 0
+       from ~30 tokens even on one build. Two byte-identical shapes is the strong result here.
+    5. **PLE offload exercised, not merely present** — `PleOffload: spawning worker (rank=0 …
+       ipc://…)` and a separate `PleOffloadWorker` process, 238 log lines, no fallback. The only
+       `ERROR` lines are 8 copies of a `Qwen3VLVideoProcessorInitKwargs` docstring complaint from
+       transformers, present on both builds and unrelated.
+
+    **And the empty completions that started this are fully explained — no defect anywhere.**
+    Two independent mistakes of mine stacked:
+    - **Wrong field name.** The reasoning text is in `message.reasoning`, **not**
+      `reasoning_content`. My fallback could never match, so an empty `content` printed as "EMPTY
+      content AND reasoning_content" and looked like a dead server.
+    - **Reasoning ate the token budget.** `completion_tokens_details.reasoning_tokens` is 26 for even
+      "Say hello." `fn3smoke` asked for `max_tokens=24` — the budget was spent thinking before any
+      content existed. `pr872` asked for 160 on a harder summarise task whose reasoning ran 108–123
+      here, leaving little or nothing.
+
+    **Consequence for det-175:** its FlashInfer-backend result stands untouched (the engine never
+    started, so no probe was involved), but its two "candidate causes" for the empty arms are now
+    closed — it was the probe, and fnmain3 was healthy the whole time. The `pr872` determinism
+    comparison still needs re-running with a sane token budget and the right field.
+
+    **Method:** the user's "shouldn't you verify PLE first?" was the cheaper and better order, and
+    the raw-JSON dump is what actually settled it. Three probe iterations were spent guessing at a
+    response shape that one dump revealed.

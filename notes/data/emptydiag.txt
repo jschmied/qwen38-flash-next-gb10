@@ -1,0 +1,50 @@
+
+=== fnmain2  venv=/opt/llm/runtime/vllm-venv-fnmain2  14:31
+   up. venv in log: /opt/llm/runtime/vllm-venv-fnmain2 
+   --- shape=short raw response (first 700 chars) ---
+     {"id":"chatcmpl-8cd5515d1b668de9","object":"chat.completion","created":1788871471,"model":"flashnext","choices":[{"index":0,"message":{"role":"assistant","content":"\n\nHello!","refusal":null,"annotations":null,"audio":null,"function_call":null,"reasoning":"We need to respond to user: \"Say hello.\" Simple. Need final only hello maybe. Ensure no extra.\n"},"logprobs":null,"finish_reason":"stop","stop_reason":null,"token_ids":null,"routed_experts":null}],"service_tier":null,"system_fingerprint":"vllm-0.28.1rc1.dev401+g8340fe1bb-5b8a0ae5","usage":{"prompt_tokens":55,"total_tokens":84,"completion_tokens":29,"prompt_tokens_details":null,"completion_tokens_details":{"reasoning_tokens":24}},"promp
+     message keys: ['annotations', 'audio', 'content', 'function_call', 'reasoning', 'refusal', 'role']
+     finish_reason: stop | usage: {'prompt_tokens': 55, 'total_tokens': 84, 'completion_tokens': 29, 'prompt_tokens_details': None, 'completion_tokens_details': {'reasoning_tokens': 24}}
+     role: len=9 'assistant'
+     content: len=8 '\n\nHello!'
+     reasoning: len=95 'We need to respond to user: "Say hello." Simple. Need final only hello maybe. En'
+   --- shape=effort raw response (first 700 chars) ---
+     {"id":"chatcmpl-af8928300665787f","object":"chat.completion","created":1788871473,"model":"flashnext","choices":[{"index":0,"message":{"role":"assistant","content":"\n\nHello! 👋 How are you doing today? Is there anything I can help you with?","refusal":null,"annotations":null,"audio":null,"function_call":null,"reasoning":"The user wants me to say hello. This is a simple, straightforward greeting request. I'll respond with a friendly hello.\n"},"logprobs":null,"finish_reason":"stop","stop_reason":null,"token_ids":null,"routed_experts":null}],"service_tier":null,"system_fingerprint":"vllm-0.28.1rc1.dev401+g8340fe1bb-5b8a0ae5","usage":{"prompt_tokens":13,"total_tokens":61,"completion_tokens"
+     message keys: ['annotations', 'audio', 'content', 'function_call', 'reasoning', 'refusal', 'role']
+     finish_reason: stop | usage: {'prompt_tokens': 13, 'total_tokens': 61, 'completion_tokens': 48, 'prompt_tokens_details': None, 'completion_tokens_details': {'reasoning_tokens': 26}}
+     role: len=9 'assistant'
+     content: len=74 '\n\nHello! 👋 How are you doing today? Is there anything I can help you with?'
+     reasoning: len=120 'The user wants me to say hello. This is a simple, straightforward greeting reque'
+   --- shape=long raw response (first 700 chars) ---
+     {"id":"chatcmpl-b2e968fbc3802811","object":"chat.completion","created":1788871477,"model":"flashnext","choices":[{"index":0,"message":{"role":"assistant","content":"\n\nThis is a long, seemingly random sequence of GPU/computing-related terms (kernel, stride, buffer, tensor, config) with no discernible semantic content or coherent message.","refusal":null,"annotations":null,"audio":null,"function_call":null,"reasoning":"The user has provided a very long sequence of words that appear to be randomly generated from a small vocabulary: \"stride\", \"kernel\", \"config\", \"buffer\", \"tensor\". They want me to summarize this in one sentence.\n\nThis appears to be a random sequence of words relate
+     message keys: ['annotations', 'audio', 'content', 'function_call', 'reasoning', 'refusal', 'role']
+     finish_reason: stop | usage: {'prompt_tokens': 3018, 'total_tokens': 3180, 'completion_tokens': 162, 'prompt_tokens_details': None, 'completion_tokens_details': {'reasoning_tokens': 123}}
+     role: len=9 'assistant'
+     content: len=173 '\n\nThis is a long, seemingly random sequence of GPU/computing-related terms (kern'
+     reasoning: len=592 'The user has provided a very long sequence of words that appear to be randomly g'
+
+=== fnmain3  venv=/opt/llm/runtime/vllm-venv-fnmain3  14:45
+   up. venv in log: /opt/llm/runtime/vllm-venv-fnmain3 
+   --- shape=short raw response (first 700 chars) ---
+     {"id":"chatcmpl-83270b7b3e63935d","object":"chat.completion","created":1788872207,"model":"flashnext","choices":[{"index":0,"message":{"role":"assistant","content":"\n\nHello!","refusal":null,"annotations":null,"audio":null,"function_call":null,"reasoning":"We need to respond to user: \"Say hello.\" Simple. Need final only. Ensure no hidden chain? final concise.\n"},"logprobs":null,"finish_reason":"stop","stop_reason":null,"token_ids":null,"routed_experts":null}],"service_tier":null,"system_fingerprint":"vllm-0.28.1rc1.dev524+g5db652225-5e22df87","usage":{"prompt_tokens":55,"total_tokens":86,"completion_tokens":31,"prompt_tokens_details":null,"completion_tokens_details":{"reasoning_tokens":2
+     message keys: ['annotations', 'audio', 'content', 'function_call', 'reasoning', 'refusal', 'role']
+     finish_reason: stop | usage: {'prompt_tokens': 55, 'total_tokens': 86, 'completion_tokens': 31, 'prompt_tokens_details': None, 'completion_tokens_details': {'reasoning_tokens': 26}}
+     role: len=9 'assistant'
+     content: len=8 '\n\nHello!'
+     reasoning: len=105 'We need to respond to user: "Say hello." Simple. Need final only. Ensure no hidd'
+   --- shape=effort raw response (first 700 chars) ---
+     {"id":"chatcmpl-a1e5bc5b7f474ef7","object":"chat.completion","created":1788872209,"model":"flashnext","choices":[{"index":0,"message":{"role":"assistant","content":"\n\nHello! 👋 How are you doing today? Is there anything I can help you with?","refusal":null,"annotations":null,"audio":null,"function_call":null,"reasoning":"The user wants me to say hello. This is a simple, straightforward greeting request. I'll respond with a friendly hello.\n"},"logprobs":null,"finish_reason":"stop","stop_reason":null,"token_ids":null,"routed_experts":null}],"service_tier":null,"system_fingerprint":"vllm-0.28.1rc1.dev524+g5db652225-5e22df87","usage":{"prompt_tokens":13,"total_tokens":61,"completion_tokens"
+     message keys: ['annotations', 'audio', 'content', 'function_call', 'reasoning', 'refusal', 'role']
+     finish_reason: stop | usage: {'prompt_tokens': 13, 'total_tokens': 61, 'completion_tokens': 48, 'prompt_tokens_details': None, 'completion_tokens_details': {'reasoning_tokens': 26}}
+     role: len=9 'assistant'
+     content: len=74 '\n\nHello! 👋 How are you doing today? Is there anything I can help you with?'
+     reasoning: len=120 'The user wants me to say hello. This is a simple, straightforward greeting reque'
+   --- shape=long raw response (first 700 chars) ---
+     {"id":"chatcmpl-95380993852540df","object":"chat.completion","created":1788872213,"model":"flashnext","choices":[{"index":0,"message":{"role":"assistant","content":"\n\nThis is a long, seemingly random sequence of deep-learning-related terms (stride, kernel, config, buffer, tensor) with no coherent meaning or structured information.","refusal":null,"annotations":null,"audio":null,"function_call":null,"reasoning":"The user has provided a very long sequence of words that appear to be randomly generated from a small vocabulary: \"stride\", \"kernel\", \"kernel\", \"config\", \"buffer\", \"tensor\". These are all terms related to deep learning/convolutional neural network operations. The user as
+     message keys: ['annotations', 'audio', 'content', 'function_call', 'reasoning', 'refusal', 'role']
+     finish_reason: stop | usage: {'prompt_tokens': 3018, 'total_tokens': 3161, 'completion_tokens': 143, 'prompt_tokens_details': None, 'completion_tokens_details': {'reasoning_tokens': 108}}
+     role: len=9 'assistant'
+     content: len=167 '\n\nThis is a long, seemingly random sequence of deep-learning-related terms (stri'
+     reasoning: len=539 'The user has provided a very long sequence of words that appear to be randomly g'
+
+== ALL DONE == 14:57
