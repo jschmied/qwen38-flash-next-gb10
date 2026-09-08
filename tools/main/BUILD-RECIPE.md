@@ -59,3 +59,33 @@ missing dependency.
 - all five markers present
 - the det overlays are installed **in the new venv** (check the path in the script's output)
 - a server start whose log names the new venv path, plus one real request
+
+## dev524 (2026-09-08): the overlay shrank from 17 files to 12
+
+Regenerating the overlay against pristine dev524 (`fnmain-overlay-dev524.diff`, 12 files, re-applies
+with **0 failed hunks**) turned up something worth knowing: **upstream now ships
+`vllm/v1/ple_offload/` and `vllm/model_executor/layers/ple_offload_layer.py`.** Those five files were
+*additions* in the dev401 overlay; on dev524 they exist upstream and our copies are byte-identical to
+them, so they carry no diff at all. The PLE offload machinery has landed (#53899 and successors) and
+we no longer maintain it locally.
+
+Two consequences:
+
+- The dev401 overlay's "MISSING in one of the trees" rows for those paths were correct **then** and
+  are wrong **now** — do not read them as a missing dependency on dev524.
+- `pip install --no-deps` overwrites those files with upstream's versions. Memory
+  `fnext-venv-ple-backport` warns that a hand-applied patch (`4e8b849b8d97`) on
+  `v1/ple_offload/connector.py` reverts silently on reinstall and then startup hangs. On dev524 the
+  hang did **not** occur (det-177: PleOffloadWorker spawns, server serves, output byte-identical to
+  the old build on two shapes), which is consistent with that fix being upstream now — but the
+  `.pre-4e8b849` backup still sits in the venv, so confirm rather than assume before relying on it.
+
+Generate the overlay with, from a directory holding `newtree1` (pristine) and `newtree2` (patched):
+
+    diff -ruN -x '*.orig' -x '*.orig-*' -x '*.pre*' -x '__pycache__' -x '*.rej' \
+             -x 'qsa_indexer.py' -x 'flashinfer_cutlass_moe.py' newtree1 newtree2
+
+The last two exclusions matter: `prod_det_overlays.sh` patches those separately, and folding its
+changes into the base overlay would apply them twice and make the det arms un-switchable.
+Verify with `patch -p1 --dry-run -N` from a tree containing `vllm/` — **`-p1`, not `-p2`**, and
+`--dry-run` prints "checking file", so assert that count is 12 before believing "0 failed".
