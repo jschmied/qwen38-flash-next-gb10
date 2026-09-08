@@ -1429,3 +1429,32 @@
     measured with (`/opt/llm/runners/dv/draft_vocab_*.txt`, 2026-09-08 21:17). The corpus has grown since, so the new 32k
     set is not byte-identical to the old one. A size sweep must therefore re-measure 32k as its own arm rather than reuse
     det-135's number as the baseline.
+
+
+152. **We have been running `--async-scheduling` with MTP for weeks, in every benchmark and in prod, while our own
+    launcher carried a comment saying never to do it (code read 2026-09-08, `config/scheduler.py:179`,
+    `config/vllm.py:1270-1319`, `v1/executor/multiproc_executor.py:558`).** `SchedulerConfig.async_scheduling` defaults
+    to **`None`**, not `False`, and the `None` branch *enables* it unless something incompatible is present. MTP is in
+    `EagleModelTypes`, so the speculative-decoding exclusion does not apply to us; `MultiprocExecutor.supports_async_scheduling()`
+    returns `True`, so the executor exclusion does not either; we do not set `disable_padded_drafter_batch`. Every branch
+    falls through to `self.scheduler_config.async_scheduling = True`. We never pass `--no-async-scheduling`.
+
+    The comment in `serve-fnmain.sh` reads: "NEVER combine MTP with `--async-scheduling`: `_prepare_ngram_context` reads
+    the CPU token mirror while it still holds speculation's -1 placeholders, giving a wrong n-gram context silently. No
+    benchmark reveals it." Two things are wrong with it now. **First, `_prepare_ngram_context` is not about n-gram
+    speculation at all** — it builds the PLE table's n-gram *embedding* context (`uses_ngram_embedding`,
+    `models/qwen4_exp/nvidia/model_state.py:65`), so it runs for every request on this model whatever the speculation
+    method, and it reads `req_states.all_token_ids.gpu`, a device tensor, not a CPU mirror. **Second, and worse, the
+    caution was never acted on**: a warning that the launcher does not enforce and the default overrides is not a
+    safeguard, it is a note that made us believe we were safe.
+
+    Evidence that the hazard is at least not firing in the sequential path: det-181 and det-184 get bit-exact greedy
+    reproduction across restarts with all four determinism fixes — with async scheduling on the whole time. That is
+    strong for c=1 and says nothing about c>1. The field runs the same combination deliberately: MiaAI-Lab's dual-Spark
+    tuning report keeps `--async-scheduling` for its best c=4 aggregate (140.7 vs 136.2 tok/s) with no accuracy note.
+
+    **Queued as `asched`:** `--no-async-scheduling` against the default, deterministic stack on, cross-arm output
+    comparison at c=1 and c=8. If the two arms agree bit-for-bit the caution is dead and the speed is ours to keep; if
+    they diverge at c>1 only, that is a real defect in a configuration vLLM enables by default for every MTP user on a
+    hybrid, and it belongs upstream. Either way the launcher comment gets replaced by a flag, because a comment is not
+    a control.
