@@ -1,0 +1,54 @@
+{
+ "tool": "vllm-position-parity",
+ "tool_version": "0.1.0",
+ "measurement_policy": {
+  "automatic_bug_label": false,
+  "automatic_root_cause": false,
+  "universal_significance_threshold": null,
+  "note": "Observed measurements only; interpretation is external."
+ },
+ "reference": {
+  "label": "det0_5960_sequential",
+  "execution_mode": "sequential",
+  "summary": {
+   "repeat_count": 8,
+   "position_count": 5201,
+   "observed_first_top1_disagreement_position": null,
+   "observed_first_nonzero_forced_logprob_spread_position": null,
+   "positions_with_top1_disagreement": 0,
+   "max_forced_logprob_spread": 0.0,
+   "max_forced_logprob_spread_position": 1
+  },
+  "warnings": [],
+  "positions": "<5201 entries dropped; regenerate from notes/data/vpp4.txt inputs>"
+ },
+ "candidate": {
+  "label": "det1_5960_sequential",
+  "execution_mode": "sequential",
+  "summary": {
+   "repeat_count": 8,
+   "position_count": 5201,
+   "observed_first_top1_disagreement_position": null,
+   "observed_first_nonzero_forced_logprob_spread_position": null,
+   "positions_with_top1_disagreement": 0,
+   "max_forced_logprob_spread": 0.0,
+   "max_forced_logprob_spread_position": 1
+  },
+  "warnings": [],
+  "positions": "<5201 entries dropped; regenerate from notes/data/vpp4.txt inputs>"
+ },
+ "cross_arm": {
+  "reference_label": "det0_5960_sequential",
+  "candidate_label": "det1_5960_sequential",
+  "reference_execution_mode": "sequential",
+  "candidate_execution_mode": "sequential",
+  "summary": {
+   "common_position_count": 5201,
+   "observed_first_cross_arm_modal_top1_mismatch_position": null,
+   "positions_with_cross_arm_modal_top1_mismatch": 0,
+   "max_abs_forced_logprob_mean_delta": 0.0,
+   "max_abs_forced_logprob_mean_delta_position": 1
+  },
+  "positions": "<5201 entries dropped; regenerate from notes/data/vpp4.txt inputs>"
+ }
+}

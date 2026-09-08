@@ -1,0 +1,54 @@
+{
+ "tool": "vllm-position-parity",
+ "tool_version": "0.1.0",
+ "measurement_policy": {
+  "automatic_bug_label": false,
+  "automatic_root_cause": false,
+  "universal_significance_threshold": null,
+  "note": "Observed measurements only; interpretation is external."
+ },
+ "reference": {
+  "label": "det0_5960_concurrent",
+  "execution_mode": "concurrent",
+  "summary": {
+   "repeat_count": 8,
+   "position_count": 5201,
+   "observed_first_top1_disagreement_position": 8,
+   "observed_first_nonzero_forced_logprob_spread_position": 5,
+   "positions_with_top1_disagreement": 3055,
+   "max_forced_logprob_spread": 1.160348892211914,
+   "max_forced_logprob_spread_position": 15
+  },
+  "warnings": [],
+  "positions": "<5201 entries dropped; regenerate from notes/data/vpp4.txt inputs>"
+ },
+ "candidate": {
+  "label": "det1_5960_concurrent",
+  "execution_mode": "concurrent",
+  "summary": {
+   "repeat_count": 8,
+   "position_count": 5201,
+   "observed_first_top1_disagreement_position": 8,
+   "observed_first_nonzero_forced_logprob_spread_position": 5,
+   "positions_with_top1_disagreement": 3055,
+   "max_forced_logprob_spread": 1.160348892211914,
+   "max_forced_logprob_spread_position": 15
+  },
+  "warnings": [],
+  "positions": "<5201 entries dropped; regenerate from notes/data/vpp4.txt inputs>"
+ },
+ "cross_arm": {
+  "reference_label": "det0_5960_concurrent",
+  "candidate_label": "det1_5960_concurrent",
+  "reference_execution_mode": "concurrent",
+  "candidate_execution_mode": "concurrent",
+  "summary": {
+   "common_position_count": 5201,
+   "observed_first_cross_arm_modal_top1_mismatch_position": 3002,
+   "positions_with_cross_arm_modal_top1_mismatch": 65,
+   "max_abs_forced_logprob_mean_delta": 0.0,
+   "max_abs_forced_logprob_mean_delta_position": 1
+  },
+  "positions": "<5201 entries dropped; regenerate from notes/data/vpp4.txt inputs>"
+ }
+}
