@@ -47,6 +47,12 @@ the speculative config). Backup at `/opt/llm/serve-fnmain.sh.bak-20260908`.
 
 **In flight:** nothing on the box; it is idle.
 
+**RESOLVED 2026-09-08 night — the three lists are reconciled**, with the venv checked rather than assumed: the set is
+**five** defects. #55375 (PLE state-stride) is merged upstream and byte-identical in `vllm-venv-fnmain2`, so it is not an
+overlay; the other four are what `prod_det_overlays.sh` installs and what det-184 measured; the FlashInfer autotune cache
+key was missing from every earlier list even though the MoE finalize fix cannot start without it. README fixed. The
+superseded audit follows for the record:
+
 **CAUTION — three different "the fixes" lists are in circulation and they disagree (audit 2026-09-08):**
 - **PR #55122 body (live, public):** "one of **three** independent defects" — top-k + MoE fused
   finalize (#54945/#54948) + align-mode blocks (#54076/#53798).
