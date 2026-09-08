@@ -1,0 +1,270 @@
+== PSTACK  start 2026-09-08 23:03
+fla overlay ON
+
+=== arm fla_1  fla=on  23:03
+   MECH marker: 4 hit(s); FLA fused kkt+solve overlay LOADED, FLA_CHUNK_SIZE=64 -> fused path ACTIVE
+   MECH block:  Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+  fla_1 TTFT 8k: prompt_tokens=7528 median=3.152s all=3.466 3.143 3.152 rate=2388 tok/s
+  fla_1 TTFT 30k: prompt_tokens=29288 median=12.055s all=12.055 12.036 12.069 rate=2430 tok/s
+  fla_1 A base: prompt_tokens=20076 cold=8.23s second=0.51s hits/queries=19200/20076
+  fla_1 A N=   16: prompt_tokens=20109 ttft median=0.584s all=0.584 0.584 0.574 hits/queries(last)=19200/20109
+  fla_1 A N=   64: prompt_tokens=20215 ttft median=0.635s all=0.655 0.632 0.635 hits/queries(last)=19200/20215
+  fla_1 A N=  256: prompt_tokens=20628 ttft median=0.777s all=0.777 0.774 0.793 hits/queries(last)=19200/20628
+  fla_1 A N= 1024: prompt_tokens=22320 ttft median=1.518s all=1.534 1.518 1.506 hits/queries(last)=19200/22320
+  fla_1 A N= 4096: prompt_tokens=29046 ttft median=4.199s all=4.209 4.199 4.178 hits/queries(last)=19200/29046
+  fla_1 A FIT: ttft = 550 ms + new_tokens / 2472 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  fla_1 C tokenize(+template) of 20149 tokens: 25 ms
+  fla_1 C tokenize(+template) of 86 tokens: 2 ms
+  fla_1 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.363s hits/queries=0/1840
+  fla_1 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.355s hits/queries=1600/1936
+  fla_1 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.792s hits/queries=1600/2856
+  fla_1 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.329s hits/queries=1600/3650
+  fla_1 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.582s hits/queries=3200/4025
+  fla_1 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.644s hits/queries=3200/4216
+  fla_1 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.244s hits/queries=3200/5011
+  fla_1 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.378s hits/queries=4800/5139
+  fla_1 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.426s hits/queries=4800/5264
+  fla_1 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.672s hits/queries=4800/5748
+  fla_1 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.665s hits/queries=4800/5857
+  fla_1 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.290s hits/queries=4800/6612
+  fla_1 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.514s hits/queries=6400/7004
+  fla_1 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.613s hits/queries=6400/7286
+  fla_1 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.692s hits/queries=6400/7520
+  fla_1 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.774s hits/queries=6400/7702
+  fla_1 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.797s hits/queries=6400/7912
+  fla_1 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.163s hits/queries=6400/8147
+  fla_1 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.343s hits/queries=8000/8246
+  fla_1 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.434s hits/queries=8000/8459
+  fla_1 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.581s hits/queries=8000/8784
+  fla_1 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.634s hits/queries=8000/9026
+  fla_1 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.774s hits/queries=8000/9413
+  fla_1 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.678s hits/queries=8000/10923
+  fla_1 DV c=1 rep=0: accept=61.4% AL=2.84 | 200 tok in 9.6s = 20.8 tok/s agg, 20.8 per stream | garbage 0/1
+  fla_1 DV c=1 rep=1: accept=48.8% AL=2.46 | 200 tok in 10.7s = 18.7 tok/s agg, 18.7 per stream | garbage 0/1
+  fla_1 DV c=1 rep=2: accept=50.6% AL=2.52 | 200 tok in 10.3s = 19.4 tok/s agg, 19.4 per stream | garbage 0/1
+fla overlay OFF
+
+=== arm base_1  fla=off  23:20
+   MECH marker: 0 hit(s); 
+   MECH block:  Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+  base_1 TTFT 8k: prompt_tokens=7528 median=3.187s all=3.494 3.172 3.187 rate=2362 tok/s
+  base_1 TTFT 30k: prompt_tokens=29288 median=12.215s all=12.195 12.215 12.230 rate=2398 tok/s
+  base_1 A base: prompt_tokens=20076 cold=8.34s second=0.53s hits/queries=19200/20076
+  base_1 A N=   16: prompt_tokens=20109 ttft median=0.601s all=0.605 0.601 0.589 hits/queries(last)=19200/20109
+  base_1 A N=   64: prompt_tokens=20215 ttft median=0.650s all=0.662 0.650 0.645 hits/queries(last)=19200/20215
+  base_1 A N=  256: prompt_tokens=20628 ttft median=0.778s all=0.790 0.777 0.778 hits/queries(last)=19200/20628
+  base_1 A N= 1024: prompt_tokens=22320 ttft median=1.524s all=1.542 1.524 1.522 hits/queries(last)=19200/22320
+  base_1 A N= 4096: prompt_tokens=29046 ttft median=4.239s all=4.248 4.230 4.239 hits/queries(last)=19200/29046
+  base_1 A FIT: ttft = 557 ms + new_tokens / 2449 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  base_1 C tokenize(+template) of 20149 tokens: 40 ms
+  base_1 C tokenize(+template) of 86 tokens: 3 ms
+  base_1 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.378s hits/queries=0/1840
+  base_1 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.352s hits/queries=1600/1936
+  base_1 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.779s hits/queries=1600/2856
+  base_1 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.320s hits/queries=1600/3650
+  base_1 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.580s hits/queries=3200/4025
+  base_1 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.636s hits/queries=3200/4216
+  base_1 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.238s hits/queries=3200/5011
+  base_1 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.374s hits/queries=4800/5139
+  base_1 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.420s hits/queries=4800/5264
+  base_1 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.665s hits/queries=4800/5748
+  base_1 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.659s hits/queries=4800/5857
+  base_1 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.284s hits/queries=4800/6612
+  base_1 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.510s hits/queries=6400/7004
+  base_1 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.611s hits/queries=6400/7286
+  base_1 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.686s hits/queries=6400/7520
+  base_1 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.762s hits/queries=6400/7702
+  base_1 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.808s hits/queries=6400/7912
+  base_1 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.158s hits/queries=6400/8147
+  base_1 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.351s hits/queries=8000/8246
+  base_1 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.429s hits/queries=8000/8459
+  base_1 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.580s hits/queries=8000/8784
+  base_1 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.637s hits/queries=8000/9026
+  base_1 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.779s hits/queries=8000/9413
+  base_1 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.673s hits/queries=8000/10923
+  base_1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.1s = 19.8 tok/s agg, 19.8 per stream | garbage 0/1
+  base_1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.9 tok/s agg, 16.9 per stream | garbage 0/1
+  base_1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 20.0 tok/s agg, 20.0 per stream | garbage 0/1
+
+== GATE: fla arm marker ->    MECH marker: 4 hit(s); FLA fused kkt+solve overlay LOADED, FLA_CHUNK_SIZE=64 -> fused path ACTIVE
+         base arm marker ->    MECH marker: 0 hit(s); 
+fla overlay ON
+
+=== arm fla_2  fla=on  23:36
+   MECH marker: 4 hit(s); FLA fused kkt+solve overlay LOADED, FLA_CHUNK_SIZE=64 -> fused path ACTIVE
+   MECH block:  Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+  fla_2 TTFT 8k: prompt_tokens=7528 median=3.150s all=3.291 3.143 3.150 rate=2390 tok/s
+  fla_2 TTFT 30k: prompt_tokens=29288 median=12.091s all=12.293 12.089 12.091 rate=2422 tok/s
+  fla_2 A base: prompt_tokens=20076 cold=8.24s second=0.52s hits/queries=19200/20076
+  fla_2 A N=   16: prompt_tokens=20109 ttft median=0.588s all=0.593 0.588 0.577 hits/queries(last)=19200/20109
+  fla_2 A N=   64: prompt_tokens=20215 ttft median=0.646s all=0.653 0.646 0.631 hits/queries(last)=19200/20215
+  fla_2 A N=  256: prompt_tokens=20628 ttft median=0.769s all=0.781 0.769 0.760 hits/queries(last)=19200/20628
+  fla_2 A N= 1024: prompt_tokens=22320 ttft median=1.516s all=1.517 1.516 1.500 hits/queries(last)=19200/22320
+  fla_2 A N= 4096: prompt_tokens=29046 ttft median=4.217s all=4.283 4.212 4.217 hits/queries(last)=19200/29046
+  fla_2 A FIT: ttft = 543 ms + new_tokens / 2442 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  fla_2 C tokenize(+template) of 20149 tokens: 40 ms
+  fla_2 C tokenize(+template) of 86 tokens: 3 ms
+  fla_2 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.667s hits/queries=0/1840
+  fla_2 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.372s hits/queries=1600/1936
+  fla_2 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.799s hits/queries=1600/2856
+  fla_2 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.321s hits/queries=1600/3650
+  fla_2 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.565s hits/queries=3200/4025
+  fla_2 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.641s hits/queries=3200/4216
+  fla_2 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.234s hits/queries=3200/5011
+  fla_2 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.376s hits/queries=4800/5139
+  fla_2 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.435s hits/queries=4800/5264
+  fla_2 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.671s hits/queries=4800/5748
+  fla_2 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.659s hits/queries=4800/5857
+  fla_2 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.285s hits/queries=4800/6612
+  fla_2 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.513s hits/queries=6400/7004
+  fla_2 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.615s hits/queries=6400/7286
+  fla_2 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.693s hits/queries=6400/7520
+  fla_2 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.851s hits/queries=6400/7702
+  fla_2 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.914s hits/queries=6400/7912
+  fla_2 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.471s hits/queries=6400/8147
+  fla_2 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.362s hits/queries=8000/8246
+  fla_2 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.441s hits/queries=8000/8459
+  fla_2 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.590s hits/queries=8000/8784
+  fla_2 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.646s hits/queries=8000/9026
+  fla_2 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.778s hits/queries=8000/9413
+  fla_2 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.679s hits/queries=8000/10923
+  fla_2 DV c=1 rep=0: accept=61.4% AL=2.84 | 200 tok in 9.8s = 20.4 tok/s agg, 20.4 per stream | garbage 0/1
+  fla_2 DV c=1 rep=1: accept=48.8% AL=2.46 | 200 tok in 10.9s = 18.4 tok/s agg, 18.4 per stream | garbage 0/1
+  fla_2 DV c=1 rep=2: accept=50.6% AL=2.52 | 200 tok in 10.5s = 19.0 tok/s agg, 19.0 per stream | garbage 0/1
+fla overlay OFF
+
+=== arm base_2  fla=off  23:51
+   MECH marker: 0 hit(s); 
+   MECH block:  Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+  base_2 TTFT 8k: prompt_tokens=7528 median=3.196s all=3.336 3.173 3.196 rate=2356 tok/s
+  base_2 TTFT 30k: prompt_tokens=29288 median=12.207s all=12.199 12.207 12.249 rate=2399 tok/s
+  base_2 A base: prompt_tokens=20076 cold=8.39s second=0.52s hits/queries=19200/20076
+  base_2 A N=   16: prompt_tokens=20109 ttft median=0.583s all=0.596 0.583 0.581 hits/queries(last)=19200/20109
+  base_2 A N=   64: prompt_tokens=20215 ttft median=0.640s all=0.647 0.640 0.635 hits/queries(last)=19200/20215
+  base_2 A N=  256: prompt_tokens=20628 ttft median=0.768s all=0.778 0.768 0.766 hits/queries(last)=19200/20628
+  base_2 A N= 1024: prompt_tokens=22320 ttft median=1.525s all=1.537 1.525 1.518 hits/queries(last)=19200/22320
+  base_2 A N= 4096: prompt_tokens=29046 ttft median=4.249s all=4.314 4.249 4.232 hits/queries(last)=19200/29046
+  base_2 A FIT: ttft = 544 ms + new_tokens / 2423 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  base_2 C tokenize(+template) of 20149 tokens: 27 ms
+  base_2 C tokenize(+template) of 86 tokens: 2 ms
+  base_2 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.360s hits/queries=0/1840
+  base_2 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.358s hits/queries=1600/1936
+  base_2 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.788s hits/queries=1600/2856
+  base_2 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.332s hits/queries=1600/3650
+  base_2 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.585s hits/queries=3200/4025
+  base_2 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.632s hits/queries=3200/4216
+  base_2 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.245s hits/queries=3200/5011
+  base_2 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.380s hits/queries=4800/5139
+  base_2 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.426s hits/queries=4800/5264
+  base_2 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.668s hits/queries=4800/5748
+  base_2 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.664s hits/queries=4800/5857
+  base_2 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.291s hits/queries=4800/6612
+  base_2 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.509s hits/queries=6400/7004
+  base_2 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.617s hits/queries=6400/7286
+  base_2 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.684s hits/queries=6400/7520
+  base_2 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.774s hits/queries=6400/7702
+  base_2 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.808s hits/queries=6400/7912
+  base_2 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.166s hits/queries=6400/8147
+  base_2 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.348s hits/queries=8000/8246
+  base_2 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.443s hits/queries=8000/8459
+  base_2 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.583s hits/queries=8000/8784
+  base_2 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.643s hits/queries=8000/9026
+  base_2 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.785s hits/queries=8000/9413
+  base_2 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.678s hits/queries=8000/10923
+  base_2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.2s = 19.5 tok/s agg, 19.5 per stream | garbage 0/1
+  base_2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.7 tok/s agg, 16.7 per stream | garbage 0/1
+  base_2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.1s = 19.8 tok/s agg, 19.8 per stream | garbage 0/1
+fla overlay ON
+
+=== arm fla_3  fla=on  00:06
+   MECH marker: 4 hit(s); FLA fused kkt+solve overlay LOADED, FLA_CHUNK_SIZE=64 -> fused path ACTIVE
+   MECH block:  Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+  fla_3 TTFT 8k: prompt_tokens=7528 median=3.144s all=3.270 3.133 3.144 rate=2394 tok/s
+  fla_3 TTFT 30k: prompt_tokens=29288 median=12.021s all=12.021 12.011 12.040 rate=2436 tok/s
+  fla_3 A base: prompt_tokens=20076 cold=8.20s second=0.53s hits/queries=19200/20076
+  fla_3 A N=   16: prompt_tokens=20109 ttft median=0.581s all=0.598 0.581 0.580 hits/queries(last)=19200/20109
+  fla_3 A N=   64: prompt_tokens=20215 ttft median=0.641s all=0.650 0.641 0.638 hits/queries(last)=19200/20215
+  fla_3 A N=  256: prompt_tokens=20628 ttft median=0.765s all=0.770 0.765 0.754 hits/queries(last)=19200/20628
+  fla_3 A N= 1024: prompt_tokens=22320 ttft median=1.511s all=1.556 1.511 1.501 hits/queries(last)=19200/22320
+  fla_3 A N= 4096: prompt_tokens=29046 ttft median=4.164s all=4.172 4.164 4.160 hits/queries(last)=19200/29046
+  fla_3 A FIT: ttft = 551 ms + new_tokens / 2492 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  fla_3 C tokenize(+template) of 20149 tokens: 27 ms
+  fla_3 C tokenize(+template) of 86 tokens: 3 ms
+  fla_3 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.351s hits/queries=0/1840
+  fla_3 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.358s hits/queries=1600/1936
+  fla_3 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.786s hits/queries=1600/2856
+  fla_3 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.348s hits/queries=1600/3650
+  fla_3 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.577s hits/queries=3200/4025
+  fla_3 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.638s hits/queries=3200/4216
+  fla_3 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.234s hits/queries=3200/5011
+  fla_3 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.375s hits/queries=4800/5139
+  fla_3 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.424s hits/queries=4800/5264
+  fla_3 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.670s hits/queries=4800/5748
+  fla_3 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.659s hits/queries=4800/5857
+  fla_3 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.288s hits/queries=4800/6612
+  fla_3 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.510s hits/queries=6400/7004
+  fla_3 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.606s hits/queries=6400/7286
+  fla_3 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.681s hits/queries=6400/7520
+  fla_3 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.767s hits/queries=6400/7702
+  fla_3 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.799s hits/queries=6400/7912
+  fla_3 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.159s hits/queries=6400/8147
+  fla_3 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.347s hits/queries=8000/8246
+  fla_3 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.435s hits/queries=8000/8459
+  fla_3 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.580s hits/queries=8000/8784
+  fla_3 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.637s hits/queries=8000/9026
+  fla_3 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.772s hits/queries=8000/9413
+  fla_3 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.665s hits/queries=8000/10923
+  fla_3 DV c=1 rep=0: accept=61.4% AL=2.84 | 200 tok in 9.6s = 20.9 tok/s agg, 20.9 per stream | garbage 0/1
+  fla_3 DV c=1 rep=1: accept=48.8% AL=2.46 | 200 tok in 10.7s = 18.6 tok/s agg, 18.6 per stream | garbage 0/1
+  fla_3 DV c=1 rep=2: accept=50.6% AL=2.52 | 200 tok in 10.3s = 19.4 tok/s agg, 19.4 per stream | garbage 0/1
+fla overlay OFF
+
+=== arm base_3  fla=off  00:21
+   MECH marker: 0 hit(s); 
+   MECH block:  Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+  base_3 TTFT 8k: prompt_tokens=7528 median=3.321s all=3.321 3.150 3.722 rate=2266 tok/s
+  base_3 TTFT 30k: prompt_tokens=29288 median=12.116s all=12.116 12.100 12.147 rate=2417 tok/s
+  base_3 A base: prompt_tokens=20076 cold=8.30s second=0.52s hits/queries=19200/20076
+  base_3 A N=   16: prompt_tokens=20109 ttft median=0.585s all=0.592 0.585 0.582 hits/queries(last)=19200/20109
+  base_3 A N=   64: prompt_tokens=20215 ttft median=0.636s all=0.652 0.636 0.630 hits/queries(last)=19200/20215
+  base_3 A N=  256: prompt_tokens=20628 ttft median=0.778s all=0.783 0.778 0.776 hits/queries(last)=19200/20628
+  base_3 A N= 1024: prompt_tokens=22320 ttft median=1.528s all=1.561 1.527 1.528 hits/queries(last)=19200/22320
+  base_3 A N= 4096: prompt_tokens=29046 ttft median=4.226s all=4.272 4.217 4.226 hits/queries(last)=19200/29046
+  base_3 A FIT: ttft = 551 ms + new_tokens / 2443 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  base_3 C tokenize(+template) of 20149 tokens: 39 ms
+  base_3 C tokenize(+template) of 86 tokens: 3 ms
+  base_3 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.434s hits/queries=0/1840
+  base_3 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.362s hits/queries=1600/1936
+  base_3 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.791s hits/queries=1600/2856
+  base_3 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.334s hits/queries=1600/3650
+  base_3 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.574s hits/queries=3200/4025
+  base_3 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.639s hits/queries=3200/4216
+  base_3 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.236s hits/queries=3200/5011
+  base_3 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.379s hits/queries=4800/5139
+  base_3 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.430s hits/queries=4800/5264
+  base_3 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.672s hits/queries=4800/5748
+  base_3 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.660s hits/queries=4800/5857
+  base_3 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.289s hits/queries=4800/6612
+  base_3 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.511s hits/queries=6400/7004
+  base_3 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.616s hits/queries=6400/7286
+  base_3 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.693s hits/queries=6400/7520
+  base_3 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.770s hits/queries=6400/7702
+  base_3 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.801s hits/queries=6400/7912
+  base_3 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.166s hits/queries=6400/8147
+  base_3 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.354s hits/queries=8000/8246
+  base_3 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.443s hits/queries=8000/8459
+  base_3 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.583s hits/queries=8000/8784
+  base_3 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.641s hits/queries=8000/9026
+  base_3 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.777s hits/queries=8000/9413
+  base_3 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.674s hits/queries=8000/10923
+  base_3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.2s = 19.6 tok/s agg, 19.6 per stream | garbage 0/1
+  base_3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  base_3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.1s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+fla overlay OFF
+
+   READ: (1) cold TTFT at 8k and 30k is the primary cell; three starts per arm, report ranges.
+         (2) turnfit B (warm agent turns) is the goal cell — a prefill kernel helps the ~1k-token
+             recompute of every warm turn too, and that is where agent time actually goes.
+         (3) expect small. If it is inside the same-arm spread, say so and close finding 143 as
+             'correct, kernel-level win, not measurable end to end' rather than shipping it.
+== ALL DONE == 2026-09-09 00:36

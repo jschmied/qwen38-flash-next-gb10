@@ -1513,3 +1513,50 @@
     **Free by-product: vllm#55533 does not reproduce here.** `schedwidth` at c=8 shows `num_requests_running` median 5
     and max 8 in *every* arm, both block sizes — the scheduler reaches the full batch. The 1+k mamba-block charge is real
     in the code, but our pool (176–247k tokens) is far from the ceiling that produces the reported {2,2,2} window.
+
+
+154. **FLA fused kkt+solve at the server: −1.4 % cold TTFT at 8k and −1.1 % at 30k, reproducibly; null on warm agent
+    turns; and its decode "win" is not a speed effect at all but a 1-ulp numerics change flipping MTP acceptance by up
+    to 10 pp in either direction (`pstack`, six arms interleaved fla/base × 3 starts, `notes/data/pstack.txt`).**
+    Overlay gate clean in every arm (4 marker hits on `fla`, 0 on `base`); overlay verified reverted byte-clean at the
+    end, which matters because that venv serves prod.
+
+    | cell | base (3 starts) | fla (3 starts) |
+    | --- | --- | --- |
+    | cold TTFT 8k (7,528 tok) | 3.187 / 3.196 / 3.321 s | **3.144 / 3.150 / 3.152 s** |
+    | cold TTFT 30k (29,288 tok) | 12.116 / 12.207 / 12.215 s | **12.021 / 12.055 / 12.091 s** |
+    | warm-prefix intercept | 544 / 551 / 557 ms | 543 / 550 / 551 ms |
+    | 24-turn replay total | 18.67 / 18.77 / 18.83 s | 18.74 / 18.67 / 19.58 s |
+
+    The cold-prefill cells are the only ones that move, and they move cleanly: **the arms' ranges do not overlap on
+    either**, across three independent server starts. −1.4 % / −1.1 % is exactly the arithmetic finding 143 implies —
+    a kernel that is 1.8–2.1× faster and worth −7…−12 % of the GDN chunked forward, applied to a GDN scan that is
+    around a tenth of prefill. The warm-prefix intercept and the real agent replay are both null (−0.21 % over 24
+    paired turns, inside the spread; one `fla` start totalled 19.58 s against 18.67 s for another).
+
+    **The decode result is the one worth reading carefully, because it looked like a win.** Rep-for-rep at c=1, `fla`
+    beat `base` by 5.2 % on prompt 0 and 10.3 % on prompt 1, and *lost* 2.7 % on prompt 2 — every range tight and
+    non-overlapping across the three starts. It is not a kernel-speed effect. The tok/s tracks acceptance exactly:
+
+    | prompt | base acceptance / AL | fla acceptance / AL | Δ tok/s |
+    | --- | --- | --- | --- |
+    | 0 | 54.8 % / 2.64 | 61.4 % / 2.84 | +5.2 % |
+    | 1 | 38.4 % / 2.15 | 48.8 % / 2.46 | +10.3 % |
+    | 2 | 54.4 % / 2.63 | 50.6 % / 2.52 | −2.7 % |
+
+    Acceptance is **identical to the decimal across all three server starts within each arm** (61.4 / 61.4 / 61.4) — the
+    deterministic stack is doing its job, so these are not noisy measurements. The fused kernel matches the two-kernel
+    path to within one bf16 ulp (finding 143) but is not bit-identical, and that is enough to change which draft tokens
+    the target accepts. On two prompts it helps, on one it hurts. **Three samples of a lottery whose expectation is
+    zero, not a lever.**
+
+    **Two consequences.** (1) Verdict on finding 143: the port is correct and worth ~1 % of cold prefill, which is real
+    but does not move agent turns; per the pre-registration, that closes it as "correct, kernel-level win, not
+    measurable end to end" rather than something to ship here. The upstream PR draft still has merit *as a kernel PR*
+    (1.8–2.1× on the kernel, one-ulp equivalence, both porting traps documented) and should be judged on that, not on
+    an end-to-end number it was never going to produce. (2) The general caution is bigger than this run: **MTP
+    acceptance on this model is chaotic with respect to numerical changes at the ulp level.** A ±10 pp swing from a
+    one-ulp kernel difference means acceptance figures are not comparable across builds that differ numerically at all —
+    ours, the field's, or upstream's — unless the arms are bit-identical. That retroactively explains a good deal of the
+    acceptance scatter in `the-field.md`, and it is why every acceptance comparison from here needs the deterministic
+    stack on *and* an explicit statement of whether the arms are bit-identical.
