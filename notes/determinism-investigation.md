@@ -2496,3 +2496,38 @@ Plus whatever drives the separate generation-side path.
     (piece1 rep1, piece3 rep0), 0 in the NONE arms. Small n (6 reps per mode), and since c=16 runs
     eager in *both* modes a cudagraph cause is implausible — so this is most likely unrelated. Do not
     quote it as a PIECEWISE defect without a reproduction.
+
+170. **`thr` (RADIX_THRESHOLD sweep) is VACUOUS — my third self-inflicted vacuous A/B in this
+    lineage (2026-09-08, raw `notes/data/thr.txt`).** Three arms, `RADIX_THRESHOLD` ∈ {16384, 20480,
+    22016}, each rebuilt from source, each `FAILS: 0`, three bench starts per arm. The det column is
+    **identical to the decimal across all three arms** on every cell.
+
+    The reason is arithmetic I should have done before launching. The dispatch is
+    `seq_len <= RADIX_THRESHOLD` → single-CTA. `bench_det.py`'s case list contains only
+    n ∈ {1024, 4096, 8192, 16384, 32768, 65536}, and my grep kept n ∈ {16384, 32768}:
+    - **16384 ≤ 16384, 20480 and 22016** → single-CTA in all three arms.
+    - **32768 > 16384, 20480 and 22016** → multi-CTA in all three arms.
+
+    No measured width changes path under any threshold I tested, so the three arms are the same
+    program. **The knob could not reach the cells.**
+
+    **The mechanism check I ran was the wrong one.** I verified the *constant* changed
+    (`grep -o 'RADIX_THRESHOLD = [0-9]*'` on each arm's source, which passed). A mechanism check has
+    to establish that the knob can influence *the thing being measured*, not that the knob moved.
+    Same failure as `cgsize2` (no cudagraphs captured in either arm) and as the c≥4 cells of det-169
+    (both arms eager). Three instances now, all mine, all in a week.
+
+    **Standing rule, added to `notes/method.md`:** before launching an A/B, name the cell where the
+    two arms must differ *and why*, in the runner's own header comment. If no measured cell can
+    differ, the run is not worth the box time.
+
+    **What the rerun needs.** Widths that straddle the thresholds, which `bench_det.py` does not
+    contain and which must be added: n = 17408, 20480, 21504 flip path between these three
+    thresholds; n = 16384 (always single) and 24576, 32768 (always multi) are the controls. Upper
+    bound on any threshold is the caching limit — `det_select_row` caches while
+    `fixed(4256) + 4n <= 101376`, i.e. **n <= 24280** — so 22016 is the largest safe value and
+    24576 would silently fall to the uncached path.
+
+    Queued as `thr2` behind `zsign`. Until it reports, **the PR body's Limitations bullet stands
+    unchanged and unchallenged**: "raising it back to 32,768 is not a fix — that costs 60–100 % at
+    n = 24,576–32,768 on 1–8 rows". Nothing in this run bears on it either way.
