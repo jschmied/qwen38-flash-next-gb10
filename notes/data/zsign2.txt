@@ -1,0 +1,17 @@
+=== ours  (cuh md5 0549208b)  09:33 ===
+  n=  4096 zeros= 1024 k=  512        | set==exact True  | index-ascending True  | odd(+0.0) picks   256/512
+  n=  8192 zeros= 2048 k= 1024        | set==exact True  | index-ascending True  | odd(+0.0) picks   512/1024
+  n= 16384 zeros= 4096 k= 2048        | set==exact True  | index-ascending True  | odd(+0.0) picks  1024/2048
+  n=  4096 zeros=  512 k=  512        | set==exact True  | index-ascending True  | odd(+0.0) picks   256/512
+ZSIGN FAILS: 0
+=== theirs  (cuh md5 b6667578)  09:33 ===
+  BUILD FAIL
+/opt/llm/runners/zsign2build/theirs/src/topk_det.cu(117): error: namespace "vllm::persistent" has no member "kDetMaxCtasPerGroup"
+/opt/llm/runners/zsign2build/theirs/src/topk_det.cu(117): error: namespace "vllm::persistent" has no member "kDetMaxCtasPerGroup"
+/opt/llm/runners/zsign2build/theirs/src/topk_det.cu(134): error: namespace "vllm::persistent" has no member "det_select_row_bytes"
+/opt/llm/runners/zsign2build/theirs/src/topk_det.cu(134): error: qualified name is not allowed
+/opt/llm/runners/zsign2build/theirs/src/topk_det.cu(134): error: expected a ";"
+/opt/llm/runners/zsign2build/theirs/src/topk_det.cu(276): error: class "vllm::persistent::PersistentTopKParams" has no member "det_smem_bytes"
+/opt/llm/runners/zsign2build/theirs/src/topk_det.cu(277): error: class "vllm::persistent::PersistentTopKParams" has no member "force_single_cta"
+7 errors detected in the compilation of "/opt/llm/runners/zsign2build/theirs/src/topk_det.cu".
+== ALL DONE == 09:33

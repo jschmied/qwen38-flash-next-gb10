@@ -2567,3 +2567,38 @@ Plus whatever drives the separate generation-side path.
     Not yet measured: the full 81-shape correctness sweep on the blocked path (only `test_det.py`'s
     grid ran), and whether the `uint4` blocked load helps or the barrier reduction is the whole
     effect. Both are cheap and neither gates the change.
+
+172. **RADIX_THRESHOLD 16384 IS TOO LOW: the single-CTA select wins the whole 16k–22k band, at every
+    row count (2026-09-08, `thr2`, 3 thresholds × 3 bench starts, raw `notes/data/thr2.txt`).**
+    The rerun of the vacuous `thr` (det-170), this time with widths that straddle the thresholds.
+    Built on the PR head, **not** on the blocked emission — the two effects are independent and were
+    measured separately. All arms `FAILS: 0`.
+
+    det µs (min of 3 starts). S = single-CTA select, M = multi-CTA cooperative radix:
+
+    | rows | n | thr=16384 | thr=20480 | thr=22016 | routing | multi costs |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | 64 | 17408 | 53.3 | **34.8** | **34.8** | M/S/S | **+53 %** |
+    | 64 | 20480 | 57.4 | **38.8** | **38.8** | M/S/S | **+48 %** |
+    | 64 | 21504 | 59.5 | 59.5 | **39.4** | M/M/S | **+51 %** |
+    | 8 | 17408 | 22.6 | **18.5** | **18.5** | M/S/S | +22 % |
+    | 8 | 20480 | 24.7 | **20.6** | **20.6** | M/S/S | +20 % |
+    | 1 | 17408 | 19.1 | **16.5** | **16.5** | M/S/S | +16 % |
+
+    **Controls hold.** n=16384 (single-CTA under all three) is flat across arms; n=24576 and n=32768
+    (multi under all three) are flat to the decimal. The effect appears only in the cells whose
+    routing actually flips, which is what det-170's rule demands.
+
+    **Conclusion: raise the threshold to 22016.** Every width in 16384 < n ≤ 22016 is currently
+    routed to a path that costs 16–53 % more, worst at 64 rows. 22016 is the largest value that
+    keeps the row cached — `fixed(4256) + 4n ≤ 101376` ⇒ n ≤ 24280 — and 24576 would silently drop
+    to the uncached path, which is very likely the source of the PR body's "raising it back to
+    32,768 costs 60–100 % at n = 24,576–32,768 on 1–8 rows". **That bullet stays true; it just does
+    not follow that 16384 is right.** Both can hold: 32768 is too high *and* 16384 is too low.
+
+    **This does not touch the 1.54× cell.** n=32768 is multi-CTA under every legal threshold
+    (the caching limit forbids anything above 24280), so that cell is unreachable by this knob —
+    exactly as det-170 predicted. What fixes it is the blocked emission (det-171: 75.9 → 59.6 µs).
+
+    Not measured: the two changes combined, and whether a threshold between 22016 and 24280 gains
+    anything more.
