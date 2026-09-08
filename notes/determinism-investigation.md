@@ -2306,3 +2306,91 @@ Plus whatever drives the separate generation-side path.
     - Two paths remain unwired (`histogram_2048_topk` for n ≤ 8192, `radix_topk` for n > 32768); the
       latter is multi-CTA and a post-pass there would need cross-CTA coordination. Not worth doing
       given the cost result.
+
+167. **FOUR INDEPENDENT DESIGNS FOR A MERGED TOP-K, SYNTHESISED (2026-09-08, three subagents +
+    the user's own opinion; full texts in `notes/data/topk-merge-opinion-{A,B,C}.md`).** Three agents
+    got the same brief — read stock, #55314 and our #55122 on the box, propose a merged kernel that
+    keeps #55314's selection cost and our ordering guarantee — with no hint of any design of mine.
+    A fourth opinion came from the user afterwards. What follows is where they agree, where they
+    disagree, and what I checked myself.
+
+    **Unanimous, and each agent reached it independently:**
+    - **The 1.54× cell at 64×32768 is a routing artifact, not the cost of determinism.** Our PR
+      lowered `RADIX_THRESHOLD` 32768 → 16384 because `det_select_row` caches a 4-byte key per element
+      and 32768×4 = 128 KB does not fit in GB10's 101376 B optin. The dispatch is
+      `seq_len <= RADIX_THRESHOLD` (`persistent_topk.cuh:1190`), so at n=32768 stock runs **one CTA**
+      through `histogram_256_topk` while we run a **2-CTA cooperative launch**. I verified both
+      constants and the comparison operator myself. That cell compares two different algorithms.
+    - **#55314 is not a merge candidate on its own.** 0/81 self-consistent, and its two tie clips
+      (`atomicAdd(&shared_final_k,-1)` and the `bp < DBUF` stash clip, reachable at `level == 4`) make
+      the *set* scheduling-dependent, not just the order. It cannot be rescued by a cheap order fix.
+      This restates det-165/166 and all three agents arrived at it from the source.
+    - **Blocked emission, 4 items per thread.** Our emission runs one `cub::BlockScan` +
+      `__syncthreads()` per 1024 elements — 16 scans at n=16384, 32 at 32768. Thread `t` owning
+      `[4t,4t+4)` cuts that 4×, and `pos = g + min(e, fin)` is unchanged because it is a pure function
+      of index, pivot and `fin`. All three agents proposed it; so did the user. **Highest
+      value/risk ratio change in the whole set** — it cannot alter the selected set or its order.
+    - **Nobody has measured what share of a decode step this kernel is.** All three name it as the
+      gate that could end the project: at ≤3 % of the step, 1.30× costs <1 % end to end and the
+      correct action is to merge #55122 unchanged and spend the effort elsewhere.
+    - **Merge #55122 now, optimise in a follow-up PR.** Unanimous.
+
+    **A real bug all three found, in stock — not in us.** `decode_bin` and `convert_to_uint8` do not
+    canonicalise signed zero, so `-0.0f` and `+0.0f` land in different coarse bins and the fp16 bucket
+    stops being monotone in the fp32 order exactly at the pivot. Our `convert_to_uint32_v2` fixes it
+    (line 53); #55314 does not fix it anywhere. **On our branch both functions are dead code**
+    (agent B confirmed by grep: nothing calls them), so this is not a defect in our shipped path —
+    it is a defect in stock and in #55314, and it belongs in a note to their author, not in our PR.
+
+    **Where they disagree, and who is right:**
+    - **B's diagnosis of the 1.54× cell is built on a false premise.** B asserts "at 64×32768 both
+      stock and #55122 do 1 global + 7 shared per chunk — identical pass counts" and concludes the
+      regression must be the `BlockScan` barriers and the inter-CTA round trip. But stock's threshold
+      is 32768 and the test is `<=`, so stock is single-CTA at that width. A and C have it right.
+      B's barrier argument may still be a real second-order cost; its stated evidence is not.
+    - **The coarse first bucket.** A and C would reuse stock's 11-bit fp16-derived `decode_bin` inside
+      `det_select_row`. B rejects it: the fp16 bucket is monotone but not injective at the extremes —
+      everything under ~6e-5 collapses to the zero bin and everything over 65504 to the inf bin, which
+      is precisely what forces #55314's descent — and proposes 4096 bins on `key >> 20` taken straight
+      out of the ordered fp32 key, which has no such collapse and no fp16 round trip. **B is right
+      here**, and it matters because a finer, non-collapsing first split is what makes the candidate
+      set small enough for the later passes to be cheap.
+    - **Bitmap vs candidate stash.** A (§2.2) and C (§2) both converge on the user's selected-index
+      bitset: two shared bitmaps (`> pivot`, `== pivot`), written only by `atomicOr` (commutative and
+      idempotent, so order-independent), then one packed prefix scan over `n/32` words to produce
+      every output slot. That is the same `pos = g + min(e, fin)` formula evaluated once per 32
+      elements, and it is the only design here that also removes stash-capacity clipping as a
+      correctness concern. B instead keeps a candidate stash but makes its capacity unable to affect
+      the result (overflow falls back to a full shared scan; the stash only ever feeds commutative
+      histogram adds). Both are sound; the bitmap is the smaller correctness argument.
+    - **C's trap that nobody else named:** for any bitmap design on the multi-CTA path,
+      `chunk_size` must be a multiple of 32, or two CTAs race on one bitmap word. A host-side
+      `STD_TORCH_CHECK` turns that from a data race into a launch error.
+    - **A's test that nobody else named, and the cheapest in the set:** the whole family rests on the
+      coarse bucket being monotone in the fp32 order. Verify it host-only and exhaustively — all
+      65536 fp16 patterns, assert the rounding intervals are ordered. Seconds, no GPU, and it pins
+      the invariant against a future "optimisation" of `decode_bin`.
+    - **B's unique contribution, and it matches the user's fourth opinion:** the multi-CTA `gt`/`eq`
+      counts need not be obtained by scanning the chunk twice — in each round, after `thr_r` is known
+      and before `local_histogram` is zeroed, accumulate `Σ_{b > thr_r} local_histogram[b]`. That
+      deletes two full shared chunk passes for four 256-element warp reductions.
+
+    **What this changes about the plan.** The merged kernel is real and both bitmap variants would
+    work, but every one of the four opinions says *not to build it yet*, and for the same reason:
+    the two cheapest changes attack the same costs with none of the architectural risk, in a file two
+    PRs are already contending over. Order of work:
+    1. `RADIX_THRESHOLD` 16384 → 20480 (`thr`, queued). `det_select_row` caches while
+       `fixed + 4n <= smem`; static 4256 B → dyn 97120 B → caching holds to n = 22712, so 20480 is
+       legal with margin. If it moves the regressed band back onto the cached path, the honest fix to
+       the PR is a better threshold plus a corrected sentence, not a caveat.
+    2. Blocked 4-item emission. ~60 lines, provably set- and order-preserving.
+    3. The multi-CTA counts from the round histograms (B's L3b).
+    4. Only then, against the post-(1..3) numbers, decide whether the bitmap is worth building.
+    And before any of it, the number that could end the project: this kernel's share of a decode step.
+
+    **Caveat on the exercise itself.** My brief to the agents contained two errors, both caught by
+    agent B: I wrote that #55122 "rescans the row" when `det_select_row` caches the ordered keys in
+    shared memory whenever they fit (always, on GB10's single-CTA domain), and I wrote "three code
+    paths" when `histogram_2048_topk` and `histogram_256_topk` are dead on our branch. Neither error
+    propagated into a wrong recommendation, but the traffic-budget framing I gave them was wrong and
+    B is the only one that said so.
