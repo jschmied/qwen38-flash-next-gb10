@@ -2884,3 +2884,47 @@ Plus whatever drives the separate generation-side path.
     `method.md` says name the differing cell; this run adds a second clause worth writing down:
     **verify the control arm actually misbehaves before trusting the treated arm's cleanliness** —
     and check the units you claim (tokens, not characters) with the tokenizer, not an estimate.
+
+180. **The "stock" arm in every `vpp` run was not stock — it carried three of the four determinism
+    fixes. That makes det-178/179's nulls a REAL result, differently labelled (2026-09-08, `vpp6`,
+    raw `notes/data/vpp6.txt`).**
+
+    `vpp6` changed the one variable det-179 pointed at — **prefix caching ON, MTP=3**, prompts
+    genuinely above the budget this time (2,447 / 2,496 tokens; the mechanism line confirms
+    `enable_prefix_caching=True`, `spec=method='mtp'`). Result: both arms **0 disagreeing positions,
+    max spread 0.0**, collector files byte-identical per shape. Eight sequential cases now, across
+    two configurations, with no divergence.
+
+    **Then I checked what `FN_DET_TOPK=0` actually disables.** `prod_det_overlays.sh` installs four
+    fixes, and only two are env-gated:
+
+    | fix | gate | state in our "det0" arm |
+    | --- | --- | --- |
+    | `qsadet` — deterministic `persistent_topk` | `VLLM_QSA_DET_TOPK` | **off** (what we intended) |
+    | `detfin` — bit-stable MoE finalize | `VLLM_MOE_DET_FINALIZE`, defaults **on** | **on** |
+    | `moe_cachekey` — FlashInfer autotune cache key | **not env-gated** | **on** |
+    | `plefix` — PLE offload semaphore reset | **not env-gated** | **on** |
+
+    So `det0` was stock-top-k **plus** the other three, including the PLE semaphore fix that
+    finding 138 called "the residual noise of four days". I labelled the arm "stock" in three runners
+    and in det-178/179 without checking, which is the same class of error as calling a run's knob
+    verified because the constant changed.
+
+    **What the eight cases therefore actually establish** — and it is worth more than what I set out
+    to measure: **with the MoE finalize, autotune cache-key and PLE semaphore fixes in place, the
+    top-k fix alone is not required for sequential position-level reproducibility on real prompts**,
+    at 1,460–5,960 tokens, cache on or off, spec on or off, across three tie shapes. That is a
+    sharper statement than "we could not reproduce it", and it bears directly on
+    LopezCastroRoberto's argument on #55122 that the default should not change without evidence of
+    user-visible harm — it is *evidence on their side*, from us, and we should say so.
+
+    It does **not** contradict det-151 (the kernel is 0/81 self-consistent on synthetic tie-heavy
+    inputs) or finding 76 (k3dani saw 0/4 prompts reproducible on the preview image, before any of
+    these fixes existed). Both remain true. The reconciliation is that the top-k defect needs ties at
+    the selection boundary, and **real prompt score distributions may simply not produce them** —
+    which is what #53287 concluded independently.
+
+    **The next test is now well-posed:** a *true* stock arm — `FN_DET_TOPK=0`, `FN_DET_FINALIZE=0`,
+    **and** `prod_det_overlays.sh off` to remove the two ungated patches — against the full-fix arm.
+    That isolates whether any of the four is load-bearing here, and it is the run that should have
+    been done first.

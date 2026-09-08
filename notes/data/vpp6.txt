@@ -1,0 +1,34 @@
+== prompts: p_repeat.txt=13639B p_prose.txt=13639B 
+
+=== arm det0  FN_DET_TOPK=0  17:05
+   up. QSADET=1  enable_prefix_caching=True  spec=method='mtp'
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out6/det0_repeat.json
+arm=det0_repeat mode=sequential repeats=8 tokens=2447
+   repeat exit=0 size=13577847
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out6/det0_prose.json
+arm=det0_prose mode=sequential repeats=8 tokens=2496
+   prose exit=0 size=13979205
+
+=== arm det1  FN_DET_TOPK=1  17:20
+   up. QSADET=1  enable_prefix_caching=True  spec=method='mtp'
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out6/det1_repeat.json
+arm=det1_repeat mode=sequential repeats=8 tokens=2447
+   repeat exit=0 size=13577847
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out6/det1_prose.json
+arm=det1_prose mode=sequential repeats=8 tokens=2496
+   prose exit=0 size=13979205
+
+=== analyzer: det0 (reference) vs det1 (candidate), per tie-shape ===
+   repeat analyze exit=0
+     det0_repeat            disagreeing_positions=     0  max_spread=0.0  first@=None
+     det1_repeat            disagreeing_positions=     0  max_spread=0.0  first@=None
+     cross-arm modal-top1 mismatches=0
+   prose analyze exit=0
+     det0_prose             disagreeing_positions=     0  max_spread=0.0  first@=None
+     det1_prose             disagreeing_positions=     0  max_spread=0.0  first@=None
+     cross-arm modal-top1 mismatches=0
+== ALL DONE == 17:34
