@@ -8,6 +8,17 @@ as archaeology unless it is cross-referenced from here.**
 
 **In flight:** nothing on the box; it is idle.
 
+**CAUTION — three different "the fixes" lists are in circulation and they disagree (audit 2026-09-08):**
+- **PR #55122 body (live, public):** "one of **three** independent defects" — top-k + MoE fused
+  finalize (#54945/#54948) + align-mode blocks (#54076/#53798).
+- **README:** "**four** fixes" — top-k + MoE finalize + PLE state-stride (#55375) + PLE offload
+  semaphore.
+- **`prod_det_overlays.sh` (what we actually run):** qsadet + detfin + **cachekey** (FlashInfer
+  autotune key) + **plefix** (PLE offload semaphore).
+The PR body's list omits the PLE offload semaphore entirely — the fix `isolate4` may show is
+load-bearing, and which det-182 confirms is **not upstream in any form**. Reconcile all three before
+the next upstream post, and say plainly which set was actually measured together.
+
 **Owed to people who asked us directly:**
 - **ZC502, #54521** — their client collector is validated on sm_121 (12/12 runs, det-178) and that
   can be reported. But our det0/det1 case was **void**: stock did not diverge on any sequential

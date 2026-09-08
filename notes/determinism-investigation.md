@@ -9,7 +9,7 @@ This file is chronological and long. It answers "what happened on the 4th" well 
 cost" badly, which is the question people actually arrive with. Added 2026-09-08 after three
 subagents *and I* re-asked a question this file had answered twice (det-168). **Keep it current:
 a stale answer here is worse than no answer, because this is the part people trust.** Last
-reconciled against the findings at det-178.
+reconciled against the findings at det-182.
 
 | question | answer | findings |
 | --- | --- | --- |
@@ -23,7 +23,10 @@ reconciled against the findings at det-178.
 | Does it give batch invariance? | No, and it cannot — GDN has no batch-invariant path. | 76 |
 | Is #55314 an alternative? | No. It fixes the set nearly for free but not the order, and its tie clips make the set scheduling-dependent. | det-165, det-166, det-167 |
 | Is a merged #55122+#55314 kernel worth building? | No — closed, not deferred, on the end-to-end number above. | det-166, det-167, det-168 |
-| Is ZC502's position-parity collector usable here? | The **client** one is: 12/12 runs on sm_121. The offline one is not (it constructs `LLM()` in-process). Our first test case was void — stock did not diverge on random-word prompts. | det-155, **det-178** |
+| Is ZC502's position-parity collector usable here? | The **client** one is: 12/12 runs on sm_121. The offline one is not (it constructs `LLM()` in-process). | det-155, det-178 |
+| **Does greedy decoding actually diverge end to end on TRUE stock?** | **Yes, badly.** 335 disagreeing positions on a 2.5k-token prompt, forced-logprob spread 10.63, first divergence at position 2, 104 modal top-1 mismatches. With all four fixes: exactly 0. Eight earlier "nulls" had three of the four silently active. | **det-181**, det-180 |
+| Which of the four fixes carries that? | **Unresolved** — `isolate4` running 2026-09-08. If it is the PLE offload semaphore rather than the top-k kernel, #55122 is not the load-bearing fix and that must be said upstream. | det-181 |
+| Is the PLE offload subsystem upstream? | **No.** Zero `vllm/v1/ple_offload/` files in the dev524 wheel and 404 on vllm main; vllm#53899 is open and `mergeable_state: dirty`; our semaphore fix (PR #13 on its fork branch) is open. It exists only here and on that branch. | **det-182** |
 
 ## Established (measured, replicated where stated)
 
