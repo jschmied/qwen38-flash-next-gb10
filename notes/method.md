@@ -28,3 +28,21 @@
 - **Clear `VLLM_CACHE_ROOT` + `TORCHINDUCTOR_CACHE_DIR`** when benchmarking a source-level patch;
   a stale compiled graph silently replays your unpatched code. (Config flags *are* hashed
   correctly — we checked before filing.)
+
+## Name the differing cell before launching an A/B
+
+Before starting any two-arm run, write in the runner's own header: **which measured cell must differ
+between the arms, and by what mechanism.** If no cell in the benchmark's case list can differ, the
+run is vacuous and must not be started.
+
+Checking that the *knob* moved is not a mechanism check. Three vacuous runs in one week, all mine,
+all passing a knob-level check:
+
+| run | knob verified | why it could not reach the measurement |
+| --- | --- | --- |
+| `cgsize2` | capture size env set | no cudagraphs were captured in *either* arm |
+| `cgnone2` c>=4 | `maxcap` logged 8 vs 0 | MTP-3 makes the batch 4*c > 8, so both arms ran eager |
+| `thr` | `RADIX_THRESHOLD` differed in each build | every benched width sat on the same side of all three thresholds |
+
+The check that would have caught all three is the same one: take the benchmark's actual case list,
+and for each arm compute which code path each case takes. If the two columns are equal, stop.
