@@ -279,3 +279,25 @@ branch lacks — fetch + rebase before pushing.
     "Fixes #54521" and the "three independent defects" list — the set is four and one of them is not
     upstream (det-182). That correction must sit visibly at the end of the thread, not be folded into
     a tidy-up. → https://github.com/vllm-project/vllm/pull/55122
+
+95. 2026-09-08 20:3x — **#55122: posted a correction that weakens our own PR, and edited the body to
+    match** (user go "post"). This is the one that matters from today.
+    **Comment** → https://github.com/vllm-project/vllm/pull/55122#issuecomment-5590003708
+    Measured end to end (per-position `prompt_logprobs`, 8 identical sequential requests, 2.5k prompt,
+    prefix caching on, MTP=3, per-arm cache roots): stock with **no** determinism patches gives 333
+    disagreeing positions; **this PR's kernel alone gives 330**; all four patches we run give **0**.
+    Three independent measurements of fix-free stock now agree (325 / 333 / 335), so the control is
+    solid and our kernel moves it by 3 out of 333. Retracted the framing outright rather than
+    softening it.
+    **Body edits, two:**
+    (a) `Fixes #54521` → `Relates to #54521 — **this PR does not close it**` with the numbers and a
+    link to the correction. This was the sharpest point: the auto-close keyword would have closed an
+    issue this PR does not fix, on merge. Verified afterwards that **no auto-close keyword for #54521
+    remains** (`Fixes|Closes|Resolves #54521` count = 0).
+    (b) "one of **three** independent defects" → **four**, naming them, and stating that the PLE
+    offload semaphore reset is **in no released vLLM and not on main**, so the list is not
+    reproducible from vLLM alone today (det-182).
+    Kept and restated what the PR does still claim: 81/81 deterministic, 16/16 exact selection,
+    0.72–1.78× over 43 cells, at or below stock on 27. Credited LopezCastroRoberto — his opt-in shape
+    does not depend on the claim we got wrong.
+    Body 14,622 → 15,312 chars, saved as `pr-55122-body-v8.md`.

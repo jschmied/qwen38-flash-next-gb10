@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. vllm-project/vllm PR #55122. ⟨QSADET⟩ = isolate5 arm-2 number, fill in.
+DRAFT — needs the user's go. vllm-project/vllm PR #55122.
 
 ---
 
@@ -11,8 +11,8 @@ disagrees between repeats:
 
 | build | disagreeing positions |
 | --- | --- |
-| stock, no determinism patches at all | **335** (first divergence at position 2, forced-logprob spread 10.63, 104 modal top-1 mismatches) |
-| **this PR's kernel alone** | ⟨QSADET⟩ |
+| stock, no determinism patches at all | **333** (first divergence at position 2, spread 8.79) |
+| **this PR's kernel alone** | **330** (first divergence at position 4, spread 8.54) |
 | all four patches we run | **0** |
 
 So on this stack the deterministic top-k is *one necessary component of a set*, not the fix. I had
