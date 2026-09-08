@@ -2531,3 +2531,39 @@ Plus whatever drives the separate generation-side path.
     Queued as `thr2` behind `zsign`. Until it reports, **the PR body's Limitations bullet stands
     unchanged and unchallenged**: "raising it back to 32,768 is not a fix — that costs 60–100 % at
     n = 24,576–32,768 on 1–8 rows". Nothing in this run bears on it either way.
+
+171. **BLOCKED 4-ITEM EMISSION: 25/25 cells faster, the deterministic kernel is now FASTER than
+    stock on 16 of 25 (2026-09-08, `blkem`, 2 builds × 3 interleaved bench starts, raw
+    `notes/data/blkem.txt`).** Branch `perf/topk-blocked-emission` in `~/git/vllm-topk-det`. The
+    change three of four independent design opinions named first (det-167): give each thread four
+    *consecutive* indices instead of one, so a tile is 4·N_THREADS and the emission runs one
+    `cub::BlockScan` + `__syncthreads()` per 4,096 elements rather than per 1,024. Blocked (not
+    striped) ownership is what keeps `pos = g + min(e, fin)` valid unchanged — it is a pure function
+    of index, pivot and `fin`.
+
+    **Correctness gate first: `FAILS: 0` on both arms.** As predicted, the selected set and its order
+    are untouched; this is a pure barrier-count change.
+
+    | | base (PR head) | blocked | worst cell |
+    | --- | --- | --- | --- |
+    | ratio vs stock, 25 cells | 1.01 – **1.54×** | **0.72 – 1.25×** | 1.54× → **1.25×** |
+    | cells at or below 1.00× (faster than stock) | 1 | **16** | |
+    | per-cell improvement | — | **9.3 – 38.3 %, all 25 same sign** | |
+
+    Largest gains where the barrier count is highest: 1×16,384 −34 %, 16×16,384 −37 %,
+    32×16,384 −38 %, 64×16,384 −37 %. The 64×32,768 cell that the PR body flags goes 75.9 → 59.6 µs.
+
+    **Control.** `bench_det.py`'s stock column is unchanged code compiled into both builds. It
+    fails to overlap in 4 of 25 cells, by **at most 4.5 %** — so the noise floor is real but the
+    smallest det effect (9.3 %) is 2× the largest control drift and the bulk are 20–38 %. Arms were
+    interleaved base/blk per start, 3 starts each, `.cuh` md5s recorded in the results file.
+
+    **What this changes.** det-168 established that this kernel costs nothing end to end, so this is
+    **review hygiene, not throughput** — but it is much better hygiene than expected. The PR's cost
+    table stops being a liability: "1.3–4.3× on the shape grid, 1.54× worst" becomes "faster than
+    stock on most shapes, 1.25× worst". Do **not** re-quote the end-to-end story on the back of
+    this — it was already inside the start-to-start band, and 0.72× will not be visible either.
+
+    Not yet measured: the full 81-shape correctness sweep on the blocked path (only `test_det.py`'s
+    grid ran), and whether the `uint4` blocked load helps or the barrier reduction is the whole
+    effect. Both are cheap and neither gates the change.
