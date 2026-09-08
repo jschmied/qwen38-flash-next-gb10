@@ -1073,6 +1073,13 @@
     hits are impossible below ~6,400 tokens of prompt", which is exactly this. That is a second cost for open RFC
     vllm#55196 ("fp8 KV gives little to no memory benefit on Mamba/GDN hybrid models"), which so far argues only from the
     mamba-page padding. Untested here; it is one `FN_KVDTYPE` value whenever the agent-turn harness runs again.
+
+    **And a confound to name before the run, not after:** halving the mamba page does not only halve the block. The KV
+    pool holds the same bytes but each page now covers half as many tokens with none of the padding, so capacity in
+    tokens rises too — more retained prefixes across turns, and more room for concurrent requests (which is the same
+    quantity vllm#55533 is about). A win in `ssm` is therefore attributable to *two* mechanisms of one knob: finer
+    recompute granularity and a larger effective cache. The `MECH kv` line (GPU KV cache size) and the `schedwidth`
+    cell separate them; the write-up must not attribute the whole effect to granularity by default.
     Server: "keeping attention block size 512 (derived minimum was 2048)"; KV capacity 348k tokens at 512 / 318k at 1024
     (vs 76k at 1600 with 4 GB, i.e. the padding costs far less than my per-block estimate — the QSA ring pages scale by
     block instead of padding). Generation sanity clean (acceptance 42–70 %, no garbage). Regression over the 20k cached
