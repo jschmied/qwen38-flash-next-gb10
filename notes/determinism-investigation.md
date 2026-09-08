@@ -3011,7 +3011,7 @@ Plus whatever drives the separate generation-side path.
 
     The control misbehaved, so the run is valid. **No arm comes near zero**, while all four together
     give exactly 0 (det-181). The spread between arms (282–348) is one run each and should not be
-    read as a ranking — MTP trajectories差 by more than that between restarts (memory
+    read as a ranking — MTP trajectories differ by more than that between restarts (memory
     `mtp-restart-instability`, up to 1.83×).
 
     **So the honest statement for #55122 is: our kernel is one necessary component of a set, not the
@@ -3034,3 +3034,36 @@ Plus whatever drives the separate generation-side path.
     `FN_CACHE_ROOT` with a purge between arms, `detfin` tested as `detfin+cachekey`, and `none` and
     `qsadet` redone on that footing. Until then, quote det-181 (all four vs none, which was a clean
     two-arm comparison) rather than these per-arm numbers.
+
+
+184. **isolate5 confirms det-183 on a valid footing: no single fix removes even a fifth of the divergence, and all
+    four together remove all of it (2026-09-08, `isolate5`, raw `notes/data/isolate5.txt`).** The three defects det-183
+    listed are all fixed here: per-arm `FN_CACHE_ROOT` purged between arms, `detfin` tested as `detfin+cachekey` (it
+    cannot run alone), and every arm re-measured on that footing. Same cell as before — prefix caching ON, MTP=3,
+    2,504-token prose prompt, 8 sequential repeats, disagreeing positions against the arm's own repeats:
+
+    | arm | disagreeing positions | max forced-logprob spread | first divergence |
+    | --- | --- | --- | --- |
+    | `none` (control) | **333** | 8.79 | position 2 |
+    | `qsadet` — our PR #55122 | 330 | 8.54 | position 4 |
+    | `cachekey` | 334 | 9.01 | position 1 |
+    | `plefix` | 285 | 9.05 | position 6 |
+    | `detfin`+`cachekey` | 280 | 8.12 | position 1 |
+    | **all four** | **0** | 0.0 | — |
+
+    Validity gate, pre-committed before the run and passed: the control must misbehave (333 ≠ 0) and the positive
+    control must not (0). Stock is now measured fix-free three times — 325 (isolate4), 333 (isolate5), 335 (det-181) —
+    which is the tightest thing in this whole investigation and says the cell itself is stable.
+
+    **Reading.** Every single-fix arm sits between 280 and 334 against a control of 333: the best of them removes 16 %
+    of the disagreeing positions, our own kernel removes 0.9 %, and one arm is *above* the control. One run each, so
+    280 vs 334 is not a ranking (MTP restart spread reaches 1.83×, memory `mtp-restart-instability`) — but the
+    qualitative statement does not depend on the ranking, because the gap between "any one fix" and "all four" is not
+    a matter of degree: 280…334 versus 0. **The four defects are jointly necessary and individually almost worthless.**
+    That is an unusual shape and it is worth saying plainly: each defect alone is enough to destroy reproducibility, so
+    removing three of four buys nothing a user can observe.
+
+    This is the evidence behind the correction already posted to #55122 (`issuecomment-5590003708`) — that our kernel
+    is one necessary component of a set rather than the fix, and that `Fixes #54521` had to go. det-183's headline
+    stands; only its per-arm numbers are superseded by the table above. **The determinism divert ends here**; the goal
+    is agent turn time again.

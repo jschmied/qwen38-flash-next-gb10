@@ -1,0 +1,79 @@
+
+=== arm none  (topk=0 finalize=0)  19:56
+   up. QSADET=0
+sending requests (endpoint_label='sm121-none', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out9/none.json
+arm=i4_none mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13991191
+
+=== arm qsadet  (topk=1 finalize=0)  20:11
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+    installed: qsadet
+   up. QSADET=1
+sending requests (endpoint_label='sm121-qsadet', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out9/qsadet.json
+arm=i4_qsadet mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13992765
+
+=== arm cachekey  (topk=0 finalize=0)  20:26
+  cache-key extras INSTALLED on MoERunner
+    installed: cachekey
+   up. QSADET=0
+sending requests (endpoint_label='sm121-cachekey', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out9/cachekey.json
+arm=i4_cachekey mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13992915
+
+=== arm plefix  (topk=0 finalize=0)  20:42
+  plefix INSTALLED (reset-before-launch)
+    installed: plefix
+   up. QSADET=0
+sending requests (endpoint_label='sm121-plefix', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out9/plefix.json
+arm=i4_plefix mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13996156
+
+=== arm detfin_ck  (topk=0 finalize=1)  20:57
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+    installed: detfin_ck
+   up. QSADET=0
+sending requests (endpoint_label='sm121-detfin_ck', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out9/detfin_ck.json
+arm=i4_detfin_ck mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13992048
+
+=== arm all4  (topk=1 finalize=1)  21:12
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+  cache-key extras INSTALLED on MoERunner
+  plefix INSTALLED (reset-before-launch)
+    installed: all4
+   up. QSADET=1
+sending requests (endpoint_label='sm121-all4', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out9/all4.json
+arm=i4_all4 mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=14002572
+
+== RESULT: disagreeing positions on , vs the no-fix control ==
+   none      disagreeing_positions=  333  max_spread=8.7874755859375  first@=2
+   qsadet    disagreeing_positions=  330  max_spread=8.53889689175412  first@=4
+   cachekey  disagreeing_positions=  334  max_spread=9.005176784176001  first@=1
+   plefix    disagreeing_positions=  285  max_spread=9.045053482055664  first@=6
+   detfin_ck disagreeing_positions=  280  max_spread=8.123493345454335  first@=1
+   all4      disagreeing_positions=    0  max_spread=0.0  first@=None
+
+   READ: none must be non-zero AND all4 must be ~0, or the run is void. Any single arm at ~0 is sufficient alone.
+== ALL DONE == 21:26
+
+== restoring ALL overlays ON
+target venv: /opt/llm/runtime/vllm-venv-fnmain2
+-- qsadet
+  qsadet already installed
+-- detfin
+  detfin already installed
+-- cachekey
+  cache-key extras already installed
+-- plefix
+  plefix already installed
+state: qsadet=1 detfin=1 cachekey=1 plefix=1
