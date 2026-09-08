@@ -1,0 +1,31 @@
+=== stock1  VLLM_DISABLED_KERNELS=<unset>  05:18 ===
+    kernel=
+  nk_stock1 TTFT 8k: prompt_tokens=7503 median=0.60s  all=2.93 0.60 0.60
+  nk_stock1 TTFT 30k: prompt_tokens=29263 median=0.62s  all=8.18 0.62 0.62
+  nk_stock1 CELL c=4 rep=0:   49.2 tok/s | no spec counters | per-req: 10.4s 10.3s 10.4s 10.4s | prompt=547
+  nk_stock1 CELL c=4 rep=1:   52.6 tok/s | no spec counters | per-req: 9.6s 9.7s 9.7s 9.7s | prompt=547
+=== w4a41  VLLM_DISABLED_KERNELS=FlashInferCuteDslNvFp4W4A16LinearKernel  05:32 ===
+    kernel=
+  nk_w4a41 TTFT 8k: prompt_tokens=7503 median=0.60s  all=2.93 0.60 0.60
+  nk_w4a41 TTFT 30k: prompt_tokens=29263 median=0.61s  all=8.20 0.61 0.61
+  nk_w4a41 CELL c=4 rep=0:   50.7 tok/s | no spec counters | per-req: 10.1s 9.9s 10.1s 10.1s | prompt=550
+  nk_w4a41 CELL c=4 rep=1:   54.1 tok/s | no spec counters | per-req: 9.5s 9.5s 9.5s 9.3s | prompt=550
+=== stock2  VLLM_DISABLED_KERNELS=<unset>  05:45 ===
+    kernel=
+  nk_stock2 TTFT 8k: prompt_tokens=7503 median=0.60s  all=2.92 0.60 0.60
+  nk_stock2 TTFT 30k: prompt_tokens=29263 median=0.62s  all=8.22 0.62 0.62
+  nk_stock2 CELL c=4 rep=0:   50.9 tok/s | no spec counters | per-req: 10.1s 9.9s 10.1s 10.1s | prompt=547
+  nk_stock2 CELL c=4 rep=1:   51.2 tok/s | no spec counters | per-req: 9.9s 10.0s 10.0s 10.0s | prompt=547
+=== w4a42  VLLM_DISABLED_KERNELS=FlashInferCuteDslNvFp4W4A16LinearKernel  05:58 ===
+    kernel=
+  nk_w4a42 TTFT 8k: prompt_tokens=7503 median=0.60s  all=2.91 0.60 0.60
+  nk_w4a42 TTFT 30k: prompt_tokens=29263 median=0.63s  all=8.16 0.61 0.63
+  nk_w4a42 CELL c=4 rep=0:   52.2 tok/s | no spec counters | per-req: 9.8s 9.8s 9.7s 9.8s | prompt=550
+  nk_w4a42 CELL c=4 rep=1:   52.8 tok/s | no spec counters | per-req: 9.7s 9.7s 9.7s 9.6s | prompt=550
+=== stock3  VLLM_DISABLED_KERNELS=<unset>  06:12 ===
+    kernel=
+  nk_stock3 TTFT 8k: prompt_tokens=7503 median=0.59s  all=2.90 0.59 0.59
+  nk_stock3 TTFT 30k: prompt_tokens=29263 median=0.59s  all=8.24 0.59 0.59
+  nk_stock3 CELL c=4 rep=0:   46.3 tok/s | no spec counters | per-req: 10.9s 11.0s 11.0s 11.0s | prompt=547
+  nk_stock3 CELL c=4 rep=1:   52.7 tok/s | no spec counters | per-req: 9.7s 9.7s 9.7s 9.6s | prompt=547
+=== w4a43  VLLM_DISABLED_KERNELS=FlashInferCuteDslNvFp4W4A16LinearKernel  06:25 ===
