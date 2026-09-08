@@ -2965,3 +2965,30 @@ Plus whatever drives the separate generation-side path.
     **Venv hygiene held.** The EXIT trap restored the overlays: `state: qsadet=1 detfin=1 cachekey=1
     plefix=1` in the results file. Worth noting because a killed run here would have left fnmain2
     stripped and silently poisoned every later measurement.
+
+182. **CORRECTION to det-180: upstream does NOT ship `vllm/v1/ple_offload/`, and the committed
+    dev524 overlay was incomplete (2026-09-08).** Asked whether the PLE offload semaphore fix is
+    upstream. It is not, and checking exposed an error in my own artefact.
+
+    - **The wheel is the evidence.** `vllm-0.28.1rc1.dev524+g5db652225…whl` contains **zero** files
+      under `vllm/v1/ple_offload/`, and no `ple_offload_layer.py`. Both the subsystem and our
+      semaphore fix exist only here and on peakcrosser7's `release/qwen38next_offload` branch.
+      **vllm#53899 is open and unmerged; our PR #13 on that branch is open and unmerged.**
+    - **Why I got it wrong.** I regenerated the overlay by diffing fnmain3 against
+      `…-pristine-dev524.tgz`, taken right after `pip install --no-deps`. But fnmain3 is a *clone of
+      fnmain2*, and `pip install` only overwrites files the wheel contains. Our five added files are
+      not in the wheel, so they survived into the "pristine" snapshot, sat identically on both sides
+      of the diff, and disappeared from the overlay. I then wrote the disappearance up as "upstream
+      now ships them" — an inference from an artefact I had built wrong, exactly the shape of error
+      det-176 was supposed to have taught me to check.
+    - **Consequence:** `tools/main/fnmain-overlay-dev524.diff` covered 12 files and would have
+      produced a venv with **no PLE offload subsystem at all**. Now 17 files, with the five added
+      ones appended as new-file hunks. A full regeneration against the extracted *wheel* is queued;
+      the rule is in `BUILD-RECIPE.md`: **a `--no-deps` install is not a reset, it is an overwrite of
+      the intersection — diff against the wheel, never against a tarball of a populated venv.**
+
+    **Why this matters beyond hygiene.** If `isolate4` shows `plefix` is the load-bearing fix for
+    end-to-end reproducibility, then the thing that makes greedy decoding reproducible on this stack
+    is a patch that exists in **no released vLLM and no merged PR** — sitting on a fork branch behind
+    an unmerged feature PR. That would be the single most useful thing we could tell #54521 and
+    #55122, and it would be more important than our own kernel PR.

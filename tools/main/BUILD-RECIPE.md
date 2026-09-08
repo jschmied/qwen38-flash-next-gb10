@@ -60,7 +60,33 @@ missing dependency.
 - the det overlays are installed **in the new venv** (check the path in the script's output)
 - a server start whose log names the new venv path, plus one real request
 
-## dev524 (2026-09-08): the overlay shrank from 17 files to 12
+## dev524 (2026-09-08): the overlay is 17 files — an earlier claim here was WRONG
+
+**Correction (same day).** This section first said the overlay had shrunk to 12 files because
+"upstream now ships `vllm/v1/ple_offload/` and `ple_offload_layer.py`". **That was wrong**, and the
+error is worth understanding because it would have shipped a broken recipe.
+
+The "pristine" tree I diffed against came from
+`vllm-venv-fnmain3-vllm-pkg-pristine-dev524.tgz`, taken after `pip install --no-deps` — but that
+venv was a **clone of fnmain2**, and `pip install` only replaces files the wheel contains. Our five
+*added* files are not in the wheel, so they survived into the "pristine" snapshot, appeared on both
+sides of the diff, and silently vanished from the overlay. Applying that 12-file overlay to a genuine
+wheel would have produced a venv missing the entire PLE offload subsystem.
+
+Checked against the wheel itself, which is the only real pristine reference:
+
+    python3 -c "import zipfile; n=zipfile.ZipFile('<wheel>').namelist(); \
+                print(sum(1 for x in n if x.startswith('vllm/v1/ple_offload/')))"   # -> 0
+
+**Rule: diff against the extracted WHEEL, never against a tarball of an already-populated venv.**
+A `--no-deps` install is not a reset; it is an overwrite of the intersection.
+
+Consequence for what is upstream: `vllm/v1/ple_offload/` and `ple_offload_layer.py` exist **only**
+here and on peakcrosser7's `release/qwen38next_offload` branch. vllm#53899 (the PLE offload feature)
+is open and unmerged, and our semaphore fix on top of it — PR #13 on that branch — is open and
+unmerged too. Nobody gets either from vLLM today.
+
+## dev524: what the overlay covers
 
 Regenerating the overlay against pristine dev524 (`fnmain-overlay-dev524.diff`, 12 files, re-applies
 with **0 failed hunks**) turned up something worth knowing: **upstream now ships
