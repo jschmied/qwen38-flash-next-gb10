@@ -2279,3 +2279,30 @@ Plus whatever drives the separate generation-side path.
       half, and the numbers now say so rather than the argument. Their approach + `union_emit_ordered`
       should land near 1.0–1.2× of stock *with* reproducibility, against our current 1.54× worst cell.
       That is worth building and is a better artefact than either PR alone.
+
+166. **The union is WORSE than our own PR as a post-pass — do not propose it (2026-09-08,
+    `notes/data/tkunion2.txt`).** Built #55314's selection + #55122's ordering and measured it.
+    Design: a post-pass that never touches their descent, so it cannot break their set — read the
+    pivot back off their own output (min ordered key among the indices they selected), count elements
+    above it, then emit `> pivot` plus the lowest-index ties in one ordered pass.
+    - **It works.** Wiring it into `histogram_256_topk` made exactly the shapes that use that path
+      (8192 < n ≤ 32768, i.e. n=20000 in the grid) fully self-consistent — 18/81 shapes, and *only*
+      that path — while the value check stayed 0/16 wrong. Path-by-path determinism, as designed.
+    - **And it costs too much.** On the wired path it is **1.76–1.99× stock** against our #55122 at
+      **1.14–1.31×** on the same cells. The safety that makes it unable to break their set — running
+      after them rather than inside them — is what makes it expensive: two extra full-row scans, one
+      to count above-pivot and one to emit. That is roughly +0.8× of stock, and it swamps the
+      1.00–1.15× their selection costs.
+    - **Conclusion: our PR is better than the obvious combination.** The "their set + our order" idea
+      is right in principle and wrong as a bolt-on. Making it pay would require *fusing* the ordered
+      emission into their descent instead of appending it — which is what I avoided because their
+      coarse bucket is fp16-derived (`convert_to_uint8` → `__float2half_rn`) and is not byte 3 of the
+      fp32 key, so the pivot cannot be assembled naively from their internals. That is a real piece of
+      work with an uncertain payoff.
+    - **Nothing proposed upstream.** The comment I had drafted offering to write the ordering patch
+      against their branch is withdrawn on these numbers. What I can honestly say on #55314 is what
+      det-165 already established: their exactness fix works and is nearly free, and it does not
+      address reproducibility — no offer attached.
+    - Two paths remain unwired (`histogram_2048_topk` for n ≤ 8192, `radix_topk` for n > 32768); the
+      latter is multi-CTA and a post-pass there would need cross-CTA coordination. Not worth doing
+      given the cost result.

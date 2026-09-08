@@ -542,27 +542,63 @@ __device__ __noinline__ void histogram_2048_topk(
 // kernel
 
 // ---------------------------------------------------------------------------
-// UNION PATCH (vllm#55122 technique on top of vllm#55314's selection).
+// UNION PATCH: vllm#55122's ordering on top of vllm#55314's selection.
 //
-// #55314 fixes the SET: it descends the remaining key bytes until the threshold
-// bin fits the stash, so no candidate is dropped. It leaves the ORDER to thread
-// arrival (`atomicAdd(&shared_output_count, 1)`), and the sparse attention sums
-// the selected keys in output order -- so identical requests still fork.
+// #55314 fixes the SET -- its selection is always a valid exact top-k by value
+// (measured 16/16 on tie-heavy shapes, sm_121). It leaves two things to thread
+// arrival: WHICH tied elements are taken, and the ORDER they are written in.
+// The sparse attention sums the selected keys in output order, so both make
+// identical requests fork.
 //
-// This emits the same set in ASCENDING INDEX order in one pass, from the full
-// 32-bit pivot their descent already computes. Position is direct:
-//     pos = (# strictly greater before) + min(# equal before, fin)
-// which is correct for a '>' element (the min saturates) and for a kept '=='
-// element (it does not), so one expression serves both and no sort is needed.
-// Ties are taken lowest-index-first, which is what makes it reproducible.
+// This is a POST-PASS, deliberately: it does not touch their descent, so it
+// cannot break the set. Their coarse bucket is fp16-derived (convert_to_uint8
+// goes through __float2half_rn) and is NOT byte 3 of the fp32 key, so
+// reconstructing a pivot from their internals is error-prone. Instead we read
+// it back off their own output:
+//
+//   pivot   = the smallest ordered key among the indices they selected
+//   gt      = # elements strictly greater than pivot  (all of them are in)
+//   fin     = k - gt                                   (ties still needed)
+//   emit      everything > pivot, then the fin LOWEST-INDEX ties, ascending
+//
+// Position is direct: pos = g + min(e, fin), correct for a '>' element (the min
+// saturates) and for a kept '==' element (it does not).
 // ---------------------------------------------------------------------------
 template <int TopK, int N_THREADS>
-__device__ __forceinline__ void union_emit_ordered(
-    const float* __restrict__ row, int n, int* __restrict__ out,
-    uint32_t pivot, uint32_t fin, void* scan_tmp_raw) {
+__device__ __forceinline__ void union_reorder_inplace(
+    const float* __restrict__ row, int n, int* __restrict__ out, int k) {
   using ScanT = cub::BlockScan<uint32_t, N_THREADS>;
-  auto* scan_tmp = reinterpret_cast<typename ScanT::TempStorage*>(scan_tmp_raw);
+  using RedT = cub::BlockReduce<uint32_t, N_THREADS>;
+  __shared__ union { typename ScanT::TempStorage scan; typename RedT::TempStorage red; } tmp;
+  __shared__ uint32_t s_pivot;
+  __shared__ uint32_t s_gt;
   const int tx = threadIdx.x;
+
+  // 1. pivot = min ordered key over their selected indices
+  uint32_t local_min = 0xFFFFFFFFu;
+  for (int i = tx; i < k; i += N_THREADS) {
+    const int idx = out[i];
+    if (idx >= 0 && idx < n) {
+      const uint32_t key = convert_to_uint32_v2(row[idx]);
+      if (key < local_min) local_min = key;
+    }
+  }
+  uint32_t mn = RedT(tmp.red).Reduce(local_min, cuda::minimum<uint32_t>{});
+  if (tx == 0) s_pivot = mn;
+  __syncthreads();
+  const uint32_t pivot = s_pivot;
+
+  // 2. count elements strictly greater than the pivot
+  uint32_t local_gt = 0;
+  for (int i = tx; i < n; i += N_THREADS)
+    if (convert_to_uint32_v2(row[i]) > pivot) local_gt++;
+  __syncthreads();
+  uint32_t tot = RedT(tmp.red).Sum(local_gt);
+  if (tx == 0) s_gt = tot;
+  __syncthreads();
+  const uint32_t fin = (s_gt >= (uint32_t)k) ? 0u : ((uint32_t)k - s_gt);
+
+  // 3. one ordered emission pass
   uint32_t run_gt = 0, run_eq = 0;
   for (int base = 0; base < n; base += N_THREADS) {
     const int i = base + tx;
@@ -571,13 +607,16 @@ __device__ __forceinline__ void union_emit_ordered(
     if (valid) key = convert_to_uint32_v2(row[i]);
     const uint32_t fgt = (valid && key > pivot) ? 1u : 0u;
     const uint32_t feq = (valid && key == pivot) ? 1u : 0u;
-    uint32_t packed_rank, packed_total;
-    ScanT(*scan_tmp).ExclusiveSum(fgt | (feq << 16), packed_rank, packed_total);
-    const uint32_t g = run_gt + (packed_rank & 0xFFFFu);
-    const uint32_t e = run_eq + (packed_rank >> 16);
-    if (fgt || (feq && e < fin)) out[g + (e < fin ? e : fin)] = i;
-    run_gt += packed_total & 0xFFFFu;
-    run_eq += packed_total >> 16;
+    uint32_t rank, total;
+    ScanT(tmp.scan).ExclusiveSum(fgt | (feq << 16), rank, total);
+    const uint32_t g = run_gt + (rank & 0xFFFFu);
+    const uint32_t e = run_eq + (rank >> 16);
+    if (fgt || (feq && e < fin)) {
+      const uint32_t pos = g + (e < fin ? e : fin);
+      if (pos < (uint32_t)k) out[pos] = i;
+    }
+    run_gt += total & 0xFFFFu;
+    run_eq += total >> 16;
     __syncthreads();
   }
 }
@@ -596,6 +635,11 @@ __device__ __noinline__ void histogram_256_topk(
   int& shared_threshold_bin = medium_scalars[1];
   int* shared_buffered_count = &medium_scalars[2];
   int& shared_final_k = medium_scalars[4];
+  // UNION PATCH: accumulate the full 32-bit ordered pivot across the fp32
+  // descent. NOTE their coarse bucket is fp16-derived (convert_to_uint8 goes
+  // through __float2half_rn), so it is NOT byte 3 of the fp32 key and must not
+  // be folded in here -- the 4-pass descent below is self-contained.
+  int& shared_pivot = medium_scalars[5];
   int (*buffered_indices)[MAX_BUFFERED_ITEMS] =
       reinterpret_cast<int (*)[MAX_BUFFERED_ITEMS]>(medium_smem +
                                                     kMediumHeaderSize);
@@ -672,6 +716,9 @@ __device__ __noinline__ void histogram_256_topk(
         if (output_pos < TopK) output_indices[output_pos] = idx;
       }
     }
+    __syncthreads();
+    // UNION PATCH: their set is final here; fix tie choice + order in place.
+    union_reorder_inplace<TopK, kThreadsPerBlock>(logits + logits_offset, seq_len, output_indices, TopK);
     __syncthreads();
     return;
   }
@@ -767,6 +814,9 @@ __device__ __noinline__ void histogram_256_topk(
       remaining_k -= above;
       if (remaining_k == 0) {
         // Already filled above this bin.
+      // UNION PATCH: their set is final here; fix tie choice + order in place.
+      union_reorder_inplace<TopK, kThreadsPerBlock>(logits + logits_offset, seq_len, output_indices, TopK);
+      __syncthreads();
         return;
       }
       if (pop <= MAX_BUFFERED_ITEMS || level == 4) {
@@ -832,6 +882,11 @@ __device__ __noinline__ void histogram_256_topk(
     remaining_k -=
         threshold_bin < 0 ? 0 : shared_histogram[0][threshold_bin + 1];
     const int bit_offset = 24 - pass * 8;
+    // UNION PATCH: fold this pass's byte into the pivot.
+    if (thread_id == 0 && threshold_bin >= 0) {
+      shared_pivot |= (threshold_bin << bit_offset);
+    }
+    __syncthreads();
 
     if (remaining_k == 0) {
       for (int i = thread_id; i < num_buffered; i += kThreadsPerBlock) {
@@ -882,6 +937,9 @@ __device__ __noinline__ void histogram_256_topk(
     }
     __syncthreads();
   }
+  // UNION PATCH: normal exit -- same post-pass.
+  union_reorder_inplace<TopK, kThreadsPerBlock>(logits + logits_offset, seq_len, output_indices, TopK);
+  __syncthreads();
 }
 
 // ============================================================================
