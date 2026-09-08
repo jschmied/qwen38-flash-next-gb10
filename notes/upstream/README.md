@@ -167,3 +167,19 @@ branch lacks — fetch + rebase before pushing.
    Two things stated so the null cannot be misread: (a) the selection genuinely changed (verified outside the run via `is_supported` with and without the env var, since vLLM does not log the chosen class) so this is NOT a flag that failed to take effect; (b) it is null because this checkpoint's `exclude_modules` puts `*.self_attn.*`, `*.linear_attn.*`, `*.mlp.gate*`, `*.mlp.shared_expert.*` outside quantization — the layers that kernel serves are BF16 here and the NVFP4 weights sit in the MoE experts. #55397 measured a DENSE 27B. The bug and its fix are still right; there is nothing on a Flash-Next-shaped checkpoint for it to be wrong about. Also warned them about the prefix-cache median trap that would have produced the same answer for the wrong reason.
    See det-164, which also downgrades the det-159 confound: our W4A16-vs-W4A4 result ran on the MoE path and stands.
 
+
+89. 2026-09-08 08:2x — **#55122 body corrected, one bullet** (user go "edit it"): the "what changed"
+    summary claimed `RADIX_THRESHOLD` 32768 → 16384 because "the deterministic multi-CTA path is
+    cheaper than the single-CTA select above 16k". **The PR's own Limitations section already
+    contradicted that** ("the crossover is row-count dependent … **never** at 32 rows, where the
+    single-CTA select still wins by 8–35 % at 65,536"), so the body argued against itself in the two
+    places a reviewer reads first and last. Replaced with the real reason, which is a capacity
+    constraint and not a cost claim: the single-CTA select caches the row's ordered keys at 4 bytes
+    per element, so 32,768 elements want 128 KB against this device's 101,376 B opt-in. Correction
+    marked inline, as with the cost-table correction (entry 61). Verified byte-for-byte: exactly one
+    line changed, 9,352 → 9,803 chars. Body saved as `pr-55122-body-v4.md`.
+    `gh api -X PATCH repos/vllm-project/vllm/pulls/55122 --input body.json` (`gh pr edit` is broken
+    on this account). → https://github.com/vllm-project/vllm/pull/55122
+    **Still owed on this bullet's neighbour:** Limitations says "raising it back to 32,768 is not a
+    fix — that costs 60–100 % at n=24,576–32,768 on 1–8 rows", which says nothing about the
+    intermediate 20,480 that the queued `thr` run is measuring. Fold that result in when it lands.
