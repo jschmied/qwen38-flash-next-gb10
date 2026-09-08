@@ -1054,6 +1054,12 @@
 142. **Small prefix-cache block on the hybrid (`blk`, FN_KEEP_BLOCK overlay: keep `--block-size`, pad attention pages to the
     Mamba page; block 512 and 1024 vs the forced 1600; MTP-3, prefix cache on, 16 GB KV, one start each, `notes/data/blk.txt`):
     the overlay works and the regression intercept falls as designed, but the real-turn median does not follow.**
+    **CORRECTION 2026-09-08: "MambaDType has no fp8, so this is the only in-config route" was wrong on the second half.**
+    fp8 is indeed not a `MambaDType`, but `FUSED_GDN_STATE_DTYPES = (torch.float32, torch.bfloat16)` and the checkpoint
+    ships float32, so `--mamba-ssm-cache-dtype bfloat16` halves the state and the derived block follows — without the
+    padding this overlay pays, and with the per-step recurrent-state traffic halved as well. MiaAI-Lab measured the same
+    switch on a Spark at 3,200 → 1,664 tokens, +6.8 % decode at 1 stream and +8.5 % at 8 (2026-09-06). Measured here as
+    the `ssm` run.
     Server: "keeping attention block size 512 (derived minimum was 2048)"; KV capacity 348k tokens at 512 / 318k at 1024
     (vs 76k at 1600 with 4 GB, i.e. the padding costs far less than my per-block estimate — the QSA ring pages scale by
     block instead of padding). Generation sanity clean (acceptance 42–70 %, no garbage). Regression over the 20k cached

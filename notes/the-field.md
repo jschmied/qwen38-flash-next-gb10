@@ -1062,3 +1062,50 @@ lever and it moves decode as well as the block size; (2) the draft-vocabulary sl
 corpus, since it is the only change either project has found that moves the single-stream step at all;
 (3) the cudagraph widths *between* the captured sizes, which also discharges MiaAI #19. The PLE prefetch
 is not a lever here and should be struck from the plan.
+
+### Open issues worth acting on (same sweep, 2026-09-08)
+
+Four upstream threads sit on the agent-turn path. Two of them are the same coupling seen from
+different sides, and we hold measurements neither reporter has.
+
+- **vllm#54458** (open, GLM-5.3-Flash on 2× RTX PRO 6000): attention blocks inflated to **7,808
+  tokens** by the same `may_override_attention_block_size` rule that gives us 1,600; ~23 KV groups ×
+  one page each pins 118k–150k token-equivalents *per request whatever its length*, so only 2–3
+  requests run and a cached 35k prompt is fully evicted after three interleaved admissions. Their ask
+  is verbatim finding 141's lever 2 — "allow one mamba state page to span multiple attention-sized
+  pool pages". **We are already its second commenter (2026-08-30).** The line in
+  `warm-turn-block-granularity` claiming no open issue existed was a search failure and is corrected.
+- **vllm#55533** (open, active, Qwen3.8-27B-class hybrid GDN + MTP): the *concurrency* face of the
+  same coupling. `MambaSpec.num_speculative_blocks = num_speculative_tokens`, and align-mode
+  `MambaManager` charges **1 + k** blocks per Mamba group for the request's lifetime, so
+  `max_concurrency = floor((num_gpu_blocks − 1) / (1 + G·(1+k)))` — at batch 8 the scheduler runs
+  exactly 3 sequences and MTP becomes 2–3× **slower** than no-spec. Our pool is 74 blocks of 1,600
+  tokens with k=3, which is the same arithmetic. Measured tonight in `mtp4` (`schedwidth.py` polls
+  `num_requests_running` at c=8, with a no-spec arm as the comparison). Both halves must hold before
+  we call it a reproduction.
+- **vllm#43258** (open, 09-04) emits prefix-cache KV events at hash-block granularity for hybrids and
+  **vllm#51769** (open) warns when EAGLE/MTP speculation costs a large prefix-cache hit — our
+  finding, upstream, as a warning rather than a fix. Neither shrinks the block.
+- **vllm#53239**: `bfloat16` Mamba cache crashes `selective_scan_fwd` on an L40S. Read before
+  tonight's run and set aside: that is Mamba2's SSD kernel, not GDN's `chunk_gated_delta_rule`, whose
+  `FUSED_GDN_STATE_DTYPES` names bfloat16 explicitly — and #55533's reporter runs a hybrid GDN model
+  with `mamba_ssm_cache_dtype="bfloat16"` without comment.
+
+On the field's own trackers: **blazux #9** (closed) — "30 tok/s → 0.2 and back" with two clients — is
+diagnosable from the log the reporter pasted, and it is not the model: `PLE mmap stats` shows
+**1,518 ms per gather op** during the collapse against 54 ms/op when it recovers, gathering ~356k rows
+each time. That is their mmap PLE thrashing under two clients, i.e. the same subsystem their
+`posix_fadvise` patch addresses, and another reason the fadvise result does not transfer to a
+RAM-resident table. **MiaAI single #28** (greedy non-determinism + context recitation inflating MTP
+acceptance to 0.93 on long prose) we have already answered with the three kernel defects; the
+methodological half is worth keeping for our own numbers — accept-length pinned at the maximum is a
+recital signature, not health.
+
+**MiaAI dual #28** is a config-only tuning report on a stock dual-Spark pair and contains the one
+untested cell on our own list: **MTP `num_speculative_tokens: 4`**, +11.4 % over 3, with the k-curve
+monotonic 0→4 (25.9 / 43.4 / 52.6 / 59.1 / 65.8 tok/s). Our sweep stopped at 3 because k=5 hard-fails
+on the block-size hole, which made 5 look like a wall rather than a gap. Also there: CPU C-states off
+is worth **+5–6.6 %** by live ablation (`cpupower idle-set -D 0`, pure step latency, acceptance
+unchanged) — a host lever we have never tested and which needs root; and `index_share_for_mtp_iteration`
+lifts acceptance 2.42 → 2.52 per draft, which pairs with MiaAI-single's finding that the flag cannot
+be set from the command line at all.
