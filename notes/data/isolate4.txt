@@ -1,0 +1,67 @@
+
+=== arm none  (topk=0 finalize=0)  18:38
+   up. QSADET=0
+sending requests (endpoint_label='sm121-none', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out8/none.json
+arm=i4_none mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13992603
+
+=== arm qsadet  (topk=1 finalize=0)  18:53
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+    installed: qsadet
+   up. QSADET=1
+sending requests (endpoint_label='sm121-qsadet', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out8/qsadet.json
+arm=i4_qsadet mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13986014
+
+=== arm detfin  (topk=0 finalize=1)  19:06
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+    installed: detfin
+   DIED after 820s
+(EngineCore pid=2031958) Traceback (most recent call last):
+(EngineCore pid=2031958)     raise RuntimeError(
+(EngineCore pid=2031958) RuntimeError: Worker failed with error 'Check failed: (id2 >= mGemm1TacticCount && id2 < mGemm1TacticCount + mGemm2TacticCount) is false: Invalid gemm2 profile id: 59', please check the stack trace above for the root cause
+(APIServer pid=2031567) Traceback (most recent call last):
+(APIServer pid=2031567)     raise RuntimeError(
+(APIServer pid=2031567) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+
+=== arm cachekey  (topk=0 finalize=0)  19:20
+  cache-key extras INSTALLED on MoERunner
+    installed: cachekey
+   up. QSADET=0
+sending requests (endpoint_label='sm121-cachekey', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out8/cachekey.json
+arm=i4_cachekey mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13995905
+
+=== arm plefix  (topk=0 finalize=0)  19:34
+  plefix INSTALLED (reset-before-launch)
+    installed: plefix
+   up. QSADET=0
+sending requests (endpoint_label='sm121-plefix', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out8/plefix.json
+arm=i4_plefix mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13991652
+
+== RESULT: disagreeing positions on , vs the no-fix control ==
+   none      disagreeing_positions=  325  max_spread=7.876900926232338  first@=1
+   qsadet    disagreeing_positions=  348  max_spread=7.249476469238289  first@=1
+   detfin: MISSING
+   cachekey  disagreeing_positions=  311  max_spread=9.807471719104797  first@=4
+   plefix    disagreeing_positions=  282  max_spread=10.834481727331877  first@=2
+
+   READ:  must be non-zero or the run is void. Any arm at 0 is sufficient on its own.
+== ALL DONE == 19:48
+
+== restoring ALL overlays ON
+target venv: /opt/llm/runtime/vllm-venv-fnmain2
+-- qsadet
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+-- detfin
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+-- cachekey
+  cache-key extras INSTALLED on MoERunner
+-- plefix
+  plefix already installed
+state: qsadet=1 detfin=1 cachekey=1 plefix=1

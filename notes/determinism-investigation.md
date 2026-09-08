@@ -2995,3 +2995,42 @@ Plus whatever drives the separate generation-side path.
     is a patch that exists in **no released vLLM and no merged PR** — sitting on a fork branch behind
     an unmerged feature PR. That would be the single most useful thing we could tell #54521 and
     #55122, and it would be more important than our own kernel PR.
+
+183. **NO SINGLE FIX CLOSES IT — the four are jointly necessary, not individually sufficient
+    (2026-09-08, `isolate4`, raw `notes/data/isolate4.txt`). Read with the two defects below.**
+    One fix active at a time against a no-fix control, prefix caching ON, MTP=3, 2,504-token prose
+    prompt, 8 sequential repeats:
+
+    | arm | disagreeing positions | max forced-logprob spread | first divergence |
+    | --- | --- | --- | --- |
+    | `none` (control) | 325 | 7.88 | position 1 |
+    | `qsadet` — **our PR #55122** | 348 | 7.25 | position 1 |
+    | `cachekey` | 311 | 9.81 | position 4 |
+    | `plefix` | 282 | 10.83 | position 2 |
+    | `detfin` | **arm died** | — | — |
+
+    The control misbehaved, so the run is valid. **No arm comes near zero**, while all four together
+    give exactly 0 (det-181). The spread between arms (282–348) is one run each and should not be
+    read as a ranking — MTP trajectories差 by more than that between restarts (memory
+    `mtp-restart-instability`, up to 1.83×).
+
+    **So the honest statement for #55122 is: our kernel is one necessary component of a set, not the
+    fix.** The body's "Fixes #54521" and "one of three independent defects that together make
+    Qwen3.8-Flash-Next reproducible" are both wrong in the same direction — the second because the
+    set is four and includes one that is not upstream at all (det-182).
+
+    **Two defects in this run, both predicted by our own notes:**
+    1. **`detfin` alone is not a runnable configuration.** It died at engine init with
+       `Invalid gemm2 profile id: 59` — verbatim the failure in memory
+       `spec-compile-cache-key-omits-nspec`: flipping `use_fused_finalize` invalidates the FlashInfer
+       autotune cache while the cache key ignores that flag. **That is precisely what `cachekey`
+       fixes**, so `detfin` can only be tested paired with it. The four fixes are not independent.
+    2. **All five arms shared one `FN_CACHE_ROOT`.** The same note says per-arm roots plus a purge.
+       `none` and `qsadet` both ran `finalize=0` so their cache state was mutually valid, and the
+       top-k change is a `.so` swap rather than a compiled artefact — but "probably unaffected" is
+       not the standard for a number that would go upstream.
+
+    **Therefore the headline of this finding is provisional.** It needs `isolate5`: per-arm
+    `FN_CACHE_ROOT` with a purge between arms, `detfin` tested as `detfin+cachekey`, and `none` and
+    `qsadet` redone on that footing. Until then, quote det-181 (all four vs none, which was a clean
+    two-arm comparison) rather than these per-arm numbers.
