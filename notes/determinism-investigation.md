@@ -2796,3 +2796,44 @@ Plus whatever drives the separate generation-side path.
     **Method:** the user's "shouldn't you verify PLE first?" was the cheaper and better order, and
     the raw-JSON dump is what actually settled it. Three probe iterations were spent guessing at a
     response shape that one dump revealed.
+
+178. **ZC502's CLIENT collector WORKS on sm_121 — but our test case did not engage the defect, so the
+    determinism comparison in it is VOID (2026-09-08, `vpp4b`, raw `notes/data/vpp4.txt`, reports in
+    `notes/data/vpp4-report4/`).** On #54521 ZC502 replied to our blocker (det-155: the offline
+    collector constructs `LLM()` in-process and cannot load Flash-Next on GB10) by shipping
+    `collect_client.py`, a stdlib-only client that POSTs to a running server, and asked for a first
+    live validation.
+
+    **Primary answer: it works.** 12 of 12 collector runs `exit=0` on GB10 / sm_121 — two arms
+    (`FN_DET_TOPK` 0 and 1) × three prompt lengths (1,460 / 1,999 / 5,960 tokens) × sequential and
+    concurrent — producing 7.5–31 MB canonical JSON each, and `analyze.py` consumes them and emits
+    reports. The blocker is genuinely gone: no launch flags to reproduce, no in-process model load,
+    no PLE memory problem.
+
+    **But the determinism result is void, and this is the falsification condition stated before the
+    run:**
+
+    | case | det0 = stock, disagreeing positions | det1 = #55122 | cross-arm mismatch |
+    | --- | --- | --- | --- |
+    | 1,460 / 1,999 / 5,960 **sequential** | **0 / 0 / 0** | 0 / 0 / 0 | 0 / 0 / 0 |
+    | 1,460 / 1,999 / 5,960 **concurrent** | 619 / 635 / 3,055 | **identical: 619 / 635 / 3,055** | 0 / 0 / 65 |
+
+    **Stock is self-consistent on all three sequential cases**, so it never exhibited the bug and
+    det1's cleanliness demonstrates nothing about the kernel. The concurrent columns are *identical
+    between arms* — same disagreeing-position counts, same max forced-logprob spread (1.35 / 0.987 /
+    1.16), same first position — which is the GDN batch-invariance effect (finding 76), not the
+    top-k, and must not be read as a #55122 failure.
+
+    **Why the case missed.** The prompts are `random.choice` over a 10-word vocabulary, inherited from
+    the earlier offline harness. That is a poor generator for this defect: the bug needs ties at the
+    top-k boundary, and #54521's original reproduction used real text near `indexer_budget`. Length
+    alone was not the discriminator — 5,960 tokens is well above the 2,048 budget and still clean
+    sequentially.
+
+    **Next:** re-run with prompts that actually tie — real prose near the budget, plus a deliberately
+    tie-heavy case — before offering ZC502 any det0/det1 numbers. The collector validation stands on
+    its own and can be reported now.
+
+    **One usability note for them:** `analyze.py` takes `reference [candidate]` as JSON *files* with
+    `--out` a directory; passing the output directory positionally gives
+    `IsADirectoryError: Is a directory`. Cost me two attempts. Worth a line in the README.

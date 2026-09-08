@@ -1,0 +1,62 @@
+== prompts: p1460.txt=8510B p1999.txt=11626B p5960.txt=34868B 
+
+=== arm det0  FN_DET_TOPK=0  15:12
+   up. QSADET active: 1  prefix caching: enable_prefix_caching=False
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det0_1460_sequential.json
+arm=det0_1460_sequential mode=sequential repeats=8 tokens=1271
+   1460/sequential exit=0 size=7547739
+sending requests (endpoint_label='sm121-det0', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det0_1460_concurrent.json
+arm=det0_1460_concurrent mode=concurrent repeats=8 tokens=1271
+   1460/concurrent exit=0 size=7555592
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det0_1999_sequential.json
+arm=det0_1999_sequential mode=sequential repeats=8 tokens=1741
+   1999/sequential exit=0 size=10381939
+sending requests (endpoint_label='sm121-det0', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det0_1999_concurrent.json
+arm=det0_1999_concurrent mode=concurrent repeats=8 tokens=1741
+   1999/concurrent exit=0 size=10376210
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det0_5960_sequential.json
+arm=det0_5960_sequential mode=sequential repeats=8 tokens=5201
+   5960/sequential exit=0 size=30924211
+sending requests (endpoint_label='sm121-det0', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det0_5960_concurrent.json
+arm=det0_5960_concurrent mode=concurrent repeats=8 tokens=5201
+   5960/concurrent exit=0 size=30950392
+
+=== arm det1  FN_DET_TOPK=1  15:26
+   up. QSADET active: 1  prefix caching: enable_prefix_caching=False
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det1_1460_sequential.json
+arm=det1_1460_sequential mode=sequential repeats=8 tokens=1271
+   1460/sequential exit=0 size=7547739
+sending requests (endpoint_label='sm121-det1', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det1_1460_concurrent.json
+arm=det1_1460_concurrent mode=concurrent repeats=8 tokens=1271
+   1460/concurrent exit=0 size=7555592
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det1_1999_sequential.json
+arm=det1_1999_sequential mode=sequential repeats=8 tokens=1741
+   1999/sequential exit=0 size=10381939
+sending requests (endpoint_label='sm121-det1', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det1_1999_concurrent.json
+arm=det1_1999_concurrent mode=concurrent repeats=8 tokens=1741
+   1999/concurrent exit=0 size=10376210
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det1_5960_sequential.json
+arm=det1_5960_sequential mode=sequential repeats=8 tokens=5201
+   5960/sequential exit=0 size=30924211
+sending requests (endpoint_label='sm121-det1', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out4/det1_5960_concurrent.json
+arm=det1_5960_concurrent mode=concurrent repeats=8 tokens=5201
+   5960/concurrent exit=0 size=30950392
+
+=== analyzer over both arms ===
+usage: analyze.py [-h] [--out OUT] [--key-positions KEY_POSITIONS] [--no-plot]
+                  reference [candidate]
+analyze.py: error: unrecognized arguments: /opt/llm/runners/vpp/out4/det0_1999_concurrent.json /opt/llm/runners/vpp/out4/det0_1999_sequential.json /opt/llm/runners/vpp/out4/det0_5960_concurrent.json /opt/llm/runners/vpp/out4/det0_5960_sequential.json /opt/llm/runners/vpp/out4/det1_1460_concurrent.json /opt/llm/runners/vpp/out4/det1_1460_sequential.json /opt/llm/runners/vpp/out4/det1_1999_concurrent.json /opt/llm/runners/vpp/out4/det1_1999_sequential.json /opt/llm/runners/vpp/out4/det1_5960_concurrent.json /opt/llm/runners/vpp/out4/det1_5960_sequential.json
+analyze exit=2
+== ALL DONE == 15:40
