@@ -416,7 +416,11 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 Nothing posted. Ranked by overlap with what we run and what we know.
 
-1. **vllm#55496 — ModelOpt MIXED_PRECISION cannot load FP8_BLOCK_SCALES MTP experts**
+1. ~~**vllm#55496**~~ **DROPPED 2026-09-08.** PRs #55498 and #55513 already cover it; #55513 adds
+   `_remap_quantized_layers()` to `vllm/models/qwen4_exp/{nvidia,amd}/mtp.py` — the exact fix we had
+   drafted — plus `FP8_PB_WO`/`FP8_BLOCK_SCALES` both. Our draft also wrongly claimed Qwen4Exp is
+   out of tree; it is at `vllm/models/qwen4_exp/`. Draft deleted. Do not re-derive this.
+   ~~**Original entry:** ModelOpt MIXED_PRECISION cannot load FP8_BLOCK_SCALES MTP experts~~
    (`nvidia/Qwen3.8-Flash-Next-NVFP4` + MTP). **Two DGX Sparks, GB10 `sm_121a`, and the same preview
    build `0.1.dev20073+g8e685d198` our Quant Map cites.** We hold direct knowledge here: memory
    `modelopt-quantized-layers-trap` — MIXED_PRECISION reads `quantized_layers`, NOT `config_groups`,
