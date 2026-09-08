@@ -51,3 +51,17 @@ loudly rather than silently measuring a different path.
 
 Both arms cross-compile clean for `sm_90a` and `sm_80` (verified on the GB10 with nvcc, compile
 only — no Hopper hardware needed to check the build).
+
+## Syntax-checking a branch without touching the GB10
+
+`modal_app.py::check` compiles `topk_det.cu` for a given arch on Modal's CPU tier — `nvcc` needs no
+GPU to compile, so this costs no GPU seconds and, the point, no time on the GB10 while it is
+benchmarking. A compile error found here does not burn a queued A/B slot hours later.
+
+    modal run modal_app.py::check --arch 121a
+
+It compiles **whatever kernel this bundle holds**, and the checked-in `persistent_topk.cuh` is the
+PR head that backs the H100/A100 numbers in `results/` — copy the branch's kernel in first if you
+want to check something else, and revert it afterwards so the bundle stays reproducible.
+
+Note (2026-09-08): the Modal token was revoked, so this path is unavailable until a new one is set.

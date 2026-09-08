@@ -57,3 +57,32 @@ def main(gpu: str = "H100"):
     with open(path, "w") as fh:
         fh.write(out)
     print("\nsaved:", path)
+
+
+# CPU-only syntax/codegen check. nvcc does not need a GPU to compile, so this costs no GPU
+# seconds and -- the point -- no time on the GB10, which is busy benchmarking. Used to keep a
+# compile error from burning a queued A/B slot hours later.
+#
+#   modal run modal_app.py::compile_check --arch 121a
+@app.function(timeout=60 * 20)
+def compile_check(arch: str = "121a") -> str:
+    import subprocess, sys, glob
+    inc = subprocess.run([sys.executable, "-c",
+                          "import torch.utils.cpp_extension as e;"
+                          "print(' '.join('-isystem '+p for p in e.include_paths()))"],
+                         capture_output=True, text=True).stdout.strip()
+    cmd = (f"nvcc -std=c++17 -O3 -c /bundle/topk_det.cu -o /tmp/topk_det.o "
+           f"-arch=sm_{arch} -I/bundle {inc} "
+           f"--expt-relaxed-constexpr -DTORCH_STABLE_ONLY -DUSE_CUDA "
+           f"-DTORCH_EXTENSION_NAME=_C_det -Xptxas -v")
+    r = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    out = [f"$ {cmd}", f"exit={r.returncode}"]
+    out.append(r.stderr[-12000:] if r.stderr else "(no stderr)")
+    if r.returncode == 0:
+        out.append("COMPILE OK")
+    return "\n".join(out)
+
+
+@app.local_entrypoint()
+def check(arch: str = "121a"):
+    print(compile_check.remote(arch))
