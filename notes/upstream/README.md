@@ -301,3 +301,23 @@ branch lacks — fetch + rebase before pushing.
     0.72–1.78× over 43 cells, at or below stock on 27. Credited LopezCastroRoberto — his opt-in shape
     does not depend on the claim we got wrong.
     Body 14,622 → 15,312 chars, saved as `pr-55122-body-v8.md`.
+
+96. 2026-09-08 20:5x — **#54521 reply to mmastrac** (user go "yes, post"). They narrowed their
+    GLM-5.3-Flash corruption to `fused_marlin_moe` non-determinism varying with M, with a
+    **non-monotonic** table: clean at 800–1280, 6/11 at 1536, clean again at 1792–2272, then 10/11 at
+    2304 and 11/11 at 4096.
+    Gave them three things: (a) the **island pattern is now three-platform** — jahnclawdmonet saw
+    non-monotonic bf16 islands at 64/128/4096 on sm_120 and said so explicitly; davidcanar's ROCm
+    counterpart found gfx1151 **monotonic with a per-shape threshold and no islands**. Islands on
+    NVIDIA, threshold on ROCm, which points at tuned-tile selection per M bucket rather than the
+    reduction. (b) **our probe** `tools/gemm_m_invariance.py` + davidcanar's
+    `gemm_m_invariance_rocm.py`, with the two traps that cost us a retracted row: v1 passed blockwise
+    FP8 scales row-major to a layout-deducing dispatch, and the MoE row is meaningless unless
+    `VLLM_TUNED_CONFIG_FOLDER` points at the deployed configs — which matters doubly here since their
+    hypothesis *is* about tuned tiles. (c) endorsed their "non-determinism is not the cause of
+    corruption" with our own accuracy-vs-reproducibility split (third-party suite: stock scored
+    *higher*, 97 vs 95, with 13/50 unstable vs 0/50), and pointed at their `mamba_hybrid.py`
+    `positions` finding as the more promising lead — shared tail slots is a corruption mechanism —
+    plus its adjacency to #55600.
+    Offered GB10 runs on their shapes; we have the hardware, not their model.
+    → https://github.com/vllm-project/vllm/issues/54521#issuecomment-5590196277
