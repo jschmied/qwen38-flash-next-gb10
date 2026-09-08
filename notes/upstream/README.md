@@ -260,3 +260,22 @@ branch lacks — fetch + rebase before pushing.
     range** (switches only at M >= 128) against the sm_120 cuBLAS row differing from M=2, which would
     make vllm#54928's E == V != A channel inactive at MTP verification widths on gfx1151.
     → https://github.com/jschmied/qwen38-flash-next-gb10/pull/1#issuecomment-5586351526
+
+94. 2026-09-08 20:1x — **#55122 thread tidied, deliberately conservatively** (user go "yes").
+    14 of the 18 comments are ours; a reviewer opening the PR saw a wall.
+    **Minimized (classifier OUTDATED, not deleted) — exactly two**, both pure procedural asks with no
+    technical content, both unanswered, both superseded now that LopezCastroRoberto is reviewing:
+    `5561292470` (@mgoin/@tlrmchlsmth review ping) and `5570822909` (@LucasWilkinson label ping).
+    **Deleted nothing.** In particular NOT `5569803578`, the self-correction retracting stale
+    `top_k_per_row_decode` numbers in our own favour — deleting a correction is the one edit that can
+    actually harm a reader, and minimizing preserves the record while collapsing the noise. The two
+    k3dani replies stay too: removing them would erase acknowledgement of someone else's independent
+    validation.
+    **Added a "Where the measurements are" index to the body** (7 rows, links to the comments that
+    carry data). The reviewer's problem was never comment count, it was not knowing which three
+    matter. Body 13,191 → 14,621 chars, saved as `pr-55122-body-v7.md`.
+    **Still owed on this PR, in the other direction:** an *addition* saying our kernel alone is not
+    sufficient for end-to-end reproducibility (det-181/183, pending `isolate5`), plus corrections to
+    "Fixes #54521" and the "three independent defects" list — the set is four and one of them is not
+    upstream (det-182). That correction must sit visibly at the end of the thread, not be folded into
+    a tidy-up. → https://github.com/vllm-project/vllm/pull/55122
