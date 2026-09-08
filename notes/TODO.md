@@ -18,7 +18,7 @@ just after each expected finish):
 | --- | --- | --- | --- |
 | 1 | `isolate5` | which of the four determinism fixes carries end-to-end reproducibility | `none` non-zero AND `all4` ~0, or void |
 | 2 | `ssm2` | **DONE 23:02 — finding 153.** Block 1,600 → **832** as predicted, KV +21–36 %, intercept −51 %. Real agent turns: **total −9.6 %** over 24 paired turns (18.84 → 17.04 s, faster on 15/24) but the **median turn is slightly worse** — it is a tail lever. Costs **127/2,504 modal top-1 changes**. No decode win; vllm#55533 does not reproduce. Prod adoption = one `FN_SSM_DTYPE` line, **user's call, pair it with a task eval** | ✅ the block-size log line differed |
-| 3 | `pstack` | what the FLA fused kkt+solve kernel (finding 143) is worth **end to end** | the overlay marker present in `fla` arms, absent in `base` |
+| 3 | `pstack` | **DONE 00:36 — finding 154.** Cold TTFT **−1.4 % at 8k, −1.1 % at 30k** (ranges do not overlap), **null** on warm agent turns. Its apparent 5–10 % decode win is a **1-ulp numerics change flipping MTP acceptance ±10 pp** — expectation zero. Closes finding 143 as a correct kernel win that does not move agent turns; the PR still stands on kernel merit | ✅ marker present in `fla`, absent in `base` |
 | 4 | `mtp42` | is MTP k=4 better than our shipped 3, and does vllm#55533's scheduler collapse reproduce here | dvcell c=1 tok/s between n3 and n4 |
 | 5 | `ishare` | is `index_share_for_mtp_iteration` a free decode lever | `index_share_for_mtp_iteration=True` in the engine config line |
 
