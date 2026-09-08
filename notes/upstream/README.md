@@ -221,3 +221,22 @@ branch lacks — fetch + rebase before pushing.
     commits; update it. **Still owed to ZC502 on #54521:** the client-collector validation (`vpp4b`
     running; the first attempt died because I set gpu_memory_utilization 0.55, copied from the
     offline harness).
+
+92. 2026-09-08 15:2x — **#55122 body updated for the two new commits** (user go "update it"). Six
+    edits, verified against the live body afterwards (11,053 → 13,190 chars, only a trailing newline
+    differs from what was prepared):
+    (a) the cost table's "**now**" column relabelled `at 995cd99` — it was measuring a revision that
+    is no longer head, which is exactly the kind of quiet staleness that makes a reviewer distrust
+    the rest;
+    (b) headline "whole grid 0.74–2.14×" scoped to that commit, with a pointer forward;
+    (c) the disclosed 5 % regression at n ≤ 16,384 / k = 2048 marked **since fixed** — the blocked
+    emission takes 8×16,384×2048 from 19.4 µs to 12.4 µs (0.75× stock). Kept the original disclosure
+    and the "I could not explain it" paragraph rather than deleting the embarrassing part;
+    (d) new section "Two follow-up commits" with det-173's 4-build table, the composition result
+    (0 of 48 cells where both are worse than either alone), the control caveat (5 cells excluded at
+    6–14 µs where timer jitter dominates; stock median spread 0.5 %), and an explicit note that
+    2.13× looks worse than the older 2.14× only because the grid is wider — the earlier number was
+    not wrong for its grid;
+    (e)+(f) the `RADIX_THRESHOLD` Limitations bullet rewritten from an open limitation to a shipped
+    change ("was 16,384 … now ships 22,016", past tense on the cost).
+    Body saved as `pr-55122-body-v6.md`. → https://github.com/vllm-project/vllm/pull/55122
