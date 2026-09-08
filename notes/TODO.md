@@ -34,6 +34,19 @@ between MiaAI's 3,200 and our 1,600); the memory `warm-turn-block-granularity` c
 is the open issue for the allocator change and we are its second commenter — the earlier "no open
 issue exists" was a search failure).
 
+**Owed, and now sharpened by a third party (2026-09-09 01:11):** rybruscoe on vllm#54521 proposes the
+discriminator our own PR #55122 needs — log the selected index set and the k-th indexer score for two
+byte-identical requests above the budget, and check whether the differing indices sit inside a near-tie
+band. If they do, the *scores* differ run to run (reduction order rounding) and the selection kernel is
+only where it becomes visible; if the differing indices have clearly separated scores, it is a genuine
+ordering bug in the top-k. They report the same shape from reward scoring: eight valid BF16 reduction
+orders flipped 52 verdicts, all near the threshold, and exact accumulation flipped none.
+**det-184 is already indirect evidence for their reading** — if top-k ordering were the whole story,
+`qsadet` alone would have removed far more than 0.9 % of the divergence instead of 3 positions out of 333.
+The instrument exists: the `tiecensus` runner (fixed after its chown failure, never re-launched) measures
+exactly `ambiguous iff n_gt < k < n_gt + n_eq` on real indexer scores. **Top candidate for the next idle
+slot**; it decides whether #55122's stated premise is right, which matters before anyone merges it.
+
 **Prepared, not yet run:** draft-vocabulary size sweep at 4k/8k/16k vs 32k (files built, `dv_patch.py`
 is the hook; 32k must be re-measured because the rebuild overwrote det-135's files). CPU C-states off
 (`cpupower idle-set -D 0`) — MiaAI measured +5–6.6 % by live ablation and it is the only host-side
