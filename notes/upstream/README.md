@@ -183,3 +183,22 @@ branch lacks — fetch + rebase before pushing.
     **Still owed on this bullet's neighbour:** Limitations says "raising it back to 32,768 is not a
     fix — that costs 60–100 % at n=24,576–32,768 on 1–8 rows", which says nothing about the
     intermediate 20,480 that the queued `thr` run is measuring. Fold that result in when it lands.
+
+90. 2026-09-08 11:2x — **#55122 body: the `RADIX_THRESHOLD` Limitations bullet replaced with measured
+    data** (user go "update text in 55122"). This discharges the item left owed in entry 89. The
+    bullet previously said only that "no scalar value is right for all of them" and that raising it
+    back to 32,768 is not a fix — true, but it understated how much the shipped 16,384 costs and said
+    nothing about the values in between. det-172 (`thr2`, 3 builds × 3 starts, widths chosen so the
+    routing actually flips) measures the whole 16k–22k band at **16–53 % more** on the multi-CTA
+    path, worst at 64 rows. Added the table, the controls (n=16,384 and n=24,576/32,768 flat across
+    arms), and the caching bound that makes **22,016 the largest legal value**
+    (`fixed(4256) + 4n ≤ 101,376` ⇒ n ≤ 24,280). Kept the old claim rather than replacing it: both
+    hold — 32,768 is too high *and* 16,384 is too low. Marked the correction inline. Body saved as
+    `pr-55122-body-v5.md`; 9,717 → 11,052 chars, exactly one bullet changed, verified against the
+    live body afterwards. → https://github.com/vllm-project/vllm/pull/55122
+    **Not done and deliberately so:** the constant itself is still 16,384 in the branch. Changing it
+    is a code change to an open PR, which is outward-facing and needs its own go. The body now says
+    the shipped value is not optimal and shows by how much, which is what a Limitations section is
+    for. Also NOT mentioned in the body: det-171's blocked emission — it lives on
+    `perf/topk-blocked-emission` and is not in this PR's diff, so promising it in the body would
+    describe work a reviewer cannot see.
