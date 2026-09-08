@@ -202,3 +202,22 @@ branch lacks — fetch + rebase before pushing.
     for. Also NOT mentioned in the body: det-171's blocked emission — it lives on
     `perf/topk-blocked-emission` and is not in this PR's diff, so promising it in the body would
     describe work a reviewer cannot see.
+
+91. 2026-09-08 15:1x — **#55122 reply to LopezCastroRoberto's review** (user go "do it like this" +
+    "we have issues to answer"). Their review argued for an opt-in backend over changing the default,
+    opened #55872, and asked us directly to test it. Order was test-then-reply, as agreed.
+    Content: (a) **their backend does not start on sm_121** — `TopKRaggedTransform failed with error
+    code operation not supported` at engine init, while the `native` arm on the same patched build is
+    fine; their patch itself applies cleanly to dev524 and needs no flashinfer 0.6.18 (det-175);
+    (b) **conceded the accuracy point outright** — #53287 holds, and our own third-party suite scored
+    *stock* higher (97 vs 95); reframed our case as reproducibility (13/50 unstable vs 0/50, and
+    #54521's Thai corruption), explicitly not claiming an accuracy regression; (c) **dropped the
+    change-the-default position** and proposed their PR as the config surface with our kernel as one
+    implementation behind the flag; (d) answered the performance objection with det-173's measured
+    numbers and the two commits pushed today; (e) flagged that their `qsa_indexer.py` hunk overlaps a
+    file our det overlay patches. Offered the GB10 for any diagnostic they want.
+    → https://github.com/vllm-project/vllm/pull/55122#issuecomment-5585698170
+    **Still owed on this PR:** the body's cost table still says 1.3–4.3× and predates the two
+    commits; update it. **Still owed to ZC502 on #54521:** the client-collector validation (`vpp4b`
+    running; the first attempt died because I set gpu_memory_utilization 0.55, copied from the
+    offline harness).
