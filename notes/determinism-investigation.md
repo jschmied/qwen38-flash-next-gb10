@@ -2602,3 +2602,40 @@ Plus whatever drives the separate generation-side path.
 
     Not measured: the two changes combined, and whether a threshold between 22016 and 24280 gains
     anything more.
+
+173. **THE TWO FIXES COMPOSE, AND det-171'S "WORST 1.25×" WAS GRID-DEPENDENT (2026-09-08, `comb`,
+    4 arms × 3 interleaved starts, raw `notes/data/comb.txt`).** base (PR head) / blk (blocked
+    emission, det-171) / thr (RADIX_THRESHOLD 22016, det-172) / both. **All four arms `FAILS: 0`** —
+    the correctness gate ran before any benching.
+
+    **They compose: 0 of 48 cells where `both` is worse than the better of `blk` and `thr`.** `both`
+    is the best arm on every cell. So the PR can take both changes, not one.
+
+    | arm | ratio vs stock (43 clean cells) | worst cell | at/below 1.00× |
+    | --- | --- | --- | --- |
+    | base | 1.01 – 2.13× | 2.13× | 0/43 |
+    | blk | 0.72 – 1.79× | 1.79× | 10/43 |
+    | thr | 1.01 – 2.13× | 2.13× | 0/43 |
+    | **both** | **0.72 – 1.78×** | **1.78×** | **27/43** |
+
+    `thr`'s controls are exact: n = 16,384 / 24,576 / 32,768 move **+0.0 %** at every row count. It
+    changes only 16,384 < n ≤ 22,016, as designed — 64×17,408 53.3 → 34.8 µs, 64×20,480 57.5 → 38.7,
+    64×21,504 59.5 → 39.0.
+
+    **Correction to det-171.** I reported its worst cell as 1.25×. That was on `bench_det.py`'s stock
+    width list (8k/16k/32k/64k). This grid adds 17,408 / 20,480 / 21,504 / 24,576, and **base's true
+    worst is 2.13× at 64 × 24,576**, which `both` only brings to 1.78×. det-171's number was not
+    wrong for its grid; it was quoted as if it were the worst cell of the kernel, and it is not. The
+    honest headline for the PR is **"worst 1.78×, and faster than stock on 27 of 43 cells"**, not
+    1.25×.
+
+    **Why 24,576 is now the worst cell.** It is just above the 22,016 threshold, so it is multi-CTA,
+    and it is above the caching bound (n ≤ 24,280) — no legal threshold can rescue it. `blk` helps
+    (65.7 → 55.1 µs) but the multi-CTA path is simply expensive there. That cell is the honest
+    remaining weakness of this PR.
+
+    **Control, stated because it partly failed.** `bench_det.py`'s stock column is vLLM's installed
+    `_C`, identical for all four builds. Median spread across arms 0.5 %, but **3 of 48 cells exceed
+    10 %** — (1, 8192, 512) at 60.9 %, (1, 8192, 2048) at 27.2 %, (1, 17408, 512) at 15.2 % — all at
+    6–14 µs where a ~4 µs timer jitter dominates. The 5 cells above 5 % are excluded from the ratio
+    table above; the det-column comparison (arm vs arm) needs no stock at all and uses all 48.
