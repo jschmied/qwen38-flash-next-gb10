@@ -12,8 +12,16 @@ no-fix control:
 | arm | disagreeing positions | note |
 | --- | --- | --- |
 | `none` | 325 | control misbehaved, so the run is valid |
-| `qsadet` (**our PR #55122**) | 348 | **no improvement** — still diverging from position 1 |
-| `detfin`, `cachekey`, `plefix` | pending | one of these should carry it |
+| `qsadet` (**our PR #55122**) | 348 | no improvement |
+| `cachekey` | 311 | no improvement |
+| `plefix` | 282 | no improvement |
+| `detfin` | died | not runnable alone — needs `cachekey` (the fixes are coupled) |
+
+**No single fix comes near zero; all four together give exactly 0.** So the four are *jointly
+necessary*, and our kernel is one component of a set rather than "the" fix. The per-arm numbers are
+provisional — that run shared one `FN_CACHE_ROOT` across arms, against our own guidance; `isolate5`
+redoes it with per-arm roots, `detfin+cachekey` paired, and an all-four positive control in the same
+run. Quote det-181 (all four vs none, a clean two-arm comparison) until then.
 
 For contrast, det-181: all four together give **exactly 0**, while true stock gives 335 disagreeing
 positions with 10.63 spread from position 2.
