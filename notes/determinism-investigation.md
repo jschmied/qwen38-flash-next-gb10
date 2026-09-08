@@ -3063,6 +3063,13 @@ Plus whatever drives the separate generation-side path.
     That is an unusual shape and it is worth saying plainly: each defect alone is enough to destroy reproducibility, so
     removing three of four buys nothing a user can observe.
 
+    **How far apart the two builds actually are, not just how unstable one of them is.** Running ZC502's `analyze.py`
+    in its two-file form over the same traces (`none` as reference, `all4` as candidate) gives a cross-arm block the
+    per-arm numbers do not: **110 of 2,504 positions (4.4 %) differ in their MODAL top-1 token**, first at position 2,
+    with a maximum absolute difference in mean forced logprob of 5.89. So the defects do not merely make stock jitter
+    between runs — they move the answer stock converges on, at one position in twenty-three. That is the number to
+    quote when someone asks whether determinism work changes output quality or only reproducibility.
+
     This is the evidence behind the correction already posted to #55122 (`issuecomment-5590003708`) — that our kernel
     is one necessary component of a set rather than the fix, and that `Fixes #54521` had to go. det-183's headline
     stands; only its per-arm numbers are superseded by the table above. **The determinism divert ends here**; the goal
