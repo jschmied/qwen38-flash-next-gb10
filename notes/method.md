@@ -63,3 +63,20 @@ false positive gets manufactured.
 Also: **check the units you claim.** `vpp5`'s prompts were sized by `chars/4` and landed at 1,874
 tokens against a stated ~2,600, below the very threshold the run was built to exceed. English prose
 here is 5.52 chars/token. Ask the tokenizer, not the estimate.
+
+## Reading a cross-arm quality comparison
+
+`analyze.py` (ZC502's, `/opt/llm/runners/vpp/analyze.py`) takes `reference [candidate]` as **files**
+and `--out` as a **directory**. With one file it reports only self-consistency across that arm's
+repeats (`reference.summary.positions_with_top1_disagreement`). With **two** files it additionally
+writes a `cross_arm` block, which is the one that answers "do these two configurations produce
+different output" rather than "is this configuration stable":
+
+- `positions_with_cross_arm_modal_top1_mismatch` — positions where the two arms' *modal* top-1 token
+  differs. This survives per-arm jitter, so it is the quality number.
+- `max_abs_forced_logprob_mean_delta` — how far apart the distributions get, and where.
+
+`/opt/llm/runners/xarm.py <report-dir…>` prints both blocks for one or more report directories; use
+it instead of hand-parsing `report.json`. Every A/B in this repo that changes numerics — a cache
+dtype, an approximation like index sharing, a scheduler mode — needs the two-file form, because a
+speed win with a moved modal answer is a trade, not a lever.
