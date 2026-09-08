@@ -2719,3 +2719,34 @@ Plus whatever drives the separate generation-side path.
 
     Three probe iterations have now been lost to guessing at this response shape. Dump the raw
     response before touching the parser again.
+
+176. **The PLE hand-port on fnmain3 VERIFIES against the known-good venv — so the empty completions
+    are not (yet) explained by the bump (2026-09-08).** det-175 left two candidates for the 0/8 empty
+    completions: (a) my probe reads the wrong response field, or (b) fnmain3's hand-ported PLE hunks
+    are broken. Checked (b) directly instead of inferring it from an end-to-end run, using fnmain2
+    (dev401, same overlay, known good) as the reference and comparing normalised ASTs so comments and
+    formatting cannot mask a difference:
+
+    | site | fnmain2 vs fnmain3 |
+    | --- | --- |
+    | classes / methods on the whole module | none dropped, none added |
+    | `load_weights` (the offload branch) | **identical** |
+    | `get_offload_output_dim`, `get_offload_output_dtype`, `initialize_dummy_offload_metadata` | **identical** |
+    | `Qwen4ExpPLELayer.__init__` construction site | **identical** — `torch.device(PleOffloadLayer.get_target_device())`, `_offload_quant_method`, and the `VLLM_PLE_CPU_OFFLOAD and not is_offload_process()` guard |
+    | `forward_impl` | one intended difference only (below) |
+
+    The `forward_impl` difference is the rebase and nothing else: fnmain2's non-offload branch builds
+    `ngram_ids` with `input_ids.new_empty(...)` and the `qwen4_exp_compute_ple_ngram_ids` custom op;
+    fnmain3 calls `self.compute_ngram_ids(...)` hoisted above the branch. vllm#55272 deleted that
+    custom op, and upstream's own dev524 `forward` is exactly `compute_ngram_ids` then embed — so the
+    port matches upstream semantics rather than inventing a substitute.
+
+    **Conclusion: hypothesis (b) is not supported.** The port is sound at the level a static check can
+    reach, which shifts suspicion to the probe or the prompt. `emptydiag` still runs, but its job is
+    now to characterise the RESPONSE SHAPE (message keys, `finish_reason`, `usage`) on both builds,
+    with fnmain2 as the control — if fnmain2 also returns empty, the bump is exonerated outright.
+
+    **Method note:** the user asked "shouldn't you verify PLE first?" — correct, and cheaper. Two cold
+    server loads (~30 min) would have told me *whether* fnmain3 was broken; a five-minute AST diff
+    against the known-good venv told me *what changed*, which is the question that actually mattered.
+    Verify the thing you changed against a reference before inferring it from end-to-end behaviour.
