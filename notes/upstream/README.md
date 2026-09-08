@@ -240,3 +240,23 @@ branch lacks — fetch + rebase before pushing.
     (e)+(f) the `RADIX_THRESHOLD` Limitations bullet rewritten from an open limitation to a shipped
     change ("was 16,384 … now ships 22,016", past tense on the cost).
     Body saved as `pr-55122-body-v6.md`. → https://github.com/vllm-project/vllm/pull/55122
+
+93. 2026-09-08 16:0x — **merged PR #1 on our own repo** (user go "do it"), davidcanar's
+    `tools/gemm_m_invariance_rocm.py`, the gfx1151/ROCm counterpart to our M-invariance probe,
+    contributed after the request on vllm#54521. **It had been open four days with a substantive
+    comment from 09-05 unanswered — that is a process failure of ours, not of the PR**, and the reply
+    says so first. Merged as `cacfd30`.
+    Answered their two questions: (a) **no rebase onto our v2** — the helpers v2 fixed (blockwise-FP8
+    scale layouts handed to a dispatch that deduces M/K-major from shape) are exactly the ones this
+    file omits, so sharing structure line-for-line would import scaffolding for paths ROCm does not
+    have; (b) **higher repetition only if the rows move into the README** — as docstring reference
+    numbers their single-pass + 20-call check is fine, and they stated its strength (~14 % bound, not
+    ~0.3 %) themselves rather than leaving a reader to derive it.
+    Called out what the file does well, because it is the habit we want: FP8 paths **omitted rather
+    than faked** with the reason in the docstring, and the MoE row shipped with the caveat that it is
+    meaningless unless `VLLM_TUNED_CONFIG_FOLDER` is set, plus the log line to confirm against — the
+    "returns a number instead of an error" class that has cost us days.
+    Their substantive result: **ROCm BF16 is M-invariant across the whole decode and verification
+    range** (switches only at M >= 128) against the sm_120 cuBLAS row differing from M=2, which would
+    make vllm#54928's E == V != A channel inactive at MTP verification widths on gfx1151.
+    → https://github.com/jschmied/qwen38-flash-next-gb10/pull/1#issuecomment-5586351526

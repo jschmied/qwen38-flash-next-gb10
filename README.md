@@ -78,6 +78,7 @@ trace to a finding, AI assistance is disclosed.
     REPRODUCE.md                  the recipe, start to finish
     scripts/serve-flashnext.sh    serve config
     tools/                        probes and microbenchmarks (shapebench, gemm_m_invariance, qsa_union_*)
+                                  gemm_m_invariance_rocm.py is @davidcanar's gfx1151/ROCm counterpart
     tools/main/                   env-gated patches for the nightly venv, the per-nightly overlay
                                   diffs (dev401, dev524) and BUILD-RECIPE.md, memguard
     patches/                      local vLLM patches and the upstream series
