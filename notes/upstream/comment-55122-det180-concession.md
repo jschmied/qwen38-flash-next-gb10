@@ -1,6 +1,12 @@
 DRAFT — needs the user's go. vllm-project/vllm PR #55122, follow-up to LopezCastroRoberto's review.
-Slot marked ⟨VPP7⟩ for the true-stock run still in flight; post either with that filled in, or with
-that paragraph deleted if the run is inconclusive.
+
+*** DO NOT POST AS ORIGINALLY FRAMED — det-181 (2026-09-08 18:12) refuted it. ***
+The "stock" arm behind the concession carried three of the four determinism fixes. With all four
+removed, the same prompts and config diverge at position 2-3 with 122/335 disagreeing positions and
+17/104 modal top-1 mismatches. End-to-end reproducibility IS a real problem on true stock.
+What survives: we have not isolated WHICH of the four carries it, and if that turns out to be the PLE
+offload semaphore rather than the top-k kernel, this PR is not the load-bearing fix and we must say
+so. `isolate4` answers that. Rewrite from the text below only after it lands.
 
 ---
 
