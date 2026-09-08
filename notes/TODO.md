@@ -451,3 +451,42 @@ Nothing posted. Ranked by overlap with what we run and what we know.
    #55600), #55517 (`qwen3.8-flash-next` divisibility assert), #55515 (PLE embedding forces PP=1),
    #55580 (GDN 27B fp8 KV TP2 c32 −24 % step), #55569 (GLM-5.3-Flash 230K prefill exhausts unified
    memory on GB10).
+
+## Venv bump dev401 -> dev524: sized 2026-09-08, NOT started (awaiting go to build)
+
+Target: main HEAD `5db652225`, wheel `vllm-0.28.1rc1.dev524+g5db652225-cp38-abi3-manylinux_2_28_aarch64.whl`
+(311 MB, cached at `/opt/llm/runtime/wheels/`). Current serving venv: `8340fe1bb` / dev401, 04 Sep.
+Recipe and its traps: `tools/main/BUILD-RECIPE.md`.
+
+**Dry-run result (`bumpdry`, prod untouched): 16 files check, 3 failed hunks, all in ONE file** —
+`vllm/models/qwen4_exp/nvidia/ple_layer.py` (hunks 7 and 12). Everything else applies with 33
+offsets and 2 fuzzy hunks. So this is a contained hand-port, not an overlay regeneration.
+
+Upstream movement in the files we patch, vs our current venv:
+
+| file | changed lines |
+| --- | --- |
+| `vllm/models/qwen4_exp/nvidia/ple_layer.py` | **684** |
+| `vllm/v1/worker/gpu_worker.py` | 140 |
+| `vllm/v1/worker/gpu/model_runner.py` | 127 |
+| `vllm/model_executor/model_loader/weight_utils.py` | 69 |
+| `vllm/models/qwen4_exp/nvidia/mtp.py` | 33 |
+| `vllm/models/qwen4_exp/nvidia/model.py` | 27 |
+| rest | ≤ 24 each |
+
+(`vllm/v1/ple_offload/*` and `ple_offload_layer.py` show as MISSING upstream because our overlay
+*adds* them — expected.)
+
+**Plan when given the go:** clone `fnmain2` → `fnmain3`, verify the interpreter rewrite by a server
+log line and not by absence of error, install the wheel `--no-deps`, back up the pristine package,
+apply the overlay, hand-port the 2 `ple_layer.py` hunks, re-run `prod_det_overlays.sh`
+**against fnmain3** (it hardcodes fnmain2 — fix that first or it patches the wrong venv), then the
+verification gate in the recipe. `fnmain2` stays intact; prod moves only by changing `FN_VENV`.
+
+**Disk is the constraint:** 50 GB free at 95 % used; the clone is ~16 GB. `vllm-venv-fnmain` (16 GB)
+looks like a stale previous generation but is the launcher's default when `FN_VENV` is unset — not
+free to delete.
+
+**Before bumping, finalise anything that must stay comparable.** det-169/171/172/173 were all
+measured on `8340fe1bb`; vllm#55272 removes torch.compile for this model, so post-bump numbers are
+a different execution model.
