@@ -1,0 +1,16 @@
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+trajs 86 (held-out 10); assistant tokens train 1,381,681 held 88,845; 4s
+code files 14324, tokens 42,923,406; 60s
+train occurrences 158,275,265 distinct 48,476; held-out assistant occurrences 88,845 distinct 2,048
+  size   1024: train coverage  75.58%   held-out assistant coverage  75.32%
+  size   2048: train coverage  83.78%   held-out assistant coverage  84.53%
+  size   4096: train coverage  90.84%   held-out assistant coverage  90.79%
+  size   8192: train coverage  95.91%   held-out assistant coverage  95.19%
+  size  16384: train coverage  98.80%   held-out assistant coverage  98.05%
+  size  32768: train coverage  99.88%   held-out assistant coverage  99.63%
+  size  65536: train coverage 100.00%   held-out assistant coverage  99.96%
+  size 131072: train coverage 100.00%   held-out assistant coverage  99.96%
+  size 16384: 98 kept tokens contain non-Latin chars (0.6%)
+  size 32768: 573 kept tokens contain non-Latin chars (1.7%)
+  size 65536: 1809 kept tokens contain non-Latin chars (2.8%)
+done /home/jschmied/llm/dv

@@ -1389,3 +1389,36 @@
     **Untested prediction, and the way to falsify it:** the crossover should move with `sm_count` and
     `tileN`, not with total weight. Forcing the 64×128×128 tile (swap-AB path) should shift the K at
     which the flip occurs by 1×, and capping CTAs per launch should shift it linearly. Neither is done.
+
+
+151. **Draft-vocabulary size, decided from OUR distribution instead of the field's: the whole observed vocabulary is
+    48,476 ids, so a 65k slice does not exist here, and the coverage curve saturates so early that the interesting
+    range is 4k–16k, not 65k (`build_vocab.py` on 86 SWE-bench trajectories + 14,324 local source/doc files,
+    `notes/data/dvsize-coverage.txt`, CPU only).** MiaAI-Lab shipped a 65,536-row draft head and argued 65k over 32k
+    because "the crossover where lost acceptance eats the byte saving is around 88–90 % coverage, and 65k costs 3 points
+    of byte saving to buy 3.6 points of coverage" — built from 513 MiB of wikitext-103 + 47 MiB of Python + model output,
+    160M occurrences over 104,522 distinct ids. Rebuilt on our corpus (158,275,265 weighted occurrences: assistant output
+    ×20, tool output ×1, code ×3; held-out = 10 trajectories by id hash):
+
+    | slice | train coverage | held-out assistant coverage |
+    | --- | --- | --- |
+    | 1,024 | 75.58 % | 75.32 % |
+    | 2,048 | 83.78 % | 84.53 % |
+    | **4,096** | 90.84 % | **90.79 %** |
+    | 8,192 | 95.91 % | 95.19 % |
+    | 16,384 | 98.80 % | 98.05 % |
+    | 32,768 | 99.88 % | 99.63 % |
+    | 65,536 (= all 48,476) | 100.00 % | 99.96 % |
+
+    Two things follow. (a) **Their 65k recommendation does not transfer**: our corpus contains only 48,476 distinct ids
+    in total, and the held-out *assistant output* — the distribution the drafter actually proposes into — has just
+    **2,048 distinct ids over 88,845 occurrences**. Agent traffic is far narrower than wikitext, so the curve saturates
+    at a tenth of their size. (b) Applying *their own* crossover rule to *our* curve puts the optimum at **~4,096 rows**
+    (90.79 % held-out), not at our shipped 32,768 (99.63 %) — 4k saves 98.4 % of the head's bytes against 86.8 % at 32k,
+    and det-135's +6.4–6.8 % at c=1 was measured at the conservative end of the range. The sizes below 8k are the ones
+    nobody has measured, on either project.
+
+    Method note, recorded because it costs a baseline: this rebuild **overwrote** the 8k/16k/32k files that det-135 was
+    measured with (`/opt/llm/runners/dv/draft_vocab_*.txt`, 2026-09-08 21:17). The corpus has grown since, so the new 32k
+    set is not byte-identical to the old one. A size sweep must therefore re-measure 32k as its own arm rather than reuse
+    det-135's number as the baseline.
