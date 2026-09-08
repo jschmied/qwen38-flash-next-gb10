@@ -1,9 +1,35 @@
 # Open work, ranked
 
-Rewritten 2026-08-31. Anything measured-and-closed lives in its own note; this file says only what
-is open, what is blocked, and what is settled enough not to revisit.
+Rewritten 2026-08-31, then appended to per working day. **The sections are chronological, so the
+oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
+as archaeology unless it is cross-referenced from here.**
 
-## Open, in order
+## Live state — 2026-09-08 (end of day)
+
+**In flight:** nothing on the box; it is idle.
+
+**Owed to people who asked us directly:**
+- **ZC502, #54521** — their client collector is validated on sm_121 (12/12 runs, det-178) and that
+  can be reported. But our det0/det1 case was **void**: stock did not diverge on any sequential
+  case, because random-word prompts do not tie at the top-k boundary. **Re-run with real prose near
+  `indexer_budget` plus a deliberately tie-heavy case before offering them any determinism numbers.**
+- **MiaAI #19** — still owed. Needs a wide-capture-size arm; `cgsize2`, which was supposed to be it,
+  was vacuous (det-170's class), and `cgnone2` did not discharge it (det-169).
+
+**Done today, do not redo:** #55122 answered and updated (review conceded on accuracy, default-change
+position dropped, two perf commits folded in — det-171/172/173, PR head `7cfd04a39`); #55872 tested
+and reported (det-175, fails to init on sm_121); fnmain3 built, hand-ported and **proved working**
+(det-177); `fnmain-overlay-dev524.diff` regenerated and committed.
+
+**Blocked:** `zsign`'s "theirs" arm will not build — #55314's kernel needs its own driver
+(`bench/topk-union/their/topk_their.cu` + `bindings_their.cpp`), so the ±0 set-defect claim stays
+unmeasured and `notes/upstream/comment-55314-signed-zero.md` stays unposted.
+
+**Decision waiting on the user:** cut prod over to fnmain3. `serve-fnmain.sh` still defaults to
+`vllm-venv-fnmain`; the switch is one `FN_VENV` line. Anything measured after the cutover is not
+comparable to det-169/171/172/173, all taken on dev401.
+
+## Open, in order (ranked 2026-08-31 — item 1 is now closed, see below)
 
 1. **Corroborate or refute vllm#54521's `indexer_budget` model.** They report greedy decoding
    deterministic *below* `indexer_budget` (2048) and non-deterministic above, because QSA switches
@@ -11,6 +37,12 @@ is open, what is blocked, and what is settled enough not to revisit.
    contradicts them:** divergence at 582 and 1,142 prompt tokens, both well below the budget. But we
    run MTP k=2 and their repro does not, so the decisive cell is MTP-off below the budget. In
    flight. Either outcome is worth reporting; the issue has no comments.
+   → **CLOSED 2026-09-08. The `indexer_budget` model is refuted**, and not only by us: davidcanar
+   reproduced on gfx1151 *without* QSA at all, sudodrew on SM120, mmastrac on GLM-5.3-Flash at TP=4.
+   The issue now has 39 comments and five separate defects. Our own det-178 adds that stock can be
+   perfectly self-consistent at 5,960 tokens — far *above* the budget — so length is not the
+   discriminator; ties at the top-k boundary are. The issue title is now too narrow for what the
+   thread contains and arguably mis-routes triage.
 2. **Quality scorecard: repeat Task A (Go), n≥4, then Task B (Java).** Current result is a single
    FAIL at temperature 1.0 on one generics error (`entry[_, _]`). Two rows of our scorecard were
    wrong until re-run; a 2/4 or 3/4 is worth far more than one FAIL.
@@ -452,11 +484,18 @@ Nothing posted. Ranked by overlap with what we run and what we know.
    #55580 (GDN 27B fp8 KV TP2 c32 −24 % step), #55569 (GLM-5.3-Flash 230K prefill exhausts unified
    memory on GB10).
 
-## Venv bump dev401 -> dev524: sized 2026-09-08, NOT started (awaiting go to build)
+## Venv bump dev401 -> dev524: BUILT AND PROVED 2026-09-08 (prod not switched)
 
 Target: main HEAD `5db652225`, wheel `vllm-0.28.1rc1.dev524+g5db652225-cp38-abi3-manylinux_2_28_aarch64.whl`
 (311 MB, cached at `/opt/llm/runtime/wheels/`). Current serving venv: `8340fe1bb` / dev401, 04 Sep.
 Recipe and its traps: `tools/main/BUILD-RECIPE.md`.
+
+**Outcome: done.** fnmain3 built from the dev524 wheel into a clone, the two rejected hunks
+hand-ported, and proved working (det-177: byte-identical output to fnmain2 on two of three shapes,
+plus a real `PleOffloadWorker` process). Overlay regenerated as
+`tools/main/fnmain-overlay-dev524.diff` — 12 files, re-applies with 0 failed hunks; it shrank from
+17 because upstream now ships `vllm/v1/ple_offload/`. **Prod default unchanged.** The sizing that
+led here:
 
 **Dry-run result (`bumpdry`, prod untouched): 16 files check, 3 failed hunks, all in ONE file** —
 `vllm/models/qwen4_exp/nvidia/ple_layer.py` (hunks 7 and 12). Everything else applies with 33
