@@ -411,3 +411,39 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 - `/tmp/claude-1000` is `drwx------ jschmied` and servers run as `uid=llm`: anything a server must read goes
   in `/opt/llm/runners`, world-readable. This silently invalidated four A/B arms on 2026-09-07.
 
+
+## New upstream issues touching our stack — triage 2026-09-08 (37 scanned, created >= 09-05)
+
+Nothing posted. Ranked by overlap with what we run and what we know.
+
+1. **vllm#55496 — ModelOpt MIXED_PRECISION cannot load FP8_BLOCK_SCALES MTP experts**
+   (`nvidia/Qwen3.8-Flash-Next-NVFP4` + MTP). **Two DGX Sparks, GB10 `sm_121a`, and the same preview
+   build `0.1.dev20073+g8e685d198` our Quant Map cites.** We hold direct knowledge here: memory
+   `modelopt-quantized-layers-trap` — MIXED_PRECISION reads `quantized_layers`, NOT `config_groups`,
+   and the wrong field yields a W4A4 kernel with no `input_scale`. Their failure is
+   `mtp.layers.48.mlp.experts has no parameter 'w2_weight_scale_inv'`. **Highest-value place we could
+   contribute, and the one where we are least likely to be wrong.**
+2. **vllm#55600 — hybrid mamba prefix-cache hit reads out of bounds** (Xid 31): `add_request` seeds
+   the state slot with `cache_config.block_size` *after* `_initialize_kv_caches` lowered it to the
+   min over prefix-cacheable groups, which for a **DFlash2/EAGLE-style drafter group** is far below
+   `mamba_block_size`. Adjacent to our own #55375 (strided `state_indices[:,0]` read with unit
+   stride). We run DFlash2 + prefix caching + GDN. **Their trigger needs a sliding-window drafter
+   group and our launcher sets no `sliding_window`, so the precondition may not hold for us — but
+   the block-size-minimum mechanism is generic. VERIFY on the live config when the box is free**;
+   the journal check attempted 2026-09-08 08:5x did not surface the block sizes.
+3. **vllm#55766 — Qwen3.5/3.8 hybrid GDN: NaN logits after a prefix-cache hit** when the previous
+   prefill ended 4–10 tokens past a block boundary, mamba cache mode `align`, v0.28.0. Our model
+   family, our `align` mode, and the same area as #54076/#53798/#54173. Finding 76 already records a
+   partial-vs-full prefix-cache-hit logits difference on this path — theirs escalates it to NaN.
+4. **vllm#55524 — [RFC] Mamba2 exact-replay decode.** Carries a maintainer ruling that matters to
+   our framing: **"batch invariance is organised per kernel, not per model"**, and the behaviour
+   belongs under `VLLM_BATCH_INVARIANT=1` rather than a per-model opt-in. Read before writing
+   anything further about batch invariance — we disclaim it in every determinism post.
+5. **vllm#55775 — MTP + FlashInfer long-context CUDA IMA / Xid 31 on v0.27.1**, Qwen3.8-27B-NVFP4.
+   Our model and our vLLM version (memory `vllm-027-cutover`).
+6. **vllm#55581 — FlashInfer `get_cudagraph_support()` divides the target's head count by the
+   drafter's.** Spec decode + cudagraph + FlashInfer; we are mid-cudagraph-A/B (`cgnone2`).
+7. Lower: #55800 (DFlash2 sliding-window drafter admission deadlock — same precondition question as
+   #55600), #55517 (`qwen3.8-flash-next` divisibility assert), #55515 (PLE embedding forces PP=1),
+   #55580 (GDN 27B fp8 KV TP2 c32 −24 % step), #55569 (GLM-5.3-Flash 230K prefill exhausts unified
+   memory on GB10).
