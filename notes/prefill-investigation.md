@@ -1060,6 +1060,19 @@
     padding this overlay pays, and with the per-step recurrent-state traffic halved as well. MiaAI-Lab measured the same
     switch on a Spark at 3,200 → 1,664 tokens, +6.8 % decode at 1 stream and +8.5 % at 8 (2026-09-06). Measured here as
     the `ssm` run.
+
+    **Pre-registered prediction for that run, from the arithmetic rather than from their number.**
+    `attn_block_size = align · cdiv(mamba_page, align · attn_page_1_token)`, and `attn_page_1_token` is derived from
+    `kv_cache_dtype` (`cache_dtype == "auto"` → the model dtype, `platforms/interface.py:805`). Two consequences follow,
+    and together they explain why their block is 3,200 and ours 1,600 on the same architecture: (a) halving the SSM state
+    halves `mamba_page` and therefore the block — ours should go **1,600 → ~800**; (b) **fp8 KV DOUBLES the attention
+    block**, because it halves the bytes per token in the denominator. They run `KV_CACHE_DTYPE=fp8` and we run bf16,
+    which is the whole of the 2× difference, and their 3,200 → 1,664 is the two effects cancelling. The fp8-KV half is
+    worth stating on its own: it doubles the pool's token capacity *and* doubles the prefix-cache block, so on a hybrid it
+    buys long-context capacity by paying warm-turn recompute — their own report notes that at block 3,200 "prefix-cache
+    hits are impossible below ~6,400 tokens of prompt", which is exactly this. That is a second cost for open RFC
+    vllm#55196 ("fp8 KV gives little to no memory benefit on Mamba/GDN hybrid models"), which so far argues only from the
+    mamba-page padding. Untested here; it is one `FN_KVDTYPE` value whenever the agent-turn harness runs again.
     Server: "keeping attention block size 512 (derived minimum was 2048)"; KV capacity 348k tokens at 512 / 318k at 1024
     (vs 76k at 1600 with 4 GB, i.e. the padding costs far less than my per-block estimate — the QSA ring pages scale by
     block instead of padding). Generation sanity clean (acceptance 42–70 %, no garbage). Regression over the 20k cached
