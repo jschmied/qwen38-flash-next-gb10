@@ -1,22 +1,42 @@
-# cgnone2 — contamination note (2026-09-08, model-authored)
+# cgnone2 — "contamination" note, RETRACTED (2026-09-08)
 
-Arm 1 (`piece1`, started 07:37) ran its c=4 and c=16 reps between roughly 07:45 and 07:54.
-During exactly that window I ran heavy **host** work on the box: repeated python parses of two
-multi-GB session transcripts (45 MB + 33 MB, read whole into memory), file copies, git operations.
-Two of my own background shells were killed by the low-memory guard at ~07:51; `free` showed
-1 GB free with `some avg10=31`.
+**The original claim was wrong and is retracted.** I wrote (08:0x) that arm 1 (`piece1`) was
+contaminated by heavy host work I ran during it — repeated python parses of two multi-GB session
+transcripts, which did push the box into the low-memory guard and killed two of my own shells. The
+inference from that to "the arm is spoiled" was unsupported, and arm 2 refutes it.
 
-Symptoms visible in the arm-1 data:
+## What the next arm showed
 
-- `piece1 DV c=4` spans **64.1 / 37.5 / 37.1 tok/s** — a 1.7x spread within ONE server start.
-  Reps inside a single start should not do that; restarts are where our spread lives (det-162).
-- `piece1 DV c=16 rep=1` reports `garbage 1/16`.
+`none1` ran 07:54–08:13, after the host work stopped. The rep-by-rep structure is the same:
 
-**Handling.** Treat `piece1`'s c=4 and c=16 cells as contaminated and take those cells from the
-later PIECEWISE arms (`piece2`, `piece3`). `piece1 c=1` ran 07:37–07:45, before the host work, and
-is probably clean but is the weakest of the three starts. The c=16 garbage stream is **not**
-evidence of a cudagraph-mode effect until it reappears in a clean arm.
+| arm | c=4 rep0 / rep1 / rep2 (tok/s agg) | c=1 rep0 / rep1 / rep2 / rep3 |
+| --- | --- | --- |
+| piece1 (during the host work) | **64.1** / 37.5 / 37.1 | 18.2 / **16.2** / 19.8 / 21.6 |
+| none1 (after it stopped) | **59.2** / 37.6 / 37.9 | 19.1 / **16.8** / 19.9 / 21.4 |
 
-**Rule this reinforces.** No heavy host IO or memory work while a benchmark arm is running — the
-GPU being idle-looking says nothing, because this box shares one memory pool. Same mistake class as
-the `du`/`find` sweep that landed inside `cgsize2` start 3.
+rep=0 fast, reps 1–2 settling near 37.5 at c=4; the same dip at c=1 rep=1; the same rise to rep=3.
+A perturbation that happened only during piece1 cannot reproduce itself in none1.
+
+## What it actually is, and what it means for the finding
+
+**Reps inside one server start are not exchangeable.** rep=0 runs against a fresh server and a cold
+prefix cache; later reps run against a different cache state. This is the same effect as the TTFT
+median that hid a cold prefill (`median=0.60s` while `all=2.93 0.60 0.60`) — the mechanism is
+prefix caching, and it is systematic, not noise.
+
+**Consequence for the cgnone2 table: compare like reps across arms, never a mean over reps.** An
+arm's rep=0 belongs with the other arms' rep=0. Collapsing reps to a mean mixes a cold and two warm
+measurements in a fixed 1:2 ratio and would produce a stable-looking number with no meaning.
+
+## What is still open
+
+`piece1 c=16 rep=1` reported `garbage 1/16`; `none1` c=16 is `garbage 0/16` on both reps. One
+occurrence, no reproduction yet — keep it flagged, attribute it to nothing until it recurs in a
+later arm.
+
+## The standing rule is unchanged
+
+Do not run heavy host IO or memory work while a benchmark arm is running — one memory pool, and it
+did trip the guard. That rule was right; using it to condemn an arm without checking the next one
+was not. Two corrections of my own inference in one morning, both from asserting a cause before
+looking at the control that was already being measured.
