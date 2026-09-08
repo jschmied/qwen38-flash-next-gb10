@@ -1,0 +1,67 @@
+=== piece1  cudagraph_mode=PIECEWISE capture_sizes=[1,2,4,8]  07:37 ===
+    mode=cudagraph_mode': <CUDAGraphMode.PIECEWISE  maxcap=max_cudagraph_capture_size': 8  sizes_in_log=cudagraph_capture_sizes': [1
+  piece1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 11.0s = 18.2 tok/s agg, 18.2 per stream | garbage 0/1
+  piece1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.3s = 16.2 tok/s agg, 16.2 per stream | garbage 0/1
+  piece1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.1s = 19.8 tok/s agg, 19.8 per stream | garbage 0/1
+  piece1 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.3s = 21.6 tok/s agg, 21.6 per stream | garbage 0/1
+  piece1 DV c=4 rep=0: accept=54.9% AL=2.65 | 800 tok in 12.5s = 64.1 tok/s agg, 16.0 per stream | garbage 0/4
+  piece1 DV c=4 rep=1: accept=49.0% AL=2.47 | 800 tok in 21.3s = 37.5 tok/s agg, 9.4 per stream | garbage 0/4
+  piece1 DV c=4 rep=2: accept=52.9% AL=2.59 | 800 tok in 21.6s = 37.1 tok/s agg, 9.3 per stream | garbage 0/4
+  piece1 DV c=16 rep=0: accept=50.7% AL=2.52 | 3200 tok in 53.9s = 59.4 tok/s agg, 3.7 per stream | garbage 0/16
+  piece1 DV c=16 rep=1: accept=53.4% AL=2.60 | 3200 tok in 66.4s = 48.2 tok/s agg, 3.0 per stream | garbage 1/16
+=== none1  cudagraph_mode=NONE capture_sizes=[1,2,4,8]  07:54 ===
+    mode=cudagraph_mode': <CUDAGraphMode.NONE  maxcap=max_cudagraph_capture_size': 0  sizes_in_log=cudagraph_capture_sizes': [1
+  none1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  none1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  none1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  none1 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.3s = 21.4 tok/s agg, 21.4 per stream | garbage 0/1
+  none1 DV c=4 rep=0: accept=47.4% AL=2.42 | 800 tok in 13.5s = 59.2 tok/s agg, 14.8 per stream | garbage 0/4
+  none1 DV c=4 rep=1: accept=52.2% AL=2.57 | 800 tok in 21.3s = 37.6 tok/s agg, 9.4 per stream | garbage 0/4
+  none1 DV c=4 rep=2: accept=51.1% AL=2.53 | 800 tok in 21.1s = 37.9 tok/s agg, 9.5 per stream | garbage 0/4
+  none1 DV c=16 rep=0: accept=49.1% AL=2.47 | 3200 tok in 54.0s = 59.3 tok/s agg, 3.7 per stream | garbage 0/16
+  none1 DV c=16 rep=1: accept=47.9% AL=2.44 | 3200 tok in 68.5s = 46.7 tok/s agg, 2.9 per stream | garbage 0/16
+=== piece2  cudagraph_mode=PIECEWISE capture_sizes=[1,2,4,8]  08:13 ===
+    mode=cudagraph_mode': <CUDAGraphMode.PIECEWISE  maxcap=max_cudagraph_capture_size': 8  sizes_in_log=cudagraph_capture_sizes': [1
+  piece2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.0 tok/s agg, 19.0 per stream | garbage 0/1
+  piece2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  piece2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  piece2 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.4s = 21.4 tok/s agg, 21.4 per stream | garbage 0/1
+  piece2 DV c=4 rep=0: accept=47.4% AL=2.42 | 800 tok in 13.5s = 59.4 tok/s agg, 14.9 per stream | garbage 0/4
+  piece2 DV c=4 rep=1: accept=50.8% AL=2.52 | 800 tok in 21.1s = 37.9 tok/s agg, 9.5 per stream | garbage 0/4
+  piece2 DV c=4 rep=2: accept=49.1% AL=2.47 | 800 tok in 21.7s = 36.9 tok/s agg, 9.2 per stream | garbage 0/4
+  piece2 DV c=16 rep=0: accept=49.0% AL=2.47 | 3200 tok in 54.0s = 59.3 tok/s agg, 3.7 per stream | garbage 0/16
+  piece2 DV c=16 rep=1: accept=48.7% AL=2.46 | 3200 tok in 66.2s = 48.3 tok/s agg, 3.0 per stream | garbage 0/16
+=== none2  cudagraph_mode=NONE capture_sizes=[1,2,4,8]  08:30 ===
+    mode=cudagraph_mode': <CUDAGraphMode.NONE  maxcap=max_cudagraph_capture_size': 0  sizes_in_log=cudagraph_capture_sizes': [1
+  none2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.6s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  none2 DV c=1 rep=1: accept=39.1% AL=2.17 | 200 tok in 12.2s = 16.4 tok/s agg, 16.4 per stream | garbage 0/1
+  none2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.4s = 19.2 tok/s agg, 19.2 per stream | garbage 0/1
+  none2 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.5s = 21.1 tok/s agg, 21.1 per stream | garbage 0/1
+  none2 DV c=4 rep=0: accept=54.9% AL=2.65 | 800 tok in 12.7s = 63.2 tok/s agg, 15.8 per stream | garbage 0/4
+  none2 DV c=4 rep=1: accept=46.3% AL=2.39 | 800 tok in 23.1s = 34.7 tok/s agg, 8.7 per stream | garbage 0/4
+  none2 DV c=4 rep=2: accept=48.5% AL=2.45 | 800 tok in 21.5s = 37.2 tok/s agg, 9.3 per stream | garbage 0/4
+  none2 DV c=16 rep=0: accept=52.5% AL=2.58 | 3200 tok in 54.9s = 58.3 tok/s agg, 3.6 per stream | garbage 0/16
+  none2 DV c=16 rep=1: accept=49.4% AL=2.48 | 3200 tok in 68.5s = 46.7 tok/s agg, 2.9 per stream | garbage 0/16
+=== piece3  cudagraph_mode=PIECEWISE capture_sizes=[1,2,4,8]  08:48 ===
+    mode=cudagraph_mode': <CUDAGraphMode.PIECEWISE  maxcap=max_cudagraph_capture_size': 8  sizes_in_log=cudagraph_capture_sizes': [1
+  piece3 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 10.6s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  piece3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.6 tok/s agg, 16.6 per stream | garbage 0/1
+  piece3 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.2s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  piece3 DV c=1 rep=3: accept=59.7% AL=2.79 | 200 tok in 9.5s = 21.0 tok/s agg, 21.0 per stream | garbage 0/1
+  piece3 DV c=4 rep=0: accept=51.7% AL=2.55 | 800 tok in 13.5s = 59.4 tok/s agg, 14.8 per stream | garbage 0/4
+  piece3 DV c=4 rep=1: accept=50.5% AL=2.52 | 800 tok in 20.8s = 38.6 tok/s agg, 9.6 per stream | garbage 0/4
+  piece3 DV c=4 rep=2: accept=48.7% AL=2.46 | 800 tok in 21.1s = 38.0 tok/s agg, 9.5 per stream | garbage 0/4
+  piece3 DV c=16 rep=0: accept=51.9% AL=2.56 | 3200 tok in 55.1s = 58.1 tok/s agg, 3.6 per stream | garbage 1/16
+  piece3 DV c=16 rep=1: accept=51.0% AL=2.53 | 3200 tok in 66.1s = 48.4 tok/s agg, 3.0 per stream | garbage 0/16
+=== none3  cudagraph_mode=NONE capture_sizes=[1,2,4,8]  09:07 ===
+    mode=cudagraph_mode': <CUDAGraphMode.NONE  maxcap=max_cudagraph_capture_size': 0  sizes_in_log=cudagraph_capture_sizes': [1
+  none3 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 10.7s = 18.7 tok/s agg, 18.7 per stream | garbage 0/1
+  none3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  none3 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.2s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  none3 DV c=1 rep=3: accept=59.7% AL=2.79 | 200 tok in 9.5s = 21.0 tok/s agg, 21.0 per stream | garbage 0/1
+  none3 DV c=4 rep=0: accept=48.7% AL=2.46 | 800 tok in 12.8s = 62.4 tok/s agg, 15.6 per stream | garbage 0/4
+  none3 DV c=4 rep=1: accept=50.7% AL=2.52 | 800 tok in 22.9s = 34.9 tok/s agg, 8.7 per stream | garbage 0/4
+  none3 DV c=4 rep=2: accept=46.9% AL=2.41 | 800 tok in 21.4s = 37.4 tok/s agg, 9.3 per stream | garbage 0/4
+  none3 DV c=16 rep=0: accept=49.6% AL=2.49 | 3200 tok in 51.9s = 61.7 tok/s agg, 3.9 per stream | garbage 0/16
+  none3 DV c=16 rep=1: accept=50.0% AL=2.50 | 3200 tok in 66.1s = 48.4 tok/s agg, 3.0 per stream | garbage 0/16
+== ALL DONE == 09:26

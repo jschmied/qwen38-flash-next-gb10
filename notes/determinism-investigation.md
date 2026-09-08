@@ -2455,3 +2455,44 @@ Plus whatever drives the separate generation-side path.
     deterministic / what does it cost per call / what does it cost end to end / does it change
     quality* — each pointing at the finding numbers that settle it. Written below as part of this
     entry. The knowledge tree exists for exactly this and this file is not in it.
+
+169. **PIECEWISE vs NONE cudagraphs: NULL where the graph is reachable, VACUOUS where it is not
+    (2026-09-08, `cgnone2`, 6 arms interleaved, ~19 min each, raw `notes/data/cgnone2.txt`).**
+    Prod capture sizes `[1,2,4,8]`, `FN_MTP=3`, `FN_SEQS=16`, c ∈ {1,4,16}. **Mechanism check passed
+    on every arm** — PIECEWISE arms log `max_cudagraph_capture_size: 8`, NONE arms log `0` — so
+    unlike `cgsize2` this run is not vacuous by construction.
+
+    Compared **like rep against like rep**, never a mean over reps (reps inside a start are not
+    exchangeable — see `notes/data/cgnone2-contamination.md`), tok/s aggregate, 3 arms per mode:
+
+    | c | rep | PIECEWISE | NONE | verdict |
+    | --- | --- | --- | --- | --- |
+    | 1 | 0 | 18.2 / 18.8 / 19.0 | 18.7 / 18.8 / 19.1 | overlap |
+    | 1 | 1 | 16.2 / 16.6 / 16.8 | 16.4 / 16.8 / 16.8 | overlap |
+    | 1 | 2 | 19.7 / 19.8 / 19.9 | 19.2 / 19.7 / 19.9 | overlap |
+    | 1 | 3 | 21.0 / 21.4 / 21.6 | 21.0 / 21.1 / 21.4 | overlap |
+    | 4 | 0–2 | 36.9–64.1 | 34.7–63.2 | overlap, **but vacuous** |
+    | 16 | 0–1 | 48.2–59.4 | 46.7–61.7 | overlap, **but vacuous** |
+
+    **0 of 9 cells non-overlapping — no effect.** Acceptance is identical to the digit across modes
+    (38.4–61.0 % in both, n=27 each), as it must be: cudagraph mode cannot change what is sampled.
+
+    **Which cells actually mean anything.** MTP n=3 issues 4 query tokens per sequence, so the decode
+    batch is 4·c tokens against a captured maximum of 8:
+    - **c=1 → 4 tokens, inside the capture set: the graph IS used.** This is the one informative
+      cell, and it is a real null — *turning cudagraphs off entirely costs nothing measurable at
+      c=1*, across 3 arms × 4 reps.
+    - **c=4 → 16 tokens and c=16 → 64 tokens, both above 8: BOTH arms run eager.** Their overlap is
+      not evidence about cudagraphs; it is two eager arms agreeing with each other. Same vacuity trap
+      as `cgsize2`, caught this time before it was written up as a result.
+
+    **This does NOT discharge the MiaAI-Lab #19 commitment, and I had expected it to.** We told them
+    our c=16 numbers were provisional because prod's capture sizes may leave c≥4 eager. This run
+    *confirms the arithmetic* (c≥4 is eager) but cannot answer their question, which is what happens
+    with a capture width that actually covers 4·c. That needs a wide-capture arm — which is what
+    `cgsize2` was for, and `cgsize2` was vacuous. **#19 stays owed; re-run the wide arm.**
+
+    **One loose end, flagged and attributed to nothing:** 2 garbage streams, both in PIECEWISE c=16
+    (piece1 rep1, piece3 rep0), 0 in the NONE arms. Small n (6 reps per mode), and since c=16 runs
+    eager in *both* modes a cudagraph cause is implausible — so this is most likely unrelated. Do not
+    quote it as a PIECEWISE defect without a reproduction.
