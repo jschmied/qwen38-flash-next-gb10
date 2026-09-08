@@ -46,3 +46,20 @@ all passing a knob-level check:
 
 The check that would have caught all three is the same one: take the benchmark's actual case list,
 and for each arm compute which code path each case takes. If the two columns are equal, stop.
+
+## And verify the control arm actually misbehaves
+
+Naming the differing cell is necessary, not sufficient. Five void runs on 2026-09-08 split into two
+kinds:
+
+- the knob could not reach the measured cells (`cgsize2`, `cgnone2` c>=4, `thr`);
+- the knob was fine but **the control never misbehaved**, so the treated arm's cleanliness meant
+  nothing (`vpp4`, `vpp5`).
+
+For any "X fixes it" claim, the run must first show the unfixed arm exhibiting the defect. If it does
+not, report that and stop — do not iterate on the stimulus until something moves, which is how a
+false positive gets manufactured.
+
+Also: **check the units you claim.** `vpp5`'s prompts were sized by `chars/4` and landed at 1,874
+tokens against a stated ~2,600, below the very threshold the run was built to exceed. English prose
+here is 5.52 chars/token. Ask the tokenizer, not the estimate.

@@ -2843,3 +2843,44 @@ Plus whatever drives the separate generation-side path.
     **One usability note for them:** `analyze.py` takes `reference [candidate]` as JSON *files* with
     `--out` a directory; passing the output directory positionally gives
     `IsADirectoryError: Is a directory`. Cost me two attempts. Worth a line in the README.
+
+179. **A fifth void run — and the pattern across it and det-178 is itself the finding: we cannot
+    reproduce the top-k defect end-to-end in THIS server configuration (2026-09-08, `vpp5`, raw
+    `notes/data/vpp5.txt`).** det-178 blamed random-word prompts for not tying at the top-k boundary,
+    so this run held length fixed and varied tie *shape*: one sentence repeated (maximal identical
+    keys), natural prose, and a cycled phrase set. Sequential only, 8 repeats, both arms.
+
+    | tie shape | det0 = stock | det1 = #55122 | cross-arm |
+    | --- | --- | --- | --- |
+    | `repeat` | **0** disagreeing positions | 0 | 0 |
+    | `prose` | **0** | 0 | 0 |
+    | `clustered` | **0** | 0 | 0 |
+
+    The two arms' collector files are byte-identical per shape (10,396,079 / 10,615,797 / 10,510,501),
+    so stock and our kernel produced the same output, position for position.
+
+    **My own error, stated first: the prompts were not above the budget.** I sized them by
+    `chars/4`; English prose here tokenizes at **5.52 chars/token**, so 10,439 characters gave
+    1,874–1,896 tokens — *below* the 2,048 `indexer_budget`, not the ~2,600 the runner's header
+    claims. So this run did not test what it said it tested, and its header is wrong.
+
+    **But that does not rescue it**, because det-178 already covered above-budget: 5,960 tokens,
+    sequential, also 0. Taken together that is **six sequential cases from 1,460 to 5,960 tokens,
+    two prompt generators, zero divergence in stock.**
+
+    **The reconciliation, and the next test.** The kernel *is* non-deterministic — det-151 measures
+    0/81 shapes self-consistent at the kernel level, and finding 76 records k3dani seeing 0/4 prompts
+    reproducible end to end. The difference is configuration: **k3dani ran prefix caching ON, chunked
+    prefill, MTP=2, PIECEWISE graphs**, and our own finding 82 saw stock take a different trajectory
+    under MTP n=5. Every `vpp` run has prefix caching **off** and **no speculation** — chosen to make
+    the case clean, which appears to have removed the very conditions that expose it.
+
+    So the hypothesis to test next is not another prompt: it is **prefix caching ON + MTP**, the
+    configuration in which divergence has actually been observed here and by a third party. If stock
+    diverges there and not with the cache off, that is a sharper statement about the defect than any
+    prompt shape — and it is what we should give ZC502.
+
+    **Method note.** Five void runs today (cgsize2, cgnone2 c≥4, thr, vpp4, vpp5). The rule in
+    `method.md` says name the differing cell; this run adds a second clause worth writing down:
+    **verify the control arm actually misbehaves before trusting the treated arm's cleanliness** —
+    and check the units you claim (tokens, not characters) with the tokenizer, not an estimate.

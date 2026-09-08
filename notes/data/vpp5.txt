@@ -1,0 +1,46 @@
+== prompts: p_repeat.txt=10439B p_prose.txt=10439B p_clustered.txt=10439B 
+
+=== arm det0  FN_DET_TOPK=0  16:09
+   up. QSADET active: 1  prefix caching: enable_prefix_caching=False
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out5/det0_repeat.json
+arm=det0_repeat mode=sequential repeats=8 tokens=1874
+   repeat exit=0 size=10396079
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out5/det0_prose.json
+arm=det0_prose mode=sequential repeats=8 tokens=1896
+   prose exit=0 size=10615797
+sending requests (endpoint_label='sm121-det0', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out5/det0_clustered.json
+arm=det0_clustered mode=sequential repeats=8 tokens=1890
+   clustered exit=0 size=10510501
+
+=== arm det1  FN_DET_TOPK=1  16:22
+   up. QSADET active: 1  prefix caching: enable_prefix_caching=False
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out5/det1_repeat.json
+arm=det1_repeat mode=sequential repeats=8 tokens=1874
+   repeat exit=0 size=10396079
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out5/det1_prose.json
+arm=det1_prose mode=sequential repeats=8 tokens=1896
+   prose exit=0 size=10615797
+sending requests (endpoint_label='sm121-det1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/vpp/out5/det1_clustered.json
+arm=det1_clustered mode=sequential repeats=8 tokens=1890
+   clustered exit=0 size=10510501
+
+=== analyzer: det0 (reference) vs det1 (candidate), per tie-shape ===
+   repeat analyze exit=0
+     det0_repeat            disagreeing_positions=     0  max_spread=0.0  first@=None
+     det1_repeat            disagreeing_positions=     0  max_spread=0.0  first@=None
+     cross-arm modal-top1 mismatches=0
+   prose analyze exit=0
+     det0_prose             disagreeing_positions=     0  max_spread=0.0  first@=None
+     det1_prose             disagreeing_positions=     0  max_spread=0.0  first@=None
+     cross-arm modal-top1 mismatches=0
+   clustered analyze exit=0
+     det0_clustered         disagreeing_positions=     0  max_spread=0.0  first@=None
+     det1_clustered         disagreeing_positions=     0  max_spread=0.0  first@=None
+     cross-arm modal-top1 mismatches=0
+== ALL DONE == 16:35
