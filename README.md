@@ -4,8 +4,8 @@ Qwen's Qwen4-architecture preview (125B MoE, 6B active, a 51B n-gram table) serv
 with 128 GB of unified memory, on vLLM. This repo is the working record: the recipe, every number
 with its data file, the failures by symptom, and the claims of our own we had to withdraw.
 
-**Status: working, fast, and usable** — 262K-capable context, tool calls, vision, and two kernel
-fixes of ours now in vLLM or under review there.
+**Status: working, fast, and usable** — 262K-capable context, tool calls, vision, one kernel fix of
+ours merged into vLLM and four more under review there.
 
 | what | number | where it comes from |
 | --- | --- | --- |
@@ -39,7 +39,9 @@ each link says how its number was produced. Nothing here is quoted from one run:
 | [vllm#55375](https://github.com/vllm-project/vllm/pull/55375) | **MTP output corruption, root-caused here** (findings 126–131): with speculation configured, prefills after batch row 0 wrote their PLE conv state into request 0's checkpoint blocks — a strided index view read with unit stride; the fix (same as our closed duplicate [#55467](https://github.com/vllm-project/vllm/pull/55467)) is peakcrosser7's, our evidence and the strided decode test are on it | **merged 2026-09-05** |
 | [vllm#55430](https://github.com/vllm-project/vllm/pull/55430) | tile-union QSA prefill kernel: consecutive rows share one K/V gather; −2.8 % TTFT at 8k, −1.7 % at 30k on SM121 | PR, review |
 | [vllm#55394](https://github.com/vllm-project/vllm/issues/55394) | the RFC behind it: design, GB10 numbers, bring-up table for other parts | open |
-| [vllm#55122](https://github.com/vllm-project/vllm/pull/55122) | deterministic `persistent_topk` (index-ranked ties): greedy prefill reproducible at no cost; shipped by blazux as their patch 8 | PR, review |
+| [vllm#55122](https://github.com/vllm-project/vllm/pull/55122) | deterministic `persistent_topk` (index-ranked ties): greedy prefill reproducible at no cost end to end; shipped by blazux as their patch 8. Reviewed 09-08 — we conceded the accuracy point (there is no accuracy regression, only a reproducibility one), dropped the change-the-default position, and added two perf commits: blocked 4-item emission and `RADIX_THRESHOLD` → 22,016, taking the grid to 0.72–1.78× and at-or-below stock on 27 of 43 cells | PR, in review |
+| [vllm#55872](https://github.com/vllm-project/vllm/pull/55872) | LopezCastroRoberto's opt-in `--dsa-topk-backend`: the right shape, but the FlashInfer path **does not start on sm_121** (`TopKRaggedTransform … operation not supported` at init) — tested here at their request, their patch itself applies cleanly | theirs; GB10 result reported |
+| [vllm#55661](https://github.com/vllm-project/vllm/pull/55661) | SM 12.x blockwise FP8: gate the CTA swizzle on activation size too — follow-up to the merged #55180, regret 118.8 → 35.3 pp over 66 cells | PR, review |
 | [vllm#55180](https://github.com/vllm-project/vllm/pull/55180) | blockwise-FP8 GEMM on GB10: CTA swizzle restores 150–168 TF at every M (stock collapses to 52) | PR, review |
 | [vllm#54521](https://github.com/vllm-project/vllm/issues/54521), [#54928](https://github.com/vllm-project/vllm/issues/54928) | greedy non-determinism: the three GB10 causes, the batch-shape channel, the GEMM M-invariance table | evidence posted |
 | [vllm#53899](https://github.com/vllm-project/vllm/pull/53899) | PLE offload worker: GB10 validation, the `--cap-add=SYS_PTRACE` and KV-profiling notes | validated; **PR #13 on that branch**: the offload semaphore runs one step ahead with CUDA graphs, fix + evidence |
@@ -76,10 +78,12 @@ trace to a finding, AI assistance is disclosed.
     REPRODUCE.md                  the recipe, start to finish
     scripts/serve-flashnext.sh    serve config
     tools/                        probes and microbenchmarks (shapebench, gemm_m_invariance, qsa_union_*)
-    tools/main/                   env-gated patches for the nightly venv, the overlay diffs, memguard
+    tools/main/                   env-gated patches for the nightly venv, the per-nightly overlay
+                                  diffs (dev401, dev524) and BUILD-RECIPE.md, memguard
     patches/                      local vLLM patches and the upstream series
     notes/prefill-investigation.md   numbered findings 1–119 (prefill, kernels, cache)
-    notes/determinism-investigation.md   findings on greedy reproducibility
+    notes/determinism-investigation.md   findings on greedy reproducibility — starts with an
+                                  "answers by question" index; read that before re-measuring
     notes/upstream/               drafts of every post, the posting log, the PR plan
     notes/data/                   raw logs behind every number
     notes/log.md                  running record, including the dead ends

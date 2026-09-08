@@ -7,17 +7,23 @@ confidence each item deserves, plus what was refuted along the way.
 
 This file is chronological and long. It answers "what happened on the 4th" well and "what does X
 cost" badly, which is the question people actually arrive with. Added 2026-09-08 after three
-subagents *and I* re-asked a question this file had answered twice (det-168).
+subagents *and I* re-asked a question this file had answered twice (det-168). **Keep it current:
+a stale answer here is worse than no answer, because this is the part people trust.** Last
+reconciled against the findings at det-178.
 
 | question | answer | findings |
 | --- | --- | --- |
 | Is the QSA top-k kernel deterministic? | Stock: no (0/4 prompts, 0/81 shapes). Our #55122: yes, 81/81, and index-canonical. | 76, det-151, det-165 |
 | **What does the deterministic kernel cost end to end?** | **Nothing measurable.** TTFT and s/turn inside the start-to-start band over 3 starts/arm; independently, 99–100 % of stock prefill throughput. (87–90 % is the *Python* fallback, not the kernel.) | **82, 76** |
-| What does it cost per call, in the microbenchmark? | 1.14–1.30× on the shapes the model issues; 1.3–4.3× across the whole grid; one 1.54× cell that is a `RADIX_THRESHOLD` routing artifact. | det-151, det-167 |
+| What does it cost per call, in the microbenchmark? | **0.72–1.78× over 43 cells** since the blocked emission + `RADIX_THRESHOLD` 22,016; at or below stock on 27 of them. Was 1.01–2.13× before those. | det-171, det-172, **det-173** |
+| Which cell is worst, and can it be fixed? | 64 × 24,576, at 1.78×. It sits just above the caching bound (n ≤ 24,280) so it is multi-CTA under *every* legal threshold — that constant cannot reach it. | det-172, det-173 |
+| Is the opt-in FlashInfer backend (#55872) an alternative on GB10? | **No — it does not start on sm_121**: `TopKRaggedTransform … operation not supported` at engine init. Their patch is fine; the kernel has no sm_121 path. | det-175 |
+| Does prefix caching work under MTP, despite the "reuse will be disabled" warning? | **Yes** — 92.1 % hit rate on repeat requests, exactly 4 full blocks. The warning's operative clause is about an external KV offload tier, which we do not run. | det-174 |
 | Does it change output quality? | Third-party 50-item suite: 95/100 with 0/50 unstable, vs stock 97/100 with 13/50 unstable. | 76 |
 | Does it give batch invariance? | No, and it cannot — GDN has no batch-invariant path. | 76 |
 | Is #55314 an alternative? | No. It fixes the set nearly for free but not the order, and its tie clips make the set scheduling-dependent. | det-165, det-166, det-167 |
 | Is a merged #55122+#55314 kernel worth building? | No — closed, not deferred, on the end-to-end number above. | det-166, det-167, det-168 |
+| Is ZC502's position-parity collector usable here? | The **client** one is: 12/12 runs on sm_121. The offline one is not (it constructs `LLM()` in-process). Our first test case was void — stock did not diverge on random-word prompts. | det-155, **det-178** |
 
 ## Established (measured, replicated where stated)
 
