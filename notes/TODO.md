@@ -4,6 +4,45 @@ Rewritten 2026-08-31, then appended to per working day. **The sections are chron
 oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
 as archaeology unless it is cross-referenced from here.**
 
+## Live state — 2026-09-08 night (goal: agent turn time)
+
+**The goal was reset by the user tonight: make agent turns faster on this model. The top-k /
+determinism work was a divert that the errors we found made necessary; it is finished and posted.**
+An agent turn is TTFT + tokens/rate with TTFT 53–69 % of it and the median turn emitting ~130–242
+tokens, so prefill and warm-turn recompute are where the time is.
+
+**Chained on the box tonight** (systemd units, each waiting on the previous by name; watchdogs set
+just after each expected finish):
+
+| # | unit | question | named cell that must differ |
+| --- | --- | --- | --- |
+| 1 | `isolate5` | which of the four determinism fixes carries end-to-end reproducibility | `none` non-zero AND `all4` ~0, or void |
+| 2 | `ssm2` | does `--mamba-ssm-cache-dtype bfloat16` shrink the forced attention block and speed up warm turns | the block-size log line: bf16 < fp32 (predicted 1,600 → ~800) |
+| 3 | `pstack` | what the FLA fused kkt+solve kernel (finding 143) is worth **end to end** | the overlay marker present in `fla` arms, absent in `base` |
+| 4 | `mtp42` | is MTP k=4 better than our shipped 3, and does vllm#55533's scheduler collapse reproduce here | dvcell c=1 tok/s between n3 and n4 |
+| 5 | `ishare` | is `index_share_for_mtp_iteration` a free decode lever | `index_share_for_mtp_iteration=True` in the engine config line |
+
+Runs 2–5 all came out of a field/issue sweep done the same evening (`the-field.md`, 2026-09-08) —
+three of them are levers the field has measured and we had not, and one (`pstack`) is a finding of
+ours that had never been taken to the server.
+
+**Done tonight, do not redo:** field + open-issue sweep (`the-field.md`); finding 151 (our
+draft-vocabulary coverage curve — the whole observed vocabulary is 48,476 ids, so the field's 65k
+does not exist here and their own crossover rule points at ~4k, not our 32k); finding 142 corrected
+twice (the bf16 route exists; fp8 KV *doubles* the attention block, which is the entire difference
+between MiaAI's 3,200 and our 1,600); the memory `warm-turn-block-granularity` corrected (vllm#54458
+is the open issue for the allocator change and we are its second commenter — the earlier "no open
+issue exists" was a search failure).
+
+**Prepared, not yet run:** draft-vocabulary size sweep at 4k/8k/16k vs 32k (files built, `dv_patch.py`
+is the hook; 32k must be re-measured because the rebuild overwrote det-135's files). CPU C-states off
+(`cpupower idle-set -D 0`) — MiaAI measured +5–6.6 % by live ablation and it is the only host-side
+lever anyone has found; needs one server and two interleaved ablations, no restart.
+
+**Env note:** `/opt/llm/serve-fnmain.sh` gained two opt-in knobs tonight, both default-off:
+`FN_SSM_DTYPE` (→ `--mamba-ssm-cache-dtype`) and `FN_ISHARE` (→ `index_share_for_mtp_iteration` in
+the speculative config). Backup at `/opt/llm/serve-fnmain.sh.bak-20260908`.
+
 ## Live state — 2026-09-08 (end of day)
 
 **In flight:** nothing on the box; it is idle.
