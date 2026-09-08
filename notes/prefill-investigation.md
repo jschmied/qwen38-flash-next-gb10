@@ -1458,3 +1458,58 @@
     they diverge at c>1 only, that is a real defect in a configuration vLLM enables by default for every MTP user on a
     hybrid, and it belongs upstream. Either way the launcher comment gets replaced by a flag, because a comment is not
     a control.
+
+
+153. **`--mamba-ssm-cache-dtype bfloat16`: the block halves exactly as predicted, agent turns get 9.6 % cheaper in
+    total, the *median* turn gets slightly worse, and it costs a 5.1 % change in the model's own top-1 predictions
+    (`ssm`, six arms interleaved bf16/fp32 × 3 starts, `notes/data/ssm.txt`, paired table
+    `notes/data/ssm-paired-turns.txt`).** MTP-3, prefix caching on, `FN_MAXLEN=32768`, `FN_BATCH=4096`, util 0.75,
+    deterministic stack on in every arm.
+
+    **Mechanism — both halves pre-registered before the run, both confirmed.** Block **1,600 → 832** (predicted "~800"
+    from `attn_block_size = align · cdiv(mamba_page, align · attn_page_1_token)`, not from the field's number); mamba
+    padding 0.25 % → 0.48 %; and the second, less obvious half: the padding leaves with the page, so **KV capacity rises
+    too** — 175–182k tokens at fp32 against 214–247k at bf16, max concurrency 5.4× → 6.5–7.5×. The fixed-prefix
+    regression over a 20k cached prefix does exactly what the mechanism says: intercept **559/561/565 ms → 275/274/271 ms
+    (−51 %)** with the prefill *rate* untouched (2462–2477 vs 2446–2470 tok/s). Three starts, ranges given, no overlap.
+
+    **Real agent turns are the cell that decides it, and they say something the intercept does not.** Trajectory replay,
+    24 warm turns, median 262 new tokens, paired turn-by-turn across arms:
+
+    | | fp32 | bf16 |
+    | --- | --- | --- |
+    | recomputed tokens / turn (median) | 1,042 | 820 |
+    | prefix-cache hit rate over the replay | 81.8 % | 86.7 % |
+    | TTFT **median** | 0.663 / 0.665 / 0.675 s | 0.688 / 0.752 / 0.695 s |
+    | TTFT **mean** | 0.779 / 0.796 / 0.795 s | 0.713 / 0.722 / 0.707 s |
+    | **total over the 24 turns** | **18.84 s** | **17.04 s (−9.6 %)** |
+
+    The median is *worse* and the mean is *better*, and both differences are outside the three-start spread — the arms
+    reproduce to a few ms per turn (turn 18: 0.526/0.528/0.521 vs 1.161/1.166/1.167). bf16 is faster on **15 of 24**
+    turns, and the paired table shows why: the win tracks the recompute exactly. Where the smaller block leaves less to
+    re-prefill it wins large (turn 12: 788 vs 1,812 tokens, −657 ms; turn 18: 659 vs 1,747, −640 ms; turn 24: 1,771 vs
+    2,923, −502 ms), and where the boundary happens to land worse it loses (turn 8: 979 vs 339, +458 ms; turn 13: 1,180
+    vs 604, +465 ms). Recompute per turn is `new_tokens + (tokens since the last boundary)`, which is a modular lottery
+    per turn; halving the block halves its *expectation* and its worst case, not every draw. **So this is a tail lever:
+    it does not make the typical turn faster, it removes the expensive ones**, which is what accumulates over a session.
+    Finding 142 measured the same knob through a padding overlay and called it flat — it was looking at the median.
+
+    **What it does NOT buy.** Decode at c=1 is unmoved (bf16 19.3–19.5 / 17.7–17.8 / 19.4–19.5 tok/s against fp32
+    19.6–19.7 / 16.4–16.8 / 19.7–19.9, rep-for-rep, rep 1 being the only cell bf16 wins) — MiaAI-Lab's **+6.8 % at one
+    stream does not reproduce here**. MTP acceptance is unchanged (52/42/49 % vs 55/38/54 %). Aggregate at c=8 is
+    26.7–28.3 vs 25.5–27.0 tok/s, inside the spread.
+
+    **It is not free, and a needle test cannot see the price.** Both arms are internally bit-exact (0 disagreeing
+    positions over 8 greedy repeats, deterministic stack on), so the arms are cleanly comparable — and across arms
+    **127 of 2,504 positions (5.1 %) differ in their modal top-1 token**, max |Δ mean forced logprob| 5.20, first at
+    position 36. For scale, the four determinism defects we spent a week removing moved 110/2,504 (det-184). Halving the
+    recurrent state's precision perturbs this model's predictions by the same order of magnitude. That is a *deterministic*
+    change rather than a nondeterministic one, and whether it costs task quality needs a task eval, not a logprob count —
+    but "needles 15/15 unchanged", the evidence the field shipped it on, would never have detected it.
+
+    **Verdict: a real −9.6 % on agent-turn time with a real precision cost, not a free lever.** Prod adoption is one
+    `FN_SSM_DTYPE` line and is the user's call; it should be paired with a task-level quality check first.
+
+    **Free by-product: vllm#55533 does not reproduce here.** `schedwidth` at c=8 shows `num_requests_running` median 5
+    and max 8 in *every* arm, both block sizes — the scheduler reaches the full batch. The 1+k mamba-block charge is real
+    in the code, but our pool (176–247k tokens) is far from the ceiling that produces the reported {2,2,2} window.

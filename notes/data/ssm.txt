@@ -1,0 +1,290 @@
+== SSM  start 2026-09-08 21:27
+   isolate5 finished cleanly
+
+=== arm bf16_1  ssm_dtype=bfloat16  21:27
+   MECH block: Setting attention block size to 832 tokens to ensure that attention page size is >= mamba page size.
+   MECH pad:   Padding mamba page size by 0.48% to ensure that mamba page size and attention page size are exactly equal.
+   MECH kv:    GPU KV cache size: 246,565 tokens, Maximum concurrency for 32,768 tokens per request: 7.52x
+  bf16_1 A base: prompt_tokens=20076 cold=8.58s second=0.25s hits/queries=19968/20076
+  bf16_1 A N=   16: prompt_tokens=20109 ttft median=0.295s all=0.310 0.295 0.294 hits/queries(last)=19968/20109
+  bf16_1 A N=   64: prompt_tokens=20215 ttft median=0.336s all=0.341 0.336 0.330 hits/queries(last)=19968/20215
+  bf16_1 A N=  256: prompt_tokens=20628 ttft median=0.487s all=0.491 0.483 0.487 hits/queries(last)=19968/20628
+  bf16_1 A N= 1024: prompt_tokens=22320 ttft median=1.290s all=1.290 1.244 1.400 hits/queries(last)=19968/22320
+  bf16_1 A N= 4096: prompt_tokens=29046 ttft median=3.904s all=3.938 3.904 3.883 hits/queries(last)=19968/29046
+  bf16_1 A FIT: ttft = 275 ms + new_tokens / 2470 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  bf16_1 C tokenize(+template) of 20149 tokens: 30 ms
+  bf16_1 C tokenize(+template) of 86 tokens: 2 ms
+  bf16_1 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.426s hits/queries=0/1840
+  bf16_1 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.327s hits/queries=1664/1936
+  bf16_1 B turn= 3: prompt_tokens=  2856 new=  920 ttft=1.064s hits/queries=1664/2856
+  bf16_1 B turn= 4: prompt_tokens=  3650 new=  794 ttft=0.983s hits/queries=2496/3650
+  bf16_1 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.534s hits/queries=3328/4025
+  bf16_1 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.789s hits/queries=3328/4216
+  bf16_1 B turn= 7: prompt_tokens=  5011 new=  795 ttft=0.771s hits/queries=4160/5011
+  bf16_1 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.839s hits/queries=4160/5139
+  bf16_1 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.330s hits/queries=4992/5264
+  bf16_1 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.595s hits/queries=4992/5748
+  bf16_1 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.754s hits/queries=4992/5857
+  bf16_1 B turn=12: prompt_tokens=  6612 new=  755 ttft=0.635s hits/queries=5824/6612
+  bf16_1 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.979s hits/queries=5824/7004
+  bf16_1 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.510s hits/queries=6656/7286
+  bf16_1 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.762s hits/queries=6656/7520
+  bf16_1 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.323s hits/queries=7488/7702
+  bf16_1 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.428s hits/queries=7488/7912
+  bf16_1 B turn=18: prompt_tokens=  8147 new=  235 ttft=0.526s hits/queries=7488/8147
+  bf16_1 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.557s hits/queries=7488/8246
+  bf16_1 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.864s hits/queries=7488/8459
+  bf16_1 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.457s hits/queries=8320/8784
+  bf16_1 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.534s hits/queries=8320/9026
+  bf16_1 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.956s hits/queries=8320/9413
+  bf16_1 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.179s hits/queries=9152/10923
+  bf16_1 DV c=1 rep=0: accept=51.5% AL=2.54 | 200 tok in 10.4s = 19.3 tok/s agg, 19.3 per stream | garbage 0/1
+  bf16_1 DV c=1 rep=1: accept=42.3% AL=2.27 | 200 tok in 11.3s = 17.8 tok/s agg, 17.8 per stream | garbage 0/1
+  bf16_1 DV c=1 rep=2: accept=48.6% AL=2.46 | 200 tok in 10.3s = 19.5 tok/s agg, 19.5 per stream | garbage 0/1
+  bf16_1 c=8: wall=25.2s completion_tokens=679 aggregate=27.0 tok/s
+  bf16_1 c=8: num_requests_running while busy -- samples=92 median=5.0 max=8 hist={1: 8, 2: 10, 3: 14, 4: 10, 5: 6, 6: 15, 7: 7, 8: 22}
+  bf16_1 c=8: max waiting=6  acceptance=0.722 (466/645)
+sending requests (endpoint_label='sm121-bf16_1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qssm-bf16_1.json
+arm=ssm_bf16_1 mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=13980894
+
+=== arm fp32_1  ssm_dtype=auto  21:44
+   MECH block: Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+   MECH pad:   Padding mamba page size by 0.25% to ensure that mamba page size and attention page size are exactly equal.
+   MECH kv:    GPU KV cache size: 181,784 tokens, Maximum concurrency for 32,768 tokens per request: 5.55x
+  fp32_1 A base: prompt_tokens=20076 cold=8.60s second=0.53s hits/queries=19200/20076
+  fp32_1 A N=   16: prompt_tokens=20109 ttft median=0.602s all=0.611 0.602 0.595 hits/queries(last)=19200/20109
+  fp32_1 A N=   64: prompt_tokens=20215 ttft median=0.650s all=0.666 0.650 0.644 hits/queries(last)=19200/20215
+  fp32_1 A N=  256: prompt_tokens=20628 ttft median=0.777s all=0.797 0.774 0.777 hits/queries(last)=19200/20628
+  fp32_1 A N= 1024: prompt_tokens=22320 ttft median=1.518s all=1.539 1.518 1.513 hits/queries(last)=19200/22320
+  fp32_1 A N= 4096: prompt_tokens=29046 ttft median=4.210s all=4.229 4.204 4.210 hits/queries(last)=19200/29046
+  fp32_1 A FIT: ttft = 559 ms + new_tokens / 2467 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  fp32_1 C tokenize(+template) of 20149 tokens: 41 ms
+  fp32_1 C tokenize(+template) of 86 tokens: 3 ms
+  fp32_1 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.362s hits/queries=0/1840
+  fp32_1 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.357s hits/queries=1600/1936
+  fp32_1 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.793s hits/queries=1600/2856
+  fp32_1 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.330s hits/queries=1600/3650
+  fp32_1 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.579s hits/queries=3200/4025
+  fp32_1 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.637s hits/queries=3200/4216
+  fp32_1 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.235s hits/queries=3200/5011
+  fp32_1 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.376s hits/queries=4800/5139
+  fp32_1 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.425s hits/queries=4800/5264
+  fp32_1 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.670s hits/queries=4800/5748
+  fp32_1 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.655s hits/queries=4800/5857
+  fp32_1 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.270s hits/queries=4800/6612
+  fp32_1 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.509s hits/queries=6400/7004
+  fp32_1 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.610s hits/queries=6400/7286
+  fp32_1 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.688s hits/queries=6400/7520
+  fp32_1 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.770s hits/queries=6400/7702
+  fp32_1 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.811s hits/queries=6400/7912
+  fp32_1 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.161s hits/queries=6400/8147
+  fp32_1 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.349s hits/queries=8000/8246
+  fp32_1 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.440s hits/queries=8000/8459
+  fp32_1 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.582s hits/queries=8000/8784
+  fp32_1 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.641s hits/queries=8000/9026
+  fp32_1 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.773s hits/queries=8000/9413
+  fp32_1 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.674s hits/queries=8000/10923
+  fp32_1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.2s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  fp32_1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  fp32_1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.1s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  fp32_1 c=8: wall=26.9s completion_tokens=724 aggregate=26.9 tok/s
+  fp32_1 c=8: num_requests_running while busy -- samples=98 median=5.0 max=8 hist={1: 8, 2: 17, 3: 12, 4: 8, 5: 13, 6: 10, 7: 14, 8: 16}
+  fp32_1 c=8: max waiting=6  acceptance=0.704 (490/696)
+sending requests (endpoint_label='sm121-fp32_1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qssm-fp32_1.json
+arm=ssm_fp32_1 mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=14002566
+
+== GATE: block size  bf16='832 tokens'  fp32='1600 tokens'
+
+=== arm bf16_2  ssm_dtype=bfloat16  22:03
+   MECH block: Setting attention block size to 832 tokens to ensure that attention page size is >= mamba page size.
+   MECH pad:   Padding mamba page size by 0.48% to ensure that mamba page size and attention page size are exactly equal.
+   MECH kv:    GPU KV cache size: 230,450 tokens, Maximum concurrency for 32,768 tokens per request: 7.03x
+  bf16_2 A base: prompt_tokens=20076 cold=8.47s second=0.26s hits/queries=19968/20076
+  bf16_2 A N=   16: prompt_tokens=20109 ttft median=0.308s all=0.317 0.307 0.308 hits/queries(last)=19968/20109
+  bf16_2 A N=   64: prompt_tokens=20215 ttft median=0.346s all=0.350 0.346 0.343 hits/queries(last)=19968/20215
+  bf16_2 A N=  256: prompt_tokens=20628 ttft median=0.498s all=0.511 0.488 0.498 hits/queries(last)=19968/20628
+  bf16_2 A N= 1024: prompt_tokens=22320 ttft median=1.271s all=1.271 1.343 1.241 hits/queries(last)=19968/22320
+  bf16_2 A N= 4096: prompt_tokens=29046 ttft median=3.948s all=3.985 3.948 3.923 hits/queries(last)=19968/29046
+  bf16_2 A FIT: ttft = 274 ms + new_tokens / 2446 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  bf16_2 C tokenize(+template) of 20149 tokens: 41 ms
+  bf16_2 C tokenize(+template) of 86 tokens: 3 ms
+  bf16_2 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.347s hits/queries=0/1840
+  bf16_2 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.328s hits/queries=1664/1936
+  bf16_2 B turn= 3: prompt_tokens=  2856 new=  920 ttft=1.049s hits/queries=1664/2856
+  bf16_2 B turn= 4: prompt_tokens=  3650 new=  794 ttft=0.988s hits/queries=2496/3650
+  bf16_2 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.534s hits/queries=3328/4025
+  bf16_2 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.793s hits/queries=3328/4216
+  bf16_2 B turn= 7: prompt_tokens=  5011 new=  795 ttft=0.776s hits/queries=4160/5011
+  bf16_2 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.841s hits/queries=4160/5139
+  bf16_2 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.331s hits/queries=4992/5264
+  bf16_2 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.593s hits/queries=4992/5748
+  bf16_2 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.762s hits/queries=4992/5857
+  bf16_2 B turn=12: prompt_tokens=  6612 new=  755 ttft=0.742s hits/queries=5824/6612
+  bf16_2 B turn=13: prompt_tokens=  7004 new=  392 ttft=1.133s hits/queries=5824/7004
+  bf16_2 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.514s hits/queries=6656/7286
+  bf16_2 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.764s hits/queries=6656/7520
+  bf16_2 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.322s hits/queries=7488/7702
+  bf16_2 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.430s hits/queries=7488/7912
+  bf16_2 B turn=18: prompt_tokens=  8147 new=  235 ttft=0.528s hits/queries=7488/8147
+  bf16_2 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.562s hits/queries=7488/8246
+  bf16_2 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.866s hits/queries=7488/8459
+  bf16_2 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.462s hits/queries=8320/8784
+  bf16_2 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.533s hits/queries=8320/9026
+  bf16_2 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.949s hits/queries=8320/9413
+  bf16_2 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.174s hits/queries=9152/10923
+  bf16_2 DV c=1 rep=0: accept=51.5% AL=2.54 | 200 tok in 10.2s = 19.5 tok/s agg, 19.5 per stream | garbage 0/1
+  bf16_2 DV c=1 rep=1: accept=42.3% AL=2.27 | 200 tok in 11.3s = 17.7 tok/s agg, 17.7 per stream | garbage 0/1
+  bf16_2 DV c=1 rep=2: accept=48.6% AL=2.46 | 200 tok in 10.3s = 19.4 tok/s agg, 19.4 per stream | garbage 0/1
+  bf16_2 c=8: wall=25.6s completion_tokens=724 aggregate=28.3 tok/s
+  bf16_2 c=8: num_requests_running while busy -- samples=94 median=5.0 max=8 hist={1: 6, 2: 16, 3: 13, 4: 8, 5: 8, 6: 13, 7: 9, 8: 21}
+  bf16_2 c=8: max waiting=6  acceptance=0.800 (511/639)
+
+=== arm fp32_2  ssm_dtype=auto  22:18
+   MECH block: Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+   MECH pad:   Padding mamba page size by 0.25% to ensure that mamba page size and attention page size are exactly equal.
+   MECH kv:    GPU KV cache size: 175,542 tokens, Maximum concurrency for 32,768 tokens per request: 5.36x
+  fp32_2 A base: prompt_tokens=20076 cold=8.42s second=0.52s hits/queries=19200/20076
+  fp32_2 A N=   16: prompt_tokens=20109 ttft median=0.599s all=0.615 0.599 0.589 hits/queries(last)=19200/20109
+  fp32_2 A N=   64: prompt_tokens=20215 ttft median=0.641s all=0.661 0.641 0.639 hits/queries(last)=19200/20215
+  fp32_2 A N=  256: prompt_tokens=20628 ttft median=0.772s all=0.798 0.766 0.772 hits/queries(last)=19200/20628
+  fp32_2 A N= 1024: prompt_tokens=22320 ttft median=1.514s all=1.603 1.514 1.502 hits/queries(last)=19200/22320
+  fp32_2 A N= 4096: prompt_tokens=29046 ttft median=4.194s all=4.214 4.185 4.194 hits/queries(last)=19200/29046
+  fp32_2 A FIT: ttft = 561 ms + new_tokens / 2477 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  fp32_2 C tokenize(+template) of 20149 tokens: 27 ms
+  fp32_2 C tokenize(+template) of 86 tokens: 3 ms
+  fp32_2 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.623s hits/queries=0/1840
+  fp32_2 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.362s hits/queries=1600/1936
+  fp32_2 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.805s hits/queries=1600/2856
+  fp32_2 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.335s hits/queries=1600/3650
+  fp32_2 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.584s hits/queries=3200/4025
+  fp32_2 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.645s hits/queries=3200/4216
+  fp32_2 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.248s hits/queries=3200/5011
+  fp32_2 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.381s hits/queries=4800/5139
+  fp32_2 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.432s hits/queries=4800/5264
+  fp32_2 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.671s hits/queries=4800/5748
+  fp32_2 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.658s hits/queries=4800/5857
+  fp32_2 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.296s hits/queries=4800/6612
+  fp32_2 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.514s hits/queries=6400/7004
+  fp32_2 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.615s hits/queries=6400/7286
+  fp32_2 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.687s hits/queries=6400/7520
+  fp32_2 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.777s hits/queries=6400/7702
+  fp32_2 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.813s hits/queries=6400/7912
+  fp32_2 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.166s hits/queries=6400/8147
+  fp32_2 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.354s hits/queries=8000/8246
+  fp32_2 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.442s hits/queries=8000/8459
+  fp32_2 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.590s hits/queries=8000/8784
+  fp32_2 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.640s hits/queries=8000/9026
+  fp32_2 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.779s hits/queries=8000/9413
+  fp32_2 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.679s hits/queries=8000/10923
+  fp32_2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.2s = 19.6 tok/s agg, 19.6 per stream | garbage 0/1
+  fp32_2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.2s = 16.4 tok/s agg, 16.4 per stream | garbage 0/1
+  fp32_2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.2s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  fp32_2 c=8: wall=27.2s completion_tokens=692 aggregate=25.5 tok/s
+  fp32_2 c=8: num_requests_running while busy -- samples=100 median=5.0 max=8 hist={1: 9, 2: 18, 3: 12, 4: 7, 5: 10, 6: 13, 7: 15, 8: 16}
+  fp32_2 c=8: max waiting=6  acceptance=0.668 (461/690)
+
+=== arm bf16_3  ssm_dtype=bfloat16  22:32
+   MECH block: Setting attention block size to 832 tokens to ensure that attention page size is >= mamba page size.
+   MECH pad:   Padding mamba page size by 0.48% to ensure that mamba page size and attention page size are exactly equal.
+   MECH kv:    GPU KV cache size: 214,334 tokens, Maximum concurrency for 32,768 tokens per request: 6.54x
+  bf16_3 A base: prompt_tokens=20076 cold=8.46s second=0.26s hits/queries=19968/20076
+  bf16_3 A N=   16: prompt_tokens=20109 ttft median=0.307s all=0.321 0.306 0.307 hits/queries(last)=19968/20109
+  bf16_3 A N=   64: prompt_tokens=20215 ttft median=0.342s all=0.351 0.340 0.342 hits/queries(last)=19968/20215
+  bf16_3 A N=  256: prompt_tokens=20628 ttft median=0.512s all=0.514 0.512 0.489 hits/queries(last)=19968/20628
+  bf16_3 A N= 1024: prompt_tokens=22320 ttft median=1.245s all=1.293 1.245 1.244 hits/queries(last)=19968/22320
+  bf16_3 A N= 4096: prompt_tokens=29046 ttft median=3.942s all=3.979 3.942 3.934 hits/queries(last)=19968/29046
+  bf16_3 A FIT: ttft = 271 ms + new_tokens / 2446 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  bf16_3 C tokenize(+template) of 20149 tokens: 41 ms
+  bf16_3 C tokenize(+template) of 86 tokens: 3 ms
+  bf16_3 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.357s hits/queries=0/1840
+  bf16_3 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.323s hits/queries=1664/1936
+  bf16_3 B turn= 3: prompt_tokens=  2856 new=  920 ttft=1.051s hits/queries=1664/2856
+  bf16_3 B turn= 4: prompt_tokens=  3650 new=  794 ttft=0.985s hits/queries=2496/3650
+  bf16_3 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.526s hits/queries=3328/4025
+  bf16_3 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.793s hits/queries=3328/4216
+  bf16_3 B turn= 7: prompt_tokens=  5011 new=  795 ttft=0.772s hits/queries=4160/5011
+  bf16_3 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.829s hits/queries=4160/5139
+  bf16_3 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.327s hits/queries=4992/5264
+  bf16_3 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.591s hits/queries=4992/5748
+  bf16_3 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.749s hits/queries=4992/5857
+  bf16_3 B turn=12: prompt_tokens=  6612 new=  755 ttft=0.626s hits/queries=5824/6612
+  bf16_3 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.970s hits/queries=5824/7004
+  bf16_3 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.509s hits/queries=6656/7286
+  bf16_3 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.751s hits/queries=6656/7520
+  bf16_3 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.324s hits/queries=7488/7702
+  bf16_3 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.421s hits/queries=7488/7912
+  bf16_3 B turn=18: prompt_tokens=  8147 new=  235 ttft=0.521s hits/queries=7488/8147
+  bf16_3 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.557s hits/queries=7488/8246
+  bf16_3 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.861s hits/queries=7488/8459
+  bf16_3 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.458s hits/queries=8320/8784
+  bf16_3 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.533s hits/queries=8320/9026
+  bf16_3 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.950s hits/queries=8320/9413
+  bf16_3 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.177s hits/queries=9152/10923
+  bf16_3 DV c=1 rep=0: accept=51.5% AL=2.54 | 200 tok in 10.3s = 19.4 tok/s agg, 19.4 per stream | garbage 0/1
+  bf16_3 DV c=1 rep=1: accept=42.3% AL=2.27 | 200 tok in 11.3s = 17.7 tok/s agg, 17.7 per stream | garbage 0/1
+  bf16_3 DV c=1 rep=2: accept=48.6% AL=2.46 | 200 tok in 10.3s = 19.4 tok/s agg, 19.4 per stream | garbage 0/1
+  bf16_3 c=8: wall=25.5s completion_tokens=679 aggregate=26.7 tok/s
+  bf16_3 c=8: num_requests_running while busy -- samples=93 median=5.0 max=8 hist={1: 8, 2: 10, 3: 15, 4: 9, 5: 8, 6: 15, 7: 6, 8: 22}
+  bf16_3 c=8: max waiting=6  acceptance=0.722 (466/645)
+
+=== arm fp32_3  ssm_dtype=auto  22:47
+   MECH block: Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+   MECH pad:   Padding mamba page size by 0.25% to ensure that mamba page size and attention page size are exactly equal.
+   MECH kv:    GPU KV cache size: 177,103 tokens, Maximum concurrency for 32,768 tokens per request: 5.40x
+  fp32_3 A base: prompt_tokens=20076 cold=8.35s second=0.53s hits/queries=19200/20076
+  fp32_3 A N=   16: prompt_tokens=20109 ttft median=0.605s all=0.610 0.605 0.595 hits/queries(last)=19200/20109
+  fp32_3 A N=   64: prompt_tokens=20215 ttft median=0.658s all=0.682 0.658 0.648 hits/queries(last)=19200/20215
+  fp32_3 A N=  256: prompt_tokens=20628 ttft median=0.786s all=0.813 0.781 0.786 hits/queries(last)=19200/20628
+  fp32_3 A N= 1024: prompt_tokens=22320 ttft median=1.526s all=1.526 1.530 1.522 hits/queries(last)=19200/22320
+  fp32_3 A N= 4096: prompt_tokens=29046 ttft median=4.212s all=4.212 4.196 4.279 hits/queries(last)=19200/29046
+  fp32_3 A FIT: ttft = 565 ms + new_tokens / 2462 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  fp32_3 C tokenize(+template) of 20149 tokens: 40 ms
+  fp32_3 C tokenize(+template) of 86 tokens: 3 ms
+  fp32_3 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.380s hits/queries=0/1840
+  fp32_3 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.361s hits/queries=1600/1936
+  fp32_3 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.806s hits/queries=1600/2856
+  fp32_3 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.350s hits/queries=1600/3650
+  fp32_3 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.581s hits/queries=3200/4025
+  fp32_3 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.642s hits/queries=3200/4216
+  fp32_3 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.252s hits/queries=3200/5011
+  fp32_3 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.419s hits/queries=4800/5139
+  fp32_3 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.560s hits/queries=4800/5264
+  fp32_3 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.689s hits/queries=4800/5748
+  fp32_3 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.661s hits/queries=4800/5857
+  fp32_3 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.292s hits/queries=4800/6612
+  fp32_3 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.517s hits/queries=6400/7004
+  fp32_3 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.623s hits/queries=6400/7286
+  fp32_3 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.689s hits/queries=6400/7520
+  fp32_3 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.777s hits/queries=6400/7702
+  fp32_3 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.804s hits/queries=6400/7912
+  fp32_3 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.167s hits/queries=6400/8147
+  fp32_3 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.353s hits/queries=8000/8246
+  fp32_3 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.446s hits/queries=8000/8459
+  fp32_3 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.599s hits/queries=8000/8784
+  fp32_3 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.652s hits/queries=8000/9026
+  fp32_3 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.783s hits/queries=8000/9413
+  fp32_3 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.689s hits/queries=8000/10923
+  fp32_3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.2s = 19.6 tok/s agg, 19.6 per stream | garbage 0/1
+  fp32_3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.1s = 16.5 tok/s agg, 16.5 per stream | garbage 0/1
+  fp32_3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.2s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  fp32_3 c=8: wall=26.8s completion_tokens=724 aggregate=27.0 tok/s
+  fp32_3 c=8: num_requests_running while busy -- samples=98 median=5.0 max=8 hist={1: 8, 2: 17, 3: 12, 4: 8, 5: 13, 6: 10, 7: 14, 8: 16}
+  fp32_3 c=8: max waiting=6  acceptance=0.704 (490/696)
+
+== QUALITY: bf16 vs fp32, same prompt, greedy, det stack on ==
+   self-consistency bf16_1  disagreeing_positions=    0  max_spread=0.0  first@=None
+   self-consistency fp32_1  disagreeing_positions=    0  max_spread=0.0  first@=None
+report: /opt/llm/runners/results/repssm-cross/report.json
+key positions: /opt/llm/runners/results/repssm-cross/key_positions.csv
+   cross-arm report in /opt/llm/runners/results/repssm-cross (fp32 = reference, bf16 = candidate)
+
+   READ: (1) the two arms MUST show different block sizes or the run is void.
+         (2) rank on the trajectory replay (turnfit B), NOT on the A intercept — finding 142 is the
+             precedent: A fell 485->265 ms at block 512 while the real-turn median did not follow.
+         (3) three starts per arm; report ranges. A difference inside the same-arm spread is not a result.
+         (4) schedwidth answers vllm#55533 for free: median num_requests_running at c=8 well below 8.
+== ALL DONE == 2026-09-08 23:02
