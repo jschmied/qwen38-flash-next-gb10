@@ -2394,3 +2394,37 @@ Plus whatever drives the separate generation-side path.
     paths" when `histogram_2048_topk` and `histogram_256_topk` are dead on our branch. Neither error
     propagated into a wrong recommendation, but the traffic-budget framing I gave them was wrong and
     B is the only one that said so.
+
+168. **CORRECTION TO det-167: the "gate nobody measured" was measured, twice, and it closes the
+    optimisation question (2026-09-08).** All four opinions in det-167 converged on the same
+    caveat — *what fraction of a decode step is `persistent_topk`? nobody has produced that number,
+    and it decides everything.* They were wrong, and so was I for repeating it: the number exists,
+    from two independent parties, and it has been sitting in the PR thread since 03/04 Sep.
+
+    | source | measurement | result |
+    | --- | --- | --- |
+    | us, 2026-09-04 (PR #55122 comment) | TTFT at 7.5k and 29k, 8-turn agent loop, 3 server starts per arm, MTP n=5 | **every pair inside the start-to-start band** — no measurable TTFT or per-turn cost |
+    | k3dani, 2026-09-03 (independent, different config: MTP=2, PIECEWISE, 8k chunks, FlashInfer 0.6.17) | prefill throughput at 6,082 and 24,416 tokens | **99–100 % of stock** (the 87–90 % figure in that comment is the *Python `torch.topk` fallback*, not this kernel) |
+
+    So the kernel's 1.14–1.30× microbenchmark ratio is **≤1 % end to end**, on two different
+    configurations, measured by two parties who did not coordinate. Consequences:
+
+    - **The merged bitmap kernel is closed, not deferred.** Every version of it — A's, C's, the
+      user's — exists to convert a ≤1 % end-to-end cost into a smaller ≤1 %. It touches four or five
+      kernels and two shared-memory layouts to do it. There is no throughput argument left.
+    - **The cheap changes survive, but their justification changes.** `RADIX_THRESHOLD` (`thr`,
+      queued) and the blocked 4-item emission (`blkem`, queued, branch
+      `perf/topk-blocked-emission`) are now **review hygiene, not performance work**: the
+      microbenchmark table is what a reviewer sees, and a 1.54× cell invites an objection that costs
+      more review time than the fix costs to make. Both are also cheap enough that this reframing
+      does not change whether to run them — only what I would claim if they win.
+    - **B's L3b and the ±0 fix are unaffected** — the former is a code simplification (two chunk
+      passes deleted), the latter is a correctness bug in stock and #55314.
+
+    **Process lesson, and it is the actual finding here.** I briefed three agents from the repo, and
+    the repo did not contain our own end-to-end result — it lives in the upstream thread. All three
+    independently reached for the same missing number and all three flagged it as the project's
+    decision gate, which is exactly the right instinct and exactly the wrong conclusion. **Anything
+    we post upstream that is not also in the notes is invisible to future work, including my own.**
+    The end-to-end table from 2026-09-04 should have been a numbered finding on the day it was
+    posted; it was only a comment. Fold posted results back into the notes, not just the posting log.
