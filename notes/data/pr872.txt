@@ -1,0 +1,51 @@
+== apply vllm#55872 to fnmain3 (dev524)
+   files patched: 7 (0 => VOID, not clean)
+   FAILED hunks:  0
+   NOTE: their qsa_indexer.py overlaps the file our det overlay patches.
+   sparse_attn_topk imports OK: True
+   flashinfer API present on 0.6.17: True
+
+=== arm native  FN_DET_TOPK=0  FN_EXTRA='--dsa-topk-backend native'  13:28
+   up. backend in log: flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, enable_bf16x3_router_gemm=False, dsa_topk_backend='native', dsa_topk 
+   QSADET active: 1
+  [native] rep 0: EMPTY content AND reasoning_content
+  [native] rep 1: EMPTY content AND reasoning_content
+  [native] rep 2: EMPTY content AND reasoning_content
+  [native] rep 3: EMPTY content AND reasoning_content
+  [native] rep 4: EMPTY content AND reasoning_content
+  [native] rep 5: EMPTY content AND reasoning_content
+  [native] rep 6: EMPTY content AND reasoning_content
+  [native] rep 7: EMPTY content AND reasoning_content
+  [native] 0/8 completed | DISTINCT HASHES: 0 | []
+  [native] first completion: n/a
+
+=== arm flashinfer  FN_DET_TOPK=0  FN_EXTRA='--dsa-topk-backend flashinfer --dsa-topk-tie-break small'  13:41
+   DIED after 720s
+(Worker pid=1738739) ERROR 09-08 13:52:57 [multiproc_executor.py:1059] RuntimeError: Check failed: (status == cudaSuccess) is false: TopKRaggedTransform failed with error code operation not supported
+(EngineCore pid=1738616) ERROR 09-08 13:52:57 [core.py:1385] Traceback (most recent call last):
+(EngineCore pid=1738616) ERROR 09-08 13:52:57 [core.py:1385]     raise RuntimeError(
+(EngineCore pid=1738616) ERROR 09-08 13:52:57 [core.py:1385] RuntimeError: Worker failed with error 'Check failed: (status == cudaSuccess) is false: TopKRaggedTransform failed with error code operation not supported', please check the stack trace above for the root cause
+(EngineCore pid=1738616) Traceback (most recent call last):
+(EngineCore pid=1738616)     raise RuntimeError(
+(EngineCore pid=1738616) RuntimeError: Worker failed with error 'Check failed: (status == cudaSuccess) is false: TopKRaggedTransform failed with error code operation not supported', please check the stack trace above for the root cause
+(APIServer pid=1738331) Traceback (most recent call last):
+(APIServer pid=1738331)     raise RuntimeError(
+(APIServer pid=1738331) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+
+=== arm ours  FN_DET_TOPK=1  FN_EXTRA='--dsa-topk-backend native'  13:53
+   up. backend in log: flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, enable_bf16x3_router_gemm=False, dsa_topk_backend='native', dsa_topk 
+   QSADET active: 1
+  [ours] rep 0: EMPTY content AND reasoning_content
+  [ours] rep 1: EMPTY content AND reasoning_content
+  [ours] rep 2: EMPTY content AND reasoning_content
+  [ours] rep 3: EMPTY content AND reasoning_content
+  [ours] rep 4: EMPTY content AND reasoning_content
+  [ours] rep 5: EMPTY content AND reasoning_content
+  [ours] rep 6: EMPTY content AND reasoning_content
+  [ours] rep 7: EMPTY content AND reasoning_content
+  [ours] 0/8 completed | DISTINCT HASHES: 0 | []
+  [ours] first completion: n/a
+
+== restore fnmain3 to its pre-55872 state
+   restored 6 files; .rej left: 0
+== ALL DONE == 14:06

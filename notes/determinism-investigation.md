@@ -2679,3 +2679,43 @@ Plus whatever drives the separate generation-side path.
     cosmetic field discarded six good measurements. The probe now prints timing and counters before
     touching any optional field, and the parse was validated offline against all four response
     shapes. Two 25-minute runs were spent on my own parse bugs, not on the box.
+
+175. **vllm#55872's opt-in FlashInfer TopK backend DOES NOT RUN on sm_121 (2026-09-08, `pr872`, raw
+    `notes/data/pr872.txt`).** LopezCastroRoberto reviewed our PR #55122 on 08 Sep, argued against
+    changing the default TopK, opened #55872 (`--dsa-topk-backend native|flashinfer` plus a tie-break
+    policy) and asked us directly to test it — we are the only GB10 in that thread.
+
+    Their patch applies **cleanly** to dev524: 7 files, 0 failed hunks, including
+    `vllm/models/qwen4_exp/nvidia/ops/qsa_indexer.py`, which our det overlay also patches.
+    `sparse_attn_topk` imports, and the API it calls (`top_k_ragged_transform`, `TopKTieBreak`) is
+    present in **flashinfer 0.6.17** — so their backend needs no 0.6.18 bump.
+
+    **But the engine never starts with the backend enabled.** `--dsa-topk-backend flashinfer
+    --dsa-topk-tie-break small`, cold load, dies at 720 s during engine init:
+
+        RuntimeError: Check failed: (status == cudaSuccess) is false:
+          TopKRaggedTransform failed with error code operation not supported
+
+    `operation not supported` from a CUDA call at init is the signature of a kernel with no sm_121
+    implementation. The `native` arm on the same patched build started fine, so this is the backend
+    itself, not the patch or our overlay.
+
+    **Why this matters to the #55122 review, stated carefully.** It does not make their design wrong
+    — an opt-in backend is a reasonable shape, and this may well be a fixable FlashInfer gap. What it
+    does mean is that *today*, on sm_121, their backend cannot be the deterministic option, so it
+    does not yet substitute for a deterministic native kernel on this hardware. That is a fact about
+    availability, not about which approach is better, and it should be reported to them that way.
+
+    **The determinism comparison in this run is VOID.** Arms `native` and `ours` both returned
+    **0/8 completions — empty `content` AND empty `reasoning_content`** — so there are no hashes to
+    compare and nothing can be concluded about either. `fn3smoke` hit the same thing on fnmain3
+    (`request: None`). Two candidate causes, not yet separated:
+    (a) my probe reads the wrong response field for this build, or
+    (b) **fnmain3 itself emits no output** — i.e. my hand-port of the PLE hunks is broken in a way
+        that loads, serves 200s, and produces nothing.
+    (b) would be a serious defect in today's venv bump and must be excluded before fnmain3 is used
+    for anything. The discriminator is one identical request against fnmain2 (known good) and
+    fnmain3, dumping the raw JSON rather than a parsed field. Queued as `emptydiag`.
+
+    Three probe iterations have now been lost to guessing at this response shape. Dump the raw
+    response before touching the parser again.

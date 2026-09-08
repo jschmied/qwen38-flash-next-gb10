@@ -1,0 +1,34 @@
+== det overlays onto fnmain3 (script now takes the venv as $2)
+target venv: /opt/llm/runtime/vllm-venv-fnmain3
+-- qsadet
+  qsadet INSTALLED (inert unless VLLM_QSA_DET_TOPK=1)
+-- detfin
+  detfin INSTALLED (inert unless VLLM_MOE_DET_FINALIZE=1)
+-- cachekey
+  cache-key extras already installed
+-- plefix
+  plefix already installed
+state: qsadet=1 detfin=1 cachekey=1 plefix=1
+   (check the 'target venv:' line above names fnmain3)
+
+== VERIFICATION GATE (tools/main/BUILD-RECIPE.md)
+   .rej files: 0 (must be 0)
+   17 overlay files compile: yes
+   marker LMHEADQ-MTP            1
+   marker SCALEINV-MTP           1
+   marker LMHEADQ (jschmied)     1
+   marker SCALEINV               2
+   marker PleOffloadLayer        2
+   torch 2.13.0+cu130 vllm 0.28.1rc1.dev524+g5db652225
+   registry Qwen4Exp: True
+   ported: forward_impl True helpers True
+
+== SERVER SMOKE TEST on fnmain3  13:10
+   server UP after ~880s
+   venv named in log: /opt/llm/runtime/vllm-venv-fnmain3 
+   PLE offload:    647
+   QSADET active:  1
+   request: None
+
+NOTE: prod default venv UNCHANGED (serve-fnmain.sh still defaults to vllm-venv-fnmain).
+== ALL DONE == 13:25
