@@ -1021,3 +1021,44 @@ the same) → a quality comparison by our logprob-divergence method, and an offi
 would apply the FP8-dense conversion on top. Disk: 60 GB free; the main shards alone are 73.6 GiB, the PLE/MTP file 50 GiB
 (ours is RadixArk's FP8 PLE — identity to Qwen FP8's not verified). **Not downloaded; needs the go and ~80–130 GB freed.**
 
+
+## 2026-09-08 sweep — the field is now working our lever list, and one entry validates our kernel
+
+Read for the agent-turn goal, not for deployment recipes. Commits since 2026-09-05 on the ten repos
+tracked above; four repos moved, six were silent.
+
+**[MiaAI-Lab single-Spark](https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark)** is the
+one worth reading in full — five measured changes, and three of them are items on our own list:
+
+| their change | their number | our state |
+| --- | --- | --- |
+| `mamba_ssm_cache_dtype=bfloat16` | +6.8 % decode at 1 stream, **+8.5 % at 8**; attention block 3,200 → 1,664; needles 15/15 | **the finding-141 lever, by a route we had written off.** Finding 142 says "MambaDType has no fp8, so [the padding overlay] is the only in-config route" — but `FUSED_GDN_STATE_DTYPES = (float32, bfloat16)`, and the checkpoint ships float32. Untested here. Running tonight (`ssm`). |
+| draft-vocabulary slice, 65,536 rows | **−16.9 % single-stream step**, −6.1 % at 8; MGSM en 94.8 vs 93.6 full, zh identical | we measured +6.4–6.8 % at c=1 and picked 32k (det-135); their 65k argument is better than our 32k one — the crossover where lost acceptance eats the byte saving is at 88–90 % corpus coverage, and 65k buys 3.6 points of coverage for 3 points of byte saving. Their corpus recipe (513 MiB wikitext-103 + 47 MiB Python + model output) is the part we lack: fitting the vocabulary to the model's own output does not work (52 generations = 4,250 distinct ids). |
+| `posix_fadvise(WILLNEED)` before the PLE `index_select` | 280-row cold gather 20.12 ms → 1.51 ms; **−3.2 % mean step, 6/6 levels** | **does not transfer.** Their table is mmap-backed, so the gather is a fault loop; ours is RAM-resident through the offload worker and the profile puts it at 0.0 % of prefill (finding 65) with the decode handshake fully hidden (gap 0.00 ms, `decode-c1-idle-piecewise`). Their number is a measurement of mmap, not of PLE. |
+| capture every `(1+K)·S` cudagraph width | ~4–5 ms on the 5-sequence step, nothing at 1/2/4 | this is what MiaAI **#19** asked us for. It also explains why our `cgsize`/`cgnone` arms were null: we only ever measured c ∈ {1,4,16}, and 4 and 16 are captured widths in both arms. The gap is at the widths *between* the captured ones. |
+| `VLLM_USE_V2_MODEL_RUNNER=1` | forced; the spec draft-config copy falls back to V1 and mutates the `compilation_config` it shares with the target, silently downgrading FULL_DECODE_ONLY → PIECEWISE (+24 % single-stream step for them) | **the mechanism is real, the consequence is not ours**: det-136 A/B'd PIECEWISE vs FULL_AND_PIECEWISE vs FULL_DECODE_ONLY on this box and all three were equal. Worth one grep of our logs for "Overriding cudagraph_mode" and nothing more. |
+
+Two corrections of theirs are worth keeping because they cost us nothing to learn:
+`index_share_for_mtp_iteration` **cannot be set from the command line** — `--hf-overrides` puts it on the
+*target* `text_config`, the drafter reads it from the *draft* config, and
+`SpeculativeConfig.compose_draft_hf_overrides` does not propagate dict overrides
+(`config/speculative.py:734`, their verification in-container). The remaining routes are a checkpoint
+`config.json` edit or a patch. And `flashinfer_b12x`'s exclusion from the auto MoE backend list is *not*
+stale: it selects for both processes and then faults with an illegal memory access during `profile_run`,
+which matches our own veto in `moe-backend-axis.md` but attributes it to a different place.
+
+**[blazux](https://github.com/blazux/qwen3.8-Flash-DGX)** — "patch 8: bump the deterministic top-k pin
+(correctness fix + the kernel got much faster)", 2026-09-07. That pin is our PR #55122; the speed-up is
+the blocked 4-item emission and the 22,016 `RADIX_THRESHOLD` from 09-08. First outside confirmation that
+the kernel is being run by someone else on their own hardware. They also added multi-client/multi-agent
+guidance (their issues #9/#10), which is the same workload class as our agent-turn goal.
+
+**[veloGB10](https://github.com/sf-stav/veloGB10)** shipped "FP8 prefill levers on" and a DFlash2 tree
+mode; **[styles01](https://github.com/styles01/sparkrun-recipes)** pinned MiaAI forward (+26 % decode) and
+is now mostly non-LLM lanes. 0xBakeer, DJLougen, alexskinner, mratsim and cglab-public were silent.
+
+**Order this sweep implies for the agent-turn work:** (1) bf16 recurrent state — it is the finding-141
+lever and it moves decode as well as the block size; (2) the draft-vocabulary slice at 65k with a real
+corpus, since it is the only change either project has found that moves the single-stream step at all;
+(3) the cudagraph widths *between* the captured sizes, which also discharges MiaAI #19. The PLE prefetch
+is not a lever here and should be struck from the plan.
