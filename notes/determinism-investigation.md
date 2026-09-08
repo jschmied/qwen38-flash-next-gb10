@@ -2249,3 +2249,33 @@ Plus whatever drives the separate generation-side path.
       the TTFT probe prints `median=0.60s` while `all=2.93 0.60 0.60`. With prefix caching on, reps
       2–3 hit the cache, so the median reports WARM time and would have shown "no effect" regardless
       of the kernel. Only the first request is a prefill measurement.
+
+165. **#55314 measured on sm_121: it fixes the SET essentially for free, and does NOT fix the order —
+    which makes the union worth building (2026-09-08, `notes/data/tkunion.txt`).** First independent
+    run of that PR on this hardware; their kernel built standalone against their own base's launcher
+    (`bench/topk-union/their`).
+
+    | property, 81 shapes | stock | **#55314** | #55122 (ours) |
+    | --- | --- | --- | --- |
+    | self-consistent over 6 calls | 0 | **0** | **81** |
+    | valid exact top-k by value (16 tie-heavy shapes) | — | **16 / 16** | 16 / 16 |
+    | index-canonical order | 0 | 0 | **81** |
+    | cost vs stock | 1.00× | **1.00–1.15×** | 0.88–1.54× |
+
+    - **Their exactness fix works and is nearly free.** On the tie-heavy and all-equal shapes their
+      selection is always a valid exact top-k by value: 0 of 16 wrong. Cost 1.00–1.15× of stock.
+    - **It does not touch reproducibility.** 81 of 81 shapes still fail self-consistency over six
+      calls, exactly as the retained `atomicAdd` slot assignment predicts.
+    - **Ours costs most where theirs costs nothing**: 1.24× at 64×16384, **1.54× at 64×32768**, while
+      theirs is 1.01–1.04× at the same cells. That is the price of removing the candidate buffers.
+    - **NEAR-ERROR, recorded because it would have been a public accusation.** My first pass scored
+      "set" against the *index-canonical* reference (lowest-index ties) and reported #55314 failing 52
+      of 81 — I was one step from posting that their fix does not work. Their claim is matching
+      `torch.topk`, which does not fix tie identity. Re-scored on the VALUE multiset, they pass
+      everything. Same trap as det-151 with the bitonic kernel: **a "wrong set" against a canonical
+      reference is usually a different valid tie choice, not a wrong answer.** Check values before
+      claiming anyone's kernel is broken.
+    - **Conclusion for the union:** their selection is the cheap half and our emission is the correct
+      half, and the numbers now say so rather than the argument. Their approach + `union_emit_ordered`
+      should land near 1.0–1.2× of stock *with* reproducibility, against our current 1.54× worst cell.
+      That is worth building and is a better artefact than either PR alone.
