@@ -2221,3 +2221,31 @@ Plus whatever drives the separate generation-side path.
       lowest value in the plan, and I preferred the night to finish clean.
     - Every figure here is the **main** build (`0.28.1rc1.dev401`). The page was measured on the
       **preview** build, so the non-MTP ladder on the page is still owed a re-run for the same reason.
+
+164. **NVFP4 kernel selection is a NULL on Flash-Next — the checkpoint excludes the layers the bug
+    affects (2026-09-08, 6 arms, 3 starts each, `notes/data/nvfp4k.txt`).** Tested det-159 with one
+    variable: `VLLM_DISABLED_KERNELS=FlashInferCuteDslNvFp4W4A16LinearKernel`.
+    | metric | stock (W4A16) | w4a4 (native) | |
+    | --- | --- | --- | --- |
+    | cold prefill @8k | 2.90–2.93 s | 2.91–2.93 s | overlap, 1.002× |
+    | cold prefill @30k | 8.18–8.24 s | 8.16–8.28 s | overlap, 1.000× |
+    | decode c=4 | 46.3–52.7 tok/s | 50.4–54.1 | overlap |
+    - **Mechanism verified independently of the run**, because vLLM does not log the chosen kernel
+      class at default verbosity and the harness's `kernel=` field came back empty. Calling the
+      selection with and without the env var: unset → `FlashInferCuteDslNvFp4W4A16LinearKernel`,
+      set → `FlashInferCutlassNvFp4LinearKernel`. So the arms genuinely differ; the empty log field
+      is a logging gap, not evidence of a vacuous A/B (contrast det-158, where nothing differed).
+    - **Why null here while upstream measured −31.6 %:** the checkpoint's `exclude_modules` covers
+      `*.self_attn.*`, `*.linear_attn.*`, `*.mlp.gate*`, `*.mlp.shared_expert.*` — the dense and
+      attention projections this kernel serves are **BF16 on this model**, and the NVFP4 weights are
+      in the MoE experts, which take the fused MoE path and never reach
+      `_POSSIBLE_NVFP4_KERNELS`. #55397 measured a **dense 27B**, where those projections are NVFP4.
+      The bug is real; there is almost nothing on Flash-Next for it to be wrong about.
+    - **This substantially weakens the confound flagged in det-159.** Our W4A16-vs-W4A4 fidelity
+      comparison ran through the MoE path, which this selection never touches. Downgrade
+      [[w4a16-vs-w4a4-measured]] from "suspect" back to "stands", with the scope now measured rather
+      than assumed.
+    - **Measurement trap, recorded because it nearly produced the right answer for the wrong reason:**
+      the TTFT probe prints `median=0.60s` while `all=2.93 0.60 0.60`. With prefix caching on, reps
+      2–3 hit the cache, so the median reports WARM time and would have shown "no effect" regardless
+      of the kernel. Only the first request is a prefill measurement.

@@ -29,3 +29,9 @@
   nk_stock3 CELL c=4 rep=0:   46.3 tok/s | no spec counters | per-req: 10.9s 11.0s 11.0s 11.0s | prompt=547
   nk_stock3 CELL c=4 rep=1:   52.7 tok/s | no spec counters | per-req: 9.7s 9.7s 9.7s 9.6s | prompt=547
 === w4a43  VLLM_DISABLED_KERNELS=FlashInferCuteDslNvFp4W4A16LinearKernel  06:25 ===
+    kernel=
+  nk_w4a43 TTFT 8k: prompt_tokens=7503 median=0.60s  all=2.93 0.60 0.60
+  nk_w4a43 TTFT 30k: prompt_tokens=29263 median=0.60s  all=8.28 0.60 0.60
+  nk_w4a43 CELL c=4 rep=0:   50.7 tok/s | no spec counters | per-req: 10.1s 10.1s 10.0s 10.1s | prompt=550
+  nk_w4a43 CELL c=4 rep=1:   50.4 tok/s | no spec counters | per-req: 10.2s 10.2s 10.1s 10.0s | prompt=550
+== ALL DONE == 06:38
