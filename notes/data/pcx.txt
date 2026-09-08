@@ -1,0 +1,19 @@
+=== mtp3  FN_MTP=3  12:00 ===
+    no-draft-group warning: 2  |  prefix caching: enable_prefix_caching=True  |  attn block: attention block size to 1600
+  [mtp3] prompt ~5568 tokens est, 3 identical sequential requests
+  rep 0:  3.52s | queries +6946 hits +0 | hit-rate   0.0%
+         prompt_tokens 6946 | usage.cached_tokens absent
+  rep 1:  0.71s | queries +6946 hits +6400 | hit-rate  92.1%
+         prompt_tokens 6946 | usage.cached_tokens absent
+  rep 2:  0.71s | queries +6946 hits +6400 | hit-rate  92.1%
+         prompt_tokens 6946 | usage.cached_tokens absent
+=== nospec  FN_MTP=0  12:14 ===
+    no-draft-group warning: 0  |  prefix caching: enable_prefix_caching=True  |  attn block: attention block size to 1568
+  [nospec] prompt ~5568 tokens est, 3 identical sequential requests
+  rep 0:  4.29s | queries +6946 hits +0 | hit-rate   0.0%
+         prompt_tokens 6946 | usage.cached_tokens absent
+  rep 1:  0.94s | queries +6946 hits +6272 | hit-rate  90.3%
+         prompt_tokens 6946 | usage.cached_tokens absent
+  rep 2:  0.86s | queries +6946 hits +6272 | hit-rate  90.3%
+         prompt_tokens 6946 | usage.cached_tokens absent
+== ALL DONE == 12:25

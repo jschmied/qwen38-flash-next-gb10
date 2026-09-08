@@ -2639,3 +2639,43 @@ Plus whatever drives the separate generation-side path.
     10 %** — (1, 8192, 512) at 60.9 %, (1, 8192, 2048) at 27.2 %, (1, 17408, 512) at 15.2 % — all at
     6–14 µs where a ~4 µs timer jitter dominates. The 5 cells above 5 % are excluded from the ratio
     table above; the det-column comparison (arm vs arm) needs no stock at all and uses all 48.
+
+174. **PREFIX CACHING WORKS UNDER MTP — the "reuse will be disabled" warning does not describe our
+    path (2026-09-08, `pcx3`, 2 server arms, raw `notes/data/pcx.txt`).** All six `cgnone2` arm logs
+    carry `Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as
+    the draft model's ... prefix-cache reuse across requests will be disabled and any external KV
+    offload tier will store without ever serving a hit`. det-169 and
+    `notes/data/cgnone2-contamination.md` both explain the rep=0-fast / rep=1-slow structure as
+    prefix-cache warm state, which the warning appeared to contradict. Measured, three identical
+    sequential 6,946-token requests per arm, `vllm:prefix_cache_hits_total` deltas
+    (`usage.cached_tokens` is inert here and indeed reports `absent`):
+
+    | arm | warning | rep 0 | rep 1 | rep 2 |
+    | --- | --- | --- | --- | --- |
+    | `mtp3` (FN_MTP=3) | **fires ×2** | 3.52 s, 0 hits, 0.0 % | 0.71 s, 6400 hits, **92.1 %** | 0.71 s, 6400 hits, 92.1 % |
+    | `nospec` (FN_MTP=0) | absent | 4.29 s, 0 hits, 0.0 % | 0.94 s, 6272 hits, **90.3 %** | 0.86 s, 6272 hits, 90.3 % |
+
+    **Both arms hit, and MTP hits slightly MORE, not less.** The mechanism is exact: the hit count is
+    4 full blocks in both arms — 4 × 1600 = 6400 with MTP's attention block, 4 × 1568 = 6272 without
+    — with the 546/674-token partial tail uncached, as prefix caching must behave. The only
+    difference between the arms is the block size, not the spec config.
+
+    **Consequences.**
+    - **det-169 needs no correction**, and the retraction in `cgnone2-contamination.md` is now
+      *measured* rather than argued from the shape of the numbers: rep 0 takes 0 hits at 3.5–4.3 s,
+      reps 1–2 take 6400/6272 hits at 0.7–0.9 s. That 5× TTFT drop is exactly the rep structure.
+    - Memory `prefix-cache-works-agent-loop` is **confirmed**, not contradicted.
+    - The warning's operative clause is about an **external KV offload tier** serving hits. We run
+      none, so that half is moot for us, and the prefix-cache half of the sentence overstates what
+      happens on this path. Do not read that log line as "our cache is off" again.
+    - **This is the PRE-#52771 state.** Our venv is `8340fe1bb` (2026-09-04); vllm#52771
+      (`4a806d08e`, merged 09-07 12:16) fixes the all-groups drafter fallback that emits this
+      warning, and we run `FN_SPEC_NODROP=1`, its precondition. So the fix is still one we are
+      missing — but the degradation I feared it was causing in our benchmarks **did not happen**.
+
+    **Method note, because it cost two runs.** The first attempt sent a 22.5k-token prompt against
+    `FN_MAXLEN=16384` (six 400s); the second crashed in post-processing on
+    `usage.prompt_tokens_details` being `null` *after* the requests had already succeeded — a
+    cosmetic field discarded six good measurements. The probe now prints timing and counters before
+    touching any optional field, and the parse was validated offline against all four response
+    shapes. Two 25-minute runs were spent on my own parse bugs, not on the box.
