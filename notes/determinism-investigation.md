@@ -3,6 +3,22 @@
 Index for the night's work. Detail lives in the linked notes; this is what is established, at the
 confidence each item deserves, plus what was refuted along the way.
 
+## Answers by question — read this before re-measuring anything
+
+This file is chronological and long. It answers "what happened on the 4th" well and "what does X
+cost" badly, which is the question people actually arrive with. Added 2026-09-08 after three
+subagents *and I* re-asked a question this file had answered twice (det-168).
+
+| question | answer | findings |
+| --- | --- | --- |
+| Is the QSA top-k kernel deterministic? | Stock: no (0/4 prompts, 0/81 shapes). Our #55122: yes, 81/81, and index-canonical. | 76, det-151, det-165 |
+| **What does the deterministic kernel cost end to end?** | **Nothing measurable.** TTFT and s/turn inside the start-to-start band over 3 starts/arm; independently, 99–100 % of stock prefill throughput. (87–90 % is the *Python* fallback, not the kernel.) | **82, 76** |
+| What does it cost per call, in the microbenchmark? | 1.14–1.30× on the shapes the model issues; 1.3–4.3× across the whole grid; one 1.54× cell that is a `RADIX_THRESHOLD` routing artifact. | det-151, det-167 |
+| Does it change output quality? | Third-party 50-item suite: 95/100 with 0/50 unstable, vs stock 97/100 with 13/50 unstable. | 76 |
+| Does it give batch invariance? | No, and it cannot — GDN has no batch-invariant path. | 76 |
+| Is #55314 an alternative? | No. It fixes the set nearly for free but not the order, and its tie clips make the set scheduling-dependent. | det-165, det-166, det-167 |
+| Is a merged #55122+#55314 kernel worth building? | No — closed, not deferred, on the end-to-end number above. | det-166, det-167, det-168 |
+
 ## Established (measured, replicated where stated)
 
 1. **A single forward pass is deterministic.** With `--no-enable-prefix-caching`, three identical
@@ -2421,10 +2437,21 @@ Plus whatever drives the separate generation-side path.
     - **B's L3b and the ±0 fix are unaffected** — the former is a code simplification (two chunk
       passes deleted), the latter is a correctness bug in stock and #55314.
 
-    **Process lesson, and it is the actual finding here.** I briefed three agents from the repo, and
-    the repo did not contain our own end-to-end result — it lives in the upstream thread. All three
-    independently reached for the same missing number and all three flagged it as the project's
-    decision gate, which is exactly the right instinct and exactly the wrong conclusion. **Anything
-    we post upstream that is not also in the notes is invisible to future work, including my own.**
-    The end-to-end table from 2026-09-04 should have been a numbered finding on the day it was
-    posted; it was only a comment. Fold posted results back into the notes, not just the posting log.
+    **Process lesson — corrected, and it is the actual finding here.** My first version of this
+    entry blamed the notes: results posted upstream but never folded back. **That was wrong.** Both
+    numbers are recorded, in this file, as **finding 76** (k3dani's validation, including the
+    99–100 % prefill line and the explicit note that 87–90 % is the Python fallback) and **finding
+    82** (`kdetab`, the three-start server A/B, every pair inside the start-to-start band). They
+    were written the day they were measured and they are in the same file I appended det-167 to.
+
+    So the failure is **retrieval, not recording**. This file is 2,400+ lines of chronological
+    findings with no index by question. Three agents reading the repo missed findings 76 and 82, and
+    so did I while writing a synthesis into the file that contains them — and then I wrote a process
+    lesson blaming the recording, which a two-minute grep would have refuted. A chronological log
+    answers "what happened on the 4th" and cannot answer "what does this kernel cost end to end",
+    which is the question anyone actually arrives with.
+
+    Remedy, and it is cheap: a question-indexed header at the top of this file — *is the kernel
+    deterministic / what does it cost per call / what does it cost end to end / does it change
+    quality* — each pointing at the finding numbers that settle it. Written below as part of this
+    entry. The knowledge tree exists for exactly this and this file is not in it.
