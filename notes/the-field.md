@@ -1267,3 +1267,29 @@ That is the same contract our own kernel has, and it is worth reading next to **
 boundary never ties exactly on our traffic (0 in 6,192 selecting rows), "any valid set under ties" cannot
 be what is moving our output. A library being set-exact-only is only a determinism problem where ties
 actually occur. Neither reply has been answered — both need a go.
+
+### nvidia/Qwen3.8-27B-NVFP4 fetched and fully verified (2026-09-09 14:22)
+
+19 GiB at `10.0.0.70:/mnt/bulk/hf/nvidia--Qwen3.8-27B-NVFP4`, revision pinned to `dbb8f445b3145f8a`,
+aria2 rc=0, **19 of 19 files verified against the publisher** (4 by sha256, 15 by git-blob-sha1), 0 bad.
+ZFS 1.76 T free of the 2 T quota. The GB10's own disk was never touched.
+
+The first verification pass reported **"4 verified, 15 without a publisher hash"** and we nearly filed
+that as the result. It was a gap in our tooling, not in HF's metadata: **HF publishes two hash kinds** —
+`lfs.oid` is a real sha256 for LFS files, and every non-LFS file carries a **git blob sha1** in the
+entry's top-level `oid`. `hfget.sh` recorded only the first, so `config.json` and `hf_quant_config.json`
+— the files where a silent corruption is hardest to spot and most consequential — were unchecked. Both
+are now recorded and checked (`hfverify.py`), and `hfaugment.py` backfills a `SOURCE.json` written
+earlier. Skill `model-archive` updated with the rule and the trap.
+
+**Why this checkpoint:** its recipe differs from both our local copy and NVIDIA's Flash-Next release —
+FP8 W8A8 on the GDN and attention projections, NVFP4 W4A4 on the MoE **and on `lm_head`**, MTP excluded,
+ModelOpt 0.47.0.dev80, and **Local-Hessian calibration on 2,048 samples** rather than MSE. The
+experiment is *not* "is it faster". It is whether **Local-Hessian calibration rescues the NVFP4 head**,
+which we measured at **2.4 % worse NLL, 8 of 8**, against the FP8 head we ship — a bit-comparable A/B
+our logprob-divergence tooling answers directly, and one that would revisit an August decision made on a
+single checkpoint's evidence.
+
+**Staging is no longer blocked on disk.** The watchdog's premise (~35 GB free) predates the archive run;
+the GB10 now has **302 GB free**, so the ~20 GiB copy costs nothing and needs no deletions. It needs the
+box, which `scorediv` holds until ~15:05. Queued for the user's go.
