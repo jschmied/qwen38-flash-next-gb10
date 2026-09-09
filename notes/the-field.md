@@ -1514,3 +1514,48 @@ inference overhead**.
 August 2026 paper is recent enough that adoption lag is at least as likely an explanation as a measured
 negative result on MoE — but that is a guess, and gate 1 is still the thing that decides it for our
 pipeline. Hardware there is H200/Blackwell, not GB10; NVFP4 is the same format.
+
+### The real reason NVIDIA used MSE for Flash-Next: expert COVERAGE, not missing support (2026-09-09)
+
+The user's correction, verified against the installed ModelOpt 0.47 source, and it resolves the puzzle
+completely. My earlier guess — "Local-Hessian may not support the fused-MoE path" — is **wrong** and is
+withdrawn. Two facts settle it:
+
+**1. NVIDIA's Local-Hessian build has no experts at all.** `nvidia/Qwen3.8-27B-NVFP4`'s
+`quantized_layers` are `gate_proj 64 / up_proj 64 / down_proj 64` — one each per layer, i.e. a **dense
+MLP** — plus attention and `lm_head`. Zero expert modules. They applied Local-Hessian to a model with no
+routing at all.
+
+**2. The expert-coverage knob does not exist for fused experts.** `moe_calib_experts_ratio`
+("force forward tokens to % of experts during the calibration pass") is defined on
+**`_QuantSparseSequentialMoe` only** — checked class by class:
+
+| class | has `_moe_calib_experts_ratio` |
+| --- | --- |
+| `_QuantSparseSequentialMoe` | **yes** |
+| `_QuantFusedExperts` / `_QuantNonGatedFusedExperts` | no |
+| `_QuantQwen3VLMoeTextExperts`, `_QuantLlama4TextExperts`, `_QuantDbrxExperts`, `_QuantGptOssExperts` | no |
+
+Its own docstring says so: *"Not supported for all MoE architectures; currently works with a few
+HuggingFace models such as Mixtral, Qwen3Moe, MiniMax"*, and the sequential base class notes
+*"Transformers>=5.0 has batched experts, no per-expert quantizers."* **Flash-Next is batched/fused**
+(`gate_up_proj [512,1280,2560]`), so the knob is unavailable to us.
+
+**So the honest statement of the risk.** MSE optimises expert scales without needing to know which
+tokens reach each expert. Local-Hessian needs `H = XᵀX` **per expert**, from representative routed
+tokens. On a fused-MoE model ModelOpt gives no way to force routing coverage, so each expert's Hessian
+is estimated from whatever the calibration corpus happens to route to it. That is a far better
+explanation of NVIDIA's choice than anything about support, and it is architecture-specific in exactly
+the way their two builds differ.
+
+**The arithmetic is not obviously against us.** 512 experts, top_k 10: 4.19 M calibration tokens
+(2,048 × 2,048) give **~81,900 tokens per expert on average**. The mean is comfortable — but routing is
+skewed and the mean says nothing about the tail, and the tail is precisely what Local-Hessian needs.
+
+**Gate 1 is therefore reframed.** Not "does the fused path engage" — the user cites the 0.46 changelog
+(2026-08-17) saying the fast Local-Hessian path is used automatically for dense *and* fused-MoE expert
+weights with a ~34× Triton sweep, and the Triton fast path is present in the 0.47 source we installed.
+The new gate 1 is: **measure the per-expert token-count distribution our calibration corpus actually
+produces on Flash-Next**, using the same probe technique as `headcap` on the routing gate. If the
+minimum-coverage expert still sees thousands of tokens, the concern dissolves; if some see ~0, we learn
+which and fix the corpus — and that is a data problem we can solve, not a toolchain limitation.
