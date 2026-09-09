@@ -1213,3 +1213,28 @@ overlays, the MTP path, the PLE offload worker and every measurement tool we hav
 Note also `wrldsuksgo2mars/Qwen3.8-Flash-Next-EXL3-K4.25-**PLE-FP8**-v1`: even an EXL3 build keeps the PLE
 table at FP8 as a separate artifact, which says the body/PLE decomposition is architectural rather than a
 property of any one quant format.
+
+### Where the 27B checkpoints live now (2026-09-09)
+
+The 30 archived 27B checkpoints and `laguna-s-2.1-dflash-nvfp4` are **no longer on the GB10**. They live
+only at `10.0.0.70:/mnt/bulk/gb10/models` (229 GB on a 2 TB-quota ZFS dataset outside the PBS datastore),
+each directory carrying a `SHA256SUMS` manifest and a `SOURCE.json`. Content-verified 30/30 by sha256
+before deletion; the local free space went 35 GB → **302 GB**.
+
+Three are identified against their publisher and are therefore **re-fetchable**:
+
+| directory | repository | verification |
+| --- | --- | --- |
+| `qwen38-27b-fp8` | `Qwen/Qwen3.8-27B-FP8` | 43/43 published hashes, all shards |
+| `qwen38-27b-radixark` | `RadixArk/Qwen3.8-27B-NVFP4` | 4/4, 3 shards |
+| `qwen38-27b-inferact` | `Inferact/Qwen3.8-27B-NVFP4` | 8/8, 7 shards |
+
+The rest are **locally composed** — bodies and heads spliced here (`ours-fp8head`, `radix-body`,
+`uns-bf16head`, `dflash2-*`, …) — and exist nowhere else. Losing that archive loses them.
+
+Kept on the box: `qwen38-27b-nvfp4` + `qwen38-27b-dflash2-syvai-w4a16` (the prod 27B pair named in
+`vllm-qwen38.service`), and all ten `qwen38-flash-next-*` variants, which are hardlinked onto one ~111 GiB
+base. Our production Flash-Next is `RadixArk/Qwen3.8-Flash-Next-NVFP4` at revision `7b71922524…`, fetched
+2026-08-26 and spot-verified 3/3 against RadixArk's published shard hashes; its own
+`qualification-notes.md` records that only the 48 routed-expert layers are NVFP4 W4A4 and that the PLE
+tables are the FP8 ones from `Qwen/Qwen3.8-Flash-Next-FP8`.

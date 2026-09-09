@@ -792,3 +792,22 @@ listed a file that no longer existed and the remote verification reported FAILED
 into `SOURCE.json` *at download time*; `hfverify.py` checks a directory against it; `hfidentify.py`
 recovers provenance for anything already on disk. A publisher checksum beats a copy-to-copy comparison,
 because it also catches corruption that predates the copy — which a local↔remote diff never can.
+
+## Heavy file IO leaves a page cache that starves the PLE worker's pinned allocation (2026-09-09)
+
+`tiecensus` died 770 s into startup with **`PLE offload worker failed during startup: CUDA error: out of
+memory`**. Nothing was competing for the GPU — the box was otherwise idle and `free` reported 118 GiB
+*available*. What it also reported was **105 GiB in buff/cache**: the run started minutes after a
+268 GiB archive hash had pulled every checkpoint through the page cache.
+
+The PLE offload worker needs ~48 GB of **pinned** host memory. Pinned pages cannot be handed out of an
+active page cache the way ordinary allocations can — the kernel must reclaim first, and the CUDA pinned
+allocator does not wait for it. So "available" memory is the wrong number to check before starting this
+server; **free** memory is.
+
+**Rule: after any large file operation — an archive, a hash pass, a bulk copy, a model download — run
+`sync; echo 3 > /proc/sys/vm/drop_caches` before starting a server.** Cheap, and it converts a 13-minute
+failed startup into a normal one. Worth building into the serve wrapper for runs that follow bulk IO.
+
+This also explains why the box tolerated model loads all night and failed here: every previous run followed
+another *server*, not a bulk read of a third of a terabyte.
