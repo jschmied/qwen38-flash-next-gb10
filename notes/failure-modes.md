@@ -811,3 +811,20 @@ failed startup into a normal one. Worth building into the serve wrapper for runs
 
 This also explains why the box tolerated model loads all night and failed here: every previous run followed
 another *server*, not a bulk read of a third of a terabyte.
+
+## `hfget.sh` recorded 50 of 144 files — the tree API pages, and our fetcher did not (2026-09-09)
+
+Staging the 335.3 GiB BF16 source on PBS, `hfget.sh` reported `SOURCE.json: 50 files`. The repo has
+**144**. The HF tree API returns at most 50 entries and signals more through the `Link: rel="next"`
+header, which the fetcher ignored.
+
+**Why this one is nasty:** it does not fail. It writes a syntactically perfect `SOURCE.json`, a matching
+`.aria.list`, downloads every file in it, and then `hfverify.py` reports **all files verified** — because
+it verifies the manifest, and the manifest is the thing that was truncated. We would have had a third of
+a checkpoint, verified as complete, with correct publisher hashes on every file present.
+
+Fixed by paginating the tree fetch (`tree: 144 entries over 3 page(s)` now printed at manifest time, so
+the count is visible before any bytes move). The same trap was already written into the `model-archive`
+skill this afternoon — *"the tree API pages at 50 — always `?recursive=1`, and count what you got"* —
+after it inflated a PLE size estimate. Writing the rule down did not fix the tool that had the bug.
+**A trap recorded in a skill is not a trap removed from the code.**
