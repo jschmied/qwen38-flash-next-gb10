@@ -77,6 +77,40 @@ Material we already hold, no download needed:
 This makes the build **ours, tuned to our traffic** — not a replication of NVIDIA's Nemotron-calibrated
 recipe. State that whenever the checkpoint is described.
 
+
+## Sharding policy: one component per shard (decided 2026-09-09)
+
+**Why**: variants should cost only what changed. Measured on the two head variants we already hold,
+by **inode** (not size): `qwen38-flash-next-nvfp4` and `-fp8head` share **202 of 206 files, 111.0 GiB
+of literally the same bytes**; only 4 files, 11.83 GiB, differ. A head swap should cost the head, and
+it currently costs 11.83 GiB because `lm_head` shares shard `model-bf16-00012` with `embed_tokens`.
+
+**Neither exporter does this, so it is a post-process.** `layerwise_export.py` shards by *decoder
+layer* (`model-layer-NNNNN.safetensors` + `model-tail.safetensors`); `unified_export_hf_streaming.py`
+shards by *size* (`max_shard_size`). On Flash-Next the PLE is named
+`model.language_model.layers.N.ple.*`, i.e. **inside** the layers — so a per-layer export would bundle
+the 49.2 GiB PLE with the experts and every calibration variant would re-ship all of it.
+
+| component | name rule | size | changes per calibration variant? |
+| --- | --- | --- | --- |
+| routed experts | `*.mlp.experts.*` | 73.3 GiB | **yes** — the only part that does |
+| PLE n-gram | `*.ple.*` | 49.2 GiB | no |
+| `lm_head` | `lm_head.*` | ~0.7 GiB NVFP4 / 1.3 GiB BF16 | only if the head is the variable |
+| `embed_tokens` | `*.embed_tokens.*` | ~1.3 GiB | no |
+| attention + GDN proj | `*.self_attn.*`, `*.linear_attn.*` | | no (unless scope changes) |
+| MTP | `mtp.*` | | no |
+| tail | norms, hyper-connection, gates | small | no |
+
+**Consequences.** Publishing: base once, then each variant is a branch costing only its component's
+shards (HF reuses LFS objects across revisions; `huggingface_hub` skips files whose hash already
+exists). Locally: hardlink every unchanged shard between variants — we already get 111 GiB of that by
+accident, and this makes it exact. Fetching: `hfpull_tensor.py` gets whole files instead of byte ranges.
+
+**Verification the re-shard must pass** (it rewrites a 126 GiB checkpoint, so it is not allowed to be
+"probably fine"): every tensor present exactly once across the new index; each tensor's payload bytes
+**sha256-identical** to the source; the rewritten `model.safetensors.index.json` resolves every key the
+model asks for; and the reshaped checkpoint serves. Sizes are not evidence — `verify-checksums-not-sizes`.
+
 ## The trap that would waste the whole run
 
 `cfg = NVFP4_DEFAULT_CFG; cfg["algorithm"] = {"method": "local_hessian"}` calibrates **zero modules** and
