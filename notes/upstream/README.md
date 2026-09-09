@@ -396,3 +396,21 @@ branch lacks — fetch + rebase before pushing.
 
     **NOT worth posting:** #32 (`download.sh` quoting) and #24 (`stop.sh` ignores `.env`) — both reporters
     diagnosed the bug completely and supplied the fix; a "confirmed" from us would be noise.
+
+102. 2026-09-09 16:5x — **vllm#55872 comment** (user go "post", after "check 54521"). LopezCastroRoberto's
+    opt-in deterministic FlashInfer TopK backend. Deliberately NOT a re-report of "it does not start on
+    sm_121" — we said that on #55122 on 09-08 (entry 91) and repeating it would be the duplicate trap.
+    What is new: (a) @jahnclawdmonet's shared-memory limit **explains** our earlier unexplained
+    `TopKRaggedTransform failed with error code operation not supported` — our device reports **102400
+    bytes/SM against FlashInfer 0.6.18's 131072**, so TP=1 and TP=2 fail for the same structural reason
+    and it is a hardware-family exclusion, not a misconfiguration; (b) **det-190** — the boundary never
+    ties (0 rows with any value equal to the k-th, of 6,192 selecting rows in 87,257); (c) **det-191** —
+    across 7 identical requests the *scores* differ on all 13 comparable prefill calls and **zero** calls
+    have identical scores with a differing selection, so the cause is upstream of the selection kernel.
+    Framed carefully because this is evidence against someone else's PR: said plainly that we published
+    the same limitation about **our own #55122 first**, that it does not make their PR wrong as kernel
+    correctness under ties, and that their body already declines quality/perf claims. Bounds stated:
+    prefill-only, one model, one GPU family, and ~6×10³ selecting rows is not proof of zero at 10⁶.
+    Offered TP=1 — the axis the thread lacks — including a census on a workload they think should tie.
+    Draft `comment-55872-gb10-smem-and-premise.md`.
+    → https://github.com/vllm-project/vllm/pull/55872#issuecomment-5604003805
