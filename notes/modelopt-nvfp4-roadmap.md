@@ -20,7 +20,7 @@ scheme, same size, same speed, better calibration. Not a speed project.
 | # | gate | cost | status |
 | --- | --- | --- | --- |
 | 0 | **Does LH's weight-space win survive in OUTPUT space?** | ~20 min | **PASSED 2026-09-09 21:2x — 3.067 % vs 4.370 %, LH better by 1.303 pp (29.8 % relative) on 11,905 real activation vectors, vs 1.001 pp (10.6 %) in weight space. The margin GROWS in output space.** |
-| 1 | **Does the fused-MoE path actually engage Local-Hessian?** Testable against the REAL class: transformers 5.15.1 ships `qwen3_5_moe`, and ModelOpt 0.47's HF plugin registers `_QuantFusedExperts` (`_first_proj_attr = "gate_up_proj"`, `huggingface.py:976`) plus `_QuantQwen3VLMoeTextExperts` — so a tiny config exercises the real path rather than a hand-built stub `_register_local_hessian_input_hooks` has an expert path keyed on `_current_expert_idx`; weights it cannot pair fall back to **plain MSE with a warning**. On 512 experts that is the difference between doing the experiment and thinking we did | ~30 min, 1 layer | not started |
+| 1 | **Expert routing coverage** (reframed: engagement was settled by the 0.46 changelog + the Triton fast path). Does our corpus route enough tokens to EVERY expert for a per-expert Hessian? | ~20 min | **PASSED 2026-09-09 22:17 — 0 of 512 experts below 10,000 assignments; skew only 3.7×. Per (layer, expert) the worst gets ~1,635 on a 33-prompt corpus and ~42,800 scaled to a real calibration.** |
 | 2 | **Does one real expert layer behave like the head?** Quantise layer 24 LH vs MSE, output error on real activations | ~1 h | not started |
 | 3 | **The build** | see below | gated on 0–2 |
 | 4 | **Validation before adoption** | logprob divergence vs BF16, then agent-task quality | gated on 3 |

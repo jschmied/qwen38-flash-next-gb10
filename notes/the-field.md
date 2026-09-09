@@ -1591,3 +1591,45 @@ turns an 11,905 × 248,320 product (11.8 GB) into a batched quadratic form over 
 **Limit, stated plainly:** X comes from our **quantised** 27B body and **our** prompts, not a BF16 body
 and not NVIDIA's Nemotron calibration set. This answers "which scale set is better at deployment time on
 our traffic", not "did we replicate their recipe".
+
+### GATE 1 PASSES: expert routing coverage is not the problem — but the headline number is 48× inflated
+
+`expcov` (2026-09-09 22:04–22:17). An env-gated bincount of `topk_ids` in the **concrete**
+`apply()` of `flashinfer_cutlass_moe.py:247` — deliberately not `FusedMoEMethodBase.apply()`, which is
+abstract and would have produced a clean-looking zero. Venv restored byte-identical. 33 prompts
+(30 real agent prompts + prose), **160,196 prompt tokens**, MTP off, 12,000 `apply()` calls,
+**74,936,640 routed (token, expert) pairs**.
+
+| summed over all 48 layers | |
+| --- | --- |
+| mean per expert | 146,361 |
+| **min** | **78,481** |
+| p1 / p10 / median / p90 / max | 83,942 / 105,752 / 139,998 / 191,491 / 287,763 |
+| experts with ≤ 10,000 assignments | **0 of 512** |
+| skew | max/min **3.7×**, p90/p10 **1.8×** |
+
+**The correction that matters.** Those counts are summed across layers, and Local-Hessian estimates
+`H = XᵀX` **per (layer, expert)** — layer 3's expert 7 is a different matrix from layer 24's expert 7.
+So the number the method actually uses is **48× smaller**:
+
+| | mean | worst expert |
+| --- | --- | --- |
+| per expert, summed over layers *(the flattering number)* | 146,361 | 78,481 |
+| **per (layer, expert)** *(the real one)* | **3,049** | **~1,635** |
+| scaled to a real 4.19 M-token calibration (26.2× our corpus) | ~79,835 | **~42,809** |
+
+**Verdict: PASS, and comfortably.** Even on the conservative per-layer reading our small 33-prompt corpus
+already gives the worst-covered expert ~1,600 samples, and a real calibration run gives it ~43,000. The
+routing is also remarkably *even* — 3.7× between best and worst expert, 1.8× between p10 and p90 — so
+there is no starved tail to rescue. **Zero experts fall below 10,000 even before the per-layer division.**
+
+**One assumption left unmeasured**, stated rather than buried: the per-layer *minimum* above assumes the
+routing skew is similar in every layer, because the probe summed layers rather than keying by layer. If
+one layer routes far more unevenly than the rest, its worst expert could sit below the ~1,635 estimate.
+Keying the bincount by layer index is a small change to the same probe and is the natural refinement if
+gate 2 gives an ambiguous answer.
+
+**So the coverage hypothesis is answered for our corpus, and it is not what stopped NVIDIA.** The
+architectural facts stand — `moe_calib_experts_ratio` is unavailable for `_QuantFusedExperts`, and their
+Local-Hessian build was dense — but on Flash-Next with our own agent traffic, natural routing supplies
+ample per-expert statistics without any coverage forcing.

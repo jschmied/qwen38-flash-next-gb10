@@ -1,0 +1,33 @@
+== EXPCOV (gate 1) start 2026-09-09 22:04
+expcov on: /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/model_executor/layers/fused_moe/experts/flashinfer_cutlass_moe.py
+   probe installed and compiles
+   server up 22:15   EXPCOV active lines: 1
+  corpus: 33 prompts (30 agent + prose)
+   [1/33] 5040 tok in 3.6s (cum 5,040)
+   [6/33] 5041 tok in 3.1s (cum 29,768)
+   [11/33] 5041 tok in 2.7s (cum 54,972)
+   [16/33] 5041 tok in 2.9s (cum 80,177)
+   [21/33] 5041 tok in 3.0s (cum 105,382)
+   [26/33] 5041 tok in 2.6s (cum 130,586)
+   [31/33] 5201 tok in 2.7s (cum 155,951)
+   [33/33] 1741 tok in 1.2s (cum 160,196)
+  total prompt tokens: 160,196
+
+== COVERAGE ==
+  experts=512  apply() calls=12,000  routed (token,expert) pairs=74,936,640
+  total assignments=74,936,640   mean=146,361 per expert
+  min=78,481  p1=83,942  p10=105,752  median=139,998  p90=191,491  max=287,763
+    experts with <=      0 assignments:    0 / 512  (0.0 %)
+    experts with <=    100 assignments:    0 / 512  (0.0 %)
+    experts with <=  1,000 assignments:    0 / 512  (0.0 %)
+    experts with <= 10,000 assignments:    0 / 512  (0.0 %)
+  skew: max/min = 3.7x   p90/p10 = 1.8x
+
+  READ: the mean is not the answer. Local-Hessian estimates H = X^T X per expert, so the
+        worst-covered experts set the quality floor. Thousands of assignments each => fine.
+        Experts at ~0 => their Hessian is noise and their scales would be worse than MSE's.
+== ALL DONE == 2026-09-09 22:17
+
+== removing the expcov probe
+expcov off: /opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm/model_executor/layers/fused_moe/experts/flashinfer_cutlass_moe.py
+   venv restored BYTE-IDENTICAL
