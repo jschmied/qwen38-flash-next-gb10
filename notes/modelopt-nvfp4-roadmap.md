@@ -40,18 +40,42 @@ Layer-by-layer, so the source never lands whole:
 Renting is a **scheduling** decision, not a capability one: the GB10 is the machine we work on, and a
 multi-day run monopolises it. If stage 2 says the forward passes are slow here, rent; otherwise local.
 
-## Decisions to make before starting
+## Decisions — SETTLED 2026-09-09 by the user
 
-1. **ModelOpt version.** 0.46.0 is the newest on PyPI; NVIDIA's 27B used **0.47.0.dev80** from GitHub
-   main. Match their toolchain (`pip install git+…Model-Optimizer`) or stay on the release and accept a
-   different generation. Pin whatever we choose and record it — repo names lie, `hf_quant_config.json`
-   does not.
-2. **Scope: keep it identical to RadixArk.** 48 routed-expert layers, `*.self_attn.*` /
-   `*.linear_attn.*` / `*.ple.*` / `lm_head` excluded. Changing scope *and* calibration in one build
-   confounds the only question we are asking. Widening scope is a separate experiment.
-3. **Calibration data.** NVIDIA used 2,048 samples of Nemotron post-training data. Ours would be our own
-   agent traffic — arguably better for our deployment, but it makes the build **ours**, not a
-   replication. Say which we are doing.
+**1. ModelOpt: 0.47.0.dev80 or newer. DONE.** Installed from GitHub main into
+`/opt/llm/modelopt-lib-047`: **0.47.0rc1.dev31+g2d356434**, commit dated 2026-09-09 16:35 — against
+NVIDIA's `g913f5e224` (2026-08-20) for their 27B, so 20 days newer. 0.46.0 is the newest on PyPI; this
+had to come from git. The serving venvs are untouched (`pip --target`, pure-Python wheel).
+
+**2. Scope is ours to choose — the "keep it identical to RadixArk" constraint is dropped.**
+The user's objection is correct and the earlier advice was advice we have never followed: prod already
+serves `qwen38-flash-next-fp8head`, i.e. RadixArk's build with **Unsloth's FP8 head swapped in**, because
+the RadixArk NVFP4 head measured **2.4 % worse NLL, 8/8** (`prod-dflash2-unsloth-head`, 2026-08-25).
+So we have already changed scope, deliberately, on measured evidence.
+
+The confounding worry was real but misplaced: it applies to *attribution*, not to *deployment*. Build
+what we want to serve, and keep the current prod checkpoint as the A/B control — "new build vs current
+prod" answers the deployment question directly. Attribution to the calibration axis is what gates 0–2
+are for; they isolate it **before** the build, so the build does not have to.
+
+Concrete consequence: since we are already replacing the head, the sharpest scope question is whether an
+**LH-calibrated NVFP4 head can match the FP8 head we ship** — which is the original 2.4 % NLL question,
+and `headcap`'s activations answer it with no build at all.
+
+**3. Calibration data: agent trajectories + prose. And it IS required.**
+There is no data-free Local-Hessian: the objective is `dw · H · dwᵀ` with **H = XᵀX** accumulated from
+input activations, so it needs forward passes over real text. `layerwise_calibrate` raises
+`forward_loop must not be None`, and `_register_local_hessian_input_hooks` exists precisely to capture
+those activations. Data-free weight-only calibration is exactly the **max/MSE baseline that LH beats** —
+asking for LH without data would silently get us the baseline.
+
+Material we already hold, no download needed:
+- `runners/dv/dv_prompts.json` (601 KB of real agent prompts)
+- the 49,902-token agent transcript with 47 tools from the `tcorrupt` repro
+- `runners/vpp/p5960.txt`, `p_prose.txt`, `p1999.txt` (prose)
+
+This makes the build **ours, tuned to our traffic** — not a replication of NVIDIA's Nemotron-calibrated
+recipe. State that whenever the checkpoint is described.
 
 ## The trap that would waste the whole run
 
