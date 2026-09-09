@@ -1601,3 +1601,49 @@
     concurrency when the pool comes up small, which is a partial corroboration of #55533's mechanism arriving through
     allocation variance rather than through k. Finding 153's KV comparison survives this (bf16 214–247k against fp32
     176–182k, non-overlapping), but any future single-start KV number should be treated as one draw, not as the config.
+
+
+156. **CPU idle states cost 0.7–0.9 % of a decode step on GB10, not the 5–6.6 % the field measured (`cstates`, ONE
+    server, six cells interleaved ON/OFF with a live `cpupower` toggle and no restarts, `notes/data/cstate.txt`).**
+    The mechanism check is in every cell: `/sys/…/cpuidle/state*/disable` reads `1 1 1 1` in the OFF cells and
+    `0 0 0 0` in the ON cells, and the states are verified restored at the end (they are — leaving them off would have
+    contaminated every later run). This is the cleanest A/B available to us: one process, one KV pool, one compile
+    cache, the only thing changing is a host setting toggled between cells.
+
+    **Cell 1 must be discarded and is why the design mattered.** `on_1` reads 19.1 / 16.8 / 19.8 tok/s against
+    26.4–26.8 / 21.6–21.9 / 26.5–26.8 for every later cell: it paid the cold prefix cache. Comparing it to anything
+    would have manufactured a 40 % "effect" from cache state. The five warm cells, per prompt:
+
+    | prompt | idle states ON | idle states OFF | Δ |
+    | --- | --- | --- | --- |
+    | 0 | 26.4 / 26.6 | 26.7 / 26.7 / 26.8 | +0.75 % |
+    | 1 | 21.6 / 21.7 | 21.7 / 21.8 / 21.9 | +0.7 % |
+    | 2 | 26.5 / 26.5 | 26.6 / 26.7 / 26.8 | +0.9 % |
+
+    Same sign on all three prompts with barely-overlapping ranges, so the effect is real and it is **under 1 %**.
+    Cold TTFT is untouched (8k: ON 3.177–3.211 s, OFF 3.189–3.196 s; 30k: ON 12.208–12.255 s, OFF 12.193–12.216 s).
+
+    MiaAI-Lab measured +5–6.6 % on a dual-Spark pair by the same live-ablation method, so this is the **third field
+    number tonight that did not transfer** (after the bf16 decode claim in 153 and the k=4 curve in 155). The mechanism
+    is plausible here — this box's LPI-1 has a 42 µs exit latency and our c=1 MTP-3 step issues ~2,636 kernel launches
+    — but the measured cost is an eighth of theirs. **Verdict: not worth taking.** It is a host-wide setting that needs
+    an `@reboot` job to survive a power cycle and raises idle power on a box with a PD limit, and 0.8 % does not pay
+    for that.
+
+157. **`ishare` voided itself on a shell bug in its own gate, not on the flag — and the flag had engaged correctly
+    (`notes/data/ishare-void.txt`).** The gate read
+    `MECH: $(grep -aoE "index_share…" $LOG | head -1 || echo NOT-IN-LOG)`. In a pipeline the exit status is **`head`'s**,
+    which is always 0, so the `||` fallback never fired, both arms reported an empty marker, and the second `case` fell
+    through to its `*)` branch and declared "the base arm ALSO has the flag on". The run stopped after two of six arms.
+    The logs say the opposite: `ish_1` carries
+    `speculative_config': {'method': 'mtp', 'num_speculative_tokens': 3, 'disable_eagle_block_drop': True,
+    'index_share_for_mtp_iteration': True}` and `base_1` carries no such key.
+
+    This is the **fifth void run**, and the first voided by the *gate* rather than by a knob that could not reach the
+    cell (`cgsize2`, `cgnone2` c≥4, `thr`, `vpp4` were all the other kind). New rule in `method.md`: a mechanism check
+    must be tested as a captured **string**, never as a pipeline's exit status. Re-queued as `ishare2` with the fix.
+
+    The two arms that did run suggest the answer anyway, and it is not the field's: one start each, c=1, per prompt —
+    `ish` 19.2 / 16.8 / 19.9 tok/s at acceptance 54.8 / 39.1 / 53.2 % against `base` 19.1 / 16.6 / 19.9 at
+    54.8 / 38.4 / 54.4 %. Accept length is 2.64 / 2.17 / 2.60 versus 2.64 / 2.15 / 2.63 — MiaAI-Lab's 2.42 → 2.52 gain
+    does not appear. One start is not a result; `ishare2` will say properly.

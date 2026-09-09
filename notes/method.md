@@ -80,3 +80,16 @@ different output" rather than "is this configuration stable":
 it instead of hand-parsing `report.json`. Every A/B in this repo that changes numerics — a cache
 dtype, an approximation like index sharing, a scheduler mode — needs the two-file form, because a
 speed win with a moved modal answer is a trade, not a lever.
+
+## A mechanism check must test a string, not a pipeline's exit status
+
+`say "MECH: $(grep -o … "$LOG" | head -1 || echo NOT-FOUND)"` is broken: in a pipeline the exit status
+belongs to the **last** command, and `head` always succeeds, so the `||` fallback never fires and the
+marker comes back empty. An empty marker then falls through whatever `case` the gate uses and can void
+a perfectly good run — it did, on `ishare`, 2026-09-09 (finding 157), which stopped after two of six
+arms with the flag correctly engaged. Capture first, then test the string:
+
+    M=$(grep -oE "…" "$LOG" | head -1); [ -n "$M" ] || M="NOT-FOUND"
+
+Same rule for every gate: assert on a value you can print, and print it into the results file so the
+harvest can see what the gate saw.

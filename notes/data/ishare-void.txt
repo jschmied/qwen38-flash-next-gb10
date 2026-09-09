@@ -1,0 +1,94 @@
+== ISHARE  start 2026-09-09 02:19
+
+=== arm ish_1  FN_ISHARE=1  02:19
+   MECH ishare: 
+   MECH spec:   speculative_config=SpeculativeConfig(method='mtp', model='/opt/llm/models/qwen38-flash-next-nvfp4'
+  ish_1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.4s = 19.2 tok/s agg, 19.2 per stream | garbage 0/1
+  ish_1 DV c=1 rep=1: accept=39.1% AL=2.17 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  ish_1 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.0s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  ish_1 A base: prompt_tokens=20076 cold=8.25s second=0.52s hits/queries=19200/20076
+  ish_1 A N=   16: prompt_tokens=20109 ttft median=0.586s all=0.596 0.586 0.575 hits/queries(last)=19200/20109
+  ish_1 A N=   64: prompt_tokens=20215 ttft median=0.647s all=0.652 0.647 0.634 hits/queries(last)=19200/20215
+  ish_1 A N=  256: prompt_tokens=20628 ttft median=0.779s all=0.786 0.779 0.770 hits/queries(last)=19200/20628
+  ish_1 A N= 1024: prompt_tokens=22320 ttft median=1.520s all=1.818 1.520 1.515 hits/queries(last)=19200/22320
+  ish_1 A N= 4096: prompt_tokens=29046 ttft median=4.182s all=4.196 4.171 4.182 hits/queries(last)=19200/29046
+  ish_1 A FIT: ttft = 576 ms + new_tokens / 2486 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  ish_1 C tokenize(+template) of 20149 tokens: 26 ms
+  ish_1 C tokenize(+template) of 86 tokens: 3 ms
+  ish_1 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.253s hits/queries=0/1840
+  ish_1 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.352s hits/queries=1600/1936
+  ish_1 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.763s hits/queries=1600/2856
+  ish_1 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.263s hits/queries=1600/3650
+  ish_1 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.570s hits/queries=3200/4025
+  ish_1 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.639s hits/queries=3200/4216
+  ish_1 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.214s hits/queries=3200/5011
+  ish_1 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.373s hits/queries=4800/5139
+  ish_1 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.429s hits/queries=4800/5264
+  ish_1 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.656s hits/queries=4800/5748
+  ish_1 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.657s hits/queries=4800/5857
+  ish_1 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.282s hits/queries=4800/6612
+  ish_1 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.483s hits/queries=6400/7004
+  ish_1 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.612s hits/queries=6400/7286
+  ish_1 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.686s hits/queries=6400/7520
+  ish_1 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.768s hits/queries=6400/7702
+  ish_1 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.802s hits/queries=6400/7912
+  ish_1 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.155s hits/queries=6400/8147
+  ish_1 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.342s hits/queries=8000/8246
+  ish_1 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.427s hits/queries=8000/8459
+  ish_1 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.552s hits/queries=8000/8784
+  ish_1 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.645s hits/queries=8000/9026
+  ish_1 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.779s hits/queries=8000/9413
+  ish_1 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.609s hits/queries=8000/10923
+sending requests (endpoint_label='sm121-ish_1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qish-ish_1.json
+arm=ish_ish_1 mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=14002560
+
+=== arm base_1  FN_ISHARE=0  02:36
+   MECH ishare: 
+   MECH spec:   speculative_config=SpeculativeConfig(method='mtp', model='/opt/llm/models/qwen38-flash-next-nvfp4'
+  base_1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  base_1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.6 tok/s agg, 16.6 per stream | garbage 0/1
+  base_1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.1s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  base_1 A base: prompt_tokens=20076 cold=8.32s second=0.52s hits/queries=19200/20076
+  base_1 A N=   16: prompt_tokens=20109 ttft median=0.575s all=0.588 0.575 0.569 hits/queries(last)=19200/20109
+  base_1 A N=   64: prompt_tokens=20215 ttft median=0.634s all=0.637 0.634 0.628 hits/queries(last)=19200/20215
+  base_1 A N=  256: prompt_tokens=20628 ttft median=0.767s all=0.780 0.760 0.767 hits/queries(last)=19200/20628
+  base_1 A N= 1024: prompt_tokens=22320 ttft median=1.507s all=1.556 1.507 1.494 hits/queries(last)=19200/22320
+  base_1 A N= 4096: prompt_tokens=29046 ttft median=4.231s all=4.251 4.231 4.221 hits/queries(last)=19200/29046
+  base_1 A FIT: ttft = 540 ms + new_tokens / 2440 tok/s   (intercept = fixed per-request cost over a cached prefix)
+  base_1 C tokenize(+template) of 20149 tokens: 25 ms
+  base_1 C tokenize(+template) of 86 tokens: 2 ms
+  base_1 B turn= 1: prompt_tokens=  1840 new= 1840 ttft=1.236s hits/queries=0/1840
+  base_1 B turn= 2: prompt_tokens=  1936 new=   96 ttft=0.355s hits/queries=1600/1936
+  base_1 B turn= 3: prompt_tokens=  2856 new=  920 ttft=0.761s hits/queries=1600/2856
+  base_1 B turn= 4: prompt_tokens=  3650 new=  794 ttft=1.250s hits/queries=1600/3650
+  base_1 B turn= 5: prompt_tokens=  4025 new=  375 ttft=0.558s hits/queries=3200/4025
+  base_1 B turn= 6: prompt_tokens=  4216 new=  191 ttft=0.636s hits/queries=3200/4216
+  base_1 B turn= 7: prompt_tokens=  5011 new=  795 ttft=1.214s hits/queries=3200/5011
+  base_1 B turn= 8: prompt_tokens=  5139 new=  128 ttft=0.375s hits/queries=4800/5139
+  base_1 B turn= 9: prompt_tokens=  5264 new=  125 ttft=0.421s hits/queries=4800/5264
+  base_1 B turn=10: prompt_tokens=  5748 new=  484 ttft=0.660s hits/queries=4800/5748
+  base_1 B turn=11: prompt_tokens=  5857 new=  109 ttft=0.655s hits/queries=4800/5857
+  base_1 B turn=12: prompt_tokens=  6612 new=  755 ttft=1.273s hits/queries=4800/6612
+  base_1 B turn=13: prompt_tokens=  7004 new=  392 ttft=0.494s hits/queries=6400/7004
+  base_1 B turn=14: prompt_tokens=  7286 new=  282 ttft=0.606s hits/queries=6400/7286
+  base_1 B turn=15: prompt_tokens=  7520 new=  234 ttft=0.678s hits/queries=6400/7520
+  base_1 B turn=16: prompt_tokens=  7702 new=  182 ttft=0.760s hits/queries=6400/7702
+  base_1 B turn=17: prompt_tokens=  7912 new=  210 ttft=0.809s hits/queries=6400/7912
+  base_1 B turn=18: prompt_tokens=  8147 new=  235 ttft=1.146s hits/queries=6400/8147
+  base_1 B turn=19: prompt_tokens=  8246 new=   99 ttft=0.338s hits/queries=8000/8246
+  base_1 B turn=20: prompt_tokens=  8459 new=  213 ttft=0.426s hits/queries=8000/8459
+  base_1 B turn=21: prompt_tokens=  8784 new=  325 ttft=0.546s hits/queries=8000/8784
+  base_1 B turn=22: prompt_tokens=  9026 new=  242 ttft=0.639s hits/queries=8000/9026
+  base_1 B turn=23: prompt_tokens=  9413 new=  387 ttft=0.772s hits/queries=8000/9413
+  base_1 B turn=24: prompt_tokens= 10923 new= 1510 ttft=1.596s hits/queries=8000/10923
+sending requests (endpoint_label='sm121-base_1', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qish-base_1.json
+arm=ish_base_1 mode=sequential repeats=8 tokens=2504
+   collect exit=0 size=14002562
+
+== GATE: ish arm ->    MECH ishare: 
+         base arm ->    MECH ishare: 
+   VOID: the base arm ALSO has the flag on.
+== ALL DONE (void) ==

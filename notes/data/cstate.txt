@@ -1,0 +1,55 @@
+== CSTATES  start 2026-09-09 02:53
+   idle states at start: 0 0 0 0  (0 = enabled)
+   server up 03:07
+
+--- cell on_1  idle_states=on  disable flags: 0 0 0 0 
+  cst_on_1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  cst_on_1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  cst_on_1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.1s = 19.8 tok/s agg, 19.8 per stream | garbage 0/1
+  cst_on_1 TTFT 8k: prompt_tokens=7528 median=3.177s all=3.420 3.177 3.177 rate=2370 tok/s
+  cst_on_1 TTFT 30k: prompt_tokens=29288 median=12.255s all=12.200 12.268 12.255 rate=2390 tok/s
+
+--- cell off_1  idle_states=off  disable flags: 1 1 1 1 
+  cst_off_1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  cst_off_1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 9.2s = 21.7 tok/s agg, 21.7 per stream | garbage 0/1
+  cst_off_1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 7.5s = 26.6 tok/s agg, 26.6 per stream | garbage 0/1
+  cst_off_1 TTFT 8k: prompt_tokens=7528 median=3.189s all=3.211 3.187 3.189 rate=2361 tok/s
+  cst_off_1 TTFT 30k: prompt_tokens=29288 median=12.193s all=12.253 12.193 12.188 rate=2402 tok/s
+
+--- cell on_2  idle_states=on  disable flags: 0 0 0 0 
+  cst_on_2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 7.6s = 26.4 tok/s agg, 26.4 per stream | garbage 0/1
+  cst_on_2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 9.2s = 21.6 tok/s agg, 21.6 per stream | garbage 0/1
+  cst_on_2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 7.5s = 26.5 tok/s agg, 26.5 per stream | garbage 0/1
+  cst_on_2 TTFT 8k: prompt_tokens=7528 median=3.198s all=3.192 3.198 3.200 rate=2354 tok/s
+  cst_on_2 TTFT 30k: prompt_tokens=29288 median=12.208s all=12.220 12.199 12.208 rate=2399 tok/s
+
+--- cell off_2  idle_states=off  disable flags: 1 1 1 1 
+  cst_off_2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  cst_off_2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 9.2s = 21.8 tok/s agg, 21.8 per stream | garbage 0/1
+  cst_off_2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 7.5s = 26.7 tok/s agg, 26.7 per stream | garbage 0/1
+  cst_off_2 TTFT 8k: prompt_tokens=7528 median=3.196s all=3.193 3.196 3.199 rate=2355 tok/s
+  cst_off_2 TTFT 30k: prompt_tokens=29288 median=12.201s all=12.201 12.220 12.191 rate=2400 tok/s
+
+--- cell on_3  idle_states=on  disable flags: 0 0 0 0 
+  cst_on_3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 7.5s = 26.6 tok/s agg, 26.6 per stream | garbage 0/1
+  cst_on_3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 9.2s = 21.7 tok/s agg, 21.7 per stream | garbage 0/1
+  cst_on_3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 7.5s = 26.5 tok/s agg, 26.5 per stream | garbage 0/1
+  cst_on_3 TTFT 8k: prompt_tokens=7528 median=3.211s all=3.213 3.211 3.197 rate=2345 tok/s
+  cst_on_3 TTFT 30k: prompt_tokens=29288 median=12.234s all=12.234 12.234 12.210 rate=2394 tok/s
+
+--- cell off_3  idle_states=off  disable flags: 1 1 1 1 
+  cst_off_3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 7.5s = 26.8 tok/s agg, 26.8 per stream | garbage 0/1
+  cst_off_3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 9.2s = 21.9 tok/s agg, 21.9 per stream | garbage 0/1
+  cst_off_3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 7.5s = 26.8 tok/s agg, 26.8 per stream | garbage 0/1
+  cst_off_3 TTFT 8k: prompt_tokens=7528 median=3.196s all=3.192 3.196 3.197 rate=2356 tok/s
+  cst_off_3 TTFT 30k: prompt_tokens=29288 median=12.216s all=12.214 12.230 12.216 rate=2397 tok/s
+   idle states restored to: 0 0 0 0  (must be all 0)
+
+   READ: (1) the disable flags in the off cells must read '1 1 1 1' and in the on cells '0 0 0 0'.
+             If they do not, the ablation never happened and there is nothing to report.
+         (2) one server throughout, so this is a clean paired comparison: three ON and three OFF
+             cells interleaved. Compare the three-cell ranges, not single cells.
+         (3) if OFF wins, it is a HOST setting, not a serving change: it needs an @reboot job to
+             survive a power cycle, and it raises idle power on a box with a PD limit.
+   idle states at end: 0 0 0 0  (must be all 0)
+== ALL DONE == 2026-09-09 03:15
