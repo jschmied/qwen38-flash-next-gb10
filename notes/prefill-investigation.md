@@ -1507,8 +1507,31 @@
     change rather than a nondeterministic one, and whether it costs task quality needs a task eval, not a logprob count —
     but "needles 15/15 unchanged", the evidence the field shipped it on, would never have detected it.
 
+    **The error does not accumulate through the recurrence (2026-09-09, from the same data, no extra run).** The obvious
+    worry about lowering the precision of an SSM state is that it is *carried*: `state_{t+1} = f(state_t, x_t)`, so a
+    per-step rounding error could compound over thousands of steps, unlike a KV entry which is written once and read as
+    one term of a sum. It does not. Binning the 128 cross-arm modal mismatches by position over the 2,503-token prompt:
+
+    | position range | mismatches / positions |
+    | --- | --- |
+    | 0–312 | 17 / 313 (5.4 %) |
+    | 313–625 | 15 / 313 (4.8 %) |
+    | 626–938 | 14 / 313 (4.5 %) |
+    | 939–1251 | 7 / 313 (2.2 %) |
+    | 1252–1564 | 17 / 313 (5.4 %) |
+    | 1565–1877 | 18 / 313 (5.8 %) |
+    | 1878–2190 | 24 / 313 (7.7 %) |
+    | 2191–2503 | 16 / 313 (5.1 %) |
+
+    Flat, with the variation looking like content rather than drift — the state at position 2,400 has been rounded 2,400
+    times and is no more likely to disagree than the state at position 100. The gated delta rule's decay term evidently
+    bounds the error, which is what the architecture predicts but had not been checked. **So the risk is a per-step
+    rounding floor, not a compounding drift**, and long agent sessions are not a special hazard for this knob.
+
     **Verdict: a real −9.6 % on agent-turn time with a real precision cost, not a free lever.** Prod adoption is one
-    `FN_SSM_DTYPE` line and is the user's call; it should be paired with a task-level quality check first.
+    `FN_SSM_DTYPE` line and is the user's call; it should be paired with a task-level quality check first. What that
+    check has to answer is now narrower: not "does it drift" (it does not) but "is a flat ~5 % shift in modal
+    predictions worth 9.6 % of turn time on real work".
 
     **Free by-product: vllm#55533 does not reproduce here.** `schedwidth` at c=8 shows `num_requests_running` median 5
     and max 8 in *every* arm, both block sizes — the scheduler reaches the full batch. The 1+k mamba-block charge is real
