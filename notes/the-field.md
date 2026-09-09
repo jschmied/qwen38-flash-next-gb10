@@ -1398,3 +1398,42 @@ divisible by block_size" fallbacks that were conv slices, not experts — expert
 (`.experts.`); (3) every matrix was fed the full token budget when a real expert sees ~2 % of tokens
 (top_k 10 of 512), overestimating the part that dominates by ~51×; (4) the silent no-op above. Only (4)
 would have survived into a production run undetected.
+
+### headcmp (2026-09-09): Local-Hessian calibration DOES change the scales, and reconstructs better
+
+Activation-free test of the necessary condition: did NVIDIA's Local-Hessian calibration actually choose
+different NVFP4 scales on `lm_head` than plain max would? Byte-range fetch of the BF16 head from
+`Qwen/Qwen3.8-27B` (2.4 GiB, 3 min) against `nvidia/Qwen3.8-27B-NVFP4`'s published head — no checkpoint
+downloaded on either side.
+
+**Format validated first, before reading anything into the numbers.** Dequantising the publisher's own
+packed weights with the publisher's own scales reproduces the BF16 head to **8.49 %** relative error
+(E2M1 levels {0,.5,1,1.5,2,3,4,6}, **low nibble first**, group size 16 = 5120/320, global
+`weight_scale_2` 1.2716e-4). The high-nibble-first ordering gives 141 %, which is how we know the
+ordering rather than assuming it. Only with that confirmed is a scale comparison meaningful.
+
+| scale set, same BF16 weights re-quantised to NVFP4 g16 | relative reconstruction error |
+| --- | --- |
+| publisher's shipped packed weights + LH scales | 8.482 % |
+| re-quantised with **Local-Hessian** scales | **8.482 %** |
+| re-quantised with **plain-max** scales (`amax/6`, FP8) | **9.483 %** |
+
+**Local-Hessian is ~1.0 pp better, ~10.6 % relative**, and it changes **69.77 %** of group scales.
+Direction: LH picks a **larger** scale in 73.3 % of the differing groups (median LH/max ratio **1.385**,
+p10 0.909, p90 1.600) — i.e. it does not simply clip tighter.
+
+**What this does and does not establish.** It establishes the necessary condition: LH is not a no-op on
+this matrix, so the calibration axis is real and worth pursuing. It does **not** establish output
+quality — this is plain L2 weight error, which is not even what LH optimises (it minimises a
+Hessian-weighted error). That LH also wins on plain L2 is a bonus rather than the design target, and the
+honest next step is output error under **real activations**, which needs final hidden states captured
+from a forward pass — tooling we do not have yet.
+
+**Caveat on the baseline:** "plain max" here is reconstructed as `amax/6` rounded through FP8 with the
+global scale_2. That reproduces the publisher's dequant path exactly and agrees exactly on 30.19 % of
+groups, so it is the right formula in kind — but if it were subtly suboptimal, LH's margin would be
+flattered. The 8.482 % figure is anchored to the publisher's own bytes and does not depend on it.
+
+Runner `headcmp.sh`, tools `lh/headcmp.py` (scale census), `lh/headval.py` (format validation),
+`lh/headq.py` (like-for-like re-quantisation). `headcmp.py` crashed on `quantile()` over 55 M elements —
+subsample before quantiles; `headq.py` does.
