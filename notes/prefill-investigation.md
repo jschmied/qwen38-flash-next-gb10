@@ -1560,3 +1560,44 @@
     ours, the field's, or upstream's — unless the arms are bit-identical. That retroactively explains a good deal of the
     acceptance scatter in `the-field.md`, and it is why every acceptance comparison from here needs the deterministic
     stack on *and* an explicit statement of whether the arms are bit-identical.
+
+
+155. **MTP `num_speculative_tokens=4` is WORSE than our shipped 3 here (−3.4 % at c=1), the field's +11.4 % does not
+    reproduce, and vllm#55533's scheduler collapse does not reproduce either (`mtp42`, n3/n4 interleaved × 3 starts
+    plus one no-spec arm, `notes/data/mtp4.txt`).** k=4 was the one untested cell on our own list: our sweep stopped at
+    3 because k=5 hard-fails on the block-size hole (compress_ratio 4 ⇒ n = 0…4 and 9…12 legal, 5…8 not), which made 5
+    look like a wall rather than a gap. MiaAI-Lab reported the k-curve monotonic 0→4 on a dual-Spark pair, +11.4 % from
+    3 to 4.
+
+    **c=1 on real held-out agent prompts, three server starts per arm, per prompt:**
+
+    | prompt | n3 tok/s (×3) | n3 accept / AL | n4 tok/s (×3) | n4 accept / AL |
+    | --- | --- | --- | --- | --- |
+    | 0 | 18.9 / 19.0 / 19.0 | 53.7 % / 2.61 | **19.5 / 19.6 / 19.4** | 53.1 % / 3.12 |
+    | 1 | 16.7 / 16.8 / 16.6 | 38.4 % / 2.15 | **17.0 / 16.9 / 16.8** | 36.6 % / 2.46 |
+    | 2 | **19.8 / 19.8 / 19.7** | 53.2 % / 2.60 | 17.4 / 17.2 / 17.2 | 35.7 % / 2.43 |
+    | Σ of per-prompt medians | **55.5** | | 53.6 (**−3.4 %**) | |
+
+    Acceptance is identical to the decimal across all three starts within each arm — the deterministic stack again — so
+    these are not noisy cells. The shape is the trade the run was designed to expose: **k=4 buys draft length and loses
+    acceptance rate** (AL 2.61 → 3.12 but 53.7 → 53.1 %; 2.15 → 2.46 but 38.4 → 36.6 %), and on prompt 2 the rate
+    collapses 53.2 → 35.7 % and takes 13 % of the throughput with it. Two prompts gain ~2–3 %, one loses 13 %; net
+    negative. At c=8 the ranges overlap with n3 ahead on two of three pairs (n3 25.3 / 25.2 / 23.4 against n4 21.9 /
+    22.5 / 25.2). **k=4 is not a prod change.** Their result is not refuted — a dual-Spark TP=2 pair with a different
+    checkpoint is a different machine — but it does not transfer, and it is the second field number tonight that did
+    not (see finding 153 on the bf16 decode claim).
+
+    **vllm#55533 does not reproduce, and the run says so on both of its pre-committed conditions.** (a) The scheduler
+    is not pinned near 3: `num_requests_running` at c=8 has median 5–6 and reaches **8** in every arm (15–21 samples at
+    width 8), with max waiting 6. (b) The decisive half fails outright — the no-spec arm manages **19.9 tok/s** at c=8
+    against 23.4–25.3 for n3, so MTP is not "2-3× slower than no-spec above bs=3" here, it is comfortably faster.
+    What *is* visible is the mechanism behind their formula, in the block size itself: **1,568 tokens at k=0, 1,600 at
+    k=3, 1,616 at k=4**, and the KV pool falls 180,224 → 167,401 tokens from k=3 to k=4. The `1 + k` mamba-block charge
+    is real; our pool is simply far from the ceiling that produces their {2,2,2} window.
+
+    **One thing worth flagging against our own numbers: the KV pool is not a stable quantity per config on this box.**
+    The three n3 starts, identical configuration, sized at **180,224 / 119,369 / 171,641 tokens** — a 34 % spread — and
+    the small start is exactly the one whose c=8 histogram never reached width 8 (max 6). So capacity *does* gate
+    concurrency when the pool comes up small, which is a partial corroboration of #55533's mechanism arriving through
+    allocation variance rather than through k. Finding 153's KV comparison survives this (bf16 214–247k against fp32
+    176–182k, non-overlapping), but any future single-start KV number should be treated as one draw, not as the config.
