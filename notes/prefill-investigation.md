@@ -1684,3 +1684,35 @@
     the library default, sat in our serve script for weeks and made us believe we were avoiding something we were doing
     on every run. It has been replaced by an `FN_NOASYNC` knob that defaults to the library behaviour and is now
     measured. Any future "never do X" note in a launcher must either be enforced by the launcher or deleted.
+
+
+159. **`index_share_for_mtp_iteration` is output-preserving and worth nothing here: bit-identical completions, −0.5 % at
+    c=1, −0.33 % on real agent turns (`ishare3`, six arms interleaved × 3 starts, `notes/data/ishare3.txt`).** Third
+    attempt; the first two voided on my own gate bugs, not on the flag (finding 157). Gate finally clean:
+    `index_share_for_mtp_iteration': True` in the ish arms, `NOT-IN-LOG` in base.
+
+    | prompt | ish tok/s (×3) | ish acc / AL | base tok/s (×3) | base acc / AL |
+    | --- | --- | --- | --- | --- |
+    | 0 | 18.3 / 19.1 / 19.2 | 54.8 % / 2.64 | 19.0 / 18.3 / 19.1 | 54.8 % / 2.64 |
+    | 1 | 16.7 / 16.9 / 16.5 | 39.1 % / 2.17 | 16.5 / 16.6 / 16.6 | 38.4 % / 2.15 |
+    | 2 | 19.7 / 19.4 / 19.3 | 53.2 % / 2.60 | 19.9 / 19.8 / 19.9 | 54.4 % / 2.63 |
+
+    Sum of per-prompt medians: **55.2 vs 55.5 tok/s (−0.5 %)**; 24-turn agent replay **18.28 vs 18.34 s (−0.33 %,
+    faster on 14/24)**. Both inside the spread. MiaAI-Lab's 2.42 → 2.52 accept-length gain does not appear — our AL
+    moves +0.02 on one prompt and −0.03 on another. **Fourth field number tonight whose mechanism was real and whose
+    effect size did not transfer** (after bf16 decode in 153, k=4 in 155, C-states in 156).
+
+    **Correction to my own framing before the run.** I set this up calling index sharing "an approximation, not a
+    scheduling trick", and gated it on a quality arm on that basis. That was wrong, and the measurement says so:
+    **0 of 2,504 modal top-1 mismatches, max |Δ mean forced logprob| exactly 0.0000**, both arms internally bit-exact.
+    The reason is structural rather than lucky — the speculator calls `set_skip_topk` on the **draft** model only
+    (`v1/worker/gpu/spec_decode/mtp/speculator.py`), and greedy MTP verification stores the *target's* argmax whenever
+    the draft is rejected, so perturbing the proposal cannot perturb the emitted token. **Index sharing is
+    output-preserving under greedy decoding by construction.** It changes what is proposed, never what is accepted.
+
+    That also makes this the **third independent confirmation that acceptance is a speed statistic, not a quality
+    signal** (with 154 and 158): acceptance moves on two of three prompts — 39.1 vs 38.4 %, 53.2 vs 54.4 % — while the
+    output is provably identical. Here the mechanism is fully transparent, which is why it belongs in the record beside
+    the other two.
+
+    **Verdict: safe, and not worth a config change.** Leave `FN_ISHARE` at its default of off.
