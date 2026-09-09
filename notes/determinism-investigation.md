@@ -3074,3 +3074,40 @@ Plus whatever drives the separate generation-side path.
     is one necessary component of a set rather than the fix, and that `Fixes #54521` had to go. det-183's headline
     stands; only its per-arm numbers are superseded by the table above. **The determinism divert ends here**; the goal
     is agent turn time again.
+
+
+185. **mmastrac's tool-call-corruption repro fires far harder here than on the machine it was written for, and our four
+    fixes close it completely: stock gives 40 distinct completions from 40 identical greedy requests, fixed gives 1
+    (`tcorrupt`, `notes/data/tcorrupt.txt`, 2026-09-09).** They posted the repro on vllm#54521 (gist
+    `ff0d09589d5480f8614413daf6b1552b`, 2026-09-08 19:56 UTC) as an explicit "this might be useful to see if it
+    reproduces in other models and configurations". Script AST-reviewed before running: stdlib only, one network call
+    to `--url`, no file writes, no eval/exec/pickle — the `subprocess.run` text inside it is a string constant, the fake
+    repository file the synthetic transcript pretends the agent read.
+
+    Cell: Qwen3.8-Flash-Next NVFP4, GB10 sm_121, **TP=1**, MTP-3, `FN_MAXLEN=65536`, the synthetic 47-tool coding-agent
+    transcript at **49,902 prompt tokens**, 40 runs at temperature 0 with a fixed seed, prefix caching on as in their
+    setup.
+
+    | arm | distinct completions / 40 | runs diverging from the majority |
+    | --- | --- | --- |
+    | **stock** (all four fixes off) | **40** | 39 |
+    | **fixed** (all four on) | **1** | 0 |
+
+    **Their result on 4× GB10 TP=4 with GLM-5.3-Flash-NVFP4 was 5 distinct in 40** (30 correct, then 4/3/2/1), with the
+    corruption appearing at token positions 23–31. Ours is categorically worse: **every run differs, and the divergence
+    starts at token 0 or token 1** — "I've" vs "I keep" vs "The" vs "Let" as the opening token. A second model, a
+    different tensor-parallel degree, a different parser, the same hardware family, and the failure is not a rare
+    corrupted argument but total non-reproducibility from the first token.
+
+    Why this matters more than the throughput work it interrupted: their filing notes that a corrupted tool *name*
+    makes the parser emit zero deltas, so the request finishes `stop` with no content and no tool calls and the client
+    reports "completed response with no content". **That is a whole agent turn lost**, which costs more than any of
+    tonight's speed levers buys — the best of them (finding 153) is −9.6 % on turn time. MiaAI-Lab report the same class
+    on this checkpoint in their dual-Spark #42 ("corrupted tool-call names in long agent sessions").
+
+    This is also the cleanest statement yet of what the four fixes are for. det-184 measured them on a 2,504-token prose
+    prompt and got 333 disagreeing positions → 0. Here, at 50k tokens of realistic agent context, the same set takes
+    **40 distinct completions → 1**. The fixes are not a reproducibility nicety for benchmark hygiene; on long agent
+    traffic they are the difference between a deterministic server and one that answers differently every time.
+
+    **Draft for #54521 written, NOT posted** (`notes/upstream/comment-54521-tcorrupt.md`) — needs the user's go.
