@@ -1,6 +1,11 @@
 DRAFT — needs the user's go. vllm-project/vllm PR #55122 (our own PR), comment (2026-09-09).
 
-A measurement against our own PR, before a reviewer has to find it.
+@200lz — agreed on keeping `test_persistent_topk_degenerate_lengths`, and flashinfer-ai/flashinfer#5015
+is a stronger argument for it than we had: a deterministic wedge on real traffic is worth a regression
+test regardless of how the tie path behaves. Nothing below touches that; the degenerate-length case and
+the tie case are separate paths and only the second is what we measured.
+
+With that said — a measurement against our own PR, before a reviewer has to find it.
 
 We instrumented `_topk` in the QSA indexer to census the top-k boundary on real serving traffic, asking
 how often the kernel is actually in the position this PR makes deterministic — `n_gt < k < n_gt + n_eq`,
@@ -29,8 +34,9 @@ assumed from the PR description.
 
 What the PR still is, and we think still worth merging: the kernel is genuinely arrival-order dependent
 under ties, which our standalone test shows directly with tie-heavy input, and the fix is cheap. It is
-correctness under a condition that is rare on this workload rather than a throughput or reproducibility
-win.
+correctness under a condition that is rare on *this* workload rather than a throughput or reproducibility
+win — and, per the comment above, the degenerate-length half of it guards something that has already bitten
+a production deployment.
 
 Scope of the null, stated plainly: 16 k context, two prompts, 6,192 selecting rows. Longer contexts push
 a much larger fraction of rows past `visible > k` and would sample the boundary far more often, and a tie

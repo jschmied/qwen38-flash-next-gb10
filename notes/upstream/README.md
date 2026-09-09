@@ -370,21 +370,29 @@ branch lacks — fetch + rebase before pushing.
     their Thai prompts, one server start. Draft `issue-miaai-single-checkpoint-gdn.md`.
     → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/37
 
-    **DRAFTED, AWAITING GO** (2026-09-09, from "can we answer any other issues in this repo?"):
+    **POSTED 2026-09-09 14:3x** (user go "post and…"), from "can we answer any other issues in this repo?":
     - `comment-miaai-36-ablit-ple.md` → #36 (@15ky3, 0 comments). Connects "doesn't follow any prompt,
       repeats itself" to **#34**'s measured mechanism: `edit_ple:false` makes `start.sh` serve *stock's*
       PLE table under ablit weights. Gives the sampling-invariance discriminator and the `ple_cache/`
       log check. Our PLE-row sensitivity stated as plausibility, not diagnosis.
+      → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/36#issuecomment-5601707784
     - `comment-miaai-34-remote-shard-diff.md` → #34 (@witt3rd, 0 comments). Independently verified the
       repo has **34** numbered shards (CHANGELOG's "37" is wrong, witt3rd's denominator right); offers the
       no-download shard diff via HF `lfs.oid` in the tree API (verified live); points at #36 as the same bug.
+      → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/34#issuecomment-5601707992
     - `comment-miaai-30-radixark-fits-vllm.md` → #30 (@MichaelS1011, 0 comments). Confirms RadixArk fits
       on 1× GB10 under **vLLM** as well (126 GB, prod for weeks) with our table: c=1 21.6–26.7 tok/s,
       TTFT 3.19 s @7.5k / 12.2 s @29k. Names the pinned-vs-page-cache failure (`CUDA OOM` while `free`
       showed 118 GiB available, 105 GiB of it page cache) and the honest caveat that #53899 is not upstream.
+      → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/30#issuecomment-5601708196
     - `comment-55122-tie-census.md` → **vllm#55122, our own PR**: det-190's census says the defect is
       unreachable on this traffic (0 ties in 6,192 selecting rows), so the PR is kernel correctness under
       ties, not end-to-end determinism. Better said by us than found by a reviewer.
+      **Revised before posting** after a re-read found a new comment: @200lz argued *for* keeping
+      `test_persistent_topk_degenerate_lengths` on flashinfer#5015 (a deterministic production hang). That is a
+      different code path from the tie boundary, so the comment now agrees with them and scopes the null to ties
+      only — without the thread re-read it would have read as withdrawing the PR.
+      → https://github.com/vllm-project/vllm/pull/55122#issuecomment-5601708467
 
     **NOT worth posting:** #32 (`download.sh` quoting) and #24 (`stop.sh` ignores `.env`) — both reporters
     diagnosed the bug completely and supplied the fix; a "confirmed" from us would be noise.
