@@ -761,3 +761,34 @@ and this one guarded a decision to delete 267 GiB. Fourth of that shape this wee
 exist and hashed the same constant six times), det-189's alien-token probe (a positive signal whose benign
 explanation was asserted, not measured), and this. **A passing check must report what it examined**: the
 rewrite prints `verified 30 directories: 30 OK, 0 MISMATCH`, and a count that reads 1 would have been visible.
+
+## Provenance is not optional, and it is recoverable from published hashes (2026-09-09)
+
+Archiving 30 checkpoints exposed that we could establish the origin of **four**. The rest were fetched by
+name weeks earlier and the mapping existed only in someone's head. A checkpoint whose repo and revision
+are unknown cannot be verified against the publisher's own hashes, cannot be re-fetched with confidence,
+and cannot be cited.
+
+**Recovery works, and it is cheap.** sha256 is an identifier: fetch a candidate repo's tree from the HF
+API (metadata only, no download) and intersect its published `lfs.oid` values with a local manifest.
+
+| local directory | identified as | result |
+| --- | --- | --- |
+| `qwen38-27b-fp8` | `Qwen/Qwen3.8-27B-FP8` | **43/43** published hashes, all shards |
+| `qwen38-27b-radixark` | `RadixArk/Qwen3.8-27B-NVFP4` | **4/4**, 3 shards |
+| `qwen38-27b-inferact` | `Inferact/Qwen3.8-27B-NVFP4` | **8/8**, 7 shards |
+
+One matching multi-GB shard identifies a repo; zero says it is not that repo. It also separates cleanly
+what is *re-fetchable* (a full match — the publisher still has it) from what is *ours alone* (partial or
+no match — `uns-a16` 0/19, `unsloth-nvfp4head` 1/3: locally composed bodies and heads).
+
+**Two traps found on the way.** `qwen38-27b-inferact` ships a `crc32.txt` listing `layers-N.safetensors`
+while the directory holds `model-0000N-of-00006` — a stray checksum file from different packaging, which
+a naive reading reports as "71 modified files". And our own manifest generator wrote
+`find … > SHA256SUMS.tmp`, where the shell creates the target *before* `find` runs, so every manifest
+listed a file that no longer existed and the remote verification reported FAILED for all 30 directories.
+
+**Rules now:** `hfget.sh` records repository, pinned revision, per-file URL and the publisher's sha256
+into `SOURCE.json` *at download time*; `hfverify.py` checks a directory against it; `hfidentify.py`
+recovers provenance for anything already on disk. A publisher checksum beats a copy-to-copy comparison,
+because it also catches corruption that predates the copy — which a local↔remote diff never can.
