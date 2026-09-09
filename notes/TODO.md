@@ -80,6 +80,14 @@ individually near-worthless (280–334 of ~333 disagreeing positions survive any
 give 0), and they move the *modal* answer at 110/2,504 positions, not just the variance. README's
 fix list reconciled against what the venv actually carries: five defects, not three or four.
 
+### Housekeeping done at the end
+
+**Disk: 30 → 35 GB free.** 71 per-arm compile/autotune cache roots from closed runs (`mr-`, `cgs-`,
+`pd-`, `cg-`, `i5-`) removed once the box was idle — 5.4 GB, all from runs whose findings are written
+and pushed. Tonight's roots are kept. `/opt/llm/.cache-fnmain2` is 10 GB → 4.7 GB, 34 roots left.
+Per-arm cache roots are required by the compile-cache-key trap, so this directory grows by ~90 MB per
+arm and needs a purge after every campaign.
+
 ### Still running when this was written
 
 `tcorrupt` (mmastrac's tool-call-corruption repro from vllm#54521 — stock vs our four fixes; a
