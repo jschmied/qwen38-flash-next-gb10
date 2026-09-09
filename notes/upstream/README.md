@@ -321,3 +321,37 @@ branch lacks — fetch + rebase before pushing.
     plus its adjacency to #55600.
     Offered GB10 runs on their shapes; we have the hardware, not their model.
     → https://github.com/vllm-project/vllm/issues/54521#issuecomment-5590196277
+
+97. 2026-09-09 12:0x — **#54521 reply to mmastrac** (user go "post 1..4"): ran their tool-call-corruption repro
+    (gist ff0d0958) unmodified on GB10/TP=1 at 49,902 prompt tokens — stock **40 distinct completions from 40**
+    identical greedy requests, all four fixes **1**; theirs was 5/40 at TP=4 on GLM-5.3-Flash, ours diverges at
+    token 0–1. Listed the four fixes with det-184's per-fix numbers and named #55375 as a merged fifth present in
+    both arms (peakcrosser7's, not ours). Draft `comment-54521-tcorrupt.md`, finding det-185.
+    → https://github.com/vllm-project/vllm/issues/54521#issuecomment-5600094876
+
+98. 2026-09-09 12:0x — **#54521 reply to ZC502** (same go): their client collector validated on sm_121, 12/12,
+    and used as the instrument for a five-arm isolation; `analyze.py` usability note (files, not a directory);
+    the method consequence — a single-fix A/B on a machine carrying more than one defect reads as null. **Trimmed
+    before posting** to drop det-184's table, which the mmastrac comment posted minutes earlier already carried.
+    Draft `comment-54521-zc502-isolation.md`.
+    → https://github.com/vllm-project/vllm/issues/54521#issuecomment-5600097794
+
+99. 2026-09-09 12:0x — **MiaAI-Lab single-Spark #19** (same go): the owed capture-size reply — **both our arms
+    were uninformative** because we sampled c ∈ {1,4,16}, all captured widths in both arms, so we measured the
+    same graphs twice; their own commit names the widths that matter. Plus cudagraph *mode* is null here (det-136),
+    vllm#55533 as a structural reason `MAX_NUM_SEQS` may not be their knob, and the bf16-SSM correction with the
+    fp8-KV half they had not stated. Draft `comment-miaai-19-cudagraph-widths.md`.
+    → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/19#issuecomment-5600098852
+
+100. 2026-09-09 12:1x — **#38315 follow-up** (user go "yes post follow up"): the end-to-end number our earlier
+    kernel table lacked — served, 3 starts/arm, cold TTFT −1.4 % at 8k and −1.1 % at 30k with non-overlapping
+    ranges, **null on warm agent turns**. Said plainly that ~1 % lands on the same side as vadiklyutiy's B300 read
+    and that the earlier table should not be read as an end-to-end claim. Added finding 154's caution: the fused
+    kernel is within one bf16 ulp but not bit-identical, which moved MTP acceptance +6.6/+10.4/−3.8 pp across three
+    prompts — a lottery, not a speed effect. Draft `comment-38315-endtoend.md`.
+    → https://github.com/vllm-project/vllm/pull/38315#issuecomment-5600197542
+
+    **Process note:** the PR draft `pr-fla-fused-kkt-solve.md` was listed to the user as "ready to post" when its
+    own first line records that it was deliberately NOT opened on 2026-09-06 as a duplicate of #38315. The error
+    was checking word count and the absence of such a PR under our account, and reading that absence as "not yet
+    opened" rather than "decided against". Read the draft's own header before proposing it.
