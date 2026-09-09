@@ -828,3 +828,32 @@ the count is visible before any bytes move). The same trap was already written i
 skill this afternoon — *"the tree API pages at 50 — always `?recursive=1`, and count what you got"* —
 after it inflated a PLE size estimate. Writing the rule down did not fix the tool that had the bug.
 **A trap recorded in a skill is not a trap removed from the code.**
+
+## Gate 2's activation capture grabbed the QUANTISED activation, not the expert input (2026-09-09)
+
+The probe hooked the concrete `apply()` in `flashinfer_cutlass_moe.py` — correct for counting `topk_ids`
+(gate 1 used it successfully) — and captured its `hidden_states` for gate 2. It reported
+`EXPACT captured 337 rows x 1280`, and **1280 is the tell**: the model's hidden size is 2,560, and
+NVFP4 packs two 4-bit values per byte, so a `[T, 2560]` activation arrives at that point as `[T, 1280]`
+bytes. By the time `apply()` runs the activation is already quantised; casting it to float16 on the way
+out produced a tensor that is numerically meaningless.
+
+**It did not error, and the file looks plausible** — right shape family, right dtype, a `.meta.json` beside
+it. Only the dimension arithmetic gives it away. Had the analysis run, it would have produced an output
+error for both scale arms and a clean-looking verdict on gate 2, from garbage.
+
+**Correct hook:** `Qwen3NextSparseMoeBlock.forward` in
+`vllm/model_executor/models/qwen3_next.py` — the model-level MoE block, whose input is the BF16 hidden
+state before any quantisation. `Qwen4ExpSparseMoeBlock` (models/qwen4_exp/nvidia/model.py:162) subclasses
+it.
+
+**Second defect in the same run, cosmetic:** the runner was derived from `expcov.sh` by `sed`, which
+rewired the env var to `expert_counts2.json` but left the completion check looking for
+`expert_counts.json` — so it printed "NO COUNTS WRITTEN — probe never fired (VOID)" while the counts file
+sat beside it, written correctly. **A derived runner must have its checks re-read, not just its paths
+rewritten.**
+
+**The pattern across tonight's probes:** three of four failed on plumbing, never on the science — wrong
+model name (404), root-owned output directory, and now the wrong tensor. Each was caught by a
+sanity check that cost seconds (a token count, a permission error in the log, a dimension that was half
+what it should be). The one that would have been expensive is this one, because it produces numbers.
