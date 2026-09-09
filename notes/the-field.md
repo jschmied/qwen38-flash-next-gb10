@@ -1163,11 +1163,16 @@ split NVIDIA shipped for the 27B two days earlier, and the same lever as our `fp
 | --- | --- | --- |
 | `primitive-ai/…-mixed-NVFP4-FP8` | 57.4 GiB | body only, PLE ignored, 47 files |
 | `primitive-ai/…-NVFP4` | 55.4 GiB | body only, 0 PLE files, 14,281 downloads |
-| **`primitive-ai/…-PLE-quant`** | **14.9 GiB** | **41 files, all PLE** |
-| ours (`qwen38-flash-next-nvfp4`) | **126 GiB** | body + FP8 PLE in one tree (`model-plefp8-*`, ~47.7 GiB) |
+| **`primitive-ai/…-PLE-quant`** | **48.9 / 29.8 / 26.8 GiB** | the same table in **FP8 per-row**, **INT4 g16**, **NVFP4-style g16 e2m1** — pick one |
+| ours (`qwen38-flash-next-nvfp4`) | **126 GiB** | body + FP8 PLE in one tree (`model-plefp8-*`, **48 GiB**) |
 
-**Body + quantised PLE ≈ 72 GiB against our 126 GiB — about 54 GiB back**, and 33 GiB of that is the PLE
-alone (14.9 vs 47.7). That is far more than the ~21 GiB our TODO estimated for `provsalt/…-PLE-NVFP4`.
+**CORRECTION (same day).** I first recorded this repo as "14.9 GiB, 41 files" and concluded ~54 GiB back.
+Wrong: the HF tree API pages at 50 entries and I read one page of a 387-file repo as the whole thing. The
+real figures are three alternative tables of **48.9 / 29.8 / 26.8 GiB**, and our own PLE is **48 GiB**, not
+47.7 — so the honest saving is **~18 GiB (INT4) or ~21 GiB (NVFP4)**, which is exactly what our TODO
+already estimated for `provsalt/…-PLE-NVFP4`. Our FP8 table is the *same size* as their FP8 table; there is
+no free win, only a precision trade. The pagination trap is the same shape as this week's other four: a
+query that answers confidently without covering what it claims to.
 `ple-access-pattern` already says what it buys and does not: the PLE is a **memory-layout** problem —
 2,560 useful bytes per token scattered so a 160-byte row costs a 4 KiB page — so a smaller row still faults
 one page and decode barely moves. **It buys resident capacity, not speed.** On a 128 GB box that is still
