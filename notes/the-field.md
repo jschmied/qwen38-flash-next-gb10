@@ -1437,3 +1437,42 @@ flattered. The 8.482 % figure is anchored to the publisher's own bytes and does 
 Runner `headcmp.sh`, tools `lh/headcmp.py` (scale census), `lh/headval.py` (format validation),
 `lh/headq.py` (like-for-like re-quantisation). `headcmp.py` crashed on `quantile()` over 55 M elements —
 subsample before quantiles; `headq.py` does.
+
+### 2026-09-09: #53142 / #54173 / #52244 are ONE defect, and upstream already closed the root cause
+
+@Windless84 root-caused it on 09-09 (on our exact model, RTX PRO 6000) and posted the same finding to
+all three threads. `EngineCore._initialize_kv_caches` set
+`cache_config.block_size = min(g.kv_cache_spec.block_size for g in kv_cache_groups)`. The QSA indexer
+registers a `CircularBufferSpec` whose block size is the **ring capacity — 4 tokens without spec decode,
+8 with MTP-3** — so the global `cache_config.block_size` came out 4/8 while the Mamba managers run on
+**1,600**. Two consumers trust it:
+
+1. `mamba_hybrid.add_request` seeds the resumed state column with
+   `(num_computed_tokens - 1) // cache_config.block_size` → the index lands past the Mamba block table
+   on any resume over a cached prefix. That is the illegal memory access of **#54173**, and why it fires
+   on the *second* request of a shared-prefix pair and never on a fresh prompt.
+2. `Scheduler._mamba_block_aligned_split` aligns chunk ends to it → every chunk reaches the align-mode
+   managers unaligned. Their measurement: 140K tokens took **186 of 240 blocks instead of 113**.
+
+This is exactly our post-mortem row A ("align-mode block size = QSA ring capacity instead of the mamba
+block"), arrived at independently and with the mechanism named one level deeper than we had it.
+
+**Upstream closed it on 2026-09-04 with #53906**, which excludes non-prefix-cacheable groups from the
+`min(...)` — verbatim: *"their small block_size would otherwise drag the global block_size below the real
+allocator block size and desync it from mamba."*
+
+**Checked against our own stack, and it is already in.** `vllm-venv-fnmain2`:
+
+| | |
+| --- | --- |
+| `v1/engine/core.py:338` | carries the #53906 comment; the `min()` at 345 filters on `g.kv_cache_spec.prefix_cacheable` |
+| `mamba_state_block_size` (the #54076 identifier) | **0 occurrences** — #54076 is NOT applied |
+| `_mamba_block_aligned_split` | still reads `self.cache_config.block_size` … |
+| … which now resolves to | **1600** — `Setting attention block size to 1600 tokens`, confirmed in three separate fnmain2 server logs (09-08 21:24, 09-09 14:37, 14:52) |
+
+So **the align defect is closed on our current build by a different fix than the two we were tracking**.
+#54076/#53798 address the same defect more robustly (reading the mamba group's own spec instead of
+trusting the global min), but they are not load-bearing here any more. Our determinism narrative should
+stop listing "align block units (#54076/#53798)" as a live defect on fnmain2 — it was live on the
+**preview** stack where we measured it, which is what our 09-09 withdrawal comment said in the past
+tense, so no upstream correction is owed.
