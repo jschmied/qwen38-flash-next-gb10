@@ -1109,3 +1109,37 @@ is worth **+5–6.6 %** by live ablation (`cpupower idle-set -D 0`, pure step la
 unchanged) — a host lever we have never tested and which needs root; and `index_share_for_mtp_iteration`
 lifts acceptance 2.42 → 2.52 per draft, which pairs with MiaAI-single's finding that the flag cannot
 be set from the command line at all.
+
+## 2026-09-09 — upstream issue sweep: four threads that touch our surface, none of which we are in
+
+**vllm#55922 — "Qwen3.8-Flash-Next optimizations tracking issue"** (ZJY0516, 09-08). A tracking index for our
+exact model: kernels (#55272 remove torch.compile, #54517 fuse PLE, #54513 split QSA prefill/decode, #54560
+Hopper LL-GEMM), FP8 cache (#55557 main KV on the QSA path, #54890 indexer cache), PLE/Engram offload (#54371),
+MoE (#55867), PD, CPU offload. **Determinism appears nowhere in it**, and neither does anything from a
+single-GB10 deployment. We hold the largest body of Flash-Next determinism and agent-turn data anywhere and are
+not visible on the one page someone would look at first. Same author as #38315, where we commented today.
+
+**vllm#55951 — the same bug class as #55375, on a different path** (09-08). "mamba align postprocess indexes
+block table by **batch row** while the `idx_mapping` it is given belongs to the batch from `pp_size` steps ago"
+→ recurrent state copied into the wrong physical mamba blocks, possibly a live neighbour's or a freed-and-
+reassigned one; NaN logits or silent recall loss. Gated on **PP>1**, which we do not run (TP=1), so it does not
+explain our residual concurrent perturbation. But it is the **second confirmed cross-request state-contamination
+defect on hybrid + spec decode in a week**, after #55375. The class is live on this architecture, which is
+context for det-189: we found no leakage at top-5 resolution on *our* configuration, not that the class is
+absent.
+
+**vllm#55697 — RFC: Application-Directed Prefix Checkpoints for Mamba / Hybrid Prefix Caching** (09-07). An
+input-side marker (`<|mamba_checkpoint|>`) letting an application declare semantic prefix boundaries, with
+producer/consumer prefill scheduling; claims **+110 % throughput (5.9 → 12.4 QPS)** on Qwen3.5-35B / L40S at
+exact logit parity (< 1.2e-5). This attacks the cost finding 141 measured — redundant prefix recomputation on
+hybrids — from the *application* side, where #54458 attacks it from the allocator side. We have the numbers
+that page lacks for an agent workload: 1,026 recomputed tokens against 242 new per warm turn at block 1,600,
+and the bf16-SSM result (block → 832, −9.6 % paired agent-turn TTFT, finding 153).
+
+**vllm#54458 / #55533** — the two faces of the mamba/attention page coupling, both still open, #54458 untouched
+since our comment on 08-30. det-188 has since narrowed the concurrency side considerably (peaked at the
+incommensurate chunk budget, nested affected sets).
+
+**Our PRs:** #55122 CI shows one FAILURE — `pre-run-check` → *"Check PR label and author merge count"*. The PR
+carries **no labels**; that is a maintainer action, not a code defect, and @LucasWilkinson was already pinged
+(posting log, comment `5570822909`). #55430 is still a draft, #54948 and #54912 untouched since early September.
