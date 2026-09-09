@@ -3181,3 +3181,47 @@ Plus whatever drives the separate generation-side path.
     **Method note.** A byte-identity check answers "is this file the version I have in hand", not "did this ship". For a
     provenance claim the test is ancestry — `git merge-base --is-ancestor <merge-commit> <build-commit>` — and it costs
     one command. Use it before writing "already in the build" anywhere a reader might act on it.
+
+
+188. **The chunk budget modulates the concurrent perturbation by 2×, the curve is PEAKED not monotone, and the affected
+    positions are NESTED — one mechanism scaled, not different mechanisms at different shapes (`conc2`, budgets
+    2048/4096/16384 × 2 starts, each collecting sequentially and concurrently, `notes/data/conc2.txt`).**
+
+    | `--max-num-batched-tokens` | non-zero spread | spread > 0.1 | max | top-1 flips | first spread @ |
+    | --- | --- | --- | --- | --- | --- |
+    | 2,048 (×2) | 2,499 / 2,504 | 290 (11.6 %) | 3.683 | 119 | 5 |
+    | **4,096 (×2, control)** | 2,503 / 2,504 | **565 (22.6 %)** | 8.106 | **234** | **1** |
+    | 16,384 (×2) | 2,499 / 2,504 | 330 (13.2 %) | 4.719 | 132 | 5 |
+
+    Both controls hold: every sequential arm is exactly 0/2,504, and the 4,096 arms reproduce det-186 to the digit on a
+    different day with a fresh server and rebuilt cache.
+
+    **My pre-registered gate was wrong, and I am recording that rather than reinterpreting it.** I offered two outcomes,
+    "monotone in the budget" (packing drives it) and "flat" (packing is irrelevant). The truth is a third: **peaked at
+    4,096**, with both neighbours roughly half as severe. The prediction was badly posed; the run still answered.
+
+    **Why a peak is the chunk-packing signature.** Eight requests × 2,504 tokens = 20,032. At 2,048 a forward holds less
+    than one prompt, so batches are close to one request's chunk at a time. At 16,384 it holds six whole prompts, so
+    prompts mostly go in intact and split points are rare. At 4,096 it holds one whole prompt **plus 1,592 tokens of the
+    next** — maximally incommensurate with the prompt length, so boundaries land inside prompts in the most variable
+    way. `first_spread@` agrees: divergence reaches position **1** only at 4,096. A reduction that depended merely on
+    the batch's *total token count* could not produce a peak.
+
+    **The sharper test, and it is the more informative one** (framing owed to a third-party reading of these notes,
+    2026-09-09: ask whether the affected *set* changes, not just its size):
+
+    - **Same budget, two independent starts: the flipped-position set is IDENTICAL — Jaccard 1.000 at all three
+      budgets.** Not merely the same count; the same positions.
+    - **Different budgets: the sets are NESTED, not disjoint.** 2k ⊂ 16k (shares 119 of 119) and 2k ⊂ 4k (117 of 119);
+      16k ⊂ 4k (130 of 132). Jaccard 0.902 / 0.496 / 0.551.
+
+    So the same positions are always the fragile ones and the budget decides how many of them cross the flip threshold.
+    **That is one underlying instability whose magnitude packing modulates — not different shapes exciting different
+    mechanisms.** It also bounds the remaining search: whatever the reduction is, it perturbs a fixed, reproducible set
+    of ill-conditioned positions, which is a far easier target than a floating one.
+
+    **Clarification against my own earlier over-correction.** Having found that the per-start raw payload hashes differ
+    and the completion hashes permute, I told the user I had overstated the reproducibility. That was itself wrong on
+    the point that matters: the *flipped-position set* is identical across starts (Jaccard 1.000); what permutes is the
+    assignment of the eight outcomes to repeat indices. Both hold, and they are consistent — the same multiset of
+    per-slot outcomes, dealt in a different order, leaves the set of positions where the eight disagree unchanged.

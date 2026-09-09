@@ -1,0 +1,92 @@
+== CONC2  start 2026-09-09 09:20
+
+=== arm b4k_1  FN_BATCH=4096  09:20
+   MECH: 'max_num_batched_tokens': 4096
+sending requests (endpoint_label='sm121-b4k_1-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b4k_1-sequential.json
+arm=c2_b4k_1_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002583
+sending requests (endpoint_label='sm121-b4k_1-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b4k_1-concurrent.json
+arm=c2_b4k_1_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14002017
+
+=== arm b2k_1  FN_BATCH=2048  09:35
+   MECH: 'max_num_batched_tokens': 2048
+sending requests (endpoint_label='sm121-b2k_1-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b2k_1-sequential.json
+arm=c2_b2k_1_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002583
+sending requests (endpoint_label='sm121-b2k_1-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b2k_1-concurrent.json
+arm=c2_b2k_1_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14007036
+
+=== arm b16k_1  FN_BATCH=16384  09:52
+   MECH: 'max_num_batched_tokens': 16384
+sending requests (endpoint_label='sm121-b16k_1-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b16k_1-sequential.json
+arm=c2_b16k_1_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002585
+sending requests (endpoint_label='sm121-b16k_1-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b16k_1-concurrent.json
+arm=c2_b16k_1_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14004908
+
+=== arm b4k_2  FN_BATCH=4096  10:10
+   MECH: 'max_num_batched_tokens': 4096
+sending requests (endpoint_label='sm121-b4k_2-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b4k_2-sequential.json
+arm=c2_b4k_2_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002583
+sending requests (endpoint_label='sm121-b4k_2-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b4k_2-concurrent.json
+arm=c2_b4k_2_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14002017
+
+=== arm b2k_2  FN_BATCH=2048  10:24
+   MECH: 'max_num_batched_tokens': 2048
+sending requests (endpoint_label='sm121-b2k_2-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b2k_2-sequential.json
+arm=c2_b2k_2_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002583
+sending requests (endpoint_label='sm121-b2k_2-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b2k_2-concurrent.json
+arm=c2_b2k_2_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14007036
+
+=== arm b16k_2  FN_BATCH=16384  10:37
+   MECH: 'max_num_batched_tokens': 16384
+sending requests (endpoint_label='sm121-b16k_2-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b16k_2-sequential.json
+arm=c2_b16k_2_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002585
+sending requests (endpoint_label='sm121-b16k_2-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qc2-b16k_2-concurrent.json
+arm=c2_b16k_2_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14004908
+
+== SPREAD CENSUS ==
+  c2_b2k_1_sequential        nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  c2_b2k_1_concurrent        nonzero_spread= 2499/2504 ( 99.8%)  spread>0.1=  290 (11.6%)  max=  3.683  top1_flips=  119 first_spread@=5
+  c2_b4k_1_sequential        nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  c2_b4k_1_concurrent        nonzero_spread= 2503/2504 (100.0%)  spread>0.1=  565 (22.6%)  max=  8.106  top1_flips=  234 first_spread@=1
+  c2_b16k_1_sequential       nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  c2_b16k_1_concurrent       nonzero_spread= 2499/2504 ( 99.8%)  spread>0.1=  330 (13.2%)  max=  4.719  top1_flips=  132 first_spread@=5
+  c2_b2k_2_sequential        nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  c2_b2k_2_concurrent        nonzero_spread= 2499/2504 ( 99.8%)  spread>0.1=  290 (11.6%)  max=  3.683  top1_flips=  119 first_spread@=5
+  c2_b4k_2_sequential        nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  c2_b4k_2_concurrent        nonzero_spread= 2503/2504 (100.0%)  spread>0.1=  565 (22.6%)  max=  8.106  top1_flips=  234 first_spread@=1
+  c2_b16k_2_sequential       nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  c2_b16k_2_concurrent       nonzero_spread= 2499/2504 ( 99.8%)  spread>0.1=  330 (13.2%)  max=  4.719  top1_flips=  132 first_spread@=5
+
+   READ: (1) CONTROL — the 4096 concurrent arms must reproduce det-186 (2503/2504, 565 >0.1,
+             234 flips). If not, the run is void.
+         (2) every SEQUENTIAL arm must be 0. That is what attributes anything to concurrency.
+         (3) ANSWER — monotone in the budget (2048 worst, 16384 best) means chunk packing drives
+             it and the fix is a scheduling question. FLAT across budgets means packing is not the
+             driver: the reduction depends on the batch's token count or member set rather than on
+             how it was chunked, and the next rung is per-request layer hashing.
+         (4) 16384 at util 0.75 is the memory-risky arm; if it DIED, say so rather than reading
+             a two-budget curve as if it were three.
+== ALL DONE == 2026-09-09 10:51
