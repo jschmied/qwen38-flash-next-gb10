@@ -1293,3 +1293,25 @@ single checkpoint's evidence.
 **Staging is no longer blocked on disk.** The watchdog's premise (~35 GB free) predates the archive run;
 the GB10 now has **302 GB free**, so the ~20 GiB copy costs nothing and needs no deletions. It needs the
 box, which `scorediv` holds until ~15:05. Queued for the user's go.
+
+### Partial tensor fetch: one layer instead of the checkpoint (2026-09-09)
+
+Our ingress link is the binding constraint on every "get that checkpoint" plan, and it is **~10 MB/s
+(~86 Mbit/s)** — measured today at 10.8 MB/s single-stream, with four parallel streams summing to only
+**8.5 MB/s**, so the link is saturated and parallelism does not help.
+
+But most questions are about **one tensor**. HF's CDN answers byte-range requests (`206`,
+`accept-ranges: bytes`), and safetensors carries a JSON header with every tensor's byte offsets, so a
+single tensor can be pulled without the shard: read the index → range-fetch the shard header →
+range-fetch only the matching bytes. `/opt/llm/runners/hfpull_tensor.py` does this and writes a valid
+safetensors file plus provenance.
+
+Measured: `lm_head` on `nvidia/Qwen3.8-27B-NVFP4` is **682 MiB** inside a 1,879 MiB shard inside a
+19 GiB checkpoint. A 75.8 MiB slice came down in **10.5 s** and was **byte-identical (sha256)** to the
+same range in the shard we hold on PBS, and the written file loads with correct dtypes and shapes.
+
+**This changes the H100 plan.** The return leg was the worst term — 126 GiB at 10 MB/s ≈ 3.5 h. If the
+deliverable is "does Local-Hessian calibration rescue the NVFP4 head", we need the **head**, not the
+checkpoint: quantize on the rented box, push to HF (their egress is fast), pull ~1 GB, decide, and only
+then pay for the rest. It also means the BF16 reference — 335.3 GiB, which we cannot host — stays where
+it belongs, on the rented box, where the divergence measurement should run anyway.
