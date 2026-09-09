@@ -112,6 +112,40 @@ Watchdogs are set for both.
 table), `comment-miaai-19-cudagraph-widths.md` (why our capture-size arms were null and where the
 effect actually lives), and the standing `pr-fla-fused-kkt-solve.md`.
 
+## WATCH — PixelML DFlash drafter for Flash-Next NVFP4 (added 2026-09-09)
+
+https://huggingface.co/PixelML/Qwen3.8-Flash-Next-NVFP4-DFlash — uploaded **today 19:05**, 1 like,
+0 downloads. **Weights are not up yet: the repo currently contains only `README.md`.** So this is a
+watch item, not a download.
+
+**What it is:** a DeepSpec **DFlash block drafter** (5 draft layers, block size 7, one parallel pass) for
+`nvidia/Qwen3.8-Flash-Next-NVFP4` — ships draft layers plus the fusion projection only, not a full model.
+Their base is **NVIDIA's** build; ours is RadixArk, so transfer is not automatic.
+
+**Why it is interesting to us:** DFlash beat MTP decisively on our 27B (34–40 t/s vs MTP's 23.6). A
+DFlash drafter for Flash-Next would be the same swap on the model we actually serve.
+
+**Why it is LOW priority anyway — their own README disqualifies it for our workload:**
+> "this is a maths drafter, a code wash, and it makes chat slower at every block size we can serve.
+> It beats the target's own tuned speculative head by 3.87 % in aggregate, in eager mode"
+
+We run agent/code traffic, which is the "code wash" case, and we serve with cudagraphs, not **eager**.
+
+**Their protocol is unusually close to ours** — 2× DGX Spark (GB10), vLLM, TP2 + expert parallel, c=1,
+one frozen 100-prompt fixture (33 code / 33 math / 34 chat). Two things worth taking from it regardless
+of whether we ever run the drafter:
+
+1. **They independently corroborate our finding 155.** Against MTP k=4 they measure k=3 at **−0.60 %,
+   95 % CI [−1.47, +0.25]** — i.e. k=3 and k=4 indistinguishable, k=6 at −6.72 %, k=1 at −17.97 %. Our
+   finding 155 had k=4 **worse** than our shipped k=3 by 3.4 %. Same conclusion, different hardware
+   topology: **do not move off k=3.**
+2. **Their blog is a methodology read**: *"Our 25 % inference speedup became 3.9 % after we fixed the
+   benchmark twice"* — https://github.com/PixelML/deepspec-qwen38-flash-next/blob/main/blog/README.md
+
+**Action when weights appear:** check whether the drafter is tied to NVIDIA's checkpoint or transfers to
+RadixArk, and measure on **agent** traffic with cudagraphs on — the two axes their own numbers do not
+cover. Do not adopt on the strength of an eager-mode aggregate.
+
 ## Live state — 2026-09-08 night (goal: agent turn time)
 
 **The goal was reset by the user tonight: make agent turns faster on this model. The top-k /
