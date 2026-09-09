@@ -20,7 +20,7 @@ just after each expected finish):
 | 2 | `ssm2` | **DONE 23:02 — finding 153.** Block 1,600 → **832** as predicted, KV +21–36 %, intercept −51 %. Real agent turns: **total −9.6 %** over 24 paired turns (18.84 → 17.04 s, faster on 15/24) but the **median turn is slightly worse** — it is a tail lever. Costs **127/2,504 modal top-1 changes**. No decode win; vllm#55533 does not reproduce. Prod adoption = one `FN_SSM_DTYPE` line, **user's call, pair it with a task eval** | ✅ the block-size log line differed |
 | 3 | `pstack` | **DONE 00:36 — finding 154.** Cold TTFT **−1.4 % at 8k, −1.1 % at 30k** (ranges do not overlap), **null** on warm agent turns. Its apparent 5–10 % decode win is a **1-ulp numerics change flipping MTP acceptance ±10 pp** — expectation zero. Closes finding 143 as a correct kernel win that does not move agent turns; the PR still stands on kernel merit | ✅ marker present in `fla`, absent in `base` |
 | 4 | `mtp42` | **DONE 02:19 — finding 155.** k=4 is **−3.4 %** at c=1 (buys draft length, loses acceptance rate; one prompt collapses 53.2 → 35.7 %) and no better at c=8. **Not a prod change**; the field's +11.4 % does not transfer. **vllm#55533 does not reproduce** — scheduler reaches width 8 in every arm and no-spec is 19.9 tok/s against n3's 23.4–25.3. Its `1+k` mechanism *is* visible in the block size (1,568 / 1,600 / 1,616 at k=0/3/4) | ✅ n3 vs n4 differed |
-| 5 | `ishare` | is `index_share_for_mtp_iteration` a free decode lever | `index_share_for_mtp_iteration=True` in the engine config line |
+| 5 | `ishare` | **VOID 02:52 on a gate bug of mine, not on the flag — finding 157.** `grep \| head \|\| echo` takes head's exit status, so the marker was empty and the gate declared the base arm contaminated. The flag *had* engaged. Two arms that ran suggest no gain (AL 2.64/2.17/2.60 vs 2.64/2.15/2.63). **Re-queued as `ishare2`** | ❌ gate bug; rule added to method.md |
 
 Runs 2–5 all came out of a field/issue sweep done the same evening (`the-field.md`, 2026-09-08) —
 three of them are levers the field has measured and we had not, and one (`pstack`) is a finding of
@@ -46,6 +46,8 @@ orders flipped 52 verdicts, all near the threshold, and exact accumulation flipp
 The instrument exists: the `tiecensus` runner (fixed after its chown failure, never re-launched) measures
 exactly `ambiguous iff n_gt < k < n_gt + n_eq` on real indexer scores. **Top candidate for the next idle
 slot**; it decides whether #55122's stated premise is right, which matters before anyone merges it.
+
+**Runs 6–8 (added during the night):** `cstates` **DONE 03:15 — finding 156**, CPU idle states cost **0.7–0.9 %** of a decode step, not the field's 5–6.6 %; not worth a host-wide setting. `asched` (running) — was our "never combine MTP with async scheduling" caution harmless, given we have been doing it for weeks. `tcorrupt` — mmastrac's tool-call-corruption repro from vllm#54521, stock vs our four fixes. `ishare2` — the re-run.
 
 **Prepared, not yet run:** draft-vocabulary size sweep at 4k/8k/16k vs 32k (files built, `dv_patch.py`
 is the hook; 32k must be re-measured because the rebuild overwrote det-135's files). CPU C-states off
