@@ -1559,3 +1559,35 @@ The new gate 1 is: **measure the per-expert token-count distribution our calibra
 produces on Flash-Next**, using the same probe technique as `headcap` on the routing gate. If the
 minimum-coverage expert still sees thousands of tokens, the concern dissolves; if some see ~0, we learn
 which and fix the corpus — and that is a data problem we can solve, not a toolchain limitation.
+
+### GATE 0 PASSES: Local-Hessian's advantage is ~3× LARGER in output space than in weight space
+
+`headcap` captured **11,905 real `lm_head` input vectors** (5,120-dim) from the served 27B — the probe
+inserted at `qwen3_5.py:408`, reached by delegation from `qwen3_vl.py:2969`, with `prompt_logprobs` set
+so `compute_logits` sees every prompt position rather than only the last. Venv restored byte-identical.
+
+Relative **output** error `‖X(W−Ŵ)ᵀ‖_F / ‖X Wᵀ‖_F` on those activations, same BF16 head re-quantised to
+NVFP4 g16 under each scale set:
+
+| scale set | output error | weight error (headcmp) |
+| --- | --- | --- |
+| **Local-Hessian** (NVIDIA's published scales) | **3.067 %** | 8.482 % |
+| plain-max (`amax/6` through FP8) | 4.370 % | 9.483 % |
+| **LH better by** | **1.303 pp — 29.8 % relative** | 1.001 pp — 10.6 % relative |
+
+**The margin grows in output space, which is the whole claim of the method.** Local-Hessian minimises a
+Hessian-weighted error, so plain L2 weight error understates it; measured against real activations the
+advantage is roughly **three times larger in relative terms**. Note also that output error (3–4 %) is
+far below weight error (8–9 %) — the activations simply do not excite every weight direction equally,
+which is precisely the premise Hessian weighting exploits.
+
+This sits at the top of the user's predicted range for output reconstruction ("clearly better, perhaps
+20–30 % lower perturbation"), and it is consistent with the Qwen team's own H-Scale result
+(arXiv 2608.28113).
+
+**Computed without materialising the residual**: `‖X Dᵀ‖²_F = Σⱼ dⱼᵀ (XᵀX) dⱼ`, so one 5120² Gram matrix
+turns an 11,905 × 248,320 product (11.8 GB) into a batched quadratic form over weight rows.
+
+**Limit, stated plainly:** X comes from our **quantised** 27B body and **our** prompts, not a BF16 body
+and not NVIDIA's Nemotron calibration set. This answers "which scale set is better at deployment time on
+our traffic", not "did we replicate their recipe".
