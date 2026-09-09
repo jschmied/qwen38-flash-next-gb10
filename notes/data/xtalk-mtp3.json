@@ -1,0 +1,211 @@
+{
+ "positions": 2503,
+ "solo_bit_identical": true,
+ "hetero_observations": 8,
+ "hetero_identical": false,
+ "alien_token_ids": 2942,
+ "new_topk_entries_vs_solo": 9252,
+ "ALIEN_INTRUSIONS": 124,
+ "intrusions": [
+  {
+   "position": 184,
+   "token_id": 96540
+  },
+  {
+   "position": 184,
+   "token_id": 96540
+  },
+  {
+   "position": 184,
+   "token_id": 96540
+  },
+  {
+   "position": 184,
+   "token_id": 96540
+  },
+  {
+   "position": 190,
+   "token_id": 1710
+  },
+  {
+   "position": 190,
+   "token_id": 1710
+  },
+  {
+   "position": 190,
+   "token_id": 1710
+  },
+  {
+   "position": 190,
+   "token_id": 1710
+  },
+  {
+   "position": 352,
+   "token_id": 96844
+  },
+  {
+   "position": 352,
+   "token_id": 96844
+  },
+  {
+   "position": 352,
+   "token_id": 96844
+  },
+  {
+   "position": 352,
+   "token_id": 96844
+  },
+  {
+   "position": 419,
+   "token_id": 96706
+  },
+  {
+   "position": 419,
+   "token_id": 96706
+  },
+  {
+   "position": 419,
+   "token_id": 96706
+  },
+  {
+   "position": 419,
+   "token_id": 96706
+  },
+  {
+   "position": 525,
+   "token_id": 97483
+  },
+  {
+   "position": 525,
+   "token_id": 97483
+  },
+  {
+   "position": 525,
+   "token_id": 97483
+  },
+  {
+   "position": 525,
+   "token_id": 97483
+  },
+  {
+   "position": 571,
+   "token_id": 96158
+  },
+  {
+   "position": 571,
+   "token_id": 96158
+  },
+  {
+   "position": 571,
+   "token_id": 96158
+  },
+  {
+   "position": 571,
+   "token_id": 96158
+  },
+  {
+   "position": 614,
+   "token_id": 95761
+  },
+  {
+   "position": 614,
+   "token_id": 95761
+  },
+  {
+   "position": 614,
+   "token_id": 95761
+  },
+  {
+   "position": 614,
+   "token_id": 95761
+  },
+  {
+   "position": 807,
+   "token_id": 96844
+  },
+  {
+   "position": 807,
+   "token_id": 96844
+  },
+  {
+   "position": 807,
+   "token_id": 96844
+  },
+  {
+   "position": 807,
+   "token_id": 96844
+  },
+  {
+   "position": 889,
+   "token_id": 95944
+  },
+  {
+   "position": 889,
+   "token_id": 95944
+  },
+  {
+   "position": 889,
+   "token_id": 95944
+  },
+  {
+   "position": 889,
+   "token_id": 95944
+  },
+  {
+   "position": 895,
+   "token_id": 4960
+  },
+  {
+   "position": 895,
+   "token_id": 4960
+  },
+  {
+   "position": 895,
+   "token_id": 4960
+  },
+  {
+   "position": 895,
+   "token_id": 4960
+  },
+  {
+   "position": 967,
+   "token_id": 95761
+  },
+  {
+   "position": 967,
+   "token_id": 95761
+  },
+  {
+   "position": 967,
+   "token_id": 95761
+  },
+  {
+   "position": 967,
+   "token_id": 95761
+  },
+  {
+   "position": 1012,
+   "token_id": 96844
+  },
+  {
+   "position": 1012,
+   "token_id": 96844
+  },
+  {
+   "position": 1012,
+   "token_id": 96844
+  },
+  {
+   "position": 1012,
+   "token_id": 96844
+  },
+  {
+   "position": 1078,
+   "token_id": 3709
+  },
+  {
+   "position": 1078,
+   "token_id": 3709
+  }
+ ]
+}

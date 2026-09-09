@@ -3225,3 +3225,42 @@ Plus whatever drives the separate generation-side path.
     the point that matters: the *flipped-position set* is identical across starts (Jaccard 1.000); what permutes is the
     assignment of the eight outcomes to repeat indices. Both hold, and they are consistent — the same multiset of
     per-slot outcomes, dealt in a different order, leaves the set of positions where the eight disagree unchanged.
+
+
+189. **NO CONTENT LEAKAGE between concurrent requests — and the probe that appeared to find some was answering the
+    wrong question (`xtalk` + a control computed from `conc1`, 2026-09-09).** Asked because det-186 structurally cannot
+    detect leakage: all eight of its concurrent repeats are the same prompt, so identical content crossing between
+    requests would be invisible. The probe fired the English target alongside seven co-tenants built only from
+    CJK/Cyrillic/Greek/Devanagari tokens and asked whether any co-tenant token enters the target's top-5 where it never
+    does solo.
+
+    **It reported 124 "alien intrusions", with the solo control clean (`solo_bit_identical: True`).** Decoded, the ten
+    distinct tokens are `。 ， ： 是 同 那 它 短 不同 所以` — CJK punctuation *and* content words. Read naively that is
+    contamination.
+
+    **It is not.** The missing null was the same measurement with *homogeneous English* co-tenants — no CJK anywhere in
+    the batch — which `conc1` had already collected:
+
+    | arm | new top-5 entries vs solo | CJK "intrusions" | distinct CJK tokens |
+    | --- | --- | --- | --- |
+    | alien co-tenants | 9,252 | 124 | all ten |
+    | **control: English co-tenants** | 16,605 | **178** | **the same ten** |
+
+    The same ten tokens appear at a *higher* raw count with no CJK in the batch at all. They are the CJK tokens that sit
+    just below the top-5 at particular English positions in a multilingual vocabulary — punctuation near-synonyms for
+    `.` `,` `:` and high-frequency function words — so any perturbation promotes them. Per new top-5 entry the rates are
+    1.34 % and 1.07 %, close, and the raw counts point the wrong way for a leakage story.
+
+    **Verdict: no content leakage detected at top-5 resolution.** Stated with its limit: a leak that perturbs values
+    without promoting a co-tenant token into the top 5 would not be caught by this instrument.
+
+    **The design error is the useful part, and it is mine.** I wrote into the runner that an alien token "cannot be
+    promoted into the top-5 of English prose by rounding — it would have to jump thousands of plausible continuations".
+    That was an assertion, not a measurement, and it was wrong: in a multilingual model those tokens are *already* near
+    the boundary. A positive signal with an unexcluded benign explanation is not evidence. **The rule this adds: a probe
+    needs its null measured in the same run, not argued for in the header comment.** Had this been reported as
+    contamination it would have gone to vllm#56009, which is an open cross-talk report with no reproducer — precisely
+    the thread where a false positive would do the most damage.
+
+    Third design failure of this class in two days (finding 157's gate, the payload-fingerprint extraction, this). All
+    three shared a shape: a check that could return a confident answer without ever having tested what it claimed to.
