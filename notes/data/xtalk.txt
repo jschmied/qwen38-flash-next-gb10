@@ -1,0 +1,57 @@
+== XTALK  start 2026-09-09 10:51
+
+=== arm mtp3  FN_MTP=3  10:51
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+alien co-tenant prompt: 2942 distinct token ids, 2958 tokens
+phase A (solo) x8
+   positions=2503  solo bit-identical across repeats: True
+phase B (hetero) 8 rounds of 1 target + 7 alien
+   collected 8 hetero observations
+
+=== RESULT ===
+  solo bit-identical      : True   (must be True, or the probe says nothing)
+  new top-5 entries under load: 9252  (rounding promotes plausible neighbours; expected > 0)
+  ALIEN INTRUSIONS        : 124   <-- 0 = no content leakage detected; >0 = contamination
+      position 184 token 96540
+      position 184 token 96540
+      position 184 token 96540
+      position 184 token 96540
+      position 190 token 1710
+      position 190 token 1710
+      position 190 token 1710
+      position 190 token 1710
+      position 352 token 96844
+      position 352 token 96844
+   probe exit=0
+
+=== arm mtp0  FN_MTP=0  11:08
+alien co-tenant prompt: 2942 distinct token ids, 2958 tokens
+phase A (solo) x8
+   positions=2503  solo bit-identical across repeats: True
+phase B (hetero) 8 rounds of 1 target + 7 alien
+   collected 8 hetero observations
+
+=== RESULT ===
+  solo bit-identical      : True   (must be True, or the probe says nothing)
+  new top-5 entries under load: 2366  (rounding promotes plausible neighbours; expected > 0)
+  ALIEN INTRUSIONS        : 35   <-- 0 = no content leakage detected; >0 = contamination
+      position 184 token 96540
+      position 190 token 1710
+      position 352 token 96844
+      position 419 token 96706
+      position 525 token 97483
+      position 571 token 96158
+      position 614 token 95761
+      position 807 token 96844
+      position 889 token 95944
+      position 895 token 4960
+   probe exit=0
+
+   READ: (1) CONTROL — 'solo bit-identical' must be True in both arms.
+         (2) 'new top-5 entries under load' must be > 0, else concurrency perturbed nothing.
+         (3) ANSWER — ALIEN INTRUSIONS. 0 in both arms = no content leakage at top-5 resolution.
+             Any non-zero count is contamination and outranks everything else here; the intrusion
+             list (position, token id) is in the JSON and is the start of a reproducer.
+         (4) this tests top-5 resolution only. A leak that perturbs values without promoting an
+             alien token into the top 5 would not be caught; say so rather than claiming 'no leak'.
+== ALL DONE == 2026-09-09 11:23

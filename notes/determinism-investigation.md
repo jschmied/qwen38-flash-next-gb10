@@ -3251,6 +3251,20 @@ Plus whatever drives the separate generation-side path.
     `.` `,` `:` and high-frequency function words — so any perturbation promotes them. Per new top-5 entry the rates are
     1.34 % and 1.07 %, close, and the raw counts point the wrong way for a leakage story.
 
+    **Both arms, with their controls, once the second arm finished:**
+
+    | arm | co-tenants | new top-5 entries vs solo | CJK "intrusions" | rate |
+    | --- | --- | --- | --- | --- |
+    | MTP-3 | alien (CJK) | 9,252 | 124 | 1.34 % |
+    | MTP-3 | **English only (control)** | 16,605 | **178** | **1.07 %** |
+    | MTP-0 | alien (CJK) | 2,366 | 35 | 1.48 % |
+    | MTP-0 | **English only (control)** | 16,907 | **232** | **1.37 %** |
+
+    `solo_bit_identical` is True in both arms and `new_topk_entries_vs_solo` is well above zero in all four cells, so
+    both pre-committed controls pass. In each arm the English-only control produces **more** CJK promotions in absolute
+    count than the arm with CJK actually in the batch, and the per-new-entry rates differ by less than the difference
+    between the two control cells themselves.
+
     **Verdict: no content leakage detected at top-5 resolution.** Stated with its limit: a leak that perturbs values
     without promoting a co-tenant token into the top 5 would not be caught by this instrument.
 
@@ -3264,3 +3278,10 @@ Plus whatever drives the separate generation-side path.
 
     Third design failure of this class in two days (finding 157's gate, the payload-fingerprint extraction, this). All
     three shared a shape: a check that could return a confident answer without ever having tested what it claimed to.
+
+    **And the worst detail: the error propagated into its own reviewer.** The wrong premise was written into the
+    runner's header comment *and* copied verbatim into the watchdog prompt that was supposed to audit the result — "an
+    alien token cannot be promoted into the top-5 by rounding … that outranks every other open item … draft it for
+    vllm#56009". Read literally, the reviewer instructed the reviewer to report the false positive upstream. **A probe
+    and its audit must not share a premise.** When writing a gate, the harvest instruction should state the *null that
+    would refute it*, not restate the hypothesis with more confidence.
