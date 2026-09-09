@@ -21,7 +21,7 @@ scheme, same size, same speed, better calibration. Not a speed project.
 | --- | --- | --- | --- |
 | 0 | **Does LH's weight-space win survive in OUTPUT space?** | ~20 min | **PASSED 2026-09-09 21:2x — 3.067 % vs 4.370 %, LH better by 1.303 pp (29.8 % relative) on 11,905 real activation vectors, vs 1.001 pp (10.6 %) in weight space. The margin GROWS in output space.** |
 | 1 | **Expert routing coverage** (reframed: engagement was settled by the 0.46 changelog + the Triton fast path). Does our corpus route enough tokens to EVERY expert for a per-expert Hessian? | ~20 min | **PASSED 2026-09-09 22:17 — 0 of 512 experts below 10,000 assignments; skew only 3.7×. Per (layer, expert) the worst gets ~1,635 on a 33-prompt corpus and ~42,800 scaled to a real calibration.** |
-| 2 | **Does one real expert layer behave like the head?** Quantise layer 24 LH vs MSE, output error on real activations | ~1 h | not started |
+| 2 | **Does one real expert layer behave like the head?** | ~1 h | **PASSED 2026-09-09 23:4x — LH better by median 24.3 % (range 20.3–53.5 %) across 15 real experts of layer 24, against the head's 29.8 %. ModelOpt chose the LH scales; both arms share one quantise path. Caveat: median expert had only 90 captured rows, so the evidence is mainly from well-covered experts; expert 2 returned NaN and is excluded.** |
 | 3 | **The build** | see below | gated on 0–2 |
 | 4 | **Validation before adoption** | logprob divergence vs BF16, then agent-task quality | gated on 3 |
 
