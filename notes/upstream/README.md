@@ -414,3 +414,18 @@ branch lacks — fetch + rebase before pushing.
     Offered TP=1 — the axis the thread lacks — including a census on a workload they think should tie.
     Draft `comment-55872-gb10-smem-and-premise.md`.
     → https://github.com/vllm-project/vllm/pull/55872#issuecomment-5604003805
+
+103. 2026-09-09 17:0x — **vllm#54426 comment** (user go "yes, keep short, post"). Reply to @rmagur1203's
+    third-GB10 report, which corroborates the fp8-KV capacity win (1.77× vs our 1.72× / the RFC's 1.79×)
+    but finds a **+4.3 % TTFT regression in 9 of 9 cells** and MTP acceptance −8.0 / −2.7 pts. Three
+    points, kept short: (a) the mechanism's hardware constant — **GB10 has 102400 bytes shared memory per
+    SM**, which is why an fp32 tile in `_cast_kv_tile` forces the `block_n // 2` halving; same number that
+    excluded FlashInfer's top-k on GB10 in #55872 today, two kernels one limit; (b) their acceptance delta
+    sits inside our measured **±10 pp lottery** (finding 154: a 1-ulp fused kernel moved acceptance
+    +6.6/+10.4/−3.8 pp across three prompts) and needs a per-prompt spread before being booked as a cost;
+    (c) **a correction to our own 08-30 corroboration** — we posted capacity and decode and said "no decode
+    regression", but never measured TTFT, so our comment should not be read as clearing prefill; on our
+    TTFT-bound agent workload (53–69 % of a turn) a real +4.3 % would outweigh the pool gain.
+    Draft `comment-54426-ttft-and-smem.md`.
+    → https://github.com/vllm-project/vllm/issues/54426#issuecomment-5604098517
+    **Open, not promised:** re-applying the gist to a current venv to measure TTFT bf16-vs-fp8 ourselves.
