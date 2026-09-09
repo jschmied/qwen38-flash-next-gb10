@@ -448,3 +448,17 @@ branch lacks — fetch + rebase before pushing.
     three days with no human review ever submitted. Draft `comment-54076-withdraw-acceptance.md`.
     → https://github.com/vllm-project/vllm/pull/54076#issuecomment-5604172829
     → https://github.com/vllm-project/vllm/pull/53798#issuecomment-5604173134
+
+105. 2026-09-09 18:5x — **vllm#54076 DCO note** (user go "post"). Mechanical, two lines of substance:
+    none of the three commits carries `Signed-off-by:`, so **DCO has been `action_required` since the PR
+    opened on 08-27 — thirteen days** — and `pre-run-check` fails behind it, skipping `Check format` and
+    `pre-commit`. Fix is `git rebase --signoff main && git push --force`. Flagged because DCO surfaces as
+    a check rather than a review comment and is easy to miss while resolving merge conflicts (twice), and
+    because it is a plausible reason the PR has 14 comments and **no human review ever submitted** — the
+    thing that looked odd when we checked the PR earlier today.
+    Context: wickist force-pushed a rebase at 16:30 today (author dates 08-27/28, committer dates 09-09),
+    ~80 min after our withdrawal comment. Second comment from us on this PR today — justified against the
+    posting rule added this afternoon because it is a specific, actionable fact that is **unstated** in 14
+    comments and explains a 13-day stall, not a restatement of anything.
+    Draft `comment-54076-dco.md`.
+    → https://github.com/vllm-project/vllm/pull/54076#issuecomment-5605403768
