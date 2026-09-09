@@ -133,6 +133,42 @@ accident, and this makes it exact. Fetching: `hfpull_tensor.py` gets whole files
 **sha256-identical** to the source; the rewritten `model.safetensors.index.json` resolves every key the
 model asks for; and the reshaped checkpoint serves. Sizes are not evidence — `verify-checksums-not-sizes`.
 
+
+### Sharding plan, validated against the real checkpoint (2026-09-10)
+
+`/opt/llm/runners/reshard.py --plan` classified **all 296,475 tensors** of
+`qwen38-flash-next-nvfp4` — **zero unclassified**, so the component rules partition the checkpoint.
+Plan at an 8 GiB shard cap:
+
+| component | tensors | GiB | shards |
+| --- | ---: | ---: | ---: |
+| **experts** | 294,914 | **68.0** | 9 |
+| ple | 138 | 47.7 | 7 |
+| linear_attn | 324 | 3.9 | 1 |
+| hyper_connection | 387 | 1.2 | 1 |
+| **lm_head** | 1 | **1.2** | 1 |
+| embed_tokens | 1 | 1.2 | 1 |
+| self_attn | 108 | 1.1 | 1 |
+| visual | 333 | 0.8 | 1 |
+| shared_expert | 192 | 0.4 | 1 |
+| mtp | 29 | 0.2 | 1 |
+| router_gate | 48 | 0.1 | 1 |
+| **TOTAL** | 296,475 | 125.9 | **25** |
+
+**What it buys, measured rather than estimated:**
+- a **calibration variant costs 68.0 GiB** (the experts alone), against 125.9 for a whole checkpoint;
+- a **head variant costs 1.2 GiB**, against the **11.83 GiB** the current layout forces because `lm_head`
+  shares a shard with `embed_tokens` (measured by inode across our two existing head variants);
+- 25 shards, not the 40–90 I guessed — the earlier estimate was pessimistic.
+
+**One layout fact for the build:** this NVFP4 checkpoint stores experts **individually** (294,914 tensors,
+e.g. `layers.N.mlp.experts.J.down_proj.*`), while the BF16 source stores them **fused**
+(`experts.gate_up_proj [512,1280,2560]`). The re-shard runs on whatever layout the export produces; the
+component rules match both, since they key on `.mlp.experts.` either way.
+
+`--execute` still needs writing and must verify each tensor's payload sha256 against the source before
+the plan is trusted on 126 GiB.
+
 ## The trap that would waste the whole run
 
 `cfg = NVFP4_DEFAULT_CFG; cfg["algorithm"] = {"method": "local_hessian"}` calibrates **zero modules** and
