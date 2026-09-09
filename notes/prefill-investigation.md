@@ -1,5 +1,57 @@
 # Prefill investigation — findings (continues the numbering of `determinism-investigation.md`)
 
+## Answers by question — read this before re-measuring anything
+
+Chronological below, 77 findings (65–159). This header exists because the file answers "what happened
+on the 6th" well and "what does X cost" badly, which is the question people arrive with. Added
+2026-09-09 after "where are our prefill numbers?" — the same gap det-168 caught in
+`determinism-investigation.md`. **Keep it current: a stale answer here is worse than none.**
+
+### The shape of the problem
+| question | answer | finding |
+| --- | --- | --- |
+| What is an agent turn made of? | TTFT is 53–69 % of it; median turn emits ~130–242 tokens. Prefill and warm-turn recompute are where the time is. | plan §1 |
+| What is our prefill rate? | ~2,400–2,800 tok/s sustained. TTFT ≈ **3.2 s at 7.5k**, **12.2 s at 29k** on the current stack. | 65, 393-line fit |
+| Where does 8k prefill time go? | FP8 blockwise projections 48 %, MoE 14 %, QSA indexer+attn 8.5 %, GDN 7 %. GPU busy 99 % — no idle to chase. | **65** |
+| Why are warm turns expensive? | Prefix-cache **granularity**, not host overhead: the attention block is forced to 1,600 tokens, so ~1k tokens get recomputed per turn. Host overhead is only 40 ms. | **141** |
+
+### What actually moved TTFT (shipped or shippable)
+| lever | effect | finding |
+| --- | --- | --- |
+| **CUTLASS tile-scheduler swizzle** (`max_swizzle_size=8`) | **−12 % TTFT at 30k** with 16k chunks; null at 8k and at 4k chunks. Bit-identical. | **136**, 100, 102 |
+| **Trailing-block drop flag** (`disable_eagle_block_drop`) | **−26 % per warm agent turn** | **94** |
+| **Boundary-aligned prefix** | warm-turn intercept **0.59–0.75 s → 0.15–0.27 s** | **98** |
+| **bf16 SSM state** (`--mamba-ssm-cache-dtype`) | agent turns **−9.6 % total**, but the *median* turn is slightly worse — a tail lever. Costs 127/2,504 modal top-1 changes. | **153** |
+| **GB10 split-K retune** | −1.5 % / −1.3 % TTFT and +8 % MTP single-stream decode | **123**, 120, 132 |
+| Tile-union QSA | best integrated −4.7 % / −3.7 %; upstream branch −2.6 % / −2 % | **115**, 117, 118 |
+| FLA fused kkt+solve | −1.4 % cold TTFT at 8k, −1.1 % at 30k; **null on warm turns** | **154**, 143 |
+| M%4 prompt padding | −37 % at 8k — but only on the **preview** build's misrouted GEMM; gone upstream | 69, 70, **74** |
+
+### What was null, and stop re-testing it
+| lever | verdict | finding |
+| --- | --- | --- |
+| Swizzle **gate** A/B at the server | no measurable end-to-end effect; the true control moved as much as the cells | **147** |
+| MoE tactic sweep / grouped-GEMM swizzle | autotuner already picks the best; swizzle null at prefill+decode, harmful at 29k | 145, **139** |
+| MoE tile-boundary hypothesis | REFUTED | **90** |
+| gau-nernst blockwise-FP8 kernels | neither beats CUTLASS-in-L2 nor chunking | 99 |
+| FLA shared-memory gate + warp pin | no effect on our vendored FLA | 86 |
+| MTP `num_speculative_tokens=4` | **−3.4 %** vs our shipped 3; the field's +11.4 % does not reproduce | **155** |
+| CPU C-states off | 0.7–0.9 %, not the field's 5–6.6 % | **156** |
+| `index_share_for_mtp_iteration` | output-preserving, worth −0.5 % / −0.33 % | **159** |
+| Async scheduling with MTP | exonerated — bit-identical at c=1 | **158** |
+| Small prefix-cache block on the hybrid | see the page-coupling constraint | 142 |
+
+### Traps that cost us runs
+| trap | finding |
+| --- | --- |
+| One torch.compile cache shared across arms — the cache key does not include the env-gated branch | **135** |
+| A server arm that silently fell back to stock (layout guard) | **114** |
+| A gate bug in the runner voided the arm, not the flag | **157** |
+| Python M-chunking patch not compile-safe | 83 |
+| Draft-vocabulary sized from the field instead of our own distribution (whole observed vocab is 48,476 ids) | **151** |
+| We ran `--async-scheduling` with MTP for weeks while our own launcher said never to | **152** |
+
+
 65. **8k prefill profile (2026-09-03): 47 % of GPU time is ONE misrouted FP8 GEMM; upstream fixed it on
     08-19.** `PREFPROF`: stock preview build, prefix cache off, batch 8192, no spec, one 7,503-token
     request under the torch profiler (`notes/data/prefprof.txt`, trace in the scratchpad). GPU busy
