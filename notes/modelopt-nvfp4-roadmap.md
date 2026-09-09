@@ -91,15 +91,28 @@ shards by *size* (`max_shard_size`). On Flash-Next the PLE is named
 `model.language_model.layers.N.ple.*`, i.e. **inside** the layers — so a per-layer export would bundle
 the 49.2 GiB PLE with the experts and every calibration variant would re-ship all of it.
 
-| component | name rule | size | changes per calibration variant? |
-| --- | --- | --- | --- |
-| routed experts | `*.mlp.experts.*` | 73.3 GiB | **yes** — the only part that does |
-| PLE n-gram | `*.ple.*` | 49.2 GiB | no |
-| `lm_head` | `lm_head.*` | ~0.7 GiB NVFP4 / 1.3 GiB BF16 | only if the head is the variable |
-| `embed_tokens` | `*.embed_tokens.*` | ~1.3 GiB | no |
-| attention + GDN proj | `*.self_attn.*`, `*.linear_attn.*` | | no (unless scope changes) |
-| MTP | `mtp.*` | | no |
-| tail | norms, hyper-connection, gates | small | no |
+**The invariant: a shard holds tensors from exactly ONE component.** Splitting a component across
+several shards is fine and expected (73.3 GiB of experts cannot be one file); putting two components in
+one shard is not, because then changing either one re-ships both. There is no catch-all "tail" bucket —
+that is two or more components in one shard by another name, and it is what the current build does
+(`everything else`: 1 file, 3.4 GiB) and what makes a head swap cost 11.83 GiB instead of 0.7.
+
+| component | name rule | size | may span shards | changes per calibration variant? |
+| --- | --- | --- | --- | --- |
+| routed experts | `*.mlp.experts.*` | 73.3 GiB | yes — per layer is the natural cut (48) | **yes** — the only part that does |
+| PLE n-gram | `*.ple.*` | 49.2 GiB | yes | no |
+| `lm_head` | `lm_head.*` | ~0.7 GiB NVFP4 | no | only if the head is the variable |
+| `embed_tokens` | `*.embed_tokens.*` | ~1.3 GiB | no | no — **must not share with `lm_head`** |
+| self-attention proj | `*.self_attn.*` | | yes | no (unless scope changes) |
+| GDN / linear-attn proj | `*.linear_attn.*` | | yes | no (unless scope changes) |
+| MTP | `mtp.*` | | yes | no |
+| hyper-connection | `*hyper_connection*` | small | no | no |
+| norms | `*norm*` not matched above | small | no | no |
+| router gates | `*.mlp.gate*`, `*shared_expert*` | small | no | no |
+
+Small components still get their own shard even at a few MB — the file count goes up (roughly 40–90 vs
+today's 206, depending on the expert cut) and that is the intended trade: a component is swappable iff
+nothing else rides in its shards.
 
 **Consequences.** Publishing: base once, then each variant is a branch costing only its component's
 shards (HF reuses LFS objects across revisions; `huggingface_hub` skips files whose hash already
