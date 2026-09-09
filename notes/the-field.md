@@ -1476,3 +1476,41 @@ trusting the global min), but they are not load-bearing here any more. Our deter
 stop listing "align block units (#54076/#53798)" as a live defect on fnmain2 — it was live on the
 **preview** stack where we measured it, which is what our 09-09 withdrawal comment said in the past
 tense, so no upstream correction is owed.
+
+### arXiv 2608.28113 — "H-Scale: Hessian-Guided Scale Refinement for NVFP4", Qwen Team (read 2026-09-09)
+
+The paper for the thing we spent today measuring, and it is by **the model authors** (Hao Yu, Zheng Li,
+Dayiheng Liu, Jianwei Zhang; Qwen Team, Alibaba).
+
+**Their claim, in our terms:** per-group scale selection is *the* bottleneck for NVFP4 fidelity, and
+existing PTQ refines quantized weight *values* while leaving the scales to RTN. H-Scale post-processes
+the scales, choosing hardware-valid FP8 group scales that minimise a **Hessian-weighted** reconstruction
+error from calibration activations — "targeting layer output perturbation more directly" — by enumerating
+**K = 16 neighbouring FP8 candidates** around the baseline and keeping the best. Drop-in, **zero
+inference overhead**.
+
+**Why this matters to our roadmap, point by point:**
+
+- It is the same *idea* as ModelOpt's `local_hessian` (diagonal second-order proxy, candidate
+  enumeration over FP8 group scales), though **not necessarily the same implementation**: ModelOpt
+  sweeps `start_multiplier` 0.25 → `stop_multiplier` 4.0 at `step_size` 0.1 ≈ 38 candidates, wider than
+  their K=16. Do not treat their numbers as ours.
+- **They evaluate on an MoE and it works** — Qwen3-30A3-Thinking and -Instruct (30 B total, 3 B active).
+  That is the direct counter to the worry raised by NVIDIA choosing MSE for Flash-Next: the technique is
+  not known-bad on MoE. It does *not* answer whether **ModelOpt's** fused-expert code path engages
+  correctly, which stays gate 1.
+- **The headline is the shape we want:** GPTQ+H-Scale reaches **81.22 on Qwen3-30A3-Thinking against a
+  BF16 baseline of 81.06** — i.e. the quantised model at or above BF16 on their average. And a scale-shift
+  experiment on MLP projections removes ~**50.6 %** of the initialisation error.
+- **It composes** with weight-rounding methods (GPTQ, ArcQuant, MR-GPTQ, GPTAQ, 4over6) rather than
+  replacing them — so "better calibration" and "better rounding" are orthogonal axes.
+- **Gate 0 is measuring exactly what they optimise.** Our `headcmp` result — LH changes 69.77 % of group
+  scales and is 1.0 pp better in *plain weight* space — is the weaker metric; the paper's objective is
+  layer **output** perturbation, which is what `headcap` captures activations for. The paper predicts
+  gate 0 should pass, and predicts the output-space margin should be *larger* than the weight-space one.
+
+**Timeline note that partly resolves the NVIDIA puzzle.** Their Flash-Next build used ModelOpt from
+2026-08-24 with MSE, four days *after* the 08-20 toolchain they used with Local-Hessian on the 27B. An
+August 2026 paper is recent enough that adoption lag is at least as likely an explanation as a measured
+negative result on MoE — but that is a guess, and gate 1 is still the thing that decides it for our
+pipeline. Hardware there is H200/Blackwell, not GB10; NVFP4 is the same format.
