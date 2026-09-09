@@ -10,6 +10,17 @@ as archaeology unless it is cross-referenced from here.**
 must differ named before launch. Findings 151–158 in `prefill-investigation.md`, det-184 in
 `determinism-investigation.md`, raw data in `notes/data/`.
 
+### The headline, and it is not a speed result
+
+**`tcorrupt` (det-185): mmastrac's tool-call-corruption repro from vllm#54521 gives 40 distinct
+completions from 40 identical greedy requests on stock, and 1 with our four fixes.** 49,902-token
+agent transcript, TP=1, divergence starting at token 0 or 1. Their own 4× GB10 TP=4 run gave 5
+distinct in 40 with corruption at token 23–31 — ours is categorically worse, on a different model.
+A corrupted tool *name* makes the parser emit zero deltas and the request finishes with no content
+and no tool calls, i.e. **a whole agent turn lost**, which costs more than the best speed lever
+measured tonight (−9.6 %) buys. Draft reply written (`notes/upstream/comment-54521-tcorrupt.md`),
+**not posted — needs your go**, and it is the strongest evidence we have produced for #55122's set.
+
 ### What needs your decision
 
 1. **`--mamba-ssm-cache-dtype bfloat16` (finding 153) — the only real win of the night, and it has a
