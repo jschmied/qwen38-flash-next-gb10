@@ -745,3 +745,19 @@ Rule: shape-dependent decisions go INSIDE an opaque `torch.library.custom_op` (w
 in the traced Python; the activation line goes at import time. That is also why PR #55180 keeps its M test in
 the C++ op. Verify a patch fires with a *runtime* marker (a counter read after a real request), not with the
 import-time line.
+
+## `ssh` inside a `while read` loop eats the loop's input (2026-09-09)
+
+The archive verifier looped over 30 directories comparing a manifest hash on both ends, and reported
+**`manifest match: ALL OK`** having checked **one**. `ssh` reads stdin; inside `while read -r d; do … ssh …
+done < list` it consumes the rest of the list, so the loop exits after the first iteration — and the
+failure counter, still zero, printed a pass. Same for `ffmpeg`, `mysql`, and anything else that reads stdin.
+
+    while read -r d; do   ssh -n host "…"   ; done < list      # -n, or  ssh … < /dev/null
+
+Worse than the bug is its shape: **a check that returns a confident answer without testing what it claims**,
+and this one guarded a decision to delete 267 GiB. Fourth of that shape this week — finding 157's gate
+(`grep | head || echo`, exit status belongs to `head`), the payload fingerprint (extracted a key that did not
+exist and hashed the same constant six times), det-189's alien-token probe (a positive signal whose benign
+explanation was asserted, not measured), and this. **A passing check must report what it examined**: the
+rewrite prints `verified 30 directories: 30 OK, 0 MISMATCH`, and a count that reads 1 would have been visible.
