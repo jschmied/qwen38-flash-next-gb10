@@ -429,3 +429,22 @@ branch lacks — fetch + rebase before pushing.
     Draft `comment-54426-ttft-and-smem.md`.
     → https://github.com/vllm-project/vllm/issues/54426#issuecomment-5604098517
     **Open, not promised:** re-applying the gist to a current venv to measure TTFT bf16-vs-fp8 ourselves.
+
+104. 2026-09-09 17:2x — **vllm#54076 + #53798: the 09-03 correction finally closed, by WITHDRAWAL**
+    (user go "ok do 1"). The debt was open six days: on 09-03 we wrote "corrected numbers follow" and
+    never delivered.
+    **Arm resolved first, from the runner's own gate rather than its header.** `mtpgrid0c.sh` aborts
+    with `fatal "align patch still installed"` if `mamba_state_block_size` — the identifier #54076
+    introduces — is present in `scheduler.py`, and the run logged `preflight OK`. So that grid is
+    confirmed **align-patch-OFF, EOS-correct**: a clean unpatched baseline (60/58/46/40/37/29/26 % for
+    n=2..8, three starts, finding 81).
+    **But there is no EOS-correct PATCHED arm**, so no before/after exists. Withdrew the 09-02 figure
+    ("44 % → 15/16", finding 46) outright as a measurement of `ignore_eos` filler modes rather than of
+    the patch (finding 59), and withdrew "the direction stands" from the 09-03 note as equally
+    unsupported by that data. What was explicitly kept: the defect is a **code fact** — align-mode split
+    used the QSA ring capacity instead of the mamba state block, so every prefix-cache resume continued
+    from a stale GDN state — which stands independent of any number we posted.
+    Offered the GB10 for whatever cell a reviewer names, given the PR has been conflict-blocked twice in
+    three days with no human review ever submitted. Draft `comment-54076-withdraw-acceptance.md`.
+    → https://github.com/vllm-project/vllm/pull/54076#issuecomment-5604172829
+    → https://github.com/vllm-project/vllm/pull/53798#issuecomment-5604173134
