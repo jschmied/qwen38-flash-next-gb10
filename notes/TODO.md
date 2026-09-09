@@ -4,6 +4,83 @@ Rewritten 2026-08-31, then appended to per working day. **The sections are chron
 oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
 as archaeology unless it is cross-referenced from here.**
 
+## THE NIGHT OF 2026-09-08/09 — read this first
+
+**Goal, reset by the user: make agent turns faster.** Eight runs on the box, each with the cell that
+must differ named before launch. Findings 151–158 in `prefill-investigation.md`, det-184 in
+`determinism-investigation.md`, raw data in `notes/data/`.
+
+### What needs your decision
+
+1. **`--mamba-ssm-cache-dtype bfloat16` (finding 153) — the only real win of the night, and it has a
+   price.** Attention block 1,600 → 832, KV capacity +21–36 %, and **total agent-turn TTFT −9.6 %**
+   over 24 paired turns. But it is a *tail* lever: the median turn gets slightly worse, the expensive
+   turns get much better. And it changes **127 of 2,504 modal top-1 predictions** — the same order as
+   the four determinism defects we spent a week removing. Adoption is one `FN_SSM_DTYPE` line.
+   **My recommendation: do not ship it on this evidence; run a task-level eval first.** A logprob
+   count cannot tell you whether a 5 % shift in predictions costs anything real, and the field
+   shipped it on "needles 15/15", which could never have seen it.
+2. **Prod is still on `vllm-venv-fnmain`**; fnmain3 remains built, proved (det-177) and un-cut over.
+   Unchanged from yesterday, still your call.
+
+### What was measured and rejected — no action needed
+
+- **MTP k=4** (155): −3.4 % at c=1, no better at c=8. It buys draft length and loses acceptance rate;
+  on one prompt the rate collapses 53.2 → 35.7 %. Not a prod change.
+- **FLA fused kkt+solve** (154): −1.4 % cold TTFT at 8k, −1.1 % at 30k, **null** on warm agent turns.
+  Closes finding 143 as a correct kernel win that does not move agent turns. The PR draft still
+  stands on kernel merit and needs your go.
+- **CPU idle states off** (156): 0.7–0.9 %, not the field's 5–6.6 %. Not worth a host-wide setting on
+  a PD-limited box.
+- **Async scheduling** (158): bit-identical output at c=1 (0/2,504). The caution is dead, default stays.
+
+### Three field numbers did not transfer, and that is the pattern of the night
+
+MiaAI-Lab's +6.8 % decode from bf16 SSM state, their +11.4 % from MTP k=4, and their +5–6.6 % from
+disabling C-states all failed to reproduce here — while the *mechanisms* they described were all real
+(the block did halve, the k-curve does exist, the idle-exit latency is 42 µs). Their measurements are
+not wrong; they are on a dual-Spark TP=2 pair with a different checkpoint. **Treat a field number as a
+hypothesis about a mechanism, never as an expected effect size.**
+
+### Four things we learned about our own measurements
+
+- **Acceptance is a speed statistic, not a quality signal** (158): async and noasync differ by 1.1 pp
+  of acceptance with **bit-identical output**. And acceptance is chaotic at the ulp level (154): a
+  one-ulp kernel change flipped it ±10 pp in both directions. Acceptance figures are not comparable
+  across builds that differ numerically at all.
+- **Rank warm-turn levers on the paired per-turn total, never the median** (153). Finding 142 called
+  the bf16 knob flat because it looked at the median; the mean and the total say −9.6 %.
+- **A mechanism check must test a captured string, not a pipeline's exit status** (157). `ishare`
+  voided six arms on `grep … | head -1 || echo NOT-FOUND` — `head` always succeeds. Fifth void run,
+  first one caused by the gate rather than the knob. Rule added to `method.md`; re-queued as `ishare2`.
+- **A launcher caution that the launcher does not enforce is worse than no caution** (152/158). Ours
+  said never to combine MTP with async scheduling; the library default enabled it anyway, so we ran
+  the forbidden configuration in every measurement for weeks while believing we were safe.
+
+### Also done
+
+Field + open-issue sweep (`the-field.md`): three levers the field had measured and we had not, one
+(PLE `posix_fadvise`) struck as inapplicable, and two upstream issues identified as the same
+mamba/attention page coupling from different sides. **Finding 151:** our draft-vocabulary coverage
+curve saturates at a tenth of the field's size — the whole observed vocabulary is 48,476 ids and
+held-out agent *output* has 2,048 — so their 65k does not exist here and their own crossover rule
+points at ~4k, not our shipped 32k. **det-184:** the four determinism fixes are jointly necessary and
+individually near-worthless (280–334 of ~333 disagreeing positions survive any one of them; all four
+give 0), and they move the *modal* answer at 110/2,504 positions, not just the variance. README's
+fix list reconciled against what the venv actually carries: five defects, not three or four.
+
+### Still running when this was written
+
+`tcorrupt` (mmastrac's tool-call-corruption repro from vllm#54521 — stock vs our four fixes; a
+corrupted tool *name* loses a whole agent turn, so this is on-goal) and `ishare2` (the re-run).
+Watchdogs are set for both.
+
+### Drafted, not posted — all need your go
+
+`comment-54521-zc502-isolation.md` (the owed collector validation, now carrying det-184's isolation
+table), `comment-miaai-19-cudagraph-widths.md` (why our capture-size arms were null and where the
+effect actually lives), and the standing `pr-fla-fused-kkt-solve.md`.
+
 ## Live state — 2026-09-08 night (goal: agent turn time)
 
 **The goal was reset by the user tonight: make agent turns faster on this model. The top-k /
