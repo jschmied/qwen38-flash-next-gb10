@@ -21,6 +21,18 @@ and no tool calls, i.e. **a whole agent turn lost**, which costs more than the b
 measured tonight (−9.6 %) buys. Draft reply written (`notes/upstream/comment-54521-tcorrupt.md`),
 **not posted — needs your go**, and it is the strongest evidence we have produced for #55122's set.
 
+### Follow-up run, 2026-09-09 morning (user: "run it")
+
+**det-186 — the concurrent nondeterminism is NOT an MTP defect.** With speculation off entirely, 8
+concurrent greedy repeats still perturb **2,503 of 2,504** scored positions starting at position 1,
+against **0 of 2,504** sequentially in every arm. MTP amplifies it about 2× (median per-position
+spread ratio 2.25; flips 179 → 234; 88.8 % of the MTP-off flips are a subset) but does not cause it.
+**And it is deterministic**: the exact flipped-position set is identical across two independent server
+starts, so it is a reproducible function of batch composition, not entropy — bisectable, and fixable
+by making a reduction batch-independent. Next rung proposed but not started: vary
+`--max-num-batched-tokens` (one A/B) before any instrumentation, because `layerhash_patch.py` needs
+per-request slicing before it can answer this.
+
 ### What needs your decision
 
 1. **`--mamba-ssm-cache-dtype bfloat16` (finding 153) — the only real win of the night, and it has a

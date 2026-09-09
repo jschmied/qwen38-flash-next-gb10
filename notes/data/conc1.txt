@@ -1,0 +1,65 @@
+== CONC1  start 2026-09-09 08:14
+
+=== arm mtp3_1  FN_MTP=3  08:14
+   MECH: 'num_speculative_tokens': 3
+sending requests (endpoint_label='sm121-mtp3_1-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp3_1-sequential.json
+arm=cc_mtp3_1_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002587
+sending requests (endpoint_label='sm121-mtp3_1-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp3_1-concurrent.json
+arm=cc_mtp3_1_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14002021
+
+=== arm mtp0_1  FN_MTP=0  08:30
+   MECH: no speculative_config (MTP off)
+sending requests (endpoint_label='sm121-mtp0_1-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp0_1-sequential.json
+arm=cc_mtp0_1_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002363
+sending requests (endpoint_label='sm121-mtp0_1-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp0_1-concurrent.json
+arm=cc_mtp0_1_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14005675
+
+=== arm mtp3_2  FN_MTP=3  08:44
+   MECH: 'num_speculative_tokens': 3
+sending requests (endpoint_label='sm121-mtp3_2-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp3_2-sequential.json
+arm=cc_mtp3_2_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002587
+sending requests (endpoint_label='sm121-mtp3_2-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp3_2-concurrent.json
+arm=cc_mtp3_2_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14002021
+
+=== arm mtp0_2  FN_MTP=0  08:57
+   MECH: no speculative_config (MTP off)
+sending requests (endpoint_label='sm121-mtp0_2-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp0_2-sequential.json
+arm=cc_mtp0_2_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002363
+sending requests (endpoint_label='sm121-mtp0_2-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qcc-mtp0_2-concurrent.json
+arm=cc_mtp0_2_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14005675
+
+== SPREAD CENSUS (nonzero_spread is the cell that matters, not the top-1 flips) ==
+  cc_mtp3_1_sequential       nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  cc_mtp3_1_concurrent       nonzero_spread= 2503/2504 (100.0%)  spread>0.1=  565 (22.6%)  max=  8.106  top1_flips=  234 first_spread@=1
+  cc_mtp0_1_sequential       nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  cc_mtp0_1_concurrent       nonzero_spread= 2503/2504 (100.0%)  spread>0.1=  455 (18.2%)  max=  6.686  top1_flips=  179 first_spread@=1
+  cc_mtp3_2_sequential       nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  cc_mtp3_2_concurrent       nonzero_spread= 2503/2504 (100.0%)  spread>0.1=  565 (22.6%)  max=  8.106  top1_flips=  234 first_spread@=1
+  cc_mtp0_2_sequential       nonzero_spread=    0/2504 (  0.0%)  spread>0.1=    0 ( 0.0%)  max=  0.000  top1_flips=    0 first_spread@=None
+  cc_mtp0_2_concurrent       nonzero_spread= 2503/2504 (100.0%)  spread>0.1=  455 (18.2%)  max=  6.686  top1_flips=  179 first_spread@=1
+
+   READ: (1) POSITIVE CONTROL — the mtp3 CONCURRENT arms must show pervasive nonzero_spread
+             (finding 158 saw 2503/2504). If they do not, the run is void.
+         (2) every SEQUENTIAL arm must show nonzero_spread = 0. That is the within-arm control and
+             it is what makes the concurrent number attributable to concurrency at all.
+         (3) THE ANSWER: if mtp0 concurrent is also pervasive, this is generic batching and not an
+             MTP defect -- continue into layerhash_patch.py to find the first diverging layer.
+             If mtp0 concurrent is clean, MTP's batch composition is implicated and that is a
+             specific, reportable defect.
+== ALL DONE == 2026-09-09 09:10

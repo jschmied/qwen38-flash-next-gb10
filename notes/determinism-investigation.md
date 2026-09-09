@@ -3111,3 +3111,47 @@ Plus whatever drives the separate generation-side path.
     traffic they are the difference between a deterministic server and one that answers differently every time.
 
     **Draft for #54521 written, NOT posted** (`notes/upstream/comment-54521-tcorrupt.md`) — needs the user's go.
+
+
+186. **The concurrent nondeterminism is NOT an MTP defect: it is generic batch-shape dependence in prefill, present
+    with speculation entirely off. MTP roughly doubles it but does not cause it — and the whole pattern reproduces
+    exactly across server restarts (`conc1`, mtp3/mtp0 × 2 starts, each collecting sequentially AND concurrently,
+    `notes/data/conc1.txt`).** Asked because both arms of finding 158 ran MTP-3, so MTP had never been excluded.
+
+    | arm | nonzero spread | spread > 0.1 | max | top-1 flips | first spread @ |
+    | --- | --- | --- | --- | --- | --- |
+    | mtp3 sequential (×2) | **0 / 2,504** | 0 | 0.000000 | 0 | — |
+    | mtp0 sequential (×2) | **0 / 2,504** | 0 | 0.000000 | 0 | — |
+    | mtp3 concurrent (×2) | 2,503 / 2,504 | 565 (22.6 %) | 8.106 | 234 | **1** |
+    | mtp0 concurrent (×2) | 2,503 / 2,504 | 455 (18.2 %) | 6.686 | 179 | **1** |
+
+    **Answer: generic batching.** With speculation off entirely, 8 concurrent greedy repeats of the same prompt still
+    perturb **every scored position**, starting at position 1. The within-arm sequential control is exactly 0 in all
+    four arms, so the concurrent figure is attributable to concurrency and nothing else — not the build, the prompt or
+    the server.
+
+    **MTP amplifies by about 2×, it does not cause.** Per-position spread ratio mtp3/mtp0 has **median 2.25** over 2,502
+    common positions; top-1 flips go 179 → 234; and **88.8 % of the MTP-off flipped positions are also flipped with
+    MTP on** — the same underlying instability, pushed harder. That is what one expects from a knob that adds 1+k
+    tokens per sequence per step: it changes batch shapes, it does not introduce a new source of variation.
+
+    **The most useful detail is that this "nondeterminism" is deterministic.** The exact set of 234 (and 179) flipped
+    positions is **identical across two independent server starts** — same cold load, same compile cache rebuild, same
+    everything-from-scratch. So this is not entropy; it is a reproducible function of batch composition, and our harness
+    submits the same 8 requests the same way each time. That matters twice over: it makes the effect bisectable rather
+    than statistical, and it means a fix is a matter of making a reduction order batch-independent rather than of
+    chasing a race.
+
+    **Why nobody has fixed it here:** `VLLM_BATCH_INVARIANT=1` refuses to start on this model
+    (`batch-invariance-unavailable.md`) — `supports_batch_invariance()` is implemented by five full-attention backends
+    and no mamba/linear-attention backend, while 36 of our 48 layers are linear attention. There is no batch-invariant
+    control arm to compare against, which is also why this is unmeasured elsewhere.
+
+    **Next rung, NOT started.** `layerhash_patch.py` is *not* ready for this: it targets the old
+    `vllm-venv-fnext`/`qwen3_8_flash_next` paths, it needs `--enforce-eager` (which changes the execution path we are
+    trying to measure), and it hashes each layer's whole output tensor — under concurrency that tensor holds several
+    requests' tokens, so a mismatch does not isolate the diverging request. It needs per-request slicing first. A
+    cheaper black-box rung exists and should come before instrumentation: **vary `--max-num-batched-tokens`**. Our
+    2,504-token prompt prefills in one chunk alone but eight of them get packed into 4,096-token batches, so each
+    request's prompt is split differently depending on scheduling. If the perturbation tracks the chunk budget, the
+    culprit is chunk packing rather than any single kernel, and that is one A/B rather than a multi-hour trace.
