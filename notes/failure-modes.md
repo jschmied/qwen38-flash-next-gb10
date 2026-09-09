@@ -885,3 +885,24 @@ Hessian estimate, but worth stating.
 
 Related: memory `vllm-compile-freezes-branches` — an `if` inside a traced region never fires at runtime.
 Same underlying fact, opposite symptom: that one fails silently, this one fails loudly.
+
+## Batch padding routes to experts 0–9 and impersonates the best-covered experts (2026-09-10)
+
+Gate 2 captured 16,384 expert inputs; **8,192 of them were all-zero batch padding**. A zero row
+softmaxes to a *uniform* distribution over experts, so `topk` returns the ten lowest indices — **every
+padding row routes to experts 0..9**. Those experts then show 8,192–9,040 routed rows while their real
+counts are 242, 6, 0, 128, 145, 198, 848, 106, 50, 21.
+
+Selecting "the 16 best-covered experts" therefore selected precisely the artifact. Consequences that
+reached a committed finding before being caught: **expert 2 had zero real rows** (its NaN was
+`‖X Wᵀ‖ = 0`, not a ModelOpt defect as first recorded), and **expert 1's 53.5 % headline gain rested on
+six rows**. The published median moved 24.3 % → 22.2 % and the range collapsed from 20.3–53.5 % to
+20.2–24.1 % once padding was dropped and experts were selected by *real* coverage.
+
+**The tell was already in the data and I did not read it:** `routed rows/expert: min 0 median 90 max
+9040`. A max 100× the median, with the top ten being exactly indices 0–9, is not a routing distribution —
+it is an index artifact. Uniform-looking routing to the lowest-numbered experts should always be read as
+"something upstream is zero".
+
+**Rule:** when capturing activations from a served model, **filter all-zero rows before anything else**.
+Padding is invisible in shapes, dtypes and file sizes, and it does not error — it selects the sample.

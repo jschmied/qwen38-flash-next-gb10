@@ -1634,43 +1634,44 @@ architectural facts stand — `moe_calib_experts_ratio` is unavailable for `_Qua
 Local-Hessian build was dense — but on Flash-Next with our own agent traffic, natural routing supplies
 ample per-expert statistics without any coverage forcing.
 
-### GATE 2 PASSES: Local-Hessian is ~24 % better on real EXPERT matrices too
+### GATE 2 PASSES: Local-Hessian is ~22 % better on real EXPERT matrices — CORRECTED
+
+**The first version of this entry was contaminated and its numbers are withdrawn.** Original claim:
+"median 24.3 %, range 20.3–53.5 % across 15 experts". Corrected below.
 
 `expact2` captured **16,384 BF16 expert inputs (2,560-dim)** from `layers.24.mlp.experts` — hooked at
-`Qwen3NextSparseMoeBlock.forward`, before any quantisation, with the server in `--enforce-eager` because
-that forward is fullgraph-compiled. Routing recomputed offline from the same layer's own
-`mlp.gate.weight [512,2560]`, so no routing needed capturing. Venv restored byte-identical.
+`Qwen3NextSparseMoeBlock.forward` before any quantisation, server in `--enforce-eager` because that
+forward is fullgraph-compiled. Routing recomputed offline from the same layer's own
+`mlp.gate.weight [512,2560]`. Venv restored byte-identical.
 
-Method mirrors gate 0 so the two are comparable: **ModelOpt chooses the Local-Hessian scales**
-(`NVFP4_W4A4_WEIGHT_LOCAL_HESSIAN_CFG`, 0.47.0rc1.dev31, calibrated on that expert's own routed rows —
-33 calibration iterations observed, so not the silent no-op), plain-max scales are `amax/6`, and **both
-scale sets go through the same quantise/dequant path**, isolating the scale choice. Output error via the
-Gram identity, never materialising the residual.
+**The contamination: half the captured rows are batch padding, and padding routes to experts 0–9.**
+8,192 of 16,384 rows are all-zero. A zero row softmaxes to a *uniform* distribution, so `topk` returns
+the ten lowest indices — every padding row lands on experts 0..9. Those then look like the
+best-covered experts (8,192–9,040 rows each) while their **real** counts are 242, 6, **0**, 128, 145,
+198, 848, 106, 50, 21. Selecting "the 16 best-covered experts" selected exactly the artifact: expert 2
+had *zero* real rows (hence its NaN — `‖X Wᵀ‖ = 0`), and expert 1's headline 53.5 % gain rested on **six**
+rows.
+
+**Corrected method:** drop all-zero rows, then take every expert with ≥ 300 genuinely routed rows.
 
 | | relative output error ‖X_j(W−Ŵ)ᵀ‖ / ‖X_j Wᵀ‖ |
 | --- | --- |
-| plain-max | 6.56 – 8.90 % |
-| **Local-Hessian** | **3.72 – 6.33 %** |
-| **LH better by** | **min 20.3 %, median 24.3 %, max 53.5 %** (15 experts) |
+| plain-max | 6.99 – 7.83 % |
+| **Local-Hessian** | **5.42 – 6.08 %** |
+| **LH better by, 32 experts (517–2,396 real rows each)** | **min 20.2 %, median 22.2 %, max 24.1 %** |
 
-**Gate 0 on the 27B head was 29.8 %. The experts land in the same band**, slightly lower at the median.
-So the calibration advantage is not a head-only artifact — it holds on the matrices that carry the 73.3 GiB.
+**Tighter than the contaminated version, and more credible for it** — 32 independent experts landing
+within four percentage points of each other, against the head's 29.8 % at gate 0. The calibration
+advantage is real on the matrices carrying the 73.3 GiB; it is somewhat smaller on experts than on the
+head, which is itself worth knowing.
 
-**Three honest limits.**
+ModelOpt chose the LH scales (`NVFP4_W4A4_WEIGHT_LOCAL_HESSIAN_CFG`, 0.47.0rc1.dev31, calibrated on each
+expert's own routed rows — calibration iterations observed, so not the silent no-op); plain-max is
+`amax/6`; **both scale sets go through one quantise/dequant path**, isolating the scale choice. Output
+error via the Gram identity, never materialising the residual.
 
-1. **Only 15 of 32 sampled experts could be measured.** Our 16,384-row capture gives a *median* of **90
-   rows per expert** (min 0, max 9,040) for one layer, so the worst-covered half mostly fell below the
-   64-row floor. A real 4.19 M-token calibration supplies ~256× more rows per expert, so this is a limit
-   of the probe, not of the build — but it means gate 2's evidence is drawn mainly from well-covered
-   experts.
-2. **A hint that coverage matters, too weak to call.** The six least-covered experts that *were*
-   measurable (929–2,396 rows) cluster tightly at **20.3–22.6 %**, while the best-covered nine span
-   21.8–53.5 %. Consistent with the coverage hypothesis, not evidence for it.
-3. **Expert 2 produced NaN** in the LH arm and is excluded. Its weights are finite with no zero-amax
-   groups and the activations are finite, so the NaN comes from ModelOpt's returned amax. Unexplained,
-   and worth resolving before a full build trusts every expert's scales.
+**Remaining limits:** our agent corpus through the quantised body, one layer of 48, activations from the
+eager path (same mathematics, different kernel fusion). With padding removed the capture yields 8,192
+usable rows and a median of 88 real rows per expert, so the 32 measured experts are the better-covered
+tail of one layer.
 
-**Limits of scope:** our agent corpus through the quantised body, one layer of 48, activations from the
-eager path (same mathematics, different kernel fusion). The LH arm is ModelOpt proper, which makes this
-stronger than a reimplementation would be — gate 0 used NVIDIA's published scales, so the two gates
-corroborate each other through different routes.
