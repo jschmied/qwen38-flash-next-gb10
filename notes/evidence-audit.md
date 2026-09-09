@@ -1,4 +1,12 @@
-# Evidence audit — what is proved, what rests on three runs (2026-09-02)
+# Evidence audit — what is proved, what rests on three runs
+
+> **Refreshed 2026-09-09.** The original audit (2026-09-02) is unchanged below, sections 1–7. It covered
+> `determinism-investigation.md` findings 1–42 plus topic claims, and **never covered
+> `prefill-investigation.md` at all**. Section 8 classifies everything produced since: prefill 141–159 and
+> determinism 179–188. **Still unaudited:** determinism 43–178 outside the topic sections, and prefill 65–140.
+> Those are the oldest and the most likely to have been superseded in place — treat an unclassified number
+> from them as UNDER-SAMPLED until someone checks.
+
 
 Standard applied: the repo's own (`evidence-standard.md`: n≥2 for direction, n≥3 for magnitude,
 effect must exceed *that config's* spread, never carry an error bar across configurations) plus
@@ -175,3 +183,79 @@ All measured **before finding 41**; each is one or two draws of the per-request 
 1. **3 starts × 40 turns, MTP k=2, per-turn acceptance** — anchors `which-drafter…`, `mtp-depth-anomaly.md`, the "Solid" list and the README's k=2 withdrawal; the only MTP depth with zero per-turn acceptance data.
 2. **3 starts × 5 depths, MTP on/off** — retires the "+52–54 % flat to 60k" headline and "MTP stays on at every depth".
 3. **3 interleaved no-spec arms each of `flashinfer_cutlass` / `use_fused_finalize=False` / `emulation`** — turns the +3.6 % and +17 % cost numbers (both n=1, both drafted for upstream) into something the 42.8–47.7 band cannot swallow; add the two missing shapes for the emulation determinism claim.
+
+---
+
+# 8. Refresh 2026-09-09 — prefill 141–159 and determinism 179–188
+
+Same four classes and the same standard. One addition the original audit did not need: several of the
+newest results are **bit-level cross-arm comparisons** (8 greedy repeats, deterministic stack on, both
+arms internally exact). Where an arm's own repeats are 0/2,504, a *cross-arm* difference is not a
+sampling question at all — it is a fact about two builds — so those are classed ADEQUATELY on one
+collect pair, and it is stated where that reasoning is being used.
+
+## 8a. `prefill-investigation.md` 141–159
+
+| # | claim (≤15 w) | evidence actually cited | class | reason / what would settle it |
+|---|---|---|---|---|
+| 141 | Attention block forced to 1,600 by the Mamba page | server log line + `platforms/interface.py` formula | **ADEQUATELY** (structural) | Code-verified and printed by every server since |
+| 141 | Warm turn = 485 ms + N/2,613; recompute 1,026 of 1,268 | 1 start, 3 reps per N, 23-turn replay | **UNDER-SAMPLED** | One start. The *intercept* is corroborated at 3 starts by 153 (559–565 ms at batch 4096), but at a different chunk size — do not carry the number across configs |
+| 142 | Small-block overlay works; real turns flat | 1 start per block size | **UNDER-SAMPLED** | And its "only in-config route" clause is **WITHDRAWN/CORRECTED** in place (2026-09-08): `FUSED_GDN_STATE_DTYPES` accepts bf16 |
+| 143 | FLA fused kkt+solve correct to 1 bf16 ulp, 1.8–2.1× | 6 shapes incl. varlen, timings at 5 sizes | **ADEQUATELY** (bit-level, ≥2 shapes) | Kernel claim only; the end-to-end claim is 154 |
+| 144 | GEMM1 at the DRAM floor; contiguous runs −26 % | byte-floor arithmetic + measurement | **ADEQUATELY** | Its "finalize never fused on SM120" clause is **WITHDRAWN/CORRECTED** by 145, in place |
+| 145 | `profile_ids` is dead; earlier tactic sweeps measured the fallback | forced-tactic sweep inside `autotune()` | **EXISTENCE PROOF** | Retires finding 78's "tactics all within ±2 %" |
+| 146–150 | Swizzle gate not Pareto-optimal; N is the missing term | 4 starts (146), 232 cells over 3 sweeps (148) | **ADEQUATELY** | |
+| 147 | Server A/B of the swizzle gate: no measurable effect | 3 starts, control moves as much as the arm | **UNDER-SAMPLED** (absence claim) | The note says so itself; a null with a moving control settles nothing |
+| 151 | Whole observed vocabulary is 48,476 ids; 4k ≈ 90.8 % coverage | deterministic census over 158 M weighted occurrences | **ADEQUATELY** (census, not a sample) | Depends on corpus choice, which is stated; rerunning on a different corpus is a different question, not a better sample |
+| 152 | Async scheduling has been ON in every run and in prod | `SchedulerConfig.async_scheduling` default + branch read | **ADEQUATELY** (structural) | Confirmed empirically by 158's gate: the flag appears only when passed |
+| 153 | bf16 SSM: block 1,600 → 832, KV +21–36 % | 3 starts per arm, log lines, ranges disjoint | **ADEQUATELY** | |
+| 153 | Total agent-turn TTFT −9.6 % over 24 paired turns | 3 starts per arm, paired per turn, arms reproduce to a few ms | **ADEQUATELY** | Median moves the other way; the claim is about the paired total and must be stated that way |
+| 153 | Costs 127/2,504 modal top-1 changes | 1 collect pair, both arms internally 0/2,504 | **ADEQUATELY** (bit-level cross-arm) | Both arms exact ⇒ the difference is between builds, not between draws |
+| 153 | The error does not accumulate with position | positional binning of the same 128 mismatches | **UNDER-SAMPLED** | One dataset, one prompt. A second prompt of different content would settle it |
+| 154 | FLA at the server: −1.4 % / −1.1 % cold TTFT | 3 starts per arm, ranges disjoint on both cells | **ADEQUATELY** | |
+| 154 | Null on warm agent turns | 3 starts, −0.21 %, inside spread | **UNDER-SAMPLED** (absence claim) | Adequate to refuse shipping it; not adequate to assert zero |
+| 154 | A 1-ulp change flips acceptance ±10 pp | 3 starts per arm, acceptance identical to the decimal within arm | **ADEQUATELY** | **Output was never measured here** — do not pair this with a quality claim (see 158) |
+| 155 | MTP k=4 is −3.4 % at c=1 and no better at c=8 | 3 starts per arm, per prompt | **ADEQUATELY** | |
+| 155 | vllm#55533 does not reproduce | 2 pre-committed conditions, both fail, with an n0 positive control | **EXISTENCE PROOF** (against) | The no-spec control is what makes this more than an absence claim |
+| 155 | KV pool varies 119k–180k across identical starts | 3 starts, same config | **EXISTENCE PROOF** | Consequence: any single-start KV number is one draw |
+| 156 | CPU idle states cost 0.7–0.9 % | 1 server, 3 OFF vs 2 valid ON cells, cell 1 discarded as cold | **UNDER-SAMPLED** for the magnitude, **ADEQUATELY** for "under 1 %, not 5–6 %" | Same sign on all three prompts, ranges barely disjoint |
+| 157 | `ishare` voided on a gate bug, flag had engaged | logs show the key present in one arm, absent in the other | **EXISTENCE PROOF** | |
+| 158 | Async vs sync: bit-identical at c=1 | 8 repeats × 2 arms, 0/2,504 both, cross-arm 0/2,504 | **ADEQUATELY** (bit-level) | Corroborated by six more sequential arms at 0/2,504 in 159 and det-186 |
+| 158 | Concurrent difference is not async's doing | cross-arm 52 vs each arm's own 234 / 270 self-disagreement | **EXISTENCE PROOF** | A difference below either arm's own spread is not evidence about the knob |
+| 158 | ~10 % of positions disagree at c=8 with all four fixes | 8 concurrent repeats, 2 arms | **ADEQUATELY** (existence + magnitude band) | Re-measured at 3 budgets in det-188 |
+| 159 | Index sharing is output-preserving; −0.5 % / −0.33 % | 3 starts, cross-arm 0/2,504, plus a structural argument | **ADEQUATELY** | The structural argument (drafter-only + greedy verification stores the target argmax) is what makes it general rather than a lucky null |
+
+## 8b. `determinism-investigation.md` 179–188
+
+| # | claim (≤15 w) | evidence actually cited | class | reason / what would settle it |
+|---|---|---|---|---|
+| 179 | Fifth void run; the pattern is the finding | five runs, each void for a stated reason | **EXISTENCE PROOF** | |
+| 180 | Every `vpp` "stock" arm carried three of four fixes | overlay install state read from the venv | **WITHDRAWN/CORRECTED** for the eight null cases it invalidates | |
+| 181 | True stock is badly non-reproducible; all four make it exact | 8 repeats, 2 arms, 335 vs 0 | **EXISTENCE PROOF** (strong) | Magnitude on one pair; det-184 re-measures |
+| 182 | Correction: upstream does not ship `vllm/v1/ple_offload/` | diff against an extracted wheel | **WITHDRAWN/CORRECTED** of det-180's claim | |
+| 183 | No single fix closes it — **provisional** | 5 arms sharing one cache root; one arm died | **UNDER-SAMPLED**, and says so | Superseded by 184 |
+| 184 | Any one fix leaves 280–334 of ~333; all four leave 0 | 6 arms, per-arm cache roots, pre-committed validity gate | **EXISTENCE PROOF** for the conjunction; **UNDER-SAMPLED** for ranking arms | The gap 280–334 vs 0 is far outside any plausible spread; the 280-vs-334 ordering is one run each and the note refuses to rank on it |
+| 184 | Stock measured fix-free three times: 325 / 333 / 335 | three independent runs | **ADEQUATELY** | The tightest repeated cell in the investigation |
+| 184 | Defects move the modal answer at 110/2,504 | cross-arm, both arms internally exact | **ADEQUATELY** (bit-level cross-arm) | |
+| 185 | Stock 40 distinct completions / 40; fixed 1 | 40 runs per arm, third-party repro, 49,902-token prompt | **ADEQUATELY** | Categorical effect, 40 repeats; the strongest result in the file |
+| 186 | Concurrency nondeterminism is not MTP | 2 starts per arm × 2 modes; MTP-off still 2,503/2,504 vs 0 sequential | **ADEQUATELY** (existence); **UNDER-SAMPLED** for the 2.25× amplification ratio | The existence claim needs no more; the ratio is 2 starts |
+| 187 | #55375 is peakcrosser7's; the fix is in our venv as an overlay | `merge-base --is-ancestor` false; PR metadata | **WITHDRAWN/CORRECTED** of two claims made the same morning | |
+| 188 | Flip count peaked at 4,096: 119 / 234 / 132 | 2 starts per budget, identical to the digit | **ADEQUATELY** | Identical across starts, so the count is not a draw |
+| 188 | Affected-position sets identical across starts (J = 1.000) | 3 budgets × 2 starts | **ADEQUATELY** | |
+| 188 | Sets are nested 2k ⊂ 16k ⊂ 4k | 117/119 and 130/132 shared | **ADEQUATELY** | One mechanism scaled, not different mechanisms per shape |
+
+## 8c. What this refresh changes about what you may build on
+
+1. **The bit-level cross-arm comparisons are the strongest evidence in the repo** and they are recent:
+   153, 154, 158, 159, 184, 185, 186, 188. Where both arms are internally 0/2,504, a cross-arm number
+   is a property of two builds and does not need more starts. Prefer these over any tok/s figure.
+2. **Absence claims remain the weak spot**, exactly as the original audit found. 147 and 154's
+   warm-turn null are adequate to refuse shipping something and not adequate to assert zero. The one
+   absence claim that *is* strong is 155's refutation of vllm#55533, because it carries a positive
+   control (the no-spec arm) rather than merely failing to see an effect.
+3. **Single-start numbers keep appearing and keep being wrong.** 155 found the KV pool varying
+   119k–180k tokens across three *identical* starts. Treat any one-start capacity or rate figure in
+   this repo — including in the unaudited older sections — as one draw.
+4. **Three claims were corrected by their own authors within a day** (142's route clause, 144's
+   fusion clause, 187's provenance). That is the mechanism working, but it also means an unrevisited
+   claim more than a few days old has not been through it.
