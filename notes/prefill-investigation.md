@@ -1647,3 +1647,40 @@
     `ish` 19.2 / 16.8 / 19.9 tok/s at acceptance 54.8 / 39.1 / 53.2 % against `base` 19.1 / 16.6 / 19.9 at
     54.8 / 38.4 / 54.4 %. Accept length is 2.64 / 2.17 / 2.60 versus 2.64 / 2.15 / 2.63 — MiaAI-Lab's 2.42 → 2.52 gain
     does not appear. One start is not a result; `ishare2` will say properly.
+
+
+158. **Async scheduling is exonerated: with MTP on this hybrid it produces BIT-IDENTICAL output at c=1, and the
+    concurrent difference is the known batch-invariance problem in both arms rather than anything async does
+    (`asched`, async/noasync interleaved × 3 starts, `notes/data/asched.txt`).** Background in finding 152: our launcher
+    said "NEVER combine MTP with `--async-scheduling`" while `SchedulerConfig.async_scheduling` defaults to `None` and
+    the `None` branch *enables* it — so every measurement we have ever taken, and prod, ran the combination the comment
+    forbade. Gate clean: `'async_scheduling': False` in the noasync arms, absent in the async arms.
+
+    | comparison | async self | noasync self | cross-arm modal top-1 mismatches |
+    | --- | --- | --- | --- |
+    | **sequential (c=1)** | 0 / 2,504 | 0 / 2,504 | **0 / 2,504**, max \|Δ mean logprob\| **0.0000** |
+    | concurrent (8 in flight) | 234 / 2,504 | 270 / 2,504 | 52 / 2,504, max \|Δ\| 2.16 |
+
+    Sequentially the two arms are **byte-for-byte the same model**. Under concurrency both arms are non-reproducible
+    against *themselves* — 234 and 270 disagreeing positions across their own 8 repeats — and the cross-arm difference
+    (52) is a quarter of that. **A difference smaller than either arm's own run-to-run spread is not evidence about the
+    knob.** So the caution is dead: the hazard it described does not fire, and what remains at c>1 is the
+    batch-invariance problem the README already names, present equally with async scheduling off.
+
+    Two by-products worth keeping. (a) This is our **first quantified concurrent-nondeterminism number with all four
+    determinism fixes on**: ~230–270 of 2,504 positions (≈10 %) disagree across 8 concurrent greedy repeats, against
+    exactly 0 sequentially. The README says "still not batch-invariant under concurrency"; that is the size of it.
+    (b) **Acceptance moved while the output did not.** dvcell reports 54.8 / 38.4 / 54.4 % (AL 2.64 / 2.15 / 2.63) for
+    async against 53.7 / 38.4 / 53.2 % (2.61 / 2.15 / 2.60) for noasync — identical to the decimal across three starts
+    each — yet the sequential outputs are bit-identical. The drafts differ; the accepted tokens do not. That is a clean
+    demonstration that **acceptance is a speed statistic, not a quality signal**, which sharpens finding 154's caution
+    from a different direction.
+
+    **Performance: not a lever either way.** Sum of per-prompt medians at c=1: async 55.2 vs noasync 54.5 tok/s
+    (async +1.3 %). At c=8 the sign flips and noasync wins all three pairs: 25.9 / 25.0 / 25.5 against async's
+    25.5 / 24.2 / 24.9 (≈ −2.5 % for async). Both effects are small; the default stays.
+
+    **What actually needs fixing is the process, not the flag.** A caution the launcher did not enforce, contradicted by
+    the library default, sat in our serve script for weeks and made us believe we were avoiding something we were doing
+    on every run. It has been replaced by an `FN_NOASYNC` knob that defaults to the library behaviour and is now
+    measured. Any future "never do X" note in a launcher must either be enforced by the launcher or deleted.

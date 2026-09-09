@@ -1,0 +1,88 @@
+== ASCHED  start 2026-09-09 03:15
+
+=== arm async_1  no_async='unset'  03:15
+   MECH: 
+  async_1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.6s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  async_1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.6s = 15.9 tok/s agg, 15.9 per stream | garbage 0/1
+  async_1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.4s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  async_1 c=8: wall=27.0s completion_tokens=687 aggregate=25.5 tok/s
+  async_1 c=8: num_requests_running while busy -- samples=100 median=5.0 max=8 hist={1: 9, 2: 16, 3: 12, 4: 10, 5: 6, 6: 15, 7: 18, 8: 14}
+  async_1 c=8: max waiting=6  acceptance=0.706 (470/666)
+sending requests (endpoint_label='sm121-async_1-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qas-async_1-sequential.json
+arm=as_async_1_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002590
+sending requests (endpoint_label='sm121-async_1-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qas-async_1-concurrent.json
+arm=as_async_1_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14002024
+
+=== arm noasync_1  no_async='1'  03:32
+   MECH: 'async_scheduling': False
+  noasync_1 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 11.0s = 18.1 tok/s agg, 18.1 per stream | garbage 0/1
+  noasync_1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.4s = 16.1 tok/s agg, 16.1 per stream | garbage 0/1
+  noasync_1 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.7s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  noasync_1 c=8: wall=25.6s completion_tokens=664 aggregate=25.9 tok/s
+  noasync_1 c=8: num_requests_running while busy -- samples=94 median=4.0 max=8 hist={1: 15, 2: 14, 3: 5, 4: 16, 5: 7, 6: 15, 7: 10, 8: 12}
+  noasync_1 c=8: max waiting=6  acceptance=0.778 (467/600)
+sending requests (endpoint_label='sm121-noasync_1-sequential', mode=sequential, repeats=8, request_concurrency=1, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qas-noasync_1-sequential.json
+arm=as_noasync_1_sequential mode=sequential repeats=8 tokens=2504
+   collect sequential exit=0 size=14002594
+sending requests (endpoint_label='sm121-noasync_1-concurrent', mode=concurrent, repeats=8, request_concurrency=8, timeout=300s, retries=0)
+wrote /opt/llm/runners/results/qas-noasync_1-concurrent.json
+arm=as_noasync_1_concurrent mode=concurrent repeats=8 tokens=2504
+   collect concurrent exit=0 size=14000840
+
+== GATE: async arm ->    MECH: 
+         noasync arm ->    MECH: 'async_scheduling': False
+
+=== arm async_2  no_async='unset'  03:48
+   MECH: 
+  async_2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.4s = 19.3 tok/s agg, 19.3 per stream | garbage 0/1
+  async_2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.9 tok/s agg, 16.9 per stream | garbage 0/1
+  async_2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.4s = 19.2 tok/s agg, 19.2 per stream | garbage 0/1
+  async_2 c=8: wall=26.9s completion_tokens=651 aggregate=24.2 tok/s
+  async_2 c=8: num_requests_running while busy -- samples=99 median=5.0 max=8 hist={1: 17, 2: 9, 3: 13, 4: 7, 5: 14, 6: 9, 7: 14, 8: 16}
+  async_2 c=8: max waiting=6  acceptance=0.713 (445/624)
+
+=== arm noasync_2  no_async='1'  04:03
+   MECH: 'async_scheduling': False
+  noasync_2 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  noasync_2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  noasync_2 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.2s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  noasync_2 c=8: wall=26.1s completion_tokens=653 aggregate=25.0 tok/s
+  noasync_2 c=8: num_requests_running while busy -- samples=95 median=4.0 max=8 hist={1: 19, 2: 12, 3: 6, 4: 16, 5: 8, 6: 12, 7: 8, 8: 14}
+  noasync_2 c=8: max waiting=6  acceptance=0.710 (443/624)
+
+=== arm async_3  no_async='unset'  04:17
+   MECH: 
+  async_3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.4s = 19.3 tok/s agg, 19.3 per stream | garbage 0/1
+  async_3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.7 tok/s agg, 16.7 per stream | garbage 0/1
+  async_3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  async_3 c=8: wall=23.2s completion_tokens=578 aggregate=24.9 tok/s
+  async_3 c=8: num_requests_running while busy -- samples=84 median=5.0 max=8 hist={1: 4, 2: 7, 3: 12, 4: 8, 5: 13, 6: 7, 7: 17, 8: 16}
+  async_3 c=8: max waiting=6  acceptance=0.760 (399/525)
+
+=== arm noasync_3  no_async='1'  04:31
+   MECH: 'async_scheduling': False
+  noasync_3 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 11.0s = 18.3 tok/s agg, 18.3 per stream | garbage 0/1
+  noasync_3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.6 tok/s agg, 16.6 per stream | garbage 0/1
+  noasync_3 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.2s = 19.6 tok/s agg, 19.6 per stream | garbage 0/1
+  noasync_3 c=8: wall=27.3s completion_tokens=694 aggregate=25.5 tok/s
+  noasync_3 c=8: num_requests_running while busy -- samples=101 median=4.0 max=8 hist={1: 15, 2: 18, 3: 8, 4: 10, 5: 12, 6: 17, 7: 8, 8: 13}
+  noasync_3 c=8: max waiting=6  acceptance=0.687 (470/684)
+
+== OUTPUT COMPARISON: async (reference) vs noasync (candidate) ==
+report: /opt/llm/runners/results/repas-sequential/report.json
+key positions: /opt/llm/runners/results/repas-sequential/key_positions.csv
+   sequential: report in /opt/llm/runners/results/repas-sequential
+report: /opt/llm/runners/results/repas-concurrent/report.json
+key positions: /opt/llm/runners/results/repas-concurrent/key_positions.csv
+   concurrent: report in /opt/llm/runners/results/repas-concurrent
+
+   READ: sequential AND concurrent identical -> the caution is dead, keep the default, delete the warning.
+         sequential identical but concurrent divergent -> a defect in a config vLLM enables BY DEFAULT for
+         every MTP user on a hybrid; draft it upstream, do not post without a go. Note both arms carry the
+         four determinism fixes, so a c>1 difference is NOT explained by the known kernel nondeterminism.
+== ALL DONE == 2026-09-09 04:45
