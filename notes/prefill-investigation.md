@@ -24,6 +24,7 @@ on the 6th" well and "what does X cost" badly, which is the question people arri
 | **bf16 SSM state** (`--mamba-ssm-cache-dtype`) | agent turns **−9.6 % total**, but the *median* turn is slightly worse — a tail lever. Costs 127/2,504 modal top-1 changes. | **153** |
 | **GB10 split-K retune** | −1.5 % / −1.3 % TTFT and +8 % MTP single-stream decode | **123**, 120, 132 |
 | Tile-union QSA | best integrated −4.7 % / −3.7 %; upstream branch −2.6 % / −2 % | **115**, 117, 118 |
+| **Draft-vocabulary slice 16,384** | **+8.5 … +12.1 % single-stream** vs full, 5/7 matched reps non-overlapping; beats the shipped 32k slice at 4/7. c=4 null | **160** |
 | FLA fused kkt+solve | −1.4 % cold TTFT at 8k, −1.1 % at 30k; **null on warm turns** | **154**, 143 |
 | M%4 prompt padding | −37 % at 8k — but only on the **preview** build's misrouted GEMM; gone upstream | 69, 70, **74** |
 
@@ -49,6 +50,7 @@ on the 6th" well and "what does X cost" badly, which is the question people arri
 | A gate bug in the runner voided the arm, not the flag | **157** |
 | Python M-chunking patch not compile-safe | 83 |
 | Draft-vocabulary sized from the field instead of our own distribution (whole observed vocab is 48,476 ids) | **151** |
+| Coverage of held-out OUTPUT tokens ≠ coverage of what the DRAFTER proposes — 151's "4k is enough" was refuted by measurement | **160** |
 | We ran `--async-scheduling` with MTP for weeks while our own launcher said never to | **152** |
 
 
@@ -1807,3 +1809,47 @@ on the 6th" well and "what does X cost" badly, which is the question people arri
     the other two.
 
     **Verdict: safe, and not worth a config change.** Leave `FN_ISHARE` at its default of off.
+
+160. **Draft-vocabulary sweep: 16,384 is the optimum, not 32,768 — and finding 151's "4k is enough"
+    is refuted.** `dv2` (2026-09-09 17:20–20:47), 5 arms × 3 starts = 15 server starts, MTP n=3 on the
+    fp8-head checkpoint, c=1 (8 reps) and c=4 (3 reps), vocabulary ranked from our own agent output.
+    Void gate clean: `full` arms print `fndv_lines=0`, every slice arm `fndv_lines=1`.
+    Raw: `notes/data/dv2-summary.txt`.
+
+    **Acceptance is exactly reproducible across starts** — every cell reads `X-X(3)`, min = max over
+    three starts. That is coherent with the MTP restart instability (finding 61: timings spread up to
+    1.83×): under greedy decoding with fixed prompts the accepted-token sequence is determined, while
+    the *rate* is not. **So acceptance is the clean signal for coverage questions and matched-rep tok/s
+    ranges are the only honest signal for speed.**
+
+    | matched rep, c=1 | full | 4096 | 8192 | 16384 | 32768 |
+    | --- | --- | --- | --- | --- | --- |
+    | acceptance, rep 3 | 76.0 % | 54.1 % | 62.9 % | 70.8 % | **76.0 %** |
+    | acceptance, rep 4 | 65.7 % | 42.9 % | 58.8 % | **65.7 %** | **65.7 %** |
+    | acceptance, rep 7 | 42.9 % | 33.7 % | 43.8 % | **45.6 %** | 44.7 % |
+
+    **Coverage limit: it starts biting at 8,192 and is severe at 4,096.** 16,384 and 32,768 track `full`
+    to within a point at almost every rep; 8,192 loses 3–13 pp; 4,096 loses 8–23 pp. **Finding 151's
+    inference does not hold** — 4,096 ids covering 90.8 % of held-out *output* tokens is not the same as
+    covering what the *drafter proposes*, and the 4096 arm is both the least accurate and the slowest.
+
+    **Speed, matched rep, warm reps only, counting only NON-OVERLAPPING range pairs:**
+
+    | comparison | wins | loses | overlap | gain where it wins |
+    | --- | --- | --- | --- | --- |
+    | **16384 vs full** | **5/7** | 0 | 2 | **+8.5 … +12.1 %** |
+    | **16384 vs 32768** | **4/7** | 1 | 2 | +1.6 … +12.0 % |
+    | 32768 vs full | 5/7 | 0 | 2 | +5.0 … +6.8 % |
+
+    **det-135's +6.4–6.8 % for the 32k slice DOES reproduce** — measured here at **+5.0…+6.8 %** over
+    `full`, on rebuilt vocabulary files, so that number survives its re-test. But 32k is **not** the
+    optimum: 16,384 beats it at 4 of 7 reps with non-overlapping ranges, loses at 1 (rep 3, where 32k's
+    higher acceptance pays), and is a further ~8.5–12 % over `full` rather than ~6 %.
+
+    **c=4 is null.** Every arm's range overlaps every other's (full 40.8–44.5, 16384 39.4–45.7, 32768
+    42.0–44.6, 8192 41.2–43.8), with the single exception that 4096 is consistently lowest
+    (39.0–41.8, acceptance 36.4–40.5 %). No winner may be picked from overlapping ranges.
+
+    **Action:** switch `FN_DRAFT_VOCAB` from the 32,768 slice to **16,384**. It is one launcher line,
+    it is output-safe by construction (the drafter only proposes; the target verifies), and the win is
+    single-stream — which is the regime agent turns actually run in.
