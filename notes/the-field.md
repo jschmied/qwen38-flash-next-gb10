@@ -1353,3 +1353,48 @@ fused-MoE-experts path keyed on `_current_expert_idx`, and weights it cannot pai
 `SequentialQuantizer`, non-eager experts) **fall back to plain MSE with a warning**. On a 512-expert MoE
 that fallback is the difference between doing the experiment and thinking we did it — grep the run log
 for `local_hessian:` warnings before trusting the output.
+
+### lhbench (2026-09-09): the Local-Hessian weight search is trivial; asking for it the obvious way is a SILENT NO-OP
+
+**The trap first, because it would have cost a multi-day run.** Setting
+`cfg = NVFP4_DEFAULT_CFG; cfg["algorithm"] = {"method": "local_hessian"}` — the obvious way to ask for
+it — **does nothing at all, and warns about nothing**. `NVFP4_DEFAULT_CFG` carries
+`block_sizes {-1: 16, 'type': 'dynamic'}`: block scales are derived at runtime, so a per-block scale
+search has no parameters to optimise. ModelOpt prints its three normal progress lines and then
+`MSE weight calibration: 0it` — zero modules calibrated — and reports `Calibration complete.` A full run
+this way produces a checkpoint identical to plain max-calibration, with nothing in the log to say so.
+
+The correct entry point is the purpose-built config, which exists:
+`mtq.NVFP4_W4A4_WEIGHT_LOCAL_HESSIAN_CFG`, carrying
+`algorithm={'method':'local_hessian','fp8_scale_sweep':True}` and static block scales. With it the same
+matrices give `MSE weight calibration: 32it [487 it/s]` and 0 fallbacks. **Verify by the iteration count,
+never by the "Calibration complete" line.**
+
+**What was measured** (GB10, modelopt 0.46.0, torch 2.13.0+cu130, real BF16 layer 24 of
+`Qwen/Qwen3.8-Flash-Next` fetched by byte-range, 4.83 GiB, 512 experts of `gate_up_proj [1280,2560]` +
+`down_proj [2560,640]`, 32 real expert matrices sampled, ~80 tokens/expert from top_k 10 of 512):
+
+| | |
+| --- | --- |
+| weight-scale search, 32 expert matrices (0.079 B params) | **0.1 s** |
+| extrapolated, 512 experts × 48 layers + dense | **~6 min for the whole model** |
+| MSE fallbacks | **0** |
+
+**So the amax search is not the cost, and the question I set out to answer turns out to be the wrong
+question.** What this does *not* measure, and what will actually dominate a real run: the **forward
+passes** that collect the activations and Hessians (2,048 samples through a 125 B MoE — the harness feeds
+synthetic activations straight to isolated `nn.Linear`s and skips the model entirely) and the **I/O** to
+stream 335 GiB of BF16 weights. Rough shape, *not measured*: ~9.3 h of unattended fetch at our ~10 MB/s,
+plus order 1–3 h of forward passes, plus minutes of search. That still lands in "do it locally", but on
+the strength of an estimate, not this measurement.
+
+**One-time cost worth knowing:** the first `local_hessian` call JIT-builds `modelopt_cuda_ext_fp8`
+(21.7 s here), then caches it.
+
+**Harness honesty.** This took four iterations, each a real defect: (1) `dim()==2` filtering skipped the
+fused 3-D expert tensors and timed 3 % of the layer, the wrong 3 %; (2) rank-3 detection then swept in
+`linear_attn.conv1d.weight [10240,1,4]`, setting `n_experts=10240` and emitting 16 "input features (4) not
+divisible by block_size" fallbacks that were conv slices, not experts — experts must be found **by name**
+(`.experts.`); (3) every matrix was fed the full token budget when a real expert sees ~2 % of tokens
+(top_k 10 of 512), overestimating the part that dominates by ~51×; (4) the silent no-op above. Only (4)
+would have survived into a production run undetected.
