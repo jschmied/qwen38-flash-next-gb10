@@ -857,3 +857,31 @@ rewritten.**
 model name (404), root-owned output directory, and now the wrong tensor. Each was caught by a
 sanity check that cost seconds (a token count, a permission error in the log, a dimension that was half
 what it should be). The one that would have been expensive is this one, because it produces numbers.
+
+## A probe inside a compiled forward kills the server: `Attempted to call function marked as skipped` (2026-09-09)
+
+The corrected gate-2 probe hooked `Qwen3NextSparseMoeBlock.forward` — the right tensor, the right layer —
+and the server died at engine init after 640 s:
+
+```
+Dynamo does not know how to trace the builtin `posix.stat`
+RuntimeError: Worker failed with error 'Attempted to call function marked as skipped'
+  ... aot_compile_fullgraph
+```
+
+The model forward is compiled with **fullgraph** capture, so the `open()` / `os.makedirs` in the probe is
+not merely a graph break — it is fatal. `torch._dynamo.disable` does not rescue it either, because a
+graph break is itself an error under fullgraph.
+
+**Why the earlier probes were fine:** `flashinfer_cutlass_moe.apply()` (gate 1) and `qwen3_5.py`'s
+`compute_logits` (gate 0) both sit **outside** the traced graph — at custom-op and post-model boundaries.
+File I/O is safe there. The rule is not "probes are fine" but **"probes are fine outside the compiled
+region"**, and the model's own `forward` is inside it.
+
+**Fix:** run the capture server with `--enforce-eager` (via `FN_EXTRA`), so nothing is compiled and the
+probe's I/O is legal. Costs load and inference speed, which does not matter for a 16k-row capture. The
+activations then come from the eager path — same mathematics, different kernel fusion, immaterial for a
+Hessian estimate, but worth stating.
+
+Related: memory `vllm-compile-freezes-branches` — an `if` inside a traced region never fires at runtime.
+Same underlying fact, opposite symptom: that one fails silently, this one fails loudly.
