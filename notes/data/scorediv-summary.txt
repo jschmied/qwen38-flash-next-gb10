@@ -1,0 +1,24 @@
+# scorediv (2026-09-09) — corrected analysis, summary only (per-call jsonl is 1.6 MB, not committed)
+
+Source: /opt/llm/scorediv-{stock,all4}.jsonl, analyser /opt/llm/runners/sd/sdre.py
+
+
+===== stock: 9 segments; using 8 warm ones
+  prefill calls with a real selection, per request: [13, 13, 13, 13, 13, 13, 13]
+  first 13 prefill calls, row-counts identical across requests: True
+  compared 13 aligned prefill calls across 7 identical requests:
+    scores AND selection identical      : 0
+    SCORES differ, selection also differs: 13
+    SCORES differ, selection same        : 0
+    scores IDENTICAL, SELECTION differs  : 0   <-- would be a top-k ordering bug
+    boundary gap kth-(k+1)th: min=4.578e-05 median=3.204e-04
+
+===== all4: 8 segments; using 7 warm ones
+  prefill calls with a real selection, per request: [13, 13, 13, 13, 13, 13, 13]
+  first 13 prefill calls, row-counts identical across requests: True
+  compared 13 aligned prefill calls across 7 identical requests:
+    scores AND selection identical      : 13
+    SCORES differ, selection also differs: 0
+    SCORES differ, selection same        : 0
+    scores IDENTICAL, SELECTION differs  : 0   <-- would be a top-k ordering bug
+    boundary gap kth-(k+1)th: min=1.144e-05 median=3.357e-04

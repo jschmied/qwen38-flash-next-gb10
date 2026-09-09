@@ -9,7 +9,7 @@ This file is chronological and long. It answers "what happened on the 4th" well 
 cost" badly, which is the question people actually arrive with. Added 2026-09-08 after three
 subagents *and I* re-asked a question this file had answered twice (det-168). **Keep it current:
 a stale answer here is worse than no answer, because this is the part people trust.** Last
-reconciled against the findings at det-190.
+reconciled against the findings at det-191.
 
 | question | answer | findings |
 | --- | --- | --- |
@@ -26,6 +26,7 @@ reconciled against the findings at det-190.
 | Is ZC502's position-parity collector usable here? | The **client** one is: 12/12 runs on sm_121. The offline one is not (it constructs `LLM()` in-process). | det-155, det-178 |
 | **Does greedy decoding actually diverge end to end on TRUE stock?** | **Yes, badly.** 335 disagreeing positions on a 2.5k-token prompt, forced-logprob spread 10.63, first divergence at position 2, 104 modal top-1 mismatches. With all four fixes: exactly 0. Eight earlier "nulls" had three of the four silently active. | **det-181**, det-180 |
 | Which of the four fixes carries that? | **No single one — they are jointly necessary.** Isolated: none 333, qsadet 330, cachekey 334, plefix 285, detfin+cachekey 280, **all four 0**. And `plefix` is *not upstream* (det-182), so our own #55122 is **not** the load-bearing fix; say so upstream. | **det-184** |
+| Is the nondeterminism the top-k SELECTION or the SCORES fed to it? | **The scores.** Across 7 identical requests on stock, all 13 comparable prefill calls have differing input scores; **zero** have identical scores with a differing selection. `all4` is bit-identical on both. Answers @rybruscoe's discriminator on #54521. | **det-191** |
 | Why does `qsadet` alone do nothing? | Because the defect is unreachable on this traffic: of 6,192 rows that actually performed a top-k selection, **0 had any tie at the k-th value** (and 93 % of rows had fewer visible blocks than k, so selection was a no-op). #55122 is kernel correctness under ties, not end-to-end determinism here. | **det-190** |
 | Is the PLE offload subsystem upstream? | **No.** Zero `vllm/v1/ple_offload/` files in the dev524 wheel and 404 on vllm main; vllm#53899 is open and `mergeable_state: dirty`; our semaphore fix (PR #13 on its fork branch) is open. It exists only here and on that branch. | **det-182** |
 
@@ -3331,3 +3332,60 @@ a fix that buys end-to-end determinism on production traffic — we have now mea
 here. Saying so ourselves is cheaper than a reviewer finding it. Draft: `notes/upstream/comment-55122-tie-census.md`.
 
 **Data:** `/opt/llm/tiecensus.jsonl` (400 records), runner `tiecensus.sh`, patch `tiecensus_patch.py`.
+
+---
+
+## det-191 — the indexer SCORES are nondeterministic, not the selection: rybruscoe's discriminator answered
+
+**Run:** `scorediv` (2026-09-09 14:25–14:55), two arms on `vllm-venv-fnmain2`, 8 byte-identical greedy
+requests each (`p5960`, 34,868 chars), MTP 3, FN_MAXLEN 16384, FN_BATCH 4096. An env-gated probe at the
+end of `qsa_indexer._topk` hashed, per call, the **input scores** (`shash`) and the **kernel's selected
+block indices** (`ihash`) over the first 32 selecting rows.
+
+This is the discriminator @rybruscoe proposed on vllm#54521, which det-190 could not settle: since the
+boundary never ties exactly, a differing selection between two identical requests must be either
+(1) the scores differing upstream, or (2) a genuine ordering bug in the top-k.
+
+**Result — 13 aligned prefill calls compared across 7 identical warm requests per arm:**
+
+| | scores+selection identical | **scores differ**, selection differs | scores differ, selection same | **scores identical, selection differs** |
+| --- | --- | --- | --- | --- |
+| `stock` (no fixes) | 0 | **13** | 0 | **0** |
+| `all4` (all four fixes) | **13** | 0 | 0 | **0** |
+
+**The answer is (1).** In stock, every comparable call has *different input scores*, and not one call has
+identical scores with a different selection. The top-k kernel is where the divergence becomes visible,
+not where it originates — so **#55122 is not the root cause of end-to-end nondeterminism**, exactly as
+det-184 implied (qsadet alone: 333 → 330) and as we already told upstream. `all4` is bit-identical on
+both hashes, which is an independent confirmation of det-184 from a different instrument.
+
+Boundary gaps (kth − (k+1)th score), stock: min **4.58e-05**, median **3.20e-04**. So a score
+perturbation of order 1e-4 is enough to reorder the boundary. **We did not measure the perturbation
+magnitude** — the probe stores hashes, not values — so this is the scale at which it *could* flip, not a
+demonstration that it does. rybruscoe's "near-tie band" prediction is *consistent* with this and not yet
+confirmed; confirming it needs the scores logged as values.
+
+### The run was VOID as designed, and the first analysis was wrong
+
+Both of my pre-registered void criteria fired: the stock arm reported **0 comparable calls**, and the
+`all4` control reported **176 calls with differing scores** when it should have been identical. Neither
+was a property of the model.
+
+**Defect 1 — the cold request.** Segment 0 carries extra warm-up calls (148 in `all4`, 475 in `stock`),
+so comparing call *i* across segments misaligned every comparison that included it. The whole "176"
+figure was that artifact; with segment 0 dropped, `all4`'s 7 remaining segments are 405 calls each and
+align exactly.
+
+**Defect 2 — decode calls cannot align in the stock arm, by construction.** When outputs diverge, MTP
+acceptance differs, so the *number of decode steps* differs per request (stock segment lengths: 478,
+510, 390, 345, 405, 345, 480, 510). Call-by-call alignment is impossible there — and that divergence in
+call *count* is itself a symptom of the thing being measured.
+
+**The fix, applied to the data already collected rather than by re-running:** drop the cold request, and
+compare **prefill calls only** (`rows > 64`). Prefill count and shape depend on the prompt alone, so they
+cannot drift with generated tokens. Both arms then give 13 comparable calls per request with identical
+row counts, and the table above is that comparison. Analyser: `/opt/llm/runners/sd/sdre.py`, summary in
+`notes/data/scorediv-summary.txt`.
+
+**Bound:** prefill only. Decode-time behaviour is untested here, and a re-run wanting decode coverage
+must key calls by content rather than by index.
