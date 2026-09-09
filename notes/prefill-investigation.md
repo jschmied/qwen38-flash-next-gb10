@@ -1505,7 +1505,23 @@
     position 36. For scale, the four determinism defects we spent a week removing moved 110/2,504 (det-184). Halving the
     recurrent state's precision perturbs this model's predictions by the same order of magnitude. That is a *deterministic*
     change rather than a nondeterministic one, and whether it costs task quality needs a task eval, not a logprob count —
-    but "needles 15/15 unchanged", the evidence the field shipped it on, would never have detected it.
+    but it is not something a needle test can see.
+
+    **Fairness correction to an earlier draft of this finding (2026-09-09).** I wrote that "needles 15/15 unchanged" was
+    "the evidence the field shipped it on". That misrepresents them, and the correction matters because their reasoning
+    was better than my summary of it. MiaAI-Lab's own commit message says: *"Quality was checked because this is a
+    precision change… 15/15 needles found at 5 %, 50 % and 95 % depth, exactly the float32 pass count… A 4-turn
+    continuation — the case that would expose a recurrence degrading as it is carried forward — ends on a summary
+    recalling every element of the conversation in both dtypes. Caveat: that is one night's evidence at 32k, the same
+    bar the FP8 KV default was held to, not a graded task eval."* They identified the right category, probed the exact
+    failure mode this finding later tested positionally (carried-state drift), held it to the same bar as their own
+    existing FP8-KV default, and stated the limit of their evidence themselves. Their rollout was conservative too:
+    `MAMBA_SSM_CACHE_DTYPE` is empty by default in `start.sh`, so only new `.env.sample` users get bf16.
+
+    What remains true, and is the whole of the point: a needle test measures retrieval of a planted fact and cannot see
+    a flat 5 % shift in next-token preferences, which is why our modal-top-1 comparison adds something. And the benefit
+    they priced that evidence against — **+6.8 %/+8.5 % decode — does not reproduce here at all**, so we would be
+    adopting the same knob for a different reason (warm-turn TTFT) than the one they validated.
 
     **The error does not accumulate through the recurrence (2026-09-09, from the same data, no extra run).** The obvious
     worry about lowering the precision of an SSM state is that it is *carried*: `state_{t+1} = f(state_t, x_t)`, so a
