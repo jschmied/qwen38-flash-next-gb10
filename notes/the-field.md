@@ -1238,3 +1238,32 @@ base. Our production Flash-Next is `RadixArk/Qwen3.8-Flash-Next-NVFP4` at revisi
 2026-08-26 and spot-verified 3/3 against RadixArk's published shard hashes; its own
 `qualification-notes.md` records that only the 48 routed-expert layers are NVFP4 W4A4 and that the PLE
 tables are the FP8 ones from `Qwen/Qwen3.8-Flash-Next-FP8`.
+
+## 2026-09-09 — two third-party replies that land on our own findings
+
+**vllm#53670, @Suppressor72 (2026-09-08 21:25) — an independent A/B of the trailing-block drop, and it
+only half-replicates ours.** Dual RTX 5090, TP=2, Qwen3.8-27B-FP8 hybrid, 1,648-token alignment unit,
+in-checkpoint MTP K=2 (always drafting), 3 reps/arm interleaved, fresh boot per rep:
+
+| | drop ON (default) | drop OFF (#53388) |
+| --- | --- | --- |
+| MTP acceptance | 83.1 ± 2.9 % | 84.2 ± 0.5 % (+1.1 pp, Welch p=0.59) |
+| warm throughput | 149.6 tok/s | 241.9 tok/s (**+62 %**) |
+| prefix hit rate | 23.8 % | **64.7 %** (+40.9 pp) |
+
+The **direction agrees** with our `mtp-trailing-block-flag` result (−26 % per warm turn with the drop on)
+and the hit-rate mechanism is the same. What did **not** reproduce is our *acceptance* loss: we measured
+4–6 pp, they see no detectable difference at n=3. They say plainly it is underpowered to exclude a small
+effect. **Treat our acceptance figure as configuration- or workload-dependent until someone reproduces it
+on a third layout** — the throughput and hit-rate halves are what two independent layouts now agree on.
+They also note this characterises the *blanket* opt-out, not the K=0-conditional variant.
+
+**vllm#51782, @xueyangcs (2026-09-09 05:30) — HPC-Ops TopK's contract, answering our question.**
+Verbatim: the contract is **set-exact only** — every selected value ≥ every non-selected value; with
+ties, *any* valid top-k set is allowed. They do **not** guarantee set-stability (same inputs → same index
+set) or order-determinism, because both need an explicit tie-break or a fixed post-sort, at a cost.
+
+That is the same contract our own kernel has, and it is worth reading next to **det-190**: since the QSA
+boundary never ties exactly on our traffic (0 in 6,192 selecting rows), "any valid set under ties" cannot
+be what is moving our output. A library being set-exact-only is only a determinism problem where ties
+actually occur. Neither reply has been answered — both need a go.
