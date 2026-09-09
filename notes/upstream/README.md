@@ -355,3 +355,36 @@ branch lacks — fetch + rebase before pushing.
     own first line records that it was deliberately NOT opened on 2026-09-06 as a duplicate of #38315. The error
     was checking word count and the absence of such a PR under our account, and reading that absence as "not yet
     opened" rather than "decided against". Read the draft's own header before proposing it.
+
+101. 2026-09-09 14:0x — **MiaAI-Lab single-Spark #37, new issue** (user go "write a issue to mia's repo"):
+    their shipped `local-inference-lab` checkpoint is ModelOpt **0.39.0.dev290, dated 2026-04-07** with
+    **544 quantized_layers and 0 excludes** (MXFP8 467 / NVFP4 48 / W4A16_NVFP4 29) — it quantises the
+    GDN `in_proj_a/b/qkv/z` + `out_proj`, which NVIDIA's build (0.46.0.dev281, 50 layers, 292 excludes)
+    and RadixArk's (0.46.0, 48 expert layers) both exclude. Offered as a *checkable hypothesis* for their
+    open #27 Thai combining-mark corruption — ordering damage in combining marks is a failure of fine
+    sequential structure, which on this architecture lives in the GDN recurrence. Supported at the
+    strength it has: our bf16-SSM-state result (127/2,504 modal top-1 moved by changing only the carried
+    state dtype) shows the path is sensitive, and quantising the projections is a bigger perturbation.
+    Two caveats stated in the issue: we run RadixArk and see no such corruption, but we run no non-Latin
+    traffic; and we did not reproduce #27. Test named: serve NVIDIA's or primitive-ai's build, re-run
+    their Thai prompts, one server start. Draft `issue-miaai-single-checkpoint-gdn.md`.
+    → https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/37
+
+    **DRAFTED, AWAITING GO** (2026-09-09, from "can we answer any other issues in this repo?"):
+    - `comment-miaai-36-ablit-ple.md` → #36 (@15ky3, 0 comments). Connects "doesn't follow any prompt,
+      repeats itself" to **#34**'s measured mechanism: `edit_ple:false` makes `start.sh` serve *stock's*
+      PLE table under ablit weights. Gives the sampling-invariance discriminator and the `ple_cache/`
+      log check. Our PLE-row sensitivity stated as plausibility, not diagnosis.
+    - `comment-miaai-34-remote-shard-diff.md` → #34 (@witt3rd, 0 comments). Independently verified the
+      repo has **34** numbered shards (CHANGELOG's "37" is wrong, witt3rd's denominator right); offers the
+      no-download shard diff via HF `lfs.oid` in the tree API (verified live); points at #36 as the same bug.
+    - `comment-miaai-30-radixark-fits-vllm.md` → #30 (@MichaelS1011, 0 comments). Confirms RadixArk fits
+      on 1× GB10 under **vLLM** as well (126 GB, prod for weeks) with our table: c=1 21.6–26.7 tok/s,
+      TTFT 3.19 s @7.5k / 12.2 s @29k. Names the pinned-vs-page-cache failure (`CUDA OOM` while `free`
+      showed 118 GiB available, 105 GiB of it page cache) and the honest caveat that #53899 is not upstream.
+    - `comment-55122-tie-census.md` → **vllm#55122, our own PR**: det-190's census says the defect is
+      unreachable on this traffic (0 ties in 6,192 selecting rows), so the PR is kernel correctness under
+      ties, not end-to-end determinism. Better said by us than found by a reviewer.
+
+    **NOT worth posting:** #32 (`download.sh` quoting) and #24 (`stop.sh` ignores `.env`) — both reporters
+    diagnosed the bug completely and supplied the fix; a "confirmed" from us would be noise.

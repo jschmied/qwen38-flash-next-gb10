@@ -9,7 +9,7 @@ This file is chronological and long. It answers "what happened on the 4th" well 
 cost" badly, which is the question people actually arrive with. Added 2026-09-08 after three
 subagents *and I* re-asked a question this file had answered twice (det-168). **Keep it current:
 a stale answer here is worse than no answer, because this is the part people trust.** Last
-reconciled against the findings at det-182.
+reconciled against the findings at det-190.
 
 | question | answer | findings |
 | --- | --- | --- |
@@ -25,7 +25,8 @@ reconciled against the findings at det-182.
 | Is a merged #55122+#55314 kernel worth building? | No — closed, not deferred, on the end-to-end number above. | det-166, det-167, det-168 |
 | Is ZC502's position-parity collector usable here? | The **client** one is: 12/12 runs on sm_121. The offline one is not (it constructs `LLM()` in-process). | det-155, det-178 |
 | **Does greedy decoding actually diverge end to end on TRUE stock?** | **Yes, badly.** 335 disagreeing positions on a 2.5k-token prompt, forced-logprob spread 10.63, first divergence at position 2, 104 modal top-1 mismatches. With all four fixes: exactly 0. Eight earlier "nulls" had three of the four silently active. | **det-181**, det-180 |
-| Which of the four fixes carries that? | **Unresolved** — `isolate4` running 2026-09-08. If it is the PLE offload semaphore rather than the top-k kernel, #55122 is not the load-bearing fix and that must be said upstream. | det-181 |
+| Which of the four fixes carries that? | **No single one — they are jointly necessary.** Isolated: none 333, qsadet 330, cachekey 334, plefix 285, detfin+cachekey 280, **all four 0**. And `plefix` is *not upstream* (det-182), so our own #55122 is **not** the load-bearing fix; say so upstream. | **det-184** |
+| Why does `qsadet` alone do nothing? | Because the defect is unreachable on this traffic: of 6,192 rows that actually performed a top-k selection, **0 had any tie at the k-th value** (and 93 % of rows had fewer visible blocks than k, so selection was a no-op). #55122 is kernel correctness under ties, not end-to-end determinism here. | **det-190** |
 | Is the PLE offload subsystem upstream? | **No.** Zero `vllm/v1/ple_offload/` files in the dev524 wheel and 404 on vllm main; vllm#53899 is open and `mergeable_state: dirty`; our semaphore fix (PR #13 on its fork branch) is open. It exists only here and on that branch. | **det-182** |
 
 ## Established (measured, replicated where stated)
@@ -3285,3 +3286,48 @@ Plus whatever drives the separate generation-side path.
     vllm#56009". Read literally, the reviewer instructed the reviewer to report the false positive upstream. **A probe
     and its audit must not share a premise.** When writing a gate, the harvest instruction should state the *null that
     would refute it*, not restate the hypothesis with more confidence.
+
+---
+
+## det-190 — the top-k boundary never ties on this traffic: #55122's defect is unreachable end to end
+
+**Run:** `tiecensus` (2026-09-09 14:06), the census patch re-inserted into `qsa_indexer._topk` on
+`vllm-venv-fnmain2`, 400 instrumented calls over two prompts (`repeat`, `prose`, 13,639 chars each),
+FN_MAXLEN 16384, FN_BATCH 4096, MTP 3, k = 512 blocks throughout.
+
+A row is **ambiguous** iff `n_gt < k < n_gt + n_eq` — the kernel must choose only `k - n_gt` of the
+`n_eq` entries tied at the k-th value, and *which* it picks is the arrival-order behaviour our PR
+#55122 makes deterministic.
+
+| | |
+| --- | --- |
+| rows seen | 87,257 |
+| rows where selection is a **no-op** (`visible ≤ k`, everything taken) | 81,065 (92.9 %) |
+| rows that performed a **real selection** | 6,192 (7.1 %), in 267 of 400 calls |
+| rows with **any tie at the k-th value** (`n_eq > 1`) | **0** |
+| rows **ambiguous** | **0** |
+
+Two separate reasons the defect does not fire here, and they should not be conflated:
+
+1. **On 93 % of rows there is nothing to select.** Fewer visible blocks than the budget, so the top-k
+   returns everything and order is irrelevant. This is a property of the *context length*, not the kernel.
+2. **On the 7 % that did select, the boundary never tied at all** — not "tied but unambiguously", *never
+   tied*. `rows_with_equal_kth` is 0, so the ambiguity count is 0 for the strongest available reason.
+
+**This corroborates det-184 from the other side.** There, `qsadet` alone moved the disagreeing-position
+count 333 → 330, i.e. did essentially nothing, while all four fixes together gave 0. The census says why:
+on this traffic the top-k has no tie to break, so a fix to tie-breaking cannot change the output. The
+end-to-end reproducibility we report is carried by the other three (`detfin`, `cachekey`, `plefix`).
+
+**What this does *not* say.** It does not say the kernel is correct — the standalone test still shows
+arrival-order dependence under tie-heavy synthetic input, and #53287's reasoning stands. It says the
+defect is **unreachable on this workload**, bounded by: 16 k context, two prompts, 6,192 selecting rows.
+Longer contexts push a larger fraction of rows past `visible > k` and would sample the boundary far more;
+a tie rate indistinguishable from zero at 6 × 10³ samples is not zero at 10⁶. Exact ties between float32
+logits coming out of a real GEMM are simply rare.
+
+**Consequence for the PR.** #55122 should be presented as *correctness of the kernel under ties*, not as
+a fix that buys end-to-end determinism on production traffic — we have now measured that it does not,
+here. Saying so ourselves is cheaper than a reviewer finding it. Draft: `notes/upstream/comment-55122-tie-census.md`.
+
+**Data:** `/opt/llm/tiecensus.jsonl` (400 records), runner `tiecensus.sh`, patch `tiecensus_patch.py`.
