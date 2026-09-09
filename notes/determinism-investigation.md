@@ -3155,3 +3155,29 @@ Plus whatever drives the separate generation-side path.
     2,504-token prompt prefills in one chunk alone but eight of them get packed into 4,096-token batches, so each
     request's prompt is split differently depending on scheduling. If the perturbation tracks the chunk budget, the
     culprit is chunk packing rather than any single kernel, and that is one A/B rather than a multi-hour trace.
+
+
+187. **Provenance correction to det-184's fix list and to the README (2026-09-09).** Two claims made this morning were
+    wrong and are corrected here because they concern what a reader would rely on.
+
+    **(a) #55375 is not ours.** It is peakcrosser7's, merged 2026-09-05 14:02 UTC as `28e605fb33`. We found the same
+    defect independently and opened **#55467**, which I closed as a duplicate at 13:35 the same day — 27 minutes before
+    theirs merged — and moved the GB10 evidence onto #55375. What is ours on that bug is the independent discovery, the
+    multi-prefill reproducer and the evidence, not the merged patch. (Third duplicate of this kind; see the memory
+    `search-open-prs-before-fixing`.)
+
+    **(b) The fix is in the serving venv as our overlay, not from the wheel.** `vllm-venv-fnmain2` is built from nightly
+    `0.28.1rc1.dev401+g8340fe1bb`, and `8340fe1bb9` is dated **2026-09-04 20:27** — eighteen hours *before* the merge.
+    `git merge-base --is-ancestor 28e605fb33 8340fe1bb9` is false. The byte-identity check I ran this morning compared
+    the venv against **our** commit `789f55ae5b`, not against upstream's merged file, and reported "fix present" — true,
+    but it does not support the sentence it was used for ("merged upstream and already in the build").
+
+    **What survives the correction:** the two implementations are semantically identical. The entire diff is the argument
+    *position* of `state_idx_stride` in the two kernel signatures plus a hoisted local with a comment on our side against
+    an inline `state_indices.stride(0)` on theirs. So every measurement taken on this venv stands, and a bump to any
+    nightly from 2026-09-05 14:02 onward replaces our overlay with upstream's equivalent rather than conflicting with it
+    — which makes the fnmain3 cutover and any future venv bump simpler, not riskier.
+
+    **Method note.** A byte-identity check answers "is this file the version I have in hand", not "did this ship". For a
+    provenance claim the test is ancestry — `git merge-base --is-ancestor <merge-commit> <build-commit>` — and it costs
+    one command. Use it before writing "already in the build" anywhere a reader might act on it.
