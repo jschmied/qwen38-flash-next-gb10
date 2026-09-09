@@ -4,6 +4,11 @@ Qwen's Qwen4-architecture preview (125B MoE, 6B active, a 51B n-gram table) serv
 with 128 GB of unified memory, on vLLM. This repo is the working record: the recipe, every number
 with its data file, the failures by symptom, and the claims of our own we had to withdraw.
 
+**New here?** [notes/what-generalises.md](notes/what-generalises.md) is the short version: five durable
+insights, what transferred from the field and what did not, and which of our own conclusions had to be
+thrown away. It is synthesis — every number in it points back to the note that carries the data.
+
+
 **Status: working, fast, and usable** — 262K-capable context, tool calls, vision, one kernel fix of
 ours merged into vLLM and four more under review there.
 
