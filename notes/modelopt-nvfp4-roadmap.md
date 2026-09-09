@@ -20,7 +20,7 @@ scheme, same size, same speed, better calibration. Not a speed project.
 | # | gate | cost | status |
 | --- | --- | --- | --- |
 | 0 | **Does LH's weight-space win survive in OUTPUT space?** `‖X(W−Ŵ)ᵀ‖` on real activations, LH vs max scales, same head | ~20 min | **`headcap` running** (queued behind `dv2`) |
-| 1 | **Does the fused-MoE path actually engage Local-Hessian?** `_register_local_hessian_input_hooks` has an expert path keyed on `_current_expert_idx`; weights it cannot pair fall back to **plain MSE with a warning**. On 512 experts that is the difference between doing the experiment and thinking we did | ~30 min, 1 layer | not started |
+| 1 | **Does the fused-MoE path actually engage Local-Hessian?** Testable against the REAL class: transformers 5.15.1 ships `qwen3_5_moe`, and ModelOpt 0.47's HF plugin registers `_QuantFusedExperts` (`_first_proj_attr = "gate_up_proj"`, `huggingface.py:976`) plus `_QuantQwen3VLMoeTextExperts` — so a tiny config exercises the real path rather than a hand-built stub `_register_local_hessian_input_hooks` has an expert path keyed on `_current_expert_idx`; weights it cannot pair fall back to **plain MSE with a warning**. On 512 experts that is the difference between doing the experiment and thinking we did | ~30 min, 1 layer | not started |
 | 2 | **Does one real expert layer behave like the head?** Quantise layer 24 LH vs MSE, output error on real activations | ~1 h | not started |
 | 3 | **The build** | see below | gated on 0–2 |
 | 4 | **Validation before adoption** | logprob divergence vs BF16, then agent-task quality | gated on 3 |
@@ -31,6 +31,15 @@ Layer-by-layer, so the source never lands whole:
 
 | | |
 | --- | --- |
+**Staging decision (user, 2026-09-09): fetch BF16 slices to the PBS server, not to the GB10.**
+`10.0.0.70:/mnt/bulk/hf/` has **1.76 TB free** against the GB10's 293 GB, so the whole 335.3 GiB source
+lands there once and is **retained** — a second calibration variant then costs zero download instead of
+another 9.3 h. The GB10 pulls one layer at a time over LAN (PBS reads ~97 MB/s, disk-bound on its
+two-disk mirror, so ~1 h of I/O spread across the whole run) and never holds more than a layer plus the
+growing output. `hfget.sh` already writes `SOURCE.json` with per-file publisher hashes there, and
+`hfverify.py` now checks both sha256 and git-blob-sha1, so the staged source is verifiable at 19/19
+rather than 4/19.
+
 | BF16 source fetch | 335.3 GiB at our measured **~10 MB/s** = **9.3 h**, unattended, free. Byte-range per layer (`hfpull_tensor.py`), so peak disk is one layer + the growing output ≈ **133 GiB** of our 294 GB |
 | calibration | forward passes (**unmeasured** — the real cost) + ~6 min of search |
 | output | born locally: **no return leg at all** |
