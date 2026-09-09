@@ -1315,3 +1315,41 @@ deliverable is "does Local-Hessian calibration rescue the NVFP4 head", we need t
 checkpoint: quantize on the rented box, push to HF (their egress is fast), pull ~1 GB, decide, and only
 then pay for the rest. It also means the BF16 reference — 335.3 GiB, which we cannot host — stays where
 it belongs, on the rented box, where the divergence measurement should run anyway.
+
+### ModelOpt quantises layer by layer — the H100 box spec drops a lot (checked 2026-09-09)
+
+Read from the ModelOpt source, not inferred:
+
+- **`layerwise_calibrate(model, forward_loop, calib_func, **calib_kwargs)`**
+  (`modelopt/torch/quantization/model_calib.py:2052`) wraps *any* calibration function — including
+  `local_hessian_calibrate` — in a layer-by-layer strategy. Its helper `LayerActivationCollector`
+  (`utils/layerwise_calib.py`) patches decoder layers with a **skip / run / capture** strategy: earlier
+  layers are skipped and fed cached activations, the current layer runs, its output is captured for the
+  next. Linear in layers, not quadratic.
+- **It is resumable.** `checkpoint_dir` + `_CheckpointState` persist per-layer progress to disk, with
+  `save_every`. A preempted spot instance resumes at the layer it reached.
+- **Export streams too**: `export_dir` (`export/layerwise_export.py`, `unified_export_hf_streaming.py`)
+  writes each layer's shard as it goes rather than materialising the output checkpoint in RAM.
+- **`get_qdq_activations_from_prev_layer`** switches on the sequential variant, where layer i+1 sees the
+  *quantised* outputs of layer i, so accumulated error is compensated rather than ignored.
+
+Two things about Local-Hessian specifically that change the cost model:
+
+1. **It does not mutate weights** (`_mutates_weights = False`). It is a Hessian-weighted **amax grid
+   search** — candidates from `start_multiplier` 0.25 to `stop_multiplier` 4.0 in `step_size` 0.1 —
+   minimising `dw · H · dwᵀ`. It is *not* GPTQ weight surgery, so layers are independent given their
+   inputs.
+2. **The Hessian is per block, not per layer.** `hessian_per_block` is `(cin/block_size, block_size,
+   block_size)` with `block_size=16` — about **327 KB** per linear at cin 5120, not a 5120² matrix
+   (105 MB). And `build_error_func()` frees the buffer unless `keep_buffer`.
+
+**So peak memory is one decoder layer plus the cached calibration activations**, not 335 GiB. The
+activation cache is the real driver: 2,048 samples × seq × hidden × 2 B (≈ 43 GB at seq 2048, hidden
+5120), held on the host. That is a **single H100 with ~128 GB RAM**, not 8×H100 with 500 GB — and with
+`checkpoint_dir` it can run on **preemptible/spot** pricing. Disk still needs ~470 GiB (335 in + 126 out).
+
+One caveat worth checking before booking anything: `_register_local_hessian_input_hooks` has a
+fused-MoE-experts path keyed on `_current_expert_idx`, and weights it cannot pair (conv,
+`SequentialQuantizer`, non-eager experts) **fall back to plain MSE with a warning**. On a 512-expert MoE
+that fallback is the difference between doing the experiment and thinking we did it — grep the run log
+for `local_hessian:` warnings before trusting the output.
