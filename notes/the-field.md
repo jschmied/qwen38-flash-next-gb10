@@ -1188,3 +1188,28 @@ week when vllm#55357 and #55951 are both open on MTP/hybrid state handling.
 Download ranking says where the field's attention is: `nvidia/…-NVFP4` 26,302, `Baekpica/…-Mixed-Quant-
 **SSD-PLE**-GGUF` 17,140, `primitive-ai/…-NVFP4` 14,281. Two of the top three are about getting the PLE
 out of RAM.
+
+### EXL3 (2026-09-09) — the best published quality curves, on a stack we cannot use
+
+Four EXL3 repos exist for Flash-Next; the reference is **`turboderp/Qwen3.8-Flash-Next-exl3`** (986
+downloads, 41 likes, 09-01) from the ExLlamaV3 author, shipping a bitrate ladder as *branches*:
+**2.05 / 3.05 / 4.05 / 5.05 / 6.05 bpw**. Requires ExLlamaV3 ≥ v1.4.5 (current v1.4.8, 09-06).
+
+**Why it is worth knowing about even though we cannot serve it:** the model card publishes **KL-divergence
+and perplexity curves against the unquantised model across the whole bitrate ladder**. That is the metric
+we use (modal top-1 / forced-logprob divergence, findings 153/158/159) and the one the entire NVFP4
+ecosystem does **not** publish — NVIDIA gives task scores, nobody gives divergence. Those curves are a free
+yardstick for judging whether NVFP4's measured 12.1 % weight error is good or bad *for its bitrate*.
+
+**Why we cannot use it here.** (1) **vLLM has no EXL3 backend** — the quantization registry in our build
+lists awq/gptq/marlin/fp8/modelopt/mxfp4/quark/torchao and friends, no `exl3` or `exllama`. A community
+fork does serve it (the `verdictai/glm53-flash-exl3-k4` image in vllm#54458), but that is out of tree.
+(2) **ExLlamaV3's Blackwell support is actively broken in places**: open issues #307 (illegal memory access
+in `coop_autotune.cu` on consumer Blackwell sm_120), #333 (two-GPU layer split decodes gibberish on
+sm_120), #245 (TP=2 illegal access in `pg_gather_kernel`). sm_121/GB10 is a rarer variant again and is not
+named in any of them. (3) Adopting it means giving up the vLLM stack entirely — the four determinism
+overlays, the MTP path, the PLE offload worker and every measurement tool we have.
+
+Note also `wrldsuksgo2mars/Qwen3.8-Flash-Next-EXL3-K4.25-**PLE-FP8**-v1`: even an EXL3 build keeps the PLE
+table at FP8 as a separate artifact, which says the body/PLE decomposition is architectural rather than a
+property of any one quant format.
