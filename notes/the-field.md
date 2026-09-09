@@ -1143,3 +1143,43 @@ incommensurate chunk budget, nested affected sets).
 **Our PRs:** #55122 CI shows one FAILURE — `pre-run-check` → *"Check PR label and author merge count"*. The PR
 carries **no labels**; that is a maintainer action, not a code defect, and @LucasWilkinson was already pinged
 (posting log, comment `5570822909`). #55430 is still a draft, #54948 and #54912 untouched since early September.
+
+## 2026-09-09 — the NVFP4 field for Flash-Next: the model got decomposed into body + PLE
+
+100 repos now match `Qwen3.8-Flash-Next`; 12 are NVFP4 and **11 are about the PLE**, a category that did
+not exist when we last swept on 09-05. Two things changed, and both bear on us.
+
+**1. Mixed NVFP4/FP8 is now the consensus recipe — and it is ours.**
+`primitive-ai/Qwen3.8-Flash-Next-mixed-NVFP4-FP8` (09-06, 5,165 downloads) is FP8 W8 on
+`self_attn.{q,k,v,o}_proj` **and** `linear_attn.{in_proj_qkv,in_proj_z,out_proj}`, NVFP4 group-16 on the
+MoE experts, with `ple`, `visual`, `embed_tokens`, `mtp`, `norm` and `mlp.gate` ignored. That is the same
+split NVIDIA shipped for the 27B two days earlier, and the same lever as our `fp8-mixed-checkpoint`
+(+39 % decode). One difference worth noting: neither of them quantises `lm_head` here, while NVIDIA's
+**27B does** put `lm_head` in NVFP4 — the choice we measured as 2.4 % worse NLL.
+
+**2. The model is now shipped as body + PLE, separately, and the PLE has been quantised hard.**
+
+| artifact | size | what |
+| --- | --- | --- |
+| `primitive-ai/…-mixed-NVFP4-FP8` | 57.4 GiB | body only, PLE ignored, 47 files |
+| `primitive-ai/…-NVFP4` | 55.4 GiB | body only, 0 PLE files, 14,281 downloads |
+| **`primitive-ai/…-PLE-quant`** | **14.9 GiB** | **41 files, all PLE** |
+| ours (`qwen38-flash-next-nvfp4`) | **126 GiB** | body + FP8 PLE in one tree (`model-plefp8-*`, ~47.7 GiB) |
+
+**Body + quantised PLE ≈ 72 GiB against our 126 GiB — about 54 GiB back**, and 33 GiB of that is the PLE
+alone (14.9 vs 47.7). That is far more than the ~21 GiB our TODO estimated for `provsalt/…-PLE-NVFP4`.
+`ple-access-pattern` already says what it buys and does not: the PLE is a **memory-layout** problem —
+2,560 useful bytes per token scattered so a 160-byte row costs a 4 KiB page — so a smaller row still faults
+one page and decode barely moves. **It buys resident capacity, not speed.** On a 128 GB box that is still
+the constraint worth spending: our KV pool measured 176–247k tokens and varies 119–180k across identical
+starts (finding 155), and concurrency is gated by it.
+
+Also new and worth a look: `dicksondickson/…-NVFP4-reshard-mtp-fix` (09-07) — an MTP-specific reshard, in a
+week when vllm#55357 and #55951 are both open on MTP/hybrid state handling.
+`gitcommit90/Qwen3.8-Flash-Next-NVFP4-DenseFP8-One-Spark` (09-06) is tagged `dgx-spark`/`gb10` and based on
+`nvidia/…-NVFP4` — i.e. someone is publishing our exact recipe for our exact box — but the repo holds
+**2 files and 0 GiB**: announced, weights never uploaded.
+
+Download ranking says where the field's attention is: `nvidia/…-NVFP4` 26,302, `Baekpica/…-Mixed-Quant-
+**SSD-PLE**-GGUF` 17,140, `primitive-ai/…-NVFP4` 14,281. Two of the top three are about getting the PLE
+out of RAM.
