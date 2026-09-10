@@ -937,3 +937,35 @@ search, so a version bump degrades to a slower lookup rather than a crash after 
 
 Cost of learning this the slow way: one full model load. Cheap only because the run was launched at
 shakeout size first. 2026-09-10.
+
+## `VLLM_QSA_DET_TOPK=0` ENABLES the det top-k overlay — "0" is truthy in Python
+
+The gate is `if _os.environ.get("VLLM_QSA_DET_TOPK"):` (`qsa_indexer.py:489`), so **every non-empty
+value turns the kernel on**, including `"0"`. Proven:
+
+| value | gate fires |
+| --- | --- |
+| `"1"` | True |
+| `"0"` | **True** |
+| `""` | False |
+| unset | False |
+
+`VLLM_MOE_DET_FINALIZE` has the identical shape — `not bool(os.environ.get(...))` in
+`flashinfer_cutlass_moe.py:392`. In a venv with the overlays installed, **the only way off is to
+unset the variable**, not to set it to 0.
+
+This cost a 10-minute model load: the capture failed on det-179's shared-memory ceiling, was
+relaunched with `FN_DET_TOPK=0`, the flag was verified present in `/proc/<pid>/environ` — and it
+failed identically, because the flag being present was the problem.
+
+**`isolate4` / `isolate5` are NOT contaminated by this**, checked before assuming they were: they
+call `allfixes_off`, which *uninstalls* the overlay from the venv, and their logs record `QSADET=0`
+in the off arms and `QSADET=1` in the on arms. The env var is secondary there. Runners built like
+`posdiv_con.sh`, which only *add* the variable for the on-arm, are also safe. The exposure is
+confined to runners that export the flag unconditionally from `${FN_X:-default}` against an
+installed overlay.
+
+Class: the third defect this session where a well-formed, plausible value is silently wrong —
+after `apply_chat_template(tokenize=True)` returning a BatchEncoding and the `expact` wrong tensor.
+Verifying that a flag *arrived* is not the same as verifying it *took effect*; the marker line
+(`QSADET=`) is the thing to check. 2026-09-10.
