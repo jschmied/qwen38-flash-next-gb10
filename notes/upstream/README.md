@@ -462,3 +462,31 @@ branch lacks — fetch + rebase before pushing.
     comments and explains a 13-day stall, not a restatement of anything.
     Draft `comment-54076-dco.md`.
     → https://github.com/vllm-project/vllm/pull/54076#issuecomment-5605403768
+
+106. 2026-09-10 09:2x — **three posts, one deliberately skipped** (user go "which of the upstream post are
+    really useful, if yes, post it"). Applied the posting rule added 09-09: name what the thread LACKS.
+    - **vllm#53670** → @Suppressor72's non-replication. We **downgraded our own number** rather than
+      defending it: our 4–6 pp acceptance cost for the trailing-block drop is now configuration-dependent;
+      what stands on two layouts is the throughput/hit-rate half. Added the mechanism for the disagreement —
+      finding 154's **1-ulp change moving acceptance +6.6/+10.4/−3.8 pp across three prompts**, so any
+      single-digit-pp acceptance delta on one prompt set is inside the noise band, covering their +1.1 and
+      our 4–6 equally. Draft `comment-53670-acceptance-downgrade.md`.
+      → https://github.com/vllm-project/vllm/issues/53670#issuecomment-5614689740
+    - **vllm#51782** → @xueyangcs answered that HPC-Ops TopK is set-exact-only. Closed the question **in
+      their favour**: det-190 (0 ties in 6,192 selecting rows) and det-191 (scores differ, selection never
+      differs given identical scores) mean set-stability would buy us nothing, because ties do not occur and
+      the inputs are not identical. Told them to keep the latency, and to ask for a tie census before paying
+      for the guarantee. Draft `comment-51782-not-our-failure-mode.md`.
+      → https://github.com/vllm-project/vllm/issues/51782#issuecomment-5614692998
+    - **pangoleen/qwen3.8-flash-next-dgx-spark #1** (their first issue). Their `01-draft-vocab` uses 65,536;
+      our observed vocabulary is **48,476 ids** total, so the slice is likely non-binding — and their own
+      acceptance (3.64 → 3.57) says so. Gave finding 160's sweep (16,384 wins 5/7 vs full at +8.5…+12.1 %,
+      beats 32k at 4/7) framed as "measured here, worth testing there" since the serving route differs
+      (mmap PLE vs our offload worker). Also handed back their own `03-staged-ple` argument stated by *our*
+      build: `qwen4_exp_compute_ple_ngram_ids` and `qwen4_exp_ple_short_conv` are in the engine's
+      `splitting_ops`. Draft `issue-pangoleen-draft-vocab-16k.md`.
+      → https://github.com/pangoleen/qwen3.8-flash-next-dgx-spark/issues/1
+
+    **NOT posted, on purpose:** an acknowledgement to @ZC502 on #54521. They shipped v0.1.2 implementing
+    both of our suggestions and explicitly said no re-run and no data were needed. The thread lacks nothing;
+    a thank-you in a 47-comment thread is the volume the posting rule exists to prevent.
