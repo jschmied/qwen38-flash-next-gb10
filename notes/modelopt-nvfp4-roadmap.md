@@ -294,3 +294,51 @@ the ~10 min model load. `max_model_len` must go to ≥96k and `max_num_seqs` pro
 
 Note the measurement itself was free — the capture stores rows in fed order and the sampler is
 deterministic, so row boundaries reconstruct exactly (verified: 126,677 rows = 126,677 tokens).
+
+## How an experts-only checkpoint merges — and the trap in it
+
+**The question:** our build writes one file per layer; the shipped checkpoint packs tensors into
+206 shards with no layer alignment. How do they combine?
+
+**They combine at the index, not the file.** `model.safetensors.index.json` maps tensor name → file,
+and nothing requires a shard to hold contiguous or related tensors. Merging means rewriting that map.
+
+### The trap: index-repointing alone silently discards the rebuild
+
+vLLM globs `*.safetensors`, then `filter_duplicate_safetensors_files` keeps only files **referenced
+in the index** (extras ignored; a referenced-but-missing file is a hard error). But it then iterates
+**every tensor in each kept file**, and `safetensors_weights_iterator` sorts them with
+`_natural_sort_key`:
+
+```
+layer00.safetensors          <- ours, loads FIRST
+layer47.safetensors
+model-00001-of-00131.safetensors   <- RadixArk's, loads AFTER
+```
+
+`l` sorts before `m`, so if a referenced RadixArk shard still contains the old expert tensors, they
+**overwrite ours**. No error, no warning: a model that behaves exactly like stock and a build that
+looks successful. Verified by calling `_natural_sort_key` directly, not by reasoning about it.
+
+Renaming our files to sort last would "fix" it, and must not be used — correctness cannot rest on
+filename collation. The old expert bytes have to be absent from every **referenced** file.
+
+### Which is nearly free here, because the checkpoint is already separated
+
+Header census of `/opt/llm/models/qwen38-flash-next-nvfp4` (206 shards):
+
+| shard class | count | size | action |
+| --- | --- | --- | --- |
+| pure **expert** | 192 | 63.3 GiB | drop from the index — never opened |
+| pure **other** | 13 | 52.6 GiB | reference as-is |
+| **mixed** | **1** | 4.7 expert + 5.3 other | repack the non-expert half |
+
+**Merge cost: 5.3 GiB written.** Everything else is hardlinks plus a new index — against the 57.9 GiB
+a blanket non-expert repack would have cost, or the 126 GB of a full copy.
+
+### Consequences for publishing
+
+The repo ships the 48 layer files and a merge script that does the above on the user's machine. The
+script must **fail loudly** if any referenced shard still contains an expert tensor, because the
+failure mode is a model that loads cleanly and is silently the original. That warning belongs in the
+model card, not only in the script.
