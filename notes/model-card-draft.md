@@ -34,12 +34,30 @@ the next section.
 | **main** | routed experts | 68.0 GiB | NVFP4 W4A4, Local-Hessian calibrated | **stock vLLM** |
 | *optional* | `lm_head/` | 606 MiB | blockwise FP8, +11 % decode | a patched vLLM, TP=1 |
 
-Take the experts and ignore `lm_head/` and everything works on an unmodified vLLM. The head is a
-separate opt-in with its own requirements, kept in its own directory so it is easy to skip:
+The two are **independent**. Take either, or both:
 
 ```python
-snapshot_download("josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts-FP8Head",
-                  ignore_patterns=["lm_head/*"])        # experts only, stock vLLM
+R = "josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts-FP8Head"
+
+snapshot_download(R, ignore_patterns=["lm_head/*"])   # experts only  — stock vLLM
+snapshot_download(R, allow_patterns=["lm_head/*"])    # head only     — 606 MiB
+snapshot_download(R)                                  # both
+```
+
+**The head is useful on its own, without these experts.** It is downstream of every MoE block and
+does not care how the experts were quantized, so it drops into any Qwen3.8-Flash-Next build whose
+`lm_head` is the stock BF16 `[248320, 2560]` tensor — which is every published GPU checkpoint we have
+looked at, RadixArk's included. Combined with an otherwise untouched base checkpoint it is **+11 %
+decode for a 606 MiB download**, and none of the Local-Hessian work is involved.
+
+Check compatibility before you rely on that, rather than assuming it — the head was quantized from
+one specific BF16 tensor, and a build that ships a different one will produce wrong logits, not an
+error:
+
+```python
+# your base checkpoint's lm_head must be the tensor this head was built from
+import json, hashlib
+# see COMPAT.md in this repo for the reference sha256 and a ready-made check
 ```
 
 Everything else comes unmodified from
