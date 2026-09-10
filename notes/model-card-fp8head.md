@@ -1,6 +1,5 @@
-<!-- Mirror of the card published PRIVATE at
-     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-FP8-lm_head
-     Keep this file and the repo README in step. COMPAT.md mirrored as fp8head-COMPAT.md. -->
+<!-- Mirror of the card published PUBLIC at
+     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-FP8-lm_head -->
 
 ---
 base_model:
@@ -20,8 +19,6 @@ tags:
 > Qwen3.8-Flash-Next quantization on a single DGX Spark: which schemes fit in 128 GB, what
 > each costs in speed and quality, and where this piece sits among them.
 
-
-**PRIVATE / WORK IN PROGRESS.**
 
 A single tensor and its scale: `lm_head` quantized to blockwise FP8. **606 MiB, +11 % decode, no
 measurable quality cost.** It drops into an otherwise untouched Qwen3.8-Flash-Next checkpoint.
@@ -77,10 +74,34 @@ Nine chunks improved, five worsened — **mixed signs, so this is noise, not dam
 2.4 % worse NLL in 8 of 8 chunks and was declined for production, while this **FP8** head is
 loss-neutral.
 
-**One honest limit:** the +11 % was measured *without speculation*, so the second construction site
-never executed during validation — the configuration that validated the change was not the
-configuration we serve. Re-validation under MTP is TBD; until then read +11 % as a no-speculation
-figure.
+### With speculation it is worth considerably more
+
+The +11 % above is the **no-speculation** figure. Under MTP (k=2) the head is worth more, not less,
+because of *where* it sits in the speculative loop:
+
+| | c=1 | c=16 |
+| --- | ---: | ---: |
+| BF16 head + MTP | 29.2 tok/s | 139.6 |
+| **FP8 head + MTP** | **36.3** | **167.8** |
+| | **+24 %** | **+20 %** |
+
+It also flips speculation from a **net loss** at c=16 (139.6 against 156.0 without MTP) to a **net
+gain** (167.8).
+
+The mechanism: MTP evaluates `lm_head` once per draft token *plus* once for verification, so at k=2
+the head is on the critical path about **three times per step**, while dense projections are read
+once per step either way. Halving the head therefore pays k+1 times over.
+
+**Acceptance is unchanged** — mean accepted length 2.21 against 2.15 — so this is pure speed, not
+better drafting. If you were expecting a quantized layer to cost the drafter accuracy, it did not.
+
+The general rule this is one instance of: **a quantization lever composes with speculation when the
+layer is evaluated per draft token, and competes with it when the layer is read per step.** Worth
+checking before assuming either — on this same box, quantizing the dense projections *reduced* MTP's
+benefit from +67 % to +23 % and turned it into a net loss past c≈4.
+
+**One caveat that does stand:** `mtp.py` builds its own `ParallelLMHead` and must be patched too, or
+speculation fails outright with `no module or parameter named 'lm_head.weight_scale_inv'`.
 
 ## Compatibility — check, do not assume
 
@@ -109,9 +130,10 @@ trusting the list.
 
 ## Related
 
-The Local-Hessian NVFP4 expert rebuild for the same model is a **separate** repo, with different
-requirements — it needs no vLLM patches. The two compose but neither depends on the other:
-[Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts](https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts).
+A Local-Hessian NVFP4 rebuild of the **routed experts** for the same model is in progress as a
+separate release, with different requirements — it needs no vLLM patches, and the two compose without
+either depending on the other. Not published yet; it will be linked here when it is. Its method and
+results are being written up in the notes repo linked above.
 
 Base model [`Qwen/Qwen3.8-Flash-Next`](https://huggingface.co/Qwen/Qwen3.8-Flash-Next). Built and
 measured on a single DGX Spark (GB10, sm_121, 128 GB unified memory).

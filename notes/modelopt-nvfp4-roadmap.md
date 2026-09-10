@@ -484,7 +484,22 @@ we rebuilt 48 times over.
 That lines up with the standing finding that **69 % of single-stream time is BF16 GEMV on RadixArk's
 unquantized weights**: the drafter runs on every speculation step.
 
-Two reasons not to treat it as free, though. Stage 1 captured no MTP activations, so calibrating it
-needs a second hook or plain-max. And a drafter's job is proposing tokens the target verifies —
-degrading it costs acceptance rate, which can outweigh the bandwidth saved. Measurable, not arguable,
-but it is why BF16 here may be deliberate.
+**Correction to what I first wrote here:** I flagged "degrading the drafter costs acceptance rate"
+as a reason for caution. That is not supported by our own data. `fp8-mixed-checkpoint.md` measured
+exactly this axis and found **acceptance unchanged** — mean accepted length 2.21 against 2.15 — while
+quantizing `lm_head`, a layer on the drafter's critical path ~3× per step. Speed, not worse drafting.
+
+What the same note *does* establish is that the answer depends on where the layer sits:
+
+| lever | with MTP |
+| --- | --- |
+| `lm_head` FP8 — evaluated **per draft token** | **complements**: +24 % at c=1, +20 % at c=16, and flips MTP from a net loss to a net gain |
+| dense projections FP8 — read **per step** | **competes**: MTP's benefit drops +67 % → +23 %, net loss past c≈4 |
+
+**The rule: a quantization lever composes with speculation when the layer is evaluated per draft
+token, and competes with it when the layer is read per step.**
+
+Which side the MTP module's *own* experts fall on is genuinely untested — they are read once per
+draft token, which argues "complements", but nobody has measured it. The real obstacle is mechanical:
+stage 1 hooks `Qwen4ExpSparseMoeBlock` in the main model only, so no MTP activations were captured
+and calibrating them needs a second hook or plain-max.
