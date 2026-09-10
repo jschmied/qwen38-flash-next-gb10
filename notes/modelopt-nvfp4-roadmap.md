@@ -257,3 +257,40 @@ halve it if that ever matters. It does not yet.
 - **The 16 thin experts.** Harmless at one layer; worth a census across all 48 before shipping.
 - **Baseline arm of the combining-mark probe** on current prod, folded into the next server start
   rather than paying its own 9-minute load.
+
+## The capture's real defect is POSITION coverage, not instance diversity — 2026-09-10
+
+I flagged the stage-1 sampler's shortest-first bias as a diversity problem. Measured it on the
+capture we already had (layer 24, no model load, `posdrift.py`) and the concern was real but aimed
+at the wrong axis.
+
+| split | routing TV distance | top-50 expert overlap | hidden-norm median |
+| --- | --- | --- | --- |
+| **A. within sequence** (first third vs last third) | **0.4540** | **42 %** | 30.05 → 26.61 |
+| **B. across instances** (shortest 11 vs longest 11) | 0.1484 | 80 % | 27.77 → 27.44 |
+
+**Position inside the sequence dominates by 3×.** Early and late tokens share only 42 % of their
+top-50 expert set and the hidden-state norm falls 11 % across a sequence. Instance length, the thing
+I worried about, barely moves anything (80 % overlap, norms equal to within 1 %).
+
+That inverts the fix. The problem is not which instances we picked, it is **how little of the
+position range they reach**:
+
+- captured positions span **3,507 – 8,063**
+- the corpus runs to **95,239**, median 14,089
+- so the capture covers **8 %** of the position range, and the Hessians for every expert are built
+  almost entirely from early-sequence rows
+- `--max-len 32768` would have truncated 12 of the 100 instances even if they had been selected;
+  the model itself supports 262,144
+
+Since routing varies strongly with position, an expert's routed rows at position 60k are not the
+rows we calibrated it on. This is a defect in the capture, not a caveat.
+
+**Fix: stratify on length so the capture spans the position range**, not on project diversity.
+One 95k instance contributes positions 0–95k by itself, so coverage is cheap in instance count and
+expensive only in tokens. A ~300k-token budget (1×95k + 2×~40k + 4×~14k + shorts) covers the range
+at 48 × 300,000 × 2560 × 2 B = **73.7 GB** of capture against 262 GB free, ~8 min of capture plus
+the ~10 min model load. `max_model_len` must go to ≥96k and `max_num_seqs` probably down to 1.
+
+Note the measurement itself was free — the capture stores rows in fed order and the sampler is
+deterministic, so row boundaries reconstruct exactly (verified: 126,677 rows = 126,677 tokens).
