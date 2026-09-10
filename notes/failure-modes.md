@@ -906,3 +906,18 @@ it is an index artifact. Uniform-looking routing to the lowest-numbered experts 
 
 **Rule:** when capturing activations from a served model, **filter all-zero rows before anything else**.
 Padding is invisible in shapes, dtypes and file sizes, and it does not error — it selects the sample.
+
+## `apply_chat_template(tokenize=True)` returns a BatchEncoding, not a list (transformers 5.x)
+
+`len(tok.apply_chat_template(msgs, tokenize=True))` is **2** — the number of keys
+(`input_ids`, `attention_mask`) — not the token count. A 1.8 M-token corpus censused this way
+reported "100 instances, TOTAL TOKENS 200, median 2" and raised no exception; the rendered
+string was correct all along.
+
+Tell: every instance reports the *same* tiny count regardless of size.
+
+Fix: render with `tokenize=False`, then tokenize the string with `add_special_tokens=False`
+(the template already emits `<|im_start|>`).
+
+Same class as the earlier `expact` wrong-tensor and the hfget pagination bug — an output that is
+well-formed, plausible and silently wrong. 2026-09-10.
