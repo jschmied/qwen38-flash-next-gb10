@@ -192,3 +192,68 @@ to optimise, and there is no warning. Use **`mtq.NVFP4_W4A4_WEIGHT_LOCAL_HESSIAN
 Someone may publish a Local-Hessian Flash-Next build. The HF tree API gives per-file `lfs.oid` and
 `hf_quant_config.json` without downloading anything, so checking the field costs one HTTP call and has
 already invalidated two of our plans this month.
+
+## Stages 1 and 2 both run — 2026-09-10
+
+### Stage 1: capture (`fx-lhcap`, 12:21)
+
+126,677 tokens / 22 instances of the multilingual corpus through the served RadixArk NVFP4 build,
+`enforce_eager=True`, forward pre-hook on all 48 `Qwen4ExpSparseMoeBlock`.
+
+| | |
+| --- | --- |
+| files | 48, **one distinct size** (648,586,240 B) |
+| rows/layer | 126,677 min = max — equals tokens fed, so no forward was missed |
+| mean rows per (layer, expert) | 2,474 |
+| wall / size | 199 s / 29 GB |
+
+Three attempts. Two defects, neither in the calibration logic:
+`LLMEngine has no attribute model_executor` (V1 runs EngineCore in a subprocess) and
+`Got unsupported ScalarType BFloat16` (numpy has no bf16). Both in `failure-modes.md`.
+
+### Stage 2: calibrate one layer (`fx-lhb24`, 12:27)
+
+```
+layer 24: 4.69 GiB in 69s          <- PBS byte-range stream
+layer 24: 126,677 rows, routing recomputed -> 10 experts/token
+layer 24: LH 496  thin 16  no-rows 0  -> 6144 tensors in 91s
+```
+
+6,144 tensors = 512 experts × 3 matrices × 4 tensors exactly. 1.42 GB.
+
+**`no-rows 0` closes an open question.** The earlier layer probe had **21** experts with no routed
+rows, and the diagnosis on record was that this came from an 8,192-row capture cap rather than the
+corpus being too small. Confirmed: at 126,677 rows every one of the 512 experts got data. 16 remain
+**thin** (<64 rows, under-determined Hessian) — small, real, and worth watching across layers.
+
+### Two things this layer was chosen to prove
+
+**1. The byte-range stream is exact.** Layer 24's BF16 was already on disk from the lhbench download,
+so the PBS stream could be checked against an independent copy:
+
+| tensor | result |
+| --- | --- |
+| `layers.24.mlp.experts.gate_up_proj` (512, 1280, 2560) | **bit-identical** |
+| `layers.24.mlp.experts.down_proj` (512, 2560, 640) | **bit-identical** |
+
+That validates the mechanism the other 47 layers depend on and cost nothing, which is the whole
+reason to validate on a layer we already hold.
+
+**2. Local-Hessian actually buys something here.** Measured offline on identical data before the run:
+reconstruction error through the real LH-calibrated scales **8.18 %** against **9.53 %** for
+plain-max. First direct evidence of the effect the rebuild exists to capture.
+
+### Full-build arithmetic
+
+91 s per layer, of which **69 s is the PBS stream** and ~20 s is calibration + export.
+48 layers ≈ **73 min**, and streaming dominates, so overlapping fetch with compute would nearly
+halve it if that ever matters. It does not yet.
+
+### Open before the 48-layer build
+
+- **The stage-1 sampler takes shortest instances first** — 22 of 100, good breadth over projects and
+  languages, but it excludes long trajectories, and long-context activations are where warm-turn
+  behaviour lives. A stratified re-capture (short/median/long) costs one model load. Decide once.
+- **The 16 thin experts.** Harmless at one layer; worth a census across all 48 before shipping.
+- **Baseline arm of the combining-mark probe** on current prod, folded into the next server start
+  rather than paying its own 9-minute load.
