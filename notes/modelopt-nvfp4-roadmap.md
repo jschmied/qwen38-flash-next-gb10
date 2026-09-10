@@ -537,3 +537,21 @@ proposes. Related, not identical — measure it.
 only the main model's MoE blocks), so it costs a pack-and-serve, and it answers the acceptance
 question. Only if acceptance holds is a calibrated version — which needs a second hook and a
 re-capture — worth the model load.
+
+### The build is not a no-op — checked directly, 2026-09-10
+
+Nothing so far would have caught an exporter that wrote its input back out: level 1 checks names,
+level 2 checks that the merged bytes match *our files*, and both pass if our files are copies of
+RadixArk's. So compare them directly, layer 24, 18 (expert, matrix) pairs:
+
+| | vs RadixArk |
+| --- | --- |
+| `weight_scale` differs | **18/18** |
+| packed `weight` differs | **18/18** |
+| expert 100 `gate_proj`: scale bytes changed | **100.0 %** of 102,400 |
+| expert 100 `gate_proj`: packed weight bytes changed | **56.3 %** of 819,200 |
+
+Every group's FP8 scale moved by at least 1 ULP, and over half the packed nibble-pairs changed
+quantization bin. Consistent with two different calibration methods on the same weights, and it
+settles that the pipeline is doing work — independently of the runtime level-3 check, which tests
+the *merge* rather than the files.
