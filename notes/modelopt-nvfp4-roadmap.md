@@ -375,3 +375,48 @@ fake, and the reason levels 1 and 2 are not sufficient on their own. Two conditi
 Note a byte-level readback of a loaded weight is *not* a usable level-3 check here: the loader may
 repack or interleave quantized weights for the kernel, so a hash mismatch would not distinguish a
 bad merge from a legitimate layout transform.
+
+## The build is done — calibration census, 2026-09-10
+
+48 layers, 398,861 captured rows each, ~70 s/layer. `fx-lhball` 14:19–15:18, plus `fx-lhbfix`
+15:23–15:31 to rebuild the seven layers that predated the no-rows export fix.
+
+**All 48 layer files carry 6,144 tensors — every layer has all 512 experts.**
+
+| | experts | share |
+| --- | ---: | ---: |
+| full Hessian (≥64 routed rows) | **24,485** | **99.63 %** |
+| thin (1–63 rows, LH runs but under-determined) | 58 | 0.24 % |
+| no rows → plain-max fallback | 33 | 0.13 % |
+| total | 24,576 | |
+
+Per-layer ranges `lh 495–512`, `thin 0–10`, `no-rows 0–7`. **32 of 48 layers are 512/512.**
+
+### The imperfection is a depth effect, with two different causes
+
+```
+layers  0-15 : thin  2   no-rows  7      (all seven in layer 0)
+layers 32-47 : thin 54   no-rows 26
+```
+
+- **Layer 0** is a front-end outlier: hidden states have not differentiated yet, routing concentrates,
+  and seven experts never fire at all.
+- **Layers 44–47** are the specialised tail — `lh 495–501`, the worst in the model — where individual
+  experts serve narrow patterns this corpus reaches rarely.
+
+### What it means, and the caveat that goes with it
+
+The 91 imperfectly-calibrated experts (0.37 %) are **by construction the ones the corpus routes to
+least**, so they also fire least at serve time and the effect on real traffic is smaller than 0.37 %
+suggests. The caveat: "rarely" is measured on *this* corpus. A workload with a different distribution
+could lean on exactly those experts.
+
+Not a hole either way — the 33 no-rows experts carry plain-max scales, which is what every published
+NVFP4 build applies to *every* expert. The floor is "as good as the standard method", not "missing".
+
+### Whether more capture would help
+
+Unknown, and not obviously worth finding out. Going from 126,677 to 398,861 rows is the only
+corpus-size comparison we have and it was measured on layer 24 alone, which was already 512/512 at
+the smaller size. Buying the last 0.37 % would mean capturing the tail of the routing distribution,
+which is exactly the part that grows slowest with more tokens.
