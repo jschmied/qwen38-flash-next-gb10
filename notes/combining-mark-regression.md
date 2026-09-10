@@ -75,7 +75,7 @@ Not identified. Candidates, cheapest first:
 **Discriminating test:** rebuild one layer with plain max instead of Local-Hessian and re-probe. If
 plain max is clean, the calibration is at fault; if it also corrupts, the packer is.
 
-## CAUSE FOUND — calibration-set overfitting. The packer is fine; the corpus is not.
+## ~~CAUSE FOUND — calibration-set overfitting~~ **REFUTED 2026-09-10 20:52 — see the verdict below**
 
 ### The packer is exonerated, independently
 
@@ -176,3 +176,64 @@ its original confidence.
   them.
 - Both are testable by the v2 rebuild now running: if adding script coverage fixes ours, the
   mechanism is confirmed on at least one build.
+
+---
+
+# VERDICT: the overfitting diagnosis is REFUTED
+
+I predicted that adding script coverage to the corpus would fix this. It made it **twice as bad**.
+
+| arm | corpus | corrupt | exact | scripts hit |
+| --- | --- | --- | --- | --- |
+| stock (RadixArk), 2 starts | — | **0/72 (0 %)** | **72/72** | — |
+| v1, 2 starts | 99.94 % ASCII, zero Thai | 18/72 (25 %) | 36/72 | Thai |
+| **v2, 1 start** | **30 % script, 13 languages** | **24/48 (50 %)** | 18/48 | **Thai + Devanagari** |
+
+**The decisive detail is not the rate, it is which scripts broke.** Devanagari was clean in both v1
+arms. I added Devanagari to the corpus, and Devanagari started corrupting — `U+093E` ×2 and `U+0902`
+on hi-1, `U+0902` ×3 on hi-2, deterministically on all six reps.
+
+No version of "the corpus lacked coverage" predicts that giving a script coverage breaks it. The
+hypothesis is dead, not wounded.
+
+I also got the secondary prediction backwards. I wrote that Devanagari/Arabic/Hebrew "should show
+damage too once probed harder — they are equally absent." They were not absent in v2; they were
+present, and that is when Devanagari failed.
+
+## What the evidence now supports
+
+The build quality *improved* by every internal measure while behaviour got worse:
+
+| | v1 | v2 |
+| --- | --- | --- |
+| full-Hessian experts | 99.63 % | **99.83 %** |
+| thin (1–63 rows) | 58 | **32** |
+| no-rows | 33 | **11** |
+| reconstruction vs BF16 (layer 24) | 8.585 % (v1 measured) | — |
+| **corrupt responses** | **25 %** | **50 %** |
+
+More rows per expert, fewer under-determined Hessians, better global reconstruction — and twice the
+corruption. That pattern points away from *what data* Local-Hessian sees and toward **Local-Hessian
+itself**, or the export path around it.
+
+## Next test — and it is cheap and needs no capture at all
+
+**Plain-max build.** Plain max is data-independent: it takes `amax` over the weights and never looks
+at an activation. So it needs **no capture and no forward pass** — just pack and export.
+
+- **plain-max clean** -> Local-Hessian is at fault, not its data. Our plain-max reconstruction already
+  matches RadixArk's to 0.004 pp, so a plain-max build should behave like RadixArk; if it does, the
+  packer and export path are exonerated end to end and LH is the sole suspect.
+- **plain-max also corrupts** -> the fault is in our packer or export path, *despite* matching
+  RadixArk's reconstruction to 0.004 pp. That would mean reconstruction error is blind to whatever is
+  breaking, which is itself the finding.
+
+Either outcome is decisive, which is what the previous experiment was not.
+
+## Standing correction to the cross-build story
+
+The note above argued MiaAI #27 is probably the same mechanism, keyed on data-dependent calibration.
+**That argument rests on a diagnosis that has now been refuted** and should not be carried to them.
+The observation that survives is narrower and still worth something: RadixArk (reconstruction 9.498 %,
+i.e. plain-max-like) is clean, and two data-dependent builds are not. But "data-dependent" is no
+longer a demonstrated mechanism — v2 was *more* data-dependent and *more* broken.
