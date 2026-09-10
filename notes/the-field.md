@@ -1778,5 +1778,24 @@ case it falls back to max and we should say so rather than pretend it was Hessia
 driver must therefore **count and report these three buckets per layer**; a silent max fallback on a
 subset of experts is exactly the kind of thing that would otherwise be invisible in the output.
 
-**Scope:** `gate_up_proj` only, one layer, activations pre-captured rather than generated in-loop. The
-real build adds `down_proj` (~+50 % time) and the forward passes.
+**`down_proj` validated too (07:2x), and the per-layer cost is now complete.** Different shape — per
+expert `(2560, 640)`, input dim 640 → **40** groups — exporting to `(2560, 320)` uint8 + `(2560, 40)`
+fp8, so the 16-element grouping divides cleanly at both widths. 64 experts in 1.0 s → **8 s per layer**.
+
+| | per layer | 48 layers |
+| --- | --- | --- |
+| `gate_up_proj` | 35 s | 28 min |
+| `down_proj` | 8 s | 6.6 min |
+| **experts, total** | **43 s** | **~35 min** |
+
+The scale test's output file also verifies: 1,536 tensors, **all packed weights uint8, all scales
+float8_e4m3fn**, `experts.0.gate_up_proj.weight` at `(1280, 1280)`.
+
+**One requirement this exposes for the real build.** `down_proj`'s input is the expert's *intermediate*
+activation, not the layer input — which our capture does not contain, so this arm used weight-only max
+purely to exercise the shape path. A genuine Local-Hessian `down_proj` needs those intermediates, which
+a real layerwise forward produces naturally but our pre-captured-activation shortcut does not. The build
+driver must feed `down_proj` from the in-loop forward, not from a captured tensor.
+
+**Scope:** one layer, activations pre-captured rather than generated in-loop; the forward passes remain
+the unmeasured term.
