@@ -133,3 +133,46 @@ merge is index-only, so one swapped layer file is enough to start.
 **Second prediction:** the corrupted scripts should be exactly those absent from the corpus, and the
 clean ones (Devanagari, Arabic, Hebrew, ZWJ were clean) should show damage too once probed harder —
 they are equally absent. Their cleanliness may just mean the probe's prompts were easier.
+
+## Is MiaAI #27 the same mechanism? — probably, and for a structural reason
+
+Three builds, same architecture, one coherent story:
+
+| build | `quant_algo` | ModelOpt | data-dependent calibration? | Thai |
+| --- | --- | --- | --- | --- |
+| `RadixArk/…-NVFP4` | `NVFP4`, uniform, group 16 | 0.46.0 | need not be — and measurement says it is not | **clean 0/72** |
+| **ours v1** | NVFP4 + Local-Hessian | 0.46.0 | **yes**, on a 99.94 % ASCII corpus | **18/72 corrupt** |
+| `local-inference-lab/…-NVFP4` | **`MIXED_PRECISION`** | 0.39.0.dev290 | **yes, by construction** | corrupt (#27) |
+
+**Why RadixArk is inferred data-independent:** its reconstruction error against BF16 is **9.498 %**
+and our own plain-max is **9.494 %** — 0.004 pp apart. A data-dependent method would not land that
+close to plain max by accident. Plain max cannot overfit a corpus because it never looks at one.
+
+**Why local-inference-lab is data-dependent by construction:** `MIXED_PRECISION` *requires*
+calibration data — it chooses which layers get MXFP8 vs NVFP4 vs W4A16 (467 / 48 / 29 in their case)
+by measuring sensitivity on a calibration set. Uniform NVFP4 at a fixed group size does not.
+
+So the axis that separates clean from corrupt across all three builds is **whether the calibration
+was data-dependent**, not which module was quantized.
+
+### What this does to our own issue #37
+
+**It weakens it further, and we should say so.** #37 proposed that #27's corruption comes from the
+shipped build quantizing the GDN/linear-attention path with a five-month-old ModelOpt. That
+hypothesis never had a demonstrated mechanism. Calibration-set overfitting now does — a controlled
+run on the same architecture, changing exactly one variable, reproducing the same codepoint
+signature — and it explains a case #37 cannot: **our build does not quantize `linear_attn` at all**
+and corrupts anyway.
+
+#37 is not disproven; old ModelOpt and GDN quantization could still contribute. But it is no longer
+the best explanation, and the honest thing is to tell them that rather than let our issue stand at
+its original confidence.
+
+### Limits, stated
+
+- We cannot see local-inference-lab's calibration corpus. Their method's data-*dependence* is
+  established from `MIXED_PRECISION`; the corpus *content* is inferred.
+- RadixArk's plain-max attribution rests on a 0.004 pp reconstruction match, not on a statement from
+  them.
+- Both are testable by the v2 rebuild now running: if adding script coverage fixes ours, the
+  mechanism is confirmed on at least one build.
