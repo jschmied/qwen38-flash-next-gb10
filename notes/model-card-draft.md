@@ -1,6 +1,6 @@
 <!-- Mirror of the card published PRIVATE at
      https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-W4A4-LocalHessian-Experts
-     Keep this file and the repo README in step. -->
+     Keep this file and the repo README in step. mergeverify.py ships there too. -->
 
 ---
 base_model:
@@ -87,10 +87,92 @@ Expert coverage at the layer measured: **0 experts with no routed rows, 0 thin (
 calibration helped. Calibration and evaluation instances are disjoint by construction: the 100
 instances used to build the corpus are excluded from the evaluation pool.
 
-## How to use it
+## Merging it with the base checkpoint
 
-TBD — a merge script. The expert tensors are drop-in replacements for RadixArk's; the index has to be
-rewritten to point at these shards.
+### ⚠️ Read this first: the failure mode is a model that loads cleanly and is silently the original
+
+Safetensors shards are arbitrary containers — `model.safetensors.index.json` maps each tensor name to
+a file, and nothing requires a layer's tensors to sit together. So merging is an **index rewrite**,
+not a file operation, and the base checkpoint's packing does not have to match ours.
+
+But rewriting the index **is not sufficient**, and the reason is easy to miss:
+
+vLLM keeps only the files referenced in the index (`filter_duplicate_safetensors_files`) — then
+iterates **every tensor in each kept file**, in `_natural_sort_key` order:
+
+```
+layer00.safetensors                 <- this repo, loads FIRST
+model-00001-of-00131.safetensors    <- base checkpoint, loads AFTER
+```
+
+`l` sorts before `m`. If a referenced base shard still contains the old expert tensors, **they
+overwrite the ones from this repo.** No error, no warning. You get a model that loads, runs, and is
+bit-for-bit the original quantization — and a merge that looks like it worked.
+
+Do not "fix" this by renaming files so they sort last. Correctness must not depend on filename
+collation. The old expert bytes have to be **absent from every referenced file**.
+
+### The merge
+
+Fortunately the base checkpoint is already almost perfectly separated by component. Of its 206
+shards:
+
+| shard class | count | size | what to do |
+| --- | --- | --- | --- |
+| pure **expert** | 192 | 63.3 GiB | **drop from the index** — never referenced, never opened |
+| pure **other** | 13 | 52.6 GiB | reference as-is |
+| **mixed** | **1** | 4.7 expert + 5.3 other | repack: write out only its non-expert tensors |
+
+So the merge writes **5.3 GiB**. Everything else is the 13 untouched base shards, this repo's 48
+layer files, and a new index. No full copy, no repack of 58 GiB.
+
+Steps:
+
+1. Fetch the base checkpoint `RadixArk/Qwen3.8-Flash-Next-NVFP4`.
+2. Classify its shards by reading headers only (8-byte length prefix + JSON).
+3. Repack the one mixed shard, keeping only tensors **without** `.mlp.experts.` in the name.
+4. Build a new `weight_map`: expert tensors → this repo's `layerNN.safetensors`; every other tensor →
+   its pure-other shard, or the repacked one.
+5. Copy `config.json`, `hf_quant_config.json`, tokenizer files and the chat template from the base,
+   unchanged.
+6. **Verify before serving** (next section). The merge is not done until it passes.
+
+### Verifying the merge
+
+`mergeverify.py` ships in this repo. A per-file checksum is the wrong instrument — in the failure
+mode every file is individually valid.
+
+**Level 1 — name collisions and index completeness.** Headers only, seconds. Every referenced file's
+tensor names must be pairwise disjoint and their union must equal the index exactly. This is the check
+that catches the trap above.
+
+```
+python mergeverify.py --merged <dir> --level1-only
+```
+
+It is exercised in both directions rather than assumed: it reports PASS on an untouched base
+checkpoint (296,475 tensors across 206 files, no collisions) and FAIL, naming the tensor and both
+files, on a synthesised collision.
+
+**Level 2 — per-tensor sha256 against the source each tensor should have come from.** Experts against
+this repo, everything else against the base. Proves provenance, not merely internal consistency.
+
+```
+python mergeverify.py --merged <dir> --ours <this repo> --stock <base>   # --sample 0 hashes all
+```
+
+**Level 3 — runtime divergence against the base.** The only check a correct-looking directory cannot
+fake, and the reason levels 1 and 2 are not sufficient alone. Serve both checkpoints and compare
+logprobs on a fixed prompt. Two conditions, both required:
+
+- divergence from the base must be **non-zero**. Identical logprobs mean the merge silently fell back
+  to the original, whatever the files say.
+- output must still be coherent — which rules out the opposite failure, a merge that differs because
+  it is broken.
+
+A byte-level readback of a loaded weight is *not* a usable substitute: the loader may repack or
+interleave quantized weights for the kernel, so a hash mismatch would not distinguish a bad merge
+from a legitimate layout transform.
 
 ## Provenance and credit
 
