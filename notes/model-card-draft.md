@@ -1,8 +1,3 @@
-<!-- Mirror of the card published PUBLIC at
-     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts
-     NOTE: carries a user-added "Don't download now, files are in flight" banner.
-     REMOVE IT when the upload completes and the 48 layer files are verified present. -->
-
 ---
 base_model:
 - Qwen/Qwen3.8-Flash-Next
@@ -19,17 +14,19 @@ tags:
 
 # Qwen3.8-Flash-Next — Local-Hessian NVFP4 experts
 
-**Don't download now, files are in flight**
-
 
 > 🗺️ **Part of the [Flash-Next Quant Map](https://claude.ai/code/artifact/3534a530-5e94-4ce2-abac-f1c70ee204e3)** — the measured landscape of
 > Qwen3.8-Flash-Next quantization on a single DGX Spark: which schemes fit in 128 GB, what
 > each costs in speed and quality, and where this piece sits among them.
 
-> **⏳ WEIGHTS NOT UPLOADED YET.** The build is finished and verified — the numbers below are real —
-> but the 68 GiB of expert files are still transferring. Until they land, this repo is the method,
-> the merge recipe and the verifier, not a usable checkpoint. The two `TBD` cells are the quality
-> evaluation, which has not run yet. 
+> **⏳ Weights are not uploaded yet.** The build is finished and verified — the numbers below are
+> real — but the 63 GiB of expert files have not been transferred. Until they land, this repo is the
+> method, the merge recipe and the verifier, not a usable checkpoint.
+>
+> An earlier build was withdrawn after the combining-mark canary caught it corrupting Thai; the cause
+> was two export-contract bugs of ours, now fixed and covered by a verifier check. No weights were
+> ever published. The history is in
+> [combining-mark-regression.md](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/combining-mark-regression.md).
 
 Every `TBD` below is a cell that must be filled by a measurement. If one cannot be filled, the claim
 it belongs to comes out rather than being softened.
@@ -114,8 +111,8 @@ Sources: [how the corpus was built](https://github.com/jschmied/qwen38-flash-nex
 | thin (1–63 rows) / no rows → plain max | 58 (0.24 %) / 33 (0.13 %) |
 | layers at 512/512 | **32 / 48** |
 | serves, and is genuinely different weights | **yes** — 95/96, 91/91, 75/75, 79/79 tokens diverge from stock across four prompts, max \|Δlogprob\| 0.63–1.46, both arms coherent with correct tool calls |
-| combining-mark regression (Thai/Devanagari/Arabic/Hebrew/ZWJ, vs stock) | TBD |
-| SWE-bench Multilingual, held-out slice | TBD |
+| combining-mark canary (Thai/Devanagari/Arabic/Hebrew/ZWJ, 3 scripts + ZWJ, 6 reps) | **0/48 corrupt, 48/48 exact — matches stock's 0/72** |
+| SWE-bench Multilingual, held-out slice | not run — at n=10 its SE is ~15 points and it could not resolve what the canary catches in 35 minutes |
 
 The imperfect 0.37 % concentrates at the ends and for different reasons: layer 0's routing is
 degenerate (7 experts never fire), and layers 44–47 are the specialised tail (`lh 495–501`). Those
