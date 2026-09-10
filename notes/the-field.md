@@ -1919,3 +1919,34 @@ capture is blocked by the partitions, and only removing them — pangoleen's `03
 our #53899 CPU-offload PLE rather than their NVMe mmap — can unlock it. **That converts the port from a
 nice-to-have into the only route to this lever**, and it means the prize is whatever full-decode capture
 is worth on this model, which nobody here has measured yet.
+
+## DeepSeek-V4.1-Flash on one Spark? — no, 2026-09-10
+
+`deepseek-ai/DeepSeek-V4.1-Flash`: **475.3 GiB BF16**, ~255 B params, 40 layers, hidden 5120,
+384 routed experts / top-6, 1 shared, vocab 129,280, `max_position_embeddings` **1,048,576**.
+
+Sizes of what is actually published, against GB10's **119.2 GiB** total unified memory:
+
+| build | size |
+| --- | --- |
+| `s-zaizen/…-NVFP4` | 491.1 GiB |
+| `LibertAIDAI/…-NVFP4` | 399.9 GiB |
+| `msuiche/…-NVFP4` | 386.4 GiB |
+| `Vontra/…-MLX-2bit-MTP` | 222.4 GiB |
+| `apetersson/…-MixedQ2-GGUF` | **157.3 GiB** — the smallest, still 1.3× over |
+
+**Nothing published fits**, before KV or runtime. And the "NVFP4" builds are only ~19 % below BF16,
+so — as with Flash-Next's PLE — most of the model is excluded from quantization and the label
+oversells the compression. Check sizes, not names (same lesson as `hf-field-survey-0822`).
+
+**What would be needed:** weights ≤ ~90 GiB leaves 20–30 GiB for KV, activations and framework, i.e.
+**~3.0 bits/param** — about half the smallest existing build. IQ2/IQ3, llama.cpp only; NVFP4 has a
+~4.5 bpw effective floor and cannot reach it.
+
+**Whether it would be worth it — our own precedent says be careful.** Hy3 295B at IQ1_M fit in
+91.8 GB and **lost to the dense 27B at 4-bit: 62 % vs 85 % on the common subset, and 4–5× slower**
+(`hy3-overnight-run-state`). A 255 B model at 2–3 bits is the same trade, and what it has to beat is
+Flash-Next at an honest 4 bits, which already fits with room.
+
+**One point in its favour:** MLA plus a 1 M context window makes the KV cache cheap, so if the
+weights ever fit, context would not be the constraint. The weights are the whole problem.
