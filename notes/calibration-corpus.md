@@ -90,3 +90,41 @@ SWE-bench resolution rate has SE ≈ 2.9 points at 300 instances, worse on a sma
 1–2 point effect JasonW2025 reports for W4A16-vs-W4A4 is inside that noise. **Run A is a
 regression check — "the rebuild did not break the model" — not the proof that Local-Hessian
 helped.** The proof stays the BF16 logprob-divergence measurement.
+
+## v2 — script coverage added, 2026-09-10
+
+The v1 corpus was 99.94 % ASCII with **zero Thai**, and Local-Hessian spent Thai's precision on the
+directions that had energy in it (`combining-mark-regression.md`). Fixed at the source.
+
+**Added:** 121 Wikipedia articles across **13 languages / 9 scripts** — Thai, Devanagari, Arabic,
+Hebrew, CJK, Kana, Hangul, Cyrillic, Greek, plus Latin-with-diacritics (Vietnamese, German, French,
+Spanish, Turkish). 539,348 characters, ~135k tokens.
+
+Fetched through **HF's `datasets-server` rows API**, not a dataset download: `openlanguagedata/flores_plus`
+is gated behind an agreement, and Wikipedia's own API returned 429 to a first attempt that polled too
+fast. The rows API serves content directly with no archive and no rate-limit fight.
+
+| corpus | ASCII | Thai | combining marks |
+| --- | --- | --- | --- |
+| v1 | 99.9428 % | **0** | ~0 |
+| **v2** | 95.3483 % | **0.5753 %** | **20,685** |
+
+### The share that matters is in the CAPTURE, not the file
+
+At their natural 0.6 % of characters the scripts would still carry almost no energy in H. What builds
+the Hessian is the captured rows, so the sampler now **reserves** a share for them
+(`SCRIPT_SHARE = 0.30`) instead of letting the length bands compete them away.
+
+Taking *every* script document lands at **53 %** of the capture — non-ASCII tokenizes at ~2.4
+chars/token against the agent text's ~4, so they punch well above their character share. That would
+over-fit the other way, away from the workload we actually serve. Capped at 30 % and taken
+round-robin by language so the cap never drops a script entirely.
+
+Resulting capture: **67 documents, 393,689 tokens — 30 % script over 13 languages, 70 % agent**, with
+position coverage still reaching 95,239.
+
+### The lesson, stated plainly
+
+Every stratification I did on v1 — position, project, expert row counts — measured something real
+and none of them measured the axis that broke the build. The dataset was called *Multilingual* and I
+took that to mean human languages; it means programming languages. **Count the codepoints.**
