@@ -992,3 +992,22 @@ three times on that basis. The one line that mattered had scrolled past before I
 
 Rule: for a per-item counter across a long run, **grep for the failing case** (`grep -v "no-rows 0"`)
 rather than reading the tail. A tail shows the most recent item, never the worst one. 2026-09-10.
+
+## "Zero-byte merge" is only true at merge time
+
+`mergefn.py` reports `wrote 0.00 GiB of new bytes; everything else hardlinked` — accurate when it
+runs, and misleading afterwards. The layer files are **hardlinks** into `/opt/llm/lhbuild`. Rebuild
+the source and the old names are unlinked, at which point **the merge directory becomes the sole
+owner of a full independent copy.**
+
+Two superseded merges (`fnext-lh`, `fnext-lh2`) were therefore holding **128 GB** of v1 and v2 data
+that nothing else referenced, `links=1`, invisible as anything but "the disk is full". Discovered at
+**46 GB free with a running build needing 38 GB** — an 8 GB margin, and a failure that would have
+looked like a build bug rather than a disk one.
+
+Tell: `stat -c %h` on a merged layer file. `links=2` means it still shares with the source and costs
+nothing; `links=1` means it is a full private copy.
+
+Use it deliberately in both directions — before overwriting `lhbuild`, check the link count to
+confirm a merge you want to *keep* will survive as sole owner (that is how v3 was preserved), and
+after overwriting, remember every merge you do *not* want is now real bytes. 2026-09-10.
