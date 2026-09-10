@@ -3389,3 +3389,40 @@ row counts, and the table above is that comparison. Analyser: `/opt/llm/runners/
 
 **Bound:** prefill only. Decode-time behaviour is untested here, and a re-run wanting decode coverage
 must key calls by content rather than by index.
+
+---
+
+## det-179 — kernel-det v2.4 has a context ceiling on GB10 at ~93.6k tokens
+
+**2026-09-10, found by accident during the stage-1 re-capture (`fx-lhcap`).**
+
+With `VLLM_QSA_DET_TOPK=1`, a 95,239-token prefill dies at:
+
+```
+RuntimeError: launch_persistent_topk, /opt/llm/runners/kdet_build/topk_det.cu:117,
+persistent_topk_det: dynamic smem 97568 exceeds 97120 (optin 101376 - static 4256)
+```
+
+It had written **94,080 of 95,239 rows** first, so the failure is at ~94k positions and the request
+overruns the limit by **448 bytes**. If the dynamic shared-memory request is linear in position, the
+ceiling is **~93,648 tokens**.
+
+GB10 is the constraint: 102,400 B of shared memory per SM, 101,376 B opt-in, minus 4,256 B static
+leaves 97,120 B for the kernel's dynamic request.
+
+**Why this has never surfaced:** `FN_MAXLEN` defaults to **8,192** in `serve-fnmain.sh`, and every
+A/B this year has run at 8k–32k. Nothing in normal operation approaches 93k, and the stratified
+sampler only hit it because it feeds the corpus's longest instance first.
+
+**Consequence to keep in mind:** the deterministic top-k overlay cannot be used at near-100k context
+on this box. Prod is unaffected at its current context, but any future long-context work has to
+choose between the overlay and the context.
+
+The capture itself does not need determinism — it collects activation distributions, not bit-exact
+outputs — so stage 1 re-ran with `FN_DET_TOPK=0`, which is the documented stock arm.
+
+**Second defect, same hour, worth its own line:** `lhcap.sh` had `VLLM_QSA_DET_TOPK=1` **hardcoded**,
+so passing `FN_DET_TOPK=0` as a systemd `Environment=` property did nothing and the relaunch would
+have failed identically ten minutes later. Caught by checking the runner rather than trusting the
+launch. Every runner that takes an arm flag must read it as `${FN_X:-default}` — verified after
+launch by reading `/proc/<pid>/environ`, which is now the habit.
