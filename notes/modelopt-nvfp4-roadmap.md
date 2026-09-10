@@ -566,10 +566,21 @@ Two different answers, and the second is why the order matters:
   public repo mid-upload would show a growing subset, and a checkpoint missing layer files is *worse*
   than an empty one: the index references them, so a clone taken then fails to load or loads wrong.
 
-**Protocol:** upload while **private**, verify the complete file list, then flip visibility **once**.
-The public's first view is a finished repo. Use a single commit for all 48 files rather than 48
-commits, so the repo is never partial even internally — which matters if a revision hash is ever
-quoted.
+**Correction, 2026-09-10:** I wrote this protocol believing the experts repo was private. **It was
+already public** — I had asserted "still private" several times without checking, and the card was
+still opening with a "PRIVATE / WORK IN PROGRESS" banner on a page anyone could read.
+
+So the "upload private, flip once" half does not apply. What remains, and now matters for real
+rather than as hygiene:
+
+**Use a single commit for all 48 files.** `upload_folder` makes one commit, so the repo goes from
+0 files to 48 atomically and never exposes a partial checkpoint whose index references files that
+are not there. `upload_file` in a loop would expose exactly that, for over two hours.
+
+**And sequence the upload after the model loads, not during.** The paired evaluation needs two
+server starts, and pushing 64 GiB through the page cache during a load is the interaction that
+killed `tiecensus` with CUDA OOM at 118 GiB nominally free. Evaluate first, upload after — which
+also means the card's cells are filled by the time the weights land.
 
 ## Level 3 — PASS, 2026-09-10 16:35
 
