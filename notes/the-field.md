@@ -1835,3 +1835,34 @@ host memory. So the mechanism transfers; the patch does not.
 PLE is the reason — that is a cheap server start and it decides whether this lever exists for us.
 (2) Their draft-vocab choice is one we have measured better; worth telling them, since 16,384 would be a
 further gain on top of what they report. Needs the user's go.
+
+### FULL_DECODE_ONLY is accepted on our stack — and the PLE ops are listed as graph SPLITTING ops (2026-09-10 08:47)
+
+`fdo`, two arms, nightly dev401, MTP-3, `FN_CG_MODE` straight into `cudagraph_mode`.
+
+**Capability: yes.** `FULL_DECODE_ONLY` resolves to `<CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>` with **no
+silent fallback to PIECEWISE**, and the server starts and serves (up at 08:47 vs the control's 08:33).
+So the mode is not refused, contra the hypothesis that it would be unreachable.
+
+**But the mechanism pangoleen describes is visible in our own config.** The engine's `splitting_ops` list
+contains, among others:
+
+```
+'vllm::qwen4_exp_compute_ple_ngram_ids',
+'vllm::qwen4_exp_ple_short_conv',
+```
+
+Splitting ops are exactly where the compiled graph is **partitioned** — so the PLE's n-gram lookup and
+short-conv are declared graph-break points in the stack we run. That is the mechanical form of "a
+mid-forward PLE read cannot be recorded into a CUDA graph", stated by our own build rather than inferred
+from theirs. Their `03-staged-ple` moves that read *before* the forward so the partition is unnecessary.
+
+**What this probe does NOT establish**, and the run was scoped so as not to claim it: whether graphs are
+actually captured under FULL_DECODE_ONLY, and whether it is faster. No capture lines appear in either
+arm's log (`cudagraph_metrics` is False), and the two arms' compile behaviour is identical — 20.7 s and
+20.4 s for compile range (1, 4096). **Accepting a mode is not capturing under it.** The speed question
+needs a decode A/B at c=1, three starts, matched reps.
+
+**Corrects the framing of det-136 rather than its result.** det-136 compared PIECEWISE against NONE and
+found null; the pair that matters given the splitting ops is PIECEWISE against FULL_DECODE_ONLY, which
+has never been measured here.
