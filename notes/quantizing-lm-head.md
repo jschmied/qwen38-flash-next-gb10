@@ -146,3 +146,20 @@ The FP8 head and the Local-Hessian experts are **independent axes** and must not
   i.e. a BF16 head. Any paired evaluation must hold the head **constant across arms** — stock experts
   and rebuilt experts on the same head — or two things vary at once and the comparison is
   meaningless. The model card names which head produced its numbers.
+
+### Standalone use, and the compatibility check it needs (queued 2026-09-10)
+
+The FP8 head is independent of the expert rebuild — downstream of every MoE block — so it is usable
+on its own against any Flash-Next build, for **+11 % decode at a 606 MiB download**, with none of the
+Local-Hessian work involved. That is the third way to consume the published repo, alongside
+experts-only and both.
+
+It is a drop-in **only** for a checkpoint whose `lm_head` is the same BF16 `[248320, 2560]` tensor the
+head was quantized from. A build shipping a different one produces **wrong logits, not an error** —
+the same class of silent failure as the merge trap.
+
+**Queued, not yet done:** hash `lm_head.weight` in Qwen's BF16 source
+(`10.0.0.70:/mnt/bulk/hf/Qwen--Qwen3.8-Flash-Next`) against RadixArk's, publish the reference sha256
+as `COMPAT.md` in the model repo, and ship a checker. Deferred because it is 2.4 GB of reads and the
+48-layer build is streaming from that same PBS link — heavy host I/O during a measurement is what
+killed `tiecensus`.
