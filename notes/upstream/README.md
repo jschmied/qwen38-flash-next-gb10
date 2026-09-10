@@ -490,3 +490,18 @@ branch lacks — fetch + rebase before pushing.
     **NOT posted, on purpose:** an acknowledgement to @ZC502 on #54521. They shipped v0.1.2 implementing
     both of our suggestions and explicitly said no re-run and no data were needed. The thread lacks nothing;
     a thank-you in a 47-comment thread is the volume the posting rule exists to prevent.
+
+107. 2026-09-10 10:4x — **HF model card updated**: `josch15366/Qwen3.8-27B-DFlash2-FP8` (user go "yes do
+    both", after asking whether its "requires a patched vLLM" warning still held). First outward-facing
+    publish using the new write token.
+    **Verified and added**: all three PRs (#53122, #51620, #51684) and all three issues (#53116, #53107,
+    #51581) are **still open** — nothing merged since the card was written on 2026-08-21, so the warning
+    stands. Added a dated re-check table and the defect→PR mapping (defect 1 ← #53122; defect 2 ← #51620
+    or #51684, one from each group).
+    **Deliberately NOT added**: the "here is the workaround" section the user also asked for. I could not
+    verify a working recipe — the DFlash2 drafter module is absent from every venv we run (the
+    `laguna_dflash.py` they all carry is a different drafter, 0 `quant_method` refs), so we do not
+    currently have a build that loads this checkpoint. Publishing an unverified procedure on a repo with
+    **181 downloads** would be worse than publishing none. The card now says so explicitly and points
+    readers at the PR threads instead.
+    → https://huggingface.co/josch15366/Qwen3.8-27B-DFlash2-FP8/commit/dc6ca7842ecb88af0e6bf7c09e7be37c9e510a7e
