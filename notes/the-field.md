@@ -1675,3 +1675,40 @@ eager path (same mathematics, different kernel fusion). With padding removed the
 usable rows and a median of 88 real rows per expert, so the 32 measured experts are the better-covered
 tail of one layer.
 
+
+### The build pipeline is validated end to end on one real expert (2026-09-10 03:2x)
+
+The last untested piece was the **export** — we had measured scales but never written a quantised
+checkpoint. Done now, on expert 197 of layer 24 (2,396 real routed rows, padding dropped):
+
+1. **Calibrate** — `mtq.quantize` with `NVFP4_W4A4_WEIGHT_LOCAL_HESSIAN_CFG` on that expert's own
+   routed activations.
+2. **Export** — `_export_quantized_weight` (`unified_export_hf.py:568`) produces **exactly the layout
+   NVIDIA publishes**:
+
+   | tensor | ours | NVIDIA's published head |
+   | --- | --- | --- |
+   | `weight` | (1280, **1280**) uint8 | (248320, 2560) uint8 |
+   | `weight_scale` | (1280, **160**) float8_e4m3fn | (248320, 320) float8_e4m3fn |
+   | `weight_scale_2` | scalar float32 | scalar float32 |
+   | `input_scale` | scalar float32 | scalar float32 |
+
+   Input dim 2560 → 1280 bytes (two 4-bit values per byte), 2560/16 = 160 groups. Same structure,
+   different shape only because an expert is 1280 rows and the head is 248,320.
+3. **Round-trip** — dequantised with our *independent* path (E2M1 levels, **low nibble first**, group 16,
+   the one validated at 8.49 % against NVIDIA's own bytes) and re-measured:
+
+   | | |
+   | --- | --- |
+   | round-trip output error, 2,396 real rows | **5.647 %** |
+   | gate 2's measured LH error for the same expert | **5.656 %** |
+   | agreement | **0.009 pp** |
+
+**Both directions now cross-validate.** Gate 2 took ModelOpt's chosen amax and applied our quantiser;
+this takes ModelOpt's own packing and applies our dequantiser. They agree to 0.16 % relative, so neither
+the scale extraction nor the packing convention is doing anything we have misread.
+
+**Stage 3 is therefore de-risked before the source arrives.** Calibrate → export → re-shard
+(`reshard.py --execute`, 29/29 sha256-verified on the `mtp` component) → verify, each link exercised on
+real data. What remains untested is only *scale*: 48 layers × 512 experts instead of one, and the
+layerwise streaming that keeps peak memory at one layer.
