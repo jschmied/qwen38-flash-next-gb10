@@ -32,6 +32,7 @@ on the 6th" well and "what does X cost" badly, which is the question people arri
 | lever | verdict | finding |
 | --- | --- | --- |
 | Swizzle **gate** A/B at the server | no measurable end-to-end effect; the true control moved as much as the cells | **147** |
+| `FULL_DECODE_ONLY` vs PIECEWISE | **null, well resolved** — all 7 warm reps overlap. The PLE ops are declared graph-splitting ops, so the mode alone cannot remove the partitions; staging the PLE read is the actual lever | **161** |
 | MoE tactic sweep / grouped-GEMM swizzle | autotuner already picks the best; swizzle null at prefill+decode, harmful at 29k | 145, **139** |
 | MoE tile-boundary hypothesis | REFUTED | **90** |
 | gau-nernst blockwise-FP8 kernels | neither beats CUTLASS-in-L2 nor chunking | 99 |
@@ -1853,3 +1854,37 @@ on the 6th" well and "what does X cost" badly, which is the question people arri
     **Action:** switch `FN_DRAFT_VOCAB` from the 32,768 slice to **16,384**. It is one launcher line,
     it is output-safe by construction (the drafter only proposes; the target verifies), and the win is
     single-stream — which is the regime agent turns actually run in.
+
+161. **`FULL_DECODE_ONLY` buys nothing on its own — the flag is null, so the PLE staging is the lever, not
+    the mode.** `cgab` (2026-09-10 09:20–10:57), 6 server starts, 3 per arm, nightly dev401, MTP 3, c=1,
+    8 reps, compared rep-against-rep with ranges. Every arm's `resolved=` line is correct (piece* →
+    PIECEWISE, full* → FULL_DECODE_ONLY), so the knob reached both cells. Raw:
+    `notes/data/cgab-summary.txt`.
+
+    | rep | PIECEWISE tok/s | FULL_DECODE_ONLY tok/s |
+    | --- | --- | --- |
+    | 0 (cold) | 19.1–19.2 | 18.4–19.1 |
+    | 1 | 16.7–16.9 | 16.7–16.8 |
+    | 2 | 19.8–20.0 | 19.7–20.0 |
+    | 3 | 20.4–21.4 | 21.1–21.4 |
+    | 4 | 20.8–21.0 | 20.4–20.8 |
+    | 5 | 18.9–19.1 | 18.8–18.9 |
+    | 6 | 17.8–18.8 | 18.6–18.8 |
+    | 7 | 20.7–21.0 | 20.9–21.0 |
+
+    **All 7 warm reps overlap. 0 wins either way.** And this is a *well-resolved* null, not a noisy
+    shrug: the per-rep ranges across three starts are 0.1–1.0 tok/s wide, so a difference of even ~5 %
+    would have shown. Acceptance is identical in both arms (38.4–62.9 %), as it must be — the mode
+    cannot change outputs.
+
+    **Why this is the useful answer.** `fdo` (det-note, same day) established that FULL_DECODE_ONLY is
+    *accepted* — it resolves with no silent fallback and the server serves — while our engine's
+    `splitting_ops` declares `vllm::qwen4_exp_compute_ple_ngram_ids` and `vllm::qwen4_exp_ple_short_conv`
+    as graph-partition points. Accepting the mode does not remove those partitions, so the decode graph
+    is still captured in fragments either way, and the flag changes nothing. That is exactly
+    pangoleen's diagnosis, confirmed from the other side: **their `03-staged-ple` work is REQUIRED for
+    this lever rather than optional.** Flipping `FN_CG_MODE` is not a shortcut to it.
+
+    **Corrects the framing of det-136, not its result.** det-136 compared PIECEWISE against NONE and
+    found null; this compares PIECEWISE against FULL_DECODE_ONLY and also finds null — but for a named
+    mechanism rather than as an unexplained absence.

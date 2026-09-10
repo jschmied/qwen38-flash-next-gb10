@@ -1906,3 +1906,16 @@ saying it is roughly free. That moves it from "unknown" to "worth doing after th
 with real uptake (1,380–2,346 downloads each). `MagneticLab/Qwen3.8-Flash-Next-NVFP4` ships a
 **quantised PLE sidecar mmapped read-only** and warns that *"99 GB of the checkpoint is a duplicate of
 the PLE"* — the same dedup observation our component-per-shard policy is built on.
+
+### Consequence for the staged-PLE decision: the flag is null, so the port is the only route (2026-09-10)
+
+`cgab` measured PIECEWISE vs FULL_DECODE_ONLY at c=1, 3 starts per arm, matched reps: **all 7 warm reps
+overlap, 0 wins either way**, with per-rep ranges only 0.1–1.0 tok/s wide — a well-resolved null, not a
+noisy one. Finding 161.
+
+So the sequence is settled: the mode is *accepted* (`fdo`), the PLE ops are *declared* graph-partition
+points (`fdo`, from our own `splitting_ops`), and flipping the mode *changes nothing* (`cgab`). Full-decode
+capture is blocked by the partitions, and only removing them — pangoleen's `03-staged-ple` idea, ported to
+our #53899 CPU-offload PLE rather than their NVMe mmap — can unlock it. **That converts the port from a
+nice-to-have into the only route to this lever**, and it means the prize is whatever full-decode capture
+is worth on this model, which nobody here has measured yet.

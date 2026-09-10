@@ -1,0 +1,69 @@
+== CGAB start 2026-09-10 09:20
+
+=== piece1  cudagraph_mode=PIECEWISE  09:20
+   up 09:34  resolved=PIECEWISE
+  piece1 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.4s = 19.2 tok/s agg, 19.2 per stream | garbage 0/1
+  piece1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.8s = 16.9 tok/s agg, 16.9 per stream | garbage 0/1
+  piece1 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 20.0 tok/s agg, 20.0 per stream | garbage 0/1
+  piece1 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.3s = 21.4 tok/s agg, 21.4 per stream | garbage 0/1
+  piece1 DV c=1 rep=4: accept=62.9% AL=2.89 | 200 tok in 9.5s = 21.0 tok/s agg, 21.0 per stream | garbage 0/1
+  piece1 DV c=1 rep=5: accept=48.6% AL=2.46 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  piece1 DV c=1 rep=6: accept=50.0% AL=2.50 | 200 tok in 10.6s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  piece1 DV c=1 rep=7: accept=62.4% AL=2.87 | 200 tok in 9.5s = 21.0 tok/s agg, 21.0 per stream | garbage 0/1
+
+=== full1  cudagraph_mode=FULL_DECODE_ONLY  09:36
+   up 09:50  resolved=FULL_DECODE_ONLY
+  full1 DV c=1 rep=0: accept=53.7% AL=2.61 | 200 tok in 10.9s = 18.4 tok/s agg, 18.4 per stream | garbage 0/1
+  full1 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  full1 DV c=1 rep=2: accept=53.2% AL=2.60 | 200 tok in 10.2s = 19.7 tok/s agg, 19.7 per stream | garbage 0/1
+  full1 DV c=1 rep=3: accept=59.7% AL=2.79 | 200 tok in 9.5s = 21.1 tok/s agg, 21.1 per stream | garbage 0/1
+  full1 DV c=1 rep=4: accept=61.5% AL=2.85 | 200 tok in 9.7s = 20.6 tok/s agg, 20.6 per stream | garbage 0/1
+  full1 DV c=1 rep=5: accept=47.6% AL=2.43 | 200 tok in 10.6s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  full1 DV c=1 rep=6: accept=49.0% AL=2.47 | 200 tok in 10.8s = 18.6 tok/s agg, 18.6 per stream | garbage 0/1
+  full1 DV c=1 rep=7: accept=62.4% AL=2.87 | 200 tok in 9.5s = 21.0 tok/s agg, 21.0 per stream | garbage 0/1
+
+=== piece2  cudagraph_mode=PIECEWISE  09:52
+   up 10:07  resolved=PIECEWISE
+  piece2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  piece2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.7 tok/s agg, 16.7 per stream | garbage 0/1
+  piece2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  piece2 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.8s = 20.4 tok/s agg, 20.4 per stream | garbage 0/1
+  piece2 DV c=1 rep=4: accept=62.9% AL=2.89 | 200 tok in 9.6s = 20.8 tok/s agg, 20.8 per stream | garbage 0/1
+  piece2 DV c=1 rep=5: accept=48.6% AL=2.46 | 200 tok in 10.6s = 18.9 tok/s agg, 18.9 per stream | garbage 0/1
+  piece2 DV c=1 rep=6: accept=50.0% AL=2.50 | 200 tok in 11.3s = 17.8 tok/s agg, 17.8 per stream | garbage 0/1
+  piece2 DV c=1 rep=7: accept=62.4% AL=2.87 | 200 tok in 9.5s = 20.9 tok/s agg, 20.9 per stream | garbage 0/1
+
+=== full2  cudagraph_mode=FULL_DECODE_ONLY  10:08
+   up 10:23  resolved=FULL_DECODE_ONLY
+  full2 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  full2 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.7 tok/s agg, 16.7 per stream | garbage 0/1
+  full2 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 19.9 tok/s agg, 19.9 per stream | garbage 0/1
+  full2 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.4s = 21.3 tok/s agg, 21.3 per stream | garbage 0/1
+  full2 DV c=1 rep=4: accept=62.9% AL=2.89 | 200 tok in 9.8s = 20.4 tok/s agg, 20.4 per stream | garbage 0/1
+  full2 DV c=1 rep=5: accept=48.6% AL=2.46 | 200 tok in 10.6s = 18.9 tok/s agg, 18.9 per stream | garbage 0/1
+  full2 DV c=1 rep=6: accept=50.0% AL=2.50 | 200 tok in 10.7s = 18.7 tok/s agg, 18.7 per stream | garbage 0/1
+  full2 DV c=1 rep=7: accept=62.4% AL=2.87 | 200 tok in 9.6s = 20.9 tok/s agg, 20.9 per stream | garbage 0/1
+
+=== piece3  cudagraph_mode=PIECEWISE  10:25
+   up 10:39  resolved=PIECEWISE
+  piece3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.4s = 19.2 tok/s agg, 19.2 per stream | garbage 0/1
+  piece3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 11.9s = 16.8 tok/s agg, 16.8 per stream | garbage 0/1
+  piece3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.1s = 19.8 tok/s agg, 19.8 per stream | garbage 0/1
+  piece3 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.3s = 21.4 tok/s agg, 21.4 per stream | garbage 0/1
+  piece3 DV c=1 rep=4: accept=62.9% AL=2.89 | 200 tok in 9.5s = 21.0 tok/s agg, 21.0 per stream | garbage 0/1
+  piece3 DV c=1 rep=5: accept=48.6% AL=2.46 | 200 tok in 10.5s = 19.0 tok/s agg, 19.0 per stream | garbage 0/1
+  piece3 DV c=1 rep=6: accept=50.0% AL=2.50 | 200 tok in 10.6s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  piece3 DV c=1 rep=7: accept=62.4% AL=2.87 | 200 tok in 9.7s = 20.7 tok/s agg, 20.7 per stream | garbage 0/1
+
+=== full3  cudagraph_mode=FULL_DECODE_ONLY  10:40
+   up 10:55  resolved=FULL_DECODE_ONLY
+  full3 DV c=1 rep=0: accept=54.8% AL=2.64 | 200 tok in 10.5s = 19.1 tok/s agg, 19.1 per stream | garbage 0/1
+  full3 DV c=1 rep=1: accept=38.4% AL=2.15 | 200 tok in 12.0s = 16.7 tok/s agg, 16.7 per stream | garbage 0/1
+  full3 DV c=1 rep=2: accept=54.4% AL=2.63 | 200 tok in 10.0s = 20.0 tok/s agg, 20.0 per stream | garbage 0/1
+  full3 DV c=1 rep=3: accept=61.0% AL=2.83 | 200 tok in 9.4s = 21.4 tok/s agg, 21.4 per stream | garbage 0/1
+  full3 DV c=1 rep=4: accept=62.9% AL=2.89 | 200 tok in 9.6s = 20.8 tok/s agg, 20.8 per stream | garbage 0/1
+  full3 DV c=1 rep=5: accept=48.6% AL=2.46 | 200 tok in 10.6s = 18.9 tok/s agg, 18.9 per stream | garbage 0/1
+  full3 DV c=1 rep=6: accept=50.0% AL=2.50 | 200 tok in 10.6s = 18.8 tok/s agg, 18.8 per stream | garbage 0/1
+  full3 DV c=1 rep=7: accept=62.4% AL=2.87 | 200 tok in 9.5s = 21.0 tok/s agg, 21.0 per stream | garbage 0/1
+
+== ALL DONE == 2026-09-10 10:57
