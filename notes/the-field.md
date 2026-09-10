@@ -1974,10 +1974,23 @@ offload does**, and what `0xBakeer` relies on to run Flash-Next at ~22 tok/s
 
 **Two corrections to my earlier assessment:**
 
-1. The published quant sizes I quoted (MixedQ2 GGUF 157.3 GiB, MLX 2-bit 222.4 GiB) **include the
-   engram tables**. If engram is quantized alongside the rest it is roughly 38 % of that file, which
-   would put the MixedQ2 build near **95–100 GiB resident** — under the Spark's 119.2 GiB. So it may
-   already fit, and "1.3× over" was measuring the file, not the working set.
+1. ~~The published quant sizes include the engram tables, ~38 %, so MixedQ2 may sit near 95–100 GiB
+   resident and already fit.~~ **WRONG — measured and refuted the same hour.** The GGUF header says
+   so explicitly:
+
+   ```
+   deepseek4.engram.layer_ids = [1, 14]      max_ngram_size = 4      key_length = 256
+   v41.engram = "not in this file: native FP8+E8M0 tables stay in the source"
+   ```
+
+   **Zero engram tensors in shards 1, 2 and 5.** The packager had already applied the offload idea,
+   so the 157.3 GiB was never inflated by engram — it is **157.3 GiB of pure transformer, all of it
+   resident**. Still 1.3× over. Reaching ~94 GiB needs **~1.55 bits/param** (MixedQ2 already averages
+   ~2.6), and Hy3 at IQ1_M 1.75 bpw is the datapoint for that regime: it fit and lost to the dense
+   27B at 4-bit, 62 % vs 85 %.
+
+   I inferred "38 %" from parameter counts when a byte-range header read was available and free. Same
+   error shape as calling the calibration corpus multilingual without counting codepoints.
 2. The repo is **not** a BF16 release. The routed experts are **I8 with E8M0 block scales** — already
    ~1 byte/param. So the 286.2 GiB residual is ~307 B parameters *already at 8 bits*, and reaching
    ~94 GiB needs **~2.5 bits/param**, not the 4 I assumed. Harder than the first correction makes it
