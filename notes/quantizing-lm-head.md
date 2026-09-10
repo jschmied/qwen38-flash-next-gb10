@@ -163,3 +163,19 @@ the same class of silent failure as the merge trap.
 as `COMPAT.md` in the model repo, and ship a checker. Deferred because it is 2.4 GB of reads and the
 48-layer build is streaming from that same PBS link — heavy host I/O during a measurement is what
 killed `tiecensus`.
+
+### COMPAT hash — done 2026-09-10
+
+`lm_head.weight` is **bit-identical** in Qwen's BF16 parent and in RadixArk's NVFP4 build:
+
+```
+BF16 (248320, 2560)
+sha256 40bddd25d0d94a128ab08280faad39cfc3ee3064252761269115f544722607c9
+```
+
+So RadixArk ships Qwen's head unchanged, and one reference hash covers both. Published as
+`COMPAT.md` in the model repo with a checker, **tested both ways**: COMPATIBLE against the RadixArk
+build, MISMATCH against our own fp8head build (`209e1256…`, F8_E4M3).
+
+Note what this basis actually is: **two checkpoints on one date**, not a survey. The `COMPAT.md`
+says so rather than implying the field was swept.

@@ -1,6 +1,6 @@
 <!-- Mirror of the card published PRIVATE at
      https://huggingface.co/josch15366/Qwen3.8-Flash-Next-FP8-lm_head
-     Keep this file and the repo README in step. -->
+     Keep this file and the repo README in step. COMPAT.md mirrored as fp8head-COMPAT.md. -->
 
 ---
 base_model:
@@ -87,9 +87,13 @@ figure.
 This head was quantized from one specific BF16 `lm_head`. A checkpoint shipping a different one will
 produce **wrong logits, not an error.**
 
-Every published GPU build we have examined ships the stock BF16 tensor, RadixArk's included, so it
-should be a drop-in — but verify rather than trust that. Reference sha256 and a ready-made checker:
-**TBD (`COMPAT.md`)**.
+Reference sha256 and a ready-made checker are in **[COMPAT.md](COMPAT.md)**. The tensor is
+`BF16 (248320, 2560)`, sha256
+`40bddd25d0d94a128ab08280faad39cfc3ee3064252761269115f544722607c9` — verified 2026-09-10 to be
+bit-identical in Qwen's BF16 parent and in RadixArk's NVFP4 build, which ships it unchanged.
+
+That basis is **two checkpoints, on one date**, not a survey of the field. Run the check rather than
+trusting the list.
 
 ## Using it
 
