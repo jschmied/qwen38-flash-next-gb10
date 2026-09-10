@@ -1,5 +1,6 @@
 <!-- Mirror of the card published PRIVATE at
-     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-W4A4-LocalHessian-Experts
+     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts-FP8Head
+     (renamed from ...-W4A4-LocalHessian-Experts when the head was added to the shipping set)
      Keep this file and the repo README in step. mergeverify.py ships there too. -->
 
 ---
@@ -16,54 +17,84 @@ tags:
 - partial-checkpoint
 ---
 
-# Qwen3.8-Flash-Next — NVFP4 W4A4 experts, Local-Hessian calibrated
+# Qwen3.8-Flash-Next — Local-Hessian NVFP4 experts + FP8 `lm_head`
 
 **PRIVATE / WORK IN PROGRESS.** The build is running. Every `TBD` below is a cell the build must
 fill. If a TBD cannot be filled, the claim it belongs to comes out rather than being softened.
 
-## This is a partial checkpoint — experts only
+Every measurement on this page is written up, with its method and its limits, in the open notes at
+**[jschmied/qwen38-flash-next-gb10](https://github.com/jschmied/qwen38-flash-next-gb10)** — the
+record of getting this model onto a single DGX Spark. Each claim below links to the note that
+carries it. "We" throughout means that work; there is no single "our build", which is the point of
+the next section.
 
-It contains **only** the routed expert tensors,
-`model.language_model.layers.*.mlp.experts.<e>.{gate_proj,up_proj,down_proj}.*`.
-It is not a servable model on its own.
+## This is a partial checkpoint — two components
 
-Everything else — PLE, linear/self attention, embeddings, `lm_head`, the router gate, shared
-experts, hyper-connections — is taken **unmodified** from
-[`RadixArk/Qwen3.8-Flash-Next-NVFP4`](https://huggingface.co/RadixArk/Qwen3.8-Flash-Next-NVFP4)
-and is not republished here.
+It contains the two things that were actually rebuilt:
 
-| component | size | source |
-| --- | --- | --- |
-| **experts** | **68.0 GiB** | **this repo** |
-| ple | 47.7 GiB | RadixArk, bit-identical |
-| attention | 5.1 GiB | RadixArk, bit-identical |
-| other dense + embed + lm_head | 5.0 GiB | RadixArk, bit-identical |
+| component | size | what it is | source |
+| --- | --- | --- | --- |
+| **routed experts** | **68.0 GiB** | NVFP4 W4A4, Local-Hessian calibrated | **this repo** |
+| **`lm_head`** | **606 MiB** | blockwise FP8 (`F8_E4M3` + `weight_scale_inv`) | **this repo** |
+| ple | 47.7 GiB | unchanged | RadixArk, bit-identical |
+| attention | 5.1 GiB | unchanged | RadixArk, bit-identical |
+| other dense + embed | 3.8 GiB | unchanged | RadixArk, bit-identical |
 
-Republishing 57.9 GiB of somebody else's unchanged weights carries no information, so it is left
-where it is. The exclusion set (`*.linear_attn.*`, `*.self_attn.*`, `*.ple.*`, `*.mlp.gate*`,
+It is **not a servable model on its own.** Everything not listed as *this repo* comes unmodified from
+[`RadixArk/Qwen3.8-Flash-Next-NVFP4`](https://huggingface.co/RadixArk/Qwen3.8-Flash-Next-NVFP4) and is
+not republished here — 56.6 GiB of somebody else's unchanged weights carries no information. The exclusion set (`*.linear_attn.*`, `*.self_attn.*`, `*.ple.*`, `*.mlp.gate*`,
 `lm_head`, embeddings, …) is RadixArk's and is unchanged.
 
-## `lm_head` is a separate axis — do not conflate it with this repo
+## ⚠️ The FP8 `lm_head` needs a patched vLLM. The experts do not.
 
-Worth stating plainly, because it is easy to assume a single "our build" exists.
+The two components in this repo have **different requirements**, and you can take either without the
+other:
 
-`lm_head` is **BF16 `[248320, 2560]` in every published GPU checkpoint** of Qwen3.8-Flash-Next,
-RadixArk's included. We separately quantized it to blockwise FP8 and measured **+11 % decode at no
-measurable quality cost** (NLL/token 0.9687 → 0.9628 over 646 held-out tokens; nine chunks improved,
-five worsened, so mixed signs — reported as *no measurable cost*, not as an improvement). On the
-sibling Qwen3.8-27B an **NVFP4** head came out 2.4 % worse NLL in 8 of 8 chunks and was declined: the
-layer is precision-sensitive and the *format* is what decides it.
+- **experts alone** — loads on stock vLLM. Nothing special.
+- **`lm_head` too** — needs three local vLLM fixes, and is **TP=1 only**.
 
-**That head is not part of this repo and is not required by it.** This repo is experts only. The head
-is an orthogonal choice you make when you assemble, and either works.
+`lm_head` is BF16 `[248320, 2560]` in every published GPU checkpoint of this model, RadixArk's
+included. That is not because quantizing it is unsafe — it is because three independent pieces of
+vLLM plumbing prevent it, any one of which is sufficient on its own:
 
-It also does not touch the calibration: `lm_head` sits downstream of every MoE block, so the head has
-no influence on the hidden states the experts were calibrated on. The captured rows are valid for
-either head.
+1. the model never passes `quant_config` to `ParallelLMHead`;
+2. `config.json` is authoritative and its `ignore` list contains `lm_head`;
+3. the vocab weight loader asserts `loaded_weight.shape[output_dim] == org_vocab_size`, which is
+   false for the `[1940, 20]` block-scale companion — `VocabParallelEmbedding`'s loader has no
+   concept of a scale tensor.
 
-It *does* matter for reading the numbers below. Every measurement reported here holds the head
-**constant across both arms** — stock experts and rebuilt experts on the same head — because
-otherwise two things vary at once and the comparison means nothing. TBD names which head was used.
+There are also **two** `lm_head` construction sites, not one: `mtp.py` builds its own
+`ParallelLMHead`, also without `quant_config`, so with speculation enabled it fails identically with
+`no module or parameter named 'lm_head.weight_scale_inv'`. Patch both.
+
+TP=1 only, deliberately: our fix raises `NotImplementedError` above TP=1 rather than copying the
+scale, because above TP=1 it needs sharding in *block* space (`rows // block_n`) and silently
+mis-sharding it would produce wrong logits instead of an error.
+
+Full write-up, including the scale-convention trap — ModelOpt's `weight_scale_inv` holds the scale,
+**not** the reciprocal, and getting it backwards costs 565,100,324 % relative error instead of
+2.2489 % — is at **[quantizing-lm-head.md](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/quantizing-lm-head.md)**.
+
+### What the head buys
+
+**+11 % decode at no measurable quality cost.** NLL/token 0.9687 → 0.9628 over 646 held-out tokens of
+prose, code, German, French and technical text; nine chunks improved and five worsened, so the sign
+is mixed and this is reported as *no measurable cost*, not as an improvement. A bandwidth model
+predicted ~+10 % from removing 0.64 GB/token; the measurement was +11 %.
+
+Format matters more than bit-width here: on the sibling Qwen3.8-27B an **NVFP4** head measured 2.4 %
+worse NLL in 8 of 8 chunks and was declined for production, while this **FP8** head is loss-neutral.
+
+**One honest limit on that number:** it was measured *without speculation*, so the second
+construction site never executed during validation — the configuration that validated the change was
+not the configuration we serve. Re-validation under MTP is TBD, and until it is filled the +11 %
+should be read as a no-speculation figure.
+
+### It cannot affect the calibration
+
+`lm_head` sits downstream of every MoE block, so it has no influence on the hidden states the experts
+were calibrated on. The captured rows are valid for either head. It *does* matter for reading the
+numbers below, which hold the head **constant across both arms** — otherwise two things vary at once.
 
 ## What is different about it
 
@@ -76,7 +107,8 @@ of the plain amax/MSE sweep used by the published builds.
 optimisation.
 
 Measured directly, on identical data, before the build: reconstruction error through the
-Local-Hessian scales **8.18 %** against **9.53 %** for plain-max.
+Local-Hessian scales **8.18 %** against **9.53 %** for plain-max
+([roadmap](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/modelopt-nvfp4-roadmap.md)).
 
 ## Calibration data
 
@@ -93,6 +125,8 @@ of the model's real position range. This one reaches **95,239**.
 
 Expert coverage at the layer measured: **0 experts with no routed rows, 0 thin (<64 rows)**, median
 5,007 rows per expert.
+
+Sources: [how the corpus was built](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/calibration-corpus.md) · [why it is stratified by length, and the measurement that forced it](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/modelopt-nvfp4-roadmap.md).
 
 ## Results
 
@@ -134,6 +168,8 @@ bit-for-bit the original quantization — and a merge that looks like it worked.
 Do not "fix" this by renaming files so they sort last. Correctness must not depend on filename
 collation. The old expert bytes have to be **absent from every referenced file**.
 
+([full write-up, including the shard census and both verifier controls](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/modelopt-nvfp4-roadmap.md))
+
 ### The merge
 
 Fortunately the base checkpoint is already almost perfectly separated by component. Of its 206
@@ -142,21 +178,29 @@ shards:
 | shard class | count | size | what to do |
 | --- | --- | --- | --- |
 | pure **expert** | 192 | 63.3 GiB | **drop from the index** — never referenced, never opened |
-| pure **other** | 13 | 52.6 GiB | reference as-is |
-| **mixed** | **1** | 4.7 expert + 5.3 other | repack: write out only its non-expert tensors |
+| pure **other**, no `lm_head` | 12 | 49.2 GiB | reference as-is |
+| **mixed**: experts + others | 1 | 4.7 expert + 5.3 other | repack, keeping the non-expert tensors |
+| **mixed**: `lm_head` + 169 others | 1 | 3.4 GiB | repack, keeping everything **except** `lm_head` |
 
-So the merge writes **5.3 GiB**. Everything else is the 13 untouched base shards, this repo's 48
-layer files, and a new index. No full copy, no repack of 58 GiB.
+So the merge writes about **7.6 GiB**. Everything else is the 12 untouched base shards, this repo's
+48 layer files plus its `lm_head`, and a new index. No full copy, no repack of 58 GiB.
+
+If you take the experts but **not** the head, the second row collapses back into "reference as-is"
+and the merge writes 5.3 GiB.
 
 Steps:
 
 1. Fetch the base checkpoint `RadixArk/Qwen3.8-Flash-Next-NVFP4`.
 2. Classify its shards by reading headers only (8-byte length prefix + JSON).
-3. Repack the one mixed shard, keeping only tensors **without** `.mlp.experts.` in the name.
-4. Build a new `weight_map`: expert tensors → this repo's `layerNN.safetensors`; every other tensor →
-   its pure-other shard, or the repacked one.
-5. Copy `config.json`, `hf_quant_config.json`, tokenizer files and the chat template from the base,
-   unchanged.
+3. Repack the two mixed shards: from the expert/other one keep the tensors **without**
+   `.mlp.experts.` in the name; from the `lm_head` one keep everything **except** `lm_head.*`.
+   (Skip the second if you are not taking the head.)
+4. Build a new `weight_map`: expert tensors → this repo's `layerNN.safetensors`; `lm_head.*` → this
+   repo's head file; every other tensor → its pure-other shard, or a repacked one.
+5. Copy `config.json`, `hf_quant_config.json`, tokenizer files and the chat template from the base.
+   **If you take the head, `config.json` is not unchanged**: its `ignore` list contains `lm_head`
+   and is authoritative, so the head stays BF16 until you remove that entry — see the vLLM section
+   above.
 6. **Verify before serving** (next section). The merge is not done until it passes.
 
 ### Verifying the merge
@@ -176,8 +220,8 @@ It is exercised in both directions rather than assumed: it reports PASS on an un
 checkpoint (296,475 tensors across 206 files, no collisions) and FAIL, naming the tensor and both
 files, on a synthesised collision.
 
-**Level 2 — per-tensor sha256 against the source each tensor should have come from.** Experts against
-this repo, everything else against the base. Proves provenance, not merely internal consistency.
+**Level 2 — per-tensor sha256 against the source each tensor should have come from.** Experts and
+`lm_head` against this repo, everything else against the base. Proves provenance, not merely internal consistency.
 
 ```
 python mergeverify.py --merged <dir> --ours <this repo> --stock <base>   # --sample 0 hashes all
