@@ -1745,3 +1745,38 @@ PR attribution is uncertain, and the note now cites the code rather than the num
 **Merge status of everything else we track:** #55375 (peakcrosser7, PLE state stride) merged 09-05. Still
 open: our **#55122** (persistent_topk determinism), #55430 (tile-union QSA), #54948, #54912, #54076,
 #53798, #53899, #38315; third-party #52244, #50897, #54846, #56026, #55872.
+
+### Scale test: all 512 experts of layer 24 in 35 seconds, peak 0.1 GiB (2026-09-10 06:58)
+
+Everything before this was n=1. This calibrates and exports **every expert of one real layer** — 1/48th
+of the build — from `layer24.safetensors` and the 8,192 real captured activations.
+
+| | |
+| --- | --- |
+| 512 experts, calibrate + export | **35 s** |
+| peak GPU memory | **0.1 GiB** |
+| output written | 0.88 GiB, 1,536 tensors |
+| **extrapolated, 48 layers** | **~28 min** (gate_up only; with `down_proj` ≈ 45 min) |
+
+**So the calibration is not the cost of the build, and neither is memory.** 0.1 GiB peak means this could
+run on almost any GPU — the whole thing is I/O and the forward passes that produce activations, neither
+of which this test includes. That is consistent with `lhbench` (the amax search alone was ~6 min for the
+whole model) and settles the last open cost question in the roadmap's stage 3.
+
+**Coverage, quantified at last.** From 8,192 real rows of a single layer:
+
+| | experts |
+| --- | --- |
+| local_hessian, ≥ 64 routed rows | **297** |
+| thin, 1–63 rows | **194** |
+| **no rows at all** → weight-only max fallback | **21** |
+
+42 % of experts get fewer than 64 rows and **21 of 512 get none**, from a corpus this size. A real
+calibration (2,048 × 2,048 = 4.19 M tokens) gives **512× more rows per expert**, which should empty the
+thin and zero buckets — *unless* an expert is genuinely never routed to by our agent traffic, in which
+case it falls back to max and we should say so rather than pretend it was Hessian-calibrated. The build
+driver must therefore **count and report these three buckets per layer**; a silent max fallback on a
+subset of experts is exactly the kind of thing that would otherwise be invisible in the output.
+
+**Scope:** `gate_up_proj` only, one layer, activations pre-captured rather than generated in-loop. The
+real build adds `down_proj` (~+50 % time) and the forward passes.
