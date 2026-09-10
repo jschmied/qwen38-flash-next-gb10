@@ -16,7 +16,11 @@ tags:
 - partial-checkpoint
 ---
 
-# Qwen3.8-Flash-Next — Local-Hessian NVFP4 experts (+ optional FP8 `lm_head`)
+# Qwen3.8-Flash-Next — Local-Hessian NVFP4 experts
+
+> 🗺️ **Part of the [Flash-Next Quant Map](https://claude.ai/code/artifact/3534a530-5e94-4ce2-abac-f1c70ee204e3)** — the measured landscape of
+> Qwen3.8-Flash-Next quantization on a single DGX Spark: which schemes fit in 128 GB, what
+> each costs in speed and quality, and where this piece sits among them.
 
 **PRIVATE / WORK IN PROGRESS.** The build is running. Every `TBD` below is a cell the build must
 fill. If a TBD cannot be filled, the claim it belongs to comes out rather than being softened.

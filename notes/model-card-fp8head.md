@@ -16,6 +16,11 @@ tags:
 
 # Qwen3.8-Flash-Next — blockwise FP8 `lm_head`
 
+> 🗺️ **Part of the [Flash-Next Quant Map](https://claude.ai/code/artifact/3534a530-5e94-4ce2-abac-f1c70ee204e3)** — the measured landscape of
+> Qwen3.8-Flash-Next quantization on a single DGX Spark: which schemes fit in 128 GB, what
+> each costs in speed and quality, and where this piece sits among them.
+
+
 **PRIVATE / WORK IN PROGRESS.**
 
 A single tensor and its scale: `lm_head` quantized to blockwise FP8. **606 MiB, +11 % decode, no
