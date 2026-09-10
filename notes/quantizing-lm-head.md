@@ -218,3 +218,38 @@ Re-fetch NVIDIA's head by byte range (~680 MiB), finish the comparison (subsampl
 which is what killed it), and if LH scales beat max on reconstruction, build a Flash-Next NVFP4 head
 with LH and NLL-test it against the FP8 one. All the machinery exists — `headq.py`, `nvfp4pack.py`
 and the LH path all work.
+
+## Can Local-Hessian make an NVFP4 head viable? — NO, decided 2026-09-10
+
+The motivation was real: `lm_head` is on the drafter's critical path k+1 times per step, so halving
+it again (FP8 0.6 GiB → NVFP4 0.3 GiB) was the highest-leverage lever left after the FP8 head itself.
+
+Answered in weight space, with **no activation capture and no serving** — `headfmt.py`, 16,384
+sampled rows against the BF16 head RadixArk ships unchanged:
+
+| head format | reconstruction error vs BF16 | size |
+| --- | --- | --- |
+| **FP8 blockwise (shipped)** | **2.642 %** | 0.6 GiB |
+| NVFP4 plain-max | 9.491 % | 0.3 GiB |
+| **gap** | **6.849 pp** | |
+
+Local-Hessian's measured effect on the expert weights was **9.53 → 8.18 %, 1.35 pp**. Closing 6.849 pp
+needs **5× that**. Even a best case does not bring NVFP4 near FP8 here.
+
+**Why it cannot:** this is a representational limit, not a calibration one. E2M1 has 4 bits and
+{0,.5,1,1.5,2,3,4,6}; LH only chooses *scales*, and no scale choice adds range. FP8 E4M3 simply
+represents this layer's distribution better.
+
+It also explains the earlier result rather than sitting beside it: an NVFP4 head measured **2.4 %
+worse NLL in 8 of 8 chunks** and was declined. This says LH would not have rescued it, and closes
+the question of whether that build's calibration was the problem — it was the format.
+
+**Decision: the head stays FP8.** No capture, no LH head build, no NLL round. The published head is
+already the right answer.
+
+Sanity: FP8 at 2.64 % agrees with the 2.2489 % round-trip recorded above (Frobenius vs mean-relative,
+same magnitude); NVFP4-max at 9.49 % agrees with `headq`'s 8.49 % on the 27B head and the packer's
+9.53 % gaussian self-test.
+
+**Limit:** reconstruction error is a proxy for quality. A 5× shortfall plus an independent NLL
+measurement pointing the same way is enough to decide; a 1.5× shortfall would not have been.
