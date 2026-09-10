@@ -570,3 +570,29 @@ Two different answers, and the second is why the order matters:
 The public's first view is a finished repo. Use a single commit for all 48 files rather than 48
 commits, so the repo is never partial even internally — which matters if a revision hash is ever
 quoted.
+
+## Level 3 — PASS, 2026-09-10 16:35
+
+Both arms served on identical flags (`FN_MAXLEN=8192 FN_SEQS=4 FN_UTIL=0.75 FN_MTP=3`), temp 0,
+seed 0, port 8092, served name `flashnext`.
+
+**Smoke, both arms:** coherent code / prose / German / factual output and a correct tool call
+(`get_weather {"city":"Munich"}`) on each. A stock arm that failed its own smoke would have voided
+the comparison rather than informed it.
+
+**Divergence:**
+
+| cell | tokens differing | max \|Δlogprob\| | text |
+| --- | --- | --- | --- |
+| code | 95/96 | 0.6326 | differs |
+| prose | 91/91 | 1.4587 | differs |
+| german | 75/75 | 1.2086 | differs |
+| factual | 79/79 | 1.1094 | differs |
+
+**The rebuild is real end to end.** This is the check a correct-looking directory cannot fake:
+identical logprobs would have meant the merge silently fell back to stock, and levels 1 and 2 both
+pass in that case.
+
+All three levels now green, plus the static differs-from-stock check (18/18 sampled pairs). What is
+still open is **quality**, which divergence says nothing about — that is the combining-mark canary
+and SWE run A.
