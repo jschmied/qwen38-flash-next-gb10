@@ -166,8 +166,19 @@ e.g. `layers.N.mlp.experts.J.down_proj.*`), while the BF16 source stores them **
 (`experts.gate_up_proj [512,1280,2560]`). The re-shard runs on whatever layout the export produces; the
 component rules match both, since they key on `.mlp.experts.` either way.
 
-`--execute` still needs writing and must verify each tensor's payload sha256 against the source before
-the plan is trusted on 126 GiB.
+**`--execute` is written and verified (2026-09-10 02:2x).** It reads each tensor's payload by byte range
+from the source shard, writes component-grouped shards with a rebuilt 8-byte-aligned header, then
+**re-reads every tensor from the NEW file and compares sha256 against the source bytes** — sizes are not
+evidence. A `--only <component>` flag runs it on one component so correctness can be proved without
+spending 126 GiB.
+
+Verification run on the `mtp` component of the live checkpoint: **29 tensors, 172.7 MiB, 29/29
+sha256-verified, 0 mismatches**, and the written shard loads as valid safetensors with correct shapes,
+dtypes and all-finite values. Tool at `/opt/llm/runners/reshard.py`.
+
+Still to do before a full run: the index rewrite is only emitted when `--only` is absent, and a whole-
+checkpoint pass needs ~126 GiB of free space alongside the source (we have 293 GB, so it fits, but there
+is no reason to spend it until there is a rebuilt checkpoint to shard).
 
 ## The trap that would waste the whole run
 
