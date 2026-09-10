@@ -130,3 +130,19 @@ Resident memory went **up**, 74.13 → 76.5 GiB, when removing 1.27 GB of BF16 s
 down ~0.6. Run-to-run variance on this figure is ~0.2 GiB, so the ~2.4 GiB is real and
 unexplained. The leading hypothesis is that a dequantized BF16 copy is retained alongside the FP8
 weight — if so, the memory saving is still on the table.
+
+## Relation to the Local-Hessian expert rebuild (2026-09-10)
+
+The FP8 head and the Local-Hessian experts are **independent axes** and must not be conflated.
+
+- RadixArk's `lm_head` is **BF16 (248320, 2560)** — confirmed from the shipped checkpoint's header,
+  as is every published GPU build. Our `qwen38-flash-next-fp8head` carries **F8_E4M3 +
+  `weight_scale_inv` (1940, 20)**, which is our work, not theirs.
+- The expert rebuild **does not touch the head**, and the published repo is experts only.
+- **The head cannot affect the calibration.** `lm_head` is downstream of every MoE block, so it has
+  no influence on the hidden states captured at the MoE inputs. The 398,861 captured rows are valid
+  for either head.
+- **It does affect how the results read.** The stage-1 capture ran against the RadixArk checkpoint,
+  i.e. a BF16 head. Any paired evaluation must hold the head **constant across arms** — stock experts
+  and rebuilt experts on the same head — or two things vary at once and the comparison is
+  meaningless. The model card names which head produced its numbers.

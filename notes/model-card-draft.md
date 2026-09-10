@@ -43,6 +43,28 @@ Republishing 57.9 GiB of somebody else's unchanged weights carries no informatio
 where it is. The exclusion set (`*.linear_attn.*`, `*.self_attn.*`, `*.ple.*`, `*.mlp.gate*`,
 `lm_head`, embeddings, …) is RadixArk's and is unchanged.
 
+## `lm_head` is a separate axis — do not conflate it with this repo
+
+Worth stating plainly, because it is easy to assume a single "our build" exists.
+
+`lm_head` is **BF16 `[248320, 2560]` in every published GPU checkpoint** of Qwen3.8-Flash-Next,
+RadixArk's included. We separately quantized it to blockwise FP8 and measured **+11 % decode at no
+measurable quality cost** (NLL/token 0.9687 → 0.9628 over 646 held-out tokens; nine chunks improved,
+five worsened, so mixed signs — reported as *no measurable cost*, not as an improvement). On the
+sibling Qwen3.8-27B an **NVFP4** head came out 2.4 % worse NLL in 8 of 8 chunks and was declined: the
+layer is precision-sensitive and the *format* is what decides it.
+
+**That head is not part of this repo and is not required by it.** This repo is experts only. The head
+is an orthogonal choice you make when you assemble, and either works.
+
+It also does not touch the calibration: `lm_head` sits downstream of every MoE block, so the head has
+no influence on the hidden states the experts were calibrated on. The captured rows are valid for
+either head.
+
+It *does* matter for reading the numbers below. Every measurement reported here holds the head
+**constant across both arms** — stock experts and rebuilt experts on the same head — because
+otherwise two things vary at once and the comparison means nothing. TBD names which head was used.
+
 ## What is different about it
 
 The per-group weight scales are chosen by **Hessian-weighted search** — ModelOpt's `local_hessian`,
