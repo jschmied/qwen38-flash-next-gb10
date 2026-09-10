@@ -322,3 +322,48 @@ The general form, worth carrying beyond this project: **a producer-side check va
 does not validate the file's agreement with the consumer.** Test against the consumer's contract, or
 against a known-good third-party artifact — RadixArk's 0/24,576 was what made both defects visible in
 minutes once we thought to look.
+
+---
+
+# RESOLVED — v3 is clean. The export contracts were the whole story.
+
+| arm | corpus | contracts | corrupt | exact | scripts hit |
+| --- | --- | --- | --- | --- | --- |
+| stock (RadixArk), 2 starts | — | correct | **0/72** | **72/72** | — |
+| v1, 2 starts | 99.94 % ASCII | broken | 18/72 (25 %) | 36/72 | Thai |
+| v2 | 30 % script, 13 langs | broken | 24/48 (50 %) | 18/48 | Thai + Devanagari |
+| **v3** | **same as v2** | **fixed** | **0/48** | **48/48** | **—** |
+
+**v2 → v3 changed nothing but the two export contracts** — same capture, same Local-Hessian,
+identical calibration buckets (thin 32, no-rows 11, 24,533/24,576 full-Hessian). 50 % → 0 %.
+
+And it is genuinely the rebuilt model, not a silent fallback: level 3 gives 94/96, 91/91, 85/85 and
+50/50 tokens diverging from stock, max |Δlogprob| 1.62, coherent output and a correct tool call in
+every cell.
+
+## Scoreboard, stated plainly
+
+Three diagnoses of mine, all wrong:
+
+1. **"The packer is exonerated"** — from a reconstruction test that decoded each matrix with its own
+   scale, i.e. weights the runtime never uses. The 0.004 pp agreement with RadixArk was real and
+   irrelevant.
+2. **"Calibration-set overfitting; add script coverage"** — cost a corpus rebuild and 90 minutes of
+   GPU. Refuted by its own result: corruption doubled and spread to the script I had just added.
+3. **"Local-Hessian itself is at fault"** — escalating to the most sophisticated component after the
+   second failure, instead of reopening the plumbing I had declared clean.
+
+The user's diagnosis, right on both counts and confirmed against RadixArk in 90 seconds:
+`input_scale` must be `amax/(6*448)`, and gate/up must share one `weight_scale_2`.
+
+**Local-Hessian was never at fault. The corpus was never at fault.** Both v1 and v2 were mis-exported,
+so neither measured what I claimed. The corpus v2 work was not wasted — script coverage is defensible
+on its own terms — but it was undertaken for a reason the evidence had already contradicted.
+
+## What made the difference, methodologically
+
+Every check I built compared our output to **our own intent**. The user's compared it to **the
+consumer's contract** and to a **known-good third-party artifact**. `mergeverify.py` LEVEL 1.5 now
+does the same and is exercised against the bad build so it is proven to fire.
+
+Recorded as a durable lesson in memory `diff-against-known-good-artifact`.
