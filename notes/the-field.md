@@ -1712,3 +1712,36 @@ the scale extraction nor the packing convention is doing anything we have misrea
 (`reshard.py --execute`, 29/29 sha256-verified on the `mtp` component) → verify, each link exercised on
 real data. What remains untested is only *scale*: 48 layers × 512 experts instead of one, and the
 layerwise streaming that keeps peak memory at one layer.
+
+### Our swizzle PR #55180 MERGED — and our serving venv does not have it (2026-09-10)
+
+**`[Kernel] SM 12.x blockwise FP8: swizzle the CTA raster when the weight exceeds the L2`, @jschmied,
+merged 2026-09-07, commit `4df80187`.** This is the CUTLASS tile-scheduler work from finding 100 — the
+lever measured at **−12 % TTFT at 30k with 16k chunks**, bit-identical, that replaced M-chunking.
+
+**But we are not running it.** Our serving venv is `0.28.1rc1.dev401+g8340fe1bb`, and
+
+```
+compare 4df80187...8340fe1bb  →  status=behind  ahead_by=0  behind_by=61
+```
+
+so the nightly we serve **predates the merge by 61 commits**. The change is in
+`csrc/.../scaled_mm_blockwise_sm120_fp8.cu` and its dispatch header — CUDA sources compiled into `_C`,
+so it is invisible to a Python grep and there is no launcher knob to check: `serve-fnmain.sh` has no
+`FN_SWZ`, and the measurements were taken through the `_C_swz2` standalone overlay, never through prod.
+
+**Consequence:** the only one of our upstream contributions that has landed is absent from the stack we
+serve, and getting it means bumping the venv to a nightly at or after `4df80187`. That is a prod change
+and therefore the user's call — recorded here, not done.
+
+**Correction to the 2026-09-09 entry on #53142/#54173/#52244.** I recorded @Windless84's citation that
+**#53906** closed the `cache_config.block_size` root cause. #53906's actual title is
+**"[Model] add GLM-5.3-Flash support"** (@ZJY0516, merged 2026-09-03) — so either the fix rode inside
+that PR or the number is wrong. **What we verified ourselves is unaffected**: the exclusion comment sits
+at `v1/engine/core.py:338` with the `min()` filtered on `prefix_cacheable`, and three fnmain2 server logs
+report the resolved attention block size as **1600**. The conclusion stands on the code we read; only the
+PR attribution is uncertain, and the note now cites the code rather than the number.
+
+**Merge status of everything else we track:** #55375 (peakcrosser7, PLE state stride) merged 09-05. Still
+open: our **#55122** (persistent_topk determinism), #55430 (tile-union QSA), #54948, #54912, #54076,
+#53798, #53899, #38315; third-party #52244, #50897, #54846, #56026, #55872.
