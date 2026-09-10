@@ -237,3 +237,65 @@ The note above argued MiaAI #27 is probably the same mechanism, keyed on data-de
 The observation that survives is narrower and still worth something: RadixArk (reconstruction 9.498 %,
 i.e. plain-max-like) is clean, and two data-dependent builds are not. But "data-dependent" is no
 longer a demonstrated mechanism — v2 was *more* data-dependent and *more* broken.
+
+---
+
+# ROOT CAUSE — two producer/runtime contract violations in our export
+
+**Found by the user, 2026-09-10 21:0x, and confirmed against RadixArk within minutes.** Not
+Local-Hessian, not the corpus. Both of my diagnoses were wrong; this one is measured on both sides.
+
+## Contract 1 — gate and up must share one `weight_scale_2`
+
+vLLM fuses gate and up into `w13`, and on a mismatch **silently applies the GATE scale to both
+halves** ([vllm#54974](https://github.com/vllm-project/vllm/issues/54974)). Our builder calibrated
+them separately, so each got its own:
+
+| | gate/up `weight_scale_2` mismatches, layer 24 |
+| --- | --- |
+| RadixArk | **0 / 512** |
+| ours | **506 / 512** |
+
+Ratio spread across those experts: min 0.359, median **1.216**, p90 1.754, max **3.185**;
+**383/512 more than 10 % off**. So the up projection of three quarters of every layer's experts was
+being dequantized at runtime with a global scale up to 3× wrong.
+
+## Contract 2 — `input_scale` is `amax / (E2M1_MAX * E4M3_MAX)` = `amax / 2688`
+
+Not `amax/6`. ModelOpt states the convention explicitly
+([config.py](https://github.com/NVIDIA/Model-Optimizer/blob/main/modelopt/torch/quantization/config.py)),
+and TRT-LLM describes it as `amax/(448*6)`.
+
+| build | what we wrote | vs RadixArk's 0.00246466 |
+| --- | --- | --- |
+| v1 / v2 (LH) | `amax / 6` | **448× too large** |
+| plain-max | `1.0` | **406× too large** |
+
+Back-solving RadixArk's value confirms the convention: `0.00246466 × 2688 = 6.63`, a plausible
+hidden-state amax; under `/6` it would imply 0.0148, which is not.
+
+## Why every check we had missed both
+
+**Our reconstruction test measured weights the runtime never uses.** It decoded each matrix with
+*its own* `weight_scale_2` — so gate reconstructed perfectly, up reconstructed perfectly, and the
+runtime then threw up's scale away. The 0.004 pp agreement with RadixArk on plain-max was real and
+irrelevant: it says nothing about `input_scale`, and nothing about a scale the runtime discards.
+
+That is why the symptoms looked paradoxical and I kept blaming the calibration:
+
+| symptom | explained by |
+| --- | --- |
+| weight reconstruction excellent | test used each matrix's own scale |
+| output mostly coherent | `dequant_alpha = weight_scale_2 * input_scale` cancels much of the global error |
+| small deterministic errors on rare tokens | activation FP4 range/clipping changed |
+| **v2 worse than v1** | different activations → different amax → different wrongness, *not* "LH learned Devanagari badly" |
+
+## Status
+
+Both fixed and verified on a rebuilt layer 24: **0/512** gate/up mismatches, **0/1536** input_scale
+values differing from the base. `input_scale` is now **copied from the base checkpoint** rather than
+recomputed — a weight-only rebuild does not change the activation distribution, so copying removes
+the whole class of error rather than swapping one constant for another.
+
+Full 48-layer rebuild running. Local-Hessian is **not** exonerated yet — it is merely no longer the
+prime suspect, and cannot be judged until a build that satisfies both contracts is measured.
