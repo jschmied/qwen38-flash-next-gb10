@@ -342,3 +342,36 @@ The repo ships the 48 layer files and a merge script that does the above on the 
 script must **fail loudly** if any referenced shard still contains an expert tensor, because the
 failure mode is a model that loads cleanly and is silently the original. That warning belongs in the
 model card, not only in the script.
+
+### Verifying the merge
+
+A per-file checksum cannot see the failure mode: in it every file is individually valid, the model
+loads without error, and it is silently the original. Three levels, in `mergeverify.py`:
+
+**Level 1 — name collisions and index completeness (headers only, seconds).** The check that catches
+the trap. Every referenced file's tensor names must be pairwise disjoint, and their union must equal
+the index exactly. A name in two referenced files means the later one wins by `_natural_sort_key`
+and the rebuild is discarded.
+
+Both controls run 2026-09-10, because a checker that never fires is worthless:
+
+| input | result |
+| --- | --- |
+| the stock checkpoint (positive control) | **PASS** — 296,475 tensors, 206 files, no collisions |
+| a synthesised collision (negative control) | **FAIL**, names the tensor and both files, exit 1 |
+
+**Level 2 — per-tensor sha256 against the source each tensor should have come from**: experts against
+our build output, everything else against the stock checkpoint. Proves provenance rather than mere
+self-consistency. Samples 400 tensors by default; `--sample 0` hashes all 296,475.
+
+**Level 3 — runtime divergence against stock.** The only check a correct-looking directory cannot
+fake, and the reason levels 1 and 2 are not sufficient on their own. Two conditions, both required:
+
+- logprobs on a fixed prompt must be **non-zero-divergent** from stock. Identical logprobs mean the
+  merge silently fell back to the original, whatever the files say.
+- output must still be coherent, which rules out the opposite failure — a merge that differs because
+  it is broken.
+
+Note a byte-level readback of a loaded weight is *not* a usable level-3 check here: the loader may
+repack or interleave quantized weights for the kernel, so a hash mismatch would not distinguish a
+bad merge from a legitimate layout transform.
