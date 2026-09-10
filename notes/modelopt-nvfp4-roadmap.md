@@ -420,3 +420,71 @@ Unknown, and not obviously worth finding out. Going from 126,677 to 398,861 rows
 corpus-size comparison we have and it was measured on layer 24 alone, which was already 512/512 at
 the smaller size. Buying the last 0.37 % would mean capturing the tail of the routing distribution,
 which is exactly the part that grows slowest with more tokens.
+
+## Assembly — 2026-09-10, and the classifier bug it exposed
+
+Merged checkpoint at `/opt/llm/models/fnext-lh`. **It writes zero new bytes**: 48 expert files and
+14 base shards linked, plus a rewritten index.
+
+### `.mlp.experts.` also matches the MTP draft module
+
+The first attempt classified shards by the name pattern `.mlp.experts.`, dropped every shard that
+matched, and the sanity check caught the result:
+
+```
+tensors: base 296,475  merged 296,473  missing 2
+  missing: mtp.layers.0.mlp.experts.down_proj, mtp.layers.0.mlp.experts.gate_up_proj
+```
+
+**The MTP draft module has its own experts**, and this build does not touch them — stage 1 hooks
+`Qwen4ExpSparseMoeBlock` in the main model only, so no activations were ever captured for the MTP
+block. Their shard matched the pattern anyway, was dropped from the index, and MTP would not have
+loaded.
+
+Fix: classify against the **actual replacement set** — the tensor names read out of our own layer
+files — never a name pattern. The driver now also fails if any of our tensors is absent from the base
+index, which would mean a naming mismatch.
+
+### The correct shard classification, and why the merge is free
+
+| shard class | count | size | action |
+| --- | --- | --- | --- |
+| ours to replace | 192 | 63.3 GiB | dropped from the index |
+| everything else | **14** | 57.9 GiB | referenced as-is |
+| mixed | **0** | — | — |
+
+**Zero mixed shards**, so nothing needs repacking and the merge writes nothing. The earlier
+"1 mixed shard, 5.3 GiB to repack" figure was an artefact of the pattern classifier: that shard was
+"mixed" only because it held the MTP experts, which are not ours to replace.
+
+Linking is symlink-not-hardlink: `fs.protected_hardlinks` blocks hardlinking a file owned by the
+serving account. Same zero cost; the dependency on the base is explicit by design.
+
+### Verification
+
+`mergeverify.py --sample 300`:
+
+```
+LEVEL 1  296,475 tensors across 62 referenced files
+  ok  no tensor name appears in two referenced files
+  ok  no tensor in a referenced file is absent from the index
+  ok  every indexed tensor was found
+LEVEL 2  sha256 on 300 tensors — all match their source
+```
+
+Level 3 (runtime divergence against stock) is the smoke test, next.
+
+## MTP is BF16, and that is the next obvious target
+
+The MTP draft module is **entirely unquantized**: 31 tensors, **4.86 GiB**, all BF16, with `mtp.*`
+and `model.mtp.*` in RadixArk's `exclude_modules`. Its experts are full-size —
+`gate_up_proj (512, 1280, 2560)` 3.12 GiB and `down_proj (512, 2560, 640)` 1.56 GiB, the same shapes
+we rebuilt 48 times over.
+
+That lines up with the standing finding that **69 % of single-stream time is BF16 GEMV on RadixArk's
+unquantized weights**: the drafter runs on every speculation step.
+
+Two reasons not to treat it as free, though. Stage 1 captured no MTP activations, so calibrating it
+needs a second hook or plain-max. And a drafter's job is proposing tokens the target verifies —
+degrading it costs acceptance rate, which can outweigh the bandwidth saved. Measurable, not arguable,
+but it is why BF16 here may be deliberate.
