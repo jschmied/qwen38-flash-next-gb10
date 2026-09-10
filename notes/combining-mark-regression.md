@@ -299,3 +299,26 @@ the whole class of error rather than swapping one constant for another.
 
 Full 48-layer rebuild running. Local-Hessian is **not** exonerated yet — it is merely no longer the
 prime suspect, and cannot be judged until a build that satisfies both contracts is measured.
+
+## Full-model scale of the defect, and a verifier level that catches it
+
+`mergeverify.py` now has a **LEVEL 1.5 — producer/runtime contracts**, run against the known-bad v2
+merge as a negative control:
+
+```
+FAIL  24,357/24,576 gate/up weight_scale_2 MISMATCH   (99.1 % of all experts)
+FAIL  73,728/73,728 input_scale values differ from the base   (100 %)
+```
+
+Every `input_scale` in the model was wrong, and the up projection of 99.1 % of all experts was being
+dequantized with a scale the runtime discards.
+
+**Why this level had to exist.** Levels 1 and 2 both PASSED on that same checkpoint. They verify
+names, completeness and per-tensor provenance — and they reconstruct each matrix with *its own*
+scale. That is not what the runtime does. A verifier that never models the consumer's contract can
+be perfectly green on a checkpoint that is 99 % wrong where it matters.
+
+The general form, worth carrying beyond this project: **a producer-side check validates the file; it
+does not validate the file's agreement with the consumer.** Test against the consumer's contract, or
+against a known-good third-party artifact — RadixArk's 0/24,576 was what made both defects visible in
+minutes once we thought to look.
