@@ -74,3 +74,62 @@ Not identified. Candidates, cheapest first:
 
 **Discriminating test:** rebuild one layer with plain max instead of Local-Hessian and re-probe. If
 plain max is clean, the calibration is at fault; if it also corrupts, the packer is.
+
+## CAUSE FOUND — calibration-set overfitting. The packer is fine; the corpus is not.
+
+### The packer is exonerated, independently
+
+Reconstruction against the BF16 truth, layer 24, 18 (expert, matrix) pairs:
+
+| | mean error vs BF16 |
+| --- | --- |
+| **ours (Local-Hessian)** | **8.585 %** |
+| RadixArk | 9.498 % |
+| **our plain-max** | **9.494 %** |
+
+**Our plain-max matches RadixArk's to 0.004 pp.** That validates the E2M1 encoding, the low-nibble
+order, the group size, and the scale conventions against a third-party implementation — the packer
+writes correct bytes. And Local-Hessian does what it claims: **0.91 pp better** than both.
+
+So the rebuilt weights are **measurably closer to BF16 and behaviourally worse.** That eliminates the
+packer, the gate/up split and the `input_scale` convention in one measurement.
+
+### The corpus has no Thai in it. None.
+
+```
+calibration corpus: 5,775,370 characters
+  ascii            5,772,067   99.9428 %
+  other-nonascii       3,303    0.0572 %      <- and zero Thai
+```
+
+Local-Hessian minimises `dw·H·dwᵀ` with **H estimated from our activations**. Directions that carry
+Thai have ~zero energy in that H, so the search spends their precision on the directions that
+dominate English and code. Global L2 improves *because* of the trade. Thai pays for it.
+
+This is textbook calibration-set overfitting, with an unusually clean demonstration: better global
+reconstruction, catastrophic on a script the corpus never contains.
+
+### The mistake underneath it was mine, and it is a naming trap
+
+I described this corpus as spanning "roughly ten languages — Java, JS/TS, Go, Rust, Ruby, PHP,
+C/C++, Python, Lua, jq" — on the model card, in `calibration-corpus.md`, and repeatedly in
+conversation. **Those are programming languages.** SWE-bench *Multilingual* is multilingual in
+**code** and monolingual in **human script**: 99.94 % ASCII. I never checked, because the dataset's
+name had already answered the question for me.
+
+Every stratification decision compounded it. I measured position coverage, project diversity, expert
+row counts — and never once counted a codepoint outside ASCII.
+
+### The fix is the corpus, not the method
+
+Local-Hessian is working. It needs a calibration set that contains what we do not want it to
+sacrifice. Concretely: add natural-language text across scripts — Thai, Devanagari, Arabic, Hebrew,
+CJK, Cyrillic — to the agent trajectories, then rebuild.
+
+**Testable prediction:** a **plain-max** build should be clean on Thai, because plain max is
+data-independent. If it corrupts too, this diagnosis is wrong. That test is queued and is cheap: the
+merge is index-only, so one swapped layer file is enough to start.
+
+**Second prediction:** the corrupted scripts should be exactly those absent from the corpus, and the
+clean ones (Devanagari, Arabic, Hebrew, ZWJ were clean) should show damage too once probed harder —
+they are equally absent. Their cleanliness may just mean the probe's prompts were easier.

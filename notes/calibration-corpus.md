@@ -1,5 +1,11 @@
 # The calibration corpus
 
+> **⚠️ CORRECTED 2026-09-10: this corpus is 99.94 % ASCII and contains no Thai.** It is described
+> below as spanning "roughly ten languages" — those are **programming** languages. SWE-bench
+> *Multilingual* is multilingual in code and monolingual in human script. Building on it produced a
+> checkpoint that corrupts Thai combining marks; see `combining-mark-regression.md`. Read every
+> "diversity" claim below with that in mind.
+
 Material for the Local-Hessian NVFP4 rebuild, and the disjoint pool the eval draws from.
 
 ## What we have (2026-09-10)
