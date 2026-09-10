@@ -921,3 +921,19 @@ Fix: render with `tokenize=False`, then tokenize the string with `add_special_to
 
 Same class as the earlier `expact` wrong-tensor and the hfget pagination bug — an output that is
 well-formed, plausible and silently wrong. 2026-09-10.
+
+## A forward hook in the driver process never fires — vLLM V1 runs EngineCore in a subprocess
+
+`llm.llm_engine.model_executor` raises `AttributeError: 'LLMEngine' object has no attribute
+'model_executor'`, and the tell that it is not merely a renamed attribute is in the log:
+every engine line is prefixed `(EngineCore pid=NNNN)` — a **different pid**. The model lives in
+another process, so a `register_forward_pre_hook` registered in the driver process can never see a
+forward, whatever path you reach it by.
+
+Fix: `VLLM_ENABLE_V1_MULTIPROCESSING=0` pulls the engine in-process, after which the model sits at
+`llm.llm_engine.engine_core.engine_core.model_executor.driver_worker.model_runner.model`.
+`lhcapture.py:find_model()` walks the known layouts newest-first and falls back to a breadth-first
+search, so a version bump degrades to a slower lookup rather than a crash after a 9-minute load.
+
+Cost of learning this the slow way: one full model load. Cheap only because the run was launched at
+shakeout size first. 2026-09-10.
