@@ -4,6 +4,42 @@ Rewritten 2026-08-31, then appended to per working day. **The sections are chron
 oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
 as archaeology unless it is cross-referenced from here.**
 
+## QUEUED 2026-09-10 — quantize the MTP module's own body (memory, not bandwidth)
+
+**Not the MTP head — that question is closed.** MTP has no head of its own; it shares the main
+`lm_head`, and an NVFP4 head is not viable (FP8 reconstructs at 2.642 %, NVFP4-max at 9.491 %, a
+6.85 pp gap against Local-Hessian's demonstrated 1.35 pp). Head stays FP8. See
+`quantizing-lm-head.md`.
+
+**What is open is the MTP module's own weights:** 4.69 GiB of BF16 experts + 0.17 GiB dense, all of
+it in RadixArk's `exclude_modules` as `mtp.*`.
+
+**The case is resident memory, not bandwidth.** Its experts are MoE, so only ~0.092 GiB of that
+4.69 is read per draft token — quantizing saves ~0.069 GiB/draft-token, an order of magnitude less
+than `lm_head`'s lever. What it does buy is **~4.1 GiB freed resident**, and `fp8-mixed-checkpoint.md`
+showed freed resident converting straight into KV cache. That helps exactly where MTP is weakest:
+c≥8, where speculation measured a net loss (−6 % at c=8, −10 % at c=16 on a BF16 head).
+
+**The blocker is identified and already fixed upstream.** Our venv has `_remap_ignored_layers` in
+`qwen4_exp/nvidia/mtp.py` but **not `_remap_quantized_layers`** — which is what
+[vllm#55513](https://github.com/vllm-project/vllm/pull/55513) adds (**MERGED 2026-09-08**, "Fix block
+FP8 MTP in ModelOpt mixed checkpoints"). Without it, MIXED_PRECISION reads `quantized_layers` with
+main-model indices while MTP renumbers its layers, and loading fails with
+`mtp.layers.N.mlp.experts has no parameter 'w2_weight_scale_inv'` — the failure two other DGX Spark
+users already hit. Our venv is `0.28.1rc1.dev401+g8340fe1bb`, older than the merge.
+
+We drafted this same fix ourselves and deleted the draft once #55513 landed — correctly. Do not
+re-derive it (memory `search-open-prs-before-fixing`).
+
+**Steps:** (1) port #55513 via the `venv-overlay` skill, or bump the venv; (2) quantize the MTP
+experts with **plain max** — no capture needed, since stage 1 hooks only the main model's MoE blocks;
+(3) serve and measure **acceptance length** and resident memory, not just tok/s.
+
+**The cell that decides it:** mean accepted length. The `lm_head` result (2.21 vs 2.15, unchanged)
+covers a layer the drafter *reads*; its own body determines what it *proposes*, which is a different
+question. If acceptance holds, the freed KV is a clear win. If it drops, the bandwidth saving is far
+too small to pay for it.
+
 ## THE NIGHT OF 2026-09-08/09 — read this first
 
 **Goal, reset by the user: make agent turns faster.** Eight runs on the box, each with the cell that
