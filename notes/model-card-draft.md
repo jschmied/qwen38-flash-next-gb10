@@ -72,6 +72,13 @@ head **constant across both arms** — otherwise two things vary at once.
 
 ## What is different about it
 
+> **⚠️ Read this before assuming the calibration is why you want this.** A **plain-max** build —
+> data-independent, no calibration data at all — scores **identically** on every quality measure we
+> have taken: 0/48 corrupt and 48/48 exact on the combining-mark canary, the same as this build and
+> the same as the base checkpoint. **No behavioural benefit of Local-Hessian has been demonstrated
+> here.** Its only measured advantage is 0.91 pp of weight reconstruction (8.585 % vs 9.494 % against
+> BF16), and weight reconstruction has been a poor predictor in this work — see below.
+
 The per-group weight scales are chosen by **Hessian-weighted search** — ModelOpt's `local_hessian`,
 the method of [arXiv 2608.28113](https://arxiv.org/abs/2608.28113) ("H-Scale", Qwen team) — instead
 of the plain amax/MSE sweep used by the published builds.
@@ -80,8 +87,13 @@ of the plain amax/MSE sweep used by the published builds.
 `weight_scale` differ. This is a quality change at zero inference cost, not a speed or memory
 optimisation.
 
-Measured directly, on identical data, before the build: reconstruction error through the
-Local-Hessian scales **8.18 %** against **9.53 %** for plain-max
+Measured on identical data: reconstruction error through the Local-Hessian scales **8.585 %**
+against **9.494 %** for plain-max — 0.91 pp.
+
+**Treat that number with suspicion.** In this same work weight reconstruction was 0.004 pp between
+our plain-max export and the base while two producer/runtime contracts were broken, and it rated an
+earlier Local-Hessian build *better* than the base while that build corrupted 25 % of Thai copy
+tasks. It measures the weights; it does not measure what the runtime does with them
 ([roadmap](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/modelopt-nvfp4-roadmap.md)).
 
 ## Calibration data
@@ -111,7 +123,7 @@ Sources: [how the corpus was built](https://github.com/jschmied/qwen38-flash-nex
 | thin (1–63 rows) / no rows → plain max | 58 (0.24 %) / 33 (0.13 %) |
 | layers at 512/512 | **32 / 48** |
 | serves, and is genuinely different weights | **yes** — 95/96, 91/91, 75/75, 79/79 tokens diverge from stock across four prompts, max \|Δlogprob\| 0.63–1.46, both arms coherent with correct tool calls |
-| combining-mark canary (Thai/Devanagari/Arabic/Hebrew/ZWJ, 3 scripts + ZWJ, 6 reps) | **0/48 corrupt, 48/48 exact — matches stock's 0/72** |
+| combining-mark canary (Thai/Devanagari/Arabic/Hebrew/ZWJ, 6 reps) | **0/48 corrupt, 48/48 exact** — matches stock's 0/72, **and matches a plain-max build's 0/48** |
 | SWE-bench Multilingual, held-out slice | not run — at n=10 its SE is ~15 points and it could not resolve what the canary catches in 35 minutes |
 
 The imperfect 0.37 % concentrates at the ends and for different reasons: layer 0's routing is
