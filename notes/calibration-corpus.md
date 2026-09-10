@@ -40,7 +40,15 @@ real turns.
 
 ## Provenance caveat
 
-These are **qwen38-27b's** trajectories, not Flash-Next's. The tool output, file dumps, test
+**The trajectories are qwen38-27b's; the tokenizer is Flash-Next's own.** Two different things,
+easy to conflate. The census loaded `/opt/llm/models/qwen38-flash-next-nvfp4`, whose
+`tokenizer.json`, `tokenizer_config.json`, `vocab.json` and `merges.txt` are **bit-identical to
+Qwen's official Flash-Next source** on PBS. The two models share a vocabulary (`len(tok)` 248,077,
+config `vocab_size` 248,320 for both) but **not a chat template** — 8,952 chars against the 27B's
+14,093 — so using the wrong one would have silently shifted every token count through the
+template while raising nothing.
+
+The trajectories themselves are 27B's, not Flash-Next's. The tool output, file dumps, test
 runs and tracebacks — the 78 % — are the repos' own text and model-independent. The 5 %
 assistant text is another model's prose style. Not worth re-generating for a calibration set.
 
