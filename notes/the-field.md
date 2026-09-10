@@ -1950,3 +1950,42 @@ Flash-Next at an honest 4 bits, which already fits with room.
 
 **One point in its favour:** MLA plus a 1 M context window makes the KV cache cheap, so if the
 weights ever fit, context would not be the constraint. The weights are the whole problem.
+
+### CORRECTION — DeepSeek-V4.1-Flash: I measured the wrong quantity
+
+Earlier today I wrote that nothing published fits a Spark, comparing repo sizes against 119.2 GiB
+unified memory. **That compares the wrong thing.** What matters is what must be *resident*.
+
+Measured from the index:
+
+| | |
+| --- | --- |
+| `layers.1.engram.embed.weight` | 384,006,168 × 256, F8_E4M3, **91.55 GiB** |
+| `layers.14.engram.embed.weight` | 384,016,682 × 256, F8_E4M3, **91.56 GiB** |
+| their E8M0 scales | 2.86 GiB each |
+| **engram total** | **189.1 GiB = 203.1 GB** |
+| everything else | **286.2 GiB** |
+
+The engram tables are **196.6 B parameters of pure lookup** — the model hashes n-grams (up to 4
+tokens) into a row index and reads a 256-dim vector. No matmul. They never need to be in GPU memory:
+mmap from NVMe and page in the handful of rows a token touches. **That is exactly what our PLE
+offload does**, and what `0xBakeer` relies on to run Flash-Next at ~22 tok/s
+(`flashnext-prior-art-llamacpp`).
+
+**Two corrections to my earlier assessment:**
+
+1. The published quant sizes I quoted (MixedQ2 GGUF 157.3 GiB, MLX 2-bit 222.4 GiB) **include the
+   engram tables**. If engram is quantized alongside the rest it is roughly 38 % of that file, which
+   would put the MixedQ2 build near **95–100 GiB resident** — under the Spark's 119.2 GiB. So it may
+   already fit, and "1.3× over" was measuring the file, not the working set.
+2. The repo is **not** a BF16 release. The routed experts are **I8 with E8M0 block scales** — already
+   ~1 byte/param. So the 286.2 GiB residual is ~307 B parameters *already at 8 bits*, and reaching
+   ~94 GiB needs **~2.5 bits/param**, not the 4 I assumed. Harder than the first correction makes it
+   sound.
+
+**What is measured vs inferred:** the engram sizes and the I8 dtype are measured from headers. The
+"38 % of the GGUF" is inference from parameter counts — one header read of that file would settle it,
+and unlike the 157 GiB download it costs nothing.
+
+**Standing caveat unchanged:** Hy3 295B at IQ1_M fit and lost to the dense 27B at 4-bit, 62 % vs
+85 %, 4–5× slower. Fitting is necessary, not sufficient.
