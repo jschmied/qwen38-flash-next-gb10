@@ -969,3 +969,26 @@ Class: the third defect this session where a well-formed, plausible value is sil
 after `apply_chat_template(tokenize=True)` returning a BatchEncoding and the `expact` wrong tensor.
 Verifying that a flag *arrived* is not the same as verifying it *took effect*; the marker line
 (`QSADET=`) is the thing to check. 2026-09-10.
+
+## A no-rows expert was SKIPPED, not exported — the checkpoint would not have loaded
+
+`lhbuild.py` did `continue` when an expert received no routed rows, so **no tensors were written for
+it at all**. Layer 41 shipped 511 of 512 experts (405 missing); layer 0 shipped 505 of 512.
+
+`MAX_NOROWS = 8` looked like a guard and was guarding the wrong thing: it tolerated up to **eight
+missing experts per layer**, when one missing expert makes the merged checkpoint unloadable. The
+design note's third requirement ("count and report LH / thin / no-rows per layer") was implemented as
+counting — but the *fallback* it assumed, plain-max calibration, was never written.
+
+Fix: a no-rows expert is exported with plain amax over its own weights, which is precisely the
+calibration every published NVFP4 build applies to every expert. It is a quality fallback, not a
+hole. The layer now fails if `exported != 512` experts, and `MAX_NOROWS` degrades to a warning about
+calibration quality.
+
+**How it was nearly missed, which is the part worth keeping:** the no-rows count is per layer and
+layer **0** had `no-rows 7` — the very first line of a 48-layer build. Reading `tail -1` and the most
+recent lines showed `no-rows 0` on nine consecutive layers, and I reported "no-rows 0 on every layer"
+three times on that basis. The one line that mattered had scrolled past before I first looked.
+
+Rule: for a per-item counter across a long run, **grep for the failing case** (`grep -v "no-rows 0"`)
+rather than reading the tail. A tail shows the most recent item, never the worst one. 2026-09-10.
