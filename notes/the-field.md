@@ -1799,3 +1799,39 @@ driver must feed `down_proj` from the in-loop forward, not from a captured tenso
 
 **Scope:** one layer, activations pre-captured rather than generated in-loop; the forward passes remain
 the unmeasured term.
+
+### pangoleen/qwen3.8-flash-next-dgx-spark — a peer running our exact model on one GB10 (read 2026-09-10)
+
+Paolo Rosson (@redp314), 13 stars, pushed 2026-09-09. Single DGX Spark, blazux's serving route (the
+official image plus a patch layer that **mmaps the 44 GiB n-gram table from NVMe**), hybrid fp8 side
+layers, MTP 3, `GPU_MEM=0.80`. Claims **41–44 tok/s stock → 52 tuned → 57 strongest**, and four coding
+tasks in **102.3 s vs 138.3 s**.
+
+**Three of their four overlays are levers we measured independently — and on one we have better data.**
+
+| their overlay | our position |
+| --- | --- |
+| `01-draft-vocab` — restrict the drafter to the **65,536** most frequent tokens | **We measured the optimum at 16,384.** Finding 160: 16k beats `full` at 5/7 matched reps (+8.5…+12.1 %, non-overlapping) and beats 32k at 4/7. And finding 151: our whole *observed* vocabulary is only **48,476 ids**, so a 65,536 slice is larger than the vocabulary that actually occurs — it cannot be restricting much. Their own acceptance barely moves (3.64 → 3.57 per pass), which is exactly what a non-binding slice looks like. |
+| `02-det-topk` — "vendored, Apache-2.0" order-stable top-k | Same idea as our **#55122**. Worth checking whether it *is* our kernel. |
+| `03-staged-ple` — **the one they say unlocks the rest** | **We do not have this.** See below. |
+| `04-gdn-flashinfer` — backport of a merged vLLM PR | we run FlashInfer GDN already |
+
+**The staged-PLE lead, and why it matters to us specifically.** Their argument: a mid-calculation read
+from the PLE table cannot be recorded into a CUDA graph, so the stock image can only capture *fragments*.
+Move the read **before** the calculation into a fixed buffer and the whole decode step becomes capturable
+— i.e. `FULL_DECODE_ONLY` instead of `PIECEWISE`.
+
+That reframes one of our own nulls. **det-136 measured cudagraph mode as null — but it compared PIECEWISE
+against NONE, never PIECEWISE against FULL_DECODE_ONLY.** If the PLE read is what prevents full-decode
+capture on our stack too, we never tested the mode that would actually pay. `decode-c1-idle-piecewise`
+already recorded "PIECEWISE graphs, PLE hidden" at c=1 without drawing this conclusion.
+
+**Their overlay does not drop into our tree**: it is pinned to the *preview* build
+`0.1.dev20073+g8e685d198`, module `vllm.models.qwen3_8_flash_next.nvidia` (we run `qwen4_exp` on nightly
+dev401), and it stages the **mmap** PLE, whereas we use the #53899 **CPU-offload worker** with pinned
+host memory. So the mechanism transfers; the patch does not.
+
+**Two actions.** (1) Test whether our stack can reach `FULL_DECODE_ONLY` at all, and if not, whether the
+PLE is the reason — that is a cheap server start and it decides whether this lever exists for us.
+(2) Their draft-vocab choice is one we have measured better; worth telling them, since 16,384 would be a
+further gain on top of what they report. Needs the user's go.
