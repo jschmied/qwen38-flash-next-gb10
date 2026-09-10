@@ -555,3 +555,18 @@ Every group's FP8 scale moved by at least 1 ULP, and over half the packed nibble
 quantization bin. Consistent with two different calibration methods on the same weights, and it
 settles that the pipeline is doing work — independently of the runtime level-3 check, which tests
 the *merge* rather than the files.
+
+### Upload protocol — visibility during a partial transfer
+
+Two different answers, and the second is why the order matters:
+
+- **Within a file:** not visible. HF's LFS flow uploads bytes to storage and commits the pointer
+  afterwards, so a half-transferred shard is neither listed nor downloadable.
+- **Across files:** visible, if uploaded one at a time — `upload_file` is one commit per file. A
+  public repo mid-upload would show a growing subset, and a checkpoint missing layer files is *worse*
+  than an empty one: the index references them, so a clone taken then fails to load or loads wrong.
+
+**Protocol:** upload while **private**, verify the complete file list, then flip visibility **once**.
+The public's first view is a finished repo. Use a single commit for all 48 files rather than 48
+commits, so the repo is never partial even internally — which matters if a revision hash is ever
+quoted.
