@@ -179,3 +179,42 @@ build, MISMATCH against our own fp8head build (`209e1256…`, F8_E4M3).
 
 Note what this basis actually is: **two checkpoints on one date**, not a survey. The `COMPAT.md`
 says so rather than implying the field was swept.
+
+## The MTP module has no head of its own — and the open NVFP4 question
+
+**MTP shares the main `lm_head`.** Its 31 tensors contain no `lm_head` at all; `mtp.py` builds its
+own `ParallelLMHead` *module* over the same weights. That is exactly why patching one construction
+site was not enough, and why the FP8 head is already on the drafter's critical path k+1 times per
+step (worth +24 % at c=1, +20 % at c=16 — see `fp8-mixed-checkpoint.md`).
+
+So "quantize the MTP head" is already done: it is this head.
+
+### Would Local-Hessian help it?
+
+- **On the FP8 head: little to gain.** E4M3's dynamic range makes scale choice nearly irrelevant, and
+  this head is already loss-neutral (NLL 0.9687 → 0.9628). No gap to recover.
+- **On an NVFP4 head: this is the real question.** 4 bits halves the head again — ~0.3 GiB against
+  FP8's 0.6 — on the one layer that pays k+1 times per step. Highest-leverage lever we have left.
+
+The obstacle is measured: an NVFP4 head came out **2.4 % worse NLL in 8 of 8 chunks** and was declined
+for production.
+
+### What we do not know, and it decides the answer
+
+**Whether that 2.4 %-worse head was LH-calibrated or plain-max.** If plain-max, LH plausibly closes
+the gap and a 4-bit head becomes viable. If it was already LH, 4 bits is simply too lossy here and
+FP8 is correct.
+
+`headcmp` was built to answer this and did not finish:
+
+- it established that **69.81 % of NVIDIA's NVFP4 head groups differ from plain-max**, so NVIDIA does
+  use a non-max method — but that was the **27B** head (5120 hidden, 320 groups), not Flash-Next's
+- it then crashed on `quantile()` ("input tensor is too large") before producing reconstruction errors
+- and `nv_head.safetensors` has since been **deleted**; only `bf16_head.safetensors` remains
+
+### To settle it
+
+Re-fetch NVIDIA's head by byte range (~680 MiB), finish the comparison (subsample before `quantile`,
+which is what killed it), and if LH scales beat max on reconstruction, build a Flash-Next NVFP4 head
+with LH and NLL-test it against the FP8 one. All the machinery exists — `headq.py`, `nvfp4pack.py`
+and the LH path all work.
