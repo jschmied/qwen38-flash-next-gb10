@@ -503,3 +503,37 @@ Which side the MTP module's *own* experts fall on is genuinely untested — they
 draft token, which argues "complements", but nobody has measured it. The real obstacle is mechanical:
 stage 1 hooks `Qwen4ExpSparseMoeBlock` in the main model only, so no MTP activations were captured
 and calibrating them needs a second hook or plain-max.
+
+### Should the MTP module itself be quantized? — arithmetic, 2026-09-10
+
+Yes, probably — but the justification is **resident memory, not bandwidth**, and the difference
+matters because the bandwidth case looks much stronger than it is.
+
+| | |
+| --- | --- |
+| MTP total | 4.86 GiB BF16 |
+| of which experts | 4.69 GiB — **MoE, only top_k 10 of 512 fire** |
+| of which dense | 0.17 GiB — read in full every draft token |
+| **actually read per draft token** | **≈ 0.26 GiB** |
+
+So quantizing the experts to 4 bits saves **~0.069 GiB per draft token**, against `lm_head`'s
+0.64 GB/token paid k+1 times per step. An order of magnitude smaller a lever, and the "4.86 GiB of
+BF16 on the draft path" framing overstates it by ~19×.
+
+The **memory** case is the real one: 4.69 GiB → ~0.6 GiB frees **~4.1 GiB resident**, and
+`fp8-mixed-checkpoint.md` showed 2.5 GiB freed converting straight into KV cache. That helps exactly
+where MTP is currently weakest — at concurrency, where speculation was measured a net loss (c=8
+−6 %, c=16 −10 % on a BF16 head).
+
+**No plumbing blocker, unlike `lm_head`.** `mtp.py` already calls `get_draft_quant_config()`,
+`configure_quant_config(draft_quant_config, Qwen4ExpMTP)` and passes `quant_config` into its
+constructors. RadixArk's `mtp.*` exclusion is a choice, not a limitation.
+
+**The risk is untested and is not the same as the `lm_head` result.** Acceptance held (2.21 vs 2.15)
+when we quantized a layer the drafter *reads*. Quantizing the drafter's *own body* changes what it
+proposes. Related, not identical — measure it.
+
+**Cheapest first experiment:** plain-max the MTP experts. It needs no capture at all (stage 1 hooks
+only the main model's MoE blocks), so it costs a pack-and-serve, and it answers the acceptance
+question. Only if acceptance holds is a calibrated version — which needs a second hook and a
+re-capture — worth the model load.
