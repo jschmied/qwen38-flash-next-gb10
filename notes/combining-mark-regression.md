@@ -367,3 +367,44 @@ consumer's contract** and to a **known-good third-party artifact**. `mergeverify
 does the same and is exercised against the bad build so it is proven to fire.
 
 Recorded as a durable lesson in memory `diff-against-known-good-artifact`.
+
+---
+
+# Is Local-Hessian worth anything? — not demonstrably, 2026-09-11 01:30
+
+With the export contracts fixed, a **plain-max** build (data-independent, no capture, no Hessian) was
+built, merged and probed under identical conditions.
+
+| arm | calibration | corrupt | exact |
+| --- | --- | --- | --- |
+| stock (RadixArk), 2 starts | plain-max-like | 0/72 | 72/72 |
+| **v3** | **Local-Hessian** | **0/48** | **48/48** |
+| **pmax** | **plain max** | **0/48** | **48/48** |
+
+**Both clean. The contract bugs were the entire story, and Local-Hessian is not required for
+correctness.**
+
+Not a null from identical builds — pmax vs v3 diverge on **93/96, 89/89, 80/80 and 49/49** tokens,
+max |Δlogprob| **1.73**. Two substantially different sets of weights that behave equally well on the
+only quality measure we have.
+
+## What Local-Hessian has actually demonstrated
+
+**One number: 8.585 % vs 9.494 % weight reconstruction against BF16** (layer 24, 18 expert/matrix
+pairs) — 0.91 pp, in weight space.
+
+**No behavioural benefit has been shown.** The canary cannot distinguish them; nothing else has been
+measured. Weight reconstruction has already proven a poor predictor here — it was 0.004 pp between
+our plain-max and RadixArk while two contracts were broken, and it reported v1's Local-Hessian build
+as *better* than stock while that build corrupted 25 % of Thai responses.
+
+## Consequence for the model card
+
+The card led on Local-Hessian as the reason the repo exists. That claim is not supported by anything
+measured, so it has been **softened rather than left standing** on a public page. What can honestly
+be claimed: the build is correct, verified, and equal to stock on the canary; LH gives 0.9 pp better
+weight reconstruction; whether that is worth anything is unmeasured.
+
+**What would earn the claim back:** NLL divergence against BF16 on held-out text, LH vs plain-max vs
+stock. That is the measurement `kv-dtype-logprob-experiment` was designed for and it is the only
+thing that would justify shipping LH over a build anyone can make with no calibration data at all.
