@@ -99,10 +99,25 @@ Sources: [how the corpus was built](https://github.com/jschmied/qwen38-flash-nex
 
 | | |
 | --- | --- |
-| layers rebuilt | TBD / 48 |
-| experts per layer with a full Hessian | TBD |
+| layers rebuilt | **48 / 48** |
+| experts with a full Hessian (≥64 routed rows) | **24,485 / 24,576 — 99.63 %** |
+| thin (1–63 rows) / no rows → plain max | 58 (0.24 %) / 33 (0.13 %) |
+| layers at 512/512 | **32 / 48** |
+| serves, and is genuinely different weights | **yes** — 95/96, 91/91, 75/75, 79/79 tokens diverge from stock across four prompts, max \|Δlogprob\| 0.63–1.46, both arms coherent with correct tool calls |
 | combining-mark regression (Thai/Devanagari/Arabic/Hebrew/ZWJ, vs stock) | TBD |
 | SWE-bench Multilingual, held-out slice | TBD |
+
+The imperfect 0.37 % concentrates at the ends and for different reasons: layer 0's routing is
+degenerate (7 experts never fire), and layers 44–47 are the specialised tail (`lh 495–501`). Those
+experts are the least-routed by construction, so they also fire least at serve time — measured on
+*this* corpus, which is the caveat. Experts with no routed rows carry plain-max scales, i.e. exactly
+what every published NVFP4 build applies to every expert; the floor is the standard method, not a
+hole.
+
+**"Genuinely different weights" is a claim we checked directly**, because nothing else would have:
+sampling 18 (expert, matrix) pairs, 18/18 differ from the base, with 100 % of one expert's fp8 scale
+bytes and 56.3 % of its packed weight bytes changed. An exporter that copied its input would pass
+every other check here.
 
 **On the SWE number, stated in advance:** resolution rate has a standard error of about 2.9 points at
 300 instances, so it cannot resolve the 1–2 point differences at issue here. It is reported as a
