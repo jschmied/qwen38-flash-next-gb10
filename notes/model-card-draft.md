@@ -1,6 +1,5 @@
 <!-- Mirror of the card published PRIVATE at
-     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts
-     Keep this file and the repo README in step. -->
+     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts -->
 
 ---
 base_model:
@@ -145,18 +144,28 @@ shards:
 
 | shard class | count | size | what to do |
 | --- | --- | --- | --- |
-| pure **expert** | 192 | 63.3 GiB | **drop from the index** — never referenced, never opened |
-| pure **other** | 13 | 52.6 GiB | reference as-is |
-| **mixed** | **1** | 4.7 expert + 5.3 other | repack, keeping the non-expert tensors |
+| holds tensors **this repo replaces** | 192 | 63.3 GiB | **drop from the index** — never referenced, never opened |
+| everything else | 14 | 57.9 GiB | reference as-is |
+| mixed | **0** | — | — |
 
-So the merge writes **5.3 GiB**. Everything else is the 13 untouched base shards, this repo's 48
-layer files, and a new index. No full copy, no repack of 58 GiB, and `config.json` unchanged.
+**Zero mixed shards, so the merge writes no bytes at all** — 192 shards dropped, 14 linked, one new
+index, `config.json` unchanged. No copy, no repack.
+
+> ⚠️ **Classify by tensor name against *this repo's* contents, never by the pattern
+> `.mlp.experts.`** — that pattern also matches `mtp.layers.0.mlp.experts.*`, the **MTP draft
+> module's own experts**, which this repo does **not** replace. Dropping their shard leaves the
+> checkpoint missing them and MTP will not load. We hit exactly this: the merge came out at 296,473
+> of 296,475 tensors. Read the names out of this repo's files and treat everything else as
+> "keep" — which is also why there are no mixed shards.
 
 Steps:
 
 1. Fetch the base checkpoint `RadixArk/Qwen3.8-Flash-Next-NVFP4`.
-2. Classify its shards by reading headers only (8-byte length prefix + JSON).
-3. Repack the mixed shard, keeping only the tensors **without** `.mlp.experts.` in the name.
+2. Read the tensor names out of this repo's `layerNN.safetensors` files — that set, and only that
+   set, is what you replace. Then classify the base's shards by headers only (8-byte length prefix
+   + JSON) against it.
+3. If any shard turns out to be mixed, repack it keeping only the tensors this repo does **not**
+   replace. Against the RadixArk base there are none.
 4. Build a new `weight_map`: expert tensors → this repo's `layerNN.safetensors`; every other tensor →
    its pure-other shard, or the repacked one.
 5. Copy `config.json`, `hf_quant_config.json`, tokenizer files and the chat template from the base,
