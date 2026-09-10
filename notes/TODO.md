@@ -779,3 +779,18 @@ free to delete.
 **Before bumping, finalise anything that must stay comparable.** det-169/171/172/173 were all
 measured on `8340fe1bb`; vllm#55272 removes torch.compile for this model, so post-bump numbers are
 a different execution model.
+
+### ⏳ REMOVE THE "files are in flight" BANNER when the upload lands
+
+The user added **"Don't download now, files are in flight"** to the public experts card on
+2026-09-10 ~16:50, while the 63.3 GiB upload was running. It must come out once the upload completes
+and all 48 layer files verify present — otherwise the repo tells people not to use the thing it now
+serves.
+
+Check: `HfApi().repo_info(repo_id="josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts",
+files_metadata=True)` → 48 files matching `layer*.safetensors`, ~63.3 GiB total. Then edit the
+banner out and re-upload the README.
+
+Note the upload uses `allow_patterns=["layer*.safetensors"]`, so it will **not** clobber the README —
+but any future README upload from `notes/model-card-draft.md` would, which is why the mirror was
+re-synced from the live page rather than overwritten.

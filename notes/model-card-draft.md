@@ -1,5 +1,7 @@
-<!-- Mirror of the card published PRIVATE at
-     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts -->
+<!-- Mirror of the card published PUBLIC at
+     https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts
+     NOTE: carries a user-added "Don't download now, files are in flight" banner.
+     REMOVE IT when the upload completes and the 48 layer files are verified present. -->
 
 ---
 base_model:
@@ -17,12 +19,20 @@ tags:
 
 # Qwen3.8-Flash-Next — Local-Hessian NVFP4 experts
 
+**Don't download now, files are in flight**
+
+
 > 🗺️ **Part of the [Flash-Next Quant Map](https://claude.ai/code/artifact/3534a530-5e94-4ce2-abac-f1c70ee204e3)** — the measured landscape of
 > Qwen3.8-Flash-Next quantization on a single DGX Spark: which schemes fit in 128 GB, what
 > each costs in speed and quality, and where this piece sits among them.
 
-**PRIVATE / WORK IN PROGRESS.** The build is running. Every `TBD` below is a cell the build must
-fill. If a TBD cannot be filled, the claim it belongs to comes out rather than being softened.
+> **⏳ WEIGHTS NOT UPLOADED YET.** The build is finished and verified — the numbers below are real —
+> but the 68 GiB of expert files are still transferring. Until they land, this repo is the method,
+> the merge recipe and the verifier, not a usable checkpoint. The two `TBD` cells are the quality
+> evaluation, which has not run yet. 
+
+Every `TBD` below is a cell that must be filled by a measurement. If one cannot be filled, the claim
+it belongs to comes out rather than being softened.
 
 Every measurement on this page is written up, with its method and its limits, in the open notes at
 **[jschmied/qwen38-flash-next-gb10](https://github.com/jschmied/qwen38-flash-next-gb10)** — the
