@@ -1866,3 +1866,43 @@ needs a decode A/B at c=1, three starts, matched reps.
 **Corrects the framing of det-136 rather than its result.** det-136 compared PIECEWISE against NONE and
 found null; the pair that matters given the splitting ops is PIECEWISE against FULL_DECODE_ONLY, which
 has never been measured here.
+
+### HF survey 2026-09-10: no Local-Hessian Flash-Next exists, but the axis now has a published A/B
+
+Checked because "check the field before expensive steps" applies hardest right before the build.
+
+**Our build stays novel.** A search for `hessian` / `H-Scale` / `local_hessian` across HF returns exactly
+one relevant quantised model, and it is a **different base**:
+`JasonW2025/Ling-3.0-flash-HybridQuant-NVFP4-W4A16-LocalHessian` (2026-08-19, 854 downloads). No
+Local-Hessian NVFP4 build of Qwen3.8-Flash-Next exists. The four NVFP4/W4A16 Flash-Next builds published
+in the last two days are none of them Local-Hessian.
+
+**But that Ling build is the first published LH-vs-MSE quality comparison on the same model**, and it is
+directly our axis:
+
+| | thinking off | thinking on |
+| --- | --- | --- |
+| **local-Hessian** | 85 / 87 / 89 (mean **87.0**) | 89 / 91 / 90 (mean **90.0**) |
+| MSE sibling | 85 / 83 / 86 (mean 84.7) | 88 / 88 / 89 (mean 88.3) |
+
+**+2.3 and +1.7 points.** Read it carefully though: **n = 3 per arm, and the within-arm spread (4 and 3
+points) is as large as the gap between arms.** Suggestive, in the right direction, not conclusive — the
+same standard we hold our own numbers to. It is nonetheless above the user's predicted +0.3–1.0 pp band
+for end-task quality, and it is on an MoE, which is the population NVIDIA declined to Local-Hessian.
+
+**Our deferred PLE-quantisation variant now has prior art** — two independent publishers:
+- `arnomatic/Qwen3.8-Flash-Next-W4A16-PLE8`: PLE from BF16 to **W8A16 group-32**, reporting *"quality on
+  our greedy eval suite matches the base-family reference"*. They keep the **QSA indexer at BF16**
+  deliberately: *"quantization noise here degrades long-context retrieval"* — a scope decision worth
+  copying.
+- `cmh/Qwen3.8-Flash-Next-5.33bpw-PLEQ8_0`: PLE at Q8_0 in a GGUF.
+
+So the ~18–21 GiB PLE saving we shelved as an unmeasured quality risk has two published data points
+saying it is roughly free. That moves it from "unknown" to "worth doing after the calibration build".
+
+**Also new, for the record:** `Intel/Qwen3.8-Flash-Next-W4A16-AutoRound` (24,183 downloads) — a competing
+*calibration* approach to ours, and the base for `Saren/...-AutoRound-hybrid`.
+`TheDrainFlorist/...-VQ-{2.1,3.2,4.4,5.5}bpw` — **vector quantisation**, a different family entirely,
+with real uptake (1,380–2,346 downloads each). `MagneticLab/Qwen3.8-Flash-Next-NVFP4` ships a
+**quantised PLE sidecar mmapped read-only** and warns that *"99 GB of the checkpoint is a duplicate of
+the PLE"* — the same dedup observation our component-per-shard policy is built on.
