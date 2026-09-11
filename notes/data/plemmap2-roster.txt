@@ -1,0 +1,7 @@
+
+=== fnext-plemmap2.log ===
+  vit        AttentionBackendEnum.FLASH_ATTN
+  moe        FLASHINFER_CUTLASS [NvFp4 MoE]
+             rejected: FLASHINFER_TRTLLM, FLASHINFER_CUTEDSL, FLASHINFER_CUTEDSL_BATCHED, VLLM_CUTLASS, MARLIN, HUMMING, EMULATION
+  linear     -- none --  no quantized dense Linear in this checkpoint
+  cudagraph  0.0 GiB, 0 capture lines   <-- NOT CAPTURING

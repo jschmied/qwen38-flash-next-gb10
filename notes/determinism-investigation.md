@@ -3797,11 +3797,60 @@ stock path would look identical from the outside.
 Arm: `FN_PLE_OFFLOAD=0` (mmap replaces the offload worker), `VLLM_QWEN4_PLE_MMAP=1`,
 `--enforce-eager`, `FN_MTP=0`, util 0.75.
 
-### Open, at the time of writing
+### It serves — and the first attempt failed on a hunk I missed
 
-Resident-memory delta against the offload path and any decode/TTFT numbers — the arm was still
-starting. The comparison baseline is `/opt/llm/fnext-cgnospec.log` (same model, same util, offload
-worker **on**, 76.25 GiB consumed).
+The first serve (`fx-plemmap`, 09:21) died with
+`AttributeError: 'MmapPLEEmbedding' object has no attribute 'weight'`. Radar105's `ple_layer.py` diff
+has **three** hunks; I ported the import and the dispatch and missed the third, a skip in
+`load_weights`:
 
-**It also revives the ngram comparison** that det-160 called impossible: that V1 executor conflict
-came from `VLLM_PLE_CPU_OFFLOAD`, which this path turns off.
+```python
+if isinstance(embedding, MmapPLEEmbedding):
+    # Shape checked above; data is read directly from this shard.
+    continue
+```
+
+It is needed for exactly the reason the port is worth doing — the mmap embedding holds **no**
+`Parameter`, so `embedding.weight.weight_loader(...)` has nothing to call. My own standalone test
+asserted "zero resident parameters" and passed; I proved the property and then failed to handle its
+consequence. Re-installed with all three hunks (round trip re-verified), and `fx-plemmap2` served.
+
+Functional check: `"The capital of France is"` → `" Paris. The capital of Germany is Berlin. …"`.
+
+### The memory result is real but NOT where I said it would be
+
+| | GPU-accounted "consumed memory" |
+| --- | --- |
+| offload worker on (`cgnospec`) | 76.25 GiB |
+| **mmap (`plemmap2`)** | **74.74 GiB** |
+
+**−1.51 GiB, not −47.7.** I had written that the point of the port was that the 47.7 GiB table "stops
+being resident" — wrong: **the offload path already kept it off the GPU.** Both arms have it off-GPU;
+the GPU figure was never where this would show.
+
+Where it actually shows is the worker's own memory, and there the mechanism is unambiguous:
+
+| | |
+| --- | --- |
+| checkpoint file-backed mappings in the worker | **47.7 GiB across 128 regions** (= the 128 PLE shards) |
+| worker **RSS** | **2.3 GiB** at startup, **2.4 GiB** after generating 384 tokens |
+
+The table is *mapped* and not *resident*. On GB10 the distinction is the whole game: memory is
+unified, so the table occupies the same 121 GB pool either way — but file-backed pages are **page
+cache, evictable under pressure**, where the offload worker's anonymous allocation is not.
+
+### What is NOT established
+
+- **No host-RSS baseline for the offload arm.** That arm is gone and I never captured its worker RSS,
+  so "2.3 GiB vs what?" has no measured answer. The offload worker demonstrably existed (236
+  `PleOffloadWorker` lines in `cgnospec`, zero in `plemmap2`), but its footprint is inferred, not
+  measured. **A clean A/B needs both arms' `smaps` in the same session.**
+- **Behaviour under pressure and at concurrency is unmeasured.** Only ~0.1 GiB of the 47.7 was
+  touched by a 384-token single-stream probe. Real agent traffic touches far more of the n-gram table,
+  and page-cache eviction under a full KV pool is exactly where a file-backed table could start
+  faulting badly. The single-stream result says nothing about it.
+- **Timings are one start, not three.** 128 tokens in 7.41–8.27 s wall including HTTP. Indicative
+  only; not a rate, and rep 0 is cold.
+
+**It does revive the ngram comparison** det-160 called impossible: that V1 executor conflict came from
+`VLLM_PLE_CPU_OFFLOAD`, which this path turns off.
