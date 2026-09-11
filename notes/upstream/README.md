@@ -626,3 +626,18 @@ rather than this OEM part's published rating.
 
 **The lesson:** both errors were catchable by checking the published conclusion against the published
 table in the same post. Neither needed new data. Do not reply without a fresh go.
+
+**REVISION 2 of issue #2, 2026-09-11 13:1x, on the user's instruction.** Withdraws a *third* claim,
+this time in the opposite direction from revision 1: "read size dominates, io_uring cannot help much"
+was an artefact of stopping the depth sweep at QD4. Swept to QD128: 64 KiB goes 0.49 → 3.90 GB/s
+(8.0×), 256 KiB 1.06 → 5.88 (92 % of the 18 MiB figure). So depth dominates and io_uring is worth
+pursuing — my original framing in #1, which revision 1 had withdrawn.
+
+Also adds the Gen5 finding prompted by the user's own PM9E1 comment on the thread: the GX10 root port
+advertises `LnkCap: Speed 32GT/s, Width x4` while the stock Phison E27T is Gen4, so half the link sits
+unused — 7.88 vs 15.75 GB/s raw. Largest single lever found on the unpruned path, and it is a part
+swap.
+
+Three wrong claims across two revisions, every one caught by re-measuring rather than re-reasoning,
+and every one traceable to reading a conclusion off a table that stopped too early. Revision banners
+kept visible rather than editing silently. Do not reply without a fresh go.

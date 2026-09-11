@@ -4137,3 +4137,29 @@ that the QD4 column suggested.
 **Method note.** Three corrections on this thread in one afternoon, and each came from stopping a
 sweep too early or reading a conclusion off an incomplete table. A depth sweep that stops at QD4 on a
 device with 1 M+ IOPS is not a measurement of the device. Sweep until it plateaus, then report.
+
+### det-200 addendum — the GX10 M.2 slot is Gen5, the stock drive is Gen4
+
+Checked after the user suggested a Samsung PM9E1 as a drop-in. The link topology says the slot is not
+the limit:
+
+```
+root port  0004:00:00.0   LnkCap: Speed 32GT/s, Width x4     <- Gen5 capable
+drive      0004:01:00.0   LnkCap: Speed 16GT/s, Width x4     <- Gen4, caps the negotiated link
+                          LnkSta: Speed 16GT/s
+```
+
+| | |
+| --- | --- |
+| PCIe 4.0 ×4 raw (today) | 7.88 GB/s |
+| PCIe 5.0 ×4 raw (slot capability) | **15.75 GB/s** |
+| measured today | 6.4–6.5 GB/s |
+
+**Roughly half the available link is unused because the stock part is a generation behind the slot.**
+For a streaming MoE engine at ~0.9 GB per generated token: 140 ms/token today (7.2 tok/s storage
+ceiling) against ~69 ms (14.4 tok/s) for a Gen5 drive sustaining ~13 GB/s at 18 MB reads.
+
+That is the largest single lever found on the unpruned path all day, and it is a part swap rather than
+a code change. **Unverified:** the replacement's actual behaviour at ~18 MB reads, thermals in this
+chassis, and whether the rest of the decode pipeline would then become the limit. Also relevant to our
+own box if we ever stream weights.
