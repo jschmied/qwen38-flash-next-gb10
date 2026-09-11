@@ -88,12 +88,21 @@ head **constant across both arms** — otherwise two things vary at once.
 > −0.0104, English −0.0096, then everything else under 0.006, with Hebrew the one small regression
 > (+0.0021).
 >
-> **⚠️ But do not assume the Hessian calibration is why.** A **plain-max** build — no calibration data
-> at all — scored 1.9542 against this build's 1.9488 on the earlier 15-passage set: a 0.0054 gap,
-> exactly at the resolution limit of that sample. Most of the advantage over the base is present
-> *without* any calibration. The cause has not been identified; the one structural difference found so
-> far is that we derive one `weight_scale_2` per expert while the base uses three values across all
-> 512.
+> **⚠️ The Hessian calibration is not why.** The cause is **`weight_scale_2` granularity**: we derive
+> one per expert, the base derives one per block of 128 experts (4 per layer). Rebuilding at the
+> base's granularity and changing nothing else (`blk`, plain max, `--scale2-block 128`) collapses the
+> entire advantage:
+>
+> | vs base checkpoint | overall | excluding Devanagari | Devanagari |
+> | --- | --- | --- | --- |
+> | this build (per-expert) | **−0.0152**, t = −3.92 | −0.0069, t = −2.99 | −0.0891, t = −19.08 |
+> | `blk` (base's granularity) | −0.0012, t = −0.72 | +0.0002, t = +0.12 | −0.0133, t = −2.44 |
+>
+> At the base's granularity the general gain is *zero* (t = +0.12) and only 15 % of the Devanagari gain
+> survives. A **plain-max** build — no calibration data at all — already scored 1.9542 against this
+> build's 1.9488 on the earlier 15-passage set, so most of the advantage was always present without
+> calibration. What remains open is whether Local-Hessian adds anything *on top of* per-expert scales;
+> a per-expert plain-max arm on this 59-passage set is the measurement that settles it.
 >
 > Both builds are also clean on the combining-mark canary (0/48 corrupt, 48/48 exact), matching the base.
 

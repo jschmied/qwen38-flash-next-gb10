@@ -553,6 +553,27 @@ per-expert. Thai likewise: blk 2.0614, stock 2.0592, per-expert 2.0343.
 So the cause of our NLL gain over RadixArk is **per-expert `weight_scale_2`**, not Local-Hessian and
 not the corpus.
 
+### The full paired table
+
+All three arms scored on the same 59 passages / 70,734 tokens, paired per passage.
+
+| comparison | mean delta | paired t | passages favouring the first |
+| --- | --- | --- | --- |
+| `lh_v3b` vs stock | **−0.0152** | **−3.92** | 40/59 |
+| `blk` vs stock | −0.0012 | −0.72 | 33/59 |
+| `blk` vs `lh_v3b` | **+0.0140** | **+3.85** | 18/59 |
+
+Split out, `blk` loses the advantage in both components, not just on average:
+
+| | `lh_v3b` vs stock | `blk` vs stock |
+| --- | --- | --- |
+| excluding Devanagari (n=53) | −0.0069, t = −2.99 | **+0.0002, t = +0.12** |
+| Devanagari (n=6) | −0.0891, t = −19.08 | −0.0133, t = −2.44 |
+| Thai (n=6) | −0.0249, t = −1.72 | +0.0022, t = +0.60 |
+
+The general gain goes to **exactly zero** at block granularity, and only 15 % of the Devanagari gain
+survives. That is a collapse, not an attenuation.
+
 ### The confound that remains, stated
 
 `blk` is plain-max + block; `lh_v3b` is Local-Hessian + per-expert. They differ in **two** things, so

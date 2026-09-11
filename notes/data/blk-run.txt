@@ -1,0 +1,83 @@
+== serving 06:26
+  script:Thai    wiki-th-0                    NLL/token  2.3162  (756 tok)
+  script:Thai    wiki-th-1                    NLL/token  2.1652  (1,371 tok)
+  script:Devanagari wiki-hi-0                    NLL/token  2.8708  (1,237 tok)
+  script:Devanagari wiki-hi-1                    NLL/token  2.7840  (2,064 tok)
+  script:Arabic  wiki-ar-0                    NLL/token  2.1555  (944 tok)
+  script:Arabic  wiki-ar-1                    NLL/token  2.3918  (1,008 tok)
+  script:Hebrew  wiki-he-0                    NLL/token  1.3895  (1,578 tok)
+  script:Hebrew  wiki-he-1                    NLL/token  1.1990  (1,476 tok)
+  script:Cyrillic wiki-ru-0                    NLL/token  1.8604  (889 tok)
+  script:Cyrillic wiki-ru-1                    NLL/token  0.9549  (1,153 tok)
+  script:Latin   wiki-de-0                    NLL/token  1.5142  (857 tok)
+  script:Latin   wiki-de-1                    NLL/token  1.8135  (663 tok)
+  ascii:English  wiki-en-0                    NLL/token  1.6888  (709 tok)
+  ascii:English  wiki-en-1                    NLL/token  1.9371  (798 tok)
+  ascii:English  wiki-en-2                    NLL/token  2.3564  (377 tok)
+  script:Thai    wiki2-th-0                   NLL/token  2.1504  (1,187 tok)
+  script:Thai    wiki2-th-1                   NLL/token  2.2357  (1,570 tok)
+  script:Thai    wiki2-th-2                   NLL/token  1.4650  (1,490 tok)
+  script:Thai    wiki2-th-3                   NLL/token  2.0360  (934 tok)
+  script:Devanagari wiki2-hi-0                   NLL/token  2.6081  (2,002 tok)
+  script:Devanagari wiki2-hi-1                   NLL/token  2.7707  (2,009 tok)
+  script:Devanagari wiki2-hi-2                   NLL/token  2.4636  (2,062 tok)
+  script:Devanagari wiki2-hi-3                   NLL/token  2.2814  (1,920 tok)
+  script:Arabic  wiki2-ar-0                   NLL/token  0.6402  (1,153 tok)
+  script:Arabic  wiki2-ar-1                   NLL/token  0.9812  (1,004 tok)
+  script:Arabic  wiki2-ar-2                   NLL/token  0.6412  (908 tok)
+  script:Arabic  wiki2-ar-3                   NLL/token  1.8400  (997 tok)
+  script:Hebrew  wiki2-he-0                   NLL/token  1.1274  (1,050 tok)
+  script:Hebrew  wiki2-he-1                   NLL/token  1.4471  (1,591 tok)
+  script:Hebrew  wiki2-he-2                   NLL/token  1.3816  (1,569 tok)
+  script:Hebrew  wiki2-he-3                   NLL/token  1.3325  (1,566 tok)
+  script:Cyrillic wiki2-ru-0                   NLL/token  1.5764  (1,035 tok)
+  script:Cyrillic wiki2-ru-1                   NLL/token  1.6855  (1,022 tok)
+  script:Cyrillic wiki2-ru-2                   NLL/token  1.6668  (881 tok)
+  script:Cyrillic wiki2-ru-3                   NLL/token  1.8034  (834 tok)
+  script:Latin   wiki2-de-0                   NLL/token  1.8546  (662 tok)
+  script:Latin   wiki2-de-1                   NLL/token  1.5114  (781 tok)
+  script:Latin   wiki2-de-2                   NLL/token  1.5650  (743 tok)
+  script:Latin   wiki2-de-3                   NLL/token  1.3867  (736 tok)
+  script:Greek   wiki2-el-0                   NLL/token  1.1883  (1,080 tok)
+  script:Greek   wiki2-el-1                   NLL/token  1.4588  (1,118 tok)
+  script:Greek   wiki2-el-2                   NLL/token  1.3542  (1,262 tok)
+  script:Greek   wiki2-el-3                   NLL/token  0.4384  (2,018 tok)
+  script:Japanese wiki2-ja-0                   NLL/token  1.5523  (1,957 tok)
+  script:Japanese wiki2-ja-1                   NLL/token  2.3796  (2,002 tok)
+  script:Japanese wiki2-ja-2                   NLL/token  1.9433  (1,831 tok)
+  script:Japanese wiki2-ja-3                   NLL/token  1.5530  (1,333 tok)
+  script:CJK     wiki2-zh-0                   NLL/token  1.7153  (1,156 tok)
+  script:CJK     wiki2-zh-1                   NLL/token  2.2677  (2,112 tok)
+  script:CJK     wiki2-zh-2                   NLL/token  2.7639  (2,183 tok)
+  script:CJK     wiki2-zh-3                   NLL/token  1.6485  (1,099 tok)
+  script:Vietnamese wiki2-vi-0                   NLL/token  1.3882  (766 tok)
+  script:Vietnamese wiki2-vi-1                   NLL/token  1.8908  (800 tok)
+  script:Vietnamese wiki2-vi-2                   NLL/token  1.1541  (654 tok)
+  script:Vietnamese wiki2-vi-3                   NLL/token  1.2872  (893 tok)
+  ascii:English  wiki2-en-0                   NLL/token  1.9207  (641 tok)
+  ascii:English  wiki2-en-1                   NLL/token  1.4276  (772 tok)
+  ascii:English  wiki2-en-2                   NLL/token  1.7622  (709 tok)
+  ascii:English  wiki2-en-3                   NLL/token  1.5237  (762 tok)
+
+  blk: written to /opt/llm/runners/results/nll.jsonl
+== compare
+group                    stock2        lh_v3b           blk   best
+-------------------------------------------------------------------
+ascii:English            1.8007        1.7911        1.8023   lh_v3b
+script:Arabic            1.4460        1.4402        1.4417   lh_v3b
+script:CJK               2.1021        2.1018        2.0988   blk
+script:Cyrillic          1.5922        1.5818        1.5912   lh_v3b
+script:Devanagari         2.6431        2.5541        2.6298   lh_v3b
+script:Greek             1.1042        1.0997        1.1100   lh_v3b
+script:Hebrew            1.3181        1.3202        1.3128   blk
+script:Japanese          1.8607        1.8548        1.8571   lh_v3b
+script:Latin             1.6008        1.5990        1.6076   lh_v3b
+script:Thai              2.0592        2.0343        2.0614   lh_v3b
+script:Vietnamese         1.4267        1.4246        1.4301   lh_v3b
+
+  stock2       overall NLL/token 1.7379  over 59 passages / 70,734 tokens
+  lh_v3b       overall NLL/token 1.7227  over 59 passages / 70,734 tokens
+  blk          overall NLL/token 1.7367  over 59 passages / 70,734 tokens
+
+  Lower is better. A gap inside ~0.005 on this sample size is not a result.
+== ALL DONE == 06:27
