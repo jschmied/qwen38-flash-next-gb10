@@ -3700,3 +3700,52 @@ them:
 
 A cheap discriminator exists: serve **without** `speculative_config` and see whether capture appears.
 One start, one differing cell. Queued, not run.
+
+## det-194 — speculation is NOT why capture is skipped; three of four candidates are now dead
+
+The discriminator det-193 queued. One start, `FN_MTP=0`, everything else at det-193 settings. The
+differing cell was reached — the log carries `speculative_config=None`, so MTP was genuinely off —
+and the outcome did not move.
+
+Eight starts, four configurations, every one `0.0 GiB` with zero `Capturing CUDA graphs` lines:
+
+| log | mode | capture sizes | speculation | CUDAGraph | capture lines |
+| --- | --- | --- | --- | --- | --- |
+| cgab-piece1/2/3 | PIECEWISE | [1,2,4,8] | mtp n=3 | 0.0 GiB | 0 |
+| cgab-full1/2/3 | FULL_DECODE_ONLY | [1,2,4,8] | mtp n=3 | 0.0 GiB | 0 |
+| cgsize-wide | PIECEWISE | [1,2,4,8,16,32,64] | mtp n=3 | 0.0 GiB | 0 |
+| **cgnospec** | PIECEWISE | [1,2,4,8] | **OFF** | **0.0 GiB** | **0** |
+
+### Ruled out
+
+1. `enforce_eager` — `False` in all eight.
+2. **cudagraph mode** — PIECEWISE and FULL_DECODE_ONLY behave identically.
+3. **capture sizes** — `max_cudagraph_capture_size` 8 → 64 changes nothing.
+4. **speculation / MTP** — off changes nothing. *(det-194, this finding.)*
+
+### What is left
+
+The `splitting_ops` hypothesis: under PIECEWISE, vLLM captures the regions *between* splitting ops,
+and this model's forward is almost entirely ops on that list — `qwen4_exp_qsa_with_output`,
+`qwen_gdn_attention_core`, `qwen4_exp_ple_short_conv`, `qwen4_exp_compute_ple_ngram_ids`,
+`linear_attention`, `mamba_mixer2`, `short_conv`, `unified_kv_cache_update`. If every op is a split
+point there is no region left to capture, and zero is the correct output rather than a bug.
+
+That would also explain FULL_DECODE_ONLY behaving the same way: this is a hybrid GDN/QSA model whose
+decode path runs through stateful custom ops, so a whole-graph capture has nothing it can legally
+snapshot either.
+
+**This remains a source-reading hypothesis and is deliberately not asserted.** The clean test is a
+model *without* those custom ops on the same venv and GPU — a plain dense transformer — where a
+non-zero CUDAGraph figure would prove the stack can capture at all and isolate the cause to this
+model family. One start, and it needs a second checkpoint rather than a flag.
+
+### Practical consequence, which does not wait on the cause
+
+Cudagraphs are **inert on this model**, across every knob we can reach. So:
+
+- `--enforce-eager` costs nothing here, and **det-192's PLE mmap port is ungated** — that is the
+  actionable item, and it does not depend on knowing why.
+- Any future A/B that varies a cudagraph knob on Flash-Next is void before it starts. Check
+  `kernelroster.py` output first ([[kernel-roster-from-logs]]).
+- det-136's null and the capture-width null both have this as a sufficient explanation.

@@ -518,9 +518,10 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 - **PLE mmap — UNGATED 2026-09-11 (det-193): cudagraphs capture NOTHING here (7 starts, 3 configs),
   so `--enforce-eager` costs nothing and the 3-file port is worth doing. NEXT UP.**
-- **Discriminator for det-193: serve without `speculative_config` and see if capture appears.** One
-  start, one differing cell. Decides between 'MTP suppresses capture' and 'splitting_ops leaves no
-  capturable region'. Both are currently source-reading hypotheses only.
+- ~~**Discriminator for det-193**~~ **DONE 2026-09-11 (det-194): speculation is NOT the cause — capture
+  is still 0.0 GiB with `speculative_config=None`. Four candidates dead (eager, mode, sizes, spec);
+  `splitting_ops` is the survivor and stays a hypothesis. Clean test if ever wanted: a plain dense
+  model on the same venv — needs a second checkpoint, not a flag. Not blocking anything.**
 - **PLE mmap as an alternative to CPU offload — could revive the ngram comparison (found 2026-09-07
   in [Radar105/qwen38-flash-next-nvfp4-spark](https://github.com/Radar105/qwen38-flash-next-nvfp4-spark)).**
   det-160 established that `VLLM_PLE_CPU_OFFLOAD` forces a V1 conflict that makes ngram/ngram_gpu

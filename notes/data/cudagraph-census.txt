@@ -1,0 +1,10 @@
+=== det-194 evidence: eight starts, four configurations ===
+log                        mode               sizes                    spec   cudagraph  capture_lines
+fnext-cgab-piece1          PIECEWISE          [1,2,4,8]                mtp3   0.0 GiB    0
+fnext-cgab-piece2          PIECEWISE          [1,2,4,8]                mtp3   0.0 GiB    0
+fnext-cgab-piece3          PIECEWISE          [1,2,4,8]                mtp3   0.0 GiB    0
+fnext-cgab-full1           FULL_DECODE_ONLY   [1,2,4,8]                mtp3   0.0 GiB    0
+fnext-cgab-full2           FULL_DECODE_ONLY   [1,2,4,8]                mtp3   0.0 GiB    0
+fnext-cgab-full3           FULL_DECODE_ONLY   [1,2,4,8]                mtp3   0.0 GiB    0
+fnext-cgsize-wide          PIECEWISE          [1,2,4,8,16,32,64]       mtp3   0.0 GiB    0
+fnext-cgnospec             PIECEWISE          [1,2,4,8]                OFF    0.0 GiB    0
