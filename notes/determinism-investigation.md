@@ -4325,3 +4325,56 @@ set, so overriding it would fight the allocator rather than fix the omission. Th
 upstream bug — V2 not supporting ngram is documented in that warning, but V1 silently computing a
 block size that violates an assertion the model then makes is not a user-serviceable combination.
 Worth reporting with this traceback if we ever want ngram on this model.
+
+### det-203 addendum — is `qsa_cache.py` fixable? Not by us; it is a circular dependency upstream
+
+Traced the two numbers. `cache_config.block_size` is set in `v1/engine/core.py:345`:
+
+```python
+participating = [g.kv_cache_spec.block_size
+                 for g in kv_cache_groups if g.kv_cache_spec.prefix_cacheable]
+vllm_config.cache_config.block_size = min(participating or [...])
+```
+
+and **`CircularBufferSpec.prefix_cacheable` returns `False`** (`kv_cache_interface.py:793`). The QSA
+ring is therefore **excluded by design** from setting the global block size — the comment says why:
+its small block size "would otherwise drag the global block_size below the real allocator block size".
+
+Then `qsa_cache.py:847` asserts that the same global block size must be **divisible by the ring's
+capacity**. So the code deliberately breaks the dependency and then asserts on it.
+
+**Our options: none.**
+
+- No `num_speculative_tokens` works. Capacity is `compress_ratio * cdiv(compress_ratio + n,
+  compress_ratio)` = 6, 12, 18, 24 …; 1616 = 16 × 101 admits only 1, 2, 4, 8, 16, 101, 202, 404, 808,
+  1616.
+- `block_size` is derived from a `min()` over specs, not user-set, so forcing it fights the allocator.
+
+**Upstream has at least three ways out**, none of which we should attempt locally: round the capacity
+up to a divisor of the block size (the spec's own docstring already says "rounded up to whole
+groups"); let the ring join the size computation with a floor that protects the allocator; or make the
+V1 path resolve this the way V2 evidently does, since MTP at n=3 produces the same capacity 12 and
+works. **Which of those is right is a maintainer's call**, and this is worth reporting with the
+traceback rather than patched here.
+
+### Which smgates candidates actually reach our two models
+
+The scanner's hits split cleanly by model, and the split is the opposite of what one might guess:
+
+| | Flash-Next | Qwen3.8-27B |
+| --- | --- | --- |
+| attention backend | own **QSA state** backend; FLASH_ATTN for vit only | **uses `AttentionBackendEnum.FLASHINFER`** |
+| MoE | 512 experts, fused MoE | **dense — 0 MoE tensors** |
+| → attention gates | cannot reach it | **can reach it** |
+| → `fused_moe/*` gates | can reach it | irrelevant |
+
+So the scanner's **top candidate is live for the 27B, not for Flash-Next**:
+`v1/attention/backends/flashinfer.py:422` `get_supported_kernel_block_sizes()` requires
+`is_device_capability_family(100)` for `use_large_pages`. The 27B satisfies every other condition —
+**24 Q / 4 KV heads, GQA ratio 6 > 1** — so on sm_121 it is capped at KV block sizes `[16, 32, 64]`
+and never offered ≥128, where the same configuration on an SM100 part would be.
+
+**Unverified:** whether `can_use_trtllm_attention()` would pass, and whether larger KV blocks would
+actually help this shape — head_dim 256 is unusual. That needs the A/B, not more reading. But it is
+the first scanner hit that is not inert for us, and it lands on the 27B, which
+[[dense-27b-preferred-for-long-work]] calls our quality model.
