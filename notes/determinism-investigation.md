@@ -4751,3 +4751,65 @@ Acceptance was not measured and would not be meaningful across a kernel change a
 **Prod already carries this** (det-206), so this is a confirmation of a change already shipped, not
 a pending decision. The `off` arm is what everyone on stock vLLM below `f6326f53b` is running, and
 on this model that is three of every four layers.
+
+## det-210 — the Thai A/B answers a different question: Devanagari corruption appeared with the fnmain3 bump
+
+The run was queued to test whether our determinism overlays are why this box never reproduced
+vllm#54739. It is not, and the answer to the question it *was* asked is "no".
+
+**First, a correction to the driver's own output.** `thaidet.py` ends with a bare `if stock > det`
+and printed *"Stock corrupts where prod does not (10 vs 6) — the overlays are the difference."*
+That sentence is wrong and I wrote it. The det arm is **not** clean.
+
+### What actually came out — stock RadixArk checkpoint, fnmain3, 2 starts/arm
+
+| script | det (prod config) | stock (overlays off) |
+|---|---|---|
+| Arabic | 0/6 | 0/6 |
+| **Devanagari** | **6/12** | **10/12** |
+| Hebrew | 0/6 | 0/6 |
+| **Thai** | **0/18** | **0/18** |
+| ZWJ | 0/6 | 0/6 |
+| total | 6/48 | 10/48 |
+
+**Thai is clean in both arms.** Every corrupted response is Devanagari. So this has nothing to do
+with #54739, which is a Thai report — that framing is dropped, and nothing goes to that thread.
+
+**The overlays are not the difference.** 6/48 vs 10/48 is Fisher p = **0.412**. Per-start counts are
+suspiciously stable (det 3,3; stock 5,5), but n is small and the test says what it says. The
+hypothesis that our overlays are why we don't reproduce #54739 is **refuted** — we don't reproduce
+it because our Thai is clean on both arms, for reasons this run does not identify.
+
+### The result that matters, and it is about prod
+
+The same checkpoint, the same five scripts, the same probe, the same flags, earlier arms:
+
+| venv | Devanagari | when |
+|---|---|---|
+| fnmain2 — dev401, FlashInfer 0.6.17 | `stock` 0/6, `stock2` 0/12, `pmax` 0/12 → **0/30** | 2026-09-10/11 |
+| fnmain3 — dev524, FlashInfer 0.6.18.post1 | det 6/12, stock 10/12 → **16/24** | 2026-09-11 |
+
+Restricted to the stock checkpoint: **0/18 vs 16/24, Fisher p = 4.5e-06**. Restricted further to the
+prod configuration alone: **0/18 vs 6/12, p = 0.0016**. Venv confirmed from each server log
+(`vllm-venv-fnmain2` / `dev401` vs `vllm-venv-fnmain3` / `dev524`).
+
+Context for how bad 10/12 is: the only other arm that ever hit Devanagari at that rate was `lh_v2`
+at 12/12 — our rebuild **with two broken export contracts**, the build we withdrew. Prod is now
+producing a rate in that neighbourhood on the *stock* checkpoint.
+
+**This is a cross-run comparison, not an A/B** — two days, not two arms — so it is a strong signal
+and not yet a verdict. det-211 runs it as one experiment, alternating venvs inside one driver.
+fnmain3 differs from fnmain2 by ~123 vLLM commits *and* a FlashInfer minor *and* the #55715 GDN
+kernel, so even a positive det-211 names the venv, not the cause; the cheapest next cut is the GDN
+kernel, which toggles with a patch script we already have.
+
+### Process notes
+
+- The first attempt **voided on port 8080** (the launcher serves 8092), scoring zero responses. The
+  void check is the only reason this did not report "both arms clean" and become a false refutation
+  posted upstream. I took the port from `markprobe.py`'s argparse default instead of from `gdnab.py`,
+  the runner that already worked — the same class of error as `diff-against-known-good-artifact`.
+- `sys.exit(1)` on VOID skips the driver's cleanup, so the orphaned server kept running and `plefix`
+  stayed as the last arm left it. Harmless here (it was the det arm = prod config) but the cleanup
+  belongs in a `finally`.
+- Per-script totals for every arm ever probed: `notes/data/markprobe-by-script.txt`.
