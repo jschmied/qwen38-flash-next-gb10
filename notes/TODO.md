@@ -516,7 +516,12 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
-- **OWED: PR for our own issue #54552, promised to bojiang3 on 2026-09-02 and nine days late.**
+- ~~**OWED: PR for our own issue #54552**~~ **WRONG — [PR #54912](https://github.com/vllm-project/vllm/pull/54912)
+  has been open since 2026-09-02.** Not late; `REVIEW_REQUIRED` with no human review in nine days and
+  CI blocked by the `pre-run-check` label gate (same as #55122). Nothing owed from us. The PR's
+  implementation already bounds the widening at 2x, which today's patch did not.
+  **What is genuinely new:** runtime evidence the PR lacks — the widening fired on all 12 QSA layers
+  and cleared the assert (det-204). Worth a comment there if we want to move it. Original note:
   The QSA ring assert makes `num_speculative_tokens` 5..8 unreachable. Maintainer agreed with the
   proposed widening on 09-02; we replied "I can open PR of course." **The patch is now written and
   proven at runtime** (det-204: fired on all 12 QSA layers, 12 -> 16, block size 1616, span 9, cleared

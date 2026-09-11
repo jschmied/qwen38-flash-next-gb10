@@ -4466,8 +4466,24 @@ the same number today's patch produced. The maintainer **bojiang3** replied on 2
 arithmetic checks out and the widening preserves the invariant, and **we answered "I can open PR of
 course. Give me a bit time."**
 
-**Nine days later there is no PR.** Today's run is precisely the evidence that PR needed — the patch
-applied, fired on all 12 QSA layers, and cleared the assert at runtime. It was sitting unwritten.
+**~~Nine days later there is no PR.~~ WRONG — corrected within the hour.** The PR exists:
+**[#54912](https://github.com/vllm-project/vllm/pull/54912)**, open since 2026-09-02, branch
+`fix/qsa-ring-widen` pushed to the fork, two commits. I wrote the accusation after checking
+`gh search issues` but before checking `gh pr list --author jschmied` — and #54912 is even on the
+hourly watchdog's own watch list.
+
+Its real state: `REVIEW_REQUIRED`, **no human review in nine days**, and CI shows `pre-run-check fail`
+— the label gate, the same condition already recorded for #55122. **Nothing is owed from us.**
+
+The existing implementation is also better than today's patch. It **bounds** the widening at
+`QSA_RING_MAX_WIDENING` (2×), because without a cap `num_speculative_tokens` 13..16 would widen a
+20-row ring to 212 on block size 848 and **404 on 1616** — and every request holds a ring block for
+its lifetime. Today's "smallest divisor ≥ span" had no such bound and would have picked 404 in exactly
+that band.
+
+What today's run *does* add is runtime evidence the PR never had: the widening applied on all 12 QSA
+layers, cleared the assert, and exposed blocker 3 behind it. That is worth a comment on the PR if we
+ever want to move it — **but the PR is not late, and I should not have said it was.**
 
 **#56088 documents our blocker 3 more precisely than det-204 did**: `query_start_loc` and
 `ngram_context` come only from `Qwen4ExpModelState.prepare_inputs` / `prepare_dummy_inputs`
@@ -4475,7 +4491,9 @@ applied, fired on all 12 QSA layers, and cleared the assert at runtime. It was s
 `gpu/cudagraph_utils.py:572`); the legacy `gpu_model_runner.py` never supplies them. We had the
 conclusion; they have the call sites.
 
-**The lesson is not the one I keep recording.** `check-field-before-expensive-steps` says search the
-field first — I did, but only *after* the work. The sharper version: **search our own open issues
-before treating a blocker as new.** We filed it, proposed the fix, got maintainer agreement, promised a
+**The lesson, twice over.** `check-field-before-expensive-steps` says search the field first — I did,
+but only *after* the work, and then only half of it: issues, not PRs. Searching `gh search issues`
+while skipping `gh pr list --author` produced a confident, self-critical, **false** claim that we had
+left a maintainer hanging. The sharper version: **check our own open issues AND our own open PRs
+before treating a blocker as new — and before accusing ourselves of anything.** We filed it, proposed the fix, got maintainer agreement, promised a
 PR, and then rediscovered the whole thing from cold ten days later.
