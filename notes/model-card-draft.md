@@ -72,12 +72,25 @@ head **constant across both arms** — otherwise two things vary at once.
 
 ## What is different about it
 
-> **⚠️ Read this before assuming the calibration is why you want this.** A **plain-max** build —
-> data-independent, no calibration data at all — scores **identically** on every quality measure we
-> have taken: 0/48 corrupt and 48/48 exact on the combining-mark canary, the same as this build and
-> the same as the base checkpoint. **No behavioural benefit of Local-Hessian has been demonstrated
-> here.** Its only measured advantage is 0.91 pp of weight reconstruction (8.585 % vs 9.494 % against
-> BF16), and weight reconstruction has been a poor predictor in this work — see below.
+> **⚠️ Read this before assuming the calibration is why you want this.**
+>
+> Held-out NLL/token, 15 Wikipedia passages / 15,880 tokens at offsets past the calibration corpus,
+> none of it seen by any build:
+>
+> | | this build (Local-Hessian) | plain-max, no calibration data | base checkpoint |
+> | --- | --- | --- | --- |
+> | NLL/token | **1.9488** | 1.9542 | 1.9663 |
+>
+> **Both rebuilds beat the base** (−0.0175 and −0.0121), robustly: 12/15 passages, medians agreeing
+> with means. That part is real.
+>
+> **But Local-Hessian is not demonstrably the reason.** It beats plain-max by 0.0054 — exactly the
+> threshold below which this sample size cannot resolve a difference, fixed before the measurement.
+> And a plain-max build with **no calibration data at all** captures most of the gain. The cause of
+> the improvement over the base has not been identified; it is not calibration.
+>
+> Both builds are also identical on the combining-mark canary (0/48 corrupt, 48/48 exact) and match
+> the base there.
 
 The per-group weight scales are chosen by **Hessian-weighted search** — ModelOpt's `local_hessian`,
 the method of [arXiv 2608.28113](https://arxiv.org/abs/2608.28113) ("H-Scale", Qwen team) — instead
