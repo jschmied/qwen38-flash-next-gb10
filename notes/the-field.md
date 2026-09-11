@@ -2002,3 +2002,49 @@ and unlike the 157 GiB download it costs nothing.
 
 **Standing caveat unchanged:** Hy3 295B at IQ1_M fit and lost to the dense 27B at 4-bit, 62 % vs
 85 %, 4–5× slower. Fitting is necessary, not sufficient.
+
+## DeepSelect — DeepSeek's top-k kernels, 2026-09-10 (checked 2026-09-11)
+
+[deepseek-ai/DeepSelect](https://github.com/deepseek-ai/DeepSelect), MIT, CUDA, v1.0.0 released
+2026-09-10 with an algorithm deep-dive the same day. "TopK kernels for DeepSeek Sparse Attention
+(DSA) and Samplers", claiming **2–20× over `torch.topk`**.
+
+**Why it lands in our lane.** Its "Lightning Indexer scenario" — bf16, arbitrary batch and vocab,
+`topk ≤ 4096` — is structurally the same problem as QSA's indexer top-k, which is what
+[PR #55122](https://github.com/vllm-project/vllm/pull/55122) and
+[RFC #55394](https://github.com/vllm-project/vllm/issues/55394) are about. Different model family
+(DSA vs QSA), same kernel shape: top-k over indexer scores.
+
+**Two things to know before it changes any plan of ours.**
+
+1. **It does not build for us.** `setup.py` emits `compute_100a/sm_100a` and `compute_103a/sm_103a`
+   only; sm_80 and sm_90a are commented out to speed compilation and **there is no sm_120/sm_121**.
+   GB10 would need a gencode line added, and then the question is whether the PTX tricks it leans on
+   (`set.s32.bf16x2`, `prmt.b32`, `dp4a.s32.s32`, and a denormal-float trick standing in for integer
+   add) behave on sm_12x. This is the **second** sm_100/103 gate found today — the CuTe-DSL W4A16
+   linear kernel has the same `(100, 103)` literal (det-180). The ecosystem is targeting Blackwell
+   datacenter parts and leaving sm_12x on the fallback path.
+
+2. **It is deliberately order-randomised, which is the opposite of what #55122 does.** The algorithm
+   keeps a running top-k threshold and processes input blocks **in a random order** — that
+   randomisation is load-bearing, it is what buys the expected-work bound on adversarial inputs. A
+   threshold whose evolution depends on block order means the set of candidates that survive to the
+   final select depends on it too, so **ties at the top-k boundary need not resolve the same way
+   twice**. That is the defect class #55122 exists to remove.
+
+   Two caveats, both of which matter before this is repeated anywhere. First, **unverified**: whether
+   the permutation is re-seeded per launch or derived deterministically from block indices is not
+   stated in the doc and I did not read the kernel source. Deterministic-per-shape would make the
+   point moot. Second, **det-190 found the top-k boundary never ties on our traffic**, so even a
+   genuinely order-dependent kernel may be indistinguishable in practice here.
+
+   The README, the deep-dive and the docs mention determinism, ties, stability and reproducibility
+   **zero times** between them. It is a throughput kernel and presents itself as one.
+
+**What this does NOT change.** Our union-kernel work is about determinism first and speed second;
+DeepSelect is the reverse. It is not a drop-in answer to the maintainer's "wants more than ~3 %" on
+[#55430](https://github.com/vllm-project/vllm/pull/55430), because its 2–20× is measured against
+`torch.topk`, not against vLLM's current QSA path — a comparison nobody has run.
+
+**Queued, cheap, not run:** add a sm_120a gencode line and see whether it compiles and passes its own
+`tests/test.py` on GB10. That is the first fact worth having, and it costs one build.
