@@ -50,9 +50,19 @@ something you get from `main` alone. And the recipe listed four source overlays;
 because FlashInfer 0.6.18 ships `MoERunner.get_cache_key_extras` with `use_fused_finalize` in the
 tuple, which is exactly what our autotune cache-key backport existed to add.
 
-**Not measured:** our own A/B of the GDN prefill kernel on this box is still running. Upstream's
-7.2 % TTFT at ISL 32768 is upstream's number, not ours — I am not repeating it as if we had
-confirmed it. Everything above is on one GB10, sm_121, TP1.
+**What the kernel is worth here.** Measured after writing the above — 3 starts per arm, same venv,
+only the backport differing, ~6,000-token prompt. Ranges, and the arms do not overlap:
+
+| | warm reps | cold rep 0 (full prefill) |
+|---|---|---|
+| FlashInfer | 0.558–0.564 s | 2.437–2.482 s |
+| Triton/FLA | 0.587–0.594 s | 2.610–2.687 s |
+| | **+5.0 %** | **+7.1 %** |
+
+Cold is the bigger win because the prefix cache absorbs most of a warm rep, so less GDN prefill
+actually runs; the cold cell is the one comparable to upstream's 7.2 % at ISL 32768.
+
+**Not measured:** 32k context, and decode — this kernel does not touch it. One GB10, sm_121, TP1.
 
 Recipe: https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/REPRODUCE.md
 Measurement: det-208 and det-209 in `notes/determinism-investigation.md`.

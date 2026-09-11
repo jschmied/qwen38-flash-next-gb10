@@ -146,8 +146,18 @@ both the main worker and the PLE offload worker must say:
 Using FlashInfer GDN prefill kernel (requested=auto, head_k_dim=128)
 ```
 
-Upstream measures 7.2 % TTFT at ISL 32768 on a GB10 and 3.83–4.52× on the kernel itself; our own
-A/B on this box is still running, so treat those as upstream's numbers, not ours.
+Measured here (det-207), 3 starts per arm, same venv both arms, only the backport differing —
+ranges, not means, and the two arms do not overlap:
+
+| | warm reps (prefix cache hot) | cold rep 0 (full 6,001-token prefill) |
+|---|---|---|
+| FlashInfer | **0.558–0.564 s** | **2.437–2.482 s** |
+| Triton/FLA | 0.587–0.594 s | 2.610–2.687 s |
+| | **+5.0 %** | **+7.1 %** |
+
+Cold is the bigger win because on warm reps the prefix cache absorbs most of the prompt, so less GDN
+prefill actually runs. That cold cell is the one comparable to upstream's **7.2 % at ISL 32768**, and
+it lands on it. We did not measure 32k, and this kernel does not touch decode.
 
 ## 4. Serve
 
