@@ -79,8 +79,33 @@ per-request slicing before it can answer this.
    **My recommendation: do not ship it on this evidence; run a task-level eval first.** A logprob
    count cannot tell you whether a 5 % shift in predictions costs anything real, and the field
    shipped it on "needles 15/15", which could never have seen it.
-2. **Prod is still on `vllm-venv-fnmain`**; fnmain3 remains built, proved (det-177) and un-cut over.
-   Unchanged from yesterday, still your call.
+2. ~~**Prod is still on `vllm-venv-fnmain`**~~ **DONE 2026-09-11 (det-206): prod is cut over to
+   `vllm-venv-fnmain3`.**
+
+### PROD STATE as of 2026-09-11 18:2x — the single place that says what prod runs
+
+| | |
+| --- | --- |
+| entry point | `/opt/llm/serve-fnmain.sh:22`, `VENV=${FN_VENV:-/opt/llm/runtime/vllm-venv-fnmain3}` |
+| venv | `vllm-venv-fnmain3` — vLLM `0.28.1rc1.dev524+g5db652225`, torch `2.13.0+cu130` |
+| FlashInfer | **0.6.18.post1** — python + cubin + jit-cache, all three matched |
+| local patches on it | **one**: vllm#55715 backport (`gdn55715_patch.py`), +10/−2, enables the FlashInfer GDN prefill kernel on sm_12x |
+| GDN prefill backend | **FlashInfer** (was Triton/FLA in 1,216 of 1,216 prior runs) |
+| backups / reversal | `serve-fnmain.sh.orig-precut`; `qwen_gdn_linear_attn.py.orig-gdn55715`; `gdn55715_patch.py off` |
+| 27B prod | separate — `vllm-qwen38.service` on `vllm-venv-027`, untouched |
+
+**Deliberate mismatch:** vLLM pins `flashinfer-python==0.6.18`, we run `0.6.18.post1`. The check that
+executes is FlashInfer's own `cubin == python`, which passes; matching the pin exactly costs another
+~4.5 GB because cubin must match too. See det-206.
+
+**Not yet measured:** the TTFT gain on this box. Upstream reports 7.2 % at ISL 32768 on a GB10; our
+own A/B (det-207, running) is the first time we test it here. **If it comes back null, the patch in
+prod should be reconsidered rather than kept on upstream's number.**
+
+**Not affected:** `dgx-spark-setup-guide` scopes vLLM out (`01-overview.md:90`, non-llama.cpp runtimes
+as primary backend are explicitly out of scope), so the published guide needs no change. The HF card's
+"runs on stock vLLM; no patches" remains true — that is a claim about the *checkpoint*, and this patch
+is an unrelated attention gate; the card's figures are NLL, which prefill kernels do not touch.
 
 ### What was measured and rejected — no action needed
 
