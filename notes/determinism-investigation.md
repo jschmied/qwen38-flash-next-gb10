@@ -3571,3 +3571,37 @@ the ngram question needs a different route.
 `VLLM_PLE_CPU_OFFLOAD` triggers (det-160). It uses no offload worker, so it plausibly does, but that
 is a claim about a code path I have not run. It also substitutes its own constraint, so "ngram is
 unblocked" does not follow from "the offload conflict is gone".
+
+### The published 27B map depends on this — 10 measured cells
+
+The [NVFP4 Periodic Table](https://claude.ai/code/artifact/1c0eb53f-9daf-406e-ad6f-149ac0ac161f)
+is the 27B map, and it states the kernel rule as a property of the format:
+
+> "The kernel is a property of the column, not of a cell: W4A4 forces CUTLASS, W4A16 forces Marlin.
+> … Where the kernel does show is prefill: 6.4 s against 8.4 s TTFT."
+
+Its four grid columns are labelled accordingly, with the penalty attached to the header:
+
+| column | header claim | measured cells |
+| --- | --- | --- |
+| W4A16 · Marlin, dynamic act. | slow prefill · TTFT ~10 s | 7 |
+| W4A16 · Marlin, static act. | slow prefill · TTFT ~8.5 s | 3 |
+| W4A4 · CUTLASS, dynamic act. | fast prefill · TTFT ~6.3 s | 5 |
+| W4A4 · CUTLASS, static act. | fastest prefill · 4.6 s | 4 |
+
+**"W4A16 forces Marlin" is true on sm_121 and is not a property of the format.** It is the
+`compute_capability in (100, 103)` literal in `init_nvfp4_linear_kernel`: on an sm_100/103 box the
+same W4A16 checkpoint takes CuteDSL W4A16 instead. The kernel's own `is_supported()` admits sm_12x,
+so the literal and the gate disagree, and GB10 falls to Marlin on the `else`.
+
+**What this does and does not put in doubt.** The *measurements* stand — those cells really were
+Marlin, and the TTFT figures really were observed. What is not established is the map's *causal
+attribution*: a reader takes "W4A16 ⇒ slow prefill" as a fact about the quantization scheme, when on
+this box it may be a fact about one hard-coded SM list. If `--linear-backend flashinfer_cutedsl` lifts
+it, the 2–4 s spread between the map's halves is partly a vLLM default, not a scheme cost, and the
+column headers need rewording.
+
+**Do not edit the page yet.** The A/B is unmeasured and the page is published and shared; the
+`nvfp4-table` skill owns it and its sources live in `bench/nvfp4-table/`. Sequence: run the A/B
+(`--linear-backend auto` vs `flashinfer_cutedsl`, W4A16 cell, TTFT + c=1 decode, three starts), then
+go through the skill.
