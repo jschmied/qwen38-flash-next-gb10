@@ -4268,3 +4268,60 @@ docstrings mentioning SM families.
 - **#55513** *Fix block FP8 MTP in ModelOpt mixed checkpoints* — merged, and the TODO lists MTP-body
   quantization as gated behind a port of it.
 - **#55375** — our own PLE state-stride fix, merged.
+
+## det-203 — det-160's ngram blocker IS gone; a second, independent one sits behind it
+
+The PLE mmap port (det-192/195) was supposed to revive the ngram comparison det-160 called impossible.
+It half did.
+
+**det-160's blocker is genuinely lifted.** With `FN_PLE_OFFLOAD=0 VLLM_QWEN4_PLE_MMAP=1`, ngram no
+longer hits the V1 executor *conflict*. vLLM instead logs a graceful fallback:
+
+```
+WARNING  Model Runner V2 does not yet support ngram/ngram_gpu speculative decoding;
+         using the V1 model runner instead.
+INFO     PLE mmap: 128 shards, 47.684 GiB file-backed FP8; no resident table copy
+```
+
+The mmap proof line is present, so the arm really was on the new path and the conclusion is not void.
+
+**But it dies eight minutes later on something else:**
+
+```
+AssertionError: QSA ring capacity 12 must divide the attention block size 1616
+```
+
+### The mechanism, from `qsa_cache.py:838-849`
+
+```python
+span = self.compress_ratio + vllm_config.num_speculative_tokens
+capacity = self.compress_ratio * cdiv(span, self.compress_ratio)
+assert self.cache_config.block_size % capacity == 0
+```
+
+With `compress_ratio=6` and `n=5`: span 11, **capacity 12**. The block size is **1616 = 16 × 101**,
+whose only divisors are 1, 2, 4, 8, 16, 101, 202, 404, 808, 1616. **12 is not among them.**
+
+The source comment explains why this normally cannot fire: the capacity *"joins the LCM that sets the
+scheduler block size"*, making the assertion trivially true. It fired here, so **QSA's spec did not
+join that LCM** — and the warning above says why: ngram forces the **V1** model runner, and V1's
+block-size computation does not account for QSA's ring capacity.
+
+**No `num_speculative_tokens` escapes it.** Capacities go 6, 12, 18, 24 … and none divides 1616. This
+is not a tuning problem.
+
+### Where that leaves the ngram question
+
+| | |
+| --- | --- |
+| det-160's blocker (`VLLM_PLE_CPU_OFFLOAD` V1 conflict) | **lifted** by the mmap port |
+| new blocker (V1 block-size LCM omits the QSA ring capacity) | **open, upstream** |
+
+So the Quant Map's ngram cells remain unreproducible by us, for a second and unrelated reason. The
+honest statement is that the mmap port did what it was supposed to and the path is still closed.
+
+**Not attempted:** forcing `--block-size`. 1616 is derived from an LCM over cache specs rather than
+set, so overriding it would fight the allocator rather than fix the omission. This looks like an
+upstream bug — V2 not supporting ngram is documented in that warning, but V1 silently computing a
+block size that violates an assertion the model then makes is not a user-serviceable combination.
+Worth reporting with this traceback if we ever want ngram on this model.
