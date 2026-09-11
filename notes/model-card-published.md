@@ -101,6 +101,15 @@ head **constant across both arms** — otherwise two things vary at once.
 > `weight_scale_2`, not the calibration method.**
 >
 > Both builds are also clean on the combining-mark canary (0/48 corrupt, 48/48 exact), matching the base.
+>
+> **⚠️ That canary is a temp-0 copy task, and it does not cover free generation.** Tested separately
+> against [vllm#54739](https://github.com/vllm-project/vllm/issues/54739) — free Thai generation at
+> temp 1.0 / top_p 0.95 / top_k 20 — **this build shows that defect, and so does the unmodified base
+> at the same rate**: 5.97 vs 5.68 per 1000 Thai characters (z = +0.28, p ≈ 0.78, 30 paired samples
+> each). Doubled marks (`พบว่่า`, `เกีี่ยว`) and reordering (`ทเี่กิด` for `ที่เกิด`) both reproduce.
+> The requant neither causes nor fixes it; it is inherited from the base checkpoint and/or the engine,
+> which matches the issue reproducing on FP8 with llama.cpp clean on the same weights. Both rates are
+> **floors** — the detector cannot see displacement onto the wrong consonant.
 
 **Same format, same tensor shapes, same file size, same inference speed.** Only the values of
 `weight_scale` and `weight_scale_2` differ. This is a quality change at zero inference cost, not a
@@ -176,7 +185,8 @@ Sources: [how the corpus was built](https://github.com/jschmied/qwen38-flash-nex
 | thin (1–63 rows) / no rows → plain max | 58 (0.24 %) / 33 (0.13 %) |
 | layers at 512/512 | **32 / 48** |
 | serves, and is genuinely different weights | **yes** — 95/96, 91/91, 75/75, 79/79 tokens diverge from stock across four prompts, max \|Δlogprob\| 0.63–1.46, both arms coherent with correct tool calls |
-| combining-mark canary (Thai/Devanagari/Arabic/Hebrew/ZWJ, 6 reps) | **0/48 corrupt, 48/48 exact** — matches stock's 0/72, **and matches a plain-max build's 0/48** |
+| combining-mark canary — **copy task, temp 0** (Thai/Devanagari/Arabic/Hebrew/ZWJ, 6 reps) | **0/48 corrupt, 48/48 exact** — matches stock's 0/72, **and matches a plain-max build's 0/48** |
+| free Thai generation, temp 1.0 — [vllm#54739](https://github.com/vllm-project/vllm/issues/54739) | **5.97 defects / 1000 Thai chars — and stock scores 5.68**, indistinguishable (p ≈ 0.78). Inherited, not introduced. Detector is conservative, so both are floors. |
 | SWE-bench Multilingual, held-out slice | not run — at n=10 its SE is ~15 points and it could not resolve what the canary catches in 35 minutes |
 
 The imperfect 0.37 % concentrates at the ends and for different reasons: layer 0's routing is
