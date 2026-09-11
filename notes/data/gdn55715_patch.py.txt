@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Backport vllm#55715: enable the FlashInfer GDN prefill kernel on SM12x. `off` removes.
+
+det-202: `_resolve_gdn_prefill_backend()` sets `supports_flashinfer` for SM90 and the
+SM10x family only, so GB10 (sm_121) silently ran the Triton/FLA fallback for every
+linear-attention layer -- 3 of every 4 layers on Qwen3.5/3.6/3.8. Confirmed on our box:
+1,216 of 1,216 logged GDN announcements said Triton/FLA. Never once FlashInfer.
+
+Upstream fix merged 2026-09-08 (f6326f53b), +10/-2 in this one file. Our fnmain3 base
+(5db652225, 08:30) is five commits behind it -- missed by four hours.
+
+The PR measures 7.2 % TTFT on a DGX Spark GB10 at ISL 32768 and 3.83-4.52x on the
+kernel itself. Requires FlashInfer >= 0.6.18.
+"""
+import ast, os, sys
+
+V = os.environ.get("VLLM_PKG", "/opt/llm/runtime/vllm-venv-fnmain3/lib/python3.12/site-packages/vllm")
+TGT = os.environ.get("GDN_PY", f"{V}/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py")
+OFF = len(sys.argv) > 1 and sys.argv[1] == "off"
+
+ANCHOR = """        supports_flashinfer = True
+        supports_cutedsl = True
+
+    if backend in ["flashinfer", "auto"] and supports_flashinfer:
+"""
+NEW = """        supports_flashinfer = True
+        supports_cutedsl = True
+    elif (
+        # GDN55715-PATCH: backport of vllm#55715 (merged 2026-09-08, f6326f53b).
+        # The gate covered SM90 and SM10x only, so sm_12x fell through to
+        # Triton/FLA for every linear-attention layer.
+        current_platform.is_device_capability_family(120)
+        and head_k_dim == 128
+        and current_platform.get_cuda_runtime_major() >= 13
+    ):
+        # The in-tree CuteDSL kernel targets SM100 only, so it stays off here.
+        supports_flashinfer = True
+
+    if backend in ["flashinfer", "auto"] and supports_flashinfer:
+"""
+
+s = open(TGT, encoding="utf8").read()
+if OFF:
+    s2 = s.replace(NEW, ANCHOR, 1)
+else:
+    s2 = s if "GDN55715-PATCH" in s else s.replace(ANCHOR, NEW, 1)
+if s2 != s:
+    ast.parse(s2)
+    open(TGT, "w", encoding="utf8").write(s2)
+print(("REMOVED" if OFF else "INSTALLED") + f": {'changed' if s2 != s else 'NOCHANGE (anchor missing?)'}")

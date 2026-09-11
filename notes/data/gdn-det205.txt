@@ -1,0 +1,3 @@
+INFO 09-11 16:34:20 [qwen_gdn_linear_attn.py:178] Using FlashInfer GDN prefill kernel (requested=auto, head_k_dim=128).
+INFO 09-11 16:34:26 [qwen_gdn_linear_attn.py:178] Using FlashInfer GDN prefill kernel (requested=auto, head_k_dim=128).
+INFO:     Application startup complete.

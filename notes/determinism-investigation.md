@@ -4497,3 +4497,44 @@ while skipping `gh pr list --author` produced a confident, self-critical, **fals
 left a maintainer hanging. The sharper version: **check our own open issues AND our own open PRs
 before treating a blocker as new — and before accusing ourselves of anything.** We filed it, proposed the fix, got maintainer agreement, promised a
 PR, and then rediscovered the whole thing from cold ten days later.
+
+## det-205 — the FlashInfer GDN prefill kernel now runs here, and it did not need FlashInfer 0.6.18
+
+det-202 found we had **never** used it: 1,216 of 1,216 logged GDN announcements said Triton/FLA.
+Backported vllm#55715 onto `vllm-venv-fnmain3` and it works.
+
+| | |
+| --- | --- |
+| patch | +10/−2 in one file, `qwen_gdn_linear_attn.py` — a 7-line `elif` admitting `is_device_capability_family(120)` with `head_k_dim == 128` and CUDA ≥ 13 |
+| venv | `fnmain3` (`0.28.1rc1.dev524+g5db652225`), backup `.orig-gdn55715`, on/off script, round trip verified |
+| runtime proof | `Using FlashInfer GDN prefill kernel (requested=auto, head_k_dim=128)` — **both** the main worker and the PLE offload worker |
+| output | coherent (Rayleigh-scattering answer, temp 0, MTP-3) |
+
+### fnmain3 missed the fix by four hours
+
+`5db652225` is dated 2026-09-08 08:30; #55715 merged at 12:26 as `f6326f53b`. The compare says fnmain3
+is **5 commits behind** it. So the prod cutover alone would *not* have delivered this — the two tasks
+were genuinely separate, which was not obvious going in.
+
+### The "requires FlashInfer 0.6.18" claim is conservative
+
+The PR states 0.6.18 as a requirement. **We are on 0.6.17 and the kernel selects and runs.**
+`flashinfer/gdn_prefill.py` in 0.6.17 already references `sm120`/`SM120`, so the SM120 CuTe-DSL
+delta-rule kernel is present in that release. Upgrading is still the right thing when backporting a
+newer vLLM change — version skew between a backport and its tested dependency is how confusing results
+get made — but it is **not a blocker**, which matters because the upgrade is a multi-GB pull.
+
+### What the upgrade actually costs, for the record
+
+`flashinfer-python` is on PyPI, but the two companions are not:
+
+| package | index | note |
+| --- | --- | --- |
+| `flashinfer-python` | PyPI | 0.6.18.post1 |
+| `flashinfer-cubin` | `https://flashinfer.ai/whl/` | PyPI tops out at **0.6.13** — ours came from here |
+| `flashinfer-jit-cache` | `https://flashinfer.ai/whl/cu130/` | as `0.6.18.post1+cu130` |
+
+Installed sizes 4.5 GB + 2.2 GB. The version check in `flashinfer/jit/env.py` gates **only cubin
+against python**; jit-cache is unchecked. A `--no-deps` upgrade of python alone therefore **breaks the
+import** with `flashinfer-cubin version (0.6.17) does not match flashinfer version (0.6.18.post1)` —
+hit and reverted during this work.
