@@ -408,3 +408,51 @@ weight reconstruction; whether that is worth anything is unmeasured.
 **What would earn the claim back:** NLL divergence against BF16 on held-out text, LH vs plain-max vs
 stock. That is the measurement `kv-dtype-logprob-experiment` was designed for and it is the only
 thing that would justify shipping LH over a build anyone can make with no calibration data at all.
+
+---
+
+# Held-out NLL, three arms — 2026-09-11 02:55
+
+15 Wikipedia passages / 15,880 tokens, fetched at offsets far past the calibration corpus, none of it
+seen by any arm. Fixed text, not a generated continuation. Threshold set **before** looking: a gap
+under ~0.005 on this sample is not a result.
+
+| group | pmax | lh_v3 | stock | best |
+| --- | --- | --- | --- | --- |
+| Devanagari | 2.7765 | **2.7646** | 2.8557 | lh_v3 |
+| Thai | 2.2435 | **2.2233** | 2.2337 | lh_v3 |
+| English | 2.0037 | **1.9947** | 2.0076 | lh_v3 |
+| Arabic | **2.2776** | 2.2780 | 2.2884 | pmax |
+| Cyrillic | **1.3890** | 1.3989 | 1.4022 | pmax |
+| Latin | **1.6576** | 1.6578 | 1.6591 | pmax |
+| Hebrew | 1.3070 | 1.3014 | **1.2970** | stock |
+| **overall** | 1.9542 | **1.9488** | 1.9663 | |
+
+## Two conclusions, one firm and one not
+
+**FIRM — both rebuilds beat the base checkpoint.** `lh_v3` −0.0175 and `pmax` −0.0121 against stock,
+both clearing the threshold, and robust rather than outlier-driven: **12/15 passages** favour one of
+ours, medians agree with means (1.9158 / 1.9352 / 1.9422), and the largest gap (Devanagari) is
+consistent across *both* its passages (−0.1036, −0.0900).
+
+**NOT ESTABLISHED — that Local-Hessian is the reason.** `lh_v3` beats `pmax` by **0.0054**, which is
+exactly at the threshold. Directionally favourable, three groups each, LH's winning margins larger
+than pmax's. Call it suggestive; do not call it a result.
+
+## The finding that actually matters here
+
+**`pmax` has no calibration data at all and still beats stock by 0.0121.** So the improvement over
+RadixArk does not come from calibration — not from Local-Hessian, and not from the corpus either.
+
+**Cause unknown.** Our plain-max reconstruction matched RadixArk's to 0.004 pp, so it is not a gross
+weight difference. Candidates, none tested:
+
+- `weight_scale_2` granularity or derivation. We take the max amax across a gate/up pair and divide by
+  2688; RadixArk shares a scale too, but may derive it differently.
+- Group-level amax details — clipping, tie handling, the E4M3 rounding of `weight_scale`.
+- `down_proj` scale treatment, which is per-matrix in both but need not agree.
+
+The honest position is that our export differs from RadixArk's in some way that helps slightly on
+held-out text, concentrated on the hardest script in the set, and we have not identified it. That is
+worth chasing precisely **because** it is not the mechanism we set out to test — and after today, a
+difference we cannot name is a difference we should not ship claims about.
