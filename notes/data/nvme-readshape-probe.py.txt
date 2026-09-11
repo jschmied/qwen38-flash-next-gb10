@@ -1,0 +1,49 @@
+"""Does READ SIZE explain the gap between our 6.5 GB/s and their reported ~2.5?
+
+Their layout stores each expert as a scale-run plus a separate weight-run at a different
+offset, so an 18.8 MB expert is not one contiguous read. If bandwidth falls off sharply below
+some size, that layout -- not queue depth -- is the thing costing them bandwidth, and
+expert-major repacking is worth far more than io_uring.
+"""
+import os, time, threading
+
+d = "/opt/llm/models/qwen38-flash-next-nvfp4"
+PATHS = [os.path.join(d, f) for f in sorted(os.listdir(d))
+         if f.endswith(".safetensors") and os.path.getsize(os.path.join(d, f)) > 40 * 2**20]
+ALIGN = 4096
+
+
+def run(size, qd, total_bytes=400 * 2**20):
+    n = max(qd, total_bytes // size)
+    jobs = []
+    for i in range(n):
+        p = PATHS[i % len(PATHS)]
+        sz = os.path.getsize(p)
+        off = ((i * 131) % max(1, (sz - size) // ALIGN)) * ALIGN
+        jobs.append((p, off))
+    idx = [0]; lock = threading.Lock()
+
+    def w():
+        while True:
+            with lock:
+                if idx[0] >= len(jobs): return
+                p, off = jobs[idx[0]]; idx[0] += 1
+            fd = os.open(p, os.O_RDONLY | os.O_DIRECT)
+            try: os.preadv(fd, [memoryview(bytearray(size))], off)
+            except OSError: pass
+            finally: os.close(fd)
+    t0 = time.time()
+    ts = [threading.Thread(target=w) for _ in range(qd)]
+    [t.start() for t in ts]; [t.join() for t in ts]
+    return n * size / (time.time() - t0) / 1e9
+
+
+print(f"  {'read size':>10}  {'QD1':>7}  {'QD4':>7}   GB/s, O_DIRECT, real shard bytes")
+for kb in (64, 256, 1024, 4096, 9600, 19200):
+    size = kb * 1024
+    a = max(run(size, 1) for _ in range(2))
+    b = max(run(size, 4) for _ in range(2))
+    lbl = f"{kb//1024} MiB" if kb >= 1024 else f"{kb} KiB"
+    note = "  <- one expert" if kb == 19200 else ("  <- half an expert (split layout)" if kb == 9600 else "")
+    print(f"  {lbl:>10}  {a:7.2f}  {b:7.2f}{note}")
+print("\n== ALL DONE ==")

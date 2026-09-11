@@ -1,0 +1,66 @@
+"""Does queue depth matter for 18.8 MB expert-sized reads on this NVMe?
+
+The question behind it: after establishing that NVFP4 is incompressible (det: 3.969 of 4.000
+bits) and that LRU is near the paging ceiling (det-198), the bytes a streaming MoE engine must
+fetch are fixed. The only lossless headroom left is getting more bandwidth out of the same
+bytes -- and queue depth is the first knob.
+
+Reads real expert-shard bytes with O_DIRECT at increasing concurrency. O_DIRECT bypasses the
+page cache, so this measures the drive, not RAM -- essential here, because a cached re-read
+would report ~10 GB/s and mean nothing.
+"""
+import os, time, threading, statistics
+
+PATHS = []
+d = "/opt/llm/models/qwen38-flash-next-nvfp4"
+for f in sorted(os.listdir(d)):
+    if f.endswith(".safetensors"):
+        p = os.path.join(d, f)
+        if os.path.getsize(p) > 40 * 2**20:
+            PATHS.append(p)
+CHUNK = 18 * 2**20 + 800 * 2**10      # ~18.8 MB, one expert
+ALIGN = 4096
+
+
+def one_read(path, off, size):
+    fd = os.open(path, os.O_RDONLY | os.O_DIRECT)
+    try:
+        buf = memoryview(bytearray(size + ALIGN))
+        a = (-buf.obj.__array_interface__['data'][0]) % ALIGN if hasattr(buf.obj, '__array_interface__') else 0
+        os.preadv(fd, [buf[:size]], off)
+    finally:
+        os.close(fd)
+
+
+def run(qd, n_reads=24):
+    jobs = []
+    for i in range(n_reads):
+        p = PATHS[i % len(PATHS)]
+        sz = os.path.getsize(p)
+        off = ((i * 97) % max(1, (sz - CHUNK) // ALIGN)) * ALIGN
+        jobs.append((p, off))
+    t0 = time.time()
+    idx = [0]; lock = threading.Lock()
+
+    def worker():
+        while True:
+            with lock:
+                if idx[0] >= len(jobs): return
+                j = jobs[idx[0]]; idx[0] += 1
+            try: one_read(j[0], j[1], CHUNK)
+            except OSError: pass
+    ts = [threading.Thread(target=worker) for _ in range(qd)]
+    [t.start() for t in ts]; [t.join() for t in ts]
+    dt = time.time() - t0
+    return n_reads * CHUNK / dt / 1e9
+
+
+print(f"  {len(PATHS)} shards, {CHUNK/2**20:.1f} MiB per read (one expert), O_DIRECT\n")
+print(f"  {'queue depth':>12}   {'GB/s':>7}   vs QD1")
+base = None
+for qd in (1, 2, 4, 8, 16, 32):
+    r = [run(qd) for _ in range(3)]
+    best = max(r)
+    if base is None: base = best
+    print(f"  {qd:>12}   {best:7.2f}   {best/base:5.2f}x    (3 runs: {min(r):.2f}-{max(r):.2f})")
+print("\n== ALL DONE ==")

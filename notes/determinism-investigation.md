@@ -3998,3 +3998,43 @@ Ours is 512 experts top-10 over 48 layers on calibration text; theirs is 384 top
 agent traffic, and it includes prefill and session boundaries this sequence does not. Absolute hit
 rates also move with sequence length (90.1 % at 20 k tokens, 93.5 % at 4 k — fewer distinct experts
 touched). **The gaps between policies are the finding; the absolute numbers are not portable.**
+
+## det-199 — NVMe read SHAPE, not queue depth: size and depth substitute, and size wins
+
+Follow-on from det-198 and the NVFP4 entropy measurement. With the bytes fixed (incompressible)
+and the cache near-optimal (LRU within reach of Belady), the only lossless headroom for a streaming
+MoE engine is extracting more bandwidth from the same bytes. Measured on this box's NVMe, O_DIRECT,
+reading real shard bytes so the page cache cannot flatter it.
+
+| read size | QD1 GB/s | QD4 GB/s | depth gain |
+| --- | --- | --- | --- |
+| 64 KiB | 0.46 | 0.99 | 2.2× |
+| 256 KiB | 1.07 | 2.57 | 2.4× |
+| 1 MiB | 2.40 | 5.70 | **2.4×** |
+| 4 MiB | 4.02 | 6.48 | 1.6× |
+| 9 MiB (half an expert) | 4.53 | 6.47 | 1.4× |
+| 18 MiB (one expert) | 5.06 | 6.42 | **1.27×** |
+
+Queue depth alone saturates at QD2 for expert-sized reads (5.06 → 6.39 → flat through QD32).
+
+**The finding: size and depth substitute for each other.** Large reads make depth nearly irrelevant;
+small reads make it essential. So "use io_uring" is the wrong framing of the lever — the right one is
+*make each read big, and only pay for depth if you cannot*.
+
+**Why it matters for a streaming engine.** 0xBakeer reports ~2.5 GB/s "at the read sizes and queue
+depths a decode step produces", against a drive ceiling they put near 5.5. On this curve 2.5 GB/s is
+where **~1 MiB at QD1** or **~256 KiB at QD4** lands — an order of magnitude below one 18.8 MB expert.
+Their layout stores each expert as a scale-run plus a separate weight-run at a different offset, which
+is exactly the shape that would produce it. Expert-major repacking (already their own item) is
+therefore worth up to ~2.2×, which is **more than every byte-level idea tested today combined**:
+
+| lever | measured outcome |
+| --- | --- |
+| smarter paging policy | dead — LRU beats every practical alternative (det-198) |
+| lossless compression | dead — 2.8 % floor, NVFP4 entropy 3.969/4.000 |
+| queue depth at expert size | 1.27× |
+| **read size / layout** | **up to 2.2×, and it is the one already on their list** |
+
+**Caveat:** our drive, not theirs — model, firmware and fill state all move the absolute numbers, and
+our QD1 18 MiB figure varied 3.43–5.06 across runs. The *shape* of the curve is the transferable part,
+not the absolute GB/s.
