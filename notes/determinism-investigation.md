@@ -3941,3 +3941,60 @@ different mechanisms, and mmap is ~3.4 GiB cheaper.
 **Incomplete:** one start per arm, measured in different sessions rather than one, and no
 under-pressure or concurrency behaviour. Arm 2 was pre-empted by higher-priority work before a
 same-session repeat. The direction is not in doubt; the 3.4 GiB is.
+
+## det-198 — MoE expert paging: LRU is already near the practical ceiling, and the oracle gap is not reachable
+
+User asked (high priority) for a Belady/MIN replay before anyone writes a segmented cache with
+admission control for a streaming MoE engine. The replay is the cheap experiment that decides whether
+the policy work is worth days: the LRU-to-Belady gap is the entire budget available to **any** smarter
+policy.
+
+Real `(layer, expert)` sequences from our own capture — routing recomputed exactly as the model does
+it, `topk(x @ gate.weight.T, 10)` — in true forward order (per token: layer 0's top-10, then layer 1's,
+…). Global cache over all 48×512 = 24,576 pairs, 25.6 % resident to match the engine in question.
+**Frequency-ranked policies are ranked on a held-out 25 % prefix and scored on the rest** — without
+that split they are oracles too, and the in-sample version reversed the ranking.
+
+| policy | hit rate (7.2 M scored accesses) |
+| --- | --- |
+| static trace-ranked | **55.4 %** |
+| **global LRU** | **90.1 %** |
+| decayed LFU (sampled eviction) | 88.5 % |
+| segmented: protected static set + admission on 2nd use | 84.8 % |
+| **Belady (full oracle)** | **95.6 %** |
+
+### Three results, none of which was the expected one
+
+1. **Nothing beats plain LRU.** LFU is 1.6 pp worse, the segmented design 5.3 pp worse, static ranking
+   catastrophically worse. A *frequency-ranked protected segment actively harms* — it locks slots to
+   experts that are not preferentially reused, starving the adaptive part.
+2. **The oracle gap is real and large in the quantity that matters.** 90.1 → 95.6 % hit is only 5.5 pp,
+   but misses go 9.95 % → 4.43 %: **55 % less NVMe traffic** at the ceiling. Worth chasing if reachable.
+3. **It is not reachable with a short lookahead.** Belady restricted to a drafter-sized window
+   (separate 4,000-token run, LRU 93.45 %, oracle 96.86 %): 1 token recovers **2.3 %** of the gap,
+   3 tokens **5.7 %**, 6 tokens **10.9 %** (93.82 %). Speculative decoding does not function as a
+   partial Belady — the oracle wins by knowing what will *not* be needed for thousands of accesses,
+   and a 2,880-access window against a 6,291-slot cache leaves most entries undetermined, so the
+   policy degenerates to LRU precisely where it would need to differ.
+
+### Why this was predictable from the aggregate, in hindsight
+
+Our routing entropy is **8.96 bits of a possible 9.00** (perplexity 496 of 512): near-uniform. So there
+is no global hot set to protect, and any high hit rate must come from *temporal* locality — which LRU
+already captures almost entirely. The aggregate could not prove it (it averages out time), but it
+correctly predicted which family of policies would fail.
+
+### What it means for the engine that prompted it
+
+Its architecture — trace-ranked warm start, then one global LRU — is **right**, and the warm start is
+worth far less than the LRU that follows it. Adding a protected segment would move the cache *toward*
+the 55 % policy. **Recommendation: do not build the segmented/TinyLFU cache.** The budget a better
+policy could claim is real but needs long-range prediction, which neither frequency nor a drafter
+supplies.
+
+### Limits
+
+Ours is 512 experts top-10 over 48 layers on calibration text; theirs is 384 top-6 over 40 layers on
+agent traffic, and it includes prefill and session boundaries this sequence does not. Absolute hit
+rates also move with sequence length (90.1 % at 20 k tokens, 93.5 % at 4 k — fewer distinct experts
+touched). **The gaps between policies are the finding; the absolute numbers are not portable.**

@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+"""Is MoE expert paging worth a sophisticated policy? Belady answers it in one run.
+
+For a streaming MoE engine the whole speed question is the NVMe miss rate. Before writing a
+segmented cache with admission control, replay a real (layer, expert) sequence against
+Belady/MIN -- the offline optimum. The LRU-to-Belady gap is the entire budget available to
+ANY smarter policy. If it is 2 pp, the routing lacks locality and the work is pointless.
+
+Our aggregate routing is near-uniform (entropy 8.96 of 9.00, perplexity 496/512), so a
+FREQUENCY-ranked hot set has little to work with. Any high hit rate must therefore come from
+TEMPORAL locality -- which an aggregate cannot see and this replay can.
+
+Access order is the true forward order: per token, layer 0's top-k, then layer 1's, ...
+The cache is GLOBAL over (layer, expert) pairs, matching one shared arena.
+"""
+import argparse, json, os, heapq, time
+import numpy as np
+import torch
+
+BASE = "/opt/llm/models/qwen38-flash-next-nvfp4"
+CAP = "/opt/llm/calib/capture"
+NE = 512
+_WM = None
+
+
+def gate_weight(layer):
+    global _WM
+    if _WM is None:
+        _WM = json.load(open(os.path.join(BASE, "model.safetensors.index.json")))["weight_map"]
+    k = f"model.language_model.layers.{layer}.mlp.gate.weight"
+    fh = open(os.path.join(BASE, _WM[k]), "rb")
+    n = int.from_bytes(fh.read(8), "little"); h = json.loads(fh.read(n)); base = 8 + n
+    a, b = h[k]["data_offsets"]; fh.seek(base + a); raw = fh.read(b - a)
+    return torch.frombuffer(bytearray(raw), dtype=torch.bfloat16).reshape(*h[k]["shape"]).float()
+
+
+def routing(layer, ntok, topk, hidden=2560):
+    with open(os.path.join(CAP, f"layer{layer:02d}.bin"), "rb") as f:
+        raw = f.read(ntok * hidden * 2)
+    x = torch.frombuffer(bytearray(raw), dtype=torch.bfloat16).reshape(-1, hidden).float()
+    return torch.topk(x @ gate_weight(layer).T, topk, dim=-1).indices.numpy().astype(np.int32)
+
+
+def sim_lru(seq, cap):
+    from collections import OrderedDict
+    c = OrderedDict(); hit = 0
+    for e in seq:
+        if e in c: c.move_to_end(e); hit += 1
+        else:
+            if len(c) >= cap: c.popitem(last=False)
+            c[e] = 1
+    return hit
+
+
+def sim_lfu_sampled(seq, cap, k=8, halflife=500_000):
+    """decayed LFU with Redis-style sampled eviction (exact min would be O(cap) per miss)"""
+    import random
+    rnd = random.Random(0)
+    freq = {}; c = {}; hit = 0
+    scale = 1.0; dec = 0.5 ** (1.0 / halflife)
+    for i, e in enumerate(seq):
+        scale /= dec
+        if e in c: hit += 1
+        else:
+            if len(c) >= cap:
+                ks = c.keys()
+                cand = rnd.sample(list(ks), min(k, len(c))) if len(c) > k else list(ks)
+                victim = min(cand, key=lambda x: freq.get(x, 0.0))
+                del c[victim]
+            c[e] = 1
+        freq[e] = freq.get(e, 0.0) + scale
+    return hit
+
+
+def sim_static(seq, cap, counts):
+    keep = set(sorted(counts, key=counts.get, reverse=True)[:cap])
+    return sum(1 for e in seq if e in keep)
+
+
+def sim_segmented(seq, cap, counts, protected_frac=0.6):
+    """protected static hot set + LRU over the rest, admitted only on a SECOND sighting"""
+    from collections import OrderedDict
+    npro = int(cap * protected_frac)
+    pro = set(sorted(counts, key=counts.get, reverse=True)[:npro])
+    cap2 = cap - npro
+    lru = OrderedDict(); ghost = OrderedDict(); hit = 0
+    for e in seq:
+        if e in pro: hit += 1; continue
+        if e in lru: lru.move_to_end(e); hit += 1; continue
+        if e in ghost:
+            del ghost[e]
+            if len(lru) >= cap2: lru.popitem(last=False)
+            lru[e] = 1
+        else:
+            ghost[e] = 1
+            if len(ghost) > cap2 * 4: ghost.popitem(last=False)
+    return hit
+
+
+def sim_belady_window(seq, cap, window):
+    """Belady restricted to a W-access lookahead -- what a speculative drafter actually gives you.
+
+    Beyond the window the future is unknown, so those items fall back to LRU order. This is the
+    policy a real engine could implement: run the router on the DRAFTED tokens and evict whatever
+    is not needed within the draft block.
+    """
+    n = len(seq)
+    nxt = np.full(n, n, dtype=np.int64); seen = {}
+    for i in range(n - 1, -1, -1):
+        e = seq[i]; nxt[i] = seen.get(e, n); seen[e] = i
+    cache = {}; hit = 0; clock = 0
+    # key: (known_next_use_within_window, -last_used) -- evict furthest known, else least recent
+    for i in range(n):
+        e = seq[i]; clock += 1
+        if e in cache: hit += 1
+        elif len(cache) >= cap:
+            victim = None; best = None
+            for k, (nu, lu) in cache.items():
+                horizon = nu if nu - i <= window else n + (n - lu)   # unknown -> LRU order
+                if best is None or horizon > best:
+                    best = horizon; victim = k
+            del cache[victim]
+        cache[e] = (nxt[i], clock)
+    return hit
+
+
+def sim_belady(seq, cap):
+    n = len(seq)
+    nxt = np.full(n, n, dtype=np.int64); seen = {}
+    for i in range(n - 1, -1, -1):
+        e = seq[i]; nxt[i] = seen.get(e, n); seen[e] = i
+    cache = {}; heap = []; hit = 0
+    for i in range(n):
+        e = seq[i]
+        if e in cache: hit += 1
+        elif len(cache) >= cap:
+            while True:                        # lazy deletion of stale heap entries
+                negd, cand = heapq.heappop(heap)
+                if cand in cache and cache[cand] == -negd:
+                    del cache[cand]; break
+        cache[e] = nxt[i]
+        heapq.heappush(heap, (-nxt[i], e))
+    return hit
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tokens", type=int, default=20000)
+    ap.add_argument("--layers", type=int, default=48)
+    ap.add_argument("--topk", type=int, default=10)
+    ap.add_argument("--resident", type=float, default=0.256)
+    ap.add_argument("--split", type=float, default=0.25,
+                    help="fraction used ONLY to rank the static/protected sets; the rest is scored. "
+                         "Without this the frequency policies are ranked on the sequence they are "
+                         "graded on, which makes them oracles too.")
+    a = ap.parse_args()
+
+    t0 = time.time(); per = []
+    for L in range(a.layers):
+        per.append(routing(L, a.tokens, a.topk))
+        if L % 12 == 0: print(f"  routed layer {L:2d} ({time.time()-t0:.0f}s)", flush=True)
+
+    seq = np.empty(a.tokens * a.layers * a.topk, dtype=np.int32); w = 0
+    for t in range(a.tokens):
+        for L in range(a.layers):
+            seq[w:w + a.topk] = L * NE + per[L][t]; w += a.topk
+    full = seq.tolist()
+    cut = int(len(full) * a.split)
+    warm, lst = full[:cut], full[cut:]          # warm ranks the static sets, lst is scored
+    n = len(lst)
+    universe = a.layers * NE; cap = int(universe * a.resident)
+    counts = {}
+    for e in warm: counts[e] = counts.get(e, 0) + 1   # HELD-OUT ranking, not in-sample
+    seen_eval = len(set(lst))
+    print(f"\n  ranked on the first {100*a.split:.0f} % ({len(warm):,} accesses), scored on the rest")
+    print(f"  {n:,} scored accesses over {universe:,} (layer,expert) pairs; {seen_eval:,} distinct touched")
+    print(f"  cache {cap:,} slots = {100*cap/universe:.1f} % resident\n")
+
+    out = {}
+    for name, fn in (("static trace-ranked", lambda: sim_static(lst, cap, counts)),
+                     ("global LRU", lambda: sim_lru(lst, cap)),
+                     ("decayed LFU (sampled)", lambda: sim_lfu_sampled(lst, cap)),
+                     ("segmented + admission", lambda: sim_segmented(lst, cap, counts)),
+                     ("BELADY (full oracle)", lambda: sim_belady(lst, cap))):
+        t = time.time(); h = fn(); out[name] = h / n
+        print(f"  {name:24s} hit {100*h/n:6.2f} %   ({time.time()-t:.0f}s)", flush=True)
+
+    lru, bel = out["global LRU"], out["BELADY (full oracle)"]
+    best = max(v for k, v in out.items() if k != "BELADY (full oracle)")
+    print(f"\n  LRU {100*lru:.2f} %  best practical {100*best:.2f} %  Belady {100*bel:.2f} %")
+    print(f"  headroom LRU->Belady: {100*(bel-lru):.2f} pp")
+    print(f"  NVMe traffic at the ceiling: {100*(1-(1-bel)/(1-lru)):.1f} % less than LRU")
+    print("== ALL DONE ==")

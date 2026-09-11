@@ -1,0 +1,25 @@
+  routed layer  0 (0s)
+  routed layer 12 (3s)
+  routed layer 24 (6s)
+  routed layer 36 (9s)
+  ranked on the first 25 % (2,400,000 accesses), scored on the rest
+  7,200,000 scored accesses over 24,576 (layer,expert) pairs; 23,839 distinct touched
+  cache 6,291 slots = 25.6 % resident
+  static trace-ranked      hit  55.44 %   (0s)
+  global LRU               hit  90.05 %   (0s)
+  decayed LFU (sampled)    hit  88.47 %   (25s)
+  segmented + admission    hit  84.77 %   (1s)
+  BELADY (oracle)          hit  95.57 %   (4s)
+  LRU 90.05 %  best practical 90.05 %  Belady 95.57 %
+  headroom LRU->Belady: 5.52 pp
+  NVMe traffic at the ceiling: 55.5 % less than LRU
+== ALL DONE ==
+---- windowed lookahead (4,000 tokens) ----
+  1,440,000 scored accesses, cache 6,291 slots
+  global LRU             93.45 %
+  Belady, 1-token lookahead (480 acc)   93.53 %   recovers   2.3 % of the oracle gap
+  Belady, 3-token lookahead (1,440 acc)   93.64 %   recovers   5.7 % of the oracle gap
+  Belady, 6-token lookahead (2,880 acc)   93.82 %   recovers  10.9 % of the oracle gap
+  BELADY full oracle     96.86 %
+
+[exited with code 0]
