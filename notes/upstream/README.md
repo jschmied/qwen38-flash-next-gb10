@@ -505,3 +505,22 @@ branch lacks — fetch + rebase before pushing.
     **181 downloads** would be worse than publishing none. The card now says so explicitly and points
     readers at the PR threads instead.
     → https://huggingface.co/josch15366/Qwen3.8-27B-DFlash2-FP8/commit/dc6ca7842ecb88af0e6bf7c09e7be37c9e510a7e
+
+---
+
+### HuggingFace — RadixArk/Qwen3.8-Flash-Next-NVFP4 discussion #13, 2026-09-11 09:33
+
+**"Per-expert weight_scale_2 is worth ~0.9 % held-out NLL (and two contracts you got right)"**
+→ https://huggingface.co/RadixArk/Qwen3.8-Flash-Next-NVFP4/discussions/13
+Draft: `notes/upstream/radixark-scale2-granularity.md`
+
+One actionable ask: derive `weight_scale_2` per expert rather than per block of 128. Carries the
+causal test (`blk`, their granularity rebuilt, gain collapses to +0.0002 t=+0.12 excluding
+Devanagari), and credits the two export contracts they got right and we broke (`input_scale` =
+amax/2688; gate/up sharing one `weight_scale_2`, vllm#54974).
+
+Thread state checked first: 12 open discussions, ours was #9 ("Recipe for vllm"), a different topic,
+so this is a new discussion rather than a reply. Every number re-verified against the results store
+immediately before posting.
+
+Our second HF discussion on this repo. Do not reply without a fresh go.

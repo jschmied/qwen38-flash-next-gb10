@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. The `blk` gate is CLEARED (2026-09-11 06:27).
+POSTED 2026-09-11 09:33 → https://huggingface.co/RadixArk/Qwen3.8-Flash-Next-NVFP4/discussions/13
 HuggingFace discussion, RadixArk/Qwen3.8-Flash-Next-NVFP4 (2026-09-11).
 
 ---
@@ -75,5 +75,6 @@ index-only and writes zero bytes. Held-out set and per-passage numbers in `notes
 
 ---
 
-**Gate:** the `blk` result is in and supports section 1. Needs the user's explicit go. Posting log entry required in
-`notes/upstream/README.md` after.
+**Posted** as discussion #13 after the user's explicit go (2026-09-11 09:32). Every figure was
+re-verified against `/opt/llm/runners/results/nll.jsonl` immediately before sending: 59 passages,
+70,734 tokens, 11 groups, and all eight paired statistics reproduce exactly.
