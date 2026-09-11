@@ -659,3 +659,25 @@ Also told them blocker 2 sits directly behind it — patching V1 PLE lands you o
 because it is architectural, and picking a side would have been the wrong contribution.
 
 Thread state checked first: 0 comments, still open. Do not reply again without a fresh go.
+
+### vLLM PR #54912 comment, 2026-09-11 — connect the PR to its issue, add runtime evidence
+
+→ https://github.com/vllm-project/vllm/pull/54912#issuecomment-5635920490
+Draft: `notes/upstream/comment-54912-link-and-evidence.md`
+
+**The gap this closes:** bojiang3 agreed with the widening on issue #54552 (2026-09-02) but has never
+been on the PR — it has had zero human participants since it opened the same day. The reviewer who
+approved the approach did not know the fix was up.
+
+Carries: the det-204 runtime evidence (fired on all 12 QSA layers, 12 -> 16, span 9, assert cleared on
+a GB10 at n=5), a note that the widening is already bounded at 2x (13..16 would otherwise reach 404
+rows on block size 1616), the #56088 link showing this PR is necessary-but-not-sufficient on V1, and a
+question about the `pre-run-check` label gate that has blocked CI since day one.
+
+Tagged bojiang3 as the person already in the linked issue. **Expect little** — 0 comments from them
+across vLLM in the preceding 7 days. Active maintainers that week were hmellor, DarkLight1337, njhill,
+Isotr0py; if this stays silent, one of them is the more realistic route, and that is a separate ask
+needing its own go.
+
+Deliberately did NOT tag anyone on #56088 — someone else's issue, and nudging on their behalf with an
+inactive maintainer would have been noise.
