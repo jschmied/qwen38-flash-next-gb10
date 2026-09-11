@@ -524,3 +524,21 @@ so this is a new discussion rather than a reply. Every number re-verified agains
 immediately before posting.
 
 Our second HF discussion on this repo. Do not reply without a fresh go.
+
+### HuggingFace — our own repo, discussion #1, 2026-09-11 10:0x
+
+**"Calibration corpus: what we got wrong, and the one thing worth copying (position stratification)"**
+→ https://huggingface.co/josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts/discussions/1
+Draft: `notes/upstream/hf-calibration-topic.md`
+
+Our own repo, so not gated — but written to the same standard. Five points, three of them things we
+got wrong:
+1. Routing shifts with POSITION (56 % top-50 expert overlap across the 8,063 boundary), so stratify by
+   length not project. The transferable one.
+2. Record counts mislead: 121 wiki / 100 agent records is 30.5 % / 69.5 % by tokens.
+3. Eval and corpus share a source (Wikipedia) → measured the overlap rather than arguing it,
+   0/21,653 8-grams.
+4. The multilingual half did NOT fix the Thai corruption — the two contract bugs did. Said plainly.
+5. Calibration is not where the gain comes from; granularity is.
+
+Links to RadixArk #13 rather than restating its table.
