@@ -607,3 +607,50 @@ pass in that case.
 All three levels now green, plus the static differs-from-stock check (18/18 sampled pairs). What is
 still open is **quality**, which divergence says nothing about — that is the combining-mark canary
 and SWE run A.
+
+## Where the scale values actually come from — three heuristics and one optimisation
+
+Asked directly 2026-09-11: are these optimal or guessed?
+
+| quantity | how it is chosen | optimised? |
+| --- | --- | --- |
+| `input_scale` | **copied verbatim from the base checkpoint** — RadixArk's activation amax / 2688 | **no, and not by us at all** |
+| `weight_scale_2` | our `max(amax)/2688` per expert | no — pure max |
+| `weight_scale` (plain max) | `amax/6/scale_2` | no — pure max |
+| `weight_scale` (Local-Hessian) | search minimising `dw·H·dwᵀ` | **yes**, on a surrogate over our corpus |
+
+Three of four are range-fitting: take the largest value seen, divide so it lands at the format's
+ceiling. Only the LH weight scale is optimised — and it is the one whose behavioural benefit we have
+failed to demonstrate.
+
+### `input_scale` structure, and the risk of inheriting it
+
+Base checkpoint, layer 24: **one** value for gate/up across all 512 experts (they share the layer
+input, implied activation amax **6.625**) and **222 distinct** values for `down_proj` (each expert's
+own SwiGLU intermediate, implied amax ~1.65). Sensible shapes — but measured on *their* calibration
+data, which we have never seen.
+
+Checked against our own 393,689 captured MoE-input rows:
+
+| | |
+| --- | --- |
+| our activation amax | **7.375** |
+| their implied amax | 6.625 (ratio 1.113×) |
+| elements above it | **27 of 153,600,000** = 0.000018 % |
+| rows containing one | 0.045 % |
+
+**Inheriting their `input_scale` is safe** — clipping is negligible.
+
+### The unexplored lever
+
+The same measurement shows why a max-based activation scale is wasteful: **`p99.99` is 2.422 and the
+max is 7.375**, a factor of 3. The FP4 activation grid is stretched to cover a handful of outliers
+while 99.99 % of values sit in the bottom third of the range.
+
+Clipped or percentile activation scales are the standard fix, and **this axis has been touched by
+nobody here** — not RadixArk, not us, and not Local-Hessian, which only ever moves *weight* scales.
+An `input_scale` at p99.99 would buy roughly 3× finer activation resolution for 0.01 % clipped values.
+
+Worth noting the asymmetry: we spent a 400k-token capture and an hour of GPU optimising weight
+scales for an unproven gain, while the activation scale — wasting two thirds of its dynamic range —
+was copied from someone else without being measured.
