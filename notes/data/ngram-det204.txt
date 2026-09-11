@@ -1,0 +1,8 @@
+(APIServer pid=1230628) WARNING 09-11 15:20:32 [vllm.py:678] Model Runner V2 does not yet support ngram/ngram_gpu speculative decoding; using the V1 model runner instead.
+ERROR 09-11 15:29:21 [core.py:1385] RuntimeError: Worker failed with error 'PLE inputs were not prepared', please check the stack trace above for the root cause
+ERROR 09-11 15:29:21 [multiproc_executor.py:1059]     raise RuntimeError("PLE inputs were not prepared")
+ERROR 09-11 15:29:21 [multiproc_executor.py:1059] RuntimeError: PLE inputs were not prepared
+INFO 09-11 15:20:55 [ple_mmap.py:91] PLE mmap: 128 shards, 47.684 GiB file-backed FP8; no resident table copy
+INFO 09-11 15:29:10 [qsa_cache.py:860] QSACAP-PATCH: QSA ring capacity 12 -> 16 so it divides block size 1616 (span 9, invariant capacity >= span holds)
+RuntimeError: Worker failed with error 'PLE inputs were not prepared', please check the stack trace above for the root cause
+WARNING 09-11 15:20:49 [vllm.py:678] Model Runner V2 does not yet support ngram/ngram_gpu speculative decoding; using the V1 model runner instead.

@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Widen the QSA ring capacity to a divisor of the attention block size. `off` removes.
+
+det-203: ngram forces the V1 model runner, and on that path
+`cache_config.block_size` comes out 1616 while the ring capacity is 12, tripping an
+assert. The ring is excluded BY DESIGN from the min() that sets block_size
+(`CircularBufferSpec.prefix_cacheable` is False), so the "whole groups" rounding the
+code relies on cannot guarantee divisibility.
+
+The safety invariant in the source comment is `capacity >= span` -- "anything narrower
+lets a rejected draft row overwrite a committed key". Whole-groups is only a mechanism
+for divisibility. So widening to the smallest divisor of block_size that is >= span
+keeps the invariant and fixes divisibility directly. For n=5: 12 -> 16, and 16 >= 11.
+
+Logs the widening so an A/B can prove the path was taken (venv-overlay rule 8).
+"""
+import ast, os, sys
+
+V = os.environ.get("VLLM_PKG", "/opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm")
+TGT = os.environ.get("QSA_PY", f"{V}/models/qwen4_exp/common/qsa_cache.py")
+OFF = len(sys.argv) > 1 and sys.argv[1] == "off"
+
+OLD = """        capacity = self.compress_ratio * cdiv(span, self.compress_ratio)
+        assert self.cache_config.block_size % capacity == 0, (
+            f"QSA ring capacity {capacity} must divide the attention block "
+            f"size {self.cache_config.block_size}"
+        )
+"""
+NEW = """        capacity = self.compress_ratio * cdiv(span, self.compress_ratio)
+        # QSACAP-PATCH (det-203): the ring is excluded from the min() that sets
+        # block_size (CircularBufferSpec.prefix_cacheable is False), so rounding to
+        # whole groups cannot guarantee divisibility -- on the V1 runner (ngram) it
+        # does not. The comment's safety invariant is capacity >= span; widen to the
+        # smallest divisor of block_size satisfying it rather than assert.
+        _bs = self.cache_config.block_size
+        if _bs % capacity != 0:
+            _wide = next((d for d in range(span, _bs + 1) if _bs % d == 0), None)
+            assert _wide is not None, (
+                f"QSA ring: no divisor of block size {_bs} is >= span {span}"
+            )
+            # local import: this module defines no module-level `logger`, and a
+            # NameError here would fire only on the patched path (caught in dry run)
+            from vllm.logger import init_logger as _il
+            _il(__name__).info(
+                "QSACAP-PATCH: QSA ring capacity %d -> %d so it divides block size %d "
+                "(span %d, invariant capacity >= span holds)",
+                capacity, _wide, _bs, span,
+            )
+            capacity = _wide
+"""
+
+s = open(TGT, encoding="utf8").read()
+if OFF:
+    s2 = s.replace(NEW, OLD, 1)
+else:
+    s2 = s if "QSACAP-PATCH" in s else s.replace(OLD, NEW, 1)
+if s2 != s:
+    ast.parse(s2)
+    open(TGT, "w", encoding="utf8").write(s2)
+print(("REMOVED" if OFF else "INSTALLED") + f": qsa_cache.py {'changed' if s2 != s else 'nochange'}")

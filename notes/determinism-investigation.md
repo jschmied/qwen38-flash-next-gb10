@@ -4384,3 +4384,67 @@ and never offered ≥128, where the same configuration on an SM100 part would be
 actually help this shape — head_dim 256 is unusual. That needs the A/B, not more reading. But it is
 the first scanner hit that is not inert for us, and it lands on the 27B, which
 [[dense-27b-preferred-for-long-work]] calls our quality model.
+
+## det-204 — the QSA patch works; ngram is blocked a third time, and this one is structural
+
+TEST A from det-203. **We can fix what a maintainer can** — the earlier "maintainer's call" framing
+conflated what belongs upstream with what we can test locally. Patched, tested, removed again.
+
+### The patch was right and it worked
+
+`capacity = smallest divisor of block_size that is >= span`, replacing the assert. Proven at runtime
+on all 12 QSA layers:
+
+```
+QSACAP-PATCH: QSA ring capacity 12 -> 16 so it divides block size 1616
+              (span 9, invariant capacity >= span holds)
+```
+
+**Correction to det-203's arithmetic:** span is **9**, not 11, so `compress_ratio` is **4**, not 6
+(4 + 5 = 9; 4 × ⌈9/4⌉ = 12). The safety margin is therefore wider than estimated — 16 against a span
+of 9. The source comment's invariant ("anything narrower lets a rejected draft row overwrite a
+committed key") holds comfortably.
+
+### It exposed a third blocker, and this one is not a widening
+
+Eleven seconds later:
+
+```
+RuntimeError: PLE inputs were not prepared
+```
+
+from `models/qwen4_exp/nvidia/model.py:300`, guarding
+`if input_ids is None or query_start_loc is None or ngram_context is None`.
+
+| runner | `ngram_context` / `qwen4_exp` references |
+| --- | --- |
+| `v1/worker/gpu/model_runner.py` (**V2**) | **4** |
+| `v1/worker/gpu_model_runner.py` (**V1**) | **0** |
+
+**The V1 runner has no Qwen4Exp PLE plumbing at all.** ngram forces V1 (V2 lists ngram/ngram_gpu as
+unsupported), V1 cannot prepare this model's PLE inputs, so ngram cannot run on Flash-Next without
+porting that preparation into V1. That is missing feature work, not a constant to widen.
+
+### The three blockers, in the order they appear
+
+| # | blocker | status |
+| --- | --- | --- |
+| 1 | `VLLM_PLE_CPU_OFFLOAD` forces a V1 executor conflict (det-160) | **lifted** by the PLE mmap port |
+| 2 | QSA ring capacity must divide `block_size`, and the ring is excluded from setting it | **fixable, fixed, proven** (this patch) |
+| 3 | V1 runner has no PLE preparation for this model | **open, structural** |
+
+**So the Quant Map's ngram cells stay unreproducible by us — now for a third and deeper reason.** Two
+of the three blockers are gone and the path is still closed. Anyone citing those cells for Flash-Next
+on vLLM should know that ngram does not currently run on this model at all.
+
+### Patch removed
+
+`vllm-venv-fnmain2` already carries the PLE mmap overlay and is the shared branch-validation venv. A
+second overlay that **enables nothing** is pure risk, and this one only fires on the V1 path, which
+cannot work regardless. Removed; `qsa_cache.py` verified byte-identical to `.orig-qsacap` and
+recompiled. Script kept at `/opt/llm/runners/qsacap_patch.py` (copy in `notes/data/`) for the day
+blocker 3 is fixed upstream — it will be needed again then.
+
+**Worth reporting upstream** with both tracebacks: the assert in `qsa_cache.py` is unreachable-by-design
+on the V2 path and unsatisfiable on the V1 path, and behind it the V1 path cannot serve this model at
+all. Needs the user's go.
