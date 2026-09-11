@@ -10,9 +10,8 @@ measured the result against yours on held-out text. Two things came out that you
 
 ### 1. A possible improvement: per-expert `weight_scale_2`
 
-Your checkpoint derives **3 distinct gate/up `weight_scale_2` values across all 512 experts** per
-layer — blocks of 256/128/128, which looks like the amax was batched over shards. We derive **one per
-expert**.
+Your checkpoint derives one gate/up `weight_scale_2` per **block of 128 experts** — 4 per layer,
+uniform across every layer we censused (0, 1, 12, 24, 36, 47). We derive **one per expert**.
 
 Held-out NLL/token, 59 Wikipedia passages / 70,734 scored tokens across 11 languages, fetched at
 offsets no build had seen:

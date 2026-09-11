@@ -560,6 +560,30 @@ strictly this shows "per-expert + LH beats block + plain max". The clean pair is
 plain max) against `blk` — and `pmax` was only measured on the older 15-passage set, where it scored
 1.9542 against stock's 1.9663, i.e. most of the gain without any calibration.
 
+### Correction: the base's blocks are uniformly 128, not 256/128/128
+
+Censused `gate_proj.weight_scale_2` across layers 0, 1, 12, 24, 36, 47 of RadixArk's checkpoint. Every
+layer has run lengths **[128, 128, 128, 128]** — one scale per block of 128 experts, 4 per layer.
+Layer 24 reports *3* distinct only because two adjacent blocks happen to land on the same amax; the
+blocking is identical. Earlier notes generalised layer 24's count and said "blocks of 256/128/128".
+That was wrong, and it matters for anything we tell RadixArk, who would know their own blocking.
+
+`blk` used `--scale2-block 128`, so it reproduced the real structure; the blk result stands.
+
+### `pmax` re-measure in flight (started 06:40)
+
+`lhbuild.py --plain-max --layers 0-47`, per-expert `weight_scale_2`, ~82 s/layer. Arm verified on
+layer 0 before the run was trusted:
+
+| | distinct gate `weight_scale_2` / 512 experts, layer 0 |
+| --- | --- |
+| stock (RadixArk) | **4** |
+| `pmax` (this build) | 218 |
+| `lh_v3b` | 228 |
+
+218 rather than 512 is expected and not a defect: the amax comes off BF16 weights, so per-expert
+maxima collide on the BF16 grid. gate/up mismatches 0/512; 6144 tensors.
+
 **Re-measuring `pmax` on the 59-passage set is the one measurement still owed.** It separates:
 granularity alone → 1.7227, or granularity plus a share from Local-Hessian. That distinction decides
 what is worth telling RadixArk — "use per-expert scales" is actionable, "use per-expert scales *and*
