@@ -654,3 +654,57 @@ An `input_scale` at p99.99 would buy roughly 3× finer activation resolution for
 Worth noting the asymmetry: we spent a 400k-token capture and an hour of GPU optimising weight
 scales for an unproven gain, while the activation scale — wasting two thirds of its dynamic range —
 was copied from someone else without being measured.
+
+## The calibration menu we never opened — 2026-09-11
+
+Searched the field after the scale-provenance question. `NVFP4_W4A4_WEIGHT_LOCAL_HESSIAN_CFG` is one
+of **sixteen** NVFP4 configs in our own ModelOpt 0.46.0. We went straight to it and never looked at
+the rest.
+
+**Available to us right now, untried:**
+
+| config / algorithm | what it does |
+| --- | --- |
+| **`NVFP4_FOUR_OVER_SIX_CFG`** | adaptive per-block scaling — reports **19.9 %** of the BF16 perplexity gap closed |
+| `NVFP4_AWQ_CLIP_CFG` / `AWQ_LITE` / `AWQ_FULL` | activation-aware weight scaling, with clipping |
+| `mse` (weight_scale_algorithm) | MSE-optimal clipping instead of plain max |
+| `NVFP4_SVDQUANT_DEFAULT_CFG` | SVD outlier absorption |
+| `NVFP4_W4A4_WEIGHT_MSE_FP8_SWEEP_CFG` | MSE sweep over FP8 scales |
+
+### Four Over Six — targets a defect our own data hints at
+
+E2M1's values are {0,.5,1,1.5,2,3,4,6}, so **the gap between 4 and 6 is 2.0** — a dead zone where
+near-maximal values round badly. 4/6 lets each block scale its max to **4** instead of 6, packing
+values more tightly, and picks per block whichever minimises error (MSE post-training). It requires
+the global scale to move from 6×448 to **6×256** so the FP8 block scales do not overflow.
+
+Reported: 19.9 % of the perplexity gap to BF16 closed post-training with AWQ; <15 % hardware overhead.
+[alphaXiv 2512.02010](https://www.alphaxiv.org/abs/2512.02010)
+
+**For scale:** our Local-Hessian build is **0.9 % relative NLL** better than the base, and we cannot
+attribute even that. This claims 19.9 % of the gap to BF16.
+
+### `nvfp4_act_headroom` — the activation lever, needs a version bump
+
+Newer ModelOpt (not 0.46.0) adds exactly what the p99.99-vs-max measurement above pointed at: anchor
+the activation global scale to a **low** percentile of the per-block amax distribution rather than the
+max, leaving FP8 block-scale range as headroom —
+`amax = max(rho * anchor, upper)` with `anchor_percentile` 1, `upper_percentile` 99.99, `rho` 16384.
+Applies to NVFP4 dynamic-block input quantizers, and composes with a nested `weight_scale_algorithm`
+(max / mse / local_hessian) in one pass.
+[ModelOpt CHANGELOG](https://github.com/NVIDIA/Model-Optimizer/blob/73d77842/CHANGELOG.rst)
+
+That we rediscovered the motivation independently, from our own captured activations, is mild
+evidence the reasoning was sound. It is much stronger evidence that **checking the field first would
+have been cheaper** — the same lesson as `check-field-before-expensive-steps` and
+`search-open-prs-before-fixing`, now three for three this week.
+
+### Ranked next steps
+
+1. **`NVFP4_FOUR_OVER_SIX_CFG`** — available now, largest reported effect, NVFP4-specific, and its
+   mechanism (the 4→6 dead zone) is plausible for the precision-sensitive scripts where our margins
+   were largest.
+2. **`mse` weight scales** — the cheapest possible A/B against `local_hessian`, same pipeline, one
+   config change.
+3. **ModelOpt bump for `nvfp4_act_headroom`** — the only lever that touches the activation scale,
+   which no build here has ever tuned.
