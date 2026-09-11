@@ -456,3 +456,38 @@ The honest position is that our export differs from RadixArk's in some way that 
 held-out text, concentrated on the hardest script in the set, and we have not identified it. That is
 worth chasing precisely **because** it is not the mechanism we set out to test — and after today, a
 difference we cannot name is a difference we should not ship claims about.
+
+## Where our export differs from RadixArk's — named, but not shown to be the cause
+
+Offline comparison of layer 24, our plain-max scale structure against RadixArk's own export
+(`scalediff.py`, no GPU):
+
+| matrix | scale_2 ratio ours/theirs | `weight_scale` differing | packed nibbles differing |
+| --- | --- | --- | --- |
+| `down_proj` | **1.0000** | **0.00 %** | 0.1–0.45 % |
+| `gate_proj` / `up_proj` | 0.17–0.40 | **100 %** | ~12.5 % |
+
+**Our unfused export is byte-exact with theirs.** `down_proj` gets the identical `scale_2` and
+byte-identical `weight_scale`, which independently confirms our amax derivation, the `/2688`
+convention and the E4M3 rounding. The entire difference is in the **fused gate/up pair**.
+
+**And the difference is granularity:** RadixArk uses **3 distinct gate/up `scale_2` values across all
+512 experts** — in blocks of 256/128/128, so presumably batched over shards — while we derive one per
+expert. Our per-expert scales fit each expert tighter.
+
+**Two hypotheses tested and refuted along the way:**
+
+- *E4M3 subnormals* — a larger `scale_2` pushes `weight_scale` down, so maybe theirs lose relative
+  precision. **No:** 0 % subnormal in both, medians 88–128 (ours) vs 28 (theirs), all inside the
+  normal range where E4M3's relative precision is uniform.
+- *Better weight reconstruction* — **too small to matter:** ours is 9.4912 % vs 9.4958 %, a
+  **0.0046 pp** edge against a held-out NLL gap of **0.0121**, two and a half times larger.
+
+**So the cause of the NLL improvement over RadixArk remains unidentified.** We have a real structural
+difference and a real behavioural difference, and no demonstrated link between them. Part of the
+0.0121 may simply be noise at 15 passages.
+
+**What would settle it:** rebuild one layer with RadixArk's *block* granularity (one `scale_2` per 128
+experts) and re-measure NLL. If the gain disappears, granularity is the mechanism; if it survives,
+something else is. That is a one-layer build and a re-probe — cheap, and it is the honest next step
+rather than asserting the connection.
