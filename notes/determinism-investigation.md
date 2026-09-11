@@ -4087,3 +4087,53 @@ cannot produce a large bandwidth gain for full-expert loads — its value is at 
 in reducing submission overhead. Combined with det-198 (paging is near-optimal) and the NVFP4 entropy
 result (bytes are incompressible), **the remaining wins must come from fewer misses, fewer bytes per
 missed expert, or hiding misses behind compute — not from making each large read more sequential.**
+
+## det-200 — det-199's headline is BACKWARDS: depth dominates, not size
+
+det-199 swept queue depth only to QD4 at small reads and concluded "size dominates, depth is
+secondary". Sweeping past QD4 inverts it. Same drive, same O_DIRECT probe, real shard bytes.
+
+| depth | 64 KiB GB/s | 256 KiB GB/s |
+| --- | --- | --- |
+| QD1 | 0.49 | 1.06 |
+| QD4 — *where det-199 stopped* | 1.05 | 2.35 |
+| QD16 | 3.06 | 5.22 |
+| QD64 | 3.87 | 5.84 |
+| **QD128** | **3.90** | **5.88** |
+| QD256 | 3.64 | 5.77 (thread overhead) |
+
+**64 KiB improves 8.0× from QD1 to QD128. 256 KiB improves 5.5×, reaching 92 % of the 6.4 GB/s that
+18 MiB reads achieve.** The plateau is QD64–128; QD256 regresses as thread overhead bites.
+
+### What this overturns
+
+| det-199 said | actually |
+| --- | --- |
+| "size and depth substitute, and size wins" | **depth wins.** Size only matters because it reaches the ceiling at low depth |
+| 64 KiB is 0.46 GB/s | 0.46 is the **QD1** figure; the drive does **3.90** there |
+| "io_uring cannot produce a large bandwidth gain" | at small sizes it is worth up to **8×** |
+| the E27T is "close to saturated" at small reads | it was never close — we were submission-limited |
+
+The earlier withdrawal of the DRAM-less explanation was right for the right reason (7,000 IOPS against
+a controller rated ~1.0–1.2 M), but I replaced it with a conclusion that was also wrong. **The honest
+statement: at 64 KiB and QD1 we measured our own thread pool, not the drive.**
+
+### What survives from det-199
+
+- **Sequential vs scattered is still a null** at expert size (6.37 vs 6.42). Placement is irrelevant.
+- **6.4–6.5 GB/s is still ~88 % of Phison's 7.4 GB/s** E27T rating at expert-sized reads.
+- **The paging and entropy results are untouched** — they are about bytes and hit rates, not I/O shape.
+
+### The practical consequence, restated
+
+For an engine fetching 18.8 MB experts: it is already at a size where depth buys only 1.27×, so its
+bandwidth is near the ceiling **provided it issues reads concurrently**. At QD1 it would get 5.06
+instead of 6.42 — a 21 % loss for free.
+
+More interesting: **smaller granularity is far more viable than det-199 implied.** If partial-expert or
+finer-grained streaming were ever useful, 256 KiB at depth costs only 8 % against 18 MiB, not the 6.5×
+that the QD4 column suggested.
+
+**Method note.** Three corrections on this thread in one afternoon, and each came from stopping a
+sweep too early or reading a conclusion off an incomplete table. A depth sweep that stops at QD4 on a
+device with 1 M+ IOPS is not a measurement of the device. Sweep until it plateaus, then report.

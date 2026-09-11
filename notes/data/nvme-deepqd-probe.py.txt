@@ -1,0 +1,49 @@
+"""Is the small-read end of det-199 limited by the DRIVE or by my thread pool?
+
+det-199 published 0.46 GB/s at 64 KiB QD1 and 0.99 at QD4, and I wrongly attributed the low
+figure to the E27T's DRAM-less design. 0.46 GB/s at 64 KiB is only ~7,000 IOPS against a
+controller rated ~1.0-1.2M 4K random-read IOPS, so hardware is almost certainly not the limit.
+
+Decisive test without fio: sweep depth far past QD4. If throughput keeps climbing, submission
+is the bottleneck and io_uring would help. If it plateaus near 1 GB/s, the drive is the limit.
+"""
+import os, time, threading
+d = "/opt/llm/models/qwen38-flash-next-nvfp4"
+P = [os.path.join(d,f) for f in sorted(os.listdir(d))
+     if f.endswith('.safetensors') and os.path.getsize(os.path.join(d,f)) > 40*2**20]
+A = 4096
+
+def run(size, qd, nops=None):
+    nops = nops or max(qd*8, int(600*2**20//size))
+    jobs=[]
+    for i in range(nops):
+        p=P[i%len(P)]; sz=os.path.getsize(p)
+        jobs.append((p, ((i*7919)%max(1,(sz-size)//A))*A))
+    idx=[0]; lock=threading.Lock()
+    def w():
+        fd_cache={}
+        while True:
+            with lock:
+                if idx[0]>=len(jobs): break
+                p,off=jobs[idx[0]]; idx[0]+=1
+            fd=fd_cache.get(p)
+            if fd is None:
+                fd=os.open(p, os.O_RDONLY|os.O_DIRECT); fd_cache[p]=fd
+            try: os.preadv(fd,[memoryview(bytearray(size))],off)
+            except OSError: pass
+        for fd in fd_cache.values(): os.close(fd)
+    t0=time.time(); ts=[threading.Thread(target=w) for _ in range(qd)]
+    [t.start() for t in ts]; [t.join() for t in ts]
+    return nops*size/(time.time()-t0)/1e9
+
+for kb in (64, 256):
+    print(f"\n  {kb} KiB reads, sweeping depth past where det-199 stopped:")
+    prev=None
+    for qd in (1,4,16,64,128,256):
+        r=max(run(kb*1024,qd) for _ in range(2))
+        mark=""
+        if qd==4: mark="  <- det-199 stopped here"
+        iops=r*1e9/(kb*1024)
+        print(f"    QD{qd:<4} {r:6.2f} GB/s  ({iops:8,.0f} IOPS){mark}")
+        prev=r
+print("\n== ALL DONE ==")
