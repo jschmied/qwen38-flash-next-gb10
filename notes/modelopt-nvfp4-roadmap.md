@@ -694,10 +694,28 @@ Applies to NVFP4 dynamic-block input quantizers, and composes with a nested `wei
 (max / mse / local_hessian) in one pass.
 [ModelOpt CHANGELOG](https://github.com/NVIDIA/Model-Optimizer/blob/73d77842/CHANGELOG.rst)
 
-That we rediscovered the motivation independently, from our own captured activations, is mild
-evidence the reasoning was sound. It is much stronger evidence that **checking the field first would
-have been cheaper** — the same lesson as `check-field-before-expensive-steps` and
-`search-open-prs-before-fixing`, now three for three this week.
+~~That we rediscovered the motivation independently is mild evidence the reasoning was sound.~~
+**WRONG — checked against the source 2026-09-11 and corrected.** `nvfp4_act_headroom` does the
+**opposite** of what I assumed. It does not clip to gain resolution; it **reserves headroom** so
+activations larger than anything in calibration do not saturate, setting the scale *above* the
+observed max. On our captured activations, with `rho = 16384` and per-block p1 = 0.582, it would pick
+**9536** where plain max picks **7.375** — 1293× larger, trading resolution for saturation safety.
+
+My p99.99-vs-max measurement pointed at a *clipping* lever. This is the reverse trade. Two different
+ideas that both happen to use percentiles, and I conflated them.
+
+**And it addresses a problem we measured as negligible:** only 27 of 153,600,000 captured elements
+exceed the base checkpoint's implied amax (0.000018 %). Paying resolution to prevent saturation is a
+bad trade at that rate.
+
+Status: ships in **0.47.0 (2026-09-xx), unreleased**. PyPI's newest is 0.46.1, verified identical to
+our 0.46.0 — same 16 NVFP4 configs, same 7 algorithms. Present on git `main`
+(`modelopt/torch/quantization/calib/nvfp4_act_headroom.py`), installed to `/opt/llm/modelopt-main`
+for inspection only.
+
+The lesson that does survive: **checking the field first would have been cheaper** — the same as
+`check-field-before-expensive-steps` and `search-open-prs-before-fixing`. But reading a changelog
+entry is not the same as reading the code, and I asserted a match from the former.
 
 ### Ranked next steps
 
