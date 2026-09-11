@@ -4813,3 +4813,53 @@ kernel, which toggles with a patch script we already have.
   stayed as the last arm left it. Harmless here (it was the det arm = prod config) but the cleanup
   belongs in a `finally`.
 - Per-script totals for every arm ever probed: `notes/data/markprobe-by-script.txt`.
+
+## det-211 — CONFIRMED: the fnmain3 venv corrupts Devanagari, fnmain2 does not
+
+det-210's split was across two days. This is the same comparison as one experiment: arms alternating
+inside one driver, same stock RadixArk checkpoint, same flags, det overlays on in both, per-arm
+`FN_CACHE_ROOT`. **Differing cell: the serving venv.**
+
+**Void check passed on all four starts** — each server log names the venv and build it was meant to
+run (`vllm-venv-fnmain2` / `dev401` ×2, `vllm-venv-fnmain3` / `dev524` ×2). This matters more than
+usual here: `cp -a` of a venv leaves the copy's interpreter pointing at the original, which once
+silently invalidated eight measurement arms (`venv-copy-shebang-trap`).
+
+| script | fnmain2 — dev401, FI 0.6.17 | fnmain3 — dev524, FI 0.6.18.post1 |
+|---|---|---|
+| Arabic | 0/6 | 0/6 |
+| **Devanagari** | **0/12** | **6/12** |
+| Hebrew | 0/6 | 0/6 |
+| Thai | 0/18 | 0/18 |
+| ZWJ | 0/6 | 0/6 |
+| total | **0/48** | **6/48** |
+
+Devanagari 0/12 vs 6/12, Fisher **p = 0.0137**. Per start: fnmain2 (0, 0), fnmain3 (3, 3) — and
+det-210's two fnmain3 arms in the prod configuration were also (3, 3). Four independent fnmain3
+starts, every one at exactly 3/24. Pooling det-210's fnmain3 arms: 0/12 vs 12/24, **p = 2.5e-03**.
+
+**Thai is clean in both arms, as is everything except Devanagari.** This is not vllm#54739 and must
+not be written up as if it were.
+
+### What this means for prod
+
+Prod was cut over to fnmain3 today (det-206). It is serving a build that duplicates Devanagari
+combining marks in **half of the Devanagari copy tasks** the probe puts to it, on the *stock*
+checkpoint, where the previous build was clean. For scale, the only other arm that ever reached this
+rate was `lh_v2` at 12/12 — our own rebuild with two broken export contracts, which we withdrew for
+exactly this signature.
+
+I am not rolling prod back on my own (no prod changes without the user), but the recommendation is
+on the table and the user has been told.
+
+### What it does not say
+
+fnmain3 differs from fnmain2 by **three** things at once: ~123 vLLM commits, FlashInfer
+0.6.17 → 0.6.18.post1, and the #55715 GDN prefill kernel. det-211 names the venv, not the cause.
+det-212 cuts the cheapest of the three — the kernel toggles with a patch script, so both arms can be
+the same venv and the same FlashInfer.
+
+Worth noting against det-208: 0.6.17 and 0.6.18 ship *identical* sm120 cubins, so if FlashInfer turns
+out to be the cause it is via the Python or JIT path, not the compiled kernels.
+
+Data: `notes/data/venvmark-det211.txt`, per-script totals in `notes/data/markprobe-by-script.txt`.
