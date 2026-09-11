@@ -1,0 +1,25 @@
+
+=== SUSPECT: 8 ===
+  models/kimi_k3/nvidia/kda.py:186
+      and capability.major in (9, 10, 12)
+  models/inkling/nvidia/ops/fa4_rel_attention.py:33
+      return capability is not None and capability.major in (10, 11)
+  vllm_flash_attn/cute/paged_kv.py:215
+      if const_expr(self.arch == 90):
+  v1/attention/backends/fa_utils.py:233
+      return capability is not None and capability.major in (10, 11)
+  v1/attention/backends/mla/prefill/flash_attn.py:392
+      and device_capability[0] in (10, 11)
+  model_executor/kernels/linear/__init__.py:1068
+      if compute_capability in (100, 103) and cutedsl_ok:
+  model_executor/kernels/linear/scaled_mm/pytorch.py:304
+      compute_capability == 90
+  third_party/tml_fa4/paged_kv.py:262
+      if const_expr(self.arch == 90):
+
+=== EXPLICIT: 1 ===
+  model_executor/kernels/linear/nvfp4/flashinfer.py:48
+      if compute_capability not in (100, 103) and not (
+
+=== SAFE: 12 ===
+  (comparisons; sm_121 satisfies >= 100 and friends)

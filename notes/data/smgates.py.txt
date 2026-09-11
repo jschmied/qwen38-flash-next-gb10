@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""Which vLLM capability gates EXCLUDE sm_12x, and which are merely comparisons?
+
+Motivated by two found by hand on 2026-09-11: the CuTe-DSL W4A16 linear kernel's
+`compute_capability in (100, 103)` (det-180), and DeepSelect shipping gencode for
+sm_100a/sm_103a only. Both target Blackwell datacenter and leave GB10 on a fallback.
+
+A gate is only a BUG if the kernel would actually run on sm_12x -- that judgement is
+per-site and not automatable. This tool does the mechanical half: separate gates that
+enumerate architectures (suspect) from gates that compare (usually fine).
+
+  SAFE     >= 100 / > 90 style comparisons: 121 satisfies them
+  SUSPECT  == 100, in (100, 103), explicit sm_100/sm_103 lists without a 12x arm
+  EXPLICIT already mentions 120/121 -- someone thought about us
+"""
+import ast, re, sys, os, collections
+
+ROOT = sys.argv[1] if len(sys.argv) > 1 else \
+    "/opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm"
+
+# only capability-shaped numbers: majors 8-12, or full codes 80..130. NOT 128 (a thread count).
+CAPNUM = r"(?:8|9|10|11|12)|(?:80|86|89|90|100|103|110|120|121)"
+ENUM = re.compile(r"in\s*\(\s*(?:" + CAPNUM + r")\s*,\s*(?:" + CAPNUM + r")\s*[,)]|==\s*(?:90|100|103|110|120|121)\b")
+CMP = re.compile(r"(>=|>|<=|<)\s*(\d{2,3})\b")
+TWELVEX = re.compile(r"\b12[01]\b|sm_12[01]|compute_12[01]")
+CAPCTX = re.compile(r"capability|device_capability|arch|sm_\d")
+
+buckets = collections.defaultdict(list)
+for dirpath, _, files in os.walk(ROOT):
+    for fn in files:
+        if not fn.endswith(".py"):
+            continue
+        p = os.path.join(dirpath, fn)
+        try:
+            lines = open(p, encoding="utf8", errors="replace").read().split("\n")
+        except OSError:
+            continue
+        for i, ln in enumerate(lines, 1):
+            st = ln.strip()
+            if st.startswith("#") or not CAPCTX.search(ln):
+                continue
+            rel = os.path.relpath(p, ROOT)
+            # look at a small window so a 12x arm on a neighbouring line counts
+            window = "\n".join(lines[max(0, i - 4): i + 3])
+            if ENUM.search(ln):
+                buckets["EXPLICIT" if TWELVEX.search(window) else "SUSPECT"].append((rel, i, ln.strip()))
+            elif CMP.search(ln) and re.search(r"capab", ln):
+                buckets["SAFE"].append((rel, i, ln.strip()))
+
+for k in ("SUSPECT", "EXPLICIT", "SAFE"):
+    print(f"\n=== {k}: {len(buckets[k])} ===")
+    if k == "SAFE":
+        print("  (comparisons; sm_121 satisfies >= 100 and friends)")
+        continue
+    for rel, i, ln in buckets[k][:40]:
+        print(f"  {rel}:{i}\n      {ln[:120]}")

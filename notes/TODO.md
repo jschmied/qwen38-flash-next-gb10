@@ -516,6 +516,32 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **Scan vLLM for sm_12x gates that could be opened (user request 2026-09-11).** Scanner written and
+  installed: `/opt/llm/runners/smgates.py` (copy in `notes/data/`), output for dev401 in
+  `notes/data/smgates-dev401.txt`. It separates gates that **enumerate** architectures from gates that
+  **compare** — `>= 100` already admits 121, so the 231 `is_device_capability`/`has_device_capability`
+  call sites collapse to **8 suspect**:
+
+  | site | gate | note |
+  | --- | --- | --- |
+  | `v1/attention/backends/fa_utils.py:233` | `capability.major in (10, 11)` | **best candidate** — gates FA4's dedicated **hd256** kernel, and Flash-Next QSA is head_dim 256. Unverified whether FA4 is on our path at all (QSA has its own backend); the vision tower does use FLASH_ATTN. |
+  | `v1/attention/backends/mla/prefill/flash_attn.py:392` | `device_capability[0] in (10, 11)` | MLA prefill — we do not run MLA. Low value. |
+  | `models/inkling/nvidia/ops/fa4_rel_attention.py:33` | `capability.major in (10, 11)` | different model family, not ours. |
+  | `model_executor/kernels/linear/__init__.py:1068` | `compute_capability in (100, 103)` | det-180. Real, but **inert for us** — no quantized dense Linear in Flash-Next, and the 27B is W4A4/compressed-tensors. |
+  | `scaled_mm/pytorch.py:304`, two `self.arch == 90` in cute paged_kv | | sm_90 paths, not exclusions of us. |
+
+  **Precedent that this is a normal change:** `models/kimi_k3/nvidia/kda.py:186` reads
+  `capability.major in (9, 10, 12)` — someone already added a 12 arm in this codebase.
+
+  **Method, and the part that is not automatable:** a gate excluding sm_12x is only a *bug* if the
+  kernel would actually run there. That is per-site and needs a build or a test, which is why this is
+  a scan plus judgement rather than a patch. Start with `fa_utils.py:233` because the head_dim
+  matches; first question is whether FA4 is ever selected on our stack — `kernelroster.py` on any
+  existing log answers that for free before anything is built.
+
+  Re-run the scanner after every venv bump; gate lists move (det-180's file changed between 0.27.1
+  and 0.28.1).
+
 - **PLE mmap — UNGATED 2026-09-11 (det-193): cudagraphs capture NOTHING here (7 starts, 3 configs),
   so `--enforce-eager` costs nothing and the 3-file port is worth doing. NEXT UP.**
 - ~~**Discriminator for det-193**~~ **DONE 2026-09-11 (det-194): speculation is NOT the cause — capture
