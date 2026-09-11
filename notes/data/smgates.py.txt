@@ -1,56 +1,115 @@
 #!/usr/bin/env python3
-"""Which vLLM capability gates EXCLUDE sm_12x, and which are merely comparisons?
+"""Which vLLM capability gates leave sm_12x (GB10) on a fallback path?
 
-Motivated by two found by hand on 2026-09-11: the CuTe-DSL W4A16 linear kernel's
-`compute_capability in (100, 103)` (det-180), and DeepSelect shipping gencode for
-sm_100a/sm_103a only. Both target Blackwell datacenter and leave GB10 on a fallback.
+v2, 2026-09-11. v1 pattern-matched literals like `in (100, 103)` and found 8 suspects. It MISSED
+vllm#55715 -- `_resolve_gdn_prefill_backend()` set a `supports_flashinfer` flag from an SM-family
+check and returned "triton" when unset, so GB10 silently ran the fallback for 3 of every 4 layers
+(det-202). A literal matcher cannot see that: the constraint lived in a docstring and a boolean.
 
-A gate is only a BUG if the kernel would actually run on sm_12x -- that judgement is
-per-site and not automatable. This tool does the mechanical half: separate gates that
-enumerate architectures (suspect) from gates that compare (usually fine).
+v2 walks the AST per function instead:
 
-  SAFE     >= 100 / > 90 style comparisons: 121 satisfies them
-  SUSPECT  == 100, in (100, 103), explicit sm_100/sm_103 lists without a 12x arm
-  EXPLICIT already mentions 120/121 -- someone thought about us
+  ENUMERATING   the function names specific SM values (80/89/90/100/103/110/120/121) anywhere --
+                a literal, an is_sm90()-style call, or a docstring
+  12x-AWARE     it also names 120/121/12x somewhere in the same function
+  SUSPECT       enumerating but NOT 12x-aware  <- the class that hides #55715
+
+Flag-mediated gates are caught because the whole function body is the unit, not one line. A gate is
+only a BUG if the kernel would run on sm_12x; that judgement stays per-site and manual.
 """
-import ast, re, sys, os, collections
+import ast, os, sys, re, collections
 
 ROOT = sys.argv[1] if len(sys.argv) > 1 else \
     "/opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm"
 
-# only capability-shaped numbers: majors 8-12, or full codes 80..130. NOT 128 (a thread count).
-CAPNUM = r"(?:8|9|10|11|12)|(?:80|86|89|90|100|103|110|120|121)"
-ENUM = re.compile(r"in\s*\(\s*(?:" + CAPNUM + r")\s*,\s*(?:" + CAPNUM + r")\s*[,)]|==\s*(?:90|100|103|110|120|121)\b")
-CMP = re.compile(r"(>=|>|<=|<)\s*(\d{2,3})\b")
-TWELVEX = re.compile(r"\b12[01]\b|sm_12[01]|compute_12[01]")
-CAPCTX = re.compile(r"capability|device_capability|arch|sm_\d")
+CAP_HINT = re.compile(r"capability|compute_cap|device_cap|is_sm\d|sm_?\d{2,3}|arch", re.I)
+# specific architecture identifiers, NOT bare numbers (128 is a thread count, not an arch)
+SM_TOKEN = re.compile(r"\b(?:sm_?)?(80|86|89|90|100|103|110|120|121)\b|\bSM(\d{2,3})\b|is_sm(\d{2,3})")
+TWELVEX = re.compile(r"\b12[01]\b|sm_?12[01]|SM12|compute_12|\b12x\b|sm12x", re.I)
+FLAGGY = re.compile(r"^(supports?|use|enable|can|has|allow|is)_", re.I)
 
-buckets = collections.defaultdict(list)
-for dirpath, _, files in os.walk(ROOT):
-    for fn in files:
-        if not fn.endswith(".py"):
+
+def seg(src, node):
+    return ast.get_source_segment(src, node) or ""
+
+
+def scan_function(src, fn, rel):
+    body = seg(src, fn)
+    if not body or not CAP_HINT.search(body):
+        return None
+    toks = set()
+    for m in SM_TOKEN.finditer(body):
+        toks.add(next(g for g in m.groups() if g))
+    if not toks:
+        return None
+    twelve = bool(TWELVEX.search(body))
+    # capability-derived boolean flags, the #55715 shape
+    flags = []
+    for n in ast.walk(fn):
+        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name):
+            name = n.targets[0].id
+            rhs = seg(src, n.value)
+            if FLAGGY.match(name) and rhs and CAP_HINT.search(rhs):
+                flags.append(name)
+    doc = ast.get_docstring(fn) or ""
+    return {"fn": fn.name, "file": rel, "line": fn.lineno,
+            "arch": sorted(toks, key=lambda x: int(x)), "twelvex": twelve,
+            "flags": flags, "doc_sm": bool(SM_TOKEN.search(doc))}
+
+
+rows = []
+for dp, _, fs in os.walk(ROOT):
+    for f in fs:
+        if not f.endswith(".py"):
             continue
-        p = os.path.join(dirpath, fn)
+        p = os.path.join(dp, f)
         try:
-            lines = open(p, encoding="utf8", errors="replace").read().split("\n")
-        except OSError:
+            src = open(p, encoding="utf8", errors="replace").read()
+            tree = ast.parse(src)
+        except (SyntaxError, OSError, ValueError):
             continue
-        for i, ln in enumerate(lines, 1):
-            st = ln.strip()
-            if st.startswith("#") or not CAPCTX.search(ln):
-                continue
-            rel = os.path.relpath(p, ROOT)
-            # look at a small window so a 12x arm on a neighbouring line counts
-            window = "\n".join(lines[max(0, i - 4): i + 3])
-            if ENUM.search(ln):
-                buckets["EXPLICIT" if TWELVEX.search(window) else "SUSPECT"].append((rel, i, ln.strip()))
-            elif CMP.search(ln) and re.search(r"capab", ln):
-                buckets["SAFE"].append((rel, i, ln.strip()))
+        rel = os.path.relpath(p, ROOT)
+        for n in ast.walk(tree):
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                r = scan_function(src, n, rel)
+                if r:
+                    rows.append(r)
 
-for k in ("SUSPECT", "EXPLICIT", "SAFE"):
-    print(f"\n=== {k}: {len(buckets[k])} ===")
-    if k == "SAFE":
-        print("  (comparisons; sm_121 satisfies >= 100 and friends)")
-        continue
-    for rel, i, ln in buckets[k][:40]:
-        print(f"  {rel}:{i}\n      {ln[:120]}")
+# Relevance: a gate only matters if OUR model reaches it. Rank by the paths this
+# stack actually executes -- confirmed from kernelroster.py output on real logs.
+HOT = ("mamba/gdn", "qwen4_exp", "nvfp4", "fused_moe", "v1/attention", "kernels/linear",
+       "flashinfer", "quantization/modelopt")
+COLD = ("third_party/", "/tests/", "test_", "vllm_flash_attn/cute", "/benchmarks/", "rocm", "xpu", "/tpu")
+
+
+def relevance(r):
+    if any(c in r["file"] for c in COLD):
+        return -1
+    score = 0
+    if r["flags"]:
+        score += 4                      # the #55715 shape: a capability-derived boolean
+    if any(h in r["file"] for h in HOT):
+        score += 3
+    if r["doc_sm"]:
+        score += 1
+    if {"100", "103"} & set(r["arch"]):  # Blackwell-datacenter-only enumerations
+        score += 2
+    return score
+
+
+sus = [r for r in rows if not r["twelvex"]]
+for r in sus:
+    r["score"] = relevance(r)
+sus = [r for r in sus if r["score"] > 0]
+aware = [r for r in rows if r["twelvex"]]
+print(f"  functions naming a specific SM arch: {len(rows)}")
+print(f"    12x-aware : {len(aware)}")
+print(f"    SUSPECT   : {len(sus)}   (enumerate an arch, never mention 12x)\n")
+
+sus.sort(key=lambda r: (-r["score"], r["file"]))
+print(f"  after relevance filtering (drops tests, third_party, other vendors): {len(sus)}\n")
+print("  === RANKED SUSPECTS ===")
+for r in sus[:20]:
+    tag = f"  flags={','.join(r['flags'])}" if r["flags"] else ""
+    dsm = "  [SM in docstring]" if r["doc_sm"] else ""
+    print(f"  [{r['score']:2d}] {r['file']}:{r['line']}  {r['fn']}()")
+    print(f"       arch={','.join(r['arch'])}{tag}{dsm}")

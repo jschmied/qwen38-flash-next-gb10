@@ -524,11 +524,32 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   Bundled in the same bump: #55272 (removes torch.compile for this model — bears directly on det-194's
   open cudagraph question), #55170, #54110, #55513.
 
-- **Scan vLLM for sm_12x gates that could be opened (user request 2026-09-11).** Scanner written and
-  installed: `/opt/llm/runners/smgates.py` (copy in `notes/data/`), output for dev401 in
-  `notes/data/smgates-dev401.txt`. It separates gates that **enumerate** architectures from gates that
-  **compare** — `>= 100` already admits 121, so the 231 `is_device_capability`/`has_device_capability`
-  call sites collapse to **8 suspect**:
+- **Scan vLLM for sm_12x gates that could be opened (user request 2026-09-11).**
+  **Scanner v2, AST-based** — `/opt/llm/runners/smgates.py`, output `notes/data/smgates-v2-dev401.txt`.
+
+  **v1 was regex-based and MISSED vllm#55715** (det-202), the single most valuable gate found all day:
+  `_resolve_gdn_prefill_backend()` set a `supports_flashinfer` boolean from an SM-family check and
+  returned "triton" when unset, with the constraint documented in a *docstring*. No literal to match.
+
+  v2 walks the AST **per function** instead of per line, so a flag-mediated gate is visible: it flags
+  a function that names a specific SM arch (literal, `is_sm90()`-style call, or docstring) and never
+  mentions 12x. It then ranks by whether a capability-derived `supports_*`/`use_*` boolean exists (the
+  #55715 shape), whether the file is on a path this stack actually executes, and whether the
+  enumeration is Blackwell-datacenter-only. **v2 re-finds `_resolve_gdn_prefill_backend()` at rank 6**,
+  which is the regression test that matters.
+
+  387 functions enumerate an arch; 71 are 12x-aware; **152 suspect** after dropping tests, third_party
+  and other vendors. Top new candidate, score 9:
+
+  | site | gate |
+  | --- | --- |
+  | `v1/attention/backends/flashinfer.py:422` `get_supported_kernel_block_sizes()` | `use_large_pages` requires `is_device_capability_family(100)`, so sm_121 never advertises KV block sizes ≥128 |
+
+  **Likely inert for us, same as det-180 and the FA4 gate:** we do not use the FlashInfer *attention*
+  backend — the model runs its own QSA state backend and the vision tower uses FLASH_ATTN; FlashInfer
+  serves our **MoE**, not attention. Worth re-checking for the 27B, whose attention differs.
+
+  The v1 list, for the record:
 
   | site | gate | note |
   | --- | --- | --- |

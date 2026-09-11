@@ -1,0 +1,47 @@
+  functions naming a specific SM arch: 387
+    12x-aware : 71
+    SUSPECT   : 152   (enumerate an arch, never mention 12x)
+
+  after relevance filtering (drops tests, third_party, other vendors): 152
+
+  === RANKED SUSPECTS ===
+  [ 9] v1/attention/backends/flashinfer.py:422  get_supported_kernel_block_sizes()
+       arch=100  flags=use_large_pages
+  [ 7] model_executor/kernels/linear/scaled_mm/pytorch.py:293  is_supported()
+       arch=90  flags=is_sm90
+  [ 7] models/minimax_m3/common/indexer.py:493  select_indexer_impl_cls()
+       arch=100  flags=is_sm100,use_msa  [SM in docstring]
+  [ 7] models/minimax_m3/common/sparse_attention.py:512  select_main_backend_and_impl_cls()
+       arch=100  flags=use_msa  [SM in docstring]
+  [ 6] model_executor/layers/fused_moe/oracle/mxfp4.py:356  _get_priority_backends()
+       arch=90,100  [SM in docstring]
+  [ 6] model_executor/layers/fused_moe/router/bf16x3_router_gemm_cutedsl.py:422  bf16x3_router_gemm()
+       arch=100  [SM in docstring]
+  [ 6] model_executor/layers/fused_moe/router/gate_linear.py:227  fp32_router_gemm_dispatch_impl()
+       arch=100  [SM in docstring]
+  [ 6] model_executor/layers/fused_moe/utils.py:658  resolve_moe_use_td()
+       arch=100  [SM in docstring]
+  [ 6] model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py:93  _resolve_gdn_prefill_backend()
+       arch=10,90,100  [SM in docstring]
+  [ 6] utils/flashinfer.py:1188  is_flashinfer_cudnn_fp8_prefill_attn_supported()
+       arch=100  [SM in docstring]
+  [ 6] v1/attention/backends/mla/indexer.py:1001  _build_varlen_decode_indices()
+       arch=100  [SM in docstring]
+  [ 5] model_executor/kernels/linear/__init__.py:1016  init_nvfp4_linear_kernel()
+       arch=100,103
+  [ 5] model_executor/kernels/linear/cute_dsl/ll_bf16.py:80  _arch_tuned_configs()
+       arch=90,100
+  [ 5] model_executor/kernels/linear/mxfp4/flashinfer.py:25  is_supported()
+       arch=100
+  [ 5] model_executor/kernels/linear/mxfp8/flashinfer.py:23  is_supported()
+       arch=100
+  [ 5] model_executor/kernels/linear/mxfp8/flashinfer.py:105  is_supported()
+       arch=100,103
+  [ 5] model_executor/kernels/linear/mxfp8/flashinfer.py:186  is_supported()
+       arch=100
+  [ 5] model_executor/kernels/linear/nvfp4/flashinfer.py:115  is_supported()
+       arch=100
+  [ 5] model_executor/kernels/linear/nvfp4/flashinfer.py:186  is_supported()
+       arch=100
+  [ 5] model_executor/kernels/linear/scaled_mm/flashinfer.py:41  is_supported()
+       arch=100
