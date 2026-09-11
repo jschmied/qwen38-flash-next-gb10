@@ -3427,6 +3427,11 @@ have failed identically ten minutes later. Caught by checking the runner rather 
 launch. Every runner that takes an arm flag must read it as `${FN_X:-default}` — verified after
 launch by reading `/proc/<pid>/environ`, which is now the habit.
 
+> **Numbering note (2026-09-11):** finding numbers are **not monotonic in file order** — det-190 and
+> det-191 sit above det-179/det-180. Take the next number as `max + 1` over the whole file, never
+> "the last heading + 1". det-179 and det-180 were both numbered the wrong way; they collide with
+> nothing, so they stand.
+
 ## det-180 — the sm_121 W4A16/W4A4 kernel mis-selection is REAL upstream and INERT for us, 2026-09-11
 
 **Upstream bug confirmed on our hardware** (issue #55397, fix #55405). On sm_121, walking
