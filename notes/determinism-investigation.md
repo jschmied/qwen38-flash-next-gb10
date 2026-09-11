@@ -4905,3 +4905,51 @@ valid as a *change* detector; they are just not a duplication count.
 
 The finding to carry forward: **fnmain3 substitutes U+093E → U+094B where fnmain2 copies exactly**,
 and the cause is one of ~123 vLLM commits, the FlashInfer minor, or the #55715 GDN kernel.
+
+## det-212 — the #55715 GDN kernel is NOT the cause, and the prompt has at least three wrong answers
+
+Same venv (fnmain3), same checkpoint, same flags; only the #55715 patch toggles. Void check passed:
+`gdnmark-on{0,1}` announce `Using FlashInfer GDN prefill kernel`, `gdnmark-off{0,1}` announce
+`Using Triton/FLA GDN prefill kernel`.
+
+Counter: **on 6/48, off 6/48**, per start (3, 3) and (3, 3) — indistinguishable. The GDN prefill
+kernel is **exonerated**: turning it off does not restore the correct output.
+
+### But the counters are equal and the outputs are not
+
+Classifying the `hi-1` strings instead of counting marks (the det-211b lesson, applied):
+
+| arm | output |
+|---|---|
+| source | `उपयोगकर्ता को पहले लॉग इन करना होगा।` |
+| fnmain2 | `उपयोगकर्ता को पहले लॉग इन करना होगा।` — EXACT |
+| fnmain3, kernel on (`vm-` arm) | `उपयोगकर्तो को पहले लॉग इन करनो होगा।` — SUBST |
+| fnmain3, kernel **off** (`gm-off`) | `उपयोगकर्तो को पहले लॉग इन करनो होगा।` — SUBST |
+| fnmain3, kernel **on** (`gm-on`) | `उपयोगकर्ताने पहिले लॉग इन करणे आवश्यक आहे.` — **Marathi**, a translation |
+
+`gm-on` and the `vm-` fnmain3 arm are the *same configuration* — same venv, same patch state, same
+flags. They differ only in `FN_CACHE_ROOT` (`vllm-gdnmark-on` vs `vllm-venvmark`), i.e. in which
+compile and FlashInfer-autotune caches were cold. **That is enough to change the answer**, from a
+matra substitution to a translation into a different language.
+
+Within any one configuration the output is rock-stable: 6/6 byte-identical, both starts. Across
+configurations on fnmain3 it is not. fnmain2 was EXACT in all six.
+
+### What this does to the claim
+
+det-211's "fnmain3 regresses" may be measuring **numerical sensitivity on a knife-edge prompt**
+rather than a defect in the venv. Both readings fit the data so far:
+
+- *regression*: fnmain3 changed something that pushes this prompt off the correct branch, and
+  fnmain2 holds it.
+- *fragility*: the prompt sits near a decision boundary ("copy" vs "translate"), tiny numerics
+  decide it, and fnmain2's six correct answers are one cache root's luck.
+
+They are distinguishable and the test is cheap. Two knobs: **more prompts** (we have exactly two
+Devanagari cases, which is far too few to call a rate) and **more than one cache root per venv**.
+If fnmain2 is correct across several prompts and several cache roots while fnmain3 is wrong across
+the same, it is a regression whatever any single prompt does. det-213 runs that.
+
+Relevant prior: `temp0-not-reproducible-under-load` already records that this model diverges at
+temp 0 even at c=1. A single prompt at temp 0 was never a safe measurement here, and I built two
+findings on one.
