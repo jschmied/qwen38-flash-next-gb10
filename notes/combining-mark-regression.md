@@ -534,3 +534,42 @@ result: consistent with everything measured, and not yet tested.
 the Devanagari gain collapses, granularity is the mechanism. Note that our own per-expert scales fit
 each expert tighter, which is the only structural difference we have found and the only candidate
 that predicts "helps most where precision is tightest".
+
+## Granularity IS the mechanism — blk result, 2026-09-11 06:27
+
+The block build (`--plain-max --scale2-block 128`) reproduces RadixArk's `weight_scale_2` granularity
+— 3 distinct values across 512 experts — and changes nothing else.
+
+| arm | granularity | overall NLL | vs stock |
+| --- | --- | --- | --- |
+| stock (base) | block | 1.7379 | — |
+| **blk** | **block** | **1.7367** | **−0.0012 — inside noise** |
+| lh_v3b | per-expert | 1.7227 | −0.0152 |
+
+**Reproducing the base's granularity collapses the entire advantage**, and it collapses precisely
+where the advantage lived: Devanagari **2.6298** (blk) against stock's 2.6431, versus **2.5541** for
+per-expert. Thai likewise: blk 2.0614, stock 2.0592, per-expert 2.0343.
+
+So the cause of our NLL gain over RadixArk is **per-expert `weight_scale_2`**, not Local-Hessian and
+not the corpus.
+
+### The confound that remains, stated
+
+`blk` is plain-max + block; `lh_v3b` is Local-Hessian + per-expert. They differ in **two** things, so
+strictly this shows "per-expert + LH beats block + plain max". The clean pair is `pmax` (per-expert +
+plain max) against `blk` — and `pmax` was only measured on the older 15-passage set, where it scored
+1.9542 against stock's 1.9663, i.e. most of the gain without any calibration.
+
+**Re-measuring `pmax` on the 59-passage set is the one measurement still owed.** It separates:
+granularity alone → 1.7227, or granularity plus a share from Local-Hessian. That distinction decides
+what is worth telling RadixArk — "use per-expert scales" is actionable, "use per-expert scales *and*
+Hessian calibration" much less so.
+
+### Do we need a v4? No.
+
+- **Weight-scale search is saturated.** `local_hessian` 8.585 %, `mse` 8.644 %, four-over-six 8.687 %,
+  plain max 9.490 % — every method within **0.10 pp** of the others and all capturing ~0.85–0.90 pp
+  of the available ~0.9. The residual is the 4-bit format, not the search.
+- **v3 already has the mechanism**: per-expert `weight_scale_2`.
+- **The only untouched lever is the activation scale**, and that needs a ModelOpt bump for
+  `nvfp4_act_headroom` — not another build with current tooling.
