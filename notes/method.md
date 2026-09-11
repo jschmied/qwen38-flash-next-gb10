@@ -93,3 +93,31 @@ arms with the flag correctly engaged. Capture first, then test the string:
 
 Same rule for every gate: assert on a value you can print, and print it into the results file so the
 harvest can see what the gate saw.
+
+## Record the kernel roster on every run
+
+Read kernel selection **from the run log, never from dispatch source**. Source-reading produced three
+wrong claims in one morning (det-180 twice, and the doubt cast on the published Periodic Table), each
+refuted in under a minute by a log that had been on disk the whole time.
+
+`/opt/llm/runners/kernelroster.py <server-log> [...]` prints, per log:
+
+- **linear** — `Using <kernel> for NVFP4 GEMM`. *Absence is a result*: it means no quantized dense
+  Linear was built, which is what Flash-Next looks like.
+- **moe** — the selected backend **and the candidates it rejected**, which vLLM prints for free.
+- **attention / vit** — the selected backend and its alternatives.
+- **cudagraph** — `GiB for CUDAGraph memory` and the count of `Capturing CUDA graphs` lines, flagged
+  `<-- NOT CAPTURING` when both are zero.
+
+Run it on every arm of every A/B and paste the block into the results file. Two arms that differ in a
+kernel nobody intended to change are not a comparison, and the roster is the cheapest way to see it.
+
+### Three traps it exists to catch
+
+1. **No `input_scale` tensor does not mean weight-only.** *Dynamic* activation quantization computes
+   the scale per token and stores nothing. Counting `input_scale` siblings to infer W4A16 vs W4A4 is
+   wrong; read `config_groups[...].input_activations` (`num_bits`, `dynamic`) instead.
+2. **The scheme class decides the dispatch.** `compressed-tensors` and `modelopt` reach different
+   selectors for the same bit widths. The log line `quantization=<method>` says which one ran.
+3. **Match the source to the build.** Logs from vLLM 0.27.1 cannot be explained by reading the
+   0.28.1 venv; the registry order and the forcing branches both changed between them.
