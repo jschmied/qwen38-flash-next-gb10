@@ -4208,3 +4208,63 @@ figures disagree, or which sits near 70 rather than 210, is not comparable to on
 And because we never measured it before today, **past A/B results cannot be audited for it
 retroactively**. That is the uncomfortable part: every null and every 5–10 % result in this file was
 taken without this control.
+
+## det-202 — we have NEVER used the FlashInfer GDN prefill kernel, and the fix is merged upstream
+
+Routine check of vLLM main against our venv base (`0.28.1rc1.dev401+g8340fe1bb`, **303 commits
+behind**, main HEAD `7ef4d9bfe`). One commit lands squarely on our stated next goal.
+
+### [#55715] Enable the FlashInfer GDN prefill kernel on SM12x — merged 2026-09-08
+
+The gate in `_resolve_gdn_prefill_backend()` sets `supports_flashinfer` for SM90 and the SM10x family
+only, so **SM12x falls through to the Triton/FLA fallback for every linear-attention layer** — which on
+Qwen3.5/3.6/3.8 is 3 of every 4 layers (36 of 48 on Flash-Next). The gate was written in #40717 for
+FlashInfer's SM100 kernel; the SM120 CuTe-DSL delta-rule prefill kernel landed later.
+
+**Confirmed on our box, not inferred:** across every server log we have, **1,216 of 1,216** GDN backend
+announcements read `Using Triton/FLA GDN prefill kernel (requested=auto, head_k_dim=128)`. Zero
+FlashInfer. We have never run that kernel.
+
+The PR carries measurements on **a DGX Spark GB10 (SM121)** — our exact hardware — ISL 32768, prefix
+caching off:
+
+| | Triton/FLA | FlashInfer | delta |
+| --- | --- | --- | --- |
+| TTFT, c1 | 17,972 ms | 16,680 ms | **7.2 %** |
+| TTFT, c4 | 26,349 ms | 24,400 ms | **7.4 %** |
+| request latency, c1 | 23,235 ms | 21,932 ms | 5.6 % |
+| output throughput, c1 | 11.01 tok/s | 11.67 tok/s | 6.0 % |
+
+The kernel itself microbenchmarks **3.83–4.52× faster** at 1k–8k, with `final_state` checked explicitly
+against the Triton/FLA path (the transpose trap from #40717) and agreement within bf16 tolerance.
+
+**To get it:** a venv bump past 2026-09-08 **and FlashInfer ≥ 0.6.18** — we are on **0.6.17**, so the
+version bump is a hard prerequisite, not incidental.
+
+### Our own scanner missed this gate, and that is worth recording
+
+`smgates.py` (queued 2026-09-11) classifies capability gates by whether they **enumerate** or
+**compare** architectures. This one does neither in a form it matches: it is a **resolver function**
+that sets a `supports_flashinfer` flag from an SM-family check, with the constraint documented in a
+docstring rather than expressed as `in (100, 103)`. The scanner would need to follow the flag, not
+pattern-match the literal.
+
+So the 8 "suspect" sites it found are a **lower bound, not a census**. Function-level and
+flag-mediated gates are invisible to it. Worth a second pass keyed on `supports_*` flags and on
+docstrings mentioning SM families.
+
+### Other main commits in our areas, not yet assessed
+
+- **#55272** *Remove torch.compile for the NVIDIA implementation* (merged 09-07) — removes
+  `@support_torch_compile` and the custom op registrations `qwen4_exp_compute_ple_ngram_ids`,
+  `qwen4_exp_ple_short_conv`, `qwen4_exp_qsa_with_output`. **Those are exactly the ops in our
+  `splitting_ops` list**, which is det-194's surviving hypothesis for why cudagraphs capture nothing.
+  Upstream removing the compile path for this model is strong corroboration, and it would change the
+  cudagraph picture entirely on a bump.
+- **#55170** *Prefer W4A4 linear kernels over weight-only ones on SM120/121* — det-180's subject,
+  merged. Still inert for us (no quantized dense Linear), but the venv would pick it up.
+- **#54110** *Fall back from persistent top-k on low-shared-memory GPUs* — det-179 found a shared-memory
+  ceiling on GB10 at ~93.6k tokens; this is the same territory.
+- **#55513** *Fix block FP8 MTP in ModelOpt mixed checkpoints* — merged, and the TODO lists MTP-body
+  quantization as gated behind a port of it.
+- **#55375** — our own PLE state-stride fix, merged.

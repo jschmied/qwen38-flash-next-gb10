@@ -516,6 +516,14 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **VENV BUMP: we have never used the FlashInfer GDN prefill kernel (det-202).** #55715 merged
+  2026-09-08 enables it on SM12x; our 1,216 logged GDN announcements are all Triton/FLA. The PR
+  measures **7.2 % TTFT on a GB10** at ISL 32768 and 3.8–4.5× on the kernel itself. **Needs FlashInfer
+  ≥ 0.6.18 (we are on 0.6.17)** plus a venv past 09-08. This is the largest measured item on the
+  prefill/TTFT goal and it is someone else's merged work, not ours to build.
+  Bundled in the same bump: #55272 (removes torch.compile for this model — bears directly on det-194's
+  open cudagraph question), #55170, #54110, #55513.
+
 - **Scan vLLM for sm_12x gates that could be opened (user request 2026-09-11).** Scanner written and
   installed: `/opt/llm/runners/smgates.py` (copy in `notes/data/`), output for dev401 in
   `notes/data/smgates-dev401.txt`. It separates gates that **enumerate** architectures from gates that
