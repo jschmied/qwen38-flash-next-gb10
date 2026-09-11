@@ -542,3 +542,25 @@ got wrong:
 5. Calibration is not where the gain comes from; granularity is.
 
 Links to RadixArk #13 rather than restating its table.
+
+### GitHub — 0xBakeer/deepseek-v41-flash-spark issue #1, 2026-09-11
+
+**"Unpruned path: ~35% is available from fetch/compute overlap, plus three quality-exact levers"**
+→ https://github.com/0xBakeer/deepseek-v41-flash-spark/issues/1
+Draft: `notes/upstream/issue-bakeer-unpruned-levers.md`
+
+Posted on the user's explicit go. Their repo had 0 open issues, discussions disabled, so an issue.
+
+Content: a cost model that reproduces their measured 3.5–4.0 tok/s unpruned (fetch 164 ms vs compute
+61 ms per token, serialised 4.5 / overlapped 6.1), then four levers that keep quality exact — overlap
++ batching, per-layer arena allocation by routing concentration, lossless entropy coding of the FP4
+stream (distinct from their lossy CB3, and falsifiable in minutes by histogramming nibbles), and more
+NVMe. Plus the acceptance-hypersensitivity caution from findings 154/158.
+
+**An error caught before posting:** I had told the user compute and fetch were "comparable" on this
+path. The 168 ms is a six-token verify step; amortised over acceptance 3.0 it is 61 ms/token, so
+fetch dominates 2.7:1. Re-deriving the arithmetic for the post is what surfaced it — and the corrected
+model then reproduced their published number, which is why it was worth posting at all.
+
+Our own numbers were flagged in the post as transferring as hypotheses, not results (different model).
+Do not reply without a fresh go.
