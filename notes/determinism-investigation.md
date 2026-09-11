@@ -4354,8 +4354,14 @@ capacity**. So the code deliberately breaks the dependency and then asserts on i
 up to a divisor of the block size (the spec's own docstring already says "rounded up to whole
 groups"); let the ring join the size computation with a floor that protects the allocator; or make the
 V1 path resolve this the way V2 evidently does, since MTP at n=3 produces the same capacity 12 and
-works. **Which of those is right is a maintainer's call**, and this is worth reporting with the
-traceback rather than patched here.
+works. **CORRECTED:** calling this "a maintainer's call" conflated two things. Which fix belongs *upstream*
+is theirs; whether we can test one *locally* is not — we patch venvs routinely via `venv-overlay`.
+
+The patch worth testing is the first: **`capacity = smallest divisor of block_size that is >= span`**,
+giving 16 instead of 12 for n=5. The source comment's safety invariant is `capacity >= span`
+("anything narrower lets a rejected draft row overwrite a committed key"); "whole groups" is only a
+*mechanism* for divisibility, and it buys nothing here because the ring never joins the LCM. 16 >= 11
+satisfies the invariant and divides 1616 by construction. Queued as TEST A.
 
 ### Which smgates candidates actually reach our two models
 

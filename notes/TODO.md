@@ -516,6 +516,30 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **TEST A — patch `qsa_cache.py` so ngram can serve (det-203).** We *can* fix this; I wrongly called
+  it a maintainer's call. The safety invariant in the source comment is `capacity >= span`
+  ("anything narrower lets a rejected draft row overwrite a committed key"); "whole groups" is only a
+  *mechanism* for divisibility, and it achieves nothing here because the ring never joins the LCM
+  (`CircularBufferSpec.prefix_cacheable` is `False`).
+  **Patch:** `capacity = smallest divisor of cache_config.block_size that is >= span`. For n=5 that is
+  **16 instead of 12** — safe (16 >= 11) and divides 1616 by construction.
+  Via `venv-overlay`: backup `.orig-qsacap`, on/off script, dry-run round trip on copies first
+  (rule 7 caught a real bug in the PLE port). **Prove the path at runtime** — log the chosen capacity.
+  **Decides:** whether ngram serves at all on this model, which then makes the Quant Map's ngram cells
+  (29.0 ms/tok agent claim) testable for the first time. If it serves, check output coherence before
+  any timing — a too-small ring corrupts silently, and that is exactly what this assert guards.
+
+- **TEST B — 27B FlashInfer large KV pages (first non-inert smgates hit).**
+  `v1/attention/backends/flashinfer.py:422` gates `use_large_pages` on
+  `is_device_capability_family(100)`; the 27B meets every other condition (24 Q / 4 KV, GQA 6) and
+  **uses `AttentionBackendEnum.FLASHINFER`**, unlike Flash-Next. So on sm_121 it is capped at KV block
+  sizes `[16, 32, 64]` and never offered >=128.
+  **Cell that must differ:** the advertised `kernel_block_sizes`. Patch the family check to admit 12x,
+  confirm >=128 is offered, then A/B TTFT + c=1 decode on the 27B, three starts, **bracketed with
+  `bwprobe.py`** (det-201).
+  **Unverified going in:** whether `can_use_trtllm_attention()` passes, and whether larger KV blocks
+  help at head_dim 256. If trtllm declines, the gate is moot and this closes in one start.
+
 - **VENV BUMP: we have never used the FlashInfer GDN prefill kernel (det-202).** #55715 merged
   2026-09-08 enables it on SM12x; our 1,216 logged GDN announcements are all Triton/FLA. The PR
   measures **7.2 % TTFT on a GB10** at ISL 32768 and 3.8–4.5× on the kernel itself. **Needs FlashInfer
