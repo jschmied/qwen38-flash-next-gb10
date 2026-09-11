@@ -607,4 +607,22 @@ push — `f8aa6906251a69b4e08889caa41d40b62ae2ca2e` — and all six links `curl`
 issue was drafted.
 
 Also corrects my own framing in #1: "add io_uring" was wrong; depth only substitutes for size.
-Do not reply without a fresh go.
+
+**REWRITTEN 2026-09-11, ~20 min after posting, on the user's instruction.** Two published claims were
+wrong and are withdrawn in a revision banner at the top of the body (not silently edited — anyone who
+read the original sees what changed):
+
+1. *"expert-major repacking is worth up to ~2.2×"* — contradicted by our OWN table. Combining
+   half-expert reads is −0.8 % at QD4 and +11.7 % at QD1, and a real NVFP4 expert splits ~17.7 MB
+   weights + ~1.1 MB scales, so the saving is single-digit percent. Nor is 2.5 GB/s a half-expert read
+   shape: those measure 4.53–6.47 here.
+2. *"DRAM-less explains the small-read collapse"* — 0.46 GB/s at 64 KiB is ~7,000 IOPS against a
+   controller rated ~1.0–1.2 M 4K random-read IOPS. Our thread-pool submission overhead is the likely
+   cause; an io_uring/fio sweep is needed before blaming hardware.
+
+Title changed to match what the data supports. Anchored on Phison's 7.4 GB/s E27T rating (6.5 =
+87.8 %) instead of an invented practical-link band, with the caveat that 7.4 is a controller capability
+rather than this OEM part's published rating.
+
+**The lesson:** both errors were catchable by checking the published conclusion against the published
+table in the same post. Neither needed new data. Do not reply without a fresh go.
