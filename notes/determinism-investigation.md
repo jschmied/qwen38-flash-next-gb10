@@ -4863,3 +4863,45 @@ Worth noting against det-208: 0.6.17 and 0.6.18 ship *identical* sm120 cubins, s
 out to be the cause it is via the Python or JIT path, not the compiled kernels.
 
 Data: `notes/data/venvmark-det211.txt`, per-script totals in `notes/data/markprobe-by-script.txt`.
+
+## det-211b — CORRECTION to det-210/211: it is a vowel SUBSTITUTION, not mark duplication
+
+I wrote both findings in the probe's vocabulary ("responses with duplicated combining marks")
+without looking at a single output. Looking at them changes the description, sharpens the bug, and
+makes the earlier `lh_v2` comparison wrong.
+
+**The actual failure, `hi-1`:**
+
+```
+source            उपयोगकर्ता को पहले लॉग इन करना होगा।
+fnmain2  6/6      उपयोगकर्ता को पहले लॉग इन करना होगा।     exact, byte-identical every rep
+fnmain3  6/6      उपयोगकर्तो को पहले लॉग इन करनो होगा।     wrong, byte-identical every rep
+```
+
+The full mark delta is **U+093E −2, U+094B +2**: every `ा` (VOWEL SIGN AA) in an open syllable
+becomes `ो` (VOWEL SIGN O). One codepoint substituted for another, twice, in the same two positions,
+in all six reps across both starts. **Nothing is duplicated.** `markprobe.py`'s `duplicated` field
+reports marks whose count went *up*, which a substitution also triggers — the metric cannot tell the
+two apart, and its docstring's claim to separate "wording drift" from "mark duplication" is weaker
+than it reads. It was self-tested against an injected duplicate and a dropped word, never against a
+substitution.
+
+**Three consequences.**
+
+1. The comparison to `lh_v2` (12/12 Devanagari) in det-210 is **withdrawn**. That build genuinely
+   duplicated marks; this substitutes one. Same counter, different defect. Saying prod was "in the
+   neighbourhood" of our withdrawn broken build was wrong and I should have read an output first.
+2. The stock-arm outputs are a *different* failure again — `उपयोगकर्ताने पहिले लॉग इन करणे आवश्यक आहे`
+   is Marathi, i.e. the model translating instead of copying. So the det/stock gap in det-210 (6 vs
+   10) was partly counting two unlike things. Another reason p = 0.412 deserved no weight.
+3. **The regression itself is real and is now much better characterised**, and it survives all of
+   the above: fnmain2 emits the exact source 6/6; fnmain3 emits a specific wrong codepoint 6/6.
+   Deterministic on both sides.
+
+**Why this is good news for the investigation.** A deterministic single-token substitution costs
+**one request** to test, not 24. Every remaining bisection rung is now a server start plus one HTTP
+call: ~13 minutes per hypothesis instead of ~28. `notes/data/markprobe-by-script.txt` counts stay
+valid as a *change* detector; they are just not a duplication count.
+
+The finding to carry forward: **fnmain3 substitutes U+093E → U+094B where fnmain2 copies exactly**,
+and the cause is one of ~123 vLLM commits, the FlashInfer minor, or the #55715 GDN kernel.
