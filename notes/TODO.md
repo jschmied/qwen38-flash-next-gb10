@@ -524,7 +524,7 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
   | site | gate | note |
   | --- | --- | --- |
-  | `v1/attention/backends/fa_utils.py:233` | `capability.major in (10, 11)` | **best candidate** — gates FA4's dedicated **hd256** kernel, and Flash-Next QSA is head_dim 256. Unverified whether FA4 is on our path at all (QSA has its own backend); the vision tower does use FLASH_ATTN. |
+  | ~~`v1/attention/backends/fa_utils.py:233`~~ | `capability.major in (10, 11)` | **CLOSED 2026-09-11, inert.** FA4 is never selected on our stack: across every `fnext-*.log` the only attention announcement is `FLASH_ATTN for vit attention`, and the 390 apparent "fa4" hits are hex fragments in cache hashes (`row0=2d432779fa4d`). The main model runs its own QSA state backend, so the hd256 gate is never consulted. Cost: one grep. |
   | `v1/attention/backends/mla/prefill/flash_attn.py:392` | `device_capability[0] in (10, 11)` | MLA prefill — we do not run MLA. Low value. |
   | `models/inkling/nvidia/ops/fa4_rel_attention.py:33` | `capability.major in (10, 11)` | different model family, not ours. |
   | `model_executor/kernels/linear/__init__.py:1068` | `compute_capability in (100, 103)` | det-180. Real, but **inert for us** — no quantized dense Linear in Flash-Next, and the 27B is W4A4/compressed-tensors. |
