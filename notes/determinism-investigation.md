@@ -3915,3 +3915,29 @@ nothing, which Thai orthography never permits.
 
 **This is a datapoint the issue does not have** — NVFP4, single box, tp 1 — and it rules out
 quantisation scheme as the cause on our side. Posting it needs the user's go.
+
+## det-197 (partial) — the PLE offload worker was never resident either; the mmap port's win is ~3 GiB, not 47.7
+
+det-195 left "2.3 GiB versus what?" open. Arm 1 measured 2026-09-11 11:2x, same model, util and
+flags, offload worker **on**:
+
+| | offload arm | mmap arm (det-195) |
+| --- | --- | --- |
+| main worker RSS | 2.18 GiB | 2.3 GiB |
+| PLE offload worker RSS | **1.62 GiB** | no such process |
+| checkpoint file-backed mappings | **0.0 GiB** | 47.7 GiB across 128 regions |
+| GPU "consumed memory" | 76.64 GiB | 74.74 GiB |
+
+**The offload worker never held the 47.7 GiB table resident.** It is 1.62 GiB and reads rows on
+demand — consistent with the 16 page faults per token we already recorded for that path. So the
+comparison is 3.80 GiB total worker RSS (offload) against 2.3 GiB (mmap), plus 1.9 GiB of GPU: a
+combined **~3.4 GiB**, not the table size.
+
+det-195 said the win "shows in the worker's own memory" and pointed at 47.7 GiB mapped vs 2.3 GiB
+resident. That contrast is real but it was never the *comparison* — the alternative was not a resident
+table. The honest statement is that both paths keep the PLE table off both GPU and host RAM, by
+different mechanisms, and mmap is ~3.4 GiB cheaper.
+
+**Incomplete:** one start per arm, measured in different sessions rather than one, and no
+under-pressure or concurrency behaviour. Arm 2 was pre-empted by higher-priority work before a
+same-session repeat. The direction is not in doubt; the 3.4 GiB is.
