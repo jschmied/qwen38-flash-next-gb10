@@ -72,25 +72,27 @@ head **constant across both arms** — otherwise two things vary at once.
 
 ## What is different about it
 
-> **⚠️ Read this before assuming the calibration is why you want this.**
+> **Held-out NLL/token — 59 Wikipedia passages, 70,734 scored tokens, 11 languages**, fetched at
+> offsets past the calibration corpus and never seen by any build:
 >
-> Held-out NLL/token, 15 Wikipedia passages / 15,880 tokens at offsets past the calibration corpus,
-> none of it seen by any build:
+> | | this build | base checkpoint |
+> | --- | --- | --- |
+> | NLL/token | **1.7227** | 1.7379 |
 >
-> | | this build (Local-Hessian) | plain-max, no calibration data | base checkpoint |
-> | --- | --- | --- | --- |
-> | NLL/token | **1.9488** | 1.9542 | 1.9663 |
+> **−0.0152, paired t = −3.92 over passages** (40/59 favour this build). It splits into a small
+> general gain — **−0.0069, t = −2.99** with Devanagari excluded — and a large Devanagari-specific one,
+> **−0.0891** across all six of its passages. By group: Devanagari −0.0891, Thai −0.0249, Cyrillic
+> −0.0104, English −0.0096, then everything else under 0.006, with Hebrew the one small regression
+> (+0.0021).
 >
-> **Both rebuilds beat the base** (−0.0175 and −0.0121), robustly: 12/15 passages, medians agreeing
-> with means. That part is real.
+> **⚠️ But do not assume the Hessian calibration is why.** A **plain-max** build — no calibration data
+> at all — scored 1.9542 against this build's 1.9488 on the earlier 15-passage set: a 0.0054 gap,
+> exactly at the resolution limit of that sample. Most of the advantage over the base is present
+> *without* any calibration. The cause has not been identified; the one structural difference found so
+> far is that we derive one `weight_scale_2` per expert while the base uses three values across all
+> 512.
 >
-> **But Local-Hessian is not demonstrably the reason.** It beats plain-max by 0.0054 — exactly the
-> threshold below which this sample size cannot resolve a difference, fixed before the measurement.
-> And a plain-max build with **no calibration data at all** captures most of the gain. The cause of
-> the improvement over the base has not been identified; it is not calibration.
->
-> Both builds are also identical on the combining-mark canary (0/48 corrupt, 48/48 exact) and match
-> the base there.
+> Both builds are also clean on the combining-mark canary (0/48 corrupt, 48/48 exact), matching the base.
 
 The per-group weight scales are chosen by **Hessian-weighted search** — ModelOpt's `local_hessian`,
 the method of [arXiv 2608.28113](https://arxiv.org/abs/2608.28113) ("H-Scale", Qwen team) — instead
