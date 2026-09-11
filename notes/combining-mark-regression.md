@@ -641,3 +641,30 @@ Hessian calibration" much less so.
 - **v3 already has the mechanism**: per-expert `weight_scale_2`.
 - **The only untouched lever is the activation scale**, and that needs a ModelOpt bump for
   `nvfp4_act_headroom` — not another build with current tooling.
+
+## v3 is published — 2026-09-11 08:09
+
+`josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts`: 48/48 layer files, 63.32 GiB, verified
+through the API rather than the uploader's own log (`layer00..layer47`, no zero-size entries).
+
+**Two failed runs before it landed, both in HuggingFace's Xet CAS:**
+
+| run | duration | error |
+| --- | --- | --- |
+| 06:07 | 90 min, 64.3/68 GB read | `ConnectionError` — `cas-server.xethub.hf.co/v1/xorbs/…` |
+| 07:43 attempt 1 | 23 min | `TimeoutError: error decoding response body` |
+| 07:43 attempt 2 | **1.7 min** | OK |
+
+**The single-commit choice is what made the failures harmless.** `upload_folder` pushes the LFS
+objects first and commits once, so after two crashes the public repo still showed 0 layer files — no
+index referencing files that were not there. File-by-file upload would have left a broken checkpoint
+public for 90 minutes.
+
+**And the retry was worth more than the diagnosis.** After the second failure I had a concrete fix
+ready (`HF_HUB_DISABLE_XET=1`, falling back to plain LFS multipart) and was one go-ahead from killing
+the run to apply it. Attempt 2 then finished in **1.7 minutes** — Xet had kept the xorbs from the
+23-minute attempt and only needed to commit. Switching would have discarded that and re-uploaded 63
+GiB. Backoff first, rearchitecture second.
+
+Card updated at publish time: the in-flight banner removed, and the stale "the cause has not been
+identified" caveat replaced with the granularity result and its table.
