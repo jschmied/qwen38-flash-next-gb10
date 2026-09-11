@@ -564,3 +564,25 @@ model then reproduced their published number, which is why it was worth posting 
 
 Our own numbers were flagged in the post as transferring as hypotheses, not results (different model).
 Do not reply without a fresh go.
+
+### GitHub — 0xBakeer/deepseek-v41-flash-spark issue #1, comment, 2026-09-11
+
+→ https://github.com/0xBakeer/deepseek-v41-flash-spark/issues/1#issuecomment-5632646769
+Draft: `notes/upstream/comment-bakeer-1-correction.md`
+
+**Withdraws lever 3 of our own issue body.** I had claimed NVFP4 might compress losslessly by 12–25 %.
+Measured 73.7 M nibbles: order-0 entropy **3.969 of 4.000**, order-1 conditional 3.968, combined floor
+with the FP8 scales **2.8 %**. Dead. The reason is structural — per-group amax scaling exists to make
+each group use the full code range, so near-uniform code occupancy is evidence the quantizer works.
+Flagged that this should generalise to their CB3 packing too.
+
+Also carried det-198 (Belady replay: nothing beats LRU, protected segment 5.3 pp worse, oracle gap
+5.5 pp but only 10.9 % reachable at a 6-token lookahead), since the issue body had touched the arena
+and a segmented cache is the obvious next thing they would build.
+
+Thread state checked first: 0 comments, still open. The original post had stated the falsification
+test explicitly ("if it comes out at 3.8 the idea is dead in minutes"), so the correction closes a
+loop we opened rather than raising a new topic.
+
+Caveats carried: different model/workload; gaps between policies transfer, absolute hit rates do not.
+Do not reply again without a fresh go.

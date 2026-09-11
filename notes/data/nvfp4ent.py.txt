@@ -1,0 +1,66 @@
+"""Is NVFP4 losslessly compressible? Histogram the actual nibbles and compute entropy.
+
+e2m1 packs two 4-bit codes per byte: {0,±0.5,±1,±1.5,±2,±3,±4,±6}. Per-group amax scaling
+means the extreme codes should be rare, so the order-0 entropy should sit below 4 bits. How
+far below decides whether a lossless decoder is worth building -- and it composes with a lossy
+scheme rather than competing with it.
+
+Also measures the FP8 E4M3 weight_scale stream, which is 1/16 of the bytes but may be far more
+redundant, and an order-1 conditional entropy to see if adjacent nibbles are correlated.
+"""
+import json, os, math, sys
+import numpy as np
+
+B = sys.argv[1] if len(sys.argv) > 1 else "/opt/llm/models/qwen38-flash-next-nvfp4"
+wm = json.load(open(os.path.join(B, "model.safetensors.index.json")))["weight_map"]
+
+
+def read(name):
+    p = os.path.join(B, wm[name])
+    fh = open(p, "rb"); n = int.from_bytes(fh.read(8), "little")
+    h = json.loads(fh.read(n)); base = 8 + n
+    a, b = h[name]["data_offsets"]; fh.seek(base + a)
+    return np.frombuffer(fh.read(b - a), dtype=np.uint8), h[name]["dtype"], h[name]["shape"]
+
+
+def ent(counts):
+    t = counts.sum()
+    p = counts[counts > 0] / t
+    return float(-(p * np.log2(p)).sum())
+
+
+print(f"checkpoint: {os.path.basename(B)}\n")
+tot_nib = np.zeros(16, dtype=np.int64)
+tot_scale = np.zeros(256, dtype=np.int64)
+pairs = np.zeros((16, 16), dtype=np.int64)
+n_w = 0
+for layer in (0, 12, 24, 36, 47):
+    for e in (0, 137, 400):
+        for tag in ("gate_proj", "up_proj", "down_proj"):
+            k = f"model.language_model.layers.{layer}.mlp.experts.{e}.{tag}.weight"
+            if k not in wm: continue
+            raw, dt, shape = read(k)
+            lo = raw & 0x0F; hi = raw >> 4
+            tot_nib += np.bincount(lo, minlength=16) + np.bincount(hi, minlength=16)
+            np.add.at(pairs, (lo, hi), 1)          # the two nibbles sharing a byte
+            n_w += raw.size * 2
+            s, _, _ = read(k + "_scale")
+            tot_scale += np.bincount(s, minlength=256)
+
+H0 = ent(tot_nib.astype(float))
+print(f"  weight nibbles sampled: {n_w:,}")
+print(f"  order-0 entropy        : {H0:.3f} bits of 4.000  ->  {100*(1-H0/4):.1f} % below FP4")
+print(f"  implied size           : {H0/4*18.8:.2f} MB per 18.8 MB expert")
+pj = pairs.astype(float) / pairs.sum()
+px = pj.sum(1); Hc = ent(pairs.astype(float)) - ent((px*pairs.sum()).astype(float))
+print(f"  order-1 conditional    : {Hc:.3f} bits  (adjacent-nibble correlation {'present' if Hc < H0-0.02 else 'negligible'})")
+print(f"\n  nibble distribution (code: share):")
+lev = [0,.5,1,1.5,2,3,4,6]
+for i in np.argsort(-tot_nib)[:8]:
+    v = lev[i & 7] * (-1 if i >> 3 else 1)
+    print(f"    {i:2d} (={v:+.1f}): {100*tot_nib[i]/tot_nib.sum():5.2f} %")
+Hs = ent(tot_scale.astype(float))
+print(f"\n  weight_scale (FP8 E4M3) entropy: {Hs:.3f} bits of 8.000 -> {100*(1-Hs/8):.1f} % below")
+print(f"  scales are 1/16 of weight bytes, so their share of a combined saving is small")
+eff = (H0/4*16 + Hs/8*1) / 17
+print(f"\n  COMBINED lossless floor: {100*(1-eff):.1f} % smaller than the packed NVFP4 on disk")
