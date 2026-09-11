@@ -1920,7 +1920,7 @@ our #53899 CPU-offload PLE rather than their NVMe mmap — can unlock it. **That
 nice-to-have into the only route to this lever**, and it means the prize is whatever full-decode capture
 is worth on this model, which nobody here has measured yet.
 
-## DeepSeek-V4.1-Flash on one Spark? — no, 2026-09-10
+## ~~DeepSeek-V4.1-Flash on one Spark? — no~~ **YES — it has been done. See the second correction at the end of this section.**
 
 `deepseek-ai/DeepSeek-V4.1-Flash`: **475.3 GiB BF16**, ~255 B params, 40 layers, hidden 5120,
 384 routed experts / top-6, 1 shared, vocab 129,280, `max_position_embeddings` **1,048,576**.
@@ -1971,6 +1971,47 @@ tokens) into a row index and reads a 256-dim vector. No matmul. They never need 
 mmap from NVMe and page in the handful of rows a token touches. **That is exactly what our PLE
 offload does**, and what `0xBakeer` relies on to run Flash-Next at ~22 tok/s
 (`flashnext-prior-art-llamacpp`).
+
+### CORRECTION 2 — it has been built, it serves, and my whole framing was wrong, 2026-09-11
+
+[0xBakeer/deepseek-v41-flash-spark](https://github.com/0xBakeer/deepseek-v41-flash-spark) runs
+**DeepSeek-V4.1-Flash on one GB10**, 510 GB on disk, at full FP4 expert quality — nothing requantised,
+nothing pruned. Pushed 2026-09-11. The user pointed me at it after I had written "no" at the top of
+this section.
+
+| measured (their RESULTS.md, 2026-09-10) | |
+| --- | --- |
+| decode | **2.68 tok/s** median (1.75 with DSpark off) |
+| TTFT | 7–11 s |
+| NVMe read per generated token | **0.92 GB** |
+| expert hit rate at a 25.6 % resident set | ~0.83 |
+| correctness vs a pure-torch reference port | NLL **+0.006 / +0.026 nats**, top-1 slightly better |
+| compute share of decode | **< 8 %** — the rest is the SSD |
+
+**Where my reasoning failed.** I compared published checkpoint sizes against 119.2 GiB of unified
+memory and concluded nothing fits. That treats residency as a **capacity** question. It is a **cache**
+question: rank the routed experts by a measured routing trace, keep the hot 25.6 % in a 73.8 GB arena,
+stream the other 74.4 % off NVMe with `O_DIRECT`.
+
+Worse, CORRECTION 1 above already made exactly this argument for the **engram tables** — 189 GiB of
+pure lookup that never needs to be on the GPU — and I did not carry it one step further to the
+experts. I had the right idea and stopped applying it too early.
+
+**The consequence for the rest of this section.** "What would be needed: ≤ ~90 GiB of weights, i.e.
+~3.0 bits/param, IQ2/IQ3 only" is void — it inherits the all-weights-resident premise. And the Hy3
+caution does not transfer as written: that was a 295 B model *shrunk* to 1.5 bits losing to a dense 27 B
+at 4 bits. This recipe shrinks nothing and pays in **speed** instead. 2.68 tok/s against Flash-Next's
+~36 is a real cost, but it is a different trade and has to be argued on its own terms.
+
+**What is still fair to say, from their own README:** it is explicitly work in progress — one
+benchmark row, no long-generation or thinking-mode figure, the container image never run, nothing
+repeated on a second day. Their `LIMITATIONS.md` says so before we would. That bounds how much weight
+the 2.68 carries; it does not rescue my "no".
+
+**Method note for us:** 0xBakeer is already in our notes for the Flash-Next PLE mmap trick
+([[flashnext-prior-art-llamacpp]]) and is the same source behind the PLE mmap port we landed today
+(det-192/195). Second time this month that checking their work first would have saved a wrong claim —
+[[check-field-before-expensive-steps]] applies to negative claims too, not just to expensive steps.
 
 **Two corrections to my earlier assessment:**
 
