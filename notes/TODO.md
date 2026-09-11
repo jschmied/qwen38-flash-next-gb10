@@ -536,14 +536,10 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   new to us; and they do NOT carry #55122, so their production has the QSA top-k nondeterminism.
   Their decode numbers (26.8 tok/s @47.6k, 33.8 @30k, production median 22.7) agree with ours.
 
-- **NVFP4 kernel selection on sm_121 — REOPENED for the DENSE 27B (det-180 correction, 2026-09-11).**
-  The 27B has 401 quantized dense Linears and no `input_scale`, so `use_a16=True` forces **Marlin** on
-  sm_121 while CuteDSL W4A16 reports itself supported. Cheap A/B: `--linear-backend flashinfer_cutedsl`
-  vs `auto`, c=1 decode + TTFT, three starts. **The published 27B map (NVFP4 Periodic Table) rests on
-  this**: it labels two of four columns `W4A16 · Marlin` with a ~2-4 s TTFT penalty in the header and
-  calls the kernel a property of the format — 10 measured cells sit in those two columns. If the flag
-  lifts the penalty, the headers are wrong and must go through the `nvfp4-table` skill. Closed only
-  for Flash-Next:
+- ~~**NVFP4 kernel selection on sm_121 — REOPENED for the DENSE 27B**~~ **WITHDRAWN 2026-09-11: the
+  27B is W4A4 with *dynamic* activations (no stored `input_scale`) on compressed-tensors, and 13 run
+  logs show `FlashInferCutlassNvFp4LinearKernel`, never Marlin. The published Periodic Table is
+  correct and needs no change. Closed for Flash-Next too:
 - ~~**...for Flash-Next**~~ **CLOSED 2026-09-11 (det-180):
   real upstream, INERT for us — our checkpoint has zero quantized dense Linears (73,728 expert matrices
   + 1 PLE embedding, everything else excluded), so the selector is never consulted. The doubt over

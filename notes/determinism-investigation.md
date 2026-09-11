@@ -3483,7 +3483,11 @@ The finding stands as measured.
 
 **Action for Flash-Next: none.** #55405 changes a selection this checkpoint never makes.
 
-### CORRECTION 2026-09-11 — "inert for us" was too broad; the dense 27B IS affected
+### ~~CORRECTION — the dense 27B IS affected~~ **WITHDRAWN 2026-09-11 07:5x, see below**
+
+The section that follows inferred "no `input_scale` tensors ⇒ W4A16 ⇒ `use_a16=True` ⇒ forced
+Marlin". **Every step after the first is wrong, and the first is wrong too.** Kept in full because
+the reasoning is instructive; read the withdrawal at the end before using any of it.
 
 Scope error: the paragraph above is true of **Flash-Next**, not of our fleet. The dense
 `qwen38-27b-nvfp4` is the opposite case and it is the model we prefer for long work
@@ -3524,6 +3528,42 @@ Flash-Next — and the SM list is worth reporting upstream with a GB10 number at
 
 **What does NOT change:** the [[w4a16-vs-w4a4-measured]] comparison was run on Flash-Next, where both
 arms have W4A4 experts and no quantized dense Linears. Its 0.42 pp gap is still not explained by this.
+
+### WITHDRAWAL — the 27B is W4A4 with *dynamic* activations, and it runs CUTLASS
+
+Checked against the actual run logs with `kernelroster.py` (below) instead of by reading dispatch
+code. Thirteen 27B server logs, all on `/opt/llm/models/qwen38-27b-nvfp4`, all say:
+
+```
+Using FlashInferCutlassNvFp4LinearKernel for NVFP4 GEMM
+```
+
+**Not Marlin.** Zero occurrences of "marlin" in any of them. The premise was the error:
+
+| I claimed | Actually |
+| --- | --- |
+| 0 `input_scale` tensors ⇒ weight-only (W4A16) | **dynamic** activation quant stores no `input_scale`; the scale is computed per token at runtime |
+| takes the ModelOpt `use_a16` branch | the checkpoint is **compressed-tensors**, `quantization=compressed-tensors` in the log — a different scheme class with its own dispatch |
+| forced to Marlin on sm_121 | selects `FlashInferCutlassNvFp4LinearKernel`, a W4A4 kernel |
+
+`config.json` settles it — `config_groups.group_1`, targeting `re:.*mlp\.(gate|up|down)_proj$`:
+`weights num_bits=4, dynamic=False, group_size=16` and
+**`input_activations num_bits=4, dynamic=local, group_size=16`**. W4A4. (`group_0` — attention,
+linear_attn, `lm_head`, the last eight layers' MLP — is W8A8 FP8 dynamic.)
+
+Also: those logs are **vLLM 0.27.1**; the dispatch code I traced is the current **0.28.1rc1** venv.
+Reading today's source to explain a measurement taken on an older build is its own mistake.
+
+**Consequence: the doubt cast on the published NVFP4 Periodic Table is withdrawn in full.** I claimed
+its two `W4A16 · Marlin` columns (10 measured cells) might be misattributing an SM-list default to the
+quantization scheme. No evidence supports that: the one cell whose log I can read ran
+`W4A4 → CUTLASS`, which is exactly what the map's column header says. The map's rule
+("W4A4 forces CUTLASS, W4A16 forces Marlin") is unrefuted and, for the W4A4 half, now directly
+confirmed from a run log. **Nothing on that page needs changing.**
+
+What survives: the sm_121 forced-Marlin branch is real in 0.28.1's **ModelOpt** path for a genuinely
+weight-only checkpoint. We do not currently serve one, so it remains untriggered here — the same
+verdict as for Flash-Next, reached for a different reason.
 
 ## det-192 — PLE mmap is a 3-file port, but it REQUIRES `--enforce-eager`, so det-158 gates it
 

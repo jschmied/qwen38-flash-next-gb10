@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+"""Which kernels did this run actually select? Read it from the log, never from source.
+
+Every claim about kernel selection in this project had been made by reading vLLM's
+dispatch code. That is how det-180 was first written, and why its scope came out
+wrong. vLLM announces each selection at startup, usually WITH the candidate list it
+rejected, so the run itself can be asked instead.
+
+Absence is a result too: no "for NVFP4 GEMM" line means no quantized dense Linear was
+ever built, which is the empirical form of det-180.
+
+Usage: kernelroster.py <server-log> [more logs...]
+"""
+import re, sys, os
+
+PATS = [
+    ("linear",    r"Using (\S+) for ((?:NV|MX)FP\d+) GEMM"),
+    ("moe",       r"Using '?([A-Za-z0-9_ ]+?)'? (\S*\s?MoE) backend(?: out of potential backends: (\[[^\]]*\]))?"),
+    ("attention", r"Using (\S+) attention backend out of potential backends: (\[[^\]]*\])"),
+    ("vit",       r"Using backend (\S+) for vit attention"),
+]
+CG_MEM = re.compile(r"([\d.]+) GiB for CUDAGraph memory")
+CG_CAP = re.compile(r"Capturing CUDA graphs")
+
+
+def roster(path):
+    seen, cg_mem, cg_cap = [], None, 0
+    with open(path, errors="replace") as f:
+        for line in f:
+            for kind, pat in PATS:
+                m = re.search(pat, line)
+                if m:
+                    ent = (kind,) + tuple(g for g in m.groups() if g)
+                    if ent not in seen:
+                        seen.append(ent)
+            m = CG_MEM.search(line)
+            if m:
+                cg_mem = float(m.group(1))
+            if CG_CAP.search(line):
+                cg_cap += 1
+    return seen, cg_mem, cg_cap
+
+
+for path in sys.argv[1:]:
+    seen, cg_mem, cg_cap = roster(path)
+    print(f"\n=== {os.path.basename(path)} ===")
+    for ent in seen:
+        kind, sel, rest = ent[0], ent[1], ent[2:]
+        extra = ""
+        for r in rest:
+            if r.startswith("["):
+                others = [x.strip(" '\"") for x in r.strip("[]").split(",")]
+                others = [o for o in others if o and o.upper() != sel.upper()]
+                extra += f"\n             rejected: {', '.join(others)}"
+            else:
+                extra = f" [{r}]" + extra
+        print(f"  {kind:10s} {sel}{extra}")
+    if not any(e[0] == "linear" for e in seen):
+        print("  linear     -- none --  no quantized dense Linear in this checkpoint")
+    flag = "   <-- NOT CAPTURING" if (cg_mem == 0.0 and cg_cap == 0) else ""
+    print(f"  cudagraph  {cg_mem if cg_mem is not None else '?'} GiB, {cg_cap} capture lines{flag}")
