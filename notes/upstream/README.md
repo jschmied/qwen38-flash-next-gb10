@@ -641,3 +641,21 @@ swap.
 Three wrong claims across two revisions, every one caught by re-measuring rather than re-reasoning,
 and every one traceable to reading a conclusion off a table that stopped too early. Revision banners
 kept visible rather than editing silently. Do not reply without a fresh go.
+### vLLM #56088 comment, 2026-09-11 — ngram corroboration of the V1 PLE blocker
+
+→ https://github.com/vllm-project/vllm/issues/56088#issuecomment-5635833608
+Draft: `notes/upstream/comment-56088-ngram-corroboration.md`
+
+Posted on the user's go, kept short by request. seanphan hit "PLE inputs were not prepared" with a
+DeepSpec DFlash/DSpark drafter on 2x GB10 TP2; we hit the identical error via **ngram on 1x GB10 TP1**.
+Two independent routes reframe their item 1 from "DFlash cannot boot" to **"any method that forces the
+V1 runner cannot serve this target"**.
+
+Also told them blocker 2 sits directly behind it — patching V1 PLE lands you on the QSA ring assert
+(#54552, fix already open as #54912) — and that we verified the ordering by patching the ring locally
+(det-204: cleared on all 12 QSA layers, PLE error surfaced immediately after).
+
+**Deliberately gave no opinion on their design question.** They withheld a PR on item 1 precisely
+because it is architectural, and picking a side would have been the wrong contribution.
+
+Thread state checked first: 0 comments, still open. Do not reply again without a fresh go.
