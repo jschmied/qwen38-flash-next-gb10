@@ -545,7 +545,17 @@ anything (memory `queue-chain-check-before-restart`).
 
 - `fx-gdnab-driver` → det-207, GDN prefill A/B, 3 starts/arm. Early: on 0.559/0.561 s vs off
   0.589/0.589 s TTFT at 6k prompt.
-- `fx-thaidet-driver` → the vllm#54739 Thai question, queued. `/opt/llm/runners/thaidet.py`,
+- `fx-thaidet-driver` → the vllm#54739 Thai question. **First attempt VOIDED 19:58**: `thaidet.py`
+  used port 8080, the launcher serves **8092**, so every request was a connection error and the probe
+  scored 0 responses. The void check earned its place — without it the run would have reported
+  "both arms clean, 0 corrupt", a false refutation. Restarted 20:14 with the port fixed.
+  A `sys.exit(1)` on VOID skips the cleanup, so the orphaned `fx-thaidet` server had to be stopped
+  by hand; plefix was left installed (the det arm), so prod state was never wrong.
+  **New question raised by a 1-rep smoke test at 20:11:** the det arm (= prod config) duplicated a
+  Devanagari mark (hi-1, U+094B x2) on the stock checkpoint. `combining-mark-regression.md` has that
+  same checkpoint and flags at **72/72 clean** — but on fnmain2 (dev401, FlashInfer 0.6.17), not
+  fnmain3. If the det arm's 48-response rate is non-zero, that is a candidate regression from the
+  venv bump and it affects prod. n=1 so far: a flag, not a finding. `/opt/llm/runners/thaidet.py`,
   2 starts/arm, det overlays vs stock, stock RadixArk checkpoint, MTP 3.
   Arms: `FN_DET_TOPK`/`FN_DET_FINALIZE` env + the `plefix` source toggle. **Void check uses the
   marker `Clear any semaphore still raised`** — `release_offloaded_output(stream)` occurs elsewhere
