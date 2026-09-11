@@ -516,6 +516,8 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **PLE mmap — GATED ON det-158 (see det-192, 2026-09-11): the port is only 3 files, but it requires
+  `--enforce-eager`, which our PIECEWISE config rules out unless cudagraphs are inert here.**
 - **PLE mmap as an alternative to CPU offload — could revive the ngram comparison (found 2026-09-07
   in [Radar105/qwen38-flash-next-nvfp4-spark](https://github.com/Radar105/qwen38-flash-next-nvfp4-spark)).**
   det-160 established that `VLLM_PLE_CPU_OFFLOAD` forces a V1 conflict that makes ngram/ngram_gpu

@@ -3484,3 +3484,50 @@ The finding stands as measured.
 **Action: none.** Do not apply #55405 to our venv; it changes a selection we never make. Worth a note
 on the issue that sm_121 reproduces it, if we ever post there — with the caveat that a MoE-only
 checkpoint does not exercise it.
+
+## det-192 — PLE mmap is a 3-file port, but it REQUIRES `--enforce-eager`, so det-158 gates it
+
+Desk review of `patches/vllm-complete.patch` in
+[Radar105/qwen38-flash-next-nvfp4-spark](https://github.com/Radar105/qwen38-flash-next-nvfp4-spark)
+(sha256 `e05d11568ddd96f0…`, 1,755 lines, 23 files). No venv was touched.
+
+**The mmap reader does not need the other 20 files.** It is three pieces:
+
+| piece | where |
+| --- | --- |
+| `MmapPLEEmbedding` (new file) | `vllm/models/qwen4_exp/nvidia/ple_mmap.py` |
+| `VLLM_QWEN4_PLE_MMAP` flag | `vllm/envs.py` |
+| dispatch before `PLEVocabParallelEmbedding` | `vllm/models/qwen4_exp/nvidia/ple_layer.py` |
+
+The other 20 files are five stacked upstream PRs plus their tests; the TODO's worry about having to
+take the whole stack is unfounded.
+
+### Three hard gates, and one of them is the problem
+
+1. **TP1 only** — we are TP1. Fine.
+2. **F8_E4M3 checkpoint rows only** — our PLE is FP8. Fine.
+3. **`--enforce-eager` required** — checked twice: at config time, and inside `forward()` via
+   `torch.cuda.is_current_stream_capturing()`.
+
+### Why it needs eager: the lookup runs on the CPU
+
+`forward()` does `indices.to(device="cpu")`, `np.unique` to dedup, numpy fancy-indexing into the
+`np.memmap` shards, then `.to(indices.device)`. That is a device→host sync plus page-faulted host
+reads plus a host→device copy **per PLE call** — impossible inside a captured graph, hence the gate.
+It is not "map the table into GPU memory"; it is a host-side gather with a dedup in front of it.
+
+### Consequence: det-158 is now a prerequisite, not a sibling
+
+We serve with `cudagraph_mode: PIECEWISE`, which `--enforce-eager` would disable. So the mmap path is
+unusable for us **unless cudagraphs are already doing nothing here** — exactly what det-158 suspects
+(`0.0 GiB for CUDAGraph memory`, zero `Capturing CUDA graphs` lines in both arms of the capture-width
+A/B). Radar105 running `--enforce-eager` in their own production is independent support for that.
+
+**Reordered:** det-158 (`FN_CG_MODE=NONE` arm) must land before any mmap port. If cudagraphs are inert,
+eager is free and the port is worth doing; if they are live, the port costs whatever they are worth and
+the ngram question needs a different route.
+
+**Not established:** whether the mmap path avoids the V1 executor rejection that
+`VLLM_PLE_CPU_OFFLOAD` triggers (det-160). It uses no offload worker, so it plausibly does, but that
+is a claim about a code path I have not run. It also substitutes its own constraint, so "ngram is
+unblocked" does not follow from "the offload conflict is gone".
