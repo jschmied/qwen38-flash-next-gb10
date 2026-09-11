@@ -586,3 +586,25 @@ loop we opened rather than raising a new topic.
 
 Caveats carried: different model/workload; gaps between policies transfer, absolute hit rates do not.
 Do not reply again without a fresh go.
+
+### GitHub — 0xBakeer/deepseek-v41-flash-spark issue #2, 2026-09-11
+
+**"NVMe read shape is the remaining lossless lever: size and queue depth substitute, and ~2.5 GB/s
+looks like a layout symptom"**
+→ https://github.com/0xBakeer/deepseek-v41-flash-spark/issues/2
+Draft: `notes/upstream/issue-bakeer-2-readshape.md`
+
+Posted on the user's explicit go. Carries det-199 (the read-size/QD curve), plus det-198 and the NVFP4
+entropy result as the reason read shape is what remains.
+
+The actionable claim: their reported ~2.5 GB/s sits where ~1 MiB at QD1 lands on our curve, an order
+of magnitude below one 18.8 MB expert — consistent with their scale-run + weight-run split. So
+expert-major repacking, already their own item, is worth up to ~2.2×. Evidence for promoting it, not a
+new idea, and said that way.
+
+**Permalink hygiene followed** (the rule from the four 404s on #55122): SHA captured *after* commit and
+push — `f8aa6906251a69b4e08889caa41d40b62ae2ca2e` — and all six links `curl`-checked for 200 before the
+issue was drafted.
+
+Also corrects my own framing in #1: "add io_uring" was wrong; depth only substitutes for size.
+Do not reply without a fresh go.
