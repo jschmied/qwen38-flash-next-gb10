@@ -19,13 +19,16 @@ tags:
 > Qwen3.8-Flash-Next quantization on a single DGX Spark: which schemes fit in 128 GB, what
 > each costs in speed and quality, and where this piece sits among them.
 
-> **⏳ Weights are not uploaded yet.** The build is finished and verified — the numbers below are
-> real — but the 63 GiB of expert files have not been transferred. Until they land, this repo is the
-> method, the merge recipe and the verifier, not a usable checkpoint.
+> **⏳ Weights are uploading now** (started 2026-09-11 06:07, 63.3 GiB in a single commit). Until that
+> commit lands the repo holds the method, the merge recipe and the verifier — not a checkpoint. The
+> file list going from 3 to 51 in one step is the signal that it is complete; there is deliberately no
+> partial state.
 >
-> An earlier build was withdrawn after the combining-mark canary caught it corrupting Thai; the cause
-> was two export-contract bugs of ours, now fixed and covered by a verifier check. No weights were
-> ever published. The history is in
+> An earlier build was withdrawn after the combining-mark canary caught it corrupting Thai. The cause
+> was two export-contract bugs of ours — `input_scale` written as `amax/6` instead of `amax/2688`, and
+> gate/up not sharing one `weight_scale_2` — both now fixed and both covered by a verifier check that
+> is exercised against the broken build so it is proven to fire. No weights were ever published. Full
+> history in
 > [combining-mark-regression.md](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/combining-mark-regression.md).
 
 Every `TBD` below is a cell that must be filled by a measurement. If one cannot be filled, the claim
