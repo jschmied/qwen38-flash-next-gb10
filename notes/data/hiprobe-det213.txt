@@ -1,0 +1,19 @@
+== Devanagari exact-copy rate: 12 prompts x 2 cache roots x 2 venvs ==
+   1 rep per prompt -- det-212 measured output byte-identical within a configuration
+-- fnmain2-ra
+   fnmain2-ra: 10/12 exact copies   wrong: hi-08,hi-11
+-- fnmain2-rb
+   fnmain2-rb: 10/12 exact copies   wrong: hi-08,hi-11
+-- fnmain3-ra
+   fnmain3-ra: 8/12 exact copies   wrong: hi-01,hi-05,hi-08,hi-11
+-- fnmain3-rb
+   fnmain3-rb: 8/12 exact copies   wrong: hi-01,hi-05,hi-08,hi-11
+== RESULT ==
+  fnmain2-ra   10/12 exact
+  fnmain2-rb   10/12 exact
+  fnmain3-ra    8/12 exact
+  fnmain3-rb    8/12 exact
+  fnmain2 20/24   fnmain3 16/24
+  Both cache roots agreeing within a venv, and the venvs differing -> REGRESSION.
+  Cache roots disagreeing within a venv -> FRAGILITY; det-211 was a knife-edge, withdraw it.
+== ALL DONE ==

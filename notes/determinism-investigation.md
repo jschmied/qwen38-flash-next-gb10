@@ -4953,3 +4953,49 @@ the same, it is a regression whatever any single prompt does. det-213 runs that.
 Relevant prior: `temp0-not-reproducible-under-load` already records that this model diverges at
 temp 0 even at c=1. A single prompt at temp 0 was never a safe measurement here, and I built two
 findings on one.
+
+## det-213 — the difference is real and reproducible, but far smaller than I said, and fnmain2 is not clean
+
+12 Hindi copy prompts × 2 cold cache roots × 2 venvs, scoring **exact copy** only — no mark counting,
+which is what produced the two wrong characterisations in det-210/211b.
+
+| arm | exact | wrong |
+|---|---|---|
+| fnmain2-ra | 10/12 | hi-08, hi-11 |
+| fnmain2-rb | 10/12 | hi-08, hi-11 |
+| fnmain3-ra | 8/12 | hi-01, hi-05, hi-08, hi-11 |
+| fnmain3-rb | 8/12 | hi-01, hi-05, hi-08, hi-11 |
+
+**Two things settle the method question.** The cache roots agree exactly — not only the same counts
+but the same prompts, and every wrong answer **byte-identical** between `ra` and `rb` in both venvs.
+So det-212's cache-root instability was local to that one situation, not a general property, and the
+measurement is stable after all. And the failure sets are **nested**: fnmain3 fails everything
+fnmain2 fails plus two more, and never wins one fnmain2 loses.
+
+**Two things walk back what I told the user.**
+
+1. **fnmain2 is not clean.** It fails 2 of 12, with the same defect family:
+   `जोड़ने → जोड़नो`, `करें → करेन` (hi-08); `पूरा नहीं किया → पूरानहो नहो कियान` (hi-11). So this is
+   **not a new bug class introduced by fnmain3** — it is a pre-existing Devanagari matra weakness in
+   the stock RadixArk NVFP4 checkpoint, and fnmain3 is worse on it by two prompts.
+2. **The rate difference is weak.** 20/24 vs 16/24 is Fisher **p = 0.318**. The nesting and the
+   byte-identical reproducibility are what make it a real deterministic difference; the *rate* is
+   not something to quote. det-211's "half of all Devanagari copy tasks" came from two prompts and
+   a metric that counted translations as corruption.
+
+**Correction to the prod warning.** I told the user prod was carrying a regression in the
+neighbourhood of our withdrawn broken build. On this evidence: prod on fnmain3 fails 4 of 12
+Devanagari copies; prod on fnmain2 would fail 2 of 12. That is a real difference worth chasing but
+it is not the alarm I raised, and the pre-fnmain3 baseline was never clean.
+
+### What is probably the more valuable finding here
+
+The **stock RadixArk checkpoint corrupts Devanagari matras on 2–4 of 12 plain Hindi copy tasks, on
+both venvs.** That is a property of the published checkpoint, not of our serving stack. It also
+corroborates HF discussion #13 from the other side: our per-expert `weight_scale_2` rebuild's single
+largest held-out gain was **Devanagari, −0.0891 NLL**, consistent across all six of its passages. We
+argued that from NLL; this is the behavioural version of the same claim, and it is a stronger form
+of evidence. **Running this probe on the LH rebuild vs stock is one A/B and may be worth more than
+finishing the venv bisect.** Queued, not yet run.
+
+Data: `notes/data/hiprobe-det213.txt`, raw in `/opt/llm/runners/results/hiprobe.jsonl`.
