@@ -3749,3 +3749,59 @@ Cudagraphs are **inert on this model**, across every knob we can reach. So:
 - Any future A/B that varies a cudagraph knob on Flash-Next is void before it starts. Check
   `kernelroster.py` output first ([[kernel-roster-from-logs]]).
 - det-136's null and the capture-width null both have this as a sufficient explanation.
+
+## det-195 — PLE mmap ported and serving; the dispatch fires on the real checkpoint
+
+det-192 said the port was 3 files and gated on det-158; det-193/194 ungated it by showing
+`--enforce-eager` costs nothing here. Installed 2026-09-11 09:20.
+
+### What is installed (venv-overlay rule 10)
+
+| | |
+| --- | --- |
+| venv | `vllm-venv-fnmain2`, `0.28.1rc1.dev401+g8340fe1bb` |
+| new file | `vllm/models/qwen4_exp/nvidia/ple_mmap.py` (113 lines, `MmapPLEEmbedding`) |
+| edited | `vllm/envs.py` (type line + lambda), `models/qwen4_exp/nvidia/ple_layer.py` (import + dispatch) |
+| backups | `<file>.orig-plemmap` beside each; **`ple_layer.py` had no `.orig-dev401`**, so the pristine tgz is not a proven fallback for it |
+| on/off | `ple_mmap_patch.py` (copy in `notes/data/`); round-trip verified byte-identical on copies before install |
+| source | Radar105/qwen38-flash-next-nvfp4-spark `patches/vllm-complete.patch` — 3 of its 23 files; the other 20 are five stacked upstream PRs we do not need |
+
+### The dry run earned its keep
+
+`envs.py`'s neighbouring entry is a **three-line** lambda. The first version of the patch script
+inserted after the first newline — inside the parentheses — producing a `SyntaxError`. On the live
+venv that is a server that dies at import. Caught by rule 7 (dry-run on copies) before anything was
+touched, which is the rule written after a 4-space indent reached the venv through a queued runner
+and lost a run.
+
+### Test before serve (rule 9)
+
+Their patch ships a test, but it calls a helper that lives in the upstream test file and a wheel
+install does not ship tests. Wrote a focused standalone equivalent instead — `== ALL DONE ==`, 7/7:
+
+- refuses to run before the global scale is loaded
+- **lookup byte-identical to a resident gather**, including a repeated id and the last row of each shard
+- zero resident parameters
+- empty input keeps its shape; out-of-range ids rejected at both ends; a missing shard refused
+
+### Runtime proof (rule 8)
+
+```
+PLE mmap: 128 shards, 47.684 GiB file-backed FP8; no resident table copy
+```
+
+128 shards and 47.7 GiB match the checkpoint's known PLE geometry, so the dispatch fired on the real
+table and not on a synthetic one. **Without this line any timing from this arm would be void** — the
+stock path would look identical from the outside.
+
+Arm: `FN_PLE_OFFLOAD=0` (mmap replaces the offload worker), `VLLM_QWEN4_PLE_MMAP=1`,
+`--enforce-eager`, `FN_MTP=0`, util 0.75.
+
+### Open, at the time of writing
+
+Resident-memory delta against the offload path and any decode/TTFT numbers — the arm was still
+starting. The comparison baseline is `/opt/llm/fnext-cgnospec.log` (same model, same util, offload
+worker **on**, 76.25 GiB consumed).
+
+**It also revives the ngram comparison** that det-160 called impossible: that V1 executor conflict
+came from `VLLM_PLE_CPU_OFFLOAD`, which this path turns off.

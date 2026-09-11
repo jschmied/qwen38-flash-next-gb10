@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Install/remove the PLE mmap dispatch. `python ple_mmap_patch.py [off]`
+
+Three pieces (det-192): the new ple_mmap.py module, the VLLM_QWEN4_PLE_MMAP env var,
+and a dispatch block in ple_layer.py ahead of PLEVocabParallelEmbedding.
+
+Targets are overridable so the script can be dry-run on copies (venv-overlay rule 7).
+"""
+import os, sys, ast
+
+V = os.environ.get("VLLM_PKG", "/opt/llm/runtime/vllm-venv-fnmain2/lib/python3.12/site-packages/vllm")
+ENVS  = os.environ.get("VLLM_ENVS_PY",  f"{V}/envs.py")
+LAYER = os.environ.get("VLLM_LAYER_PY", f"{V}/models/qwen4_exp/nvidia/ple_layer.py")
+OFF = len(sys.argv) > 1 and sys.argv[1] == "off"
+
+ENV_TYPE = "    VLLM_QWEN4_PLE_MMAP: bool = False\n"
+ENV_LAMBDA = ('    "VLLM_QWEN4_PLE_MMAP": lambda: os.getenv("VLLM_QWEN4_PLE_MMAP", "0") == "1",\n')
+IMPORT = "from .ple_mmap import MmapPLEEmbedding\n"
+DISPATCH = '''        if envs.VLLM_QWEN4_PLE_MMAP:
+            runtime = get_current_vllm_config()
+            if runtime.parallel_config.tensor_parallel_size != 1:
+                raise ValueError("Local PLE mmap currently supports TP1 only")
+            if not runtime.model_config.enforce_eager:
+                raise ValueError("Local PLE mmap requires --enforce-eager")
+            self.ngram_embedding = MmapPLEEmbedding(
+                runtime.model_config.model,
+                f"{prefix}.ngram_embedding",
+                padded_vocab_size,
+                self.head_dim,
+                self.split_ngram_parts,
+            )
+            return
+'''
+ANCHOR = "        self.ngram_embedding = PLEVocabParallelEmbedding(\n"
+
+
+def edit(path, apply_fn, remove_fn):
+    s = open(path, encoding="utf8").read()
+    s2 = remove_fn(s) if OFF else apply_fn(s)
+    if s2 != s:
+        ast.parse(s2)
+        open(path, "w", encoding="utf8").write(s2)
+    return s2 != s
+
+
+# the neighbouring entry is a THREE-line lambda; anchor on the whole block or the
+# insert lands inside its parentheses (caught by the rule-7 dry run, 2026-09-11)
+LAMBDA_ANCHOR = (
+    '    "VLLM_PLE_CPU_OFFLOAD": lambda: (\n'
+    '        os.getenv("VLLM_PLE_CPU_OFFLOAD", "False").lower() in ("true", "1")\n'
+    "    ),\n"
+)
+
+
+def envs_apply(s):
+    if "VLLM_QWEN4_PLE_MMAP" in s:
+        return s
+    a = "    VLLM_PLE_CPU_OFFLOAD: bool = False\n"
+    assert a in s, "envs.py type-annotation anchor missing"
+    s = s.replace(a, a + ENV_TYPE, 1)
+    assert LAMBDA_ANCHOR in s, "envs.py lambda anchor missing"
+    return s.replace(LAMBDA_ANCHOR, LAMBDA_ANCHOR + ENV_LAMBDA, 1)
+
+
+def envs_remove(s):
+    return s.replace(ENV_TYPE, "", 1).replace(ENV_LAMBDA, "", 1)
+
+
+def layer_apply(s):
+    if "MmapPLEEmbedding" in s:
+        return s
+    anchor_imp = "from .ops.ple import ple_conv, ple_gate, ple_ngram_ids\n"
+    s = s.replace(anchor_imp, anchor_imp + IMPORT, 1)
+    return s.replace(ANCHOR, DISPATCH + ANCHOR, 1)
+
+
+def layer_remove(s):
+    return s.replace(IMPORT, "", 1).replace(DISPATCH, "", 1)
+
+
+ch = []
+ch.append(("envs.py", edit(ENVS, envs_apply, envs_remove)))
+ch.append(("ple_layer.py", edit(LAYER, layer_apply, layer_remove)))
+print(("REMOVED" if OFF else "INSTALLED") + ": " + ", ".join(f"{n}={'yes' if c else 'nochange'}" for n, c in ch))

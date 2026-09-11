@@ -1,0 +1,81 @@
+"""Does the mmap PLE reader return exactly what a resident lookup would?
+
+Focused subset of Radar105's test. Their version also exercises load_weights via a
+helper that lives in the upstream test file, which a wheel install does not ship;
+everything below runs against the installed package alone.
+"""
+import json, sys, tempfile, pathlib
+import torch, pytest
+from safetensors.torch import save_file
+from vllm.models.qwen4_exp.nvidia.ple_mmap import MmapPLEEmbedding
+
+PREFIX = "model.language_model.layers.1.ple.ple_embedding.ngram_embedding"
+
+
+def build(tmp, shards=2):
+    table = torch.arange(14).reshape(7, 2).to(torch.float8_e4m3fn)
+    t = {f"{PREFIX}.shard_0.weight": table[:4], f"{PREFIX}.shard_1.weight": table[4:],
+         f"{PREFIX}.weight_scale": torch.tensor([0.25], dtype=torch.bfloat16)}
+    if shards == 1:
+        t.pop(f"{PREFIX}.shard_1.weight")
+    save_file(t, tmp / "table.safetensors")
+    (tmp / "model.safetensors.index.json").write_text(
+        json.dumps({"weight_map": dict.fromkeys(t, "table.safetensors")}))
+    return table
+
+
+def main():
+    fails = []
+    with tempfile.TemporaryDirectory() as d:
+        tmp = pathlib.Path(d)
+        table = build(tmp)
+        emb = MmapPLEEmbedding(str(tmp), PREFIX, 7, 2, 2)
+
+        # guard: refuses to run before the scale is loaded
+        try:
+            emb(torch.tensor([[0, 1]])); fails.append("no-scale guard did not fire")
+        except RuntimeError as e:
+            print(f"  OK   no-scale guard: {e}")
+
+        emb.weight_scale = torch.tensor([0.25], dtype=torch.bfloat16)
+
+        # the correctness claim: identical bytes to a resident gather, repeats and tail included
+        ids = torch.tensor([[6, 0, 4, 3, 6], [2, 1, 0, 5, 4]])
+        got = emb(ids)
+        exp = table.view(torch.uint8)[ids].view(torch.float8_e4m3fn)
+        if torch.equal(got.view(torch.uint8), exp.view(torch.uint8)):
+            print(f"  OK   lookup byte-identical to resident gather {tuple(got.shape)}"
+                  f", incl. a repeated id and the last row of each shard")
+        else:
+            fails.append("lookup differs from resident gather")
+
+        if sum(p.numel() for p in emb.parameters()) == 0:
+            print("  OK   zero resident parameters (the point of the port)")
+        else:
+            fails.append("embedding holds resident parameters")
+
+        if emb(torch.empty((0, 2), dtype=torch.long)).shape == (0, 2, 2):
+            print("  OK   empty input keeps its shape")
+        else:
+            fails.append("empty input shape wrong")
+
+        for bad in (-1, 7):
+            try:
+                emb(torch.tensor([bad])); fails.append(f"out-of-range id {bad} accepted")
+            except IndexError:
+                print(f"  OK   rejects out-of-range id {bad}")
+
+    with tempfile.TemporaryDirectory() as d:
+        tmp = pathlib.Path(d); build(tmp, shards=1)
+        try:
+            MmapPLEEmbedding(str(tmp), PREFIX, 7, 2, 2); fails.append("missing shard accepted")
+        except ValueError as e:
+            print(f"  OK   missing shard refused: {e}")
+
+    print()
+    if fails:
+        print("FAILED:"); [print("   -", f) for f in fails]; sys.exit(1)
+    print("== ALL DONE ==  all checks passed")
+
+
+main()
