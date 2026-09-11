@@ -537,6 +537,28 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
    batch-invariant evals matter.
 7. **Disk**: /opt 56 GB free; today's per-arm caches < 1 GB, something else is large — check before the next model pull.
 
+## REGRESSION HUNT (top priority, 2026-09-11) — U+093E → U+094B
+
+**The bug.** Stock RadixArk checkpoint, prompt "copy this exactly":
+`उपयोगकर्ता को पहले लॉग इन करना होगा।` → fnmain2 returns it **exactly** (6/6 byte-identical);
+fnmain3 returns `उपयोगकर्तो को पहले लॉग इन करनो होगा।` (6/6 byte-identical). Every open-syllable
+**U+093E (AA matra) → U+094B (O matra)**. A substitution, not duplication (det-211b). Deterministic
+on both sides, so **one request settles an arm** — `/opt/llm/runners/devbisect.py`, ~13 min per
+hypothesis.
+
+**Three candidate causes**, because fnmain3 changed all of them at once:
+1. the **#55715 GDN prefill kernel** — det-212, running
+2. **FlashInfer 0.6.17 → 0.6.18.post1** — note det-208: identical sm120 cubins, so it would have to
+   be the Python/JIT path
+3. **~123 vLLM commits**, dev401 → dev524 — binary search over nightlies, ~7 rungs, last resort
+
+**Inserted before 2 and 3: MTP off.** A deterministic single-token substitution is what a
+speculative-decoding acceptance bug looks like, MTP 3 is on in every arm measured so far, and the
+rung costs one server start with no venv work.
+
+**Prod is on fnmain3 and carries this.** The revert is one line (`serve-fnmain.sh:22` →
+`vllm-venv-fnmain2`) and is the user's call.
+
 ## Live runner chain (2026-09-11 19:11) — read before restarting anything
 
 `fx-thaidet-driver` **waits on `fx-gdnab-driver` by name** (bounded 2 h, then refuses). Restarting
