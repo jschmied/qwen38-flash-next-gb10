@@ -516,6 +516,16 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
 
 ### HIGH — our own findings and PRs
 
+- **OWED: PR for our own issue #54552, promised to bojiang3 on 2026-09-02 and nine days late.**
+  The QSA ring assert makes `num_speculative_tokens` 5..8 unreachable. Maintainer agreed with the
+  proposed widening on 09-02; we replied "I can open PR of course." **The patch is now written and
+  proven at runtime** (det-204: fired on all 12 QSA layers, 12 -> 16, block size 1616, span 9, cleared
+  the assert) — `/opt/llm/runners/qsacap_patch.py`, copy in `notes/data/`.
+  Still to do: turn it into a proper diff against main, a test, and the vLLM PR format (`git commit -s`,
+  AI-assistance disclosure, Purpose / Test Plan / Test Result). **Needs the user's go to open.**
+  Note the patch must use *next multiple of `compress_ratio` that divides block_size* (the wording in
+  our issue), not merely "smallest divisor" — they coincide at 16 here but diverge in general.
+
 - **TEST A — patch `qsa_cache.py` so ngram can serve (det-203).** We *can* fix this; I wrongly called
   it a maintainer's call. The safety invariant in the source comment is `capacity >= span`
   ("anything narrower lets a rejected draft row overwrite a committed key"); "whole groups" is only a

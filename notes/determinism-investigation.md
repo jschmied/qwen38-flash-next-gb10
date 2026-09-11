@@ -4448,3 +4448,34 @@ blocker 3 is fixed upstream — it will be needed again then.
 **Worth reporting upstream** with both tracebacks: the assert in `qsa_cache.py` is unreachable-by-design
 on the V2 path and unsatisfiable on the V1 path, and behind it the V1 path cannot serve this model at
 all. Needs the user's go.
+
+### det-204 addendum — both blockers were already reported, one of them BY US, with a maintainer waiting
+
+Checked the field before reporting (`search-open-prs-before-fixing`). Both findings already exist
+upstream, and today's work re-derived rather than discovered them.
+
+| our blocker | upstream | who |
+| --- | --- | --- |
+| 2 — QSA ring assert | **[#54552](https://github.com/vllm-project/vllm/issues/54552)**, open since 2026-08-31 | **us** |
+| 3 — V1 runner cannot prepare PLE inputs | [#56088](https://github.com/vllm-project/vllm/issues/56088), open since 2026-09-09 | seanphan |
+
+**#54552 is our own issue and it already carries this exact fix.** Its "Proposed fix" section says
+*widen to the next multiple of `compress_ratio` that divides `block_size`* — for block size 1616 the
+multiples of 4 that divide it are 4, 8, 16, 404, 808, 1616, so the smallest ≥ span 9 is **16**. That is
+the same number today's patch produced. The maintainer **bojiang3** replied on 2026-09-02 that the
+arithmetic checks out and the widening preserves the invariant, and **we answered "I can open PR of
+course. Give me a bit time."**
+
+**Nine days later there is no PR.** Today's run is precisely the evidence that PR needed — the patch
+applied, fired on all 12 QSA layers, and cleared the assert at runtime. It was sitting unwritten.
+
+**#56088 documents our blocker 3 more precisely than det-204 did**: `query_start_loc` and
+`ngram_context` come only from `Qwen4ExpModelState.prepare_inputs` / `prepare_dummy_inputs`
+(`model_state.py:93,112`), called only from the V2 runner (`gpu/model_runner.py:1772`,
+`gpu/cudagraph_utils.py:572`); the legacy `gpu_model_runner.py` never supplies them. We had the
+conclusion; they have the call sites.
+
+**The lesson is not the one I keep recording.** `check-field-before-expensive-steps` says search the
+field first — I did, but only *after* the work. The sharper version: **search our own open issues
+before treating a blocker as new.** We filed it, proposed the fix, got maintainer agreement, promised a
+PR, and then rediscovered the whole thing from cold ten days later.
