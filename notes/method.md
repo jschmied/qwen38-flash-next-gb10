@@ -121,3 +121,15 @@ kernel nobody intended to change are not a comparison, and the roster is the che
    selectors for the same bit widths. The log line `quantization=<method>` says which one ran.
 3. **Match the source to the build.** Logs from vLLM 0.27.1 cannot be explained by reading the
    0.28.1 venv; the registry order and the forcing branches both changed between them.
+
+## Bracket every A/B arm with a bandwidth probe
+
+`/opt/llm/runners/bwprobe.py` before and after each arm; record both with the result.
+
+GB10's decode-shaped GEMV bandwidth is reported to flip ~70 ↔ ~225 GB/s **without an SM-clock
+change**, and `clocks.mem` is `[N/A]` on this hardware — so no `nvidia-smi` field detects it (det-201).
+A clock read, which is what the watchdog does, cannot substitute.
+
+Our baseline is **212.8–215.0 GB/s peak at M=1**, 1 % spread. An arm near 70, or one whose opening and
+closing figures disagree, is not comparable to one that is not — and a 3× swing dwarfs every effect
+this project measures.

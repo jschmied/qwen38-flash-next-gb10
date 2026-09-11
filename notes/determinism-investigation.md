@@ -4163,3 +4163,48 @@ That is the largest single lever found on the unpruned path all day, and it is a
 a code change. **Unverified:** the replacement's actual behaviour at ~18 MB reads, thermals in this
 chassis, and whether the rest of the decode pipeline would then become the limit. Also relevant to our
 own box if we ever stream weights.
+
+## det-201 — the GB10 bandwidth state is invisible to nvidia-smi; measure it, do not infer it
+
+Prompted by a report from another GB10 effort that decode-shaped GEMV switches between roughly
+**70 and 225 GB/s without a corresponding SM-clock change**. Our hourly watchdog detects the
+performance state by reading `nvidia-smi clocks.sm` ("wedged = pinned 611 MHz"), so a flip like that
+would be invisible to us and would swamp any 5–10 % A/B — surfacing as inexplicable variance rather
+than as a recorded condition.
+
+### There is no cheap proxy on this hardware
+
+| field | idle | under GEMV load | usable as a bandwidth signal? |
+| --- | --- | --- | --- |
+| `clocks.sm` | 208 MHz | 2405–2548 MHz | no — tracks load, not the bandwidth state |
+| `clocks.mem` | **[N/A]** | **[N/A]** | **not exposed at all on GB10** (unified memory) |
+| `pstate` | P8 | P0 | no — a load indicator |
+
+The memory clock, which would be the obvious proxy on a discrete GPU, does not exist here. **Only an
+actual bandwidth measurement detects the state.**
+
+### The probe, and our baseline
+
+`/opt/llm/runners/bwprobe.py` (copy in `notes/data/`) times a decode-shaped GEMV — one row of
+activations against a 2560×10240 bf16 weight matrix, so the weight bytes are the cost — and reports
+achieved GB/s. ~2 s, cheap enough to bracket every arm.
+
+Idle box, three back-to-back runs:
+
+| | peak GB/s | mean |
+| --- | --- | --- |
+| M=1 (c=1 decode shape) | **212.8 / 214.2 / 215.0** | ~211 |
+| M=4 (the MTP verify shape) | 206.2–206.8 | |
+
+**1 % spread across runs**, which is more than tight enough to catch a 3× flip. We are in the good
+state: 214 against the ~225 the other effort calls healthy, and 78 % of GB10's 273 GB/s spec.
+
+### How to use it
+
+Run before and after each A/B arm and record both numbers with the result. An arm whose bracketing
+figures disagree, or which sits near 70 rather than 210, is not comparable to one that does not.
+
+**We have never observed the bad state** — so this is forward-looking protection, not a diagnosis.
+And because we never measured it before today, **past A/B results cannot be audited for it
+retroactively**. That is the uncomfortable part: every null and every 5–10 % result in this file was
+taken without this control.

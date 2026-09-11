@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Achieved memory bandwidth on a decode-shaped GEMV -- bracket every A/B arm with it.
+
+Why: another GB10 effort reports decode-shaped GEMV switching between roughly 70 and 225 GB/s
+WITHOUT a corresponding SM-clock change. Our watchdog reads `nvidia-smi clocks.sm` only, so a
+state flip like that is invisible to us and would swamp any 5-10 % A/B result -- appearing as
+inexplicable variance instead of as a recorded condition.
+
+Decode at c=1 on Flash-Next is bandwidth-bound GEMV: one row of activations against a large
+weight matrix, so the weight bytes ARE the cost. This reproduces that shape and reports GB/s.
+
+Fast enough (~2 s) to run before and after each arm. Record both numbers with the result.
+"""
+import argparse, json, time, sys
+import torch
+
+
+def gemv_bw(K=2560, N=10240, iters=200, dtype=torch.bfloat16, M=1):
+    dev = "cuda"
+    W = torch.randn(K, N, dtype=dtype, device=dev)
+    x = torch.randn(M, K, dtype=dtype, device=dev)
+    bytes_per = W.numel() * W.element_size()
+    for _ in range(20):                      # warm
+        y = x @ W
+    torch.cuda.synchronize()
+    best = 0.0; times = []
+    for _ in range(5):
+        t0 = time.perf_counter()
+        for _ in range(iters):
+            y = x @ W
+        torch.cuda.synchronize()
+        dt = (time.perf_counter() - t0) / iters
+        times.append(dt)
+        best = max(best, bytes_per / dt / 1e9)
+    return best, bytes_per / (sum(times) / len(times)) / 1e9
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--json", action="store_true")
+    ap.add_argument("--tag", default="")
+    a = ap.parse_args()
+    if not torch.cuda.is_available():
+        print("no CUDA"); sys.exit(1)
+    clk = torch.cuda.clock_rate() if hasattr(torch.cuda, "clock_rate") else None
+    peak, mean = gemv_bw()
+    peak4, mean4 = gemv_bw(M=4)             # the MTP verify shape
+    import subprocess
+    sm = subprocess.run(["nvidia-smi", "--query-gpu=clocks.sm,power.draw",
+                         "--format=csv,noheader"], capture_output=True, text=True).stdout.strip()
+    rec = {"tag": a.tag, "gemv_m1_peak_gbs": round(peak, 1), "gemv_m1_mean_gbs": round(mean, 1),
+           "gemv_m4_peak_gbs": round(peak4, 1), "nvidia_smi": sm, "ts": time.strftime("%H:%M:%S")}
+    if a.json:
+        print(json.dumps(rec))
+    else:
+        print(f"  M=1 GEMV  peak {peak:6.1f} GB/s   mean {mean:6.1f}")
+        print(f"  M=4 GEMV  peak {peak4:6.1f} GB/s")
+        print(f"  nvidia-smi: {sm}")
+        print(f"  (GB10 spec 273 GB/s; a flip to ~70 would be invisible to a clock check)")
