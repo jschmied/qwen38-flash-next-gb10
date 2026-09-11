@@ -4035,6 +4035,32 @@ therefore worth up to ~2.2×, which is **more than every byte-level idea tested 
 | queue depth at expert size | 1.27× |
 | **read size / layout** | **up to 2.2×, and it is the one already on their list** |
 
-**Caveat:** our drive, not theirs — model, firmware and fill state all move the absolute numbers, and
-our QD1 18 MiB figure varied 3.43–5.06 across runs. The *shape* of the curve is the transferable part,
-not the absolute GB/s.
+### The drive, and whether 6.5 GB/s is near its ceiling
+
+| | |
+| --- | --- |
+| controller | **Phison PS5027-E27T, DRAM-less**, PCIe 4.0 ×4 (PCI `1987:5027`) |
+| part / fw | `ESL01TBTLCZ-27J2-TYN`, 1.00 TB, `ERFM12.0` |
+| link | 16.0 GT/s × 4 — raw **7.88 GB/s**, practical ~7.1–7.5 |
+| measured peak | **6.4–6.5 GB/s ≈ 87 % of practical link** |
+
+So we are near the interface ceiling, not the NAND's. The missing ~13 % is plausibly the DRAM-less
+FTL plus filesystem and O_DIRECT overhead. The vendor's rated sequential figure is not readable from
+the hardware and would need Phison's datasheet; the link-derived number above is the defensible one.
+
+**DRAM-less is not incidental** — it has no onboard DRAM for the mapping table and leans on Host
+Memory Buffer. That is fine for large sequential reads and materially worse for small scattered ones,
+which is exactly the 0.46 GB/s at 64 KiB in the table above. On this controller class, read shape
+matters *more* than it would on a DRAM-equipped drive.
+
+**Sequential vs scattered is a null at expert size.** Marching contiguously through a single 10 GiB
+file: QD1 4.94, QD4 6.30, QD8 6.37 GB/s — against 5.06 / 6.42 for 18 MiB chunks scattered across 206
+files. At this granularity the access *pattern* costs nothing and only *size* matters, which is the
+det-199 claim arrived at from the other direction.
+
+**Caveats.** Our drive, not theirs — though if a stock DGX Spark ships this Phison part, the
+comparison is tighter than "different hardware" suggests; unverified either way. Our QD1 18 MiB figure
+varied 3.43–5.06 across runs. And **queue depth here was generated with a thread pool, not io_uring**:
+at 18 MiB each read is ~3 ms so thread overhead is noise and the 1.27× stands, but at 64 KiB each read
+is ~140 µs, so **the small-read end of the curve understates true io_uring**. The shape transfers; the
+absolute GB/s does not.
