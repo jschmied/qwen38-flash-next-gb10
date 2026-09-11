@@ -577,10 +577,19 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   **Cell that must differ:** the advertised `kernel_block_sizes`. Patch the family check to admit 12x,
   confirm >=128 is offered, then A/B TTFT + c=1 decode on the 27B, three starts, **bracketed with
   `bwprobe.py`** (det-201).
-  **Unverified going in:** whether `can_use_trtllm_attention()` passes, and whether larger KV blocks
-  help at head_dim 256. If trtllm declines, the gate is moot and this closes in one start.
+  **Precondition CLEARED 2026-09-11 (static, no GPU).** `supports_trtllm_attention()` in dev524
+  already admits us: `is_device_capability_family(120)` returns `not is_prefill`, i.e. **XQA decode
+  yes, TRTLLM prefill no**. `has_nvidia_artifactory()` is True (satisfied by the installed
+  `flashinfer-cubin`, no network needed). 24 % 4 == 0, so `can_use_trtllm_attention(24, 4,
+  is_prefill=False)` is True by construction. The gate is now at
+  `v1/attention/backends/flashinfer.py:437` and is still family(100)-only while every other
+  condition (`num_qo_heads // num_kv_heads == 6 > 1`) holds — same shape as #55715.
+  **So this does not close for free; it is a real A/B.** Still unverified: whether larger KV blocks
+  help at head_dim 256. Decode-only, so measure **c=1 decode**, not TTFT.
 
-- **VENV BUMP: we have never used the FlashInfer GDN prefill kernel (det-202).** #55715 merged
+- ~~**VENV BUMP: we have never used the FlashInfer GDN prefill kernel (det-202).**~~ **DONE 2026-09-11** (det-205/206): fnmain3 = dev524 + FlashInfer 0.6.18.post1 + the #55715 backport, prod cut over; the 0.6.17 blocker below was itself refuted in det-208. Our own A/B is det-207.
+
+- ~~original note:~~ #55715 merged
   2026-09-08 enables it on SM12x; our 1,216 logged GDN announcements are all Triton/FLA. The PR
   measures **7.2 % TTFT on a GB10** at ISL 32768 and 3.8–4.5× on the kernel itself. **Needs FlashInfer
   ≥ 0.6.18 (we are on 0.6.17)** plus a venv past 09-08. This is the largest measured item on the
