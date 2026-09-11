@@ -1,0 +1,19 @@
+== hiprobe2: MTP rung + LH rebuild, 4 arms, 12 Hindi copy prompts each ==
+   c_m3 and c_m2 are CONTROLS and must reproduce det-213
+-- c_m3: venv=vllm-venv-fnmain3 model=qwen38-flash-next-nvfp4 MTP=3
+   c_m3: 8/12 exact   wrong: hi-01,hi-05,hi-08,hi-11
+-- mtp_off: venv=vllm-venv-fnmain3 model=qwen38-flash-next-nvfp4 MTP=0
+   mtp_off: 8/12 exact   wrong: hi-01,hi-05,hi-08,hi-11
+-- c_m2: venv=vllm-venv-fnmain2 model=qwen38-flash-next-nvfp4 MTP=3
+   c_m2: 10/12 exact   wrong: hi-08,hi-11
+-- lh3: venv=vllm-venv-fnmain2 model=fnext-lh3 MTP=3
+   lh3: 9/12 exact   wrong: hi-05,hi-08,hi-11
+== RESULT ==
+  c_m3       8/12   wrong: hi-01,hi-05,hi-08,hi-11
+  mtp_off    8/12   wrong: hi-01,hi-05,hi-08,hi-11
+  c_m2      10/12   wrong: hi-08,hi-11
+  lh3        9/12   wrong: hi-05,hi-08,hi-11
+  mtp_off vs c_m3: if mtp_off recovers hi-01/hi-05, spec decode owns the venv gap.
+  lh3 vs c_m2:     if lh3 recovers hi-08/hi-11, HF discussion #13's Devanagari claim
+                   has behavioural support, not just NLL.
+== ALL DONE ==

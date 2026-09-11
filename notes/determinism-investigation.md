@@ -4999,3 +4999,51 @@ of evidence. **Running this probe on the LH rebuild vs stock is one A/B and may 
 finishing the venv bisect.** Queued, not yet run.
 
 Data: `notes/data/hiprobe-det213.txt`, raw in `/opt/llm/runners/results/hiprobe.jsonl`.
+
+## det-214 — MTP exonerated; and our LH rebuild does NOT fix Devanagari behaviourally
+
+Four arms, 12 Hindi copy prompts each, exact-copy scoring. **Both controls reproduced det-213
+exactly** — same counts *and* the same wrong-prompt sets — so the probe is reproducible across runs,
+not just across cache roots.
+
+| arm | venv | checkpoint | MTP | exact | wrong |
+|---|---|---|---|---|---|
+| `c_m3` control | fnmain3 | stock | 3 | 8/12 | hi-01, hi-05, hi-08, hi-11 |
+| `mtp_off` | fnmain3 | stock | **0** | **8/12** | **identical set** |
+| `c_m2` control | fnmain2 | stock | 3 | 10/12 | hi-08, hi-11 |
+| `lh3` | fnmain2 | **LH v3** | 3 | 9/12 | hi-05, hi-08, hi-11 |
+
+### MTP is not the cause
+
+`mtp_off` is indistinguishable from `c_m3` — not merely the same count but the same four prompts.
+Speculative decoding does not own the venv gap. Combined with det-212, both cheap hypotheses are
+now dead, and the remaining candidates are the **~123 vLLM commits** (dev401 → dev524) and the
+**FlashInfer minor**.
+
+This also settles a smaller question worth stating: MTP is a speed knob here, not a quality knob, on
+this axis. That is what we have always assumed and never tested.
+
+### Our LH rebuild is one prompt *worse*, not better
+
+`lh3` fails `hi-05`, which stock on the same venv gets right, and recovers neither `hi-08` nor
+`hi-11`. 9/12 against stock's 10/12.
+
+One prompt on n=12 is noise and I am not claiming the rebuild is worse. What it does mean is that
+**HF discussion #13's Devanagari result gets no behavioural support from this probe.** That post
+argued a −0.0891 NLL gain on Devanagari across all six of its passages; the behavioural version of
+the same claim does not appear here.
+
+The post itself is safe: it explicitly said *"Not that 0.0152 matters in practice… we have not run a
+task eval."* So nothing upstream needs correcting — but we should not now start claiming a
+behavioural benefit, and if anyone asks, this is the answer.
+
+### Where this leaves the hunt
+
+Exonerated: the #55715 GDN kernel (det-212), MTP (here). Remaining: FlashInfer 0.6.17 → 0.6.18, and
+123 vLLM commits.
+
+**Worth weighing before spending more.** The entire venv gap is **2 prompts out of 12**, Fisher
+p = 0.318, on a checkpoint that already fails 2/12 on the *good* venv. The FlashInfer rung is cheap
+— one venv clone and one start — and is being run. A nightly bisect over dev401 → dev524 is ~7 rungs
+and ~3.5 h of box time for an effect that size; that is the user's call, not one to take
+autonomously at 01:00.
