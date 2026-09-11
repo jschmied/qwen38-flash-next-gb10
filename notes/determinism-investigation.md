@@ -4697,3 +4697,57 @@ Confirms the rule from `venv-overlay`: **audit overlay state after every bump, p
 own marker string** — and when one is missing, check whether upstream absorbed it before re-applying
 it. Two of the four target files moved between dev401 and dev524, so a path-based check would have
 reported "missing" for the wrong reason.
+
+## det-207 — the FlashInfer GDN prefill kernel wins here too: +5.0 % warm, +7.1 % cold
+
+vllm#55715 measures 7.2 % TTFT at ISL 32768 on a GB10 and 3.83–4.52× on the kernel itself. That is
+upstream's number on upstream's box. det-205/206 established the kernel *selects and runs* here and
+cut prod over to it; this measures whether it is actually faster on our traffic.
+
+**Differing cell:** the GDN prefill backend and nothing else. Both arms are the same venv
+(fnmain3, `dev524+g5db652225`, FlashInfer 0.6.18.post1), same checkpoint, same flags, per-arm
+`FN_CACHE_ROOT`; the only change is applying or removing the +10/−2 backport. 3 starts/arm,
+4 reps/start, ~6,001-token prompt, 1 output token to isolate prefill.
+
+**Void check passed on all six starts** — `gdnab-on{0,1,2}.log` each announce `Using FlashInfer GDN
+prefill kernel`, `gdnab-off{0,1,2}.log` each announce `Using Triton/FLA GDN prefill kernel`. Both
+workers, every start. (Four void runs in this project so far passed a knob-level check and measured
+nothing; this one did not.)
+
+### Warm reps (1–3), prefix cache hot
+
+| arm | start 0 | start 1 | start 2 | **all 9** |
+|---|---|---|---|---|
+| on — FlashInfer | 0.559–0.564 | 0.560–0.562 | 0.558–0.559 | **0.558–0.564 s** |
+| off — Triton/FLA | 0.589–0.590 | 0.587–0.593 | 0.591–0.594 | **0.587–0.594 s** |
+
+Ranges separate completely — the gap between the slowest `on` rep and the fastest `off` rep is
+**+0.023 s**, and no start overlaps any other start of the opposite arm. **+5.0 %** on midpoints.
+That is well outside anything we would normally call from this box; prefill noise is ±20 % on
+*different configurations*, but the within-arm spread here is under 1 %.
+
+### Cold rep (rep 0), full prefill — the cell comparable to upstream
+
+| arm | rep 0, three starts | |
+|---|---|---|
+| on — FlashInfer | 2.437, 2.450, 2.482 | **2.437–2.482 s** |
+| off — Triton/FLA | 2.610, 2.616, 2.687 | **2.610–2.687 s** |
+
+**+7.1 %**, ranges again disjoint (gap +0.128 s). n = 3 per arm, so weaker than the warm cell, but
+it is the *right* cell for comparison with upstream and it is the one that matters for agent work.
+
+**Why cold is larger, and why our warm figure sits below upstream's 7.2 %.** Prefix caching is on.
+Reps 1–3 replay the same prompt, so most of the 6,001 tokens come from cache and comparatively
+little GDN prefill actually runs — the kernel's advantage is diluted by work that is not being done.
+Rep 0 prefills all 6,001 tokens. Upstream measured at ISL 32768 with no such dilution, which is the
+same regime as our cold rep, and our cold number (7.1 %) lands on theirs (7.2 %). Treat that
+agreement as consistency, not as a confirmation of their figure — different prompt length, one box,
+three starts.
+
+**Not measured:** anything at 32k. Decode is untouched by this kernel and was not measured.
+Acceptance was not measured and would not be meaningful across a kernel change anyway
+(`acceptance-is-not-quality`).
+
+**Prod already carries this** (det-206), so this is a confirmation of a change already shipped, not
+a pending decision. The `off` arm is what everyone on stock vLLM below `f6326f53b` is running, and
+on this model that is three of every four layers.

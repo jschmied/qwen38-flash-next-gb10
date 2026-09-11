@@ -1,0 +1,44 @@
+== GDN prefill A/B, 3 starts/arm, 4 reps/start, ~6000 tok prompt ==
+-- arm=on start=0:
+== GDN prefill A/B, 3 starts/arm, 4 reps/start, ~6000 tok prompt ==
+-- arm=on start=0: INSTALLED: NOCHANGE (anchor missing?)
+   backend confirmed: flashinfer
+   rep0 (COLD) TTFT 2.482s  prompt_tokens=6001
+   rep1 TTFT 0.564s  prompt_tokens=6001
+   rep2 TTFT 0.559s  prompt_tokens=6001
+   rep3 TTFT 0.561s  prompt_tokens=6001
+-- arm=off start=0: REMOVED: changed
+   backend confirmed: triton
+   rep0 (COLD) TTFT 2.610s  prompt_tokens=6001
+   rep1 TTFT 0.590s  prompt_tokens=6001
+   rep2 TTFT 0.589s  prompt_tokens=6001
+   rep3 TTFT 0.589s  prompt_tokens=6001
+-- arm=on start=1: INSTALLED: changed
+   backend confirmed: flashinfer
+   rep0 (COLD) TTFT 2.437s  prompt_tokens=6001
+   rep1 TTFT 0.560s  prompt_tokens=6001
+   rep2 TTFT 0.562s  prompt_tokens=6001
+   rep3 TTFT 0.562s  prompt_tokens=6001
+-- arm=off start=1: REMOVED: changed
+   backend confirmed: triton
+   rep0 (COLD) TTFT 2.687s  prompt_tokens=6001
+   rep1 TTFT 0.593s  prompt_tokens=6001
+   rep2 TTFT 0.593s  prompt_tokens=6001
+   rep3 TTFT 0.587s  prompt_tokens=6001
+-- arm=on start=2: INSTALLED: changed
+   backend confirmed: flashinfer
+   rep0 (COLD) TTFT 2.450s  prompt_tokens=6001
+   rep1 TTFT 0.559s  prompt_tokens=6001
+   rep2 TTFT 0.559s  prompt_tokens=6001
+   rep3 TTFT 0.558s  prompt_tokens=6001
+-- arm=off start=2: REMOVED: changed
+   backend confirmed: triton
+   rep0 (COLD) TTFT 2.616s  prompt_tokens=6001
+   rep1 TTFT 0.594s  prompt_tokens=6001
+   rep2 TTFT 0.592s  prompt_tokens=6001
+   rep3 TTFT 0.591s  prompt_tokens=6001
+  on  (FlashInfer): 3 starts, warm reps 0.558-0.564s
+  off (Triton/FLA): 3 starts, warm reps 0.587-0.594s
+  ranges do separate
+  midpoint delta: +5.0 % (upstream reports 7.2 % at ISL 32768)
+== ALL DONE ==
