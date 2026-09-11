@@ -128,3 +128,32 @@ position coverage still reaching 95,239.
 Every stratification I did on v1 — position, project, expert row counts — measured something real
 and none of them measured the axis that broke the build. The dataset was called *Multilingual* and I
 took that to mean human languages; it means programming languages. **Count the codepoints.**
+
+## Leakage check against the held-out NLL set — CLEAN, 2026-09-11
+
+The corpus's script half is **Wikipedia**, and the held-out NLL set is **also Wikipedia** at later
+offsets. That is exactly the shape where "held out by construction" quietly stops being true, so it
+was measured rather than asserted.
+
+8-gram shingle overlap, text-level (a title check is vacuous — held-out records carry no title):
+
+| | |
+| --- | --- |
+| calibration shingles | 67,002 |
+| held-out shingles | 21,653 |
+| **overlapping** | **0 (0.000 %)** |
+
+Worst-case per passage is also 0. **No leakage**, so the −0.0152 NLL result and the RadixArk post that
+rests on it stand.
+
+### What the Hessian actually saw
+
+| | items | tokens | share |
+| --- | --- | --- | --- |
+| agent trajectories | 12 | 273,747 | **69.5 %** |
+| Wikipedia (13 scripts) | 55 | 119,942 | 30.5 % |
+
+Item counts and token counts point opposite ways because length stratification pulls in a few very
+long agent runs; `jqlang__jq-2650` alone is 95,239 tokens and is what reaches the far position range.
+Anyone reading "121 script records vs 100 agent records" would guess the corpus is mostly Wikipedia.
+By tokens — which is what the Hessian integrates over — it is mostly agent traffic.
