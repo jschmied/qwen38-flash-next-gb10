@@ -153,10 +153,10 @@ A/B on this box is still running, so treat those as upstream's numbers, not ours
 
 [`scripts/serve-flashnext.sh`](scripts/serve-flashnext.sh) is the live launcher from our box.
 
-**Four source overlays are part of the recipe** (installed on the serving venv by
+**Three source overlays are part of the recipe** (installed on the serving venv by
 [`tools/main/prod-det-overlays.sh`](tools/main/prod-det-overlays.sh); any vLLM reinstall reverts them silently, so re-run it after
 every upgrade): the deterministic `persistent_topk` and the bit-stable MoE finalize above (env-gated, the launcher defaults them
-on), the FlashInfer autotune cache-key backport (`moe_cachekey_patch2.py`, flashinfer#3367 for the cutlass `MoERunner`), and the
+on), and the
 **PLE offload semaphore reset** (`plefix_patch.py`, [PR #13 on the #53899 branch](https://github.com/peakcrosser7/vllm/pull/13)).
 The last one is not optional: with CUDA graphs enabled the unpatched #53899 branch consumes the *previous* step's PLE outputs
 on every forward — identical consecutive requests hide it, real traffic never does (finding 138 in
@@ -170,7 +170,7 @@ The flags that are not obvious:
 | `VLLM_GDN_DECODE_KERNEL=triton` | the default CUDA kernel deterministically hangs the engine at c≈32 with FP8 GDN projections. No error, requests just stall |
 | `CUTE_DSL_ARCH=sm_121a` | required for the FlashInfer CuteDSL path |
 | `VLLM_QSA_DET_TOPK=1` + `VLLM_QSA_DET_LIB=<path>/_C_det.so` | deterministic `persistent_topk` (index-ranked ties; `patches/kernel-det`, v2.4). Without it greedy prefill above the 2,048-token indexer budget is not reproducible (vllm#54521, fix upstream in vllm#55122) |
-| `VLLM_MOE_DET_FINALIZE=1` | FlashInfer cutlass MoE with `use_fused_finalize=False`: bit-stable finalize (+3.6 % decode). Needs the autotune cache-key backport or the server dies with `Invalid gemm2 profile id` (vllm#54945) |
+| `VLLM_MOE_DET_FINALIZE=1` | FlashInfer cutlass MoE with `use_fused_finalize=False`: bit-stable finalize (+3.6 % decode). The autotune cache key must include `use_fused_finalize` or the server dies with `Invalid gemm2 profile id` (vllm#54945). **FlashInfer ≥ 0.6.18 does this upstream** (`fused_moe/core.py`, flashinfer#3367); below that you need the backport — a fourth overlay we used to carry and have now retired (det-209) |
 | `--max-model-len 32768` | **not 8192.** A single code task emitted 31,115 characters of *thinking* before 12,931 of content. 8192 cannot hold this model's own reasoning |
 | `--max-num-seqs 16` | **not 2.** Our early "concurrency ceiling" was this flag, not the hardware — the box reaches 266.8 tok/s at 48 streams |
 | `--enable-auto-tool-choice --tool-call-parser qwen3_xml` | without these, every request carrying `tools` returns **HTTP 400** |

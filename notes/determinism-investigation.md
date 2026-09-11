@@ -4666,3 +4666,34 @@ not the artifact. `cuobjdump` and `ls` answered in four minutes what the PR desc
 guessing about for eleven days.
 
 REPRODUCE.md and `tools/main/README.md` updated in the same commit.
+
+## det-209 — one of the four prod det overlays is now upstream; prod carries three, correctly
+
+Auditing fnmain3 before building the Thai A/B (which needs a stock arm), the four prod determinism
+overlays came back **3 installed, 1 absent**:
+
+| overlay | fnmain3 | |
+|---|---|---|
+| `qsadet_patch2` — deterministic `persistent_topk` | INSTALLED | |
+| `detfin_patch2` — `use_fused_finalize=False` | INSTALLED | |
+| `plefix_patch` — PLE semaphore reset | INSTALLED | |
+| `moe_cachekey_patch2` — FlashInfer autotune cache key | **absent** | **correct — now upstream** |
+
+This looked like BUILD-RECIPE trap #2 (`prod_det_overlays.sh` hardcodes `V2=vllm-venv-fnmain2`, so
+running it after a venv bump silently patches the *old* venv). It is not. FlashInfer 0.6.18.post1
+ships `MoERunner.get_cache_key_extras` itself at `fused_moe/core.py:707`, and the tuple ends with
+**`self.use_fused_finalize`** — the exact field our backport existed to add (flashinfer#3367). Our
+patch would now be a no-op at best and a double-definition at worst.
+
+So the pairing REPRODUCE.md warns about — "`VLLM_MOE_DET_FINALIZE=1` needs the autotune cache-key
+backport or the server dies with `Invalid gemm2 profile id` (vllm#54945)" — is satisfied by the
+FlashInfer upgrade alone from 0.6.18 on. Prod is not exposed.
+
+**This is a second thing the retired 0.6.17 pin was costing us** (det-208): staying on 0.6.17 meant
+carrying a hand-maintained patch that upstream had already absorbed. Recipe updated: three overlays,
+not four, with the version floor stated.
+
+Confirms the rule from `venv-overlay`: **audit overlay state after every bump, per overlay, by its
+own marker string** — and when one is missing, check whether upstream absorbed it before re-applying
+it. Two of the four target files moved between dev401 and dev524, so a path-based check would have
+reported "missing" for the wrong reason.

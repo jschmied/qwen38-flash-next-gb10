@@ -537,6 +537,22 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
    batch-invariant evals matter.
 7. **Disk**: /opt 56 GB free; today's per-arm caches < 1 GB, something else is large — check before the next model pull.
 
+## Live runner chain (2026-09-11 19:11) — read before restarting anything
+
+`fx-thaidet-driver` **waits on `fx-gdnab-driver` by name** (bounded 2 h, then refuses). Restarting
+`fx-gdnab-driver` while the waiter is up re-enters the wait; stop the waiter first if you swap
+anything (memory `queue-chain-check-before-restart`).
+
+- `fx-gdnab-driver` → det-207, GDN prefill A/B, 3 starts/arm. Early: on 0.559/0.561 s vs off
+  0.589/0.589 s TTFT at 6k prompt.
+- `fx-thaidet-driver` → the vllm#54739 Thai question, queued. `/opt/llm/runners/thaidet.py`,
+  2 starts/arm, det overlays vs stock, stock RadixArk checkpoint, MTP 3.
+  Arms: `FN_DET_TOPK`/`FN_DET_FINALIZE` env + the `plefix` source toggle. **Void check uses the
+  marker `Clear any semaphore still raised`** — `release_offloaded_output(stream)` occurs elsewhere
+  in `connector.py` and is NOT discriminating; a rule-7 dry run caught it reporting both arms
+  "installed", which would have compared prod against prod.
+  Leaves `plefix` installed on exit.
+
 ## Work queue as of 2026-09-07 (user: "higher prio has work on our own findings and PRs, run when idle")
 
 ### HIGH — our own findings and PRs
