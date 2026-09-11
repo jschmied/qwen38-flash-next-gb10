@@ -1,8 +1,11 @@
 # Main-tree venv (`/opt/llm/runtime/vllm-venv-fnmain`)
 
 Built 2026-09-03 from the nightly aarch64 wheel `vllm-0.28.1rc1.dev352+gbb363db9a` (torch 2.13.0 pin
-satisfied by the cloned venv's `2.13.0+cu130`; flashinfer left at 0.6.17, the 0.6.18 pin is unmet —
-0.6.18 drops the SM121a JIT cubins). `build-fnmain.sh` is the clone-don't-build recipe.
+satisfied by the cloned venv's `2.13.0+cu130`; flashinfer was left at 0.6.17 at the time, on the
+belief that 0.6.18 drops the SM121a JIT cubins — **refuted in det-208**: neither wheel ships an
+sm121 artifact and the `*_sm120` modules are identical in both. Prod is on `0.6.18.post1` since
+2026-09-11. `build-fnmain.sh` is the clone-don't-build recipe; `BUILD-RECIPE.md` supersedes it for
+version bumps.
 
 What main has that the preview lacks: the sm120 blockwise-FP8 dispatch fix (#52775, finding 65),
 the prefill/decode-split QSA indexer (#54513), FP8_PB_WO natively, the `qwen4_exp` model package.

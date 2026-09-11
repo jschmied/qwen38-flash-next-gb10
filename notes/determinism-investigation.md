@@ -4588,3 +4588,81 @@ because cubin must match, and a post-release is packaging-only by PEP 440. Recor
 3.83–4.52× on the kernel itself; we confirmed only that the kernel is *selected and correct*. A
 three-start A/B against `fnmain2` (Triton/FLA) is the honest next step, and until then the 7.2 % is
 upstream's number, not ours.
+
+## det-208 — the "do not take FlashInfer 0.6.18" pin is refuted: neither wheel ships an sm121 cubin
+
+REPRODUCE.md has told the public since 2026-08-31 to pin FlashInfer **0.6.17**, because
+flashinfer#4757 "removed SM121a from the aarch64 JIT-cache arch list. You lose the prebuilt cubins,
+fall back to runtime JIT, and the unbounded ninja fan-out can take the whole box into a global OOM."
+That was written from the PR description. Nobody opened the wheel. After cutting prod over to
+0.6.18.post1 (det-206) I opened both.
+
+### The wheels, side by side
+
+`flashinfer_jit_cache/` as installed, `vllm-venv-fnmain2` (0.6.17) vs `vllm-venv-fnmain3` (0.6.18.post1):
+
+| | 0.6.17 | 0.6.18.post1 |
+|---|---|---|
+| files / size | 964 / 2.2 GB | 911 / 1.7 GB |
+| filenames containing `121` | **0** | **0** |
+| arch tokens | sm90 ×206, sm120 ×12, sm100 ×6, sm100a ×2 | sm90 ×206, sm100f ×82, sm120 ×12, sm100 ×6, sm103a ×4, sm100a ×2 |
+
+**Neither version ships an sm121 or sm121a artifact.** 0.6.17 predates #4757 (installed here
+2026-08-25; #4757 merged 2026-08-27) and has none either, so there were no sm121a cubins to lose.
+Nothing in the tree is gated to `sm_121a`, so that arch-list entry produced no distinct artifacts —
+which is what REPRODUCE.md's *own* second paragraph already implied (flashinfer#3170: `compute_120f`
+covers CC 12.0 and 12.1; `sm_121a` is needed only for sparse MMA, which this model does not use).
+The warning kept the refuted mechanism as its headline.
+
+### What we actually run is identical in both
+
+The modules this model touches are the `*_sm120` ones — `fp4_gemm_cutlass_sm120`,
+`nvfp4_attention_sm120`, `gemm_sm120`, `mxfp8_gemm_cutlass_sm120`, `cute_sm120_mxfp8_groupwise` —
+present in both. `cuobjdump --list-elf fp4_gemm_cutlass_sm120.so` reports the **same 17 `sm_120`
+ELF kernels** in each; no PTX section in either.
+
+0.6.18 drops 96 files, **all** of them `single_decode_with_kv_cache_*` variants. vLLM serves through
+the batched paged wrappers, never `single_decode`. It adds 43 `cake_kda_*` / `flash_kda_*` files at
+sm100f/sm103a — Blackwell-datacenter, not ours.
+
+### The empirical test: no JIT happened
+
+If the fallback the warning describes were real, the runtime JIT cache would fill on first start.
+After the cutover and several starts:
+
+```
+~/.cache/flashinfer/0.6.17/121a        1 module,  520K   (generated sources only)
+~/.cache/flashinfer/0.6.18.post1/121a  0 modules, 4.0K
+```
+
+Zero modules. `grep -ciE 'ninja|Compiling|nvcc'` over a full 0.6.18.post1 start log: **0**. There is
+no JIT fallback, so there is no ninja fan-out and no OOM exposure.
+
+I then attributed the 13-minute first start after the cutover to the version-scoped autotune cache
+being cold. **That was also wrong, and measuring it was four commands.** Time from the first log
+line to `Application startup complete`:
+
+| venv | FlashInfer | startup |
+|---|---|---|
+| fnmain2 | 0.6.17 | 11:20, 12:01 |
+| fnmain3 | 0.6.18.post1 | 11:54 |
+
+~12 minutes is simply what this model costs to start — 123 GB of weights, 47.7 GiB of it PLE. The
+autotune cache *is* version-scoped and *is* discarded on upgrade (det-206), but it is invisible next
+to the load. Two wrong causal stories in one investigation, both from reasoning about a mechanism
+instead of timing the thing.
+
+### Consequence, and the cost of having been wrong
+
+The 0.6.17 pin was not merely unnecessary, it was **expensive**: vllm#55715 (the FlashInfer GDN
+prefill kernel, merged 2026-09-08) states FlashInfer ≥ 0.6.18 as a requirement, so a reader
+following our recipe would have read themselves out of the kernel. det-205 then showed that
+requirement is itself conservative — the kernel selects and runs on 0.6.17 here — but a reader has
+no way to know that from the PR. Two conservative claims pointing opposite ways, neither measured,
+both published.
+
+Same lesson as `diff-against-known-good-artifact`: the producer-side description of an artifact is
+not the artifact. `cuobjdump` and `ls` answered in four minutes what the PR description had had us
+guessing about for eleven days.
+
+REPRODUCE.md and `tools/main/README.md` updated in the same commit.

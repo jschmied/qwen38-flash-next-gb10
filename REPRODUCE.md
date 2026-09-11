@@ -1,8 +1,8 @@
 # Reproducing this on your own DGX Spark
 
 A working server, start to finish. The [README](README.md) says *what we measured*; this says
-*what to type*. Every version pin below is load-bearing — three of them have a documented failure
-mode if you take the newer thing.
+*what to type*. Most version pins below are load-bearing and have a documented failure mode. One of
+them turned out not to be, and is marked as reversed rather than quietly deleted.
 
 **Target:** `36.5 tok/s` single-stream, ~`100 tok/s` aggregate at 16 concurrent, 32K+ context,
 tool calling, on one GB10 with 128 GB unified memory.
@@ -17,30 +17,58 @@ tool calling, on one GB10 with 128 GB unified memory.
 |---|---|
 | hardware | NVIDIA DGX Spark (GB10, **sm_121**, 128 GB unified, aarch64) |
 | disk | **~140 GB free.** The base is 123 GB and the overlay adds ~12 GB |
-| vLLM | `0.1.dev20073+g8e685d198` — the **#53896 + #53899 preview build** |
-| FlashInfer | **0.6.17**, pinned |
+| vLLM | `0.28.1rc1.dev524+g5db652225` — **nightly `main` + our #53899 port** (see below) |
+| FlashInfer | `0.6.18.post1` — python + cubin + jit-cache, all three at the same version |
 | torch | `2.13.0+cu130` |
 
-### Two pins that will bite you if you "upgrade"
+### The build: `main` does not have PLE offload, and you have to port it
 
-- **Do not build from vLLM `main`, even though #53896 merged on 2026-08-31.** `main` has the model
-  but **not** PLE offload — #53899 is still open and `vllm/v1/ple_offload/` does not exist there.
-  Without it the 51.2 B-parameter n-gram table stays resident on the GPU and the model does not fit.
-  The two trees have diverged (#53899 is not stacked on the merge), so this is a real port, not a
-  cherry-pick. Wait for #53899, or build from its branch head.
-- **Do not take FlashInfer 0.6.18.** flashinfer#4757 removed **SM121a from the aarch64 JIT-cache
-  arch list** and it was cherry-picked into the 0.6.18 release. You lose the prebuilt cubins, fall
-  back to runtime JIT, and the unbounded ninja fan-out can take the whole box into a global OOM —
-  not just vLLM. vllm#54313 bumped vLLM's pin to 0.6.18 on 2026-08-30, so **re-pin 0.6.17 after any
-  vLLM change**.
+vLLM `main` has the model (#53896, merged 2026-08-31) but **not** PLE offload — #53899 is still
+open and `vllm/v1/ple_offload/` does not exist upstream. Without it the 51.2 B-parameter n-gram
+table stays resident on the GPU and the model does not fit. The generic UVA route
+(`--cpu-offload-gb`) is not a substitute: it pins the tables and thrashes the box.
 
-  If you are ever forced onto 0.6.18, it is survivable but do it deliberately: flashinfer#3170's
-  audit notes `compute_120f` covers both CC 12.0 and 12.1, and the arch-specific `sm_121a`
-  requirement applies **only to sparse MMA** (`mma.sp .kind::mxf4nvf4`) — which this model does not
-  use; our `mxf4nvf4` references are dense `tcgen05.mma` in the NVFP4 MoE mainloop. So the loss is
-  bounded. Warm the JIT cache **at a low `--gpu-memory-utilization` first**, with `MAX_JOBS=2` and
-  `FLASHINFER_NVCC_THREADS=1` set (both are already in the launcher). A cold JIT rebuild at
-  util 0.90 is how this box was taken down once.
+The two trees have diverged, so this is a real port, not a cherry-pick — but it is done and it
+works. [`tools/main/`](tools/main/) carries it: apply `pr53899.vllm.diff` (13 files clean, 14/17
+hunks of `ple_layer.py`), then `port53899.py` hand-ports the three rejects onto main's fused-op PLE
+layer. [`tools/main/BUILD-RECIPE.md`](tools/main/BUILD-RECIPE.md) is the full procedure for bumping
+to a newer nightly, with the traps that cost us time — **clone the serving venv, never build a
+fresh one** (a fresh venv breaks the `torch 2.13.0+cu130` pin), and verify the clone by a log line
+from the running server naming the venv path, because `cp -a` leaves the copy's interpreter
+pointing at the original.
+
+### Take FlashInfer 0.6.18, not 0.6.17
+
+**This reverses what this file said until 2026-09-11.** We pinned 0.6.17 on the grounds that
+flashinfer#4757 dropped SM121a from the aarch64 JIT-cache arch list, so 0.6.18 would lose the
+prebuilt cubins and fall back to a ninja fan-out that once took this box down. We had read the PR
+description and never opened the wheel. Opening both wheels refutes it:
+
+| `flashinfer_jit_cache/` | 0.6.17 | 0.6.18.post1 |
+|---|---|---|
+| filenames containing `121` | **0** | **0** |
+| `fp4_gemm_cutlass_sm120.so` | 17 × `sm_120` ELF | the same 17 × `sm_120` ELF |
+
+Neither version ships an sm121 artifact — 0.6.17 predates #4757 and has none either, so there were
+never any to lose. Nothing in the tree is gated to `sm_121a`: `compute_120f` covers CC 12.0 **and**
+12.1, and `sm_121a` is required only for sparse MMA (`mma.sp .kind::mxf4nvf4`), which this model
+does not use. Everything we touch is a `*_sm120` module, identical in both. Empirically, after
+cutting over, `~/.cache/flashinfer/0.6.18.post1/121a/` holds **0 modules** and a full start log has
+zero `ninja`/`nvcc`/`Compiling` lines. There is no JIT fallback here, so there is no OOM exposure.
+(Measured in [det-208](notes/determinism-investigation.md).)
+
+The pin was also expensive: vllm#55715 below asks for FlashInfer ≥ 0.6.18, so anyone following the
+old advice read themselves out of a working kernel.
+
+> **Startup takes ~12 minutes and always did.** The FlashInfer autotune cache is version-scoped
+> (`flashinfer_autotune_cache/<version>/121a/<hash>/`), so an upgrade does discard the previous
+> tuning — but it is not what you wait for. Measured startup to `Application startup complete`:
+> **11:20 / 12:01 on 0.6.17**, **11:54 on 0.6.18.post1**. Loading 123 GB dominates; the version
+> change is invisible next to it. Don't mistake the wait for a hang, and don't attribute it to
+> the upgrade. Keep all three packages at one version:
+> `flashinfer-python` from PyPI, `flashinfer-cubin` from `https://flashinfer.ai/whl/` (PyPI tops
+> out at 0.6.13), `flashinfer-jit-cache` from `https://flashinfer.ai/whl/cu130/`. `jit/env.py`
+> asserts cubin == python and aborts the import on a mismatch.
 
 ---
 
@@ -101,6 +129,25 @@ accept it. See [MANIFEST](patches/MANIFEST.md) for what each one does and why.
 **Any `pip install`/upgrade of vLLM in this venv silently reverts all eight.** The symptoms are
 non-obvious — a startup hang at `warmup_kernels`, HTTP 400 on every tool call, missing scale
 parameters. Re-run `apply.sh` after any reinstall.
+
+### One more thing to check: the GDN prefill kernel
+
+Three of every four layers in this model are linear-attention (GDN). Until vllm#55715
+(merged 2026-09-08, `f6326f53b`) `_resolve_gdn_prefill_backend()` set `supports_flashinfer` for SM90
+and the SM10x family only, so **sm_121 silently fell through to the Triton/FLA fallback for every one
+of them** — 1,216 of 1,216 logged backend announcements on this box, never once FlashInfer. It is a
+silent default, not an error.
+
+If your build is at or past `f6326f53b` you get it for free. Below that it is +10/−2 in one file;
+ours is [`tools/main/`](tools/main/). Either way, **verify from the log rather than from the version** —
+both the main worker and the PLE offload worker must say:
+
+```
+Using FlashInfer GDN prefill kernel (requested=auto, head_k_dim=128)
+```
+
+Upstream measures 7.2 % TTFT at ISL 32768 on a GB10 and 3.83–4.52× on the kernel itself; our own
+A/B on this box is still running, so treat those as upstream's numbers, not ours.
 
 ## 4. Serve
 
