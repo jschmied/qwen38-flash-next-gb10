@@ -3854,3 +3854,64 @@ cache, evictable under pressure**, where the offload worker's anonymous allocati
 
 **It does revive the ngram comparison** det-160 called impossible: that V1 executor conflict came from
 `VLLM_PLE_CPU_OFFLOAD`, which this path turns off.
+
+## det-196 — we DO have vllm#54739's Thai corruption, and it is the base, not our experts
+
+User asked whether our model shows the Thai defect of
+[vllm#54739](https://github.com/vllm-project/vllm/issues/54739). It does. So does stock, at the same
+rate.
+
+| arm | defects | Thai chars | per 1000 |
+| --- | --- | --- | --- |
+| `ours-lh3` (RadixArk base + our Local-Hessian experts) | 62 | 10,378 | **5.97** |
+| `stock-radixark` (base, unmodified) | 60 | 10,570 | **5.68** |
+
+Conditional test on the split of the 122 total defects: **z = +0.28, p ≈ 0.78**. Indistinguishable.
+**Our requant neither introduces nor removes it.** Both arms: 30 samples, identical prompts, seeds,
+sampling and detector, `--enforce-eager`, MTP off, one start each.
+
+Reference: the issue reports **12–18 per 1000** for the configurations it calls broken and **0** for
+llama.cpp on the same weights.
+
+### Our canary was testing the wrong thing
+
+`markprobe.py` reports this build **0/48 corrupt, 48/48 exact** — and that is true and beside the
+point. It is a **temp-0 copy task**. The issue is **free generation at temp 1.0 / top_p 0.95 /
+top_k 20**, and the reporter says explicitly that greedy is unusable on this model because it
+degenerates. The defects appear only in the condition we never tested.
+
+The model card cites the canary as quality evidence. It therefore overstates what was checked, and
+that needs fixing — the finding is not that the canary lied, it is that it answered a narrower
+question than the card implies.
+
+### What the defects look like
+
+Both of the issue's classes, all mid-sentence in running Thai prose, not the model quoting examples:
+
+| observed | correct | class |
+| --- | --- | --- |
+| `พบว่่า` | `พบว่า` | doubled mai ek |
+| `เกีี่ยว` | `เกี่ยว` | doubled sara ii — their `อีีก` exactly |
+| `กัับ`, `ต่างกััน` | `กับ`, `ต่างกัน` | doubled sara a |
+| `ทเี่กิด` | `ที่เกิด` | marks jump behind the leading vowel `เ` |
+| `ความเขา้ ใจ` | `ความเข้าใจ` | tone mark off `ข` onto `า`, plus a spurious space |
+
+At codepoint level `ทเี่กิด` is `ท เ ี ่` where correct is `ท ี ่ เ`: the combining marks attach to
+nothing, which Thai orthography never permits.
+
+### Caveats, stated
+
+- **5.97 and 5.68 are floors.** The detector catches doubled and orphaned marks; it is blind to
+  *displacement onto the wrong consonant* (their `เชน่`), because free text has no reference string.
+  Validated first against the issue's own examples: catches 2 of its 4 quoted corruptions, 0 false
+  positives on 8 correct forms.
+- **Early flags were false positives** — the model discussing Thai orthography in English and quoting
+  bare marks. Excluded by inspection before any rate was quoted, not by the detector.
+- **Different config from the report.** They ran `Qwen3.8-Flash-Next-FP8` on 2× DGX Spark at tp 2; we
+  ran NVFP4 on 1× GB10 at tp 1. That our rate is ~3× below theirs may be the config, the detector's
+  blindness, or both. **Not evidence their number is wrong.**
+- One start per arm. The arms are paired on prompts and seeds, which is what makes the *comparison*
+  sound; neither absolute rate is a three-start number.
+
+**This is a datapoint the issue does not have** — NVFP4, single box, tp 1 — and it rules out
+quantisation scheme as the cause on our side. Posting it needs the user's go.

@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Does our build show the vllm#54739 Thai corruption under the reporter's conditions?
+
+Their probe is FREE GENERATION at temp 1.0 / top_p 0.95 / top_k 20 -- explicitly not
+greedy, which they say degenerates on this model. Our own combining-mark canary is a
+temp-0 COPY task, so it has never tested this.
+
+No reference string exists for free text, so defects are detected structurally. Two
+classes, both unambiguous in well-formed Thai:
+
+  DOUBLED   the same combining mark twice in a row  (their `อีีก`, `ครรับ`)
+  ORPHAN    a tone mark / vowel sign not attached to a consonant (their `เชน่`)
+
+Rate is per 1000 Thai characters, matching their 12-18/1000.
+"""
+import json, sys, unicodedata, urllib.request, argparse, re
+
+CONS = lambda c: "ก" <= c <= "ฮ"
+TONE = lambda c: c in "่้๊๋็์ํ๎"
+VOWEL_ABOVE = lambda c: c in "ัิีึื"
+BELOW = lambda c: c in "ฺุู"
+THAI = lambda c: "฀" <= c <= "๿"
+
+
+def defects(t):
+    out = []
+    for i, c in enumerate(t):
+        if not THAI(c):
+            continue
+        comb = unicodedata.category(c) in ("Mn", "Mc", "Me")
+        if comb and i and t[i - 1] == c:
+            out.append(("DOUBLED", repr(c), t[max(0, i - 6):i + 4]))
+            continue
+        if (TONE(c) or VOWEL_ABOVE(c) or BELOW(c)) and comb:
+            # walk back over other marks to find the base
+            j = i - 1
+            while j >= 0 and unicodedata.category(t[j]) in ("Mn", "Mc", "Me"):
+                j -= 1
+            if j < 0 or not CONS(t[j]):
+                out.append(("ORPHAN", repr(c), t[max(0, i - 6):i + 4]))
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--url", default="http://127.0.0.1:8092")
+    ap.add_argument("--model", default="flashnext")
+    ap.add_argument("--n", type=int, default=10)
+    ap.add_argument("--arm", default="?")
+    a = ap.parse_args()
+
+    PROMPTS = [
+        "ช่วยเขียนอธิบายสั้น ๆ เป็นภาษาไทยว่าเทศกาลสงกรานต์คืออะไร และคนไทยทำอะไรกันบ้างในวันนั้น",
+        "อธิบายเป็นภาษาไทยว่าปีใหม่ไทยกับปีใหม่สากลต่างกันอย่างไร และคริสต์ศักราชคำนวณอย่างไร",
+        "เขียนย่อหน้าภาษาไทยเกี่ยวกับประวัติของการพิมพ์ เช่น เครื่องพิมพ์และหนังสือเล่มแรก ๆ",
+    ]
+    tot_chars = tot_def = 0
+    per = []
+    for pi, p in enumerate(PROMPTS):
+        for k in range(a.n):
+            body = {"model": a.model, "prompt": p, "max_tokens": 220,
+                    "temperature": 1.0, "top_p": 0.95, "top_k": 20, "seed": 1000 + k}
+            r = urllib.request.Request(a.url + "/v1/completions",
+                                       json.dumps(body).encode(), {"Content-Type": "application/json"})
+            try:
+                with urllib.request.urlopen(r, timeout=240) as f:
+                    txt = json.loads(f.read())["choices"][0]["text"]
+            except Exception as e:
+                print(f"  request failed: {e}"); continue
+            d = defects(txt)
+            nth = sum(1 for c in txt if THAI(c))
+            tot_chars += nth; tot_def += len(d)
+            per.append((pi, k, nth, len(d)))
+            for kind, ch, ctx in d[:2]:
+                print(f"    {kind:8s} {ch:10s} …{ctx}…")
+    rate = 1000 * tot_def / tot_chars if tot_chars else 0
+    print(f"\n  arm={a.arm}  {len(per)} samples  {tot_chars:,} Thai chars  {tot_def} defects")
+    print(f"  RATE = {rate:.2f} per 1000 Thai chars   (vllm#54739 reports 12-18 for the broken configs, 0 for llama.cpp)")
+    print("== ALL DONE ==")
+
+
+main()
