@@ -3481,9 +3481,49 @@ The queued doubt was: *if the W4A4 arm's dense linears ran through a 16-bit-acti
 linears to mis-route. The gap came from the MoE path, which the TODO already noted is unaffected.
 The finding stands as measured.
 
-**Action: none.** Do not apply #55405 to our venv; it changes a selection we never make. Worth a note
-on the issue that sm_121 reproduces it, if we ever post there — with the caveat that a MoE-only
-checkpoint does not exercise it.
+**Action for Flash-Next: none.** #55405 changes a selection this checkpoint never makes.
+
+### CORRECTION 2026-09-11 — "inert for us" was too broad; the dense 27B IS affected
+
+Scope error: the paragraph above is true of **Flash-Next**, not of our fleet. The dense
+`qwen38-27b-nvfp4` is the opposite case and it is the model we prefer for long work
+([[dense-27b-preferred-for-long-work]]).
+
+| checkpoint | quantized modules | with `input_scale` | quantized dense Linears |
+| --- | --- | --- | --- |
+| `qwen38-flash-next-nvfp4` | 73,729 | 73,728 | **1** (a PLE embedding) |
+| `qwen38-27b-nvfp4` | 401 | **0** | **401** |
+
+The 27B's 401 are `mlp.{gate,up,down}_proj`, `linear_attn.{in_proj_qkv,in_proj_z,out_proj}` and
+`self_attn.{q,k,v,o}_proj` — every one a dense Linear, and **none carries an `input_scale`**, so it is
+a W4A16 checkpoint by construction and `use_a16=True`.
+
+That takes a **different branch** from the registry walk traced above:
+
+```python
+elif linear_backend == "auto" and use_a16:
+    if compute_capability in (100, 103) and cutedsl_ok:
+        force_kernel = FlashInferCuteDslNvFp4W4A16LinearKernel
+    else:
+        force_kernel = MarlinNvFp4LinearKernel     # sm_121 lands here
+```
+
+sm_121 is not in `(100, 103)`, so all 401 layers are forced onto **Marlin** — while
+`FlashInferCuteDslNvFp4W4A16LinearKernel.is_supported()` returns **True** on sm_12x (measured, table
+above). The hard-coded SM list contradicts the kernel's own support gate. Confirmed by calling the
+selector: `init_nvfp4_linear_kernel(use_a16=True) -> MarlinNvFp4LinearKernel`.
+
+**Cheap test, not yet run.** The force only applies when `linear_backend == "auto"`. Setting
+`--linear-backend flashinfer_cutedsl` should skip the force, filter the a16 candidates
+(`CuteDslW4A16`, `Marlin`, `Humming`) to that backend, and select CuteDSL W4A16. One flag, no patch.
+**Unverified** — `_get_linear_backend()` needs a live vLLM config, so this was read, not executed.
+
+**Queued:** A/B the 27B on sm_121, `--linear-backend auto` (Marlin) vs `flashinfer_cutedsl`, c=1 decode
++ TTFT, three starts. If CuteDSL wins, #55405's territory matters to us after all — on the 27B, not on
+Flash-Next — and the SM list is worth reporting upstream with a GB10 number attached.
+
+**What does NOT change:** the [[w4a16-vs-w4a4-measured]] comparison was run on Flash-Next, where both
+arms have W4A4 experts and no quantized dense Linears. Its 0.42 pp gap is still not explained by this.
 
 ## det-192 — PLE mmap is a 3-file port, but it REQUIRES `--enforce-eager`, so det-158 gates it
 

@@ -536,7 +536,11 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   new to us; and they do NOT carry #55122, so their production has the QSA top-k nondeterminism.
   Their decode numbers (26.8 tok/s @47.6k, 33.8 @30k, production median 22.7) agree with ours.
 
-- ~~**NVFP4 kernel selection on sm_121 — we run W4A16 where W4A4 exists**~~ **CLOSED 2026-09-11 (det-180):
+- **NVFP4 kernel selection on sm_121 — REOPENED for the DENSE 27B (det-180 correction, 2026-09-11).**
+  The 27B has 401 quantized dense Linears and no `input_scale`, so `use_a16=True` forces **Marlin** on
+  sm_121 while CuteDSL W4A16 reports itself supported. Cheap A/B: `--linear-backend flashinfer_cutedsl`
+  vs `auto`, c=1 decode + TTFT, three starts. Closed only for Flash-Next:
+- ~~**...for Flash-Next**~~ **CLOSED 2026-09-11 (det-180):
   real upstream, INERT for us — our checkpoint has zero quantized dense Linears (73,728 expert matrices
   + 1 PLE embedding, everything else excluded), so the selector is never consulted. The doubt over
   [[w4a16-vs-w4a4-measured]] is retired. Original text below.**
