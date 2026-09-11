@@ -4538,3 +4538,53 @@ Installed sizes 4.5 GB + 2.2 GB. The version check in `flashinfer/jit/env.py` ga
 against python**; jit-cache is unchecked. A `--no-deps` upgrade of python alone therefore **breaks the
 import** with `flashinfer-cubin version (0.6.17) does not match flashinfer version (0.6.18.post1)` —
 hit and reverted during this work.
+
+## det-206 — prod cut over to fnmain3, carrying the FlashInfer GDN prefill kernel
+
+Both tasks the user authorised, done and verified in one chain.
+
+### What changed
+
+| | before | after |
+| --- | --- | --- |
+| `serve-fnmain.sh:22` default venv | `vllm-venv-fnmain` (dev352) | **`vllm-venv-fnmain3`** (dev524) |
+| GDN prefill kernel | Triton/FLA — **1,216 of 1,216 runs** | **FlashInfer**, both workers |
+| FlashInfer | 0.6.17 | **0.6.18.post1** (python + cubin + jit-cache, consistent) |
+| vllm / torch | — | unchanged: `dev524+g5db652225`, `2.13.0+cu130` |
+
+Backups: `serve-fnmain.sh.orig-precut`, `qwen_gdn_linear_attn.py.orig-gdn55715`. Reversal is one `sed`
+plus `gdn55715_patch.py off`.
+
+**Prod was on `fnmain` (dev352)** — older than the `fnmain2` every measurement this week used via an
+explicit `FN_VENV`. So the cutover is a two-generation jump, not one.
+
+### Verified after the dependency change, not before
+
+The FlashInfer upgrade landed *after* the first GDN verification, so that check did not carry. Re-ran
+it end to end on 0.6.18.post1: startup complete, `Using FlashInfer GDN prefill kernel` in both the main
+and PLE-offload workers, and a correct temp-0 generation (a sound definition of primality).
+
+### Two things learned in passing
+
+**The FlashInfer autotune cache is version-scoped** —
+`flashinfer_autotune_cache/0.6.18.post1/121a/<hash>/` — so an upgrade discards the previous tuning and
+the first start pays a full autotune pass (20 profiles for `trtllm::fused_moe::gemm1`, ~1/s, 4 tactics
+skipped as unsupported on sm_121 each time). A ~13-minute first start after this upgrade is expected,
+not a hang.
+
+**`--no-deps` on `flashinfer-python` alone breaks the import.** `flashinfer/jit/env.py` asserts
+`cubin == python`, and `flashinfer-cubin` is not on PyPI above 0.6.13 — it comes from
+`https://flashinfer.ai/whl/`, with `jit-cache` from `https://flashinfer.ai/whl/cu130/`. All three must
+move together.
+
+**Left deliberately unmatched:** vLLM pins `flashinfer-python==0.6.18` and we run `0.6.18.post1`. The
+check that actually executes is FlashInfer's own `cubin == python`, which passes; vLLM's only runtime
+mention is a `kimi_k3` log string saying "0.6.18 or newer". Chasing the exact pin costs another ~4.5 GB
+because cubin must match, and a post-release is packaging-only by PEP 440. Recorded rather than fixed.
+
+### Not yet measured
+
+**We have not measured the TTFT gain on our own box.** The PR reports 7.2 % at ISL 32768 on a GB10 and
+3.83–4.52× on the kernel itself; we confirmed only that the kernel is *selected and correct*. A
+three-start A/B against `fnmain2` (Triton/FLA) is the honest next step, and until then the 7.2 % is
+upstream's number, not ours.

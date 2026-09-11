@@ -124,7 +124,9 @@ kernel nobody intended to change are not a comparison, and the roster is the che
 
 ## Bracket every A/B arm with a bandwidth probe
 
-`/opt/llm/runners/bwprobe.py` before and after each arm; record both with the result.
+`/opt/llm/runners/bwprobe.py` **before the arm starts and after it stops** — never while a server holds
+the GPU. Tried concurrently 2026-09-11 and it died with a CUDA error at util 0.75; the idle-box
+baseline is not comparable to a contended measurement anyway.
 
 GB10's decode-shaped GEMV bandwidth is reported to flip ~70 ↔ ~225 GB/s **without an SM-clock
 change**, and `clocks.mem` is `[N/A]` on this hardware — so no `nvidia-smi` field detects it (det-201).
