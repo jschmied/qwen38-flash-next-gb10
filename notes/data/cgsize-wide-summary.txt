@@ -1,0 +1,8 @@
+=== det-193 evidence: capture config vs outcome, per log ===
+fnext-cgab-piece1.log        mode=PIECEWISE          sizes=[1, 2, 4, 8]           max=8    0.0 GiB for CUDAGraph memory capture_lines=0
+fnext-cgab-piece2.log        mode=PIECEWISE          sizes=[1, 2, 4, 8]           max=8    0.0 GiB for CUDAGraph memory capture_lines=0
+fnext-cgab-piece3.log        mode=PIECEWISE          sizes=[1, 2, 4, 8]           max=8    0.0 GiB for CUDAGraph memory capture_lines=0
+fnext-cgab-full1.log         mode=FULL_DECODE_ONLY   sizes=[1, 2, 4, 8]           max=8    0.0 GiB for CUDAGraph memory capture_lines=0
+fnext-cgab-full2.log         mode=FULL_DECODE_ONLY   sizes=[1, 2, 4, 8]           max=8    0.0 GiB for CUDAGraph memory capture_lines=0
+fnext-cgab-full3.log         mode=FULL_DECODE_ONLY   sizes=[1, 2, 4, 8]           max=8    0.0 GiB for CUDAGraph memory capture_lines=0
+fnext-cgsize-wide.log        mode=PIECEWISE          sizes=[1, 2, 4, 8, 16, 32, 64] max=64   0.0 GiB for CUDAGraph memory capture_lines=0

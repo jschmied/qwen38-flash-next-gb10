@@ -3645,3 +3645,58 @@ column headers need rewording.
 `nvfp4-table` skill owns it and its sources live in `bench/nvfp4-table/`. Sequence: run the A/B
 (`--linear-backend auto` vs `flashinfer_cutedsl`, W4A16 cell, TTFT + c=1 decode, three starts), then
 go through the skill.
+
+## det-193 — prod captures NO cudagraphs, and it is not the capture sizes, 2026-09-11 08:33
+
+**det-158 answered, and the A/B it specified was void before it started.** Seven server starts across
+three configurations, all on `qwen38-flash-next-nvfp4`, `enforce_eager=False`, vLLM
+`0.28.1rc1.dev401+g8340fe1bb`:
+
+| log | mode | capture sizes | max | CUDAGraph memory | `Capturing CUDA graphs` lines |
+| --- | --- | --- | --- | --- | --- |
+| cgab-piece1/2/3 | PIECEWISE | [1,2,4,8] | 8 | **0.0 GiB** | **0** |
+| cgab-full1/2/3 | FULL_DECODE_ONLY | [1,2,4,8] | 8 | **0.0 GiB** | **0** |
+| **cgsize-wide** | PIECEWISE | **[1,2,4,8,16,32,64]** | **64** | **0.0 GiB** | **0** |
+
+### Why det-158's own design was void
+
+It specified `PIECEWISE` vs `NONE`. But PIECEWISE already captures nothing, so `NONE` would have been
+a third non-capturing configuration and the two arms would have been the same behaviour under
+different names. The six `cgab` logs had been on disk since 2026-09-10 and said so; nobody had read
+them for this. **Fifth void run identified — and the first caught before spending the starts.**
+
+The tool that caught it is `kernelroster.py` ([[kernel-roster-from-logs]]), written the same morning
+for an unrelated question.
+
+### The one new start, and what it rules out
+
+`fx-cgsize` with `FN_CG_SIZES=[1,2,4,8,16,32,64]`. **The knob reached the cell** — the engine built
+with `max_cudagraph_capture_size: 64`, up from 8 — and the outcome did not move. So this is a valid
+negative, not a void run: capture is not being skipped because the sizes are too small.
+
+The motivating hypothesis is dead: MTP n=3 makes each decode step 1+3 tokens per sequence, so a real
+batch never lands on 1/2/4/8 — but widening to 64 covers every shape this server can produce
+(`max_num_seqs 4`) and still nothing captures.
+
+### What this settles
+
+- **det-136's null has a second explanation.** Both its arms had capture disabled in fact, whatever
+  they asked for.
+- **The capture-width A/B is void**, not merely null, and must not be re-run as designed.
+- **MiaAI #19 is discharged**: the answer to "does it capture" is no, with seven starts behind it.
+- **det-192 (PLE mmap) is UNGATED.** Its blocker was `--enforce-eager` conflicting with our PIECEWISE
+  config. If PIECEWISE captures nothing, eager costs nothing, and the 3-file port is worth doing.
+
+### What is NOT established
+
+**Why** capture is skipped. Ruled out: capture size, cudagraph mode, `enforce_eager`. Still open, and
+both are source-reading hypotheses that this session's record says to distrust until a log confirms
+them:
+
+1. the speculative/MTP path suppressing capture, or
+2. `splitting_ops` listing nearly every op this model uses — `qwen4_exp_qsa_with_output`,
+   `qwen_gdn_attention_core`, `qwen4_exp_ple_short_conv`, `linear_attention`, `mamba_mixer2` — which
+   under PIECEWISE would leave no capturable region between splits.
+
+A cheap discriminator exists: serve **without** `speculative_config` and see whether capture appears.
+One start, one differing cell. Queued, not run.
