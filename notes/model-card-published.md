@@ -26,9 +26,6 @@ tags:
 > history in
 > [combining-mark-regression.md](https://github.com/jschmied/qwen38-flash-next-gb10/blob/main/notes/combining-mark-regression.md).
 
-Every `TBD` below is a cell that must be filled by a measurement. If one cannot be filled, the claim
-it belongs to comes out rather than being softened.
-
 Every measurement on this page is written up, with its method and its limits, in the open notes at
 **[jschmied/qwen38-flash-next-gb10](https://github.com/jschmied/qwen38-flash-next-gb10)** — the
 record of getting this model onto a single DGX Spark. Each claim below links to the note that
@@ -38,7 +35,7 @@ the next section.
 ## This is a partial checkpoint — experts only
 
 It contains **only** the routed expert tensors,
-`model.language_model.layers.*.mlp.experts.<e>.{gate_proj,up_proj,down_proj}.*` — 68.0 GiB,
+`model.language_model.layers.*.mlp.experts.<e>.{gate_proj,up_proj,down_proj}.*` — 63.3 GiB,
 NVFP4 W4A4, Local-Hessian calibrated. **It runs on stock vLLM; no patches.**
 
 It is not a servable model on its own. Everything else comes unmodified from
@@ -47,12 +44,16 @@ not republished here — 57.9 GiB of somebody else's unchanged weights carries n
 
 | component | size | source |
 | --- | --- | --- |
-| **experts** | **68.0 GiB** | **this repo** |
+| **routed experts** | **63.3 GiB** | **this repo** |
 | ple | 47.7 GiB | RadixArk, bit-identical |
 | attention | 5.1 GiB | RadixArk, bit-identical |
+| MTP drafter experts | 4.7 GiB | RadixArk, bit-identical — BF16, `mtp.*` is excluded from quantization |
 | other dense + embed + lm_head | 5.0 GiB | RadixArk, bit-identical |
 
-The exclusion set (`*.linear_attn.*`, `*.self_attn.*`, `*.ple.*`, `*.mlp.gate*`, `lm_head`,
+The MTP drafter has its own expert pair and it is **not** part of this repo. Counting it with the
+routed experts (a single "68.0 GiB experts" row) was an error in an earlier revision of this page.
+
+The exclusion set (`*.linear_attn.*`, `*.self_attn.*`, `*.ple.*`, `*.mlp.gate*`, `mtp.*`, `lm_head`,
 embeddings, …) is RadixArk's and is unchanged.
 
 > **Also available, separately: a blockwise FP8 `lm_head`** — 606 MiB, **+11 % decode** at no
@@ -101,18 +102,23 @@ head **constant across both arms** — otherwise two things vary at once.
 >
 > Both builds are also clean on the combining-mark canary (0/48 corrupt, 48/48 exact), matching the base.
 
+**Same format, same tensor shapes, same file size, same inference speed.** Only the values of
+`weight_scale` and `weight_scale_2` differ. This is a quality change at zero inference cost, not a
+speed or memory optimisation.
+
+## About the name: this build *is* Local-Hessian, but that is not where the gain comes from
+
 The per-group weight scales are chosen by **Hessian-weighted search** — ModelOpt's `local_hessian`,
 the method of [arXiv 2608.28113](https://arxiv.org/abs/2608.28113) ("H-Scale", Qwen team) — instead
-of the plain amax/MSE sweep used by the published builds.
+of the plain amax/MSE sweep used by the published builds. That is what was built, and it is what the
+repo is named after.
 
-**Same format, same tensor shapes, same file size, same inference speed.** Only the values of
-`weight_scale` differ. This is a quality change at zero inference cost, not a speed or memory
-optimisation.
+It does win on weight reconstruction: **8.585 %** against **9.494 %** for plain-max on identical
+data, 0.91 pp. **But that advantage does not survive to held-out text.** Once `weight_scale_2`
+granularity is held fixed, Local-Hessian's increment over plain max is 0.0054 NLL at t = −1.18 —
+not a result. The 0.91 pp is real and it is nearly irrelevant.
 
-Measured on identical data: reconstruction error through the Local-Hessian scales **8.585 %**
-against **9.494 %** for plain-max — 0.91 pp.
-
-**Treat that number with suspicion.** In this same work weight reconstruction was 0.004 pp between
+**Treat reconstruction error with suspicion generally.** In this same work weight reconstruction was 0.004 pp between
 our plain-max export and the base while two producer/runtime contracts were broken, and it rated an
 earlier Local-Hessian build *better* than the base while that build corrupted 25 % of Thai copy
 tasks. It measures the weights; it does not measure what the runtime does with them
