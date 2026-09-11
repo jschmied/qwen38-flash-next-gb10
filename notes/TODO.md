@@ -534,7 +534,11 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
   new to us; and they do NOT carry #55122, so their production has the QSA top-k nondeterminism.
   Their decode numbers (26.8 tok/s @47.6k, 33.8 @30k, production median 22.7) agree with ours.
 
-- **NVFP4 kernel selection on sm_121 — we run W4A16 where W4A4 exists (det-159, upstream #55397 /
+- ~~**NVFP4 kernel selection on sm_121 — we run W4A16 where W4A4 exists**~~ **CLOSED 2026-09-11 (det-180):
+  real upstream, INERT for us — our checkpoint has zero quantized dense Linears (73,728 expert matrices
+  + 1 PLE embedding, everything else excluded), so the selector is never consulted. The doubt over
+  [[w4a16-vs-w4a4-measured]] is retired. Original text below.**
+- **NVFP4 kernel selection on sm_121 (det-159, upstream #55397 /
   fix #55405).** VERIFIED in the prod venv: first match on sm_121 is
   `FlashInferCuteDslNvFp4W4A16LinearKernel`; three native W4A4 kernels sit below it unreached.
   Queued behind `mtprem`: apply #55405, confirm the selection flips, A/B prefill/TTFT + c=1 decode.

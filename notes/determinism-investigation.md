@@ -3426,3 +3426,56 @@ so passing `FN_DET_TOPK=0` as a systemd `Environment=` property did nothing and 
 have failed identically ten minutes later. Caught by checking the runner rather than trusting the
 launch. Every runner that takes an arm flag must read it as `${FN_X:-default}` — verified after
 launch by reading `/proc/<pid>/environ`, which is now the habit.
+
+## det-180 — the sm_121 W4A16/W4A4 kernel mis-selection is REAL upstream and INERT for us, 2026-09-11
+
+**Upstream bug confirmed on our hardware** (issue #55397, fix #55405). On sm_121, walking
+`_POSSIBLE_NVFP4_KERNELS[CUDA]` in order with `use_a16=False`:
+
+| # | kernel | `is_supported()` on sm_121 |
+| --- | --- | --- |
+| 1 | `FlashInferCuteDslNvFp4LinearKernel` (**W4A4**) | **False** — "requires sm_10x" |
+| 2 | `FlashInferCuteDslNvFp4W4A16LinearKernel` (**W4A16**) | True — accepts sm_100 **or sm_12x** |
+| 3–8 | FlashInferCutlass / B12x / Cutlass / Marlin / Trtllm / Cudnn (W4A4) | True, never reached |
+
+The CuTe-DSL W4A4 kernel excludes sm_12x while its W4A16 sibling admits it, and the W4A16 kernel's
+`can_implement()` returns `(True, None)` unconditionally — it accepts a W4A4 config. Verified by
+calling the selector, not by reading it:
+
+```
+init_nvfp4_linear_kernel(use_a16=False) -> FlashInferCuteDslNvFp4W4A16LinearKernel
+init_nvfp4_linear_kernel(use_a16=True)  -> MarlinNvFp4LinearKernel
+```
+
+`apply_weights` takes BF16 `x` and never quantizes activations, so a W4A4 checkpoint's `input_scale`
+would be ignored for any dense linear that reached this path.
+
+### It does not reach that path on our checkpoint
+
+Counting modules with a `weight_scale` sibling in the base index:
+
+| NVFP4-quantized | count |
+| --- | --- |
+| `layers.N.mlp.experts.N.{gate,up,down}_proj` | 73,728 (48 × 512 × 3) |
+| `layers.1.ple.ple_embedding.ngram_embedding` | 1 |
+| everything else | **0** |
+
+`exclude_modules` removes `*.self_attn.*`, `*.linear_attn.*`, `*.mlp.gate*`, `*.mlp.shared_expert.*`,
+`*hyper_connection*`, `*.ple.*`, `lm_head`, `mtp.*`, both embed tables. There is **no quantized dense
+Linear in this model**, so `init_nvfp4_linear_kernel` is never consulted for it; the routed experts go
+through the fused MoE path and the PLE entry is an embedding, not a Linear.
+
+**Independent confirmation that the expert path really is W4A4:** the `input_scale` contract bug fixed
+2026-09-10 corrupted Thai combining marks. A weight-only kernel ignores `input_scale`, so it could not
+have produced that corruption. The experts consume activation scales.
+
+### Consequence for [[w4a16-vs-w4a4-measured]]
+
+The queued doubt was: *if the W4A4 arm's dense linears ran through a 16-bit-activation kernel, the
+0.42 pp fidelity gap is suspect.* **That doubt is retired** — the W4A4 arm has no quantized dense
+linears to mis-route. The gap came from the MoE path, which the TODO already noted is unaffected.
+The finding stands as measured.
+
+**Action: none.** Do not apply #55405 to our venv; it changes a selection we never make. Worth a note
+on the issue that sm_121 reproduces it, if we ever post there — with the caveat that a MoE-only
+checkpoint does not exercise it.
