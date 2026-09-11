@@ -4035,32 +4035,55 @@ therefore worth up to ~2.2×, which is **more than every byte-level idea tested 
 | queue depth at expert size | 1.27× |
 | **read size / layout** | **up to 2.2×, and it is the one already on their list** |
 
-### The drive, and whether 6.5 GB/s is near its ceiling
+### The drive, and whether 6.5 GB/s is near its ceiling — CORRECTED 2026-09-11
 
 | | |
 | --- | --- |
-| controller | **Phison PS5027-E27T, DRAM-less**, PCIe 4.0 ×4 (PCI `1987:5027`) |
-| part / fw | `ESL01TBTLCZ-27J2-TYN`, 1.00 TB, `ERFM12.0` |
-| link | 16.0 GT/s × 4 — raw **7.88 GB/s**, practical ~7.1–7.5 |
-| measured peak | **6.4–6.5 GB/s ≈ 87 % of practical link** |
+| controller | **Phison PS5027-E27T**, PCIe 4.0 ×4, DRAM-less with HMB (PCI `1987:5027`) |
+| part / fw | `ESL01TBTLCZ-27J2-TYN`, 1.00 TB, `ERFM12.0` — also seen in ASUS GX10 systems |
+| Phison controller rating | **7.4 GB/s sequential read** |
+| PCIe 4.0 ×4 encoding max | 7.877 GB/s |
+| measured peak | **6.4–6.5 GB/s = 87.8 % of the 7.4 rating, 82.5 % of the encoding max** |
 
-So we are near the interface ceiling, not the NAND's. The missing ~13 % is plausibly the DRAM-less
-FTL plus filesystem and O_DIRECT overhead. The vendor's rated sequential figure is not readable from
-the hardware and would need Phison's datasheet; the link-derived number above is the defensible one.
+Use Phison's 7.4 as the reference. An earlier revision of this note invented a "practical link
+7.1–7.5 GB/s" band; the vendor figure is a cleaner anchor and replaces it. Note also that 7.4 is a
+**controller capability, not a published rating for this OEM configuration** — other E27T 1 TB
+references give 7.35, and commercial implementations are sometimes rated 7.0.
 
-**DRAM-less is not incidental** — it has no onboard DRAM for the mapping table and leans on Host
-Memory Buffer. That is fine for large sequential reads and materially worse for small scattered ones,
-which is exactly the 0.46 GB/s at 64 KiB in the table above. On this controller class, read shape
-matters *more* than it would on a DRAM-equipped drive.
+**The remaining ~12–14 %** could come from the OEM NAND/firmware configuration, attainable queue
+depth, controller or NAND limits, thermal/power state, or host I/O overhead. **These measurements do
+not isolate which**, and the earlier attribution to "the DRAM-less FTL, filesystem and O_DIRECT
+overhead" was not demonstrated.
 
-**Sequential vs scattered is a null at expert size.** Marching contiguously through a single 10 GiB
-file: QD1 4.94, QD4 6.30, QD8 6.37 GB/s — against 5.06 / 6.42 for 18 MiB chunks scattered across 206
-files. At this granularity the access *pattern* costs nothing and only *size* matters, which is the
-det-199 claim arrived at from the other direction.
+### ~~DRAM-less explains the small-read collapse~~ — WITHDRAWN
 
-**Caveats.** Our drive, not theirs — though if a stock DGX Spark ships this Phison part, the
-comparison is tighter than "different hardware" suggests; unverified either way. Our QD1 18 MiB figure
-varied 3.43–5.06 across runs. And **queue depth here was generated with a thread pool, not io_uring**:
-at 18 MiB each read is ~3 ms so thread overhead is noise and the 1.27× stands, but at 64 KiB each read
-is ~140 µs, so **the small-read end of the curve understates true io_uring**. The shape transfers; the
-absolute GB/s does not.
+An earlier revision blamed the 0.46 GB/s at 64 KiB on the DRAM-less/HMB design. **Not supported.**
+0.46 GB/s at 64 KiB is only ~7,000 IOPS, trivial against the E27T's ~1.0–1.2 M 4K random-read IOPS at
+high queue depth, and real E27T products show strong random-read behaviour despite being HMB-based.
+
+The thread-pool caveat is the *more likely* explanation and matters more than the controller design:
+at ~140 µs per operation, submission cost, scheduling, synchronisation and insufficient **effective**
+queue depth all bite. **An io_uring or fio sweep is needed before attributing the small-I/O end of the
+curve to anything about the hardware.**
+
+### The strongest result, and what it implies
+
+**Sequential and scattered are indistinguishable at expert size:** 18 MB contiguous through one file
+**6.37 GB/s** against 18 MB scattered across 206 files **6.42 GB/s**. At expert granularity, placement
+and seek locality are effectively irrelevant on this SSD. Transfer size and queue depth dominate.
+
+**Consequence — and it contradicts what we published in issue #2.** Our own table says combining two
+half-expert reads into one gains **−0.8 % at QD4** and **+11.7 % at QD1**. A real NVFP4 expert splits
+asymmetrically (~17.7 MB of weights + ~1.1 MB of scales), so expert-major repacking merges a long read
+with a short one and saves single-digit percent, not the "up to ~2.2×" claimed in
+`issue-bakeer-2-readshape.md`. **That claim is withdrawn.**
+
+Nor is ~2.5 GB/s explained by their split layout: half-expert reads measure 4.53–6.47 GB/s here. To
+sit at 2.5 the requests must be far smaller than half an expert, or the limit is submission/effective
+queue depth rather than layout.
+
+**The honest conclusion:** the E27T is already close to saturated for expert-sized reads, so io_uring
+cannot produce a large bandwidth gain for full-expert loads — its value is at smaller request sizes and
+in reducing submission overhead. Combined with det-198 (paging is near-optimal) and the NVFP4 entropy
+result (bytes are incompressible), **the remaining wins must come from fewer misses, fewer bytes per
+missed expert, or hiding misses behind compute — not from making each large read more sequential.**
