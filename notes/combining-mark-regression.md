@@ -491,3 +491,46 @@ difference and a real behavioural difference, and no demonstrated link between t
 experts) and re-measure NLL. If the gain disappears, granularity is the mechanism; if it survives,
 something else is. That is a one-layer build and a re-probe — cheap, and it is the honest next step
 rather than asserting the connection.
+
+## The NLL advantage is real — 59 passages, and it has two components
+
+Held-out set extended to **59 passages / 70,734 scored tokens over 11 languages**, fetched at offset
+20000, disjoint from the calibration corpus *and* from the first held-out batch. Both arms scored on
+identical text.
+
+| | stock | v3 | Δ |
+| --- | --- | --- | --- |
+| overall NLL/token | 1.7379 | **1.7227** | **−0.0152** |
+
+**Paired over passages: 40/59 favour v3, mean −0.0152, t = −3.92.** Not the 15-passage artefact I was
+worried about — the effect grew with the sample.
+
+### It splits into a general effect and a Devanagari effect
+
+| subset | n | mean Δ | t |
+| --- | --- | --- | --- |
+| all | 59 | −0.0152 | −3.92 |
+| **excluding Devanagari** | 53 | **−0.0069** | **−2.99** |
+| Devanagari only | 6 | **−0.0891** | −19.08 |
+
+The general improvement is real but small (~0.4 % relative). The Devanagari one is **13× larger** and
+consistent across all six of its passages.
+
+Per group: Devanagari −0.0891, **Thai −0.0249**, Cyrillic −0.0104, English −0.0096, Japanese −0.0059,
+Arabic −0.0058, Greek −0.0045, Vietnamese −0.0022, Latin −0.0018, CJK −0.0003, Hebrew **+0.0021**.
+
+### The ordering is the interesting part
+
+**Devanagari and Thai lead, and those are precisely the two scripts the contract-broken builds
+corrupted** (v1: Thai; v2: Thai + Devanagari). The same scripts that failed first under a bad export
+gain most under a good one.
+
+That suggests these scripts sit closest to the precision cliff in the expert weights — so any change
+in expert quantization fidelity shows up there before anywhere else. It is a hypothesis, not a
+result: consistent with everything measured, and not yet tested.
+
+**The test that would settle it** is the one already identified: rebuild at RadixArk's *block*
+`scale_2` granularity (3 values across 512 experts) instead of our per-expert one, and re-measure. If
+the Devanagari gain collapses, granularity is the mechanism. Note that our own per-expert scales fit
+each expert tighter, which is the only structural difference we have found and the only candidate
+that predicts "helps most where precision is tightest".
