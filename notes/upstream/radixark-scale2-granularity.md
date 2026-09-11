@@ -1,4 +1,4 @@
-DRAFT — needs the user's go, AND needs the `blk` measurement before it is worth sending.
+DRAFT — needs the user's go. The `blk` gate is CLEARED (2026-09-11 06:27).
 HuggingFace discussion, RadixArk/Qwen3.8-Flash-Next-NVFP4 (2026-09-11).
 
 ---
@@ -26,10 +26,21 @@ gain (−0.0069, t = −2.99 excluding Devanagari) and a large Devanagari-specif
 consistent across all six of its passages). Thai is second at −0.0249; Hebrew is the one small
 regression (+0.0021).
 
-**TBD — the causal test.** A build at *your* block granularity, identical in every other respect,
-is measured as arm `blk`. If its gain collapses, granularity is the mechanism and this is worth your
-time. If it survives, we do not know the cause and this section should be cut to the bare
-observation. **Do not send before that number exists.**
+**The causal test.** We rebuilt at *your* granularity (`--scale2-block 128`, plain max, nothing else
+changed) and scored it on the same passages. The advantage collapses:
+
+| vs your checkpoint | overall | excluding Devanagari (n=53) | Devanagari (n=6) |
+| --- | --- | --- | --- |
+| per-expert | **−0.0152**, t = −3.92 | −0.0069, t = −2.99 | −0.0891, t = −19.08 |
+| your granularity, rebuilt | −0.0012, t = −0.72 | **+0.0002, t = +0.12** | −0.0133, t = −2.44 |
+
+At block granularity the general gain is zero and 15 % of the Devanagari gain survives. On a separate
+15-passage set a **plain-max** per-expert build — no calibration data at all — captured 69 % of the
+overall gain and 87 % of the Devanagari gain, and beat Hessian calibration's increment only by 0.0054
+(t = −1.18, not a result).
+
+So the actionable part is one line in your export: **derive `weight_scale_2` per expert.** The
+calibration method is not what matters here.
 
 ### 2. Two things your checkpoint gets right that we got wrong
 
@@ -52,7 +63,7 @@ scale, which is not what the runtime does.
 ## What we are NOT claiming
 
 - Not that Local-Hessian calibration is why. A **plain-max** build with no calibration data at all
-  captures most of the gain over your checkpoint. Whatever the mechanism is, it is not the Hessian.
+  captures most of the gain. The mechanism is granularity, not the Hessian.
 - Not that 0.0152 matters in practice. It is ~0.9 % relative NLL and we have not run a task eval.
 - Not that this generalises past Qwen3.8-Flash-Next on GB10 at TP1.
 
@@ -64,5 +75,5 @@ index-only and writes zero bytes. Held-out set and per-passage numbers in `notes
 
 ---
 
-**Gate:** needs the `blk` result, then the user's explicit go. Posting log entry required in
+**Gate:** the `blk` result is in and supports section 1. Needs the user's explicit go. Posting log entry required in
 `notes/upstream/README.md` after.

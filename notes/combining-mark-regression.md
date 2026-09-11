@@ -605,7 +605,30 @@ layer 0 before the run was trusted:
 218 rather than 512 is expected and not a defect: the amax comes off BF16 weights, so per-expert
 maxima collide on the BF16 grid. gate/up mismatches 0/512; 6144 tensors.
 
-**Re-measuring `pmax` on the 59-passage set is the one measurement still owed.** It separates:
+**~~Re-measuring `pmax` on the 59-passage set is the one measurement still owed.~~ WRONG — it was
+already measured.** Corrected 2026-09-11 07:00, after a rebuild was started and then killed. The
+`pmax` arm was built *after* the contract fix, its 15 passages *include* Devanagari, and all three
+arms were scored paired:
+
+| 15-passage set | overall | paired t | Devanagari (n=2) |
+| --- | --- | --- | --- |
+| `pmax` (per-expert, no calibration) vs stock | −0.0121 | −1.52 | **−0.0792** |
+| `lh_v3` (per-expert + Hessian) vs stock | −0.0175 | −2.15 | −0.0911 |
+| `lh_v3` vs `pmax` | −0.0054 | **−1.18** | −0.0119 |
+
+Plain max with **no calibration data at all** captures **69 % of the overall gain and 87 % of the
+Devanagari gain**. Combined with `blk` — which reproduces the base's granularity and gains nothing
+(+0.0002 excluding Devanagari, t = +0.12) — the 2×2 is complete without another build:
+
+| | base's 128-blocks | per-expert |
+| --- | --- | --- |
+| plain max | `blk`: no gain | `pmax`: most of the gain |
+| Local-Hessian | (never needed) | `lh_v3b`: the gain, +0.005 inside noise |
+
+**Granularity is the mechanism. Local-Hessian's increment is not resolvable at either sample size.**
+
+The cost of not re-reading this first: ~20 minutes of build and a deleted `blk` checkpoint. The
+`check-field-before-expensive-steps` rule applies to our own results, not just the field. It separates:
 granularity alone → 1.7227, or granularity plus a share from Local-Hessian. That distinction decides
 what is worth telling RadixArk — "use per-expert scales" is actionable, "use per-expert scales *and*
 Hessian calibration" much less so.
