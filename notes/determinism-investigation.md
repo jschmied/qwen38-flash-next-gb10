@@ -5720,3 +5720,29 @@ the author validated on an RTX 4060 Laptop (SM89, 8 GiB) with torch 2.11, explic
 **Log hygiene:** armrun reuses `armrun-<tag>.log` across invocations, so run 3 overwrote run 2's log
 and the ~1.78 GiB det-overlay KV cost I read from it is no longer verifiable — recorded as
 provisional only. Run logs are now copied to `results/logs/` with a timestamp.
+
+### det-227 CORRECTION (same day) — the 5.21 GiB budget effect is NOT established
+
+The `pr56500` run's `stock512` arm is the **same cell** as run 3's `default512` (unpatched, 512 MB,
+`max-model-len 262144`, util 0.85, det off). It did not reproduce:
+
+| start | KV cache | GPU KV tokens |
+|---|---|---|
+| run 3 `default512` | 20.74 GiB | 829,382 |
+| pr56500 `stock512` | 23.65 GiB | 944,903 |
+| — spread on one cell — | **2.91 GiB** | **115,521 tok** |
+
+Against a restart spread of 2.91 GiB on an unchanged cell, the 5.21 GiB gap between the 64 MB and
+512 MB arms — each n=1 — cannot be attributed to the budget. **Withdrawn as a finding.** The three
+numbers stand as measurements; the causal claim does not.
+
+`capped64` (25.95 GiB / 1,038,208) is still the largest of the three, so a budget effect is not
+excluded either. Deciding it needs **≥3 starts per cell**, which is what the house rule already said
+and what I did not do before writing it up.
+
+**This also invalidates the KV half of the `pr56500` A/B as currently specified** (1 start per arm).
+The completion/hang half survives — that is a boolean, not a rate. A 3-start KV-sizing A/B is the
+only way to answer the PR author's "reserving up front costs live memory" concern.
+
+Mechanism for the restart variance is unmeasured: vLLM sizes KV from a profiled peak, and allocator
+fragmentation across a fresh process would plausibly move it. Hypothesis, not a result.
