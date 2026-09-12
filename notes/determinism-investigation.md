@@ -5775,3 +5775,39 @@ claim.
 arm is 0.93 GiB lower, which is the direction the PR author flagged as a risk, but the same cell moved
 2.91 GiB between restarts, so this is inside noise and decides nothing. `kvsize3` (3 starts per arm,
 startup KV only) is queued to answer it.
+
+## det-229 — #56457 does not reproduce on one GB10 at the reporter's own prompt length
+
+`spec-56457b.json`, target 250K, same cells as det-227. Closes the obvious objection to det-227,
+which prefilled 170K while the reporter prefilled 254K.
+
+| prefill | 64 MB | 512 MB (default) |
+|---|---|---|
+| 170K (det-227) | 169,990 tok, 68.6 s | 169,990 tok, 70.8 s |
+| **250K** | 250,010 tok, 104.8 s | **250,010 tok, 105.2 s** |
+
+All four completed. The reporter hangs at **166,400 computed tokens of a 254K prefill**; a single
+GB10 at `max-model-len 262144`, util 0.85, bf16 KV, det overlays off, default 512 MB budget carries
+**250,010** without OOM or hang.
+
+**So the bug is bound to their configuration, not to the context length.** Theirs is 2× DGX Spark,
+TP=2, `--nnodes 2`. What we have NOT tested is TP=2 or multi-node — we have one box. This narrows
+where to look; it does not refute their report, and must not be offered as if it did.
+
+Throughput is flat across lengths (2,376–2,479 tok/s over 170K and 250K), consistent with the
+compute-bound ~2.4k tok/s prefill picture. One start per cell, so no rate is claimed from it —
+completion is a boolean and that is what this finding rests on.
+
+### Budget effect on startup KV — reinstated, with the magnitude as a range
+
+det-227 claimed 5.21 GiB, I withdrew it as restart noise, and both were too hasty. Ranges now:
+
+| cell | n | GPU KV tokens |
+|---|---|---|
+| 64 MB | 2 | 984,891 – 1,038,208 |
+| 512 MB | 3 | 829,382 – 944,903 |
+
+**The ranges do not overlap** (64 MB floor 984,891 > 512 MB ceiling 944,903), so the direction is
+real. The magnitude is **not** 5.21 GiB — that was the widest possible pairing quoted as a point
+value. Closest pairing gives ~40k tokens (~1.0 GiB), widest ~209k (~5.2 GiB). `kvsize3` runs 3 starts
+of `{stock512, patched512, stock64}` to settle both this and #56500's up-front-reservation question.

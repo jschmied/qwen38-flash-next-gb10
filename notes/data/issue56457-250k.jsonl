@@ -1,0 +1,2 @@
+{"completed": 1, "prompt_tokens": 250010, "past_166400": 1, "prefill_s": 104.8, "tok_s": 2386.0, "arm": "capped64", "start": 0, "tag": "issue56457b-capped640", "ts": "2026-09-12 17:10:57"}
+{"completed": 1, "prompt_tokens": 250010, "past_166400": 1, "prefill_s": 105.2, "tok_s": 2376.1, "arm": "default512", "start": 0, "tag": "issue56457b-default5120", "ts": "2026-09-12 17:24:05"}
