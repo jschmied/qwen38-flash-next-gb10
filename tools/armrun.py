@@ -159,6 +159,7 @@ def main() -> int:
             validate_marker(venv, arm["source_toggle"])
     if a.validate_only:
         log(f"== armrun {name}: spec valid ({len(spec['arms'])} arms). Nothing started. ==")
+        globals()["_SENT"] = True      # a dry check is not a completed job
         return 0
 
     log(f"== armrun {name}: {len(spec['arms'])} arms x {starts} start(s), port {PORT} ==")
@@ -224,8 +225,14 @@ def main() -> int:
         log(f"  {arm['name']:<12} {'  '.join(parts)}" + (f"   wrong: {','.join(w)}" if w else ""))
     log("  ranges, not means -- reps within a start are not exchangeable")
     log("== ALL DONE ==" if rc == 0 else "== VOID ==")
+    globals()["_SENT"] = True
     return rc
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Early `return 2` paths (VOID) skip the summary block, so the sentinel never printed and
+    # qnext recorded the job `unknown` instead of `void`. 2026-09-12.
+    _rc = main()
+    if not globals().get("_SENT"):
+        log("== VOID ==" if _rc else "== ALL DONE ==")
+    sys.exit(_rc)
