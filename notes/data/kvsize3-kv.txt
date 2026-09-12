@@ -1,0 +1,11 @@
+# kvsize3 — startup KV, 3 starts x {stock512, pr56500, stock64}, 2026-09-12
+
+pr565000                   26.49 GiB     1,058,943 tok
+pr565001                   23.94 GiB       956,751 tok
+pr565002                   23.37 GiB       934,535 tok
+stock5120                  24.11 GiB       964,156 tok
+stock5121                  24.38 GiB       974,524 tok
+stock5122                   22.8 GiB       912,320 tok
+stock640                   24.96 GiB       998,220 tok
+stock641                   23.45 GiB       937,498 tok
+stock642                   23.83 GiB       952,308 tok

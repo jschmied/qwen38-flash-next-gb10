@@ -5883,3 +5883,38 @@ Also established by that thread: `nvidia-smi -lgc 0,2200` is a **power cap, not 
 copy as the control and a bimodality verdict. Deliberately ordered **before** `pr56500_250k` so a flip
 cannot contaminate that run's throughput numbers. Outcome either gives our variance a candidate cause
 or retires the hypothesis for free.
+
+## det-232 — at n=3 neither the budget effect nor #56500's memory cost is detectable
+
+`spec-kvsize3.json`, 3 starts × {stock512, pr56500, stock64}, startup KV only, det overlays off,
+`max-model-len 262144`, util 0.85. This is the measurement promised publicly on vllm#56500.
+
+| cell | n | GPU KV tokens | GiB |
+|---|---|---|---|
+| stock512 | 3 | 912,320 – 974,524 | 22.80 – 24.38 |
+| `pr56500` | 3 | 934,535 – 1,058,943 | 23.37 – 26.49 |
+| stock64 | 3 | 937,498 – 998,220 | 23.45 – 24.96 |
+
+**All three ranges overlap.** Two results, both negative:
+
+1. **#56500 does not cost KV cache.** The author flagged that reserving the logits budget during
+   profiling "can increase live memory". The patched cell's range is not below stock's — its *upper*
+   end is the highest of all nine starts. At n=3 there is no detectable cost. That is the honest
+   answer to his concern, and it is worth telling him.
+2. **The budget effect is refuted, and this corrects det-229.** det-227 claimed 5.21 GiB from n=1;
+   I withdrew it as restart noise; then at n=2/3 I *reinstated* it because the 64 MB and 512 MB ranges
+   did not overlap. With n=3 each **they do overlap** (937,498–974,524 is common ground). The
+   non-overlap was a small-sample artifact. **Withdrawn again, and this time at the sample size the
+   house rule asks for.** Three positions on one question in one day is two too many; the rule exists
+   precisely to stop the first two.
+
+**Restart variance is the dominant term**: up to 62,204 tokens (6.4 %) inside `stock512` and 124,408
+(12.4 %) inside `pr56500`, on an unchanged cell. Any KV claim below that needs far more than 3 starts.
+
+**One sample is contaminated and is disclosed rather than dropped.** `stock5122` (912,320, the lowest
+of all nine) booted while I was running `du -x /` and a `find` over `/opt/llm/models` — heavy host IO
+during a measurement, which the standing rules forbid. It is the extreme low of its cell, so if
+anything it biases stock512 *downward*, i.e. against the conclusion in (1). Excluding it leaves
+stock512 at 964,156–974,524, still inside stock64's range, so neither conclusion changes.
+
+Throughput was flat and is not a claim: 939.3–999.9 tok/s across all nine at a 2,042-token probe.

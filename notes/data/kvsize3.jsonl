@@ -1,0 +1,9 @@
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.1, "tok_s": 992.5, "arm": "stock512", "start": 0, "tag": "kvsize3-stock5120", "ts": "2026-09-12 17:36:20"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.1, "tok_s": 984.2, "arm": "pr56500", "start": 0, "tag": "kvsize3-pr565000", "ts": "2026-09-12 17:48:25"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.1, "tok_s": 980.7, "arm": "stock64", "start": 0, "tag": "kvsize3-stock640", "ts": "2026-09-12 18:00:32"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.1, "tok_s": 980.5, "arm": "stock512", "start": 1, "tag": "kvsize3-stock5121", "ts": "2026-09-12 18:12:30"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.1, "tok_s": 968.9, "arm": "pr56500", "start": 1, "tag": "kvsize3-pr565001", "ts": "2026-09-12 18:24:35"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.0, "tok_s": 999.5, "arm": "stock64", "start": 1, "tag": "kvsize3-stock641", "ts": "2026-09-12 18:36:00"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.0, "tok_s": 999.9, "arm": "stock512", "start": 2, "tag": "kvsize3-stock5122", "ts": "2026-09-12 18:48:15"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.2, "tok_s": 939.3, "arm": "pr56500", "start": 2, "tag": "kvsize3-pr565002", "ts": "2026-09-12 18:59:41"}
+{"completed": 1, "prompt_tokens": 2042, "past_166400": 0, "prefill_s": 2.2, "tok_s": 944.2, "arm": "stock64", "start": 2, "tag": "kvsize3-stock642", "ts": "2026-09-12 19:11:16"}
