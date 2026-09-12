@@ -714,3 +714,20 @@ Both sets reproducible and exact over 4 repeats.
 the PR head. Prod's deterministic kernel is not the kernel this PR proposes, so prod measurements
 quoted on that thread describe the older variant. Rebuilding prod's kernel is a prod change and
 needs the user.
+
+### vllm#51782 — posted 2026-09-12 (user go "post")
+
+Answered @NNNtrance's Q1: `top_k_per_row_decode`/`_prefill` live in `csrc/libtorch_stable/sampler.cu`
+(717/846, declared `ops.h:466`, only definitions in csrc); #55314 touches `persistent_topk.cuh`,
+`cooperative_topk.cuh`, `topk_histogram_4096.cuh` — not `sampler.cu`. Same threshold-bin construct
+there, but I did not read its overflow branch, so: the fix does not reach it, not "the bug is there".
+Plus the three-conjunct divert condition (row > RADIX_THRESHOLD, cooperative launch oversubscribes,
+smem < 128 KiB; GB10 = 100 KiB) which makes short and long rows run different kernels.
+
+**Draft revised before posting** — a second follow-up had landed at 07:53 showing exact `torch.topk`
+is within noise of the stock kernel (9/6 vs 11/7), which rules out the mechanism I was going to
+offer. Said so explicitly rather than leading with a hypothesis their own data had already killed.
+→ https://github.com/vllm-project/vllm/issues/51782#issuecomment-5644650755
+
+Also fixed by this check: our own REPRODUCE.md said "every request takes `persistent_topk`" on
+sm_121. Every request *calls* it; long rows *run* `top_k_per_row_decode` inside it.
