@@ -5345,3 +5345,51 @@ compile cannot be switched back on in dev524.
 
 The knob-level check matters more than usual here — `cc_off`'s log must show `CompilationMode.NONE`
 **and** zero inductor lines. If it still compiled, the injection failed and the run is void.
+
+## det-221 — #55272 (torch.compile removal) explains ONE of the two prompts, not both
+
+Differing cell: compilation mode only, both arms fnmain2 + stock + MTP 3. `cc_off` injected
+`"mode":0` into the launcher's `--compilation-config`.
+
+**Knob verified before reading any number** — this is where a void would have hidden:
+
+| | `cc_on` | `cc_off` |
+|---|---|---|
+| logged mode | (compiles) | `CompilationMode.NONE: 0` |
+| "Compiling" lines | 2 | **0** |
+| evidence | `Dynamo bytecode transform time: 4.98 s`, `saved AOT compiled function`, `torch.compile took 29.26 s in total` | `Inductor compilation was disabled by user settings` ×2 |
+
+### Result
+
+| arm | exact | wrong |
+|---|---|---|
+| fnmain2, compile **on** — CONTROL | 10/12 | hi-08, hi-11 |
+| fnmain2, compile **off** | **9/12** | **hi-01**, hi-08, hi-11 |
+| fnmain3 (dev524, compile removed) | 8/12 | hi-01, **hi-05**, hi-08, hi-11 |
+
+Control reproduced det-213 for the sixth time. The three failure sets are **strictly nested**:
+
+```
+{hi-08, hi-11}  ⊂  {hi-01, hi-08, hi-11}  ⊂  {hi-01, hi-05, hi-08, hi-11}
+   compile on         compile off             dev524
+```
+
+**So #55272 is a real cause and accounts for exactly one of the two prompts.** Turning compilation
+off on dev401 reproduces `hi-01`'s failure precisely — the same prompt, and it is the one whose
+fnmain3 output was the Marathi translation. `hi-05` is still unexplained and remains attributable to
+something else in the commit range.
+
+Half of a 2-prompt gap is one prompt on n=12, so the effect size is tiny in absolute terms. What
+makes it a result rather than noise is the same thing as before: perfect reproducibility within a
+configuration, and monotone nesting across three configurations.
+
+### What this settles and what it does not
+
+**Settles:** inductor fusion changes this model's output on non-Latin copy tasks. Not a
+kernel-selection difference, not a precision flag — the same weights and the same numerics config,
+compiled versus eager, produce a different token. Also confirms det-220's reading of #55272, and
+det-193/194 stays explained (`splitting_ops: []` + mode `NONE` leaves PIECEWISE nothing to capture).
+
+**Does not settle:** `hi-05`. And the "prod regression" framing stays retired — dev524 removing
+torch.compile is upstream's deliberate change, not a defect we found, and fnmain2 was never clean
+(2/12 fail there with compile *on*).

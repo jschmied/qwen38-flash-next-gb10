@@ -1,0 +1,12 @@
+== hiprobe5: torch.compile ON vs OFF on fnmain2 (the #55272 cell) ==
+   c_m3 and c_m2 are CONTROLS and must reproduce det-213
+-- cc_on: venv=vllm-venv-fnmain2 model=qwen38-flash-next-nvfp4 MTP=3
+   cc_on: 10/12 exact   wrong: hi-08,hi-11
+-- cc_off: venv=vllm-venv-fnmain2 model=qwen38-flash-next-nvfp4 MTP=3
+   cc_off: 9/12 exact   wrong: hi-01,hi-08,hi-11
+== RESULT ==
+  cc_on     10/12   wrong: hi-08,hi-11
+  cc_off     9/12   wrong: hi-01,hi-08,hi-11
+  cc_off drops to ~8/12 -> #55272 (torch.compile removal) explains the venv gap.
+  cc_off stays 10/12 -> compile is not it either, and little is left to read.
+== ALL DONE ==
