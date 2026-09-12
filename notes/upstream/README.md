@@ -864,3 +864,26 @@ layer-0 experts.
 same model, architecture and hardware class. They hit it at `max-model-len 262144` on 2× Spark TP=2;
 we ran **131072 on one GB10 at util 0.85, no OOM, 12/12 correct at 100k** (det-224). Bounding
 datapoint with no serious confound, and 262144 single-node is one run.
+
+### vllm PR #56500, 2026-09-12 (user go "post second")
+
+First comment on that PR (it had zero, one bot review). GB10/sm_121 validation at head `866c7ba3cf`:
+stock vs patched in one armrun, marker `get_qsa_prefill_workspace` read back per arm; both completed
+a 169,990-token real-weights prefill (75.2 s / 71.0 s). Said plainly it is NOT a confirmation of the
+fix, since we cannot reproduce #56457 on one node; it shows the patch does not break the working path,
+and complements the author's own smoke test (dummy weights, <=4,097 tokens, SM89 laptop).
+Declined to read anything into the 0.93 GiB KV difference on his stated up-front-reservation risk —
+same cell moved 2.91 GiB across restarts. 3-start measurement promised and running (`kvsize3`).
+Disclosed the four non-stock deviations in our venv and that absolute KV figures are not portable.
+→ https://github.com/vllm-project/vllm/pull/56500#issuecomment-5646884554
+
+### vllm issue #56457, 2026-09-12 (user go "post 56457")
+
+Lead: the command in the issue body cannot have started an engine — `--kv-cache-dtype fp8` hits
+`NotImplementedError` at `qsa.py:109` and the guard is present at their own commit `2a02f6efe`.
+Zero prior mentions of it in the thread, and @michaelmanly had just asked for the exact command.
+Then: could not reproduce on one GB10 — all four cells complete, incl. 250,010 tokens at the default
+budget (105.2 s) past the 166,400 hang point. Framed as narrowing, not contradicting, with the
+TP=2-should-have-more-headroom argument as the reason it is interesting, and a request for their
+`GPU KV cache size` lines. Same venv caveats disclosed.
+→ https://github.com/vllm-project/vllm/issues/56457#issuecomment-5646890596
