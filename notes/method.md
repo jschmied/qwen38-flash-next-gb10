@@ -47,6 +47,44 @@ all passing a knob-level check:
 The check that would have caught all three is the same one: take the benchmark's actual case list,
 and for each arm compute which code path each case takes. If the two columns are equal, stop.
 
+## The cell must be the ONLY thing that moved
+
+Naming the differing cell is not enough — the rule as written asks whether the knob can *reach* the
+cell, and that is satisfiable by a cell containing three other changes. On 2026-09-12 a five-rung
+bisect ran against "the serving venv" while that cell also held **our own tile-union prefill kernel**
+(on in one venv, absent in the other), **our #55715 GDN patch** (the reverse), and **torch.compile
+on versus off** (upstream #55272 removed the decorators). Two of those were ours and invisible from
+the launcher.
+
+So before an A/B, diff **our own patch markers** across the arms, not just the version strings:
+
+```bash
+for m in "QSADET (jschmied" "DETFIN (jschmied" "Clear any semaphore still raised" \
+         "GDN55715-PATCH" "tile_union" "jschmied"; do
+  printf "%-34s A:%s B:%s\n" "$m" "$(grep -rl "$m" "$A" --include=*.py | wc -l)" \
+                              "$(grep -rl "$m" "$B" --include=*.py | wc -l)"
+done
+```
+
+Any row where the counts differ is part of the cell whether you meant it to be or not. A marker that
+is *present* is not necessarily *active* — check the run log too; the PLE mmap overlay was in one venv
+and inert because its gate needs `--enforce-eager`.
+
+## State no cause until the alternative is measured
+
+A finding may say "A differs from B". It may not say "A differs *because* of C" until C has been
+varied and measured. Reading the dispatch code is not measuring; neither is a plausible mechanism.
+
+Of ~13 errors on 2026-09-12, **ten** were this: a published FlashInfer pin written from a PR
+description instead of the wheel; a 13-minute startup blamed on an autotune cache that timing showed
+was just the cost of loading 123 GB; "no PTX, so it is an arch gap" when the errno was
+`cudaErrorNotSupported` (801) and a missing cubin is 209; "make the clamp unconditional" when the
+value being clamped was an allocation size the kernel indexes. Each counterfactual took minutes, and
+the data was already on disk in every case.
+
+Practical form: before writing a cause, name the run that would have come out differently had the
+cause been false. If there is none, write it as a hypothesis and say so.
+
 ## And verify the control arm actually misbehaves
 
 Naming the differing cell is necessary, not sufficient. Five void runs on 2026-09-08 split into two
