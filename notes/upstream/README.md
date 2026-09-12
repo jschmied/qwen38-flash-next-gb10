@@ -836,3 +836,31 @@ files.
 **Rule for next time:** the contents API and the git data API author as the token owner. Either set
 `author.email` explicitly in the payload, or do not hand-write a `Signed-off-by` that differs from it.
 A DCO failure is invisible in the push response and only shows up in `gh pr checks`.
+
+### vllm#55927 — DECIDED NOT TO POST, 2026-09-12 (user go was "post, triple check first"; the check said no)
+
+Their bug: exact-string needle at ~28k of ~57k returns with its last digit wrong, deterministically,
+**whenever prompt length ≡ 3 (mod 4)**; correct with reasoning enabled; reproduced on vLLM 0.28.0 and
+SGLang across four stacks, with one provider correct.
+
+I had three candidate contributions. The triple-check killed all three:
+
+1. **"It does not reproduce on Qwen3.8-Flash-Next"** — we did test ≡3 (mod 4) nine times across four
+   depths to 100k, all exact (det-222/224). But they have **already excluded weights and GPU**, and
+   our null carries six confounds: different model, QSA indexer vs lightning indexer, `fp8_ds_mla` KV,
+   `--block-size 256` vs default, TP=4 vs TP=1, needle-in-filler vs audit list. A null across six
+   differences isolates nothing.
+2. **"Reasoning-on may just shift the residue"** — the best mechanism I had, and it **failed its own
+   test**: on the template I can render, `thinking` adds **40 tokens, ≡ 0 (mod 4)**, so the residue is
+   unchanged. Cannot test theirs.
+3. **"≡3 (mod 4) selects scalar fallbacks in kernels picking vector width by divisibility"** — real
+   pattern, and we have a concrete in-tree example in `persistent_topk`'s `vec_size`. But they have
+   already excluded the top-k path on two backends, so the one instance I can name is the excluded one.
+
+Contributing would need their checkpoint (`DeepSeek-V4-Flash-0731`, 155 GiB); we hold only V4.1
+layer-0 experts.
+
+**Where we do have standing: #56457** (Qwen4Exp QSA indexer OOM/hang on unified-memory GB10 SM121) —
+same model, architecture and hardware class. They hit it at `max-model-len 262144` on 2× Spark TP=2;
+we ran **131072 on one GB10 at util 0.85, no OOM, 12/12 correct at 100k** (det-224). Bounding
+datapoint with no serious confound, and 262144 single-node is one run.
