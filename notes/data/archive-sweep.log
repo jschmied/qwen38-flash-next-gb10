@@ -1,0 +1,51 @@
+-- manifests (regular files only; symlinks are recorded separately)
+   fnext-lh: 212 files, 14 symlinks
+   fnext-lh2: 212 files, 14 symlinks
+   fnext-lh3: 260 files, 14 symlinks
+   fnext-pmax: 212 files, 14 symlinks
+   qwen38-27b-dflash2-syvai-w4a16: 4 files, 0 symlinks
+   qwen38-flash-next-fp8hc: 419 files, 0 symlinks
+   qwen38-flash-next-fp8hc64: 419 files, 0 symlinks
+   qwen38-flash-next-fp8hcup: 419 files, 0 symlinks
+   qwen38-flash-next-fp8head: 419 files, 0 symlinks
+   qwen38-flash-next-fp8mix: 420 files, 0 symlinks
+   qwen38-flash-next-fp8se: 419 files, 0 symlinks
+   qwen38-flash-next-hcup-pc: 419 files, 0 symlinks
+   qwen38-flash-next-w4a16b: 419 files, 0 symlinks
+   qwen38-flash-next-w4a16mtp: 419 files, 0 symlinks
+-- ONE rsync, -H preserves the shared hardlink pool, symlinks kept as symlinks
+
+Number of files: 4.770 (reg: 4.700, dir: 14, link: 56)
+Number of created files: 4.770 (reg: 4.700, dir: 14, link: 56)
+Number of deleted files: 0
+Number of regular files transferred: 1.395
+Total file size: 1.248.218.356.086 bytes
+Total transferred file size: 276.434.049.198 bytes
+Literal data: 276.434.049.198 bytes
+Matched data: 0 bytes
+File list size: 327.597
+File list generation time: 0,001 seconds
+File list transfer time: 0,000 seconds
+Total bytes sent: 276.502.069.711
+Total bytes received: 258.155
+
+sent 276.502.069.711 bytes  received 258.155 bytes  101.487.365,71 bytes/sec
+total size is 1.248.218.356.086  speedup is 4,51
+   VERIFIED fnext-lh -> freeing 51M
+   VERIFIED fnext-lh2 -> freeing 51M
+   VERIFIED fnext-lh3 -> freeing 64G
+   VERIFIED fnext-pmax -> freeing 51M
+   VERIFIED qwen38-27b-dflash2-syvai-w4a16 -> freeing 1,2G
+   VERIFIED qwen38-flash-next-fp8hc -> freeing 123G
+   VERIFIED qwen38-flash-next-fp8hc64 -> freeing 123G
+   VERIFIED qwen38-flash-next-fp8hcup -> freeing 123G
+   VERIFIED qwen38-flash-next-fp8head -> freeing 123G
+   VERIFIED qwen38-flash-next-fp8mix -> freeing 124G
+   VERIFIED qwen38-flash-next-fp8se -> freeing 123G
+   VERIFIED qwen38-flash-next-hcup-pc -> freeing 123G
+   VERIFIED qwen38-flash-next-w4a16b -> freeing 120G
+   VERIFIED qwen38-flash-next-w4a16mtp -> freeing 120G
+
+archived+freed: 14 of 14
+/dev/nvme0n1p2  916G    638G  232G   74% /
+== ALL DONE ==

@@ -173,3 +173,25 @@ A clock read, which is what the watchdog does, cannot substitute.
 Our baseline is **212.8–215.0 GB/s peak at M=1**, 1 % spread. An arm near 70, or one whose opening and
 closing figures disagree, is not comparable to one that is not — and a 3× swing dwarfs every effect
 this project measures.
+
+## Archiving to PBS: what the 2026-09-12 sweep cost to get right
+
+Four defects before it worked, none of which lost data — the copy → **remote** verify → free order
+caught every one:
+
+1. **root has no ssh key.** The job runs as root under systemd; `/root/.ssh` holds no private key, so
+   rsync returned 255 on 12 of 12 directories. `model-archive` already said "always pass `-i`"; I had
+   tested as `jschmied`, whose default identity works, and rewrote that warning as over-strict.
+   **Test as the user the job will actually run as.**
+2. **Symlinks copied as dangling links.** Plain `-a` preserves them; the remote checksum then fails on
+   every linked shard. Correct answer is *not* `-L`.
+3. **`-L` would have exploded the archive.** `fnext-lh`/`lh2`/`pmax` are 0 GB unique with 62 GB behind
+   absolute symlinks into the prod checkpoint; the `fp8*`/`w4a16*` family shares 111–122 GB of
+   **hardlinks**. Per-directory `-aL` would have written **>1 TB** for 317 GB of content.
+   One `rsync -aH` moved 1,248 GB of apparent content as **276.5 GB sent, speedup 4.51**.
+4. **`du` per directory is not what deleting frees.** A hardlinked variant frees only its *unique*
+   bytes while another link survives. Four directories the log called "123G" moved the disk by ~34 GB.
+   Total: 14 dirs, **85 GB → 232 GB free (147 GB)**, matching the ~151 GB predicted from unique bytes,
+   not the ~1.4 TB the apparent sizes suggest.
+
+The log line "freeing 123G" prints `du -xsh`, which is the misleading number. Report unique bytes.
