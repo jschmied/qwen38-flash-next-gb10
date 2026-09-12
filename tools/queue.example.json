@@ -1,0 +1,75 @@
+{
+ "note": "Advanced one job per invocation by qnext.py. needs_user items never auto-start.",
+ "items": [
+  {
+   "name": "venv-cleanup",
+   "state": "done",
+   "needs_user": false,
+   "prereqs": [],
+   "expect_min": 2,
+   "cmd": [
+    "bash",
+    "-c",
+    "rm -rf /opt/llm/runtime/vllm-venv-fnmain3-fi617 && df -h / | tail -1 && echo '== ALL DONE =='"
+   ],
+   "note": "reclaim 16 GB: fi617 only (FlashInfer exonerated, det-215). The 55872 clone is KEPT -- we offered @LopezCastroRoberto a re-run under instrumentation on vllm#55122",
+   "started": "2026-09-12 13:07:46",
+   "log": "/opt/llm/qnext/logs/venv-cleanup.log",
+   "finished": "2026-09-12 13:07:48",
+   "rc": 0,
+   "minutes": 0.0
+  },
+  {
+   "name": "cb3-tier0",
+   "state": "queued",
+   "needs_user": false,
+   "prereqs": [],
+   "expect_min": 15,
+   "cmd": [
+    "bash",
+    "-c",
+    "echo 'TODO: random-weight harness for tools/cb3_moe.py + CB3Arena via tools/cb3.py packer'; echo '== VOID =='"
+   ],
+   "note": "CB3 is 0xBakeer's SHIPPED expert format; Tier 0 only covered fp4_moe. Needs a CB3Arena and the packer, so it is a real harness, not a sed of the fp4 one"
+  },
+  {
+   "name": "prod-det-kernel-rebuild",
+   "state": "queued",
+   "needs_user": true,
+   "prereqs": [],
+   "expect_min": 5,
+   "cmd": [
+    "bash",
+    "-c",
+    "echo 'PROD CHANGE - rebuild /opt/llm/kernel-det from the det-224 fix'; echo '== VOID =='"
+   ],
+   "note": "det-224 validated the budget fix in scratch. Rebuilding prod's _C_det.so is a prod change: needs the user"
+  },
+  {
+   "name": "mtp-remeasure",
+   "state": "queued",
+   "needs_user": false,
+   "prereqs": [],
+   "expect_min": 110,
+   "cmd": [
+    "bash",
+    "-c",
+    "echo 'TODO: port the MTP sweep to armrun spec'; echo '== VOID =='"
+   ],
+   "note": "every MTP figure predates three fixes prod now has, incl. the k=2 recommendation still published in REPRODUCE.md"
+  },
+  {
+   "name": "dsv41-tier2",
+   "state": "queued",
+   "needs_user": true,
+   "prereqs": [],
+   "expect_min": 180,
+   "cmd": [
+    "bash",
+    "-c",
+    "echo 'DOWNLOAD ~50 GB - partial DeepSeek-V4.1 checkpoint'; echo '== VOID =='"
+   ],
+   "note": "4-layer partial path (Weights n_layers=NL, load_mtp=False) for per-layer route agreement vs Model.forward. ~50 GB download: needs the user"
+  }
+ ]
+}
