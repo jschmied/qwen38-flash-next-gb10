@@ -919,3 +919,31 @@ box" — and add a genuinely new packaging point: **the PR targets a file no rel
 
 Worth noting for later, no action: they run FlashInfer **0.6.17**, which det-208 showed costs the
 prebuilt GDN path for no benefit. Not our place to volunteer it unasked.
+
+### INBOUND 2026-09-12 (2) — MaCoredroid validates the low-shared-memory fallback path on GB10
+
+Second independent GB10 reproduction on vllm#55122, complementary to k3dani's: where that one was
+end-to-end serving, this is **kernel-level exactness on the overflow fallback**.
+
+Built a standalone harness against the unmodified PR kernel header at `7cfd04a3` (kernel sources
+unchanged at `a7188289e`) and drove the `force_single_cta` / uncached `det_select_row` path under
+**48 SMs and 101,376 B opt-in shared memory** — the same device limits det-217 measured and det-222 /
+det-224 fixed a budget bug around.
+
+| case | result |
+|---|---|
+| rows {1,4} × k {512,1024,2048} × widths {355588, 400000, 474112}, random / tie-heavy / all-equal | **324 fallback launches, all matched** a value-descending / index-ascending reference, indices sorted ascending |
+| repeats | identical across **6 per case**; no output poison |
+| width 355584 | 108 passing cooperative-control launches |
+| width 474116 | 18 expected pre-launch >64-CTA rejections |
+
+Harness, source hashes and logs published:
+`MaCoredroid/Lumo_FlyWheel@1536dae3 /results/upstream/55122`.
+
+**Their stated scope, which is exactly right**: supports exactness and repeatability for these cases
+on one device; does **not** validate torch/vLLM operator registration, CUDA graphs, other streams or
+broader determinism, and makes no performance claim. Ran alongside another workload.
+
+So the PR now has two independent GB10 confirmations from different angles — serving-level
+(reproducibility, 99–100 % of stock throughput, 0/50 unstable on a quality suite) and kernel-level
+(324 exact fallback launches at the 101,376 B ceiling). Neither is ours.
