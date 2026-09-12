@@ -887,3 +887,35 @@ budget (105.2 s) past the 166,400 hang point. Framed as narrowing, not contradic
 TP=2-should-have-more-headroom argument as the reason it is interesting, and a request for their
 `GPU KV cache size` lines. Same venv caveats disclosed.
 → https://github.com/vllm-project/vllm/issues/56457#issuecomment-5646890596
+
+### INBOUND 2026-09-12 — k3dani independently validates the det kernel on a second GB10
+
+Not our post; recorded because it is the first external reproduction of our work, from a different
+DGX Spark, built **from our repo** (`jschmied/qwen38-flash-next-gb10@0c559878`).
+
+On vllm#55122, GB10 sm_121a / aarch64, `RadixArk/Qwen3.8-Flash-Next-NVFP4`, their production config
+(prefix caching, chunked prefill, PIECEWISE graphs, MTP=2, FlashInfer 0.6.17, 8K chunks):
+
+| arm | reproducible | prefill throughput retained |
+|---|---|---|
+| stock `persistent_topk` | **0/4 prompts** — 10 distinct top-20 hashes per prompt | 100 % (baseline) |
+| exact `torch.topk` fallback | yes | **87–90 %** |
+| `VLLM_QSA_DET_TOPK=1` (ours) | yes | **99–100 %** |
+
+`test_det.py`: 0 FAILS, every row `stock identical x3=False`, `stock set==ref=False`. Quality on a
+50-item Hungarian KIE suite: ours **95/100 with 0/50 unstable**, against stock **97/100 with 13/50
+unstable**. Their conclusion: "same stability, essentially stock speed".
+
+They also independently corroborate two more of our threads: the 3/4 they saw is the align-resume
+path (#53798 / #54076), which they identify themselves and explicitly exclude from the PR; and on
+#54076 they report an independent reproduction of the deterministic logit divergence on one Spark.
+
+**#56500 — their negative result does NOT contradict ours.** They could not apply the PR at all
+because `nvidia/ops/qsa_indexer.py` was created 2026-09-02 by #54513 and exists only on `main`;
+both shippable bases (preview image `0.1.dev20073`, `v0.29.0`) still carry the older shape with
+`_LOGITS_WORKSPACE_BYTES = 128 MB` as a module constant. We validated on main (`dev524+g5db652225`),
+which is why ours applied. They cite our run approvingly — "neither of us can reproduce #56457 on one
+box" — and add a genuinely new packaging point: **the PR targets a file no release ships.**
+
+Worth noting for later, no action: they run FlashInfer **0.6.17**, which det-208 showed costs the
+prebuilt GDN path for no benefit. Not our place to volunteer it unasked.
