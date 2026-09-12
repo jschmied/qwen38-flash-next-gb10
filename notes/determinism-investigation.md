@@ -5152,3 +5152,56 @@ Stated here so nobody later reads it as a clean negative.
 Nothing further should be spent without a decision. The choice is now between hours of hand-porting
 per rung for a 2-of-12 effect on a checkpoint that fails 2/12 on the good venv anyway, or accepting
 and documenting the limitation. Put to the user.
+
+## det-217 — narrowing the 123 commits by reading, not building: two candidates eliminated
+
+det-216 showed each bisect rung is a hand-port, so the range is being narrowed by reading instead.
+Full commit list paged properly (123/123 — the earlier 300-file compare was truncated at GitHub's
+cap and its zero counts were worthless).
+
+Subject scan surfaced three candidates that could plausibly flip a token on this model.
+
+### #54890 — "[Qwen3.8-Flash-Next] Support FP8 indexer cache for QSA" — NOT ACTIVE
+
+The most alarming on its face: it targets our exact model and its own description says *"This
+implementation doesn't contain any scaling."* An unscaled FP8 indexer is exactly the kind of
+precision change that flips a token deterministically.
+
+It is off in both venvs:
+
+- **dev524** wires `resolve_indexer_kv_dtype("bf16")` in `models/qwen4_exp/nvidia/indexer_qsa.py`
+  — the default is bf16, and `indexer_kv_dtype` defaults to `"auto"`, which resolves to that.
+- **dev401** has no Qwen4Exp caller at all; only `minimax_m3` and the MLA indexer call it.
+
+So the switch was *added* in range but its default keeps us on bf16. Not the cause.
+
+### #54110 — "Fall back from persistent top-k on low-shared-memory GPUs" — BYPASSED BY OUR OWN PATCH
+
+This one genuinely applies to GB10: `torch.cuda.get_device_properties` reports **100 KiB of shared
+memory per multiprocessor**, under the 128 KiB the `FilteredTopK` path needs, so the new
+sub-128-KiB branch is exactly our hardware. On stock vLLM it would change top-k routing on this box.
+
+It cannot be our cause, because our own QSADET overlay short-circuits the selection *before* the
+dispatcher:
+
+```python
+if _os.environ.get("VLLM_QSA_DET_TOPK"):
+    topk_op = torch.ops._C_det.persistent_topk     # ours
+else:
+    topk_op = ... _C.cooperative_topk / _C.persistent_topk
+```
+
+`VLLM_QSA_DET_TOPK=1` was set in every arm of det-213/214/215, so `_C.persistent_topk` — and
+therefore #54110's new fallback inside it — was never reached.
+
+**Worth passing on to other GB10 users even though it is not our bug:** on a stock vLLM in this
+range, GB10 crosses that threshold.
+
+### Still open, in rough order of suspicion
+
+`#50220` MoE fused sum row offsets · `#55242` Kimi K3 NVFP4 align `in_proj` by 128 ·
+`#55069` TRTLLM FP8 block-scale MoE SwiGLU clamp · `#55341` / `#55455` kernel warm-up before
+CUDA-graph capture · `#55180` our own SM 12.x swizzle, which we measured bit-identical (finding 136)
+but only on one config.
+
+Cost so far this round: zero GPU, zero venv builds.
