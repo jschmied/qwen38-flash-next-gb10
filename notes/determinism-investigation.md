@@ -5047,3 +5047,56 @@ p = 0.318, on a checkpoint that already fails 2/12 on the *good* venv. The Flash
 — one venv clone and one start — and is being run. A nightly bisect over dev401 → dev524 is ~7 rungs
 and ~3.5 h of box time for an effect that size; that is the user's call, not one to take
 autonomously at 01:00.
+
+## det-215 — FlashInfer exonerated too; every cheap hypothesis is now dead
+
+Differing cell: the FlashInfer version alone. Both arms are vLLM `dev524` + stock checkpoint +
+MTP 3. `fi617` is a clone of fnmain3 with `flashinfer-python`, `-cubin` and `-jit-cache` all swapped
+to 0.6.17 — copied from fnmain2 rather than downloaded. Clone verified self-contained before use:
+`sys.prefix`, `vllm` and `flashinfer` all resolve inside it, reporting FlashInfer 0.6.17 with
+vLLM 0.28.1rc1.dev524+g5db652225.
+
+| arm | exact | wrong |
+|---|---|---|
+| `c_m3` control — FlashInfer 0.6.18.post1 | 8/12 | hi-01, hi-05, hi-08, hi-11 |
+| `fi617` — FlashInfer 0.6.17 | **8/12** | **identical set** |
+
+Control reproduced for the fourth time. **FlashInfer is not the cause.**
+
+### The ledger
+
+| hypothesis | verdict | where |
+|---|---|---|
+| #55715 GDN prefill kernel | exonerated | det-212 |
+| MTP / speculative decoding | exonerated | det-214 |
+| FlashInfer 0.6.17 → 0.6.18 | exonerated | det-215 |
+| ~123 vLLM commits dev401 → dev524 | **the only survivor** | — |
+
+### Stopping here deliberately
+
+The remaining bisect is a binary search over nightly wheels, ~7 rungs, each needing a venv clone, a
+wheel fetch and a server start: **2.5–3.5 h of box time**. Against that, the honest size of the
+thing being chased:
+
+- the whole effect is **2 prompts out of 12**, Fisher **p = 0.318**;
+- the "good" venv fnmain2 already fails **2/12** on the same probe — there was never a clean baseline;
+- the defect is a **pre-existing Devanagari matra weakness in the published RadixArk checkpoint**,
+  not something fnmain3 introduced;
+- our own LH rebuild does not fix it either (det-214), so it is not a quantization-granularity issue
+  we know how to address.
+
+That is a judgement about how to spend the box, not a technical question, so it goes to the user
+rather than being taken autonomously. Box left idle; no new GPU job started.
+
+The one argument *for* finishing it: if a vLLM commit in that range degraded Indic text handling, it
+is an upstream bug that nobody else appears to have caught, and we would be the ones to find it. The
+effect is small on our probe but we have no reason to think our probe bounds it.
+
+### Worth recording separately
+
+Four findings in this investigation (det-210, det-211, det-211b, det-213) were progressively walked
+back, and the pattern is the same each time: **I scored a counter instead of reading an output.**
+The mark-duplication metric conflated substitution, duplication and translation; two prompts became
+"half of all Devanagari tasks"; a cross-run comparison became a confirmed prod regression. Every
+correction came from looking at the actual strings, which cost minutes. The probe that finally
+settled it scores exact-copy and nothing else.

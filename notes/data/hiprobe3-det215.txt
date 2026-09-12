@@ -1,0 +1,14 @@
+== hiprobe3: FlashInfer 0.6.17 vs 0.6.18 on vLLM dev524, 12 Hindi copy prompts ==
+   c_m3 and c_m2 are CONTROLS and must reproduce det-213
+-- c_m3: venv=vllm-venv-fnmain3 model=qwen38-flash-next-nvfp4 MTP=3
+   c_m3: 8/12 exact   wrong: hi-01,hi-05,hi-08,hi-11
+-- fi617: venv=vllm-venv-fnmain3-fi617 model=qwen38-flash-next-nvfp4 MTP=3
+   fi617: 8/12 exact   wrong: hi-01,hi-05,hi-08,hi-11
+== RESULT ==
+  c_m3       8/12   wrong: hi-01,hi-05,hi-08,hi-11
+  fi617      8/12   wrong: hi-01,hi-05,hi-08,hi-11
+  fi617 recovers hi-01/hi-05 -> the FlashInfer minor owns the gap; det-208 says the sm120
+     cubins are identical between the two, so it would be the Python/JIT path.
+  fi617 still 8/12 -> FlashInfer out too; only the ~123 vLLM commits remain, and that
+     bisect is ~3.5 h for a 2-prompt effect. Put it to the user before spending it.
+== ALL DONE ==
