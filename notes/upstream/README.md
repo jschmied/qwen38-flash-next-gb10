@@ -749,3 +749,31 @@ the fix". det-205 measured the #55715 kernel selecting and running on 0.6.17 too
 requirement is itself conservative. Changed to "out of *adopting* it" plus that caveat — correcting
 one unverified version claim while repeating another would have been the same mistake twice.
 → discussion #9, comment posted 2026-09-12 (HTTP 201)
+
+### vllm#55122 — two replies posted 2026-09-12 (user go "post all")
+
+- **→ @MaCoredroid** — acknowledged the stale path-transition parametrization, fixed in `a7188289e`,
+  and gave the hardware verification rather than just the literal swap: rebuilt this branch's kernel
+  on GB10 and ran the test body at both sets — old exercises **1** distinct path, new exercises **2**,
+  both reproducible and exact over 4 repeats. Draft `vllm-55122-macoredroid-ack.md`.
+  → https://github.com/vllm-project/vllm/pull/55122#issuecomment-5644819209
+
+- **→ @LopezCastroRoberto** (unanswered four days) — conceded the opt-in design. Our det-190 census
+  supports *his* position; we have been running his shape for a week behind `VLLM_QSA_DET_TOPK`;
+  and this week's GB10 shared-memory hard-fail at ~100k is a further argument against defaulting a
+  path whose appetite a 100 KiB device cannot always meet. Committed to testing #55872 here — it is
+  pure Python and touches `qwen4_exp/nvidia/{indexer_qsa.py, ops/qsa_indexer.py}`, our exact path.
+  Added the three-conjunct scoping note: on GB10 short and long rows run different kernels, so a
+  backend wrapping only `persistent_topk` would miss the long-row case.
+  Draft `vllm-55122-lopez-optin.md`.
+  → https://github.com/vllm-project/vllm/pull/55122#issuecomment-5644819319
+
+**Pre-checks.** Thread state re-read (head `a7188289e`, nothing new since MaCoredroid 09-11 23:18).
+Every number verified at source — and two were corrected in the process:
+1. I nearly told Lopez #55872 "does not reach our model", from a **truncated** file listing. The full
+   list touches two `qwen4_exp` runtime files. Caught before drafting.
+2. The tie census was about to be quoted as "on real agent traffic". det-190's own bound is **16k
+   context, two prompts**. In a thread where long context is the live concern that omission would
+   have been misleading, so the bound is now stated explicitly.
+
+**Now owed:** we said we would test #55872 on this box and report back.
