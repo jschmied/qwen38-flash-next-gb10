@@ -56,9 +56,11 @@ def sh(*c): return subprocess.run(c, capture_output=True, text=True)
 
 def refuse_if_busy(unit: str) -> None:
     out = sh("systemctl", "list-units", "--no-legend", "fx-*").stdout
+    # fx-qnext is the orchestrator that launched us, not a GPU job; downloads are not GPU work.
+    # Without this, qnext running as fx-qnext makes every job it starts refuse itself (rc=3).
     others = [l.split()[0] for l in out.splitlines()
-              if l.strip() and not l.split()[0].startswith((unit, f"{unit}-"))
-              and "-dl." not in l.split()[0]]           # downloads are not GPU work
+              if l.strip() and not l.split()[0].startswith((unit, f"{unit}-", "fx-qnext"))
+              and "-dl." not in l.split()[0]]
     if others:
         log(f"!! REFUSING: other fx-* units active: {', '.join(others)}")
         sys.exit(3)
