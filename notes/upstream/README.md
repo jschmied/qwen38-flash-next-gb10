@@ -777,3 +777,18 @@ Every number verified at source — and two were corrected in the process:
    have been misleading, so the bound is now stated explicitly.
 
 **Now owed:** we said we would test #55872 on this box and report back.
+
+### vllm#55122 — #55872 GB10 test result posted 2026-09-12 (user go "report")
+
+Honoured the commitment made this morning. His opt-in FlashInfer TopK backend **fails at engine init
+on sm_121**: `TopKRaggedTransform ... operation not supported` at `csrc/topk.cu:269`. Native arm fine
+(8/12, matching baseline), flag verified parsed, our own overlay disabled in both arms so it could
+not mask his.
+
+**Corrected my own diagnosis before sending.** I had "no PTX, sm_120 only" as the cause; the error is
+`cudaErrorNotSupported` (801), not `cudaErrorNoKernelImageForDevice` (209), so an absent cubin is
+ruled out — and cooperative/cluster launch are all supported on the device. Offered the shared-memory
+ceiling instead (GB10 optin 101,376 B vs ~227 KiB datacenter), with det-222's 960-byte near-miss in
+our own kernel as the supporting evidence, framed as a hypothesis and with an offer to re-run under
+instrumentation.
+→ https://github.com/vllm-project/vllm/pull/55122#issuecomment-5645230534

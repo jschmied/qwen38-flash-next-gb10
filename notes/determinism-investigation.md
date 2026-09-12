@@ -5492,3 +5492,53 @@ Not patching this on the spot. It is a kernel prod loads, the fix moves a device
 sizing logic, and the validating test is the 100k arm that exposed it — that is a deliberate change
 with a rebuild and a re-run, not a same-session edit. Prod at `--max-model-len 32768` is under the
 trigger and unaffected.
+
+## det-223 — vllm#55872's opt-in FlashInfer TopK backend does not start on GB10
+
+We promised @LopezCastroRoberto this test on #55122. Answer: **it fails at engine init on sm_121.**
+
+Setup: clone of a dev524 venv with the PR applied (7 runtime files clean, only `tests/` skipped),
+FlashInfer 0.6.18.post1, stock checkpoint, `VLLM_QSA_DET_TOPK=0` in both arms so our own overlay could
+not mask his — his hook in `qsa_indexer.py` `return`s above ours, so leaving ours on would have made
+the control arm not-native.
+
+| arm | result |
+|---|---|
+| `native` (`--dsa-topk-backend native`) | **8/12** on the 12-prompt exact-copy probe — matches our unpatched baseline exactly |
+| `fitopk` (`--dsa-topk-backend flashinfer`) | **server never came up** |
+
+Flag parsed (`dsa_topk_backend='flashinfer'` in the config echo), so the knob reached the cell. Then:
+
+```
+flashinfer/topk.py:329 -> csrc/topk.cu:269
+RuntimeError: Check failed: (status == cudaSuccess) is false:
+  TopKRaggedTransform failed with error code operation not supported
+```
+
+### My first diagnosis was wrong, and checking it is what made the report worth sending
+
+I assumed a missing kernel image for sm_121 — `topk.so` carries ELF for
+`sm_80 sm_89 sm_90a sm_100a sm_103a sm_110a sm_120` and **no PTX**, which looks damning. It is not the
+explanation: **"operation not supported" is `cudaErrorNotSupported` (801)**, while an absent cubin
+raises `cudaErrorNoKernelImageForDevice` (209). sm_120 loads on sm_121 by minor-version forward
+compatibility, consistent with the error we actually got.
+
+Device capabilities are all present too — `cudaDevAttrCooperativeLaunch` 1, `cudaDevAttrClusterLaunch`
+1, `cudaDevAttrCooperativeMultiDeviceLaunch` 1.
+
+### The lead
+
+That leaves a launch-resource request the device cannot meet, and GB10's
+`cudaDevAttrMaxSharedMemoryPerBlockOptin` is **101,376 B** against ~227 KiB on H100-class parts.
+det-222 hit exactly that ceiling in *our* top-k the day before — `dynamic smem 98080 exceeds 97120`,
+960 bytes over. A radix top-k sized from a datacenter assumption would fail here and nowhere else,
+and would give an 801 rather than a 209. Stated to him as a hypothesis with the evidence, not a cause.
+
+### Why this strengthens his side of the #55122 argument
+
+A GB10 user on his backend gets engine-init failure; one on a deterministic-by-default kernel gets
+det-222's hard failure. Neither is acceptable as a default, both are fine as opt-in behind a
+capability check — which is the position he has been arguing and we have now supplied evidence for
+against our own PR.
+
+Posted: https://github.com/vllm-project/vllm/pull/55122#issuecomment-5645230534

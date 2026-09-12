@@ -1,0 +1,6 @@
+== hiprobe6: vllm#55872 opt-in FlashInfer DSA TopK backend vs native, on sm_121 ==
+   c_m3 and c_m2 are CONTROLS and must reproduce det-213
+-- native: venv=vllm-venv-55872 model=qwen38-flash-next-nvfp4 MTP=3
+   native: 8/12 exact   wrong: hi-01,hi-05,hi-08,hi-11
+-- fitopk: venv=vllm-venv-55872 model=qwen38-flash-next-nvfp4 MTP=3
+!! fitopk: server never came up -- VOID, stopping
