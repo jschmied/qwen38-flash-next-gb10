@@ -5205,3 +5205,70 @@ CUDA-graph capture · `#55180` our own SM 12.x swizzle, which we measured bit-id
 but only on one config.
 
 Cost so far this round: zero GPU, zero venv builds.
+
+## det-218 — the differing cell was never clean: OUR tile-union kernel ran on fnmain2 and not fnmain3
+
+Continuing the read-only narrowing, the executed-path diff between the venvs turned up something
+that should have been checked on day one.
+
+`kernelroster.py` first showed the executed kernels are **identical** across fnmain2, fnmain3 and
+fi617 — `FLASHINFER_CUTLASS [NvFp4 MoE]` with TRTLLM rejected, no quantized dense Linear, and
+**0 CUDA-graph capture lines** on all three. That alone eliminates three more candidates:
+
+- **#55069** (TRTLLM FP8 block-scale MoE): TRTLLM is *rejected* on our path.
+- **#55341 / #55455** (warm up kernels before capturing CUDA graphs): nothing is captured here
+  (det-193/194, 8 starts / 4 configs). A change to warm-up-before-capture cannot matter.
+- **#55180** (SM 12.x blockwise FP8 swizzle — our own): the roster says **no quantized dense
+  Linear** for the *stock* checkpoint these probes used. Our −12 % TTFT for that PR was measured on
+  the fp8mix/fp8head checkpoint, which has FP8 dense. Not on this measurement's path.
+
+`flashinfer_cutlass_moe.py` is **byte-identical** between the venvs, so the MoE wrapper is out too.
+
+### Then the actual problem
+
+Diffing our *own* patch markers across the two venvs:
+
+| marker | dev401 | dev524 |
+|---|---|---|
+| `QSADET`, `DETFIN`, `plefix` | 1 | 1 |
+| `GDN55715-PATCH` | 0 | 1 (tested null, det-212) |
+| `block_indices_out` | **2 files** | **0** |
+| `tile_union` | **6 files** | **1** (orphan module only) |
+
+**fnmain2 carries our experimental QSA tile-union prefill kernel wired through six files; fnmain3
+does not.** And it was not dormant — the fnmain2 run log from det-213 says:
+
+```
+[qsa_tile_union.py:161] QSA tile-union prefill path enabled:
+    QSATileUnionConfig(rows_per_tile=2, blocks_per_step=8, ...)
+[qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4)
+```
+
+The tile-union path changes **which blocks QSA selects**, i.e. what the model attends to. A copy task
+landing on a different token because of it is entirely plausible.
+
+### What this does to det-211 / 213 / 214 / 215
+
+Their differing cell was labelled "the serving venv" and treated as "123 upstream commits". It was
+actually **at least four things at once**: the upstream commits, our tile-union kernel (on for
+fnmain2, off for fnmain3), our #55715 GDN patch (the reverse), and a `ple_layer.py` patch difference.
+
+det-215's conclusion — *"only the ~123 vLLM commits remain"* — is therefore **wrong**. There was a
+fourth candidate the whole time, sitting in our own tree, and I nearly spent hours hand-porting
+nightlies to hunt for something that may not be upstream at all.
+
+`notes/method.md`'s "name the differing cell" says to verify the knob could reach the measured
+cells. It does not say to verify the knob is the *only* thing that moved. It does now.
+
+### The test, running
+
+One server start settles it: fnmain2 with `VLLM_QSA_TILE_UNION=0` against fnmain2 as it ran.
+
+- `tu_off` drops to ~8/12 → **our own kernel**, not upstream, explains the gap — and our tile-union
+  work *improves* Devanagari copy accuracy, which would be a result about our own kernel rather than
+  a vLLM regression.
+- `tu_off` stays 10/12 → tile-union exonerated and the gap really is upstream.
+
+The control leaves the env var **unset** rather than forcing `=1`: forcing it takes the
+"forced on … not tuned for this device" branch with a different table entry, which is not the branch
+the det-213/214 runs logged.
