@@ -5940,3 +5940,26 @@ is **not** this. It has another cause, and a candidate is now eliminated for 62 
 Consistent with the fleet data: our kernel `6.17.0-1031-nvidia` / driver `580.173.02` is one kernel
 revision off the fleet that showed zero slow seconds on the same driver; the fleets that flipped ran
 kernels 1014/1021 and drivers 580.142/580.159.03.
+
+## det-233 — PR #56500 carries a 250K real-weights prefill on sm_121
+
+`spec-pr56500_250k.json`, source_toggle A/B in one invocation, marker `get_qsa_prefill_workspace`
+read back per arm, one start each.
+
+| arm | prompt tokens | prefill s | tok/s | completed |
+|---|---|---|---|---|
+| stock512 | 250,010 | 104.7 | 2387.7 | yes |
+| `pr56500` | 250,010 | 104.1 | 2400.6 | yes |
+
+This is the piece det-228 was missing: our patched evidence stopped at 170K, and the PR author's own
+validation tops out at **4,097 tokens with dummy weights on an SM89 laptop** (his words: "an
+integration smoke test, not a model-quality evaluation"). The patch now has a **250K real-weights
+prefill on the hardware #56457 was reported from**, matching the reporter's own prompt length.
+
+**0.6 % apart is not a speedup** — one start per arm, and the same unpatched cell spanned
+2,376–2,480 tok/s across today's runs. No rate claimed.
+
+Together with det-232 (no KV cost at n=3) the picture for #56500 on one GB10 is: applies to `main`,
+runs on sm_121, no functional regression to 250K, no measurable memory cost. Still **not** a
+confirmation of the fix — we cannot reproduce #56457 on one node (det-229), so this shows the patch
+does not break the working path, which is a different claim.
