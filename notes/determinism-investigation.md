@@ -5542,3 +5542,49 @@ capability check — which is the position he has been arguing and we have now s
 against our own PR.
 
 Posted: https://github.com/vllm-project/vllm/pull/55122#issuecomment-5645230534
+
+## det-224 — the shared-memory budget fix works: 100k now returns 12/12 instead of killing the engine
+
+Validating det-222's addendum diagnosis (the **budget** was wrong, not the clamp). Fix applied to a
+copy: `vec_size` and `cudaFuncGetAttributes` hoisted above the budget, `dyn_optin =
+max_smem_per_block - fa.sharedSizeBytes` used for all three `num_rows` branches, det block reusing
+the hoisted `fa`/`dyn_cap`. Built to scratch; **prod's `/opt/llm/kernel-det/_C_det.so` untouched**.
+
+**Regression first:** their own `test_det.py` against the fixed build — **FAILS: 0**, across the
+whole pivot-ties matrix including the cases where the stock kernel is both non-deterministic and
+wrong (`stock identical x3=False stock set==ref=False`). The fix does not cost the determinism the
+kernel exists for.
+
+**The arm that died in det-222:**
+
+| | det-222 | det-224 (fixed) |
+|---|---|---|
+| depth 100,000 | **EngineCore died**, `dynamic smem 98080 exceeds 97120` | **12/12 exact**, 0 void, 0 ppm |
+| served | — | 99,978 tok (−0.02 % off target) |
+
+Void check passed: the server log prints `QSADET active: …/kdetfix/obj/_C_det.so`, so it ran the
+fixed kernel and not prod's. (Three log lines matched a naive `exceeds` grep — all
+`weight_utils.py:928` "Auto-prefetch is disabled … (EXT4)", unrelated. Checked rather than assumed.)
+
+The arithmetic confirms the diagnosis exactly: 101,376 optin − 4,256 static = 97,120, and the failing
+request was 98,080 — a 960-byte overshoot lying inside the 4,256 B that was never subtracted.
+
+### It also completes det-222's curve
+
+| depth | 8k | 32k | 64k | **100k** |
+|---|---|---|---|---|
+| exact | 12/12 | 12/12 | 12/12 | **12/12** |
+| drift | 0 ppm | 0 ppm | 0 ppm | **0 ppm** |
+
+**48/48 exact copies, zero character errors, to 100k context.** So the path-drift hypothesis is now
+fully null on this model — the Devanagari substitution does not generalise to path copying at any
+depth we can serve. That is worth stating because vllm#51782's reporter sees exactly this failure
+above ~32k on GLM-5.3-Flash; we do not reproduce it, on a different model with a different indexer.
+
+### Still open
+
+Rebuilding **prod's** kernel with this fix is a prod change and needs the user. Prod runs
+`--max-model-len 32768`, under the trigger, so it is not urgent — but `REPRODUCE.md` publishes both
+the kernel and the flag, and a reader who raises context gets the engine kill. The second defect from
+the addendum also stands: a `STD_TORCH_CHECK` in a worker kills EngineCore where a fallback to the
+stock kernel would degrade instead. With the budget corrected that assert should now be unreachable.

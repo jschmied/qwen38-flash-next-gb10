@@ -1,0 +1,12 @@
+== serving at max-model-len 131072, waiting for startup ==
+== up; running the drift probe ==
+== file-path drift vs context depth: 12 probes x 1 depths ==
+   paths share a long prefix and differ only in digits + an 8-hex tail; the target is named
+   by a status marker, never by appearance -- so this scores COPYING, not retrieval
+  depth 100000: 12/12 exact, 0 void, drift 0 ppm, served 99978 tok
+== RESULT ==
+    target   served     exact  wrong  drift ppm
+    100000    99978   12/12        0          0
+  Rising 'wrong' at constant task = the agent mis-copies paths from deep context.
+  That is the claim worth making; the ppm column is only for comparing depths.
+== ALL DONE ==
