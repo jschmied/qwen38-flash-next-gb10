@@ -1,0 +1,4 @@
+# vllm#56457 on ONE GB10 — startup KV sizing, unpatched (2026-09-12)
+
+capped64     Available KV cache memory: 25.95 GiB GPU KV cache size: 1,038,208 tokens 
+default512   Available KV cache memory: 20.74 GiB GPU KV cache size: 829,382 tokens 

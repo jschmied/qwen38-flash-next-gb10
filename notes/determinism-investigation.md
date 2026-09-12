@@ -5679,3 +5679,44 @@ Verified both ways before use: `FN_DET_TOPK=1` → `'1'`/True, `FN_DET_TOPK=0` �
 ["QSADET active"]` purely to keep prod's smem-buggy kernel (det-222) out of a 170k prefill; the arm
 voided on the forbidden string and the gate bug fell out. A void check written for one reason caught
 an unrelated defect — which is the argument for asserting on the log rather than trusting the env.
+
+## det-227 — vllm#56457 does NOT reproduce on a single GB10 at 170k, and the default budget costs 5.2 GiB of KV
+
+`spec-56457.json`, one start per arm, det overlays genuinely off (det-226), bf16 KV — the Qwen4Exp
+QSA backend refuses `--kv-cache-dtype fp8` outright (`qsa.py:110`, guard present at the reporter's
+own commit `2a02f6efe`, so their posted command line cannot be what produced the hang).
+
+| arm | `MAX_LOGITS_MB` | prompt tok | prefill s | tok/s | completed |
+|---|---|---|---|---|---|
+| capped64 | 64 | 169,990 | 68.6 | 2479.3 | yes |
+| default512 | 512 (default) | 169,990 | 70.8 | 2402.4 | yes |
+
+Both pass the reporter's 166,400-token hang point. **One node, `max-model-len 262144`, util 0.85 —
+no OOM, no hang.** Their failure is on 2× DGX Spark, TP=2, `--nnodes 2`.
+
+**Not yet established, and the obvious objection:** they prefilled **254K**; we prefilled 170K.
+`issue56457b` (250K, same two budgets) is queued to close exactly that gap before any of this is
+offered upstream. One start per arm, so the tok/s figures are single-start and not a quotable rate.
+
+### The incidental result is the more interesting one
+
+At identical config, differing only in the budget:
+
+| budget | Available KV | GPU KV cache |
+|---|---|---|
+| 64 MB | 25.95 GiB | 1,038,208 tok |
+| 512 MB | 20.74 GiB | **829,382 tok** |
+
+**The default budget costs 5.21 GiB of KV cache before a single request arrives** — 11.6× the 448 MB
+budget delta. I predicted no difference (the buffer is allocated per chunk at request time) and was
+wrong. A profiling-time peak that retains several buffer sizes would explain it; that is a hypothesis,
+not a measurement, and the counterfactual has not been run.
+
+It bears directly on PR #56500, whose author flags an untested risk that reserving the budget during
+profiling "can increase live memory". If the unpatched default already gives up 5.21 GiB, a bounded
+reservation may be a net win. That A/B is queued as `pr56500` — nobody has tested that PR on sm_121;
+the author validated on an RTX 4060 Laptop (SM89, 8 GiB) with torch 2.11, explicitly not the CI env.
+
+**Log hygiene:** armrun reuses `armrun-<tag>.log` across invocations, so run 3 overwrote run 2's log
+and the ~1.78 GiB det-overlay KV cost I read from it is no longer verifiable — recorded as
+provisional only. Run logs are now copied to `results/logs/` with a timestamp.

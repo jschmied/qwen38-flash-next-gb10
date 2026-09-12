@@ -73,6 +73,11 @@ def pkg_dir(venv: str) -> str:
 def toggle(spec_venv: str, t: dict, on: bool) -> bool:
     """Apply/remove a source patch and return the state READ BACK from the file."""
     f = t["file"].replace("<pkg>", pkg_dir(spec_venv))
+    if not os.path.exists(f):
+        # A doubled <pkg> path reported as "not writable as root" and burned a queued job
+        # (2026-09-12). <pkg> already ends in /vllm.
+        log(f"!! REFUSING: {f} does not exist. <pkg> already ends in /vllm -- check the spec path.")
+        sys.exit(3)
     if not os.access(f, os.W_OK):
         # Found by armrun's own first test run: as a non-root user the patch script cannot
         # write /opt/llm/runtime/..., fails quietly, and BOTH states then read identical --
@@ -158,6 +163,13 @@ def main() -> int:
         if "source_toggle" in arm:
             validate_marker(venv, arm["source_toggle"])
     if a.validate_only:
+        # validate_marker leaves each arm in its DECLARED state, so the last arm with on:true
+        # left the shared venv PATCHED -- and the next untoggled job would silently inherit it.
+        # Caught 2026-09-12 (marker count 2 after a dry check). Leave it pristine and say so.
+        for arm in spec["arms"]:
+            if "source_toggle" in arm:
+                st = toggle(venv, arm["source_toggle"], False)
+                log(f"   source restored to OFF (marker present: {st})")
         log(f"== armrun {name}: spec valid ({len(spec['arms'])} arms). Nothing started. ==")
         globals()["_SENT"] = True      # a dry check is not a completed job
         return 0
