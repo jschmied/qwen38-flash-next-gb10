@@ -1,0 +1,12 @@
+== serving at max-model-len 131072, waiting for startup ==
+== up; running the drift probe ==
+== file-path drift vs context depth: 12 probes x 4 depths ==
+   paths share a long prefix and differ only in digits + an 8-hex tail; the target is named
+   by a status marker, never by appearance -- so this scores COPYING, not retrieval
+  depth   8000: 12/12 exact, 0 void, drift 0 ppm, served 7960 tok
+  depth  32000: 12/12 exact, 0 void, drift 0 ppm, served 32000 tok
+  depth  64000: 12/12 exact, 0 void, drift 0 ppm, served 64045 tok
+    ans, usage = ask(q)
+                 ^^^^^^
+    with urllib.request.urlopen(r, timeout=900) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

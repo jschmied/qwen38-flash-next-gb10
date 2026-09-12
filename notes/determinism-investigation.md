@@ -5393,3 +5393,67 @@ det-193/194 stays explained (`splitting_ops: []` + mode `NONE` leaves PIECEWISE 
 **Does not settle:** `hi-05`. And the "prod regression" framing stays retired — dev524 removing
 torch.compile is upstream's deliberate change, not a defect we found, and fnmain2 was never clean
 (2/12 fail there with compile *on*).
+
+## det-222 — no path drift to 64k (36/36 exact), and our own det kernel kills the engine at 100k
+
+Built to test whether the Devanagari character-substitution result generalises to something people
+act on: an agent emitting a file path that does not exist. A needle test for **copying**, not
+retrieval — hundreds of paths share `/srv/pipeline/ingest/2026/…` and differ only in digits and an
+8-hex tail, so the answer cannot be reconstructed from gist; and the target is named by a status
+marker ("the one file whose status is exactly `FAILED checksum`"), never by appearance, so locating
+and copying are separate abilities and only copying is scored.
+
+| target depth | served (median) | exact | drift |
+|---|---|---|---|
+| 8,000 | 7,960 (−0.5 %) | **12/12** | 0 ppm |
+| 32,000 | 32,000 (+0.0 %) | **12/12** | 0 ppm |
+| 64,000 | 64,045 (+0.1 %) | **12/12** | 0 ppm |
+| 100,000 | — | **engine died** | — |
+
+**36/36 exact, zero character errors.** The depth axis is sound (all within 0.5 % of target; the
+builder was calibrated against the real tokenizer after a first estimate came out 2.2× off).
+
+### Outcome (b): the drift hypothesis is not supported up to 64k
+
+This is a clean null and it bounds the earlier work: the Devanagari substitution does **not**
+generalise to path copying at these depths. Worth stating plainly because I wanted the other answer
+— "the agent invents a file path" would have been a far stronger argument than a ppm figure, and it
+is not what the box does. vllm#51782's reporter sees trouble above ~32k; we see none to 64k, on a
+different model, with a different indexer. Their 100k+ regime is exactly what we failed to reach.
+
+### The actual finding: our deterministic kernel hard-fails at ~100k
+
+The 100k arm never produced a score. It killed EngineCore:
+
+```
+RuntimeError: launch_persistent_topk, topk_det.cu:117, persistent_topk_det:
+  dynamic smem 98080 exceeds 97120 (optin 101376 - static 4256)
+```
+
+960 bytes over. This is **our** out-of-tree deterministic top-k — the kernel prod loads whenever
+`VLLM_QSA_DET_TOPK=1`. The clamp is conditional:
+
+```c
+if (smem_size < P::kSmemMedium) smem_size = P::kSmemMedium;        // floor
+...
+const size_t dyn_cap = max_smem_per_block - fa.sharedSizeBytes;
+if (det_want > smem_size) smem_size = std::min(det_want, dyn_cap); // clamps ONLY in this branch
+STD_TORCH_CHECK(smem_size <= dyn_cap, ...);                        // so this fires
+```
+
+When `smem_size` already exceeds `dyn_cap` — as the cooperative path's chunk-size computation makes
+it at long context — the `min()` never runs and the assert trips. Two defects, not one:
+
+1. **The clamp should be unconditional.** `smem_size = std::min(smem_size, dyn_cap)` after the branch.
+2. **It should not be fatal.** `STD_TORCH_CHECK` in a worker takes down EngineCore; the right
+   behaviour when the deterministic path cannot fit is to fall back to the stock kernel for that row,
+   not to kill the server.
+
+**Blast radius.** Prod runs `--max-model-len 32768` and has been stable for weeks, so prod is under
+the trigger. But `REPRODUCE.md` publishes both this kernel and the flag, so any reader who raises
+context toward 100k with `VLLM_QSA_DET_TOPK=1` gets an engine kill rather than a degraded answer.
+That needs fixing and a note in the recipe.
+
+It is also a real datapoint for vllm#55122's opt-in argument, and was cited there today: the
+deterministic path wants the row resident in shared memory, and a 100 KiB device cannot always
+supply it. The failure to clamp is ours; the appetite is the algorithm's.
