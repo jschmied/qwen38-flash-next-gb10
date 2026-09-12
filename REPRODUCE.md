@@ -250,9 +250,18 @@ Each measured null here, with the mechanism understood. Full detail in
 
 - **Greedy decoding is not reproducible on this model.** Same prompt, `temperature=0`, different
   output — from as few as 582 prompt tokens. On sm_121 `use_cooperative_topk` is False (the
-  capability-*family* check excludes all of 12.x), so every request takes
+  capability-*family* check excludes all of 12.x), so every request calls
   `torch.ops._C.persistent_topk`, which vllm#51782 reports silently returns wrong values in a
-  data-dependent way. Four other explanations were tested and eliminated
+  data-dependent way.
+
+  **Refinement (2026-09-12):** *calls* is not the same as *runs*. Inside `persistent_topk`, a row
+  whose length exceeds `RADIX_THRESHOLD` needs a cooperative launch; if that launch would
+  oversubscribe the device **and** `sharedMemPerBlockOptin < 128 KiB`, the C++ diverts to
+  `top_k_per_row_decode` instead. GB10 reports **100 KiB**, so it meets that third condition
+  always — meaning long rows here are served by a *different kernel* than short ones. That split is
+  invisible at the Python level and it matters: vllm#55314, the fix for the bin-overflow defect,
+  changes `persistent_topk.cuh` / `cooperative_topk.cuh` / `topk_histogram_4096.cuh` but **not**
+  `sampler.cu`, where `top_k_per_row_decode` actually lives. Four other explanations were tested and eliminated
   ([write-up](notes/temp0-nondeterminism.md)).
 - **Long-prompt hangs (>8k)** are `is_arch_support_pdl()` returning True for anything with
   `major >= 9`, so PDL is used in `_build_qsa_metadata_kernel` where the dependent kernel waits
