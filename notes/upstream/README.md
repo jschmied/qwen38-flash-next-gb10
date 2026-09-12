@@ -681,3 +681,36 @@ needing its own go.
 
 Deliberately did NOT tag anyone on #56088 — someone else's issue, and nudging on their behalf with an
 inactive maintainer would have been noise.
+
+### vllm#55122 — pushed a review fix (2026-09-12 ~09:0x), no comment posted
+
+@MaCoredroid (2026-09-11 23:18) reported that `test_persistent_topk_path_transition` still
+parametrizes 16383/16384/16385 while `RADIX_THRESHOLD` is 22016. Verified and correct: the cause is
+our own last commit `7cfd04a39` ("Raise RADIX_THRESHOLD to 22016"), which moved the boundary and left
+the test behind.
+
+Fixed on the branch as `a7188289e`: seq_len → 22015/22016/22017, plus a docstring recording that
+num_rows 64 can select FilteredTopK on ≥128 KiB opt-in shared-memory devices.
+
+**Tested before pushing**, on GB10 against this branch's kernel — rebuilt `_C_det.so` from the PR
+head into a scratch rig (two call sites needed porting for the `max_seq_len` + `max_smem_per_block`
+parameters that `3e399815a`/`995cd99fa` added):
+
+| parametrization | distinct paths exercised |
+| --- | --- |
+| old 16383/16384/16385 | **1** — all single-CTA, no transition |
+| new 22015/22016/22017 | **2** — 22016 single-CTA, 22017 cooperative |
+
+Both sets reproducible and exact over 4 repeats.
+
+**No reply posted to either open thread.** Still owed, both needing the user's go:
+- @MaCoredroid — acknowledge the fix.
+- @LopezCastroRoberto (2026-09-08, four days unanswered) — argues for an opt-in backend over
+  changing the default, points at his #55872, and asks directly whether we would test it here. Our
+  own det-190 tie census (0 ties in 6,192 selecting rows) supports his position.
+
+**Also found, and it is ours to fix:** `/opt/llm/kernel-det/_C_det.so` that prod loads was built
+2026-09-06 and predates both `73936f304` and `7cfd04a39` — **393 differing non-comment lines** from
+the PR head. Prod's deterministic kernel is not the kernel this PR proposes, so prod measurements
+quoted on that thread describe the older variant. Rebuilding prod's kernel is a prod change and
+needs the user.

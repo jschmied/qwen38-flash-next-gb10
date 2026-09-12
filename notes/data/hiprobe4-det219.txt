@@ -1,0 +1,13 @@
+== hiprobe4: OUR tile-union QSA prefill kernel ON vs OFF, both on fnmain2 ==
+   c_m3 and c_m2 are CONTROLS and must reproduce det-213
+-- tu_on: venv=vllm-venv-fnmain2 model=qwen38-flash-next-nvfp4 MTP=3
+   tu_on: 10/12 exact   wrong: hi-08,hi-11
+-- tu_off: venv=vllm-venv-fnmain2 model=qwen38-flash-next-nvfp4 MTP=3
+   tu_off: 10/12 exact   wrong: hi-08,hi-11
+== RESULT ==
+  tu_on     10/12   wrong: hi-08,hi-11
+  tu_off    10/12   wrong: hi-08,hi-11
+  tu_off drops to 8/12 -> OUR tile-union kernel, not upstream, explains the venv gap.
+     det-211/213/214/215 all had it ON for fnmain2 and OFF for fnmain3.
+  tu_off stays 10/12 -> tile-union exonerated; the gap is upstream after all.
+== ALL DONE ==

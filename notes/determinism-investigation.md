@@ -5272,3 +5272,32 @@ One server start settles it: fnmain2 with `VLLM_QSA_TILE_UNION=0` against fnmain
 The control leaves the env var **unset** rather than forcing `=1`: forcing it takes the
 "forced on … not tuned for this device" branch with a different table entry, which is not the branch
 the det-213/214 runs logged.
+
+## det-219 — the tile-union kernel is exonerated: the confound was real, the cause it isn't
+
+det-218 found that fnmain2 ran our experimental QSA tile-union prefill kernel and fnmain3 did not,
+in every arm of det-211/213/214/215. Differing cell here: `VLLM_QSA_TILE_UNION` alone, both arms on
+fnmain2, stock checkpoint, MTP 3. The control left the variable **unset** so it took the same auto
+branch the earlier runs logged, rather than the "forced on" branch a literal `=1` selects.
+
+| arm | exact | wrong |
+|---|---|---|
+| `tu_on` (as it ran) — CONTROL | 10/12 | hi-08, hi-11 |
+| `tu_off` (`VLLM_QSA_TILE_UNION=0`) | **10/12** | **identical set** |
+
+Control reproduced det-213. Turning our kernel off changes nothing — **the tile-union path is not
+why fnmain2 beats fnmain3 by two prompts.**
+
+So det-218's confound was genuine (the cell was contaminated and the A/B was not clean) but it is
+not the explanation. Two separate things, and it was worth an hour to find that out rather than
+assume either way.
+
+**Still unexamined from det-218:** the `ple_layer.py` patch difference — dev401 carries a `jschmied`
+marker there, dev524 does not. That is the last known non-upstream difference between the venvs.
+
+### Ledger after five rungs
+
+Eliminated: #55715 GDN kernel (det-212) · MTP (det-214) · FlashInfer 0.6.17↔0.6.18 (det-215) ·
+tile-union (here) · #54890, #54110, #55069, #55341/#55455, #55180 (det-217/218, by roster and gate).
+Remaining: the `ple_layer.py` delta, and the upstream commits not yet excluded — where each bisect
+rung costs a hand-port (det-216).
