@@ -5811,3 +5811,37 @@ det-227 claimed 5.21 GiB, I withdrew it as restart noise, and both were too hast
 real. The magnitude is **not** 5.21 GiB — that was the widest possible pairing quoted as a point
 value. Closest pairing gives ~40k tokens (~1.0 GiB), widest ~209k (~5.2 GiB). `kvsize3` runs 3 starts
 of `{stock512, patched512, stock64}` to settle both this and #56500's up-front-reservation question.
+
+## det-230 — the det-226 audit: one more contaminated run, and three that are fine
+
+det-226 said `vpp5/6/7`, `thaidet.py` and `hiprobe6.py` carry the `FN_DET_TOPK=0`-means-stock
+assumption and "should be re-read before reuse". Done, by log rather than by reading the runners.
+
+| run | arm | `QSADET active` | verdict |
+|---|---|---|---|
+| vpp4 | `det0` | present | **null** — `det0` ≡ `det1`; `truestock` is the only valid control (det-226) |
+| vpp4 | `truestock` | absent | valid |
+| **thaidet** | `det0`, `stock0`, `stock1` | **present in all three** | **det axis collapsed** |
+| hiprobe6 | `native` | present | both arms det-on; see below |
+| hiprobe6 | `fitopk` | absent | *not* a stock arm — it never started |
+| vpp5 / vpp6 / vpp7 | — | no logs exist | **never ran**, nothing to audit |
+
+**thaidet is the new casualty.** All of its "stock" arms ran the det kernel, so any conclusion that
+attributes a difference to the deterministic top-k is void there. Its PLE-fix axis is a *separate*
+source toggle with its own validated marker (`Clear any semaphore still raised`) and is unaffected —
+the labels `det`/`stock` are misleading, not the plefix comparison.
+
+**hiprobe6 is not a counterexample to det-226, though it looks like one.** Its `fitopk` log has no
+`QSADET active` line, which reads as "det was off". It is not: that arm **died at engine init** with
+`TopKRaggedTransform failed with error code operation not supported` — the sm_121 failure we reported
+on vllm#55872 — and never reached the print. `native` started and shows the kernel live. Both arms
+asked for `FN_DET_TOPK=0` and both got it on; since they share that, the `--dsa-topk-backend` axis
+they were actually testing is unaffected.
+
+**det-196 (Thai corruption) survives, and it is worth saying why.** Its arms are `ours-lh3` vs
+`stock-radixark` — the differing cell is the *checkpoint*, not the kernel. The det kernel being on in
+both arms holds it constant, which is what an A/B wants. "Stock" there means stock *weights*. The
+conclusion (our requant neither introduces nor removes the defect, z = +0.28) stands.
+
+Net: **two** contaminated comparisons total (vpp4's det axis, thaidet's det axis), both now labelled;
+three runners needed no correction; three never ran.
