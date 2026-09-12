@@ -5301,3 +5301,47 @@ Eliminated: #55715 GDN kernel (det-212) · MTP (det-214) · FlashInfer 0.6.17↔
 tile-union (here) · #54890, #54110, #55069, #55341/#55455, #55180 (det-217/218, by roster and gate).
 Remaining: the `ple_layer.py` delta, and the upstream commits not yet excluded — where each bisect
 rung costs a hand-port (det-216).
+
+## det-220 — the two venvs are not running the same execution mode: #55272 removed torch.compile
+
+Closing the last known non-upstream difference first (the `ple_layer.py` delta from det-218):
+
+- dev401's `PORT53899` marker is a hand-port artefact; dev524 needed no hand-port there.
+- dev401 additionally carries our **PLE mmap overlay** (`MmapPLEEmbedding`, `VLLM_QWEN4_PLE_MMAP`).
+  **Inert in every arm**: the env was never set, and the gate raises unless `--enforce-eager`, while
+  every run logged `enforce_eager=False`.
+- The remaining diff is that dev401 calls the n-gram id computation through a registered custom op
+  and dev524 calls the method directly. `compute_ngram_ids` itself is **byte-identical, 73 lines,
+  0 differing**. With compilation off that is the same work.
+
+So all four known non-upstream differences are now closed. The cause is upstream — and reading the
+commit subjects for our model turned up the one that matters.
+
+### The finding
+
+| | fnmain2 (dev401) | fnmain3 (dev524) |
+|---|---|---|
+| `mode` | **`VLLM_COMPILE: 3`** | **`NONE: 0`** |
+| `custom_ops` | `['none']` | `['all']` |
+| `splitting_ops` | 11, incl. `qwen4_exp_qsa_with_output`, `qwen_gdn_attention_core`, `qwen4_exp_compute_ple_ngram_ids` | `[]` |
+| inductor / "Compiling" lines in the run log | **8 / 2** | **0 / 0** |
+| `@support_torch_compile` on `model.py`, `mtp.py` | **present (×3)** | **absent** |
+
+**vllm#55272, "[Qwen3.8-Flash-Next] Remove torch.compile for NVIDIA implementation"**, is in the
+dev401 → dev524 range and deleted the decorators. fnmain2 runs inductor-compiled fused graphs;
+fnmain3 runs eager with `custom_ops: ['all']`. That is not a subtle kernel difference — it is a
+different execution strategy for the whole model, and it is entirely sufficient to move a token at a
+near-tie. It is also, by a wide margin, the largest difference we have found in the executed path.
+
+**It simultaneously explains det-193/194**, open since 2026-09-04: cudagraphs captured nothing across
+8 starts and 4 configs, and `splitting_ops` was recorded as "the unasserted hypothesis". With
+`splitting_ops: []` and mode `NONE`, PIECEWISE capture has nothing to split on. Asserted now.
+
+### Test running (det-221)
+
+`cc_on` (fnmain2 as it runs) vs `cc_off` (fnmain2 with `"mode":0` injected into the launcher's
+`--compilation-config`). The reverse experiment is impossible: #55272 deleted the decorators, so
+compile cannot be switched back on in dev524.
+
+The knob-level check matters more than usual here — `cc_off`'s log must show `CompilationMode.NONE`
+**and** zero inductor lines. If it still compiled, the injection failed and the run is void.
