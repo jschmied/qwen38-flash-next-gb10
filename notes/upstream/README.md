@@ -792,3 +792,30 @@ ceiling instead (GB10 optin 101,376 B vs ~227 KiB datacenter), with det-222's 96
 our own kernel as the supporting evidence, framed as a hypothesis and with an offer to re-run under
 instrumentation.
 → https://github.com/vllm-project/vllm/pull/55122#issuecomment-5645230534
+
+### vllm#51782 — @NNNtrance closed their loop 2026-09-12 09:03Z; our pointer corroborated
+
+Four arms on GLM-5.3-Flash, 30-turn replay, bad turns (fresh / prefix-cache):
+
+| arm | bad turns |
+|---|---|
+| stock kernel, `index_topk 2048` | 11 / 7 |
+| exact `torch.topk` (both call sites) | 9 / 6 |
+| bf16 indexer query projections (`indexer.wq_b`, 12 layers) instead of 4-bit | **7 / 9** |
+| stock kernel, **`index_topk 8192`** | **2 / 3** |
+
+Their conclusion: *"neither selection accuracy nor indexer weight precision moves the needle for this
+workload; only the size of the selected set does."* And: *"Thanks @jschmied for the sampler.cu
+pointer — consistent with what we see."*
+
+So it is a **capacity** problem, not precision or selection correctness. Our contribution stands and
+was corroborated; nothing further is owed. They are moving to attention-sink force-keeping
+(mlx-lm#1552). **Not replying** — they asked nothing, and the one thing we could offer (GB10's
+101,376 B shared-memory optin being tight, which we hit in *a* top-k path at ~100k rows in det-222)
+is speculation about a different kernel on a stack we have never run.
+
+**Process error this exposed, worth more than the datapoint:** I reported "watch list clear" in
+several ticks while (a) passing the box's CEST clock to a `--since` that GitHub reads as UTC, a
+two-hour blind spot, and (b) in the later ticks, not running the query at all. Rule added to the
+`upstream-post` skill: build the window with `date -u`, and list the tail unfiltered before
+concluding a thread is quiet.
