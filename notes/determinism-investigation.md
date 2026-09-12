@@ -5918,3 +5918,25 @@ anything it biases stock512 *downward*, i.e. against the conclusion in (1). Excl
 stock512 at 964,156–974,524, still inside stock64's range, so neither conclusion changes.
 
 Throughput was flat and is not a claim: 939.3–999.9 tok/s across all nine at a 2,042-token probe.
+
+## det-231 CLOSED — our GB10 does NOT exhibit the fast/slow flip
+
+Probe `gpuflip.py`, 62 s, no model, no engine, with the 64 MB device copy as the control.
+
+| | our box | reported slow | reported fast |
+|---|---|---|---|
+| decode-shaped bf16 GEMV | **218.6 – 219.7 GB/s** | 66–80 | 224–233 |
+| max/min over 62 s | **1.01x** | — | — |
+| seconds below midpoint | 0 of 31 | 27–35 of 62 | — |
+
+**Verdict: no flip observed in 62 s.** We sit squarely in the reported *fast* band and never left it, with a
+ratio of 1.01x against the 1.8x threshold. tonyd2wild #1 / magicbear saw 7–32 s states and
+27–35 slow seconds per minute; we saw none.
+
+**So the hypothesis is retired, and that is the useful part**: our unexplained variance —
+[[mtp-restart-instability]]'s 1.83x MTP spread and det-232's 12.4 % KV spread on an unchanged cell —
+is **not** this. It has another cause, and a candidate is now eliminated for 62 s of box time.
+
+Consistent with the fleet data: our kernel `6.17.0-1031-nvidia` / driver `580.173.02` is one kernel
+revision off the fleet that showed zero slow seconds on the same driver; the fleets that flipped ran
+kernels 1014/1021 and drivers 580.142/580.159.03.
