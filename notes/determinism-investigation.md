@@ -5633,3 +5633,49 @@ starts, and on the fp8head checkpoint so the number is comparable to what is pub
 `== ALL DONE ==` sentinel and marked the job `done` (50 min). Three bugs were found by using them
 today — a root-owned queue file, marker-vs-permissions misreporting, and `fx-qnext` blocking every
 job it launched — all fixed. The spec is 12 lines where the old hand-copied driver was ~130.
+
+## det-226 — `FN_DET_TOPK=0` never produced a stock arm, and one past A/B is null because of it
+
+Fixed at the source in `serve-fnmain.sh`. **The bug itself was already known** — `lhcap.sh:14-16`
+documents it verbatim ("`0` is TRUTHY in Python — exporting 0 enables the kernel just as 1 does … the
+only way off is to UNSET it") and works around it locally. What was missing is that the *launcher*
+every other runner goes through was never fixed, so the workaround protected exactly one script.
+
+Both overlays gate on the presence of the string, not its value:
+
+| | gate |
+|---|---|
+| `qsa_indexer.py:491` | `if _os.environ.get("VLLM_QSA_DET_TOPK"):` |
+| `flashinfer_cutlass_moe.py:392` | `use_fused_finalize=not bool(…environ.get("VLLM_MOE_DET_FINALIZE"))` |
+
+`"0"` is a non-empty string, so both stayed ON. And the launcher wrote `${FN_DET_TOPK:-1}`, where `:-`
+substitutes for empty *as well as* unset — so passing an empty value yielded `1` too. **There was no
+value of `FN_DET_TOPK` that produced a stock arm.**
+
+**The confirmed casualty**, by log rather than by inference:
+
+| vpp4 arm | intent | `QSADET active` in log |
+|---|---|---|
+| `det0` | stock persistent_topk | **present** |
+| `det1` | PR #55122 det kernel | present |
+| `truestock` | added later | absent |
+
+`det0` and `det1` were the same configuration, so that comparison was null by construction; only
+`truestock` is a valid control there. `vpp5/6/7`, `thaidet.py` and `hiprobe6.py` carry the same
+`FN_DET_TOPK=0`-means-stock assumption and should be re-read before any of their stock-arm
+conclusions are reused.
+
+**Fix** (`serve-fnmain.sh`, default unchanged — on):
+
+```bash
+export VLLM_QSA_DET_LIB=${FN_DET_LIB:-/opt/llm/kernel-det/_C_det.so}
+if [ "${FN_DET_TOPK:-1}" = 1 ]; then export VLLM_QSA_DET_TOPK=1; else unset VLLM_QSA_DET_TOPK; fi
+if [ "${FN_DET_FINALIZE:-1}" = 1 ]; then export VLLM_MOE_DET_FINALIZE=1; else unset VLLM_MOE_DET_FINALIZE; fi
+```
+
+Verified both ways before use: `FN_DET_TOPK=1` → `'1'`/True, `FN_DET_TOPK=0` → `None`/False.
+
+**How it surfaced.** Not by reading the launcher. The #56457 spec declared `log_must_not_contain:
+["QSADET active"]` purely to keep prod's smem-buggy kernel (det-222) out of a 170k prefill; the arm
+voided on the forbidden string and the gate bug fell out. A void check written for one reason caught
+an unrelated defect — which is the argument for asserting on the log rather than trusting the env.
