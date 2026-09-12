@@ -21,7 +21,7 @@
   },
   {
    "name": "cb3-tier0",
-   "state": "queued",
+   "state": "done",
    "needs_user": false,
    "prereqs": [],
    "expect_min": 15,
@@ -30,7 +30,7 @@
     "-c",
     "echo 'TODO: random-weight harness for tools/cb3_moe.py + CB3Arena via tools/cb3.py packer'; echo '== VOID =='"
    ],
-   "note": "CB3 is 0xBakeer's SHIPPED expert format; Tier 0 only covered fp4_moe. Needs a CB3Arena and the packer, so it is a real harness, not a sed of the fp4 one"
+   "note": "DONE: CB3 kernel exact vs fp4 on identical weights, determinism 4/4, but CHUNK INVARIANCE FAILS at prefixes 2/4/8 on the shipped path (v41_engine.py:370). See deepseek repo notes/cb3-chunk-invariance.md"
   },
   {
    "name": "prod-det-kernel-rebuild",

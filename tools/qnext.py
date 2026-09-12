@@ -34,9 +34,18 @@ DONE, VOID = "== ALL DONE ==", "== VOID =="
 
 def log(*a): print(*a, flush=True)
 def load(): return json.load(open(QUEUE))
-def save(q): 
+def save(q):
+    """Atomic, and ownership-preserving: qnext runs as root for jobs that touch /opt/llm/runtime,
+    and a root-owned queue silently blocks the next non-root --status/edit."""
     tmp = QUEUE + ".tmp"
-    json.dump(q, open(tmp, "w"), indent=1); os.replace(tmp, QUEUE)
+    try:
+        st = os.stat(QUEUE)
+    except FileNotFoundError:
+        st = None
+    json.dump(q, open(tmp, "w"), indent=1)
+    os.replace(tmp, QUEUE)
+    if st and os.geteuid() == 0:
+        os.chown(QUEUE, st.st_uid, st.st_gid)
 
 
 def busy() -> list[str]:
