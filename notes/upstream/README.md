@@ -731,3 +731,21 @@ offer. Said so explicitly rather than leading with a hypothesis their own data h
 
 Also fixed by this check: our own REPRODUCE.md said "every request takes `persistent_topk`" on
 sm_121. Every request *calls* it; long rows *run* `top_k_per_row_decode` inside it.
+
+### HuggingFace — RadixArk/Qwen3.8-Flash-Next-NVFP4 discussion #9, 2026-09-12 (user go "do post")
+
+Correction to our own 2026-09-01 pointer in that thread: the recipe told readers to pin FlashInfer
+**0.6.17**, which det-208 refuted — neither wheel ships an sm121 artifact, the `*_sm120` modules are
+identical (17 × `sm_120` ELF each), 0.6.18 drops only `single_decode_with_kv_cache_*` which vLLM
+never calls, and the runtime JIT cache holds 0 modules after the cutover. Also carries det-207's
+measured GDN numbers (+5.0 % warm, +7.1 % cold, ranges disjoint), the vLLM pin correction (main +
+our #53899 port), and the overlay count 4 → 3 (det-209).
+
+Pre-checks run: thread state re-read (still 1 event, our own, no replies); every figure diffed
+against det-207 in `determinism-investigation.md`; secret scan on repo and body.
+
+**One claim softened during the check.** The draft said a reader on 0.6.17 "reads themselves out of
+the fix". det-205 measured the #55715 kernel selecting and running on 0.6.17 too, so the PR's stated
+requirement is itself conservative. Changed to "out of *adopting* it" plus that caveat — correcting
+one unverified version claim while repeating another would have been the same mistake twice.
+→ discussion #9, comment posted 2026-09-12 (HTTP 201)

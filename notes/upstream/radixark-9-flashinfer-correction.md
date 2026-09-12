@@ -37,7 +37,10 @@ full start log has zero `ninja` / `nvcc` / `Compiling` lines. No JIT fallback, s
 SM12x and states FlashInfer ≥ 0.6.18 as a requirement. Three of every four layers in this model are
 GDN, and before that fix `_resolve_gdn_prefill_backend()` covered SM90 and SM10x only — so sm_121
 fell through to the Triton/FLA fallback silently. On this box that was **1,216 of 1,216** logged
-backend announcements. Anyone on the 0.6.17 pin reads themselves out of the fix. Verify from the log,
+backend announcements. Anyone on the 0.6.17 pin reads themselves out of adopting it. (In fairness
+to 0.6.17: we later tried the backport *on* 0.6.17 and the kernel selected and ran there too, so
+#55715's stated requirement looks conservative — but a reader has no way to know that from the PR,
+and we are not going to repeat one unverified version claim while correcting another.) Verify from the log,
 not the version — both the main worker and the PLE offload worker should say:
 
 ```
