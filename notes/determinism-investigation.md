@@ -5457,3 +5457,38 @@ That needs fixing and a note in the recipe.
 It is also a real datapoint for vllm#55122's opt-in argument, and was cited there today: the
 deterministic path wants the row resident in shared memory, and a 100 KiB device cannot always
 supply it. The failure to clamp is ours; the appetite is the algorithm's.
+
+### det-222 addendum — the clamp is the symptom; the budget is the bug
+
+My first reading ("make the clamp unconditional") is **wrong and would be dangerous**. Tracing it:
+
+```
+ 82:  smem_size = kFixedSmemLarge + chunk_size * sizeof(uint32_t)
+ 97:  floor at kSmemMedium
+116:  conditional det clamp                      <-- where it trips
+240:  params.det_smem_bytes = smem_size
+249:  kernel<<<total_ctas, kThreadsPerBlock, smem_size, stream>>>
+```
+
+`smem_size` is not a free knob — it is `chunk_size` in bytes, and the kernel indexes that much.
+Clamping it at line 116 without shrinking `chunk_size` under-allocates and the kernel runs off the
+end of its shared array. A silent out-of-bounds is strictly worse than the current hard failure.
+
+**The real defect is the budget.** `effective_max_smem` is derived from `sharedMemPerBlockOptin`
+without subtracting the kernel's own **static** `__shared__` usage (4,256 B here). `chunk_size` is
+therefore sized against a budget ~4 KB larger than the kernel can actually be given, and at long
+context that overshoot crosses the cap — 98,080 against a real ceiling of 97,120.
+
+**Correct fix:** hoist the `cudaFuncGetAttributes` call above the `chunk_size` computation and
+subtract `fa.sharedSizeBytes` when forming `effective_max_smem`, so `chunk_size` is sized against
+the true dynamic capacity. The assert at 116 then becomes what an assert should be — unreachable —
+rather than a hard failure the caller trips in normal use.
+
+**Second, independent defect:** even correctly sized, a `STD_TORCH_CHECK` in a worker kills
+EngineCore. Where the deterministic path genuinely cannot fit, it should fall back to the stock
+kernel for that row and log once.
+
+Not patching this on the spot. It is a kernel prod loads, the fix moves a device query across the
+sizing logic, and the validating test is the 100k arm that exposed it — that is a deliberate change
+with a rebuild and a re-run, not a same-session edit. Prod at `--max-model-len 32768` is under the
+trigger and unaffected.

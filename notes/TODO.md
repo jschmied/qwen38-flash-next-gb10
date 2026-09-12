@@ -537,6 +537,20 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
    batch-invariant evals matter.
 7. **Disk**: /opt 56 GB free; today's per-arm caches < 1 GB, something else is large — check before the next model pull.
 
+## QUEUED: two concrete jobs from 2026-09-12
+
+1. **Fix the det-kernel shared-memory budget (det-222 addendum).** Hoist `cudaFuncGetAttributes`
+   above the `chunk_size` computation in `/opt/llm/kernel-det/topk_det.cu` and subtract
+   `fa.sharedSizeBytes` from `effective_max_smem`; make the residual case fall back to the stock
+   kernel instead of `STD_TORCH_CHECK`. Rebuild via `build_det.py`, validate with the **100k arm of
+   `filedrift.py`**, which is the run that exposed it. Do NOT clamp `smem_size` at line 116 — it is
+   `chunk_size` in bytes and the kernel indexes it.
+
+2. **Test vllm#55872 on this box — publicly promised 2026-09-12.** Pure Python, and it touches our
+   exact path (`qwen4_exp/nvidia/indexer_qsa.py`, `ops/qsa_indexer.py`), so: clone a venv, apply the
+   PR's diff, serve, and check the opt-in deterministic backend selects and runs on sm_121. We told
+   @LopezCastroRoberto we would report back.
+
 ## REGRESSION HUNT (top priority, 2026-09-11) — U+093E → U+094B
 
 **The bug.** Stock RadixArk checkpoint, prompt "copy this exactly":
