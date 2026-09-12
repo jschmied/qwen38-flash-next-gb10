@@ -5845,3 +5845,41 @@ conclusion (our requant neither introduces nor removes the defect, z = +0.28) st
 
 Net: **two** contaminated comparisons total (vpp4's det axis, thaidet's det axis), both now labelled;
 three runners needed no correction; three never ran.
+
+## det-231 (OPEN, probe queued) — a reported GB10 slow state that would contaminate our variance history
+
+Found in the V4.1-on-Spark field survey, not in our own work. `tonyd2wild` issue #1, **independently
+reproduced by magicbear on 2 of 8 nodes**: GB10 flips between a fast and a slow state that
+`nvidia-smi` cannot see.
+
+| probe | slow | fast |
+|---|---|---|
+| decode-shaped bf16 GEMV (6×5120 @ 5120×16384) | 66–80 GB/s | 224–233 GB/s |
+| fp16 2048³ matmul | 53–55 TFLOPS | 76–84 TFLOPS |
+| **64 MB device copy** | 239–242 GB/s | **239–242 GB/s (no change)** |
+| SM clock | 2164–2177 MHz | 2164–2177 MHz |
+| throttle reasons | 0x0 | 0x0 |
+
+States last 7–32 s then flip; three 62 s runs spent 27/34, 33/29, 27/35 s fast/slow. In serving: 63
+vs 94 ms per decode step. The flat 64 MB copy is the control that separates this from "GPU slow".
+magicbear's slow node recovered after the model was unloaded, so it correlates with memory residency,
+not a fixed low clock.
+
+**Why this is ours too.** We carry two unexplained variance findings —
+[[mtp-restart-instability]] (up to **1.83×** spread on MTP alone across restarts, while no-spec and
+ngram stayed at 1.1×) and [[temp0-not-reproducible-under-load]]. If this box flips, an unknown
+fraction of our A/B history has an uncontrolled variable in it, and "three starts" does not fix a
+7–32 s square wave — it aliases against it.
+
+**Our position is genuinely uncertain**, which is why it is worth 62 s: kernel `6.17.0-1031-nvidia`,
+driver `580.173.02`. The fleet that showed **zero** slow seconds in ~540 s ran kernel `1032` with the
+**same** driver; the fleets that flipped ran kernels `1014`/`1021` and drivers `580.142`/`580.159.03`.
+We are one kernel revision below the clean fleet.
+
+Also established by that thread: `nvidia-smi -lgc 0,2200` is a **power cap, not a fast-state holder**
+(unlocked measured faster: 85.8 vs 77.2 TFLOPS).
+
+**Queued as `gpuflip`** — `/opt/llm/runners/gpuflip.py`, 62 s, no model, no engine, with the 64 MB
+copy as the control and a bimodality verdict. Deliberately ordered **before** `pr56500_250k` so a flip
+cannot contaminate that run's throughput numbers. Outcome either gives our variance a candidate cause
+or retires the hypothesis for free.
