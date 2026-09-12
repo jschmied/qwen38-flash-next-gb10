@@ -5100,3 +5100,55 @@ The mark-duplication metric conflated substitution, duplication and translation;
 "half of all Devanagari tasks"; a cross-run comparison became a confirmed prod regression. Every
 correction came from looking at the actual strings, which cost minutes. The probe that finally
 settled it scores exact-copy and nothing else.
+
+## det-216 — the cheap narrowing is not available: each bisect rung is a hand-port, not a wheel swap
+
+The user chose "narrow it cheaply first" — one rung at the midpoint of dev401 → dev524 before
+committing to the full search. The midpoint is **`199cb9b96` = dev463**, exactly 123/2 commits in,
+and its aarch64 nightly wheel exists.
+
+**It is not a cheap rung, and that is the result.**
+
+Building it: clone fnmain3 (17 GB), `pip install --no-deps` the dev463 wheel. Then audit what the
+wheel reverted:
+
+| overlay | after the wheel |
+|---|---|
+| `plefix` (in the *added* `v1/ple_offload/`) | survived |
+| `qsadet`, `detfin`, `#55715 GDN` | **overwritten** |
+| PLE port's *modified* files — `envs.py`, `config/parallel.py`, `models/qwen4_exp/nvidia/ple_layer.py`, `v1/worker/gpu_worker.py`, `v1/executor/uniproc_executor.py` | **overwritten** |
+
+Added files survive a wheel install; modified ones do not (BUILD-RECIPE trap, now demonstrated).
+Without the PLE port's modifications the offload never engages, the 47.7 GiB n-gram table stays
+resident, and the model does not fit — starting it would be an OOM attempt, not a measurement.
+
+So each rung needs the port re-applied. Dry run of `pr53899.vllm.diff` against dev463:
+
+```
+9 files checked, 7 of 17 hunks FAILED in ple_layer.py (+4 files already-applied)
+```
+
+On dev524 that same patch lands **14/17** and `port53899.py` hand-ports the 3 rejects. On dev463
+**7** hunks fail, and they are different hunks — `port53899.py` does not cover them. **Every rung is
+a genuine hand-port of a 17-hunk patch into a file that moved.** My "~7 rungs × 20 min = 2.5–3.5 h"
+estimate was wrong; the real cost is hours per rung, and worse, each hand-port risks introducing its
+own defect into the very venv meant to measure a 2-prompt difference.
+
+Half-built venv deleted rather than left around.
+
+### A cheaper alternative, and its limit
+
+Reading the diff instead of building it: of the changed files across the range, **0 touch the
+sampler, logits processors, or the tokenizer**; 21 touch MoE and 18 touch attention. A token flip
+with no sampler change points at numerics in MoE or attention, which is consistent with everything
+seen so far.
+
+**Caveat that makes this weaker than it looks:** GitHub's compare API caps at 300 files and returned
+exactly 300, so the list is truncated and the zero counts are "not in the first 300", not "absent".
+Stated here so nobody later reads it as a clean negative.
+
+### Where this leaves it
+
+Nothing further should be spent without a decision. The choice is now between hours of hand-porting
+per rung for a 2-of-12 effect on a checkpoint that fails 2/12 on the good venv anyway, or accepting
+and documenting the limitation. Put to the user.
