@@ -5963,3 +5963,41 @@ Together with det-232 (no KV cost at n=3) the picture for #56500 on one GB10 is:
 runs on sm_121, no functional regression to 250K, no measurable memory cost. Still **not** a
 confirmation of the fix — we cannot reproduce #56457 on one node (det-229), so this shows the patch
 does not break the working path, which is a different claim.
+
+## det-234 — the det-224 fix is INSTALLED IN PROD and validated at 100k on the shipped binary
+
+User authorised the prod change 2026-09-12. `/opt/llm/runners/det_rebuild.py`: build to staging →
+gate on `test_det.py` → back up the live `.so` → install → verify it loads → roll back on failure.
+
+| step | result |
+|---|---|
+| build | 1,425,520 B staged |
+| gate | `test_det.py` **FAILS: 0**, every row `det identical x20=True exact=True` vs `stock identical x3=False` |
+| backup | `_C_det.so.bak-0912-2326`, sha `e856c359…` (differs from the new one) |
+| installed | sha `acabf852…` — **identical to the staged build** |
+| load | `_C_det.persistent_topk` registered |
+
+**End-to-end validation on the shipped binary (`det100k`), which the rebuild gate did NOT cover:**
+
+| | |
+|---|---|
+| 100k prefill, det ON, `max-model-len 131072` | 99,995 tokens, 40.7 s, 2456.6 tok/s, completed |
+| `QSADET active: /opt/llm/kernel-det/_C_det.so` | present — the prod path, witnessed not assumed |
+| `dynamic smem` | **0** — det-222's death signature absent |
+| engine deaths | 0 |
+
+This closes the det-217 → 222 → 224 chain in prod. det-222 killed the engine here with `dynamic smem
+98080 exceeds 97120`; det-224 fixed the budget but validated a **scratch** build. The same depth now
+runs on the installed artifact.
+
+**Two process failures on the way, both mine, both caught:**
+
+1. The first rebuild attempt **VOIDed at the gate** because I passed the `.so` via `VLLM_QSA_DET_LIB`
+   when `test_det.py` takes `sys.argv[1]`; it died `IndexError` and the script correctly refused to
+   install. Prod was untouched. **An unclear test result must block, and it did.**
+2. My repair raised `IndentationError` *after* writing the file, and the `cp` on the following line ran
+   anyway — briefly installing a syntactically broken `det_rebuild.py`. Two commands in one shell are
+   not a gate; the install is now chained behind the parse check with `&&`.
+
+`mtp-remeasure3` would not have caught any of this: it runs at 8,192 context, far from the failure
+regime, so prod could have carried an unvalidated kernel while looking healthy.
