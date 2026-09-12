@@ -184,11 +184,16 @@ The flags that are not obvious:
 | `--max-model-len 32768` | **not 8192.** A single code task emitted 31,115 characters of *thinking* before 12,931 of content. 8192 cannot hold this model's own reasoning |
 | `--max-num-seqs 16` | **not 2.** Our early "concurrency ceiling" was this flag, not the hardware — the box reaches 266.8 tok/s at 48 streams |
 | `--enable-auto-tool-choice --tool-call-parser qwen3_xml` | without these, every request carrying `tools` returns **HTTP 400** |
-| `--speculative-config '{"method":"mtp","num_speculative_tokens":2}'` | +35%. `k=5` hard-fails (QSA ring capacity must divide the attention block size) |
+| `--speculative-config '{"method":"mtp","num_speculative_tokens":2}'` | +35% — **under re-measurement**, this figure predates three fixes now in the serving path and was not taken at three starts. `k=5` hard-fails (QSA ring capacity must divide the attention block size); `k=0..4` and `9..12` are legal, `5..8` are not — a hole, not a ceiling |
 
-> ⚠️ **Never combine MTP with `--async-scheduling`.** `_prepare_ngram_context` reads the CPU token
-> mirror while it still holds speculation's `-1` placeholders, so the n-gram context is wrong.
-> Silently. No benchmark reveals it.
+> **Correction (2026-09-12).** This slot used to carry a warning never to combine MTP with
+> `--async-scheduling`. **That warning was wrong and is withdrawn.** It was wrong twice over:
+> `_prepare_ngram_context` is the PLE n-gram *embedding* context, not ngram speculation, and it reads
+> a device tensor, not a CPU mirror. And it was never enforced in the first place —
+> `SchedulerConfig.async_scheduling` defaults to `None`, the `None` branch *enables* it for MTP on a
+> multiproc executor, and we never passed `--no-async-scheduling`. So **every MTP number on this page
+> was measured with async scheduling ON.** Nothing here needs changing to reproduce it; the warning
+> was the error. Pass `--no-async-scheduling` only if you want to A/B it.
 
 If you serve in Docker you also need **`--cap-add=SYS_PTRACE`**: PLE offload's `rebuild_cuda_tensor`
 needs `pidfd_getfd`, and without it the engine dies ~10 minutes in with only `Failed core proc(s): {}`.
