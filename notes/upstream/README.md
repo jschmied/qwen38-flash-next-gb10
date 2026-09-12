@@ -819,3 +819,20 @@ several ticks while (a) passing the box's CEST clock to a `--since` that GitHub 
 two-hour blind spot, and (b) in the later ticks, not running the query at all. Rule added to the
 `upstream-post` skill: build the window with `date -u`, and list the tail unfiltered before
 concluding a thread is quiet.
+
+### vllm#55122 — DCO fixed 2026-09-12 (user go "do it"). I had broken it that morning.
+
+`a7188289e`, the path-transition test fix, was pushed via the GitHub **contents API**, which authors
+the commit as the **account's** email (`github@juergenschmied.de`) while I hand-wrote the sign-off as
+`juergenschmied70@gmail.com`. Author ≠ sign-off ⇒ **DCO fail** on a PR that had been green on that
+check for 19 commits.
+
+Fixed without cloning vLLM, via the git data API: read the commit object, POST an identical one
+(**same tree `ae065ad7…`, same parent `7cfd04a3`, same 19-line message**) with the author email
+corrected, then PATCH the branch ref with `force=true`. Verified the tree hash matched **before**
+moving the ref, so no content changed — new head `42db1ddbb`, still 20 commits, still +854/−297 in 3
+files.
+
+**Rule for next time:** the contents API and the git data API author as the token owner. Either set
+`author.email` explicitly in the payload, or do not hand-write a `Signed-off-by` that differs from it.
+A DCO failure is invisible in the push response and only shows up in `gh pr checks`.
