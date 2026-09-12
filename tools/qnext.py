@@ -34,6 +34,20 @@ DONE, VOID = "== ALL DONE ==", "== VOID =="
 
 def log(*a): print(*a, flush=True)
 def load(): return json.load(open(QUEUE))
+def missing_artifacts(job: dict) -> list[str]:
+    """File arguments in a job's cmd that do not exist.
+
+    A job whose script or spec is absent is not work, it is a scheduled failure -- and it will fire
+    at whatever hour the chain reaches it. pr56509 sat queued for hours with no script (2026-09-12).
+    qnext skips such a job and moves on rather than burning the slot.
+    """
+    out = []
+    for a in job.get("cmd", []):
+        if "/" in a and a.rsplit(".", 1)[-1] in ("py", "sh", "json") and not os.path.exists(a):
+            out.append(a)
+    return out
+
+
 def save(q):
     """Atomic, and ownership-preserving: qnext runs as root for jobs that touch /opt/llm/runtime,
     and a root-owned queue silently blocks the next non-root --status/edit."""
@@ -64,6 +78,11 @@ def runnable(q):
             out.append((i, f"state={i.get('state')}")); continue
         if i.get("needs_user"):
             out.append((i, "needs_user")); continue
+        absent = missing_artifacts(i)
+        if absent:
+            # A job whose script/spec does not exist is a scheduled failure, not work.
+            out.append((i, "NO ARTIFACT: " + ", ".join(os.path.basename(a) for a in absent)))
+            continue
         missing = [p for p in i.get("prereqs", []) if p not in done]
         out.append((i, f"waiting on {','.join(missing)}" if missing else None))
     return out
