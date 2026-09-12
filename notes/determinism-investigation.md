@@ -5746,3 +5746,32 @@ only way to answer the PR author's "reserving up front costs live memory" concer
 
 Mechanism for the restart variance is unmeasured: vLLM sizes KV from a profiled peak, and allocator
 fragmentation across a fresh process would plausibly move it. Hypothesis, not a result.
+
+## det-228 — vllm PR #56500 runs correctly on GB10 sm_121; it does NOT confirm the fix
+
+`spec-pr56500.json`, one armrun invocation, `source_toggle` between pristine and patched with marker
+`get_qsa_prefill_workspace` read back before each start (not assumed). One start per arm.
+
+| arm | prompt tok | prefill s | tok/s | completed |
+|---|---|---|---|---|
+| `stock512` | 169,990 | 75.2 | 2259.6 | yes |
+| `pr56500` | 169,990 | 71.0 | 2395.0 | yes |
+
+**What this establishes:** the patch applies to `dev524+g5db652225` (two hunks at +10 offset from our
+QSADET overlay), imports and runs on **sm_121 / aarch64**, and a 170k prefill at `max-model-len
+262144` completes with no functional regression. The author validated on an RTX 4060 Laptop (SM89,
+8 GiB, torch 2.11) and said outright that is not the CI environment; nobody had run it on the
+hardware the bug was reported from.
+
+**What it does NOT establish — the honest limit.** We could not reproduce #56457 on a single node
+(det-227), so this cannot show the patch *fixes* anything. It shows the patch does not break the
+working path. Confirming the fix needs the failing configuration, which is 2× DGX Spark TP=2.
+
+**The throughput difference is noise, not a speedup.** 71.0 s vs 75.2 s is 5.6 %, and the same
+unpatched cell spanned 70.8–75.2 s across restarts (run 3 vs this run). One start per arm. No rate
+claim.
+
+**KV at startup** — `stock512` 23.65 GiB / 944,903 tok, `pr56500` 22.72 GiB / 907,877 tok. The patched
+arm is 0.93 GiB lower, which is the direction the PR author flagged as a risk, but the same cell moved
+2.91 GiB between restarts, so this is inside noise and decides nothing. `kvsize3` (3 starts per arm,
+startup KV only) is queued to answer it.

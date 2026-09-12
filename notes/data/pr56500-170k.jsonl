@@ -1,0 +1,2 @@
+{"completed": 1, "prompt_tokens": 169990, "past_166400": 1, "prefill_s": 75.2, "tok_s": 2259.6, "arm": "stock512", "start": 0, "tag": "pr56500-stock5120", "ts": "2026-09-12 16:42:22"}
+{"completed": 1, "prompt_tokens": 169990, "past_166400": 1, "prefill_s": 71.0, "tok_s": 2395.0, "arm": "pr56500", "start": 0, "tag": "pr56500-pr565000", "ts": "2026-09-12 16:55:46"}
