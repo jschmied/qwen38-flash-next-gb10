@@ -195,3 +195,30 @@ caught every one:
    not the ~1.4 TB the apparent sizes suggest.
 
 The log line "freeing 123G" prints `du -xsh`, which is the misleading number. Report unique bytes.
+
+
+## Archive pass 2 (2026-09-12/13) — 163.6 GB, and the scope I had silently dropped
+
+`archive_to_pbs.sh` (generalised from the one-off sweep). 3 of 3 verified, 0 failures.
+
+| target | unique bytes freed | on PBS |
+|---|---|---|
+| `calib/capture` | 90.1 GB | 49 files |
+| `bf16-work` | 51.7 GB | 19 files |
+| `models/qwen38-27b-nvfp4` | 21.8 GB | 18 files |
+
+**Disk 232 GB -> 395 GB free.** rsync moved 175.8 GB at 95.7 MB/s with **speedup 1.00** — correct
+here and a useful cross-check: these three share no inodes, unlike the model family where `-aH` gave
+4.51x. A flat speedup on the model dirs would have meant the hardlink preservation had failed.
+
+**These were dropped by accident, not by choice.** They were in the original plan; when I rewrote the
+sweep script for `-aH` I removed its `for extra in ...` loop and never noticed. The sweep then reported
+"14 of 14" — true for its own `DIRS` list, which is exactly why the count did not reveal the gap.
+**A success criterion that only measures what the script chose to attempt cannot detect dropped scope.**
+
+`bf16-work` was checked for redundancy first rather than assumed: it is `model-000NN-of-00018`, while
+the PBS BF16 stage is `-of-00131` — a different model, so it was archived rather than deleted.
+
+PBS `du` reports the copies smaller than the originals (73/41/19 GB vs 90.1/51.7/21.8) because
+`data/bulk` is ZFS-compressed. The sha256 manifests verified, so content is byte-identical; do not
+read the compressed figure as data loss.

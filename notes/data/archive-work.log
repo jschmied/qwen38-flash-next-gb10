@@ -1,0 +1,29 @@
+-- manifests
+   capture: 49 files, 0 symlinks, 91G
+   bf16-work: 19 files, 0 symlinks, 52G
+   qwen38-27b-nvfp4: 18 files, 0 symlinks, 22G
+-- ONE rsync -aH -> /mnt/bulk/gb10/work/
+
+Number of files: 95 (reg: 92, dir: 3)
+Number of created files: 95 (reg: 92, dir: 3)
+Number of deleted files: 0
+Number of regular files transferred: 92
+Total file size: 175.760.605.917 bytes
+Total transferred file size: 175.760.605.917 bytes
+Literal data: 175.760.605.917 bytes
+Matched data: 0 bytes
+File list size: 0
+File list generation time: 0,001 seconds
+File list transfer time: 0,000 seconds
+Total bytes sent: 175.803.522.670
+Total bytes received: 1.784
+
+sent 175.803.522.670 bytes  received 1.784 bytes  95.675.387,46 bytes/sec
+total size is 175.760.605.917  speedup is 1,00
+   VERIFIED capture -> freeing 90.1G unique
+   VERIFIED bf16-work -> freeing 51.7G unique
+   VERIFIED qwen38-27b-nvfp4 -> freeing 21.8G unique
+
+archived+freed: 3   failed: 0
+/dev/nvme0n1p2  916G    475G  395G   55% /
+== ALL DONE ==
