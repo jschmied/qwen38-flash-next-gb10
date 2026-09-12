@@ -5588,3 +5588,48 @@ Rebuilding **prod's** kernel with this fix is a prod change and needs the user. 
 the kernel and the flag, and a reader who raises context gets the engine kill. The second defect from
 the addendum also stands: a `STD_TORCH_CHECK` in a worker kills EngineCore where a fallback to the
 stock kernel would degrade instead. With the budget corrected that assert should now be unreachable.
+
+## det-225 — MTP re-measured on the current build: k=2 stands, and its published gain understates
+
+First run driven end to end by the new tooling (`qnext` → `armrun` → `mtp_probe`). Single stream,
+160 new tokens, `ignore_eos`, 4 reps with **rep 0 dropped as cold**, one start per arm. Differing
+cell: `FN_MTP` only — same venv (fnmain3), stock checkpoint, flags and det overlays throughout.
+
+| arm | tok/s (warm reps) | accept_len |
+|---|---|---|
+| `mtp_off` | **16.70 – 16.81** | — |
+| `mtp_k2` | **24.50 – 24.60** | 2.038 |
+| `mtp_k3` | 23.26 – 23.38 | 2.239 |
+
+### What is callable and what is not
+
+- **k=2 over off: +46.5 %.** Far above the 6.9 % decode noise floor, so this one is callable even
+  from a single start. `REPRODUCE.md` publishes **"+35 %"**, which now **understates** the gain on the
+  current build — the three fixes prod picked up have, if anything, helped speculation.
+- **k=3 is 5.0 % slower than k=2** — *below* the noise floor. The k=2 recommendation stands, but
+  **this run does not prove k=3 is worse.** Three starts before that claim.
+- **k=3 has the higher acceptance (2.239 vs 2.038) and is slower.** A clean local illustration of
+  `acceptance-is-not-quality`: acceptance is not a speed proxy either, and ranking arms on it would
+  have picked the slower one here.
+
+### The number that would otherwise cause a false alarm
+
+We measured **24.5 tok/s** where `REPRODUCE.md` advertises **36.5**. That is **not** a regression:
+the published figure is explicitly *"on the `fp8head` checkpoint"* (§ Verify), and these arms ran the
+**stock** NVFP4 checkpoint. fp8head carries dense-FP8 (+39 %) and an FP8 `lm_head` (+11 %, doubling
+to +19 % with MTP on), which is the gap. Recorded here because a future reader comparing 24.5 against
+the published 36.5 would otherwise start a regression hunt — we have spent a day on exactly that
+mistake already.
+
+### Not changing the published number yet
+
+The recommendation (k=2) is unchanged and correct. The **+35 %** figure looks stale, but revising a
+public recommendation on one start per arm is the thing we said we would stop doing. Queued: three
+starts, and on the fp8head checkpoint so the number is comparable to what is published.
+
+### The tooling, on its first real job
+
+`armrun` reported per-arm ranges and its void checks passed on all three arms; `qnext` recorded the
+`== ALL DONE ==` sentinel and marked the job `done` (50 min). Three bugs were found by using them
+today — a root-owned queue file, marker-vs-permissions misreporting, and `fx-qnext` blocking every
+job it launched — all fixed. The spec is 12 lines where the old hand-copied driver was ~130.

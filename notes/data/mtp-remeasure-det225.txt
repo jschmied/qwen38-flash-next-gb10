@@ -1,0 +1,20 @@
+== armrun mtp-remeasure: 3 arms x 1 start(s), port 8092 ==
+-- mtp-remeasure-mtp_off0  env={'FN_MTP': '0'}
+Running as unit: fx-armrun-mtp-remeasure.service; invocation ID: 199bab19f71b4c5e8e91446201618ac0
+   void checks passed (0 required, 0 forbidden)
+   {"tok_s_min": 16.7, "tok_s_max": 16.81, "warm_reps": 3, "new_tokens": 160}
+-- mtp-remeasure-mtp_k20  env={'FN_MTP': '2'}
+Running as unit: fx-armrun-mtp-remeasure.service; invocation ID: 75cb6f3875914fe9b10daf8756d2ef57
+   void checks passed (0 required, 0 forbidden)
+   {"tok_s_min": 24.5, "tok_s_max": 24.6, "warm_reps": 3, "new_tokens": 160, "accept_len": 2.038}
+-- mtp-remeasure-mtp_k30  env={'FN_MTP': '3'}
+Running as unit: fx-armrun-mtp-remeasure.service; invocation ID: 255ec1c5f05a4de2b590e29a6383849b
+   void checks passed (0 required, 0 forbidden)
+   {"tok_s_min": 23.26, "tok_s_max": 23.38, "warm_reps": 3, "new_tokens": 160, "accept_len": 2.239}
+
+== RESULT ==
+  mtp_off      tok_s_min 16.7  tok_s_max 16.81  warm_reps 3  new_tokens 160  start 0
+  mtp_k2       tok_s_min 24.5  tok_s_max 24.6  warm_reps 3  new_tokens 160  accept_len 2.038  start 0
+  mtp_k3       tok_s_min 23.26  tok_s_max 23.38  warm_reps 3  new_tokens 160  accept_len 2.239  start 0
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
