@@ -947,3 +947,21 @@ broader determinism, and makes no performance claim. Ran alongside another workl
 So the PR now has two independent GB10 confirmations from different angles — serving-level
 (reproducibility, 99–100 % of stock throughput, 0/50 unstable on a quality suite) and kernel-level
 (324 exact fallback launches at the 101,376 B ceiling). Neither is ours.
+
+### vllm#55122 — rebased 2026-09-13 20:40 (user go "do it"), reply to MaCoredroid still DRAFT
+
+mergify flagged conflicts at 08:18. Cause: upstream `fa008bdccf` (#56464, "Integrate DeepSelect TopK
+for the DSA sparse indexer") added 323 lines to `tests/kernels/test_top_k_per_row.py` the same
+morning. Purely additive on both sides, no name collisions, both test sets kept.
+
+Verified rather than trusted: both kernel diffs (`persistent_topk.cuh`, `topk.cu`) hash identically
+before and after the rebase, and the five commits git dropped were all earlier
+`Merge branch 'main'` syncs. 20 → 15 commits, `CONFLICTING` → `MERGEABLE`, `BLOCKED` on review only.
+
+**Checked whether #56464 supersedes us: it does not.** `indexer_topk.py:295` on today's main still
+calls `torch.ops._C.persistent_topk` — it is now the `persistent` backend of a three-way dispatcher
+(`deepselect` / `persistent` / `top_k_per_row_decode`) with a config surface in
+`vllm/config/kernel.py`. So the fix applies to a path users now select explicitly.
+
+Reply drafted at `comment-55122-rebase-and-second-gb10.md`; **not posted**, awaiting the user's go.
+MaCoredroid's verification has been unacknowledged since 2026-09-12.
