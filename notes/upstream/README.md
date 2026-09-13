@@ -963,5 +963,7 @@ calls `torch.ops._C.persistent_topk` — it is now the `persistent` backend of a
 (`deepselect` / `persistent` / `top_k_per_row_decode`) with a config surface in
 `vllm/config/kernel.py`. So the fix applies to a path users now select explicitly.
 
-Reply drafted at `comment-55122-rebase-and-second-gb10.md`; **not posted**, awaiting the user's go.
-MaCoredroid's verification has been unacknowledged since 2026-09-12.
+**POSTED 2026-09-13 20:47** (user go "keep it short and post"), 201 words:
+https://github.com/vllm-project/vllm/pull/55122#issuecomment-5655243777
+Draft kept at `comment-55122-rebase-and-second-gb10.md`. Covers the rebase, the #56464
+non-supersession, and the acknowledgement MaCoredroid was owed since 2026-09-12.
