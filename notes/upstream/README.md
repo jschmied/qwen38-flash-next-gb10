@@ -990,3 +990,22 @@ and whether eligibility passes with prefill chunked at 8192.
 
 OPEN ON OUR SIDE: our own 1.45x in-situ figure predates #55272 and must be re-measured on the
 fixed head before it is quoted again.
+
+**POSTED 2026-09-17 11:2x** (user go "do post"), ~370 words:
+https://github.com/vllm-project/vllm/pull/54076#issuecomment-5711993205
+Draft at `comment-54076-cached-tokens-trap.md`. wickist accepted our measurement offer on 09-16 and
+asked for prefix-cache hit rate patched-vs-unpatched. Posted two things AHEAD of running it:
+
+1. THE TRAP, because they asked for the cell by the name of the metric that does not work:
+   `usage.prompt_tokens_details.cached_tokens` is INERT (0 on provable hits, measured 2026-08-24/25
+   on #53479). Anyone reading their request literally gets zeros on both arms and calls the fix a
+   no-op. Use `vllm:prefix_cache_hits_total` deltas and/or instrumented find_longest_cache_hit.
+2. OUR EXISTING CORROBORATION of their scoping commit, from the flag-shaped route:
+   disable_eagle_block_drop (#53388) on Flash-Next MTP n=3, 3 starts -- cached tokens/warm turn
+   4,800 -> 6,400, warm turn 2.05 -> 1.52 s, acceptance 53-56 -> 57-60 %. Scoped honestly as
+   ADJACENT: ours is mtp, not dflash/dspark, and it does not touch the align-mode first-repetition
+   cold turn.
+
+COMMITTED: patched vs unpatched vs +scoping, prefix_cache_hits_total deltas, EOS-correct harness,
+3 starts. PR is Python-only (3 files under vllm/), so it overlays without a rebuild. Told them it
+is serialised behind another model on this single-GPU box rather than immediate.
