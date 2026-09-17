@@ -1047,3 +1047,26 @@ filtered log applies history simplification and can hide a change that arrived t
 NOT DONE, deliberately: the port needs a CUDA build plus numerical validation on GB10, and the box
 is committed to DS4.1. Branch left at `ef5d2d9532`, rebase aborted, backup at
 `backup/topk-pre-rebase-20260917`. Nothing pushed, PR still CONFLICTING.
+
+**POSTED 2026-09-17 11:4x** (user go "reply as short as possible"), ~230 words:
+https://github.com/vllm-project/vllm/pull/55430#issuecomment-5712154191
+Draft at `comment-55430-primts-convergence.md`. Answers gau-nernst's pointer to vllm#56240 /
+flashinfer#4996 (PerkzZheng's PrimTS QSA backend).
+
+KERNEL DOES NOT CROSS: flashinfer#4996 says verbatim "Source supports SM100/SM103"; we are sm_121
+(GB10, confirmed cc 12.1). #56240 already treats #55430 as separate work for the same reason.
+
+INTERFACE ALREADY CONVERGED, and this is the useful part: their `indexer_block_ids` (logical
+selected-block IDs [total_q, block_topk], consumed WITHOUT expansion into token indices) is exactly
+our `block_indices_out` ([num_tokens, block_topk], -1-padded, `expand=False` skipping expansion).
+Two independent implementations chose the same contract -- the strongest argument our indexer seam
+is the right abstraction.
+
+PROPOSED RESHAPE (ours, offered, not agreed): #56240 adds VLLM_QSA_ATTENTION_BACKEND=auto|triton|
+prims_ts while we add VLLM_QSA_TILE_UNION -- two selectors for one decision. Better to register
+tile-union as a third backend under theirs and share one indexer contract. That makes #55430 depend
+on #56240 landing first.
+
+Also disclosed in the same comment: the 1.45x figure predates #55272's projected_qk refactor, which
+broke the path outright, so it is unverified until re-measured. Told them plainly rather than
+leaving a stale number as the PR's headline.
