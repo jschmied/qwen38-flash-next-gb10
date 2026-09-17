@@ -1006,6 +1006,15 @@ asked for prefix-cache hit rate patched-vs-unpatched. Posted two things AHEAD of
    ADJACENT: ours is mtp, not dflash/dspark, and it does not touch the align-mode first-repetition
    cold turn.
 
-COMMITTED: patched vs unpatched vs +scoping, prefix_cache_hits_total deltas, EOS-correct harness,
-3 starts. PR is Python-only (3 files under vllm/), so it overlays without a rebuild. Told them it
-is serialised behind another model on this single-GPU box rather than immediate.
+**EDITED 2026-09-17 11:2x (user go "change last comment and apologise")** -- the commitment is
+WITHDRAWN. I offered the arm and they accepted, then the check I should have done first showed the
+Qwen3.8-Flash-Next checkpoint is no longer on this box: /opt/llm/models holds only dsv41-shards
+(207 GB) and the HF cache entry for the NVFP4 repo is a 108 KB metadata stub, not weights.
+Restoring it is a ~100 GB pull into 198 GB free, which is not worth it for this cell. The comment
+now opens with the apology and keeps the two items that rest on measurements already taken.
+
+LESSON, and it is the same one as [[posting-check-thread-state-first]] one step earlier: check that
+the thing you are offering to measure is still ON THE BOX before offering it. The model had been
+swapped out well before the offer; nothing about the offer was ever runnable.
+
+Still true and still posted: the cached_tokens trap, and the disable_eagle_block_drop corroboration.
