@@ -1018,3 +1018,32 @@ the thing you are offering to measure is still ON THE BOX before offering it. Th
 swapped out well before the offer; nothing about the offer was ever runnable.
 
 Still true and still posted: the cached_tokens trap, and the disable_eagle_block_drop corroboration.
+
+**#55122 REBASE ATTEMPTED AND ABORTED 2026-09-17** (no post; nothing pushed). mergify flagged
+conflicts again on 09-15, four days after the 09-13 rebase. This one is NOT a mechanical rebase.
+
+Upstream restructured the kernel our PR rewrites:
+
+    was:  __global__ void FilteredTopKUnifiedKernel(input, output, lengths, num_rows, top_k, max_len)
+    now:  __device__ __forceinline__ bool filtered_topk_row(score, dst, length, top_k,
+                                                            FilteredTopKStorage<MAX_K>& storage)
+          template <..., bool CheckOverflow = false>   // returns false so the caller can retry
+                                                       // with exact full-row selection
+
+i.e. the `__global__` became a `__device__` helper with a shared-memory storage struct and a BOOL
+RETURN CONTRACT for the low-shared-memory overflow fallback -- the path MaCoredroid exercised on
+09-12 (`force_single_cta=1`, 48 SMs, 101,376 B opt-in shared memory). 52 insertions / 34 deletions.
+
+Our commit `f721b41290` replaces the BODY of the old __global__ with a call to `det_select_row`.
+Porting means putting the deterministic path inside the new helper, returning bool, and honouring
+CheckOverflow. Picking either side of the conflict compiles and is silently wrong -- the exact
+[[merge-hazard-bypassed-kernel]] class.
+
+METHOD ERROR WORTH RECORDING: `git log --oneline $base..origin/main -- <path>` reported ZERO commits
+touching this file, and I believed it. `git diff $base origin/main -- <path>` shows 52/-34. Path-
+filtered log applies history simplification and can hide a change that arrived through a merge.
+**Diff the file; do not trust a path-filtered log to tell you whether upstream moved it.**
+
+NOT DONE, deliberately: the port needs a CUDA build plus numerical validation on GB10, and the box
+is committed to DS4.1. Branch left at `ef5d2d9532`, rebase aborted, backup at
+`backup/topk-pre-rebase-20260917`. Nothing pushed, PR still CONFLICTING.
