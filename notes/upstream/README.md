@@ -1070,3 +1070,27 @@ on #56240 landing first.
 Also disclosed in the same comment: the 1.45x figure predates #55272's projected_qk refactor, which
 broke the path outright, so it is unverified until re-measured. Told them plainly rather than
 leaving a stale number as the PR's headline.
+
+**POSTED 2026-09-17 12:1x** (user go "post what we have"), ~420 words:
+https://github.com/vllm-project/vllm/pull/55122#issuecomment-5712836396
+Draft at `comment-55122-port-onto-filtered-topk-row.md`. NOT pushed -- the port collapses the
+current 15 commits, so the post asks whether rewriting what reviewers have been reading is wanted.
+
+WHAT WAS POSTED: the rebase is a PORT. Upstream split FilteredTopKUnifiedKernel into a wrapper plus
+a __device__ helper `filtered_topk_row(...) -> bool` with CheckOverflow. Determinism goes in the
+WRAPPER because sampled_topk.cuh calls the helper with CheckOverflow=true and falls back to exact
+threshold+emit on false -- rewriting the helper would change a kernel this PR is not about and make
+that fallback unreachable, since the rescanning select never stashes. det_select_row is
+byte-identical to the pre-port branch (MD5 verified); only the call site moved.
+
+VERIFIED: nvcc -arch=sm_121 compiles the header and both launcher instantiations, rc=0, no warnings.
+That compile caught a bug in my own port -- the 3-way merge dropped
+`#include "topk_histogram_4096.cuh"` and `namespace hist4096 = topk_histogram_4096;`, which the
+earlier revision did not need because it deleted the short path this port keeps.
+
+DISCLOSED AS UNVERIFIED rather than restated: the in-tree test has not run against the port (needs a
+full _C build); the 21-28 % figure predates 253 upstream commits so its baseline moved; and the tie
+census (0 ties in 6,192 selecting rows) was 16k-context only and says nothing about long context.
+
+Also recorded in memory as `qwen38-flashnext-blocked-on-checkpoint`: four upstream measurements now
+wait on one ~100 GB pull, and they share one serve.
