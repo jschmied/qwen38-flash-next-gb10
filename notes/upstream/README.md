@@ -967,3 +967,26 @@ calls `torch.ops._C.persistent_topk` — it is now the `persistent` backend of a
 https://github.com/vllm-project/vllm/pull/55122#issuecomment-5655243777
 Draft kept at `comment-55122-rebase-and-second-gb10.md`. Covers the rebase, the #56464
 non-supersession, and the acknowledgement MaCoredroid was owed since 2026-09-12.
+
+**POSTED 2026-09-17 11:1x** (user go "push and reply"), ~330 words:
+https://github.com/vllm-project/vllm/pull/55430#issuecomment-5711914584
+Draft kept at `comment-55430-projected-qk-fix.md`. Two things in one post: the rebase onto main
+(126 commits, head `c5d7eba3`, conflicts cleared) and a BUG the reviewer's own data surfaced.
+
+vLLM #55272 split `forward(hidden_states)` into a caller that projects plus
+`_run_qsa(projected_qk, ...)`. Two tile-union references still named `hidden_states`, which is no
+longer in scope in either function -- and `hidden_states` still exists in `qsa.py`, in the OUTER
+forward, so it merged cleanly and was silently broken. Neither file has a try/except, so entering
+the tile-union branch raised NameError before doing any work.
+
+Consequence, and why the post was owed: de1tydev's 2026-09-06 table (2x DGX Spark, TP=2 + EP,
+NVFP4) showed the union path as a wash, and their runs COMPLETED -- so the branch was never
+entered and both arms were the base path. Their numbers are not evidence against the kernel; they
+are evidence it did not run. The config/warmup log lines they quoted fire at setup, not per call.
+
+Told them to hold the offered tile-config sweep until the path is confirmed active. Also asked for
+two specifics only they can get: whether `_tile_union_workspace_shape` is non-None on their ranks,
+and whether eligibility passes with prefill chunked at 8192.
+
+OPEN ON OUR SIDE: our own 1.45x in-situ figure predates #55272 and must be re-measured on the
+fixed head before it is quoted again.
