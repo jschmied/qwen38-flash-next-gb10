@@ -1094,3 +1094,27 @@ census (0 ties in 6,192 selecting rows) was 16k-context only and says nothing ab
 
 Also recorded in memory as `qwen38-flashnext-blocked-on-checkpoint`: four upstream measurements now
 wait on one ~100 GB pull, and they share one serve.
+28. 2026-09-18 07:5x (user: "post/commit 55122") — PR #55122: MaCoredroid read the port and found two
+    real defects in `FilteredTopKUnifiedKernel`. Commit `19588c898e` pushed to
+    `jschmied:fix/persistent-topk-deterministic` (fast-forward from the PR head `85f61e24bd`; head is
+    now 3 commits) and the reply POSTED as a review-comment reply →
+    https://github.com/vllm-project/vllm/pull/55122#discussion_r4044179893 (text
+    `55122-smem-grant-and-clamp.md`).
+    - **The bug**: the port added `&max_seq_len, &smem_size` to the launcher's `args[]` but never
+      added the matching kernel parameters, so `cudaLaunchKernel` silently ignored both — extra
+      `void*` entries in `args[]` are not type-checked — and `det_select_row` kept using
+      `FILTERED_TOPK_SMEM_DYNAMIC`. That constant is the launcher's request *floor*, and the launcher
+      then clamps to the device (`smem_size = min(want, cap)`), so on any device with under 128 KB of
+      opt-in shared memory the grant is smaller than the constant and the kernel caches past the end
+      of what it was given. Latent, not live: the launcher does not select FilteredTopK on GB10's
+      101,376 B limit, which is why neither our runs nor MaCoredroid's harness reached it.
+    - Also clamps the row length to `min(max_len, max_seq_len)`, floored at 0 — the same expression
+      the launcher already uses for `row_width`. The pre-split wrapper did not clamp either, but
+      `filtered_topk_row` only ran its own vectorised loop bound; the rescanning select indexes
+      `length` directly. A difference the port introduced, stated as such in the reply.
+    - **Verified to a compile only** (`sm_121a`), and the reply says so in its own section: that check
+      does not discriminate, since the previous code compiled too. Arg ORDER was checked by hand
+      against the launcher's `args[]` — 8 ↔ 8, all trailing `uint32_t`. The in-tree test still wants
+      a box that can select the path; we cannot reach it here.
+    - MaCoredroid also re-ran the standalone GB10 harness against `85f61e24b`: 324 fallback + 108
+      cooperative-control launches passed, 18 expected >64-CTA rejections. Thanked in the reply.
