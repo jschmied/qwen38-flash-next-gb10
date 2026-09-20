@@ -18,6 +18,39 @@ on the 6th" well and "what does X cost" badly, which is the question people arri
 ### What actually moved TTFT (shipped or shippable)
 | lever | effect | finding |
 | --- | --- | --- |
+
+### Swizzle: closed for this model (checked 2026-09-20)
+
+#55180 is **merged and in the serving build** — its merge commit `4df80187` is an ancestor of our
+`dev524` base `5db652225` (`ahead_by=62, behind_by=0`). It matters here: the checkpoint is
+`MIXED_PRECISION` with **157 of 205 quantized layers at `FP8_PB_WO`**, the blockwise-FP8 path the
+gate controls.
+
+The follow-up #55661 (activation term) was **closed by us** on 2026-09-07 on a structural argument,
+not on the wall-clock null that [`evidence-audit.md`](evidence-audit.md) flags as finding 147.
+
+**The one open commitment — the `weight > l2` off-by-one-byte boundary sweep — cannot bite this
+model.** At 6144x4096 the weight is 25,165,824 B and GB10's `l2CacheSize` is 25,165,824 B, so the
+gate is false by one byte and the default raster costs 138 % (69.5 vs 165.6 TF). Our layer shapes:
+
+| weight bytes | shape | count | vs L2 | gate picks |
+|---:|---|---:|---:|---|
+| 635,699,200 | (248320, 2560) | 1 | 25.26x | swizzle |
+| 31,457,280 | (12288, 2560) | 12 | 1.250x | swizzle |
+| 26,214,400 | (10240, 2560) | 36 | 1.042x | swizzle |
+| 15,728,640 | (6144, 2560) | 36 | 0.625x | default |
+| 15,728,640 | (2560, 6144) | 48 | 0.625x | default |
+| 1,310,720 | (512, 2560) | 24 | 0.052x | default |
+
+Nothing within 4 % of the boundary, so the merged gate decides correctly for all 157 layers. The
+sweep was promised "before proposing anything" — a precondition on a proposal, not a debt.
+
+**If it is ever reopened, the question is N, not M.** 84 layers sit at 0.625x L2 with identical
+weight bytes but two different N (6144x2560 and 2560x6144), which is exactly the missing term in
+findings 146/148 (232 cells). Findings 100/136 measured swizzle as *costing* 5-9 % while the weight
+fits L2, and the #55661 structural result bounds any such gate at ~4 %, so the expected value is
+low.
+
 | **CUTLASS tile-scheduler swizzle** (`max_swizzle_size=8`) | **−12 % TTFT at 30k** with 16k chunks; null at 8k and at 4k chunks. Bit-identical. | **136**, 100, 102 |
 | **Trailing-block drop flag** (`disable_eagle_block_drop`) | **−26 % per warm agent turn** | **94** |
 | **Boundary-aligned prefix** | warm-turn intercept **0.59–0.75 s → 0.15–0.27 s** | **98** |
