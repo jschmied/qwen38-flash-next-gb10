@@ -38,8 +38,36 @@ does the equalization. This is wickist's own 2026-09-09 finding reproduced on a 
 **What to post instead of the requested cell:** the no-op result with the two log lines, which is
 reviewer-relevant for a PR whose author reported the same thing from an RTX 3090 TP2 box.
 
-**The probe found something worth more than what it was looking for: with MTP enabled, prefix
-caching is disabled outright on this build.** `kv_cache_utils.py:2160`:
+> ### ⚠️ CORRECTED 2026-09-20 12:44 — the claim below is WRONG; the warning is a false alarm
+>
+> A two-arm counterfactual (arms differing **only** in `kv_cache_utils.py`, each on its own boot,
+> journal scoped to that boot's start):
+>
+> | arm | warnings | KV | rep2 hits | rate | wall cold/rep1/rep2 |
+> |---|---|---|---|---|---|
+> | unpatched | **2** | 578,901 | 19,200/26,910 | **71.3 %** | 3.66 / 3.45 / 1.19 s |
+> | +#55390 | **0** | 547,693 | 19,200/26,919 | **71.3 %** | 3.61 / 3.42 / 1.18 s |
+>
+> **Prefix-cache reuse is identical in both arms.** The warning says "prefix-cache reuse across
+> requests will be disabled"; in the arm where it fires, reuse runs at 71.3 % with a 2.9x wall-time
+> win on the repeat. So on Qwen4Exp/GB10 the warning is **false**, the defect it names does not
+> manifest, and #55390 correctly suppresses the annotation while buying nothing measurable. KV
+> differs by 5 % but run-to-run spread across five boots was 547k-579k, so that is not attributable.
+> **#55390 was reverted from prod** (venv back to the audited 15-file overlay set): an unmerged
+> upstream patch with no measured benefit is pure maintenance cost.
+>
+> Two of my own measurement errors produced the original claim, both now in memory:
+> `journal-window-spans-boots` (a `--since "-30 min"` window counted the *pre-patch* boot and I
+> reported "#55390 does not fix it" when it had silenced the warning on every post-patch boot) and
+> the three-pass rule in `prefix-cache-hit-measurement-trap` (a cold -> one-re-ask harness reads 0
+> because align mode does not serve a hit until the **second** repetition -- 0/18,949 then
+> 16,000/18,949).
+>
+> **Still true and still worth reporting:** the warning fires on a configuration where reuse works,
+> which is a false alarm worth telling #54360 / #55390 about. **Prod keeps MTP.**
+
+**~~The probe found something worth more than what it was looking for: with MTP enabled, prefix
+caching is disabled outright on this build.~~** `kv_cache_utils.py:2160`:
 
 > Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the
 > draft model's, so every group -- including Mamba groups [0, 1, 2, 3] -- will be treated as a draft
