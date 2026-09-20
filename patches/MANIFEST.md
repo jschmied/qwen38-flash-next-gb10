@@ -8,6 +8,14 @@
 > diffing the serving venv against `vllm-venv-fnmain3-vllm-pkg-pristine-dev524.tgz`. Per-item upstream
 > status is in the table below. Keep this file for the dev20073 machine and as the record of what each
 > change was for; do not apply it to a current build.
+>
+> **The patch files and `apply.sh` themselves are no longer here.** They were archived on 2026-09-20
+> to `10.0.0.70:/mnt/bulk/gb10/qwen38-archive/patches-superseded-2026-09-20.tar.gz`
+> (sha256 `e3e754ad88c8…`, indexed in `/mnt/bulk/INDEX.md`), together with `live/` and the retired
+> `tools/main` scaled_mm trio. They went because every one of them is written against
+> `vllm/models/qwen3_8_flash_next/...`, a path dev524 does not have — so none of them applies to the
+> build we serve. **This file stays as the record of what each change was for**; the table below is
+> therefore documentation, not an inventory of files in this directory.
 
 Cut against **`0.1.dev20073+g8e685d198`** (the vllm#53896 + #53899 preview build).
 `apply.sh` refuses another version: upstream has since renamed the package

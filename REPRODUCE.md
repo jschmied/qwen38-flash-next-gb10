@@ -159,19 +159,36 @@ scripts/quant_lmhead.py --base <base> --out <overlay>   # see notes/quantizing-l
 
 ## 3. Patches
 
-Eight local vLLM patches. `apply.sh` is idempotent and reports `applied` / `already` / `FAILED`:
+The serving venv carries **15 modified files** on top of the stock `dev524` wheel, installed by
+[`tools/main/prod-det-overlays.sh`](tools/main/prod-det-overlays.sh). Eight of the fifteen are the
+[#53899](https://github.com/vllm-project/vllm/pull/53899) PLE-offload port, which is **still
+unmerged** — so there is no version of this recipe that runs on stock vLLM.
 
 ```bash
-cd patches && ./apply.sh
+./tools/main/prod-det-overlays.sh        # idempotent; reports applied / already / FAILED per item
 ```
 
-Order matters and the script hardcodes it — `hyperconnection.py` **must** precede `model.py`,
-because `model.py` passes `quant_config=` to `GatedResidual` and upstream's signature does not
-accept it. See [MANIFEST](patches/MANIFEST.md) for what each one does and why.
-
-**Any `pip install`/upgrade of vLLM in this venv silently reverts all eight.** The symptoms are
+**Any `pip install`/upgrade of vLLM in this venv silently reverts all fifteen.** The symptoms are
 non-obvious — a startup hang at `warmup_kernels`, HTTP 400 on every tool call, missing scale
-parameters. Re-run `apply.sh` after any reinstall.
+parameters. Re-run the installer after any reinstall.
+
+> **The older `patches/*.patch` + `apply.sh` bundle is gone** (archived 2026-09-20). It was cut
+> against `0.1.dev20073` and every file in it targeted `vllm/models/qwen3_8_flash_next/...`, a path
+> `dev524` does not have — so it could not be applied to the build this page describes. Four of its
+> ideas are still live and are carried by `tools/main/` instead: both `lm_head` `quant_config`
+> patches, the `GatedResidual` threading (currently **not** applied), and the QSA ring widening
+> ([#54912](https://github.com/vllm-project/vllm/pull/54912), open).
+> [`patches/MANIFEST.md`](patches/MANIFEST.md) remains as the record of what each change was for,
+> with per-item upstream status.
+
+To verify what is actually applied, diff the serving venv against the pristine wheel snapshot rather
+than reading the patch files — that is how the `GatedResidual` gap above was found:
+
+```bash
+tar xzf /opt/llm/runtime/vllm-venv-fnmain3-vllm-pkg-pristine-dev524.tgz -C /tmp/pristine
+LC_ALL=C diff -rq --exclude=__pycache__ --exclude='*.pyc' --exclude='*.orig*' --exclude='*.pre-*' \
+  /tmp/pristine/vllm "$SP/vllm" | grep '^Files'      # LC_ALL=C: a localised diff breaks the grep
+```
 
 ### One more thing to check: the GDN prefill kernel
 
