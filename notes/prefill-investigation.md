@@ -1921,3 +1921,63 @@ low.
     **Corrects the framing of det-136, not its result.** det-136 compared PIECEWISE against NONE and
     found null; this compares PIECEWISE against FULL_DECODE_ONLY and also finds null — but for a named
     mechanism rather than as an unexplained absence.
+
+190. **Kernel roster at 29k prefill: the QSA attention kernel the tile-union targets is only the
+    THIRD largest consumer, and its share caps the union at 3.8 % e2e** (`roster`,
+    `notes/data/roster-29k-summary.txt`; trace via `FN_PROF_DIR` + `/start_profile`, summarised with
+    `tools/prof_summary.py`). One 28,933-token request, union **off**, MTP off, 9.841 s of kernel
+    time over 24,473 launches:
+
+    | group | ms | % | calls |
+    | --- | ---: | ---: | ---: |
+    | MoE grouped GEMM + routing | 3585.7 | **36.4** | 2,400 |
+    | hyper-connections (`_hc_*`) | 1350.6 | **13.7** | 2,900 |
+    | QSA attention + index | 1200.1 | **12.2** | 500 |
+    | dense GEMM (nvjet / cublas) | 1099.9 | 11.2 | 4,350 |
+    | blockwise FP8 GEMM + quant | 1089.9 | 11.1 | 1,940 |
+    | GDN / linear attention | 813.9 | 8.3 | 1,560 |
+    | other | 618.7 | 6.3 | 10,703 |
+    | top-k (indexer) | 82.2 | 0.8 | 120 |
+
+    Single largest kernel: a cutlass `GemmUniversal<GroupProblemShape>` at 1635.1 ms / 16.6 % over
+    480 calls (3.4 ms each). `_qsa_sparse_paged_gqa_splitk_kernel` is 1138.0 ms / 11.6 % over 120
+    calls (9.5 ms each).
+
+    **Ceiling arithmetic for vllm#55430.** The tile-union replaces the QSA attention kernel only, so
+    its whole budget is 12.2 %: at the measured 1.45× kernel ratio the e2e ceiling is **3.78 %**, at
+    2× it is 6.1 %, and an *infinitely fast* kernel would still only buy 12.2 %. Against a
+    maintainer bar of ">3 %" the design is marginal by construction — and we measure **−1.6 %** at
+    29k (finding 191), i.e. it realises ~42 % of its own ceiling, the rest going to glue (sort, pack,
+    build) and 3.6 ms of added idle. This is the number that settles the PR: not that the
+    measurements were wrong, but that the addressable share is too small for the complexity, which
+    is what gau-nernst said on 2026-09-05.
+
+    **Where the time actually is.** MoE grouped GEMM is 3× the QSA kernel, and hyper-connections
+    alone cost more than it. Both are already on record: `moe-grouped-gemm-dram-floor` (GEMM1 at the
+    DRAM floor, epilogue fusion is the fix, findings 144/145) and the BF16 hyper-connections. Any
+    further prefill work should start there, not at QSA.
+
+    Method note: `find | head -1` picked the 295 KB API-side trace over the 40 MB rank0 GPU trace and
+    the summary came back with zero kernels; `ls -S | head -1` is the fix. The rank0 trace is the one
+    with `cat == "kernel"` events.
+
+191. **Tile-union re-measured end to end after #55272, and it is a null** (`union-clean`,
+    `state/union-clean.jsonl`). The union path *does* still execute on the rebased patch
+    (`QSAUNION path: raw (indexer selection), R=2 BNB=8 warps=4`), which was the open question —
+    #55272 had broken it outright. Byte-identical 29,030-token prompts per arm, 4 reps, rep 0
+    discarded because the sizing probe primes the prefix cache:
+
+    | arm | reps (s) | median |
+    | --- | --- | ---: |
+    | off | 10.138 / 10.146 / 10.153 / 11.225 | 10.149 |
+    | on | 9.970 / 9.986 / 9.994 / 10.212 | 9.990 |
+
+    **−1.6 %**, consistent with finding 118's −1.7 % at 30k, so this *reproduces* the prior e2e work
+    rather than refuting it. Earlier cells: 8k −1.0 %, 16k +0.5 %, and a confounded 24k/28k pair
+    whose raw −5.9 % was an artefact of the arm name being part of the prompt tag (`off`/`on` differ
+    by a character, so the arms prefilled 25,750 vs 24,184 tokens); per-token those were +0.2 % and
+    −2.1 %.
+
+    **Correction to how this was framed during the run:** the 1.45× of finding 121 is a *kernel*
+    ratio, not an e2e figure, and finding 121 already translated it to "~3 % end to end is the
+    ceiling of this design here". Comparing today's TTFT deltas against 1.45× was a category error.

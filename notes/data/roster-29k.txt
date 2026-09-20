@@ -1,0 +1,56 @@
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                   Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg    # of Calls  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  
+              concurrent/futures/thread.py(89): _worker        20.10%       10.156s        40.00%       20.206s       10.103s             2  
+<built-in method get of _queue.SimpleQueue object at...        20.00%       10.102s        20.00%       10.102s       10.102s             1  
+                           asyncio/runners.py(118): run        19.93%       10.067s        20.00%       10.103s       10.103s             1  
+<built-in method get of _queue.SimpleQueue object at...        19.83%       10.018s        19.83%       10.018s        5.009s             2  
+<built-in method poll of select.poll object at 0xea6...        18.64%        9.417s        18.64%        9.417s     941.671ms            10  
+                              selectors.py(415): select         1.35%     684.040ms         1.35%     684.040ms     684.040ms             1  
+<built-in method encode_batch of tokenizers.Tokenize...         0.06%      31.079ms         0.06%      31.079ms      31.079ms             1  
+<built-in method step of tokenizers.decoders.DecodeS...         0.02%       9.418ms         0.02%       9.418ms       9.418ms             1  
+                           asyncio/tasks.py(653): sleep         0.00%       1.977ms         0.00%       2.054ms      19.751us           104  
+                            regex/_main.py(388): escape         0.00%       1.433ms         0.00%       1.624ms      36.081us            45  
+                          <built-in function monotonic>         0.00%       1.432ms         0.00%       1.432ms      68.198us            21  
+                      uvicorn/server.py(239): main_loop         0.00%       1.090ms         0.01%       4.423ms      43.788us           101  
+vllm/entrypoints/openai/chat_completion/serving.py(9...         0.00%     991.644us         0.01%       2.595ms       2.595ms             1  
+<built-in method set_result of _asyncio.Future objec...         0.00%     841.915us         0.00%     841.915us       5.929us           142  
+vllm/parser/engine/incremental_lexer.py(47): __init_...         0.00%     810.525us         0.00%       1.325ms     264.908us             5  
+                  concurrent/futures/thread.py(53): run         0.00%     658.460us         0.07%      33.655ms      11.218ms             3  
+asyncio/futures.py(311): _set_result_unless_cancelle...         0.00%     634.478us         0.00%       1.506ms      14.481us           104  
+          torch/autograd/profiler.py(414): _start_trace         0.00%     554.094us         0.00%     557.166us     557.166us             1  
+                        uvicorn/server.py(242): on_tick         0.00%     501.436us         0.00%     914.907us       9.058us           101  
+                                 enum.py(1562): __and__         0.00%     448.939us         0.00%       1.036ms       5.451us           190  
+                           asyncio/tasks.py(665): sleep         0.00%     440.141us         0.00%     440.141us       4.232us           104  
+               vllm/v1/metrics/loggers.py(1110): record         0.00%     400.223us         0.00%       1.075ms      89.567us            12  
+           vllm/v1/engine/detokenizer.py(169): __init__         0.00%     389.070us         0.00%     392.718us     392.718us             1  
+                    zmq/_future.py(670): _handle_events         0.00%     366.269us         0.00%       1.469ms     122.419us            12  
+transformers/tokenization_utils_tokenizers.py(738): ...         0.00%     361.998us         0.00%     363.070us     363.070us             1  
+                                <built-in function max>         0.00%     354.510us         0.00%     354.510us      50.644us             7  
+                          uvicorn/server.py(98): _serve         0.00%     351.518us         0.01%       4.774ms      47.268us           101  
+                                <built-in function min>         0.00%     331.247us         0.00%     332.063us     166.031us             2  
+                         <built-in function isinstance>         0.00%     324.031us         0.00%     367.487us       0.233us          1575  
+<built-in method add of set object at 0xea611ded6dc0...         0.00%     317.647us         0.00%     317.647us       0.320us           992  
+                   zmq/_future.py(470): _add_recv_event         0.00%     316.334us         0.00%       1.103ms      84.876us            13  
+                              enum.py(1544): _get_value         0.00%     311.840us         0.00%     482.640us       0.715us           675  
+                           uvicorn/server.py(81): serve         0.00%     268.368us         0.01%       5.042ms      49.925us           101  
+              multiprocessing/connection.py(1122): wait         0.00%     251.630us        18.64%        9.418s     941.754ms            10  
+vllm/parser/engine/streaming_parser_engine.py(39): _...         0.00%     251.021us         0.01%       4.018ms     803.651us             5  
+<built-in method _disable_profiler of pybind11_built...         0.00%     223.416us         0.00%     223.416us     223.416us             1  
+       vllm/v1/engine/async_llm.py(775): output_handler         0.00%     215.920us         0.02%      11.676ms       1.061ms            11  
+                                 enum.py(726): __call__         0.00%     214.526us         0.00%     322.493us       1.079us           299  
+                      zmq/_future.py(586): _handle_recv         0.00%     212.128us         0.00%     853.358us      65.643us            13  
+                          regex/_main.py(460): _compile         0.00%     204.991us         0.00%     743.756us      16.528us            45  
+vllm/v1/engine/core_client.py(1114): process_outputs...         0.00%     181.216us         0.00%       1.732ms     144.312us            12  
+<built-in method decode of msgspec.msgpack.Decoder o...         0.00%     167.135us         0.00%     196.415us      15.109us            13  
+vllm/v1/engine/utils.py(263): monitor_engine_livenes...         0.00%     164.160us        20.00%       10.103s       10.103s             1  
+vllm/parser/engine/streaming_parser_engine.py(112): ...         0.00%     162.288us         0.01%       4.532ms     906.322us             5  
+vllm/entrypoints/serve/engine/protocol.py(44): __log...         0.00%     158.832us         0.00%     330.062us      30.006us            11  
+                                  <template>(263): root         0.00%     155.168us         0.00%     401.598us     401.598us             1  
+                    asyncio/futures.py(381): _set_state         0.00%     147.903us         0.00%     248.975us      82.992us             3  
+                 prometheus_client/metrics.py(458): set         0.00%     145.168us         0.00%     365.568us       6.093us            60  
+<built-in method append of list object at 0xea61269e...         0.00%     140.672us         0.00%     140.672us       0.149us           941  
+<built-in method cancelled of _asyncio.Future object...         0.00%     139.728us         0.00%     139.728us       1.259us           111  
+-------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 50.516s
+

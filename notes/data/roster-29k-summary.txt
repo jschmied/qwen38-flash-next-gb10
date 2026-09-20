@@ -1,0 +1,48 @@
+kernel-sum 9.841 s over span 9.983 s, 24473 launches
+kernel                                                                                ms      %  calls   us/call
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh    1635.1   16.6    480    3406.5
+_qsa_sparse_paged_gqa_splitk_kernel                                               1138.0   11.6    120    9483.5
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh    1120.1   11.4    432    2592.9
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa     924.8    9.4    960     963.3
+_hc_combine_norm_kernel                                                            777.2    7.9    950     818.1
+nvjet_sm121_tst_mma_128x208x64_2_32x104x64_tmaAB_bz_TNNN                           743.7    7.6   1755     423.7
+_hc_gate_mix_kernel                                                                558.9    5.7    970     576.2
+void tensorrt_llm::kernels::cutlass_kernels::finalizeMoeRoutingKernel<__nv_bfl     348.3    3.5    480     725.7
+void tensorrt_llm::kernels::cutlass_kernels::doActivationKernel<__nv_fp4_e2m1,     204.6    2.1    480     426.2
+_causal_conv1d_fwd_kernel                                                          204.5    2.1    360     568.0
+_fused_post_conv_kernel                                                            199.6    2.0    360     554.4
+layer_norm_fwd_kernel                                                              164.6    1.7    360     457.3
+kernel_cutlass_kernel_flashinfergdn_kernelsdelta_rule_dsldelta_rule_sm120_Full     163.9    1.7    360     455.2
+void tensorrt_llm::kernels::cutlass_kernels::expandInputRowsKernel<__nv_fp4_e2     145.5    1.5    480     303.1
+void per_token_group_quant_8bit_kernel<c10::BFloat16, c10::Float8_e4m3fn, true     139.5    1.4    960     145.3
+_ZN7cutlass13device_kernelINS_4gemm6kernel13GemmUniversalINS1_17GroupProblemSh     132.0    1.3     48    2750.8
+void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast     125.3    1.3   1090     114.9
+nvjet_sm121_tst_mma_128x176x64_2_32x88x64_tmaAB_bz_TNNN                            106.2    1.1    432     245.8
+void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<      89.3    0.9    490     182.2
+void vllm::persistent::persistent_topk_kernel<512, 4u>(vllm::persistent::Persi      82.2    0.8    120     684.7
+_fused_qk_rmsnorm_rope_gate_kernel                                                  81.3    0.8    120     677.5
+void cutlass::Kernel2<cutlass_80_tensorop_bf16_s16816gemm_relu_bf16_256x128_32      78.5    0.8    529     148.4
+void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<c10:      67.0    0.7    480     139.5
+void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<c1      55.1    0.6    120     459.6
+nvjet_sm121_tst_mma_128x144x64_2_32x72x64_tmaAB_bz_TNNN                             51.6    0.5    432     119.4
+void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast      46.2    0.5    490      94.3
+std::enable_if<!(false), void>::type internal::gemvx::kernel<int, int, __nv_bf      45.8    0.5    432     106.0
+_qsa_mqa_paged_prefill_kernel                                                       45.7    0.5    120     380.9
+void vllm::cvt_fp16_to_fp4<__nv_bfloat16, false, false>(int, int, int, int, __      45.1    0.5    480      94.0
+nvjet_sm121_tst_mma_64x96x64_4_16x96x64_tmaAB_bz_TNNN                               36.5    0.4    324     112.6
+void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_c      35.0    0.4    600      58.4
+void tensorrt_llm::kernels::cutlass_kernels::blockExpertPrefixSumKernel<1024>(      31.8    0.3    480      66.3
+void cutlass::device_kernel<vllm::cutlass_3x_gemm_fp8_blockwise<cutlass::bfloa      25.6    0.3     10    2556.3
+nvjet_sm121_tst_mma_128x192x64_2_32x96x64_tmaAB_bz_TNNN                             18.3    0.2    108     169.3
+_expand_qsa_indices_kernel                                                          15.1    0.2    120     125.5
+void vllm::moe::topkGating<16, 512, 4, 16, 32, int, __nv_bfloat16, (vllm::moe:      13.9    0.1    480      29.0
+void vllm::act_and_mul_kernel<c10::BFloat16, __nv_bfloat162, &(c10::BFloat16 v      13.1    0.1    480      27.2
+_ple_gate_kernel                                                                    12.9    0.1     10    1288.3
+void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel      12.0    0.1    390      30.7
+tensorrt_llm::kernels::cutlass_kernels::mergeExpertPrefixSumKernel(int const*,      11.6    0.1    480      24.1
+QSA-related kernels: 1200.1 ms = 12.2 % of kernel time
+    _qsa_sparse_paged_gqa_splitk_kernel                                               1138.0 ms    120 calls
+    _qsa_mqa_paged_prefill_kernel                                                       45.7 ms    120 calls
+    _expand_qsa_indices_kernel                                                          15.1 ms    120 calls
+    _qsa_pre_indexer_kernel                                                              1.2 ms    120 calls
+    _build_qsa_metadata_kernel                                                           0.0 ms     20 calls
