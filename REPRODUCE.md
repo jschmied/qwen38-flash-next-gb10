@@ -17,9 +17,52 @@ tool calling, on one GB10 with 128 GB unified memory.
 |---|---|
 | hardware | NVIDIA DGX Spark (GB10, **sm_121**, 128 GB unified, aarch64) |
 | disk | **~140 GB free.** The base is 123 GB and the overlay adds ~12 GB |
+| **swap** | **64 GiB, and it is load-bearing — not a safety net.** Measured peak is 48.3 GiB. See below |
 | vLLM | `0.28.1rc1.dev524+g5db652225` — **nightly `main` + our #53899 port** (see below) |
 | FlashInfer | `0.6.18.post1` — python + cubin + jit-cache, all three at the same version |
 | torch | `2.13.0+cu130` |
+
+### Swap is part of the recipe on a 128 GB box
+
+The PLE table is "offloaded to host memory", but on GB10 host and device are the **same physical
+pool**, so offloading moves the allocation between accounting buckets without creating capacity.
+The two loads also run **concurrently** — `PleOffloadWorker` streams its 10 PLE shards while the
+main worker streams the other 196 — so the peak is additive:
+
+| | |
+|---|---|
+| main model, device side | 78.2 GiB |
+| PLE n-gram table, host side | 47.7 GiB |
+| KV cache + CUDA context + runtime | ~20 GiB |
+| **peak demand** | **~146 GiB** |
+| `MemTotal` on a 128 GB Spark | **121.6 GiB** |
+
+The difference has to be swap. Ubuntu's default `/swap.img` is 16 GiB and **is not enough**:
+measured here, swap use passes 16 GiB while the main worker is still under 40 % loaded, and
+plateaus at **48.3 GiB** — which is the PLE table almost exactly. The table is cold during load,
+so the kernel pushes essentially all of it out as the main worker claims RAM, and `MemAvailable`
+*recovers* from 7.9 GiB to ~38 GiB as it does. That is the mechanism working, not a warning sign.
+Size swap to hold the whole table with headroom: 64 GiB.
+
+With too little swap the PLE worker is OOM-killed at ~200/206 shards and the engine
+reports only `RuntimeError: PLE offload worker exited during startup` (an `EOFError` on the
+worker's pipe) — the kill is in `dmesg`, not in the vLLM log. That is
+[vllm#53960](https://github.com/vllm-project/vllm/issues/53960).
+
+```bash
+# 48 GiB here + Ubuntu's default 16 GiB /swap.img = 64 GiB total
+sudo fallocate -l 48G /swap2.img && sudo chmod 600 /swap2.img
+sudo mkswap /swap2.img && sudo swapon /swap2.img
+echo '/swap2.img none swap sw,pri=-2 0 0' | sudo tee -a /etc/fstab
+```
+
+Two consequences worth stating, because both cost us a box:
+
+- **Do not disable swap.** Without it the load does not degrade, it dies.
+- **Do not pin the PLE table.** Pinned pages are unswappable, so pinning defeats exactly the
+  mechanism above and thrashes the box to the point of needing a hard reset. `main`'s own
+  UVA-offload path pins; the #53899 worker keeps the table in ordinary anonymous memory, which is
+  what makes it swappable.
 
 ### The build: `main` does not have PLE offload, and you have to port it
 
@@ -195,8 +238,19 @@ The flags that are not obvious:
 > was measured with async scheduling ON.** Nothing here needs changing to reproduce it; the warning
 > was the error. Pass `--no-async-scheduling` only if you want to A/B it.
 
-If you serve in Docker you also need **`--cap-add=SYS_PTRACE`**: PLE offload's `rebuild_cuda_tensor`
-needs `pidfd_getfd`, and without it the engine dies ~10 minutes in with only `Failed core proc(s): {}`.
+**PLE offload needs ptrace permission, in Docker *and* on bare metal.** `rebuild_cuda_tensor` grabs
+the GPU worker's fd with `pidfd_getfd`, and `PleOffloadWorker` is a **sibling** of that worker, not a
+descendant of it — so the grab is a cross-process ptrace operation and is gated:
+
+| | |
+|---|---|
+| Docker | `--cap-add=SYS_PTRACE` |
+| bare metal | `sudo sysctl -w kernel.yama.ptrace_scope=0` (Ubuntu ships `1` in `/etc/sysctl.d/10-ptrace.conf`, and `1` means *descendants only*) |
+
+Without it the engine loads all 206 shards, spends ~8 minutes doing so, and only then dies with
+`RuntimeError: pidfd_getfd: Operation not permitted` wrapped in `PLE offload worker failed during
+startup` — and, one frame up, the much less helpful `Failed core proc(s): {}`. Set it **before**
+starting, or you pay the full load time to find out.
 
 ## 5. Verify — capabilities first, then speed
 
