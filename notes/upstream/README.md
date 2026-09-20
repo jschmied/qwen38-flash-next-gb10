@@ -1133,3 +1133,22 @@ wait on one ~100 GB pull, and they share one serve.
     predate #54371 and no longer apply, and that we have contributed to neither. Commit-pinned
     permalinks to merge commit `3116c5d0`. Draft `comment-56757-unified-memory.md` →
     https://github.com/vllm-project/vllm/pull/56757#issuecomment-5748793042
+
+109. 2026-09-20 12:5x — **vllm#55390 comment** (user go "report. with pr?"): GB10 two-arm A/B of that
+    PR, arms differing only in `kv_cache_utils.py`, each on its own boot with the journal scoped to
+    that boot's start. Warning 2 → 0, and **no measured change**: rep2 hits 19,200/26,910 vs
+    19,200/26,919, 71.3 % both, wall within noise, KV difference inside the 547k–579k five-boot
+    spread. Explained why reuse is not disabled here in the arithmetic: 8,973 tok = 5.61 blocks of
+    1600, hit = 6,400 = exactly 4 full blocks, unhit = 973 partial tail + exactly one full block, i.e.
+    the EAGLE volatile trailing-block drop working as intended. Distinguished our identical-prompt
+    probe from **#56026**'s shared-prefix-across-different-prompts case (0/816,343 on the same model)
+    — bounds their claim rather than refuting it, and offered to run their prompt shape. Flagged that
+    our base predates **#56791** (merged 09-14) so the alarming text we quote is stale, and that on the
+    trimmed message this reduces to **#55519**'s point. Stated the weakness plainly: **one boot per
+    arm**, not three. Draft `comment-55390-gb10-ab.md` →
+    https://github.com/vllm-project/vllm/pull/55390#issuecomment-5749390149
+
+    **No PR opened, deliberately.** The fix space is taken: #56791 merged the text trim, #55519 skips
+    the warning when the block drop is off, #55390 and #56026 cover the annotation. A patch from us
+    would have been a fourth duplicate — the `search-open-prs-before-fixing` case, caught by the
+    search this time rather than after the push.
