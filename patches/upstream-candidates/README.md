@@ -57,3 +57,28 @@ The diff is against a much older tree and will not apply cleanly; hand-apply the
 venv while arms run corrupts them — and measure with `tools/determinism/` rather than by eye.
 The claim to test is whether acceptance still collapses one-way over a long run
 (`degrade.py`), not whether the prefill probe changes.
+
+## `vllm-pr54076-align-split-mamba-block.dev524.diff` — rebased 2026-09-20, NOT yet applied
+
+The upstream diff no longer applies to our serving build: hunk 1 wants to add a `MambaSpec` import
+that `dev524` already has (line 59, for `prefill_checkpoint_alignment`), and hunk 4 predates
+[#53614](https://github.com/vllm-project/vllm/pull/53614)'s internal-checkpoint exemption. Rebased
+to 3 hunks / 48 lines: hunk 1 dropped, hunks 2-3 unchanged, hunk 4 reconciled to
+`0 if use_internal_checkpoint else next_block_boundary` per wickist's 2026-09-06 note on the PR.
+Verified by `ast` against the pristine file (56 methods, identical class structure) and by a clean
+`patch --dry-run`. The derivation it adds (`mamba_state_block_sizes`) is genuinely absent from
+`dev524`, so an unpatched arm really is unpatched.
+
+**Precondition for measuring it — the default config is a no-op.** Our serve logs
+`interface.py:933` "Setting attention block size to 1568 tokens" and `interface.py:957` "Padding
+mamba page size by 0.13% to ensure that mamba page size and attention page size are **exactly
+equal**". That is the condition wickist reported on 2026-09-09 from an RTX 3090 TP2 box: with the
+grids equal the heterogeneous geometry never arises and the fix cannot do anything. Reaching the
+regime the fix governs needs an explicit `--block-size` (their repro: 816 against a mamba spec of
+1648). Measuring on the default config would produce a null that means nothing — the same shape as
+the swizzle null recorded as finding 147.
+
+**What is owed** (wickist, 2026-09-16): prefix-cache hit rate on an immediate same-prompt re-ask,
+patched vs unpatched, EOS-correct harness, 3 starts, optionally a third arm with the scoping commit
+(`use_eagle_preserves_target_kv_cache()`). Read it from `vllm:prefix_cache_hits_total` deltas —
+`cached_tokens` is inert and returns 0 on provable hits, see [[prefix-cache-hit-measurement-trap]].
