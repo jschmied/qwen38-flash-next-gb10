@@ -1171,7 +1171,15 @@ wait on one ~100 GB pull, and they share one serve.
     their "after" numbers used `disable_eagle_block_drop` as a stand-in, so the annotation fix's
     contribution is separable from the drop's; offered the 2x2 on GB10. Draft
     `comment-56026-chainshape.md` →
-    https://github.com/vllm-project/vllm/pull/56026#issuecomment-5749521861
+    **DELETED by the user, 2026-09-20** (was `#issuecomment-5749521861`)
+
+    **WITHDRAWN.** The user deleted this comment shortly after it went up, and was right to: it was
+    corroboration, not news. Their PR body **already** stated the first-extender miss and its
+    mechanism, and **already** disclosed that the "after" numbers used `disable_eagle_block_drop` as a
+    stand-in — so my headline review question pointed at something the author had volunteered. The A/B
+    demonstrated in numbers what they had written in prose. Gate added to
+    `posting-check-thread-state-first`: re-reading a thread stops *false* posts, not *unnecessary*
+    ones; answer "what does this thread not already have?" in one line before posting.
 
     **"Check again" earned its keep.** I was one step from posting this as a **non-reproduction** of
     their 0/816,343. Re-reading their body showed they already document the first-extender miss, and
