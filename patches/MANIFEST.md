@@ -1,5 +1,14 @@
 # Local vLLM patches this box depends on
 
+> **Audited 2026-09-20 — this bundle is HISTORICAL.** It applies only to
+> `vllm-venv-fnext` (`0.1.dev20073`), which can no longer load our checkpoint: that build predates
+> the `Qwen4ExpForConditionalGeneration` rename and errors with
+> `Error in inspecting model architecture`. **The live patch set is [`../tools/main/`](../tools/main/),
+> against `vllm-venv-fnmain3` (`0.28.1rc1.dev524+g5db652225`)** — 15 modified files, verified by
+> diffing the serving venv against `vllm-venv-fnmain3-vllm-pkg-pristine-dev524.tgz`. Per-item upstream
+> status is in the table below. Keep this file for the dev20073 machine and as the record of what each
+> change was for; do not apply it to a current build.
+
 Cut against **`0.1.dev20073+g8e685d198`** (the vllm#53896 + #53899 preview build).
 `apply.sh` refuses another version: upstream has since renamed the package
 `qwen3_8_flash_next` → `qwen4_exp` and refactored `ple_layer.py`, so these would not apply
@@ -16,6 +25,17 @@ meaningfully.
 | `models/…/nvidia/hyperconnection.py` | widens `GatedResidual.__init__` to accept `quant_config` and threads it into all three projections (upstream hardcodes `None`) | ours |
 | `models/…/nvidia/model.py` | `quant_config` on the body `ParallelLMHead`; passes `quant_config=` to all three `GatedResidual` sites | ours |
 | `model_executor/layers/quantization/modelopt.py` | `FP8_PB_WO` + per-channel/per-token dispatch | ours; upstream equivalent in vllm#50617. Regenerated 2026-09-01 after removing a leftover `PROBE (temporary)` warning that the patch itself carried |
+
+### Upstream status of each item (audited 2026-09-20)
+
+| item | upstream | verdict |
+|---|---|---|
+| `v1/ple_offload/connector.py` + `gpu/model_runner.py` | upstream `4e8b849b8d97`, and the whole feature is [#53899](https://github.com/vllm-project/vllm/pull/53899) — **still open** | absorbed into the dev524 #53899 port; not separately needed |
+| `common/qsa_cache.py` ring widening | [#54912](https://github.com/vllm-project/vllm/pull/54912) **open** | still ours; not applied on dev524 |
+| `nvidia/qsa.py` + `nvidia/ops/qsa.py` fp8 KV | [#55557](https://github.com/vllm-project/vllm/pull/55557) **merged 2026-09-16** | superseded upstream; dev524 predates it, so still needed here if fp8 KV is wanted |
+| `nvidia/mtp.py`, `nvidia/model.py` lm_head `quant_config` | not upstream | **still ours** — live on dev524 as `tools/main/lmhead_patch.py` / `lmhead_mtp_patch.py` |
+| `nvidia/hyperconnection.py` `GatedResidual(quant_config=)` | not upstream | still ours, and **not currently applied** on dev524 (`GatedResidual` takes no `quant_config`, all 3 call sites pass none) |
+| `quantization/modelopt.py` FP8_PB_WO | [#50617](https://github.com/vllm-project/vllm/pull/50617) open, but `FP8_PB_WO` and `FP8_PER_CHANNEL_PER_TOKEN` are **both present in stock dev524** | superseded |
 
 **Order matters, and `apply.sh` hardcodes it.** `hyperconnection.py` must precede `model.py`:
 `model.py` passes `quant_config=` at all three `GatedResidual` call sites, and upstream's

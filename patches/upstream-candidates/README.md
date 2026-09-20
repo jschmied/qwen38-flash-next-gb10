@@ -1,5 +1,17 @@
 # Upstream patches kept for possible later use
 
+> **Audited 2026-09-20.** `vllm-pr50729-mamba-state-copy-race.diff` was **deleted**:
+> [#50729](https://github.com/vllm-project/vllm/pull/50729) merged into `main` on 2026-08-17 and is
+> in our dev524 build (`v1/worker/mamba_utils.py`). The other four stay:
+>
+> | file | upstream | why kept |
+> |---|---|---|
+> | `vllm-pr47861-eagle-peek-mamba.diff` | **closed unmerged** | a closed PR's diff may stop being fetchable; see below |
+> | `vllm-pr48375-drop-eagle-block-mamba.diff` | [#48375](https://github.com/vllm-project/vllm/pull/48375) **open** | `disable_eagle_block_drop` is worth −26 % per warm turn here |
+> | `vllm-pr53798-align-seed-mamba-block.diff` | [#53798](https://github.com/vllm-project/vllm/pull/53798) **open** | one of four competing fixes; see vllm#53142 |
+> | `vllm-pr54076-align-split-mamba-block.diff` | [#54076](https://github.com/vllm-project/vllm/pull/54076) **open** | same family |
+
+
 ## `vllm-pr47861-eagle-peek-mamba.diff` — NOT APPLIED, and analysis says it would be a no-op here
 
 [vllm#47861](https://github.com/vllm-project/vllm/pull/47861) fixed MTP + prefix-caching
