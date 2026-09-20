@@ -1152,3 +1152,28 @@ wait on one ~100 GB pull, and they share one serve.
     the warning when the block drop is off, #55390 and #56026 cover the annotation. A patch from us
     would have been a fourth duplicate — the `search-open-prs-before-fixing` case, caught by the
     search this time rather than after the push.
+
+110. 2026-09-20 13:2x — **vllm#54076 comment** (user go "yes both"): delivered the cell owed since
+    09-16 as a **negative finding with its mechanism**. Both arms normalize to equal grids
+    (`interface.py:933/957`: no-spec 1568 / +0.13 %, MTP n=3 1600 / +0.25 %), so
+    `cache_config.block_size == MambaSpec.block_size` always and the split the PR corrects is never
+    reached — wickist's own 09-09 result on a third configuration. Closed the obvious objection:
+    `interface.py:931` is a **floor**, so `--block-size 816` is raised to 1568. Offered the rebase
+    (hunk 1 obsolete, hunk 4 reconciled to their 09-06 form, 3 hunks / 48 lines) and repeated the two
+    measurement notes. Draft `comment-54076-noop.md` →
+    https://github.com/vllm-project/vllm/pull/54076#issuecomment-5749417211
+
+111. 2026-09-20 13:4x — **vllm#56026 comment** (same go, after "check again"): chained-vs-shared A/B
+    isolating why their replay hits 0. Chained (each prompt extends the previous): 0/24,459 then
+    0/30,755. Shared fixed prefix: 0, 0, then **19,200/30,859 = 62.2 %** (exactly 12 blocks of 1,600).
+    So the headline 0 is the **chain shape** meeting the trailing-block drop — every prompt in a chain
+    is a first-extender — which is what their own note says. Asked the review question this leaves:
+    their "after" numbers used `disable_eagle_block_drop` as a stand-in, so the annotation fix's
+    contribution is separable from the drop's; offered the 2x2 on GB10. Draft
+    `comment-56026-chainshape.md` →
+    https://github.com/vllm-project/vllm/pull/56026#issuecomment-5749521861
+
+    **"Check again" earned its keep.** I was one step from posting this as a **non-reproduction** of
+    their 0/816,343. Re-reading their body showed they already document the first-extender miss, and
+    that their replay is chained while my probe shared a fixed prefix — two different questions. The
+    claim would have been false and aimed at someone else's measurement.
