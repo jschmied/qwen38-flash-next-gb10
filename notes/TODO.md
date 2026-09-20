@@ -27,6 +27,43 @@ neither is in vLLM's config — see memory `flashnext-baremetal-prereqs`:
 Runner + watchdog are up. `20-load-mainstream` is marked `.done` **deliberately** — it is the job
 that OOM'd the box on 09-19 and must not re-run.
 
+### RESULTS from the 2026-09-20 run (jobs 30 + 35)
+
+**#54076's heterogeneous geometry is NOT reachable on dev524 — the arm we owe cannot be run as
+specified.** Both probe arms equalize the grids: no-spec sets attention block **1568** and pads the
+mamba page 0.13 %; MTP n=3 sets **1600** and pads 0.25 %. The block size changes between arms but
+stays equal to the mamba spec *within* each, so `cache_config.block_size == MambaSpec.block_size`
+always. `interface.py:931` is a floor (an explicit `--block-size 816` is raised to 1568) and `:957`
+does the equalization. This is wickist's own 2026-09-09 finding reproduced on a third configuration.
+**What to post instead of the requested cell:** the no-op result with the two log lines, which is
+reviewer-relevant for a PR whose author reported the same thing from an RTX 3090 TP2 box.
+
+**The probe found something worth more than what it was looking for: with MTP enabled, prefix
+caching is disabled outright on this build.** `kv_cache_utils.py:2160`:
+
+> Speculative decoding (method=mtp) is enabled but no KV cache group could be identified as the
+> draft model's, so every group -- including Mamba groups [0, 1, 2, 3] -- will be treated as a draft
+> group. A Mamba group cannot satisfy the widened lookup window that implies, so **prefix-cache reuse
+> across requests will be disabled** and any external KV offload tier will store without ever serving
+> a hit.
+
+KV also drops 869,444 → 571,099 tokens. **Prod runs MTP**, and memory `prefix-cache-works-agent-loop`
+measured ~51 % of prompt tokens served from cache and TTFT −40 % after turn 1 — that is what this
+costs. This is the engine confirming nickchan0412's root cause on
+[#54360](https://github.com/vllm-project/vllm/issues/54360), and the fix in flight is
+[#55390](https://github.com/vllm-project/vllm/pull/55390) (Navjot10, open, `kv_cache_utils.py`
++43/−15: annotate the drafter-containing attention group so Mamba groups stay unannotated). It is
+also exactly what wickist's #54076 scoping commit addresses from the other side.
+**Actions: (a) test #55390 here — we have the reproducing config and the engine's own warning;
+(b) decide whether prod keeps MTP until it lands.**
+
+**U+093E → U+094B does NOT reproduce on the current serve.** 6/6 byte-identical, deterministic,
+`fp8head` + MTP n=3. **Caveat that matters:** the original was on the **stock RadixArk** checkpoint,
+so fnmain3 is *not* cleared for it — only for the checkpoint we serve. First run of the probe
+reported `exact=False` on all 6 reps; that was **my harness bug**, `max_tokens=120` against a reply
+needing 125 tokens, i.e. a length-stop truncating the copy. `payloads/devprobe.py` now asserts
+`finish_reason == "stop"`. The trap is in our own notes and I wrote it into the probe anyway.
+
 ### PENDING — upstream, ranked
 
 1. **vllm#54076 — the prefix-cache arm we owe.** wickist accepted on 09-16; we withdrew on 09-17
