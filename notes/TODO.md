@@ -1,5 +1,75 @@
 # Open work, ranked
 
+## CURRENT — 2026-09-20 (read this first; supersedes every "Live state" block below)
+
+**Prod runs again, on a different footing than the 09-11 block describes.** Entry point is now the
+systemd unit `vllm-flashnext.service` → `/opt/llm/serve-flashnext.sh`, venv `vllm-venv-fnmain3`
+(`0.28.1rc1.dev524+g5db652225`), checkpoint `qwen38-flash-next-fp8head`, PLE offloaded, 869,444-token
+KV, 24.9/24.5/21.6 tok/s at c=1 without speculation. Two host prerequisites are load-bearing and
+neither is in vLLM's config — see memory `flashnext-baremetal-prereqs`:
+
+- **64 GiB swap.** The PLE table is 47.7 GiB and the weights alone are 122.9 GiB against a 121.6 GiB
+  `MemTotal`; the table must stay *evictable*. Steady state is 49.8 GiB of swap at 5.3 GiB
+  `MemAvailable` over 152 samples. 16 GiB is not enough and the failure is an OOM-kill at ~200/206
+  shards with only `Failed core proc(s): {}` in the log.
+- **`CAP_SYS_PTRACE`, scoped to the unit** (`AmbientCapabilities`), because `PleOffloadWorker` is a
+  *sibling* of the GPU worker so `pidfd_getfd` is a cross-process ptrace op. Host stays at
+  `ptrace_scope=1`. Rejected: the host-wide sysctl, and `setcap` on the venv's `python3` (a symlink
+  to `/usr/bin/python3.12`, so it would cap every Python on the box).
+
+### IN FLIGHT right now
+
+| job | what |
+|---|---|
+| `30-probe-heterogeneity` | Can #54076's heterogeneous mamba/attention geometry be reached on dev524? `interface.py:931` is a **floor**, so an explicit `--block-size` cannot create it (816 is raised to 1568) and `:957` pads the mamba page to be *exactly equal*. Probing no-spec vs MTP n=3, since hunk 2's own comment names "a drafter or attention group with a smaller block" |
+| `35-devanagari-regression` | Does the U+093E → U+094B substitution below still reproduce on the venv we serve? |
+
+Runner + watchdog are up. `20-load-mainstream` is marked `.done` **deliberately** — it is the job
+that OOM'd the box on 09-19 and must not re-run.
+
+### PENDING — upstream, ranked
+
+1. **vllm#54076 — the prefix-cache arm we owe.** wickist accepted on 09-16; we withdrew on 09-17
+   when the checkpoint left the box, and it is back. Cell asked for: prefix-cache hit rate on an
+   immediate same-prompt re-ask, patched vs unpatched, EOS-correct, 3 starts, optional third arm with
+   the scoping commit. Diff **rebased to dev524** (`.dev524.diff`, 3 hunks, hunk 1 dropped as already
+   present, hunk 4 reconciled per wickist's 09-06 note). Read it from
+   `vllm:prefix_cache_hits_total` deltas — `cached_tokens` is inert. **Blocked on job 30's verdict:**
+   on the default geometry the fix is a no-op, which is wickist's own 09-09 finding on a third box.
+2. **vllm#56757 — reply awaited.** Posted 2026-09-20 asking whether `disk_offload_dir` should be
+   generalized behind `EngramConfig` so `qwen4_exp` is one subclass, with the unified-memory argument
+   nobody upstream had made. Offered to write and test the `qwen4_exp` backend on GB10.
+3. **vllm#55122 — the long-context tie census.** Still the measurement that decides the PR; our
+   0-ties result was scoped to 16k over two prompts. Actionable. (The *perf vs current main* arm is
+   **structurally blocked**: main cannot serve this model, see below.)
+4. **vllm#55430 — re-measure the 1.45× union figure.** Note `tools/main/qsa_union_patch.py` is **not
+   applied** on dev524; apply before measuring. The old number describes code that could not run.
+
+### The mainstream move is blocked, and not for the reason we assumed
+
+PLE offload *is* upstream — but as **#54371 (merged 09-09)**, which supersedes the still-open #53899
+and offers exactly two backends, `Qwen4ExpPLEDeviceEmbedding` and `Qwen4ExpPLEPinnedHostEmbedding`.
+`allocate_embedding_weight` is unconditionally `pin_memory=True` for the complete table, and pinned
+pages cannot be evicted, so on unified memory neither fits. **Do not test it live** — that is the
+pinned-PLE condition that has hard-reset this box twice. `VLLM_WEIGHT_OFFLOADING_DISABLE_UVA` is not
+an escape (it gates a different subsystem). Four open efforts exist and none makes the
+unified-memory argument: #54129, #54070, #56757, #57497.
+
+### Closed today — do not re-open
+
+- **Swizzle.** #55180 is merged *and in the serving build* (merge `4df80187` is an ancestor of our
+  base, `ahead_by=62 behind_by=0`), and it matters here: 157 of 205 quantized layers are `FP8_PB_WO`.
+  #55661 was closed by us on a sound 154-cell structural argument, **not** on the void null recorded
+  as finding 147. The promised boundary sweep cannot bite this checkpoint: no layer is within 4 % of
+  the 25,165,824-byte L2 boundary. If ever re-opened the question is **N, not M**.
+- **`patches/`** archived off-box (`patches-superseded-2026-09-20.tar.gz`, sha256 `e3e754ad88c8…`,
+  on `10.0.0.70:/mnt/bulk/gb10/qwen38-archive/`, in `/mnt/bulk/INDEX.md`). Every file in it targeted
+  `qwen3_8_flash_next/`, a path dev524 does not have. The live set is `tools/main/`: 15 modified
+  files, 8 of them the #53899 port. `patches/MANIFEST.md` stays as the record.
+- **vllm#54426** — not ours (Nanetnounou's), fixed upstream by #55557 (merged 09-16), already
+  answered in-thread by gaby. Nothing to post; we cannot even confirm it, dev524 predates the fix.
+
+
 Rewritten 2026-08-31, then appended to per working day. **The sections are chronological, so the
 oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
 as archaeology unless it is cross-referenced from here.**
@@ -40,7 +110,7 @@ covers a layer the drafter *reads*; its own body determines what it *proposes*, 
 question. If acceptance holds, the freed KV is a clear win. If it drops, the bandwidth saving is far
 too small to pay for it.
 
-## THE NIGHT OF 2026-09-08/09 — read this first
+## THE NIGHT OF 2026-09-08/09 — HISTORICAL (was 'read this first'; see CURRENT, 2026-09-20)
 
 **Goal, reset by the user: make agent turns faster.** Eight runs on the box, each with the cell that
 must differ named before launch. Findings 151–158 in `prefill-investigation.md`, det-184 in
@@ -82,30 +152,14 @@ per-request slicing before it can answer this.
 2. ~~**Prod is still on `vllm-venv-fnmain`**~~ **DONE 2026-09-11 (det-206): prod is cut over to
    `vllm-venv-fnmain3`.**
 
-### PROD STATE as of 2026-09-11 18:2x — the single place that says what prod runs
+### ~~PROD STATE as of 2026-09-11~~ — SUPERSEDED 2026-09-20
 
-| | |
-| --- | --- |
-| entry point | `/opt/llm/serve-fnmain.sh:22`, `VENV=${FN_VENV:-/opt/llm/runtime/vllm-venv-fnmain3}` |
-| venv | `vllm-venv-fnmain3` — vLLM `0.28.1rc1.dev524+g5db652225`, torch `2.13.0+cu130` |
-| FlashInfer | **0.6.18.post1** — python + cubin + jit-cache, all three matched |
-| local patches on it | **one**: vllm#55715 backport (`gdn55715_patch.py`), +10/−2, enables the FlashInfer GDN prefill kernel on sm_12x |
-| GDN prefill backend | **FlashInfer** (was Triton/FLA in 1,216 of 1,216 prior runs) |
-| backups / reversal | `serve-fnmain.sh.orig-precut`; `qwen_gdn_linear_attn.py.orig-gdn55715`; `gdn55715_patch.py off` |
-| 27B prod | separate — `vllm-qwen38.service` on `vllm-venv-027`, untouched |
-
-**Deliberate mismatch:** vLLM pins `flashinfer-python==0.6.18`, we run `0.6.18.post1`. The check that
-executes is FlashInfer's own `cubin == python`, which passes; matching the pin exactly costs another
-~4.5 GB because cubin must match too. See det-206.
-
-**Not yet measured:** the TTFT gain on this box. Upstream reports 7.2 % at ISL 32768 on a GB10; our
-own A/B (det-207, running) is the first time we test it here. **If it comes back null, the patch in
-prod should be reconsidered rather than kept on upstream's number.**
-
-**Not affected:** `dgx-spark-setup-guide` scopes vLLM out (`01-overview.md:90`, non-llama.cpp runtimes
-as primary backend are explicitly out of scope), so the published guide needs no change. The HF card's
-"runs on stock vLLM; no patches" remains true — that is a claim about the *checkpoint*, and this patch
-is an unrelated attention gate; the card's figures are NLL, which prefill kernels do not touch.
+That table named `/opt/llm/serve-fnmain.sh` as the entry point and "one local patch". Both are now
+wrong: prod is the `vllm-flashnext.service` unit → `/opt/llm/serve-flashnext.sh`, and the venv
+carries **15** modified files (8 of them the #53899 PLE-offload port), verified by diffing against
+`vllm-venv-fnmain3-vllm-pkg-pristine-dev524.tgz` rather than by reading patch files. See **CURRENT**
+at the top. Still true from the old table: FlashInfer `0.6.18.post1` (deliberate mismatch against
+vLLM's `==0.6.18` pin, det-206), the #55715 GDN backport, and that 27B prod is a separate unit.
 
 ### What was measured and rejected — no action needed
 
@@ -161,11 +215,7 @@ and pushed. Tonight's roots are kept. `/opt/llm/.cache-fnmain2` is 10 GB → 4.7
 Per-arm cache roots are required by the compile-cache-key trap, so this directory grows by ~90 MB per
 arm and needs a purge after every campaign.
 
-### Still running when this was written
-
-`tcorrupt` (mmastrac's tool-call-corruption repro from vllm#54521 — stock vs our four fixes; a
-corrupted tool *name* loses a whole agent turn, so this is on-goal) and `ishare2` (the re-run).
-Watchdogs are set for both.
+<!-- removed 2026-09-20: tcorrupt / ishare2 runners no longer exist. -->
 
 ### Drafted, not posted — all need your go
 
@@ -207,7 +257,7 @@ of whether we ever run the drafter:
 RadixArk, and measure on **agent** traffic with cudagraphs on — the two axes their own numbers do not
 cover. Do not adopt on the strength of an eager-mode aggregate.
 
-## Live state — 2026-09-08 night (goal: agent turn time)
+## HISTORICAL — live state 2026-09-08 night (goal: agent turn time)
 
 **The goal was reset by the user tonight: make agent turns faster on this model. The top-k /
 determinism work was a divert that the errors we found made necessary; it is finished and posted.**
@@ -262,7 +312,7 @@ lever anyone has found; needs one server and two interleaved ablations, no resta
 `FN_SSM_DTYPE` (→ `--mamba-ssm-cache-dtype`) and `FN_ISHARE` (→ `index_share_for_mtp_iteration` in
 the speculative config). Backup at `/opt/llm/serve-fnmain.sh.bak-20260908`.
 
-## Live state — 2026-09-08 (end of day)
+## HISTORICAL — live state 2026-09-08 (end of day)
 
 **In flight:** nothing on the box; it is idle.
 
@@ -551,7 +601,7 @@ capture mode — the opposite of what the hyper-connection work is trying to do.
    PR's diff, serve, and check the opt-in deterministic backend selects and runs on sm_121. We told
    @LopezCastroRoberto we would report back.
 
-## REGRESSION HUNT (top priority, 2026-09-11) — U+093E → U+094B
+## REGRESSION HUNT — U+093E → U+094B (raised 2026-09-11, STILL OPEN, re-testing 2026-09-20)
 
 **The bug.** Stock RadixArk checkpoint, prompt "copy this exactly":
 `उपयोगकर्ता को पहले लॉग इन करना होगा।` → fnmain2 returns it **exactly** (6/6 byte-identical);
@@ -570,34 +620,15 @@ hypothesis.
 speculative-decoding acceptance bug looks like, MTP 3 is on in every arm measured so far, and the
 rung costs one server start with no venv work.
 
-**Prod is on fnmain3 and carries this.** The revert is one line (`serve-fnmain.sh:22` →
+**Prod is on fnmain3 and carries this.** The revert is one line (`FN_VENV` →
 `vllm-venv-fnmain2`) and is the user's call.
 
-## Live runner chain (2026-09-11 19:11) — read before restarting anything
+> **2026-09-20:** never resolved, and it is the highest-priority open correctness item — we are
+> serving fnmain3. Job `35-devanagari-regression` re-tests it. One caveat on whatever it returns:
+> the original was measured on the **stock RadixArk** checkpoint and we now serve the derived
+> `fp8head` one, so a clean result does **not** clear fnmain3 for the stock checkpoint.
 
-`fx-thaidet-driver` **waits on `fx-gdnab-driver` by name** (bounded 2 h, then refuses). Restarting
-`fx-gdnab-driver` while the waiter is up re-enters the wait; stop the waiter first if you swap
-anything (memory `queue-chain-check-before-restart`).
-
-- `fx-gdnab-driver` → det-207, GDN prefill A/B, 3 starts/arm. Early: on 0.559/0.561 s vs off
-  0.589/0.589 s TTFT at 6k prompt.
-- `fx-thaidet-driver` → the vllm#54739 Thai question. **First attempt VOIDED 19:58**: `thaidet.py`
-  used port 8080, the launcher serves **8092**, so every request was a connection error and the probe
-  scored 0 responses. The void check earned its place — without it the run would have reported
-  "both arms clean, 0 corrupt", a false refutation. Restarted 20:14 with the port fixed.
-  A `sys.exit(1)` on VOID skips the cleanup, so the orphaned `fx-thaidet` server had to be stopped
-  by hand; plefix was left installed (the det arm), so prod state was never wrong.
-  **New question raised by a 1-rep smoke test at 20:11:** the det arm (= prod config) duplicated a
-  Devanagari mark (hi-1, U+094B x2) on the stock checkpoint. `combining-mark-regression.md` has that
-  same checkpoint and flags at **72/72 clean** — but on fnmain2 (dev401, FlashInfer 0.6.17), not
-  fnmain3. If the det arm's 48-response rate is non-zero, that is a candidate regression from the
-  venv bump and it affects prod. n=1 so far: a flag, not a finding. `/opt/llm/runners/thaidet.py`,
-  2 starts/arm, det overlays vs stock, stock RadixArk checkpoint, MTP 3.
-  Arms: `FN_DET_TOPK`/`FN_DET_FINALIZE` env + the `plefix` source toggle. **Void check uses the
-  marker `Clear any semaphore still raised`** — `release_offloaded_output(stream)` occurs elsewhere
-  in `connector.py` and is NOT discriminating; a rule-7 dry run caught it reporting both arms
-  "installed", which would have compared prod against prod.
-  Leaves `plefix` installed on exit.
+<!-- removed 2026-09-20: runners fx-gdnab-driver / fx-thaidet-driver are long gone (box repurposed to DS4.1 and back). The U+094B question it raised is preserved in the REGRESSION HUNT section. -->
 
 ## Work queue as of 2026-09-07 (user: "higher prio has work on our own findings and PRs, run when idle")
 
@@ -938,7 +969,7 @@ Nothing posted. Ranked by overlap with what we run and what we know.
    #55580 (GDN 27B fp8 KV TP2 c32 −24 % step), #55569 (GLM-5.3-Flash 230K prefill exhausts unified
    memory on GB10).
 
-## Venv bump dev401 -> dev524: BUILT AND PROVED 2026-09-08 (prod not switched)
+## ~~Venv bump dev401 -> dev524~~ — DONE, and prod has been switched since (see CURRENT, 2026-09-20)
 
 Target: main HEAD `5db652225`, wheel `vllm-0.28.1rc1.dev524+g5db652225-cp38-abi3-manylinux_2_28_aarch64.whl`
 (311 MB, cached at `/opt/llm/runtime/wheels/`). Current serving venv: `8340fe1bb` / dev401, 04 Sep.
@@ -984,17 +1015,7 @@ free to delete.
 measured on `8340fe1bb`; vllm#55272 removes torch.compile for this model, so post-bump numbers are
 a different execution model.
 
-### ⏳ REMOVE THE "files are in flight" BANNER when the upload lands
+### ✅ The "files are in flight" banner is gone — verified 2026-09-20
 
-The user added **"Don't download now, files are in flight"** to the public experts card on
-2026-09-10 ~16:50, while the 63.3 GiB upload was running. It must come out once the upload completes
-and all 48 layer files verify present — otherwise the repo tells people not to use the thing it now
-serves.
-
-Check: `HfApi().repo_info(repo_id="josch15366/Qwen3.8-Flash-Next-NVFP4-LocalHessian-Experts",
-files_metadata=True)` → 48 files matching `layer*.safetensors`, ~63.3 GiB total. Then edit the
-banner out and re-upload the README.
-
-Note the upload uses `allow_patterns=["layer*.safetensors"]`, so it will **not** clobber the README —
-but any future README upload from `notes/model-card-draft.md` would, which is why the mirror was
-re-synced from the live page rather than overwritten.
+The upload landed: 48 `layer*.safetensors`, 63.3 GiB, and the live card no longer contains the
+banner string. Nothing to do.
