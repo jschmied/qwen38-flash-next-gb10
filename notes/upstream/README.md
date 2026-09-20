@@ -1118,3 +1118,18 @@ wait on one ~100 GB pull, and they share one serve.
       a box that can select the path; we cannot reach it here.
     - MaCoredroid also re-ran the standalone GB10 harness against `85f61e24b`: 324 fallback + 108
       cooperative-control launches passed, 18 expected >64-CTA rejections. Thanked in the reply.
+
+108. 2026-09-20 11:0x — **vllm#56757 comment** (user go "do the post"): the unified-memory case for a
+    non-pinned PLE backend. #54371 (merged 09-09) offers only `Qwen4ExpPLEDeviceEmbedding` and
+    `Qwen4ExpPLEPinnedHostEmbedding`, and `allocate_embedding_weight` is unconditionally
+    `pin_memory=True`; on GB10 the weights alone are 122.9 GiB against a 121.6 GiB `MemTotal`, so the
+    47.7 GiB table must stay **evictable** or the model does not serve. Measured on the live serve:
+    steady state 49.8 GiB of swap / 5.3 GiB `MemAvailable` over 152 samples, `MemAvailable` recovering
+    to 38.7 GiB mid-load as the table pages out, KV 869,444 tokens, 24.9/24.5/21.6 tok/s at c=1 without
+    speculation. Asked whether `disk_offload_dir` should be generalized behind `EngramConfig` (one
+    subclass for `qwen4_exp`) or stay DeepSeek-specific, and offered to write and test the
+    `qwen4_exp` side on GB10 as an **additive third backend** leaving pinned the default. Stated
+    explicitly that the pinned path was **not** measured here and why. Noted #54129 and #54070 both
+    predate #54371 and no longer apply, and that we have contributed to neither. Commit-pinned
+    permalinks to merge commit `3116c5d0`. Draft `comment-56757-unified-memory.md` →
+    https://github.com/vllm-project/vllm/pull/56757#issuecomment-5748793042
