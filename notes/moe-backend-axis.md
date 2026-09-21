@@ -156,3 +156,36 @@ conclusion from exactly that frame. Five source-level theories died before measu
 ship it. MoE grouped GEMM + routing is 36.4% of prefill kernel time (finding 190).
 
 **Upstreamed:** vllm#57946 (fix + test), and #50189 got the root cause.
+
+---
+
+## b12x + MTP is impossible on this build — the exact mechanism (2026-09-21)
+
+This file said the drafter's unquantized MoE *"vetoes it globally"*, implying a silent backend
+override. It is not silent and it is not a veto: it is a hard `ValueError` at drafter construction,
+which is why nothing ever falls back to cutlass.
+
+Arm: `FN_MOE_BACKEND=flashinfer_b12x FN_MTP=3 FN_SPEC_MOE=flashinfer_cutlass`, dev524.
+
+```
+mtp.py:195                 self.layers = nn.ModuleList(...)      # the MTP drafter's own layers
+model.py:170               Qwen4ExpSparseMoeBlock.__init__
+routed_experts.py:205      quant_method = UnquantizedFusedMoEMethod(moe_config)
+oracle/unquantized.py:177  map_unquantized_backend(runner_backend)
+ValueError: moe_backend='flashinfer_b12x' is not supported for unquantized MoE.
+   Expected one of ['triton', 'batched_triton', 'flashinfer_trtllm', 'flashinfer_cutlass', 'aiter']
+-> Engine core initialization failed. Server never reached startup.
+```
+
+The drafter's experts are **unquantized**, so they take a different oracle with a different backend
+list, and the global `--moe-backend` is applied to them regardless.
+
+**`SpeculativeConfig.moe_backend` is confirmed INERT on the V2 runner at dev524.** The drafter
+received `moe_backend='flashinfer_b12x'` despite `FN_SPEC_MOE=flashinfer_cutlass`. Note
+`flashinfer_cutlass` *is* in the allowed unquantized list, so the documented escape hatch would have
+worked had it been honoured — this is the same inertness we reported on vllm#51960, still present.
+
+Consequence: the warm (MTP-on, prefix-cache-on) b12x-vs-cutlass A/B **cannot be run** on this build.
+`armrun` VOIDed the arm on its path-line check and aborted the whole run (exit 2), so no warm
+numbers exist. Finding 192's cold-arm verdict stands as the only measured comparison.
+
