@@ -2110,3 +2110,41 @@ reported `acceptance_rate 1.1983` / `acceptance_length 4.595` — impossible val
 and a length above the n+1 ceiling. All figures above are recomputed from the raw counters. The
 probe now reads the three exact counters and asserts both ceilings.
 
+---
+
+## Finding 195 — the NVFP4 drafter buys +26% KV capacity (2026-09-22)
+
+The speed A/B (finding 194) pinned KV at 2 GiB and so could not see this. Here the pin is removed
+(`FN_EXTRA="--language-model-only"`, `FN_UTIL=0.80` fixed), so the memory freed from the drafter is
+absorbed by the KV pool. `armrun` spec `mtp-kvgain`, 1 start per arm, exit 0, both arms' `model_tag`
+asserted. Raw: `notes/data/kvgain-nvfp4.log`, `notes/data/kvgain-bf16.log`.
+
+| drafter | available KV memory | GPU KV cache | vs BF16 |
+|---|---|---|---|
+| NVFP4 | **23.80 GiB** | **453,290 tokens** | +4.91 GiB, **+93,623 tokens (+26.0%)** |
+| BF16 | 18.89 GiB | 359,667 tokens | — |
+
+One start per arm is sufficient here: KV pool size is a deterministic function of the memory profile,
+not a timing measurement, and a 26% gap is far outside any plausible variation in that calculation.
+
+**The in-memory saving exceeds the on-disk one.** Shards shrank 11.54 -> 7.92 GB (3.6 GB), but KV
+gained 4.91 GiB — so the win is not only the weight bytes. Not chased further; the number that
+matters for serving is the KV figure, and it is measured.
+
+**Verification note, twice-learned.** `armrun` runs the launcher with stdout redirected to
+`/opt/llm/armrun-<tag>.log`, NOT through the `vllm-flashnext` unit — so `journalctl -u
+vllm-flashnext` shows nothing for an armrun arm. Two of my in-script greps came up empty for this
+reason and briefly looked like missing data. Read the per-arm log files.
+
+### Drafter verdict
+
+| axis | result |
+|---|---|
+| acceptance | unaffected — 568 vs 567 of 948, reproducible (finding 194) |
+| output | identical, 882 tokens both arms (guaranteed at temp 0) |
+| KV capacity | **+26.0%** |
+| tok/s | +7.2% mean, **NOT established** (BF16 spread 9.3%) |
+| patch set | b12x + MTP serves on STOCK `oracle/unquantized.py` — one local patch instead of two |
+
+Shippable on the evidence: a free 26% KV increase and a simpler patch set, with no acceptance cost.
+
