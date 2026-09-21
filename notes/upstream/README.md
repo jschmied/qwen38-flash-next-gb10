@@ -1221,3 +1221,24 @@ wait on one ~100 GB pull, and they share one serve.
     k3dani and MaCoredroid because the remaining case rests on their work. Body edited with
     `gh api -X PATCH` (`gh pr edit` is broken on this account). Draft `comment-55122-reframe.md` →
     PR https://github.com/vllm-project/vllm/pull/55122
+
+114. 2026-09-21 10:2x — **PR OPENED against CarstyYou/flashinfer#4720's branch** (user go "yes, short,
+    simple technical english, on point"): `test(moe): gate SM12x MoE tests on is_sm12x_supported` →
+    https://github.com/CarstyYou/flashinfer/pull/1 (base `cutedsl_fused_moe_sm12x`, head
+    `jschmied:test/sm12x-moe-gating`, 7 files, +42/-42, tests only).
+
+    Finding: #4720's own new tests call `skip_if_not_sm120()` → `is_sm120a_supported()` (`minor == 0`),
+    so every SM12x test skips on SM121 even though the PR targets SM120 **and** SM121 and its dispatch
+    gate accepts `arch in (120, 121)`. Measured on GB10 sm_121 with flashinfer nightly 0.7.0rc3:
+    **1 passed / 31 skipped → 32 passed / 0 skipped.** The kernels already work there; only the gate
+    excluded it, which is why the PR's own test plan reports an SM120a device only.
+
+    Used the repo's PR template as CONTRIBUTING requires, cited the in-repo precedents (#3182 for
+    `test_fmha_v2_prefill`, and `_is_sm12x_supported` in `tests/moe/test_b12x_fused_moe.py`), disclosed
+    AI assistance, and stated that the SM120 path is unchanged by construction rather than re-verified
+    (`major == 12` is a superset of `major == 12 and minor == 0`) since we have no SM120a device.
+
+    **Two corrections en route, both mine.** I first claimed all nine test files were already in main —
+    a broken existence check read a 404 body as a hit; only `test_b12x_fused_moe.py` and
+    `test_unified_moe_cutlass.py` are. And I ticked the pre-commit boxes before running it; ran it
+    afterwards (`--files`, not `--all-files`) and every applicable hook passes.
