@@ -1253,3 +1253,12 @@ wait on one ~100 GB pull, and they share one serve.
   and an explicit correction of our 2026-08-30 comment there (which blamed the b12x kernel path and
   read the `_hc_combine` frame as meaningful; both wrong).
 
+## 2026-09-21 — vllm#56964 review (quantization-only MoE fall-through)
+
+- https://github.com/vllm-project/vllm/pull/56964#issuecomment-5765785360 — their allowlist
+  `["auto","humming","marlin"]` still rejects `flashinfer_b12x`; proposed inverting the test to
+  "has no unquantized equivalent". Evidence: b12x + MTP serves in 720 s with the inverted form and
+  raises `ValueError` without it (finding 193). Offered to test revisions on the box.
+- Related: #54788 (merged) already fixes `speculative_config.moe_backend` on Model Runner V2;
+  our dev524 predates it. #56832 is the issue #56964 fixes.
+
