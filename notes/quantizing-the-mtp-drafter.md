@@ -51,7 +51,14 @@ shards contain mtp tensors; the other 203 are hardlinked, so the checkpoint cost
    body's last-layer per-expert values** — the MTP head consumes the final hidden state, so those
    statistics are the closest available. **This is an approximation; acceptance length is the
    measurement that exposes it** (`scripts/accept_probe.py`).
-4. **vLLM reads `config.json["quantization_config"]`, NOT `hf_quant_config.json`.** Both files
+4. **There are TWO exclusion lists, and the one that matters is `ignore`.**
+   `config.json.quantization_config` carries both `exclude_modules` (here: `[]`) and a
+   compressed-tensors-style **`ignore`** list, which is merged into `exclude_modules` at
+   construction. `ignore[9] = "mtp.*"`, `ignore[10] = "model.mtp.*"`. Clearing only
+   `exclude_modules` leaves the drafter excluded, so it loads unquantized and dies on the extra
+   tensors. Note a wildcard entry does not show up in a naive `"mtp.*" in prefix` substring test —
+   the match is by fnmatch, which is how I convinced myself twice that nothing was excluded.
+5. **vLLM reads `config.json["quantization_config"]`, NOT `hf_quant_config.json`.** Both files
    exist here and both carry a full config. Editing only the latter leaves the drafter unquantized
    and the load dies with
    `AttributeError: Layer mtp.layers.48.mlp.experts has no parameter 'w2_input_scale'`.
@@ -61,9 +68,34 @@ shards contain mtp tensors; the other 203 are hardlinked, so the checkpoint cost
    `quantized_layers[k]["quant_algo"]`. `_quantized_layer_prefix_candidates()` only swaps
    `language_model.model.` <-> `model.language_model.`, so `mtp.layers.0...` never matches.
 
-## Status
+## Status: IT LOADS
 
-Weights verified against the body's format (U8 `(640,1280)` / `(2560,320)`, scales
-`float8_e4m3fn` `(640,160)` / `(2560,40)`, index fully resolving). **Whether vLLM loads a
-split-per-expert NVFP4 MTP is still unproven** — `_resolve_quant_algo` strategy 3 exists for this
-prefix shape but no published checkpoint exercises it. Acceptance length is unmeasured.
+`SERVES after 705s`, coherent generation, and — scoped to that boot — **zero
+`Unquantized MoE backend` lines**, only the two expected `FLASHINFER_CUTLASS NvFp4` (worker + PLE
+worker). So a split-per-expert NVFP4 MTP does load: `_resolve_quant_algo` strategy 3 (prefix match
+on `.experts`) handles it, which no published checkpoint had exercised.
+
+That removes the structural problem at its source: the drafter no longer takes
+`UnquantizedFusedMoEMethod`, so a quantization-only `--moe-backend` should no longer abort. If that
+holds, the generalized #56964 patch is not needed in OUR venv (it is still needed upstream, for
+people whose drafter stays BF16).
+
+**Still unmeasured: acceptance length**, which is the only thing that exposes the borrowed
+`input_scale`. A/B against the BF16 drafter is running (`scripts/accept_probe.py`).
+
+**Do not quote a memory win from single boots.** Today's KV figures (1,044,206 / 910,950 / 880,366 /
+992,870 / 610,889 tokens) span different `FN_UTIL` and `FN_EXTRA` settings and are not comparable;
+the A/B holds those fixed.
+
+## The debugging loop that worked
+
+Three of the four failed loads were config plumbing, diagnosed by guessing and costing ~11 minutes
+each. The fourth question was answered in 30 seconds by instantiating the config object directly:
+
+```python
+cfg = ModelOptMixedPrecisionConfig.from_config(json.load(open("config.json"))["quantization_config"])
+cfg._resolve_quant_algo("mtp.layers.48.mlp.experts")   # -> 'NVFP4'
+cfg.is_layer_excluded("mtp.layers.48.mlp.experts")     # -> True  <- the actual bug
+```
+
+Test the predicate offline before paying for a load.

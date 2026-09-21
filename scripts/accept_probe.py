@@ -40,9 +40,7 @@ PROMPTS = [
 ]
 
 before, err = metrics()
-if err:
-    print(f"  {err}")
-t0 = time.time(); toks = 0
+t0 = time.time(); toks = 0; first = ""
 for i in range(a.n):
     body = json.dumps({"model": "flashnext", "temperature": 0, "max_tokens": a.max_tokens,
                        "messages": [{"role": "user", "content": PROMPTS[i % len(PROMPTS)]}],
@@ -53,20 +51,22 @@ for i in range(a.n):
     d = json.loads(urllib.request.urlopen(r, timeout=600).read())
     toks += d["usage"]["completion_tokens"]
     if i == 0:
-        print("  first reply:", repr(d["choices"][0]["message"]["content"][:140]))
+        first = d["choices"][0]["message"]["content"][:90]
 dt = time.time() - t0
 after, _ = metrics()
 
-print(f"  {a.n} requests, {toks} completion tokens, {dt:.1f}s -> {toks/dt:.2f} tok/s aggregate")
-if after:
-    acc = draft = 0.0
-    for k, v in after.items():
-        d = v - before.get(k, 0.0)
-        if "accepted" in k: acc += d
-        elif "draft" in k or "num_drafts" in k: draft += d
-        print(f"    {k}: +{d:.0f}")
-    if draft:
-        print(f"  acceptance rate: {acc/draft:.3f}   (accepted {acc:.0f} / drafted {draft:.0f})")
-        print(f"  acceptance length: {1 + acc/max(draft/ max(1,acc/max(acc,1)),1):.2f} (see raw counters above)")
-else:
-    print("  no spec_decode counters exposed; compare tok/s against the BF16 drafter instead")
+out = {"arm": a.arm, "requests": a.n, "completion_tokens": toks,
+       "seconds": round(dt, 2), "tok_s": round(toks / dt, 2), "first_reply": first}
+acc = draft = nd = 0.0
+for k, v in after.items():
+    delta = v - before.get(k, 0.0)
+    out[f"m_{k.split(':')[-1]}"] = round(delta, 1)
+    lk = k.lower()
+    if "accepted" in lk: acc += delta
+    elif "num_drafts" in lk: nd += delta
+    elif "draft" in lk: draft += delta
+if draft:
+    out["acceptance_rate"] = round(acc / draft, 4)
+if nd:
+    out["acceptance_length"] = round(1.0 + acc / nd, 3)
+print(json.dumps(out), flush=True)

@@ -153,6 +153,11 @@ if _qc is not None:
     _inner = _qc.get("quantization", _qc)
     _inner["exclude_modules"] = [e for e in _inner.get("exclude_modules", [])
                                  if e not in ("mtp.*", "model.mtp.*")]
+    # AND the compressed-tensors-style "ignore" list, which is merged into exclude_modules.
+    # This is where the real mtp exclusion lives; exclude_modules here is often empty, so
+    # clearing only that leaves the drafter excluded and it loads unquantized.
+    if "ignore" in _qc:
+        _qc["ignore"] = [e for e in _qc["ignore"] if e not in ("mtp.*", "model.mtp.*")]
     _cql = _inner.setdefault("quantized_layers", {})
     for _i in (_nl, 0):
         _cql[f"mtp.layers.{_i}.mlp.experts"] = dict(_entry)
