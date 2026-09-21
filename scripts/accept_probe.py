@@ -11,6 +11,7 @@ import argparse, json, re, sys, time, urllib.request
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--url", default="http://127.0.0.1:8092")
+ap.add_argument("--arm", default="?")   # armrun passes this; without it the probe dies
 ap.add_argument("--key", default="sk-bench")
 ap.add_argument("--n", type=int, default=6)
 ap.add_argument("--max-tokens", type=int, default=160)
@@ -57,16 +58,21 @@ after, _ = metrics()
 
 out = {"arm": a.arm, "requests": a.n, "completion_tokens": toks,
        "seconds": round(dt, 2), "tok_s": round(toks / dt, 2), "first_reply": first}
-acc = draft = nd = 0.0
+# Use the three exact counters. Summing every key containing "accepted" double-counts
+# num_accepted_tokens_per_pos_total and yields a rate > 1 (measured 1.1983 once) and an
+# acceptance length above the n+1 ceiling.
+dr = after.get("vllm:spec_decode_num_drafts_total", 0.0) - before.get("vllm:spec_decode_num_drafts_total", 0.0)
+dt = after.get("vllm:spec_decode_num_draft_tokens_total", 0.0) - before.get("vllm:spec_decode_num_draft_tokens_total", 0.0)
+ac = after.get("vllm:spec_decode_num_accepted_tokens_total", 0.0) - before.get("vllm:spec_decode_num_accepted_tokens_total", 0.0)
 for k, v in after.items():
-    delta = v - before.get(k, 0.0)
-    out[f"m_{k.split(':')[-1]}"] = round(delta, 1)
-    lk = k.lower()
-    if "accepted" in lk: acc += delta
-    elif "num_drafts" in lk: nd += delta
-    elif "draft" in lk: draft += delta
-if draft:
-    out["acceptance_rate"] = round(acc / draft, 4)
-if nd:
-    out["acceptance_length"] = round(1.0 + acc / nd, 3)
+    out[f"m_{k.split(':')[-1]}"] = round(v - before.get(k, 0.0), 1)
+out["drafts"], out["draft_tokens"], out["accepted"] = dr, dt, ac
+if dt > 0:
+    out["acceptance_rate"] = round(ac / dt, 4)
+if dr > 0:
+    out["acceptance_length"] = round(1.0 + ac / dr, 3)
+    out["spec_n"] = round(dt / dr, 2)
+    # a rate above 1, or a length above n+1, means the counters were mis-aggregated
+    if out.get("acceptance_rate", 0) > 1.0 or out["acceptance_length"] > out["spec_n"] + 1.001:
+        out["WARNING"] = "derived values exceed their ceiling -- counter aggregation is wrong"
 print(json.dumps(out), flush=True)

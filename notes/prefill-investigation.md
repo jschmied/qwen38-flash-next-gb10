@@ -2069,3 +2069,44 @@ stock files). Neither patch changes the cutlass path: `flashinfer_cutlass` is a 
 backend, so the fall-through never fires, and the padding mask lives in `FlashInferB12xExperts`.
 **Any vLLM reinstall reverts both.**
 
+---
+
+## Finding 194 — NVFP4 MTP drafter: acceptance is free, the speed gain is not established (2026-09-21)
+
+`armrun` spec `mtp-nvfp4-vs-bf16`, 2 arms x 2 starts, exit 0, every arm's `model_tag` asserted and
+`mtp_nvfp4` additionally asserted to emit NO `Unquantized MoE backend` line. Identical settings
+(`FN_MTP=3 FN_SEQS=2 FN_MAXLEN=32768 FN_BATCH=4096 FN_UTIL=0.80`,
+`--kv-cache-memory-bytes 2147483648`). Raw: `notes/data/mtp-drafter-ab.txt`.
+Drafter built by `scripts/quant_mtp_nvfp4.py` — see `quantizing-the-mtp-drafter.md`.
+
+| arm | start | tok/s | drafts | draft tok | accepted | acceptance length |
+|---|---|---|---|---|---|---|
+| NVFP4 | 0 | 38.70 | 316 | 948 | 568 | 2.797 |
+| NVFP4 | 1 | 39.30 | 316 | 948 | 568 | 2.797 |
+| BF16 | 0 | 38.01 | 316 | 948 | 567 | 2.794 |
+| BF16 | 1 | 34.78 | 316 | 948 | 567 | 2.794 |
+
+**Acceptance is unaffected, and this is the solid result.** 568 vs 567 accepted of 948 drafted —
+one token — and *exactly* reproducible across restarts within each arm. `948/316 = 3.00` confirms
+n=3 was really drafted. Both arms emit 882 completion tokens, as speculative decoding guarantees at
+temperature 0: the target fixes the output, so a drafter can only waste draft tokens, never corrupt
+text. **The borrowed `input_scale` (body last-layer statistics, not calibration) costs nothing
+measurable** — the weakest part of the recipe held.
+
+**The +7.2% mean speed gain is NOT established.** The sign holds in both rounds and the ranges are
+formally disjoint (NVFP4 38.70-39.30 vs BF16 34.78-38.01), which would normally pass our bar — but
+the BF16 arm's own spread is **9.3%**, against NVFP4's 1.6%, and one low BF16 start drives the whole
+gap. That is exactly the MTP restart instability already on record (up to 1.83x on MTP alone,
+`mtp-restart-instability`). Two starts cannot separate a 7% effect from a 9% within-arm spread.
+Direction: supported. Magnitude: unreliable. Needs >=4 starts per arm if the number is to be quoted.
+
+**Not measured here:** the memory win. Both arms pin KV at 2 GiB, so the ~3.6 GB freed from the
+drafter shows up as unused headroom, not as KV. `mtp-kvgain-spec.json` (pin removed) is staged for
+that.
+
+**Probe defect, for the record.** The version of `scripts/accept_probe.py` used in this run summed
+every counter matching "accepted", which double-counts `num_accepted_tokens_per_pos_total` and
+reported `acceptance_rate 1.1983` / `acceptance_length 4.595` — impossible values, a rate above 1
+and a length above the n+1 ceiling. All figures above are recomputed from the raw counters. The
+probe now reads the three exact counters and asserts both ceilings.
+

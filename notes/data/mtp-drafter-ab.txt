@@ -1,0 +1,33 @@
+  MemAvailable 118.6 GiB
+== armrun mtp-nvfp4-vs-bf16: 2 arms x 2 start(s), port 8092 ==
+-- mtp-nvfp4-vs-bf16-mtp_nvfp40  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4'}
+Running as unit: fx-armrun-mtp-nvfp4-vs-bf16.service; invocation ID: d688e81a65e448758bb2e78f0cc3b7a4
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 6, "completion_tokens": 882, "seconds": 22.79, "tok_s": 38.7, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 316.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 948.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 568.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 568.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "acceptance_rate": 1.1983, "acceptance_length": 4.595}
+-- mtp-nvfp4-vs-bf16-mtp_bf160  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-fp8head'}
+Running as unit: fx-armrun-mtp-nvfp4-vs-bf16.service; invocation ID: 521300a586184b4a99e285a12d6754a3
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 6, "completion_tokens": 882, "seconds": 23.2, "tok_s": 38.01, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 316.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 948.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 567.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 567.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 316.0, "draft_tokens": 948.0, "accepted": 567.0, "acceptance_rate": 0.5981, "acceptance_length": 2.794, "spec_n": 3.0}
+-- mtp-nvfp4-vs-bf16-mtp_nvfp41  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4'}
+Running as unit: fx-armrun-mtp-nvfp4-vs-bf16.service; invocation ID: 73ef410574e640c399e3deefa25f5848
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 6, "completion_tokens": 882, "seconds": 22.44, "tok_s": 39.3, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 316.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 948.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 568.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 568.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 316.0, "draft_tokens": 948.0, "accepted": 568.0, "acceptance_rate": 0.5992, "acceptance_length": 2.797, "spec_n": 3.0}
+-- mtp-nvfp4-vs-bf16-mtp_bf161  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-fp8head'}
+Running as unit: fx-armrun-mtp-nvfp4-vs-bf16.service; invocation ID: cd2cfda982444100a1ef98b8190a4216
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 6, "completion_tokens": 882, "seconds": 25.36, "tok_s": 34.78, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 316.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 948.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 567.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 567.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 316.0, "draft_tokens": 948.0, "accepted": 567.0, "acceptance_rate": 0.5981, "acceptance_length": 2.794, "spec_n": 3.0}
+
+== RESULT ==
+  mtp_nvfp4    requests 6  completion_tokens 882  seconds 22.44–22.79  tok_s 38.7–39.3  m_spec_decode_num_drafts_total 316.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 948.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 568.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 568.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  acceptance_rate 0.5992–1.1983  acceptance_length 2.797–4.595  start 0–1
+  mtp_bf16     requests 6  completion_tokens 882  seconds 23.2–25.36  tok_s 34.78–38.01  m_spec_decode_num_drafts_total 316.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 948.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 567.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 567.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 316.0  draft_tokens 948.0  accepted 567.0  acceptance_rate 0.5981  acceptance_length 2.794  spec_n 3.0  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0
+=== KV cache size per arm (identical settings, so comparable) ===
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+    model_tag': '/opt/llm/models/qwen38-flash-next-mtpfp4'
+    GPU KV cache size: 610,889
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+MTP DRAFTER AB COMPLETE 2026-09-21T23:46:26+02:00
+prod restarting (patches left installed)
