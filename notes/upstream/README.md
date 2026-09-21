@@ -1207,3 +1207,17 @@ wait on one ~100 GB pull, and they share one serve.
     2026-09-05 "too small for the complexity" was correct. RFC #55394 left open.
     Draft `comment-55430-withdraw.md` →
     https://github.com/vllm-project/vllm/pull/55430#issuecomment-5755466929
+
+114. 2026-09-21 07:0x — **vllm#55122 REFRAMED** (user go "do 1"). Retitled
+    "[Kernel] Make persistent_topk deterministic" → "[Kernel] persistent_topk: deterministic select,
+    faster than the exact-topk workaround", and rewrote `## Purpose` with a dated motivation update.
+    Reason: #51782 moved against the determinism framing on three independent readings — our 0-tie
+    census over 6,192 selecting rows, @xueyangcs stating the HPC-Ops contract is **set-exact only**
+    (no set-stability ever promised), and @NNNtrance measuring exact `torch.topk` at 9/6 bad turns vs
+    11/7 stock on GLM-5.3-Flash across three DGX Sparks — noise — while `index_topk 8192` gives 2/3.
+    What survives is performance, independently measured: k3dani's 21–28 % over the exact-topk
+    workaround, plus the null e2e A/B. Body now says to judge it as a perf PR with a correctness
+    side-benefit, repeats that it does not close #54521, and states we will not argue a close. Pinged
+    k3dani and MaCoredroid because the remaining case rests on their work. Body edited with
+    `gh api -X PATCH` (`gh pr edit` is broken on this account). Draft `comment-55122-reframe.md` →
+    PR https://github.com/vllm-project/vllm/pull/55122
