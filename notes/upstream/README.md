@@ -1185,3 +1185,25 @@ wait on one ~100 GB pull, and they share one serve.
     their 0/816,343. Re-reading their body showed they already document the first-extender miss, and
     that their replay is chained while my probe shared a fixed prefix — two different questions. The
     claim would have been false and aimed at someone else's measurement.
+
+112. 2026-09-21 06:4x — **flashinfer#3170 comment** (user go "post ... and withdraw"): data for action
+    item 2 of the DGX Spark SM121 audit. `tests/moe/test_b12x_fused_moe.py` at `v0.6.18.post1` passes
+    on GB10 sm_121 — **189 passed, 151.63 s cold / 44.61 s warm**, including the numerical-accuracy
+    tests and the **W4A16** variants, not only the structural ones. Also reported that the item's
+    stated blocker is **stale**: `@not_sm121` is absent from that file at both `v0.6.18.post1` and
+    `main`, and a code search for it returns no hits. Scope stated: 11 distinct test functions, 48 of
+    189 from one activation class, no perf comparison. Asked for the intended target for item 3, since
+    no `test_b12x_*` file exists under `tests/gemm`. First time we have posted on that issue.
+    Draft `comment-3170-b12x-sm121.md` →
+    https://github.com/flashinfer-ai/flashinfer/issues/3170#issuecomment-5755464601
+
+113. 2026-09-21 06:4x — **vllm#55430 WITHDRAWN and CLOSED** (same go). The re-measurement we promised
+    is done and the design cannot clear the bar for an arithmetic reason: the kernel roster (finding
+    190, 28,933-token prefill) puts QSA attention + index at **12.2 %** of kernel time, so at the
+    measured 1.45× ratio the e2e ceiling is **3.78 %**, at 2× it is 6.1 %, and an infinitely fast
+    kernel buys 12.2 %. Measured after rebasing for #55272 (which had broken the union path outright,
+    so every earlier figure described code that could not run): **−1.6 %** at 29,030 byte-identical
+    tokens per arm, consistent with the earlier −1.7 % at 30k, ≈42 % of the ceiling. gau-nernst's
+    2026-09-05 "too small for the complexity" was correct. RFC #55394 left open.
+    Draft `comment-55430-withdraw.md` →
+    https://github.com/vllm-project/vllm/pull/55430#issuecomment-5755466929
