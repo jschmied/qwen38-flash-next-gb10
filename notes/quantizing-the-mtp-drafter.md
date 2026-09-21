@@ -99,3 +99,29 @@ cfg.is_layer_excluded("mtp.layers.48.mlp.experts")     # -> True  <- the actual 
 ```
 
 Test the predicate offline before paying for a load.
+
+## Finding: the quantized drafter replaces the #56964 patch (2026-09-22)
+
+`b12x + MTP n=3 + the NVFP4 drafter`, with `oracle/unquantized.py` reverted to **stock**
+(`GENFIX56964` markers = 0) and only the #57946 padding fix left installed:
+
+```
+verdict: SERVES after 675s
+nvfp4.py:261]  Using 'FLASHINFER_B12X' NvFp4 MoE backend
+SpecDecoding metrics: Mean acceptance length: 2.93
+```
+
+So the drafter never reaches `UnquantizedFusedMoEMethod`, and the generalized #56964 fall-through is
+**not needed in our venv**. Prod can carry one local patch (#57946, already upstreamed) instead of
+two. Upstream still needs #56964's generalized form for everyone whose drafter stays BF16 — which is
+all ten published Flash-Next variants, since every one excludes `mtp.*`.
+
+Verification note: the `nvfp4.py:261` line sits just outside a 23:55 journal window and a first grep
+missed it, which briefly looked like an unverified fallback. Widening the window found it. Scope
+journal greps generously; "the line is absent" is a claim about the window, not the run.
+
+## Open
+
+`mtp-kvgain-spec.json` — does the ~3.6 GB freed from the drafter become usable KV? The speed A/B
+(finding 194) pinned KV at 2 GiB and could not see it. Staged, not run.
+
