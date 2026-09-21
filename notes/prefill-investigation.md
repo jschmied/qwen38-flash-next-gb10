@@ -1981,3 +1981,42 @@ low.
     **Correction to how this was framed during the run:** the 1.45× of finding 121 is a *kernel*
     ratio, not an e2e figure, and finding 121 already translated it to "~3 % end to end is the
     ceiling of this design here". Comparing today's TTFT deltas against 1.45× was a category error.
+
+---
+
+## Finding 192 — b12x vs cutlass MoE backend: no reason to switch (2026-09-21)
+
+`armrun` spec `moe-b12x-vs-cutlass`, 2 arms x 2 starts, alternating, every arm's backend line
+asserted present and the other's asserted absent (all four passed). Raw:
+`notes/data/moe-b12x-vs-cutlass.txt`.
+
+Arm = `--moe-backend flashinfer_b12x` vs the default (`auto` -> `FLASHINFER_CUTLASS`). Identical
+otherwise, **including the #57946 padding-sentinel patch installed in both** (it lives in
+`FlashInferB12xExperts.apply()`, a no-op on the cutlass path), so the backend is the only variable.
+Cold arm: `FN_SEQS=2 FN_MAXLEN=32768 FN_BATCH=4096 FN_UTIL=0.80 FN_MTP=0`, prefix caching off.
+
+| arm | TTFT 8k (s) | TTFT 30k (s) | decode tok/s |
+|---|---|---|---|
+| b12x, start 0 | 2.404 | 9.446 | 23.85 |
+| b12x, start 1 | 2.472 | 9.552 | 23.51 |
+| cutlass, start 0 | 2.430 | 9.595 | 24.98 |
+| cutlass, start 1 | 2.456 | 9.719 | 23.66 |
+
+**Only one effect separates.** TTFT at 30k: b12x wins in both rounds AND the ranges are disjoint
+(b12x 9.446-9.552 vs cutlass 9.595-9.719), ~1.6%. TTFT at 8k overlaps. Decode favours cutlass in
+sign in both rounds but the ranges overlap (b12x 23.51-23.85, cutlass 23.66-24.98) and the gap
+collapses 4.7% -> 0.6% between rounds, so the 24.98 is within-arm drift, not a backend effect.
+An interim read of round 0 alone called decode "the only effect larger than the spread" — that was
+wrong and is withdrawn here.
+
+**Verdict: stay on cutlass.** A 1.6% TTFT edge at 30k does not justify a prod change, and the
+comparison is MTP-off / prefix-cache-off, which is not our serving config.
+
+Why b12x does not win here, from flashinfer's own selector
+(`gemm/gemm_base.py:6924`): *"SM120 + CUDA 13: prefer b12x ... SM121 (GB10) is intentionally
+excluded -- cutlass/cudnn are faster in most cases"*. GB10 has 48 SMs / 24 MiB L2 / LPDDR5X shared
+with the CPU; b12x's dynamic path materialises a routed-rows workspace, and that traffic is cheap on
+a discrete GB202 and expensive here. Model-specific caveat: our `intermediate_size=640` exceeds 512,
+so `_can_use_gated_optimized_kernel` is False and b12x runs its *generic* kernel — a model with
+n<=512 could rank differently on the same hardware.
+

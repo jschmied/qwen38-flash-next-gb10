@@ -1,0 +1,31 @@
+=== preflight ===
+  swap: 64.0 GiB
+  prod engine stopped, MemAvailable 118.4 GiB
+=== install the padding-sentinel fix into the serving venv (both arms) ===
+  fix markers in the venv: 1
+=== armrun ===
+== armrun moe-b12x-vs-cutlass: 2 arms x 2 start(s), port 8092 ==
+-- moe-b12x-vs-cutlass-b12x0  env={'FN_MOE_BACKEND': 'flashinfer_b12x'}
+Running as unit: fx-armrun-moe-b12x-vs-cutlass.service; invocation ID: 77ad69cc7b5e48d8a8484115525db144
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k": 2.404, "ttft_8k_all": [2.595, 2.404, 2.389], "ptok_8k": 7503, "ttft_30k": 9.446, "ttft_30k_all": [9.451, 9.444, 9.446], "ptok_30k": 29263, "decode_tok": 257, "decode_s": 10.735, "decode_tps": 23.85, "decode_t1_median": 2.413, "decode_t257_median": 13.148}
+-- moe-b12x-vs-cutlass-cutlass0  env=(spec default)
+Running as unit: fx-armrun-moe-b12x-vs-cutlass.service; invocation ID: fdcfbbcf84a142dfa228c7e0502bb235
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k": 2.43, "ttft_8k_all": [2.513, 2.43, 2.429], "ptok_8k": 7503, "ttft_30k": 9.595, "ttft_30k_all": [9.595, 9.572, 9.595], "ptok_30k": 29263, "decode_tok": 257, "decode_s": 10.249, "decode_tps": 24.98, "decode_t1_median": 2.44, "decode_t257_median": 12.689}
+-- moe-b12x-vs-cutlass-b12x1  env={'FN_MOE_BACKEND': 'flashinfer_b12x'}
+Running as unit: fx-armrun-moe-b12x-vs-cutlass.service; invocation ID: 2f1c4d7c47304c75bbe772a74f6b4526
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k": 2.472, "ttft_8k_all": [3.664, 2.472, 2.411], "ptok_8k": 7503, "ttft_30k": 9.552, "ttft_30k_all": [9.519, 9.552, 9.652], "ptok_30k": 29263, "decode_tok": 257, "decode_s": 10.89, "decode_tps": 23.51, "decode_t1_median": 2.433, "decode_t257_median": 13.323}
+-- moe-b12x-vs-cutlass-cutlass1  env=(spec default)
+Running as unit: fx-armrun-moe-b12x-vs-cutlass.service; invocation ID: 13b42cbc9da44665b3a0fd4bf496809b
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k": 2.456, "ttft_8k_all": [2.546, 2.456, 2.449], "ptok_8k": 7503, "ttft_30k": 9.719, "ttft_30k_all": [9.734, 9.706, 9.719], "ptok_30k": 29263, "decode_tok": 257, "decode_s": 10.819, "decode_tps": 23.66, "decode_t1_median": 2.465, "decode_t257_median": 13.284}
+
+== RESULT ==
+  b12x         ttft_8k 2.404–2.472  ptok_8k 7503  ttft_30k 9.446–9.552  ptok_30k 29263  decode_tok 257  decode_s 10.735–10.89  decode_tps 23.51–23.85  decode_t1_median 2.413–2.433  decode_t257_median 13.148–13.323  start 0–1
+  cutlass      ttft_8k 2.43–2.456  ptok_8k 7503  ttft_30k 9.595–9.719  ptok_30k 29263  decode_tok 257  decode_s 10.249–10.819  decode_tps 23.66–24.98  decode_t1_median 2.44–2.465  decode_t257_median 12.689–13.284  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0  (0=all checks held, 2=VOID, 3=setup refusal)
+restored stock experts file; prod engine restarting
