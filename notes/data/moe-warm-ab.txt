@@ -1,0 +1,30 @@
+=== preflight ===
+  swap 63 GiB, MemAvailable 117.6 GiB
+=== install both patches (persisting) ===
+  markers: genfix=1 padding-fix=1
+=== armrun (MTP n=3, prefix caching ON) ===
+== armrun moe-b12x-vs-cutlass-warm: 2 arms x 2 start(s), port 8092 ==
+-- moe-b12x-vs-cutlass-warm-b12x0  env={'FN_MOE_BACKEND': 'flashinfer_b12x'}
+Running as unit: fx-armrun-moe-b12x-vs-cutlass-warm.service; invocation ID: 3e69ccec82b14d4385f7eb4f795663d7
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k_all": [2.777, 0.507, 0.514, 0.511, 0.512], "ttft_8k_cold": 2.777, "ttft_8k_warm": 0.512, "ptok_8k": 7503, "ttft_30k_all": [14.819, 0.398, 0.397, 0.398, 0.398], "ttft_30k_cold": 14.819, "ttft_30k_warm": 0.398, "ptok_30k": 29263, "decode_tok": 257, "decode_s": 5.547, "decode_tps": 46.15, "decode_t1_median": 0.553, "decode_t257_median": 6.1}
+-- moe-b12x-vs-cutlass-warm-cutlass0  env=(spec default)
+Running as unit: fx-armrun-moe-b12x-vs-cutlass-warm.service; invocation ID: e957d18ff6b0437d8c8d837cbd117093
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k_all": [2.785, 0.506, 0.512, 0.513, 0.515], "ttft_8k_cold": 2.785, "ttft_8k_warm": 0.513, "ptok_8k": 7503, "ttft_30k_all": [15.039, 0.387, 0.384, 0.388, 0.384], "ttft_30k_cold": 15.039, "ttft_30k_warm": 0.384, "ptok_30k": 29263, "decode_tok": 257, "decode_s": 5.398, "decode_tps": 47.42, "decode_t1_median": 0.557, "decode_t257_median": 5.956}
+-- moe-b12x-vs-cutlass-warm-b12x1  env={'FN_MOE_BACKEND': 'flashinfer_b12x'}
+Running as unit: fx-armrun-moe-b12x-vs-cutlass-warm.service; invocation ID: d07bb5eb81084febac66ee0ee86ac8d1
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k_all": [2.789, 0.507, 0.522, 0.519, 0.519], "ttft_8k_cold": 2.789, "ttft_8k_warm": 0.519, "ptok_8k": 7503, "ttft_30k_all": [14.727, 0.409, 0.402, 0.399, 0.403], "ttft_30k_cold": 14.727, "ttft_30k_warm": 0.402, "ptok_30k": 29263, "decode_tok": 257, "decode_s": 5.744, "decode_tps": 44.57, "decode_t1_median": 0.549, "decode_t257_median": 6.293}
+-- moe-b12x-vs-cutlass-warm-cutlass1  env=(spec default)
+Running as unit: fx-armrun-moe-b12x-vs-cutlass-warm.service; invocation ID: a2e4515000444d84b15013d84f1e05d4
+   void checks passed (1 required, 1 forbidden)
+   {"ttft_8k_all": [2.777, 0.501, 0.508, 0.509, 0.509], "ttft_8k_cold": 2.777, "ttft_8k_warm": 0.509, "ptok_8k": 7503, "ttft_30k_all": [15.005, 0.387, 0.386, 0.382, 0.387], "ttft_30k_cold": 15.005, "ttft_30k_warm": 0.386, "ptok_30k": 29263, "decode_tok": 257, "decode_s": 5.435, "decode_tps": 47.1, "decode_t1_median": 0.552, "decode_t257_median": 5.987}
+
+== RESULT ==
+  b12x         ttft_8k_cold 2.777–2.789  ttft_8k_warm 0.512–0.519  ptok_8k 7503  ttft_30k_cold 14.727–14.819  ttft_30k_warm 0.398–0.402  ptok_30k 29263  decode_tok 257  decode_s 5.547–5.744  decode_tps 44.57–46.15  decode_t1_median 0.549–0.553  decode_t257_median 6.1–6.293  start 0–1
+  cutlass      ttft_8k_cold 2.777–2.785  ttft_8k_warm 0.509–0.513  ptok_8k 7503  ttft_30k_cold 15.005–15.039  ttft_30k_warm 0.384–0.386  ptok_30k 29263  decode_tok 257  decode_s 5.398–5.435  decode_tps 47.1–47.42  decode_t1_median 0.552–0.557  decode_t257_median 5.956–5.987  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0  (0=all checks held, 2=VOID, 3=setup refusal)
+arm drop-in cleared, prod restarting -- PATCHES LEFT INSTALLED (auto-restore off)

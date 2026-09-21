@@ -2020,3 +2020,52 @@ a discrete GB202 and expensive here. Model-specific caveat: our `intermediate_si
 so `_can_use_gated_optimized_kernel` is False and b12x runs its *generic* kernel — a model with
 n<=512 could rank differently on the same hardware.
 
+---
+
+## Finding 193 — b12x vs cutlass in the PROD config (MTP n=3 + prefix cache): cutlass wins (2026-09-21)
+
+Supersedes finding 192's scope, not its numbers: 192 was MTP-off / cache-off, this is the serving
+configuration. `armrun` spec `moe-b12x-vs-cutlass-warm`, 2 arms x 2 starts, exit 0, every arm's
+backend line asserted present and the other's absent. Raw: `notes/data/moe-warm-ab.txt`.
+
+Only variable is `--moe-backend`. Both arms ran the same patched venv (see below).
+`FN_SPEC_MOE` is NOT set — the generalized #56964 fall-through makes the drafter pick `auto` itself.
+
+| metric | b12x | cutlass | winner |
+|---|---|---|---|
+| TTFT 8k cold | 2.777-2.789 | 2.777-2.785 | wash |
+| TTFT 8k warm | 0.512-0.519 | 0.509-0.513 | wash (ranges touch) |
+| TTFT 30k cold | **14.727-14.819** | 15.005-15.039 | b12x, -1.6% |
+| TTFT 30k warm | 0.398-0.402 | **0.384-0.386** | cutlass, -4% |
+| decode tok/s | 44.57-46.15 | **47.10-47.42** | cutlass, +2.7..6.4% |
+
+Three metrics have **disjoint ranges across both starts**, so the signs are real, not drift.
+
+**Verdict: stay on cutlass, more firmly than in 192.** b12x wins only cold long prefill; cutlass
+wins warm TTFT and decode, which are the two that matter in the agent loop
+(memory `agentic-speed-is-ttft-bound`). Both effects are small next to the features themselves:
+MTP roughly doubles decode (24 -> 47 tok/s vs the cold run) and the prefix cache takes 30k TTFT
+from ~15 s to ~0.39 s.
+
+**First time b12x has ever run with MTP on this model.** It needs the generalized form of
+vllm#56964: that PR extends a hardcoded allowlist to `["auto","humming","marlin"]`, which still
+rejects `flashinfer_b12x`. Inverting the test — fall through whenever the backend has no unquantized
+equivalent — covers b12x and every other quantization-only backend. The drafter then logs
+`moe_backend=flashinfer_b12x is quantization-only; using auto for this unquantized MoE layer` and
+selects from `['FlashInfer TRTLLM','FlashInfer CUTLASS','TRITON','BATCHED_TRITON']`.
+
+### The serving venv is NO LONGER STOCK
+
+At the user's request the A/B driver's source auto-restore was disabled, so
+`vllm-venv-fnmain3` keeps two patches and prod runs on them:
+
+| file | patch |
+|---|---|
+| `model_executor/layers/fused_moe/oracle/unquantized.py` | generalized vllm#56964 fall-through (marker `GENFIX56964`) |
+| `model_executor/layers/fused_moe/experts/flashinfer_b12x_moe.py` | vllm#57946 padding-sentinel mask |
+
+Originals and patched copies: `/opt/llm/patches-installed/` (`*.pre-fix` / `*.pre-probe` are the
+stock files). Neither patch changes the cutlass path: `flashinfer_cutlass` is a legal unquantized
+backend, so the fall-through never fires, and the padding mask lives in `FlashInferB12xExperts`.
+**Any vLLM reinstall reverts both.**
+
