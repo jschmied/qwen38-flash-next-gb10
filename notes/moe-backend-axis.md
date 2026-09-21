@@ -1,10 +1,15 @@
-# The MoE backend axis: closed, and what it cost to close it
+# The MoE backend axis: REOPENED 2026-09-21 — root-caused and fixed
 
-**Verdict.** `flashinfer_b12x` is *selectable* on this hardware and *faults*: an illegal memory
-access on sm_121, which is a known unfixed upstream bug (**vllm#50189**, open since 2026-07-28 —
-their trigger is concurrent chunked prefill, ours is kernel load with no traffic; we added the
-second reproduction). `auto` picks `FLASHINFER_CUTLASS`, which works. **Nothing further to try here
-without an upstream kernel fix.**
+**Verdict (2026-09-21).** `flashinfer_b12x` now **serves and generates correctly** on this box.
+The fault was never a kernel bug: vLLM's profile run hands the MoE an all `-1` routing table
+(`-1` = "not routed", the sentinel `fused_moe.py:167` handles by writing zeros), and
+`experts/flashinfer_b12x_moe.py:288` forwards it unmasked into an expert index — an out-of-bounds
+write, i.e. the Xid 31. Masking invalid slots to expert 0 with weight 0 fixes it.
+See "Root cause of vllm#50189" below. The old verdict, kept for the record, was:
+
+> ~~an illegal memory access on sm_121, a known unfixed upstream bug (**vllm#50189**) ...
+> **Nothing further to try here without an upstream kernel fix.**~~ — wrong: it is fixable in vLLM,
+> no kernel change needed.
 
 **The blocker we spent weeks on was not the real one.** This file claimed since August that
 *"`--moe-backend` is global, so the drafter's unquantized MoE vetoes the kernel for all 48 quantized
@@ -97,3 +102,52 @@ identically, stop editing and instrument.**
 | `flashinfer_b12x` | selectable once the drafter is quantized — then **faults** (vllm#50189) |
 | `triton`, `cutlass` | hit the SM120/121 CUTLASS SMEM overflow (99 KiB budget vs a 228 KiB assumption) |
 | `TRTLLM`, `CUTEDSL`, `VLLM_CUTLASS`, `MARLIN`, `HUMMING` | untried, **no field evidence favours any on sm_121** |
+
+
+---
+
+## Root cause of vllm#50189 (2026-09-21, GB10 sm_121)
+
+Build: vLLM `0.28.1rc1.dev524+g5db652225`, FlashInfer `0.6.18.post1`, TP=1, no EP.
+
+**Cause.** `topk_ids == -1` is vLLM's "not routed" sentinel (`fused_moe.py:167` / `:424`,
+`deep_gemm_utils.py:109` — the Triton path calls `write_zeros_to_output`). The b12x integration at
+`experts/flashinfer_b12x_moe.py:288` passes `topk_ids` straight to `B12xMoEWrapper.run()`, and the
+kernel indexes per-expert state with it. A negative id writes out of bounds -> Xid 31
+(`ACCESS_TYPE_VIRT_WRITE`, GPC1).
+
+**Where the -1 comes from.** The profile run's dummy batch only. Measured at the router's return:
+
+| call | tokens | id range | negative |
+|---|---:|---|---:|
+| profile | 4096 | `[-1,-1]` | 40960/40960 |
+| profile | 4096 | `[-1,-1]` | 40960/40960 |
+| warmup  |   32 | `[1,504]` | 0/320 |
+| warmup  |   32 | `[19,470]`| 0/320 |
+
+`logits_finite=True`, `x_finite=True` — legitimate input, NOT uninitialised memory. Real batches
+route normally. `FLASHINFER_CUTLASS` tolerates the sentinel, which is why only b12x died.
+
+**Counterfactual (the proof).** Same process, same wrapper, same shapes, 40960 routed rows,
+E=512 k=2560 n=640 topk=10 — only the ids differ:
+
+| ids | result |
+|---|---|
+| all `-1` | **FAULT** — illegal memory access |
+| masked to 0, weight 0 | **OK** — finite |
+
+**Fix** (`payloads/fix_b12x_invalid_ids.py`, before the `wrapper.run()` call): route invalid slots
+to expert 0 with zero weight. Numerically identical to skipping them, branch-free (no `.any()`,
+which would stall the stream). Engine result: **SERVES after 660 s**, reply
+`"spring, summer, autumn, winter"`. Note this is *compute-then-zero* where the contract wants
+*skip* — correct but wasteful; the cleaner upstream form drops those rows before the launch.
+
+**Diagnostic that mattered.** `CUDA_LAUNCH_BLOCKING=1`. Without it the traceback blames
+`_hc_combine_kernel` at `hc.py:255` — layer 0 attention, before any MoE — because the async fault
+surfaces at the next Triton `load_binary`. Our 2026-08-30 comment on #50189 drew the wrong
+conclusion from exactly that frame. Five source-level theories died before measurement settled it
+(workspace undersizing, missed gated fallback, scratch shortfall, seq-count dependence,
+`reorder_w1w3_to_w3w1`).
+
+**Not yet measured:** b12x vs cutlass throughput/quality on this model. Stability != a reason to
+ship it. MoE grouped GEMM + routing is 36.4% of prefill kernel time (finding 190).
