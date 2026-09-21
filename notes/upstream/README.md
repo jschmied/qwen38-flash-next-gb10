@@ -1242,3 +1242,14 @@ wait on one ~100 GB pull, and they share one serve.
     a broken existence check read a 404 body as a hit; only `test_b12x_fused_moe.py` and
     `test_unified_moe_cutlass.py` are. And I ticked the pre-commit boxes before running it; ran it
     afterwards (`--files`, not `--all-files`) and every applicable hook passes.
+
+## 2026-09-21 — vllm#57946 + #50189 comment (b12x padding sentinel)
+
+- **PR** https://github.com/vllm-project/vllm/pull/57946 — `[Bugfix] Handle MoE padding sentinel in
+  FlashInfer b12x experts`. Fix + 105-line regression test. Mirrors #57036 (AITER) / #55231 (XPU).
+  Draft: `patches/upstream-candidates/`. Commit 953520327c, branch `bugfix/b12x-moe-padding-sentinel`
+  on the fork.
+- **Comment** https://github.com/vllm-project/vllm/issues/50189#issuecomment-5760901760 — root cause,
+  and an explicit correction of our 2026-08-30 comment there (which blamed the b12x kernel path and
+  read the `_hc_combine` frame as meaningful; both wrong).
+

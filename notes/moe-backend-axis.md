@@ -125,8 +125,11 @@ kernel indexes per-expert state with it. A negative id writes out of bounds -> X
 | warmup  |   32 | `[1,504]` | 0/320 |
 | warmup  |   32 | `[19,470]`| 0/320 |
 
-`logits_finite=True`, `x_finite=True` — legitimate input, NOT uninitialised memory. Real batches
-route normally. `FLASHINFER_CUTLASS` tolerates the sentinel, which is why only b12x died.
+`logits_finite=True`, `x_finite=True` — legitimate input, NOT uninitialised memory. The source is
+`VLLM_MOE_SKIP_PADDING` (default **True**, `envs.py:210`): the topk kernels mark cudagraph padding
+rows with `-1`. **NOT startup-only** — trailing padding rows are marked the same way on real
+batches (per vllm#57036), so b12x was exposed in normal serving too; our 32-token warmup simply
+had no padding rows. `FLASHINFER_CUTLASS` tolerates the sentinel, which is why only b12x died.
 
 **Counterfactual (the proof).** Same process, same wrapper, same shapes, 40960 routed rows,
 E=512 k=2560 n=640 topk=10 — only the ids differ:
@@ -151,3 +154,5 @@ conclusion from exactly that frame. Five source-level theories died before measu
 
 **Not yet measured:** b12x vs cutlass throughput/quality on this model. Stability != a reason to
 ship it. MoE grouped GEMM + routing is 36.4% of prefill kernel time (finding 190).
+
+**Upstreamed:** vllm#57946 (fix + test), and #50189 got the root cause.
