@@ -99,16 +99,34 @@ needing 125 tokens, i.e. a length-stop truncating the copy. `payloads/devprobe.p
    immediate same-prompt re-ask, patched vs unpatched, EOS-correct, 3 starts, optional third arm with
    the scoping commit. Diff **rebased to dev524** (`.dev524.diff`, 3 hunks, hunk 1 dropped as already
    present, hunk 4 reconciled per wickist's 09-06 note). Read it from
-   `vllm:prefix_cache_hits_total` deltas — `cached_tokens` is inert. **Blocked on job 30's verdict:**
-   on the default geometry the fix is a no-op, which is wickist's own 09-09 finding on a third box.
-2. **vllm#56757 — reply awaited.** Posted 2026-09-20 asking whether `disk_offload_dir` should be
-   generalized behind `EngramConfig` so `qwen4_exp` is one subclass, with the unified-memory argument
-   nobody upstream had made. Offered to write and test the `qwen4_exp` backend on GB10.
-3. **vllm#55122 — the long-context tie census.** Still the measurement that decides the PR; our
-   0-ties result was scoped to 16k over two prompts. Actionable. (The *perf vs current main* arm is
-   **structurally blocked**: main cannot serve this model, see below.)
-4. **vllm#55430 — re-measure the 1.45× union figure.** Note `tools/main/qsa_union_patch.py` is **not
-   applied** on dev524; apply before measuring. The old number describes code that could not run.
+   `vllm:prefix_cache_hits_total` deltas — `cached_tokens` is inert.
+   **UNBLOCKED 2026-09-22 (finding 208).** Job 30's "geometry not reachable" verdict is WITHDRAWN and
+   the public claim retracted on the thread. MaCoredroid's hidden-state-extraction config **does**
+   produce the split on our own dev524 build (attention 800 vs hidden-state cache layer 200). So the
+   cell they originally asked for — prefix-cache hit rate patched vs unpatched — is **runnable after
+   all**, on `qwen38-27b-fp8` with that config rather than on Flash-Next. That is the live next step
+   here. Caveat: our build is 777 commits behind main, so any number is "as of 2026-09-08".
+2. ~~**vllm#56757**~~ — **CLOSED upstream** (checked 2026-09-22). No action.
+3. **vllm#55122 — the tie census is now ANSWERED, by someone else.** `Bizuayeu` posted measured
+   evidence 2026-09-22 on 2x GB10 (GLM-5.3-Flash NVFP4, TP=2): ties at the 512th rank do occur in
+   real requests — one row had **540 pools, 513 at the 512th value**, and the two pools the kernel
+   swapped had bit-identical scores. Their mechanism explains why *our* census found none: the
+   indexer logits are a reduction of **FP8** q/k, while we sampled a float32 grid at 16k over two
+   prompts. Our 0-ties result is superseded in method, not merely in scope.
+   **What is still missing is the perf number** — `MaCoredroid` stated they measured none, so the
+   21-28 % claim is unvalidated by anyone. That arm stays **structurally blocked** (main cannot serve
+   this model; re-confirmed against the `1ea7c63f4` wheel in finding 209). **A comment adds nothing
+   here** — do not post agreement; post a measurement or nothing.
+4. ~~**vllm#55430**~~ — **CLOSED upstream** (checked 2026-09-22). The 1.45x union figure is no longer
+   owed to anyone; `tools/main/qsa_union_patch.py` stays unapplied and the path gated off
+   (`VLLM_QSA_UNION=0`).
+
+### The mainstream move is blocked — RE-CONFIRMED 2026-09-22 against current main
+
+Finding 209 audited the `1ea7c63f4` nightly (= upstream/main HEAD) by extracting the wheel: **it
+retires nothing** of our 17-file overlay — the 5 `ple_offload` files are absent from main entirely,
+the rest are 0-30 % incidental overlap. #57946, #55122 and #57512 are all still unmerged. So the
+upgrade calculus is settled: stay on dev524, and stop re-asking whether main has caught up.
 
 ### The mainstream move is blocked, and not for the reason we assumed
 
