@@ -2272,3 +2272,40 @@ check on `FNDV draft vocab:` caught it. `dv_patch.py` now also patches
 `v1/worker/gpu/spec_decode/speculator.py`, attaching inside `_validate_local_argmax_reduction`
 (which `load_model` already calls and which has just verified `get_top_tokens` exists).
 
+---
+
+## Finding 199 — MTP n=4 vs n=3, and the vocab slice is depth-independent (2026-09-22)
+
+`armrun` spec `nvfp4-mtp4`, 2 arms x 2 starts, exit 0. NVFP4 drafter, `FN_SPEC_N=4`, otherwise
+identical to finding 198. Raw: `notes/data/nvfp4-mtp4.txt`.
+
+| arm | start 0 | start 1 | range | accepted/drafted | accept len | accept rate |
+|---|---|---|---|---|---|---|
+| slice32k | 41.67 | 42.59 | [41.67, 42.59] | 1176/2376 | 2.980 | 0.495 |
+| full vocab | 38.79 | 38.80 | [38.79, 38.80] | 1180/2360 | 3.000 | 0.500 |
+
+**The slice wins at n=4 too: +8.6%**, sign 2/2, disjoint — slightly more than the +7.8% at n=3,
+consistent with the mechanism (more draft positions -> more draft-head projections -> more to save).
+So the vocab lever is depth-independent, or mildly favours deeper speculation.
+
+**Depth, slice on:**
+
+| n | range | accept len | accept rate |
+|---|---|---|---|
+| **3** | **[43.02, 43.13]** | 2.780 | 0.593 |
+| 4 | [41.67, 42.59] | 2.980 | 0.495 |
+
+n=3 ahead, ranges disjoint. The counters show the inverted-U directly rather than by inference:
+n=4 accepts a **longer run** (3.00 vs 2.78 tokens per step) at a **much worse rate** (0.495 vs
+0.593), so half of every draft batch is discarded and the wasted compute dominates.
+
+**CONFOUND, not yet resolved.** `cudagraph_capture_sizes` is `[1,2,4,8]`. Single-stream decode width
+is `(1+n)`: n=3 -> **4, captured**; n=4 -> **5, NOT captured**. So the n=4 arms may run an uncaptured
+decode shape and the depth comparison is unfair to n=4. Also note widths 1 and 2 are unreachable
+under MTP at all, so two of our four captured sizes are dead. `mtp4-capture` (n=4 and slice fixed,
+capture `[1,2,4,5,8,10]` vs stock) isolates this.
+
+**Stability is not a simple function of depth.** At n=4 the full-vocab arms are near-identical
+(38.79 / 38.80) while the slice arms spread 2.2%; at n=3 both spread 0.1-0.3%. Whatever drives the
+MTP restart instability, it is not depth alone.
+

@@ -1,0 +1,28 @@
+== armrun nvfp4-mtp4: 2 arms x 2 start(s), port 8092 ==
+-- nvfp4-mtp4-slice32k0  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-nvfp4-mtp4.service; invocation ID: 5dc3a067b9704600b40eedb0d97a3a70
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 42.33, "tok_s": 41.67, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 594.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2376.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1176.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1176.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 594.0, "draft_tokens": 2376.0, "accepted": 1176.0, "acceptance_rate": 0.4949, "acceptance_length": 2.98, "spec_n": 4.0}
+-- nvfp4-mtp4-fullvocab0  env=(spec default)
+Running as unit: fx-armrun-nvfp4-mtp4.service; invocation ID: 951e34a0f92f4196a5ef2c6c0a28e6eb
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 45.48, "tok_s": 38.79, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 590.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2360.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1180.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1180.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 590.0, "draft_tokens": 2360.0, "accepted": 1180.0, "acceptance_rate": 0.5, "acceptance_length": 3.0, "spec_n": 4.0}
+-- nvfp4-mtp4-slice32k1  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-nvfp4-mtp4.service; invocation ID: 3b21e8f6b578421cabdda04f280247b6
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 41.42, "tok_s": 42.59, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 594.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2376.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1176.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1176.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 594.0, "draft_tokens": 2376.0, "accepted": 1176.0, "acceptance_rate": 0.4949, "acceptance_length": 2.98, "spec_n": 4.0}
+-- nvfp4-mtp4-fullvocab1  env=(spec default)
+Running as unit: fx-armrun-nvfp4-mtp4.service; invocation ID: a61843cc88184d55bd10414d755c9526
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 45.46, "tok_s": 38.8, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 590.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2360.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1180.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1180.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 590.0, "draft_tokens": 2360.0, "accepted": 1180.0, "acceptance_rate": 0.5, "acceptance_length": 3.0, "spec_n": 4.0}
+
+== RESULT ==
+  slice32k     requests 12  completion_tokens 1764  seconds 41.42–42.33  tok_s 41.67–42.59  m_spec_decode_num_drafts_total 594.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 2376.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1176.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1176.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 594.0  draft_tokens 2376.0  accepted 1176.0  acceptance_rate 0.4949  acceptance_length 2.98  spec_n 4.0  start 0–1
+  fullvocab    requests 12  completion_tokens 1764  seconds 45.46–45.48  tok_s 38.79–38.8  m_spec_decode_num_drafts_total 590.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 2360.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1180.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1180.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 590.0  draft_tokens 2360.0  accepted 1180.0  acceptance_rate 0.5  acceptance_length 3.0  spec_n 4.0  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0
+=== KV pool per arm (pin removed, so this IS comparable) ===
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+KVGAIN COMPLETE 2026-09-22T11:15:27+02:00
+prod restarting
