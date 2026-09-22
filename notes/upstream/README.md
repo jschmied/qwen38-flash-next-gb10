@@ -1284,3 +1284,11 @@ wait on one ~100 GB pull, and they share one serve.
   too). Finding 208/209. Draft: `notes/upstream/54076-geometry-reproduced.md`.
   <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5779194753>
 
+- **2026-09-22 — vllm#54076 comment (2nd today).** Answers MaCoredroid's explicit request: ran their
+  config on stock main `1ea7c63f4` via the nightly wheel on `PYTHONPATH` (our PLE overlay shadowed;
+  version+path logged to prove it). **Geometry persists** — 800/200, 1,228,800 bytes, 37.50 %,
+  unchanged across 0.28.0 → dev524 → main. Engine reached serving state (480 s), but generation was
+  NOT exercised and their runtime-correctness caveat is restated as still open, with an offer to
+  re-run. Finding 212. Draft: `notes/upstream/54076-main-nightly-result.md`.
+  <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5781703498>
+
