@@ -2906,6 +2906,24 @@ not sufficient, you also have to land on a kernel at least as good"), finding 20
 **slower** on shapes built for it), and the EXL3 recipe's own counterintuitive result (INT8
 activation GEMV turned **off** because FP16 GEMV was faster on a Spark).
 
+**Field survey completed 2026-09-22 — unanimous across five independent checkpoints.** Checked at
+the *tensor* level, not the config level:
+
+| checkpoint | quantizer | `hyper_connection` |
+|---|---|---|
+| `nvidia/…-NVFP4` (vendor) | modelopt | excluded by name |
+| `tcclaviger/…-MXFP4-FP8-GPTQ` | compressed-tensors | excluded by regex |
+| `Minachist/…-INT4-Mixed-AutoRound` | compressed-tensors | excluded |
+| `wtdcode/…-AWQ-W4A16` | compressed-tensors | excluded |
+| `albucino/…-W4A16-FP8PLE` | auto-round, **no ignore list at all** | **387 plain `.weight`, 0 quantized** |
+
+`albucino` looked like the exception — 4-bit auto-round with an empty exclude list — and is not: its
+index carries 387 plain `hyper_connection` weights, 192 plain `shared_expert`, 194 plain
+`input_mix_weight`, and zero quantized counterparts. **A config-level read gave a false negative;
+the tensor list is the ground truth.** The exclusion is *implicit* (the model's `quant_config=None`
+means these Linears are never converted), which is the same mechanism as reason 1 above, now visible
+from the outside.
+
 **Verdict: demote this lever.** The 13.7 % is not sitting there unclaimed because the field missed
 it; it is a skinny GEMM the vendor tuned for cuBLAS, in exactly the regime where quantization has
 repeatedly cost us speed. Bytes say ~0.660 B x 2 = 1.3 GB/token; the kernel says the replacement
