@@ -157,6 +157,46 @@ Rewritten 2026-08-31, then appended to per working day. **The sections are chron
 oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
 as archaeology unless it is cross-referenced from here.**
 
+## FIELD READ 2026-09-22 — the EXL3 GB10 recipe: what transfers and what does not
+
+Source is an **EXL3 (ExLlamaV3)** recipe, a different engine, so every percentage in it is relative
+to *its* baseline. Our standing pattern applies: three MiaAI-Lab numbers (+6.8 % bf16 SSM state,
++11.4 % MTP k=4, +5-6.6 % CPU idle states) all failed to transfer to us. Treat the list as levers,
+not results ([[check-field-before-expensive-steps]]).
+
+### Already ours — corroboration, no action
+
+| their item | our evidence |
+|---|---|
+| smaller draft-head projection, full head kept for verification | **our draft-vocab slice**: 32k of 248,320 rows, det-135, +6.4-6.8 % at c=1. Shipped, and in the config promoted 2026-09-22. |
+| INT8 activation GEMV **off** — FP16 GEMV was faster | our own law, `block-size-is-not-a-kernel-limit.md:98`: removing bytes is not sufficient, you must also land on a kernel at least as good. cuBLAS skinny BF16 GEMV beats the Triton blockwise path at `(10240, 320)`, M=1. **Finding 206 (DeepGEMM 8 % slower) is the third instance of this same law.** The most credible item in their list, because it is counterintuitive and we hit it independently. |
+
+### TRANSFERS — worth a run, in order
+
+1. **INT8 / MXFP8 on the BF16 leftovers** (their "INT8 mixer weights, 7-13 %"). Maps onto our single
+   largest untouched decode lever: **16.5 % of kernel time** in BF16 GEMVs — shared expert, hc
+   low-rank, router, MTP dense (det-136 ranking). **Constraint already known:** those shapes are
+   `K=320`, *not* 128-divisible, so blockwise FP8 **cannot express them**
+   (`single-stream-limit.md:340`); needs a group size dividing 320 — MXFP8 (32) or INT8 per-channel.
+   Their 7-13 % is a plausible magnitude for exactly this work. Also needs the **four hardcoded
+   `quant_config=None` opt-outs** in the model removed — quantizing is a two-part change.
+2. **Dynamic stopping / adaptive draft length** (their "five-token MTP with dynamic stopping").
+   The *depth* does not transfer: finding 155 has k=4 at **-3.4 %** at c=1, and k=5 is illegal in our
+   stack — QSA's ring needs `block_size % capacity == 0`, and at block 1600 n=5 gives capacity 12
+   with `1600 % 12 = 4`. EXL3 has no QSA ring. **The stopping rule is the transferable idea**, and it
+   is already queued ([[dflash-27b-next-levers]]: nspec 8 short / 12+ long). Untested.
+
+### DOES NOT TRANSFER / lower prior
+
+- **Wider fused-MoE decode tiles** — tension with our own measurement: MoE GEMM1 is already at the
+  **DRAM floor** ([[moe-grouped-gemm-dram-floor]]); our fix there is epilogue fusion, not tiling. A
+  wider tile cannot beat a bandwidth bound. Would need a shape that is *not* floor-bound to pay.
+- **Fewer host synchronizations** — our c=1 decode step is **GPU-bound**; the 46 % "idle" was
+  profiler overhead (det-134/136). Low prior.
+- **CPU launch threads pinned to big cores** — we measured the sibling lever (CPU idle states off)
+  at **0.7-0.9 %** against the field's claimed 5-6.6 % (finding 156). Same class, did not transfer.
+- **8-bit KV cache** — already wanted, not new: #55557 (fp8 KV x1.72), **blocked behind #53899**.
+
 ## QUEUED 2026-09-10 — quantize the MTP module's own body (memory, not bandwidth)
 
 **Not the MTP head — that question is closed.** MTP has no head of its own; it shares the main
