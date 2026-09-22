@@ -2112,7 +2112,12 @@ probe now reads the three exact counters and asserts both ceilings.
 
 ---
 
-## Finding 195 — the NVFP4 drafter buys +26% KV capacity (2026-09-22)
+## Finding 195 — the NVFP4 drafter buys KV capacity; the +26% figure is WITHDRAWN (2026-09-22)
+
+> **WITHDRAWN by finding 196 (same night).** The +26.0% below does not reproduce: a second run of
+> the same two arms, same settings, gave **+13.7%** (382,293 vs 434,566 tokens). The KV pool is
+> **not** deterministic across restarts — BF16 alone moved 6.3% between runs — so the claim below
+> that "one start per arm is sufficient" was wrong. Direction holds, magnitude does not. See 196.
 
 The speed A/B (finding 194) pinned KV at 2 GiB and so could not see this. Here the pin is removed
 (`FN_EXTRA="--language-model-only"`, `FN_UTIL=0.80` fixed), so the memory freed from the drafter is
@@ -2147,4 +2152,43 @@ reason and briefly looked like missing data. Read the per-arm log files.
 | patch set | b12x + MTP serves on STOCK `oracle/unquantized.py` — one local patch instead of two |
 
 Shippable on the evidence: a free 26% KV increase and a simpler patch set, with no acceptance cost.
+
+---
+
+## Finding 196 — drafter A/B/C: NVFP4 matches BF16 acceptance, FP8 does not (2026-09-22)
+
+`armrun` spec `mtp-three-drafters`, 3 arms x 1 start, exit 0, each arm's `model_tag` asserted and
+the quantized arms asserted to emit no `Unquantized MoE backend` line. KV pin removed
+(`FN_EXTRA="--language-model-only"`, `FN_UTIL=0.80`), `FN_MTP=3`. Raw: `notes/data/mtp-three-drafters.txt`,
+`notes/data/three-drafters-{fp8,nvfp4,bf16}.log`.
+
+| drafter | shards | KV memory | KV tokens | vs BF16 | accepted/drafted | acceptance length | tok/s |
+|---|---|---|---|---|---|---|---|
+| BF16 | 11.54 GB | 20.08 GiB | 382,293 | — | 567/948 | 2.794 | 37.67 |
+| FP8 (per-tensor) | 9.02 GB | 21.44 GiB | 408,819 | +6.9% | 560/972 | **2.728** | 38.24 |
+| NVFP4 (block-16) | 7.92 GB | 22.82 GiB | 434,566 | **+13.7%** | 568/948 | **2.797** | 39.37 |
+
+**NVFP4 matches BF16 acceptance (568 vs 567) with a quarter of the bits. FP8 does not (560).**
+FP8 needed 324 draft steps to NVFP4's and BF16's 316 for the same 882 output tokens.
+
+**Hypothesis for why 4-bit beats 8-bit here: scaling granularity, not bit width.** NVFP4 carries a
+block scale per 16 elements along K plus a per-tensor global scale; `ModelOptFp8MoEMethod` registers
+`PerTensorScaleParameter`, i.e. ONE scalar for a 640x2560 weight. The 27B DFlash2 drafter's
+per-channel FP8 is not reachable for MoE experts through this method. **Untested** — the direct check
+is dequantize-and-compare reconstruction error against BF16, which is CPU-only and not yet run.
+
+**KV pool sizing has run-to-run variance.** Two runs of the same NVFP4-vs-BF16 comparison:
+
+| run | BF16 tokens | NVFP4 tokens | gain |
+|---|---|---|---|
+| `mtp-kvgain` (finding 195) | 359,667 | 453,290 | +26.0% |
+| `mtp-three-drafters` (this) | 382,293 | 434,566 | +13.7% |
+
+Direction is consistent across both; magnitude is not. **Finding 195's +26.0% is withdrawn** — it was
+a single start presented as deterministic. Honest statement today: NVFP4 buys somewhere in the
+**+14..26%** range and needs >=3 starts per arm to pin down. The likely cause is absolute free memory
+at launch, which is already on record as what governs this box's memory behaviour.
+
+**tok/s here is 1 start per arm and not quotable** (BF16's own across-restart spread is 9.3%).
+The 3-start speed pass is staged.
 
