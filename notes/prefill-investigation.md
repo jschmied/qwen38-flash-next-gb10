@@ -2339,3 +2339,70 @@ run's stock numbers and said the capture set "changes nothing", then read round 
 and said "+4.2%". Both were premature; the first was a cross-run comparison of the exact kind that
 produced finding 195's withdrawn KV figure.
 
+---
+
+## Finding 201 — finding 161's blocker still stands, in a new mechanism; and the two graph regimes are not comparable (2026-09-22)
+
+### The PLE still breaks the decode graph — but not via `splitting_ops`
+
+Finding 161 (dev401) blamed `splitting_ops` declaring `vllm::qwen4_exp_compute_ple_ngram_ids` and
+`vllm::qwen4_exp_ple_short_conv`. **On dev524 those are gone from the NVIDIA path** — the default
+list in `config/compilation.py:772` still carries `qwen4_exp_ple_short_conv` but comments it
+*"Qwen4Exp's AMD backend still uses these splitting ops"*, and the live NVIDIA op is
+`qwen4_exp_ple_embed`, which is not a split point.
+
+The break moved to a different mechanism. Our engine auto-enables **`VLLM_USE_BREAKABLE_CUDAGRAPH=1`**
+(log: *"Set VLLM_USE_BREAKABLE_CUDAGRAPH=0 to opt out"*), which sets `CompilationMode.NONE` —
+no torch.compile, `splitting_ops=[]` — and instead declares break points at the op:
+
+| file | line | op |
+|---|---|---|
+| `qwen4_exp/nvidia/ple_layer.py` | 1243 | `@eager_break_during_capture def _short_conv` |
+| `qwen4_exp/nvidia/qsa.py` | 355 | `@eager_break_during_capture` |
+
+`ple_layer.py:1242` states the reason: *"State routing consumes the current request metadata on
+every replay."* `eager_break_during_capture` "ends the current cudagraph segment, runs the function
+eagerly on the capture stream, records the callable for replay, and starts a fresh segment".
+
+**So finding 161's conclusion holds on the current build and the target is now a specific line.**
+Staging is not about where the PLE bytes live (2.5 KB read per token against a 47.7 GiB table,
+`ple-access-pattern.md`) — it is about removing the **metadata dependency** so the segment need not
+break. Two break points, not one.
+
+### Breakable vs torch.compile: +2.0% to breakable, but NOT a clean A/B
+
+`armrun` spec `breakable-vs-compile`, 2 arms x 2 starts, exit 0. NVFP4 drafter + 32k slice, n=3;
+only `VLLM_USE_BREAKABLE_CUDAGRAPH` differs. Raw: `notes/data/breakable-vs-compile.txt`.
+
+| regime | mode | splitting_ops | r0 | r1 | tokens | accept len |
+|---|---|---|---|---|---|---|
+| breakable (default) | `NONE` | `[]` | 43.27 | 43.03 | **1764** | 2.780 |
+| compile (`=0`) | `VLLM_COMPILE` | attention ops | 42.47 | 42.15 | **1742** | 2.810 |
+
+Breakable faster in both rounds, ranges disjoint, +2.0%. **But the arms do not do identical work**:
+1742 tokens vs 1764. The compile regime changes the *target's* kernels, Inductor fusion changes
+rounding, a near-tie flips under greedy argmax, and the continuation diverges. A tok/s delta over
+different text is not a clean speed comparison, so **+2.0% is indicative, not a verdict**; the
+honest evaluation of the compile regime would be NLL + task pass alongside throughput.
+
+**Caveat:** both arms log zero `torch.compile took` lines, so "the compile arm actually ran Inductor"
+is unverified — the mode and `splitting_ops` differ as expected, but compilation may be cached or
+not logged at this level.
+
+### Why the outputs differ, and what it confirms about the det work
+
+Every **drafter-side** change this session produced exactly 1764 completion tokens — BF16 -> NVFP4
+-> FP8 drafters, the 32k vocab slice, MTP n=3 -> n=4, capture widths. Only the **target-side**
+regime change moved it. That is the speculative-decoding invariant working: the drafter proposes,
+the target verifies, so draft quality moves acceptance and never output.
+
+Both arms ran with `QSADET active` and `MOE_DET_FINALIZE` (launcher defaults `FN_DET_TOPK=1`,
+`FN_DET_FINALIZE=1`). The det overlays did their job — each regime reproduces its **own** output
+byte-for-byte across restarts, including the compile arm's divergent 1742. What they cannot do is
+make different kernel sets agree; determinism is not numerical equivalence across builds. Same
+principle as `acceptance-is-not-quality` ("+-10 pp from a 1-ulp kernel change"), one level up.
+
+**Free invariant for the staged-PLE work:** staging removes a break point without changing kernels,
+so a correct implementation must still emit **1764**. A different token count is a correctness bug,
+not an optimisation.
+

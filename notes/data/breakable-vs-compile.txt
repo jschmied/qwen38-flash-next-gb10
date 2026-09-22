@@ -1,0 +1,28 @@
+== armrun breakable-vs-compile: 2 arms x 2 start(s), port 8092 ==
+-- breakable-vs-compile-compile0  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt', 'VLLM_USE_BREAKABLE_CUDAGRAPH': '0'}
+Running as unit: fx-armrun-breakable-vs-compile.service; invocation ID: d157a354b2f84ac79d41f13385eefdbc
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1742, "seconds": 41.02, "tok_s": 42.47, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 620.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1860.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1122.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1122.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 620.0, "draft_tokens": 1860.0, "accepted": 1122.0, "acceptance_rate": 0.6032, "acceptance_length": 2.81, "spec_n": 3.0}
+-- breakable-vs-compile-breakable0  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-breakable-vs-compile.service; invocation ID: 7250820325c8487c97dedbca71965682
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 40.77, "tok_s": 43.27, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 636.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1908.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1132.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1132.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 636.0, "draft_tokens": 1908.0, "accepted": 1132.0, "acceptance_rate": 0.5933, "acceptance_length": 2.78, "spec_n": 3.0}
+-- breakable-vs-compile-compile1  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt', 'VLLM_USE_BREAKABLE_CUDAGRAPH': '0'}
+Running as unit: fx-armrun-breakable-vs-compile.service; invocation ID: 961ee78593cd42a5b88756fd9f18b74b
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1742, "seconds": 41.32, "tok_s": 42.15, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 620.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1860.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1122.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1122.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 620.0, "draft_tokens": 1860.0, "accepted": 1122.0, "acceptance_rate": 0.6032, "acceptance_length": 2.81, "spec_n": 3.0}
+-- breakable-vs-compile-breakable1  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-breakable-vs-compile.service; invocation ID: c4b967f0cbde46caa1ff06310b527b4e
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 40.99, "tok_s": 43.03, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 636.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1908.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1132.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1132.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 636.0, "draft_tokens": 1908.0, "accepted": 1132.0, "acceptance_rate": 0.5933, "acceptance_length": 2.78, "spec_n": 3.0}
+
+== RESULT ==
+  compile      requests 12  completion_tokens 1742  seconds 41.02–41.32  tok_s 42.15–42.47  m_spec_decode_num_drafts_total 620.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 1860.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1122.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1122.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 620.0  draft_tokens 1860.0  accepted 1122.0  acceptance_rate 0.6032  acceptance_length 2.81  spec_n 3.0  start 0–1
+  breakable    requests 12  completion_tokens 1764  seconds 40.77–40.99  tok_s 43.03–43.27  m_spec_decode_num_drafts_total 636.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 1908.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1132.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1132.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 636.0  draft_tokens 1908.0  accepted 1132.0  acceptance_rate 0.5933  acceptance_length 2.78  spec_n 3.0  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0
+=== KV pool per arm (pin removed, so this IS comparable) ===
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+KVGAIN COMPLETE 2026-09-22T14:02:09+02:00
+prod restarting
