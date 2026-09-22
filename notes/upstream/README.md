@@ -1284,7 +1284,12 @@ wait on one ~100 GB pull, and they share one serve.
   too). Finding 208/209. Draft: `notes/upstream/54076-geometry-reproduced.md`.
   <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5779194753>
 
-- **2026-09-22 — vllm#54076 comment (2nd today).** Answers MaCoredroid's explicit request: ran their
+- ~~**2026-09-22 — vllm#54076 comment (2nd today).**~~ **DELETED by the user, do not repost as-is.**
+  It reported the geometry result but also stated that generation was never exercised because my
+  runner tore the server down before the completion — i.e. it published a half-finished run and
+  narrated my own harness bug to upstream. **Rule: finish the work, then post.** Re-run with the
+  request inside the runner, then seek a fresh go. Original text below for reference only.
+  Answers MaCoredroid's explicit request: ran their
   config on stock main `1ea7c63f4` via the nightly wheel on `PYTHONPATH` (our PLE overlay shadowed;
   version+path logged to prove it). **Geometry persists** — 800/200, 1,228,800 bytes, 37.50 %,
   unchanged across 0.28.0 → dev524 → main. Engine reached serving state (480 s), but generation was

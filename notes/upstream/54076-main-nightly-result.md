@@ -1,5 +1,7 @@
-POSTED 2026-09-22 — vllm#54076 comment
-<https://github.com/vllm-project/vllm/pull/54076#issuecomment-5781703498>
+WITHDRAWN 2026-09-22 — posted, then DELETED by the user: it published a half-finished run
+(no generation exercised) and explained my own harness race to upstream. Do not repost as-is;
+re-run with the completion inside the runner first.
+
 
 Ran it on `1ea7c63f4`. **The startup geometry persists on current main.**
 
