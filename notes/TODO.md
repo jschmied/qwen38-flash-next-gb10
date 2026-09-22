@@ -164,7 +164,16 @@ as archaeology unless it is cross-referenced from here.**
 
 ## UPSTREAM NEWS 2026-09-22 — three open PRs that change our constraints
 
-**1. vllm#56273 — packed NVFP4 PLE embeddings. Potentially removes our overlay dependency.**
+**1. vllm#56273 — packed NVFP4 PLE embeddings. DOWNGRADED, probably not worth it for us.**
+
+> **Corrected 2026-09-22 (user):** it buys residency by spending KV. We have already measured that
+> the thing it removes is **free**: the PLE offload gather is *completely hidden* — 0.00 ms gap
+> before the first PLE kernel ([[decode-c1-idle-piecewise]]) — and *"PLE offload is NOT the
+> bottleneck; swap cost per token FALLS"* with concurrency ([[flashnext-concurrency-scaling]]).
+> So resident PLE costs **26.8 GiB** of our 869,444-token KV to remove a cost that measures zero,
+> and it hurts exactly the axis (concurrency) where offload already wins. The secondary prize —
+> retiring the overlay and unblocking mainstream — is real but must be priced against that KV loss,
+> not assumed. **Do not chase this without measuring the KV/concurrency trade first.**
 *"Enable the `local-inference-lab/Qwen3.8-Flash-Next-NVFP4` checkpoint to run on 1x DGX Spark
 **without CPU or disk PLE offloading**. Its packed NVFP4 ngram table occupies **26.822 GiB** and
 remains resident."* Validated on one GB10, 4,096-token context, 2 GiB KV, MTP off; load reported
@@ -174,7 +183,12 @@ fits resident at 26.8 GiB instead of 47.7, the offload worker, the 64 GiB swap p
 mainstream. That checkpoint was already in our HF survey (`local-inference-lab/…-NVFP4`, 23,673 dl).
 **Highest-value item on this list.** Open, +431/-28, updated 09-16.
 
-**2. vllm#54912 — widens the QSA raw-key ring instead of asserting. Unblocks the MTP depth band.**
+**2. vllm#54912 — THIS IS OUR OWN PR, not news.** Issue **#54552** is ours (2026-08-31); `bojiang3`
+agreed with the widening 09-02 and asked for a PR; we opened #54912 the same day and commented
+09-11 with det-204 evidence. **Zero human participants in 20 days.** I re-surfaced it as "news" —
+check authorship before writing something up as a field finding.
+**The band does not need the merge:** we patched the ring locally once already (det-204, cleared on
+all 12 QSA layers), so MTP depths 5..8 are **runnable here today**.
 It quotes our exact failure verbatim: `QSA ring capacity 12 must divide the attention block size
 848`. With `compress_ratio = 4`, depths **5..8 and 13..16** need a 12- (20-) row ring that neither
 the power-of-two nor the hybrid 848/1616 sizes have. `qsa_ring_capacity()` returns the smallest
@@ -188,7 +202,8 @@ stopping idea from the EXL3 field read. Open, +98/-11, updated 09-15.
 **3. vllm issue #46307 — `gpu_memory_utilization` is not respected on GB10 unified memory; the host
 wedges.** *"With a conservative `gpu_memory_utilization=0.70` … available memory to ~7 GiB during
 `profile_run` … the entire host becomes unresponsive (SSH dies; requires a hard power-cycle)."*
-**This is our phenomenon, three times over:** the two hard resets behind
+**Stale — a comment will not move it (user, 2026-09-22); only a PR would.** Do not post evidence
+there. **This is our phenomenon, three times over:** the two hard resets behind
 [[vllm-load-needs-fit-check]] and [[pinned-sweep-crashed-box]], and the shapebench OOM today where
 `MemAvailable` 5.4 GiB was not GPU-allocatable beside a `util=0.90` prod. Only **1 comment**. We have
 more evidence on this than the reporter — a candidate post, but note vLLM's policy and get a go.
