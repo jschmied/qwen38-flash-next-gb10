@@ -2793,6 +2793,19 @@ so the base unit is untouched; revert = `rm` + `daemon-reload` + restart.
 Prod serves `FN_SEQS=16`, and MTP under concurrent load (c=16/c=32) is still unmeasured — the
 remaining axis, and the natural next run.
 
+**VERIFIED LIVE 2026-09-22 18:5x.** Prod came up after 770 s and the effective config is the
+promoted one, read back from the log rather than inferred from the unit being active:
+`model='/opt/llm/models/qwen38-flash-next-mtpfp4'`, `num_speculative_tokens': 3`,
+`FNDV draft vocab: 32768`. Smoke test: coherent 60-token completion in 1.39 s (~43 tok/s),
+`finish_reason: length`; live counters `drafts 18 / draft_tokens 54 / accepted 41` = 75.9 % rate,
+accept length **3.28** (ceiling 4 at n=3) on a short easy prompt, against 2.53 on the agent loop.
+
+*Two guards of mine misfired during the restart and are worth not repeating:*
+`systemctl is-active --quiet` returns non-zero for **`deactivating`**, the normal stop phase of a
+restart — it reported PROD FAILED when nothing had failed; fail only on `ActiveState=failed`. And a
+`journalctl -b` grep surfaced an **18:23** traceback predating the promotion entirely — scope to the
+restart, not the boot ([[journal-window-spans-boots]]).
+
 ## Finding 211 — the "69 % BF16" figure is RadixArk's, not ours; and nobody quantizes what is left (2026-09-22)
 
 **Correction.** I repeated the 2026-08-27 measurement (58.8 ms/token, **69.4 %** of wall in cuBLAS

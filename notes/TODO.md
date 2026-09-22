@@ -4,8 +4,13 @@
 
 **Prod runs again, on a different footing than the 09-11 block describes.** Entry point is now the
 systemd unit `vllm-flashnext.service` → `/opt/llm/serve-flashnext.sh`, venv `vllm-venv-fnmain3`
-(`0.28.1rc1.dev524+g5db652225`), checkpoint `qwen38-flash-next-fp8head`, PLE offloaded, 869,444-token
-KV, 24.9/24.5/21.6 tok/s at c=1 without speculation. Two host prerequisites are load-bearing and
+(`0.28.1rc1.dev524+g5db652225`), PLE offloaded.
+
+**PROD CHANGED 2026-09-22 (finding 210):** checkpoint is now `qwen38-flash-next-mtpfp4` with
+**MTP n=3 + `disable_eagle_block_drop` + local-argmax + the 32k draft-vocab slice**, via drop-in
+`/etc/systemd/system/vllm-flashnext.service.d/20-mtp-promote.conf`. **−19.4 % per agent turn**
+(1.65 vs 2.03–2.05 s/turn, disjoint ranges, 2 starts each). Was: `fp8head`, no speculation,
+24.9/24.5/21.6 tok/s at c=1. Revert = `rm` the drop-in + `daemon-reload` + restart. Two host prerequisites are load-bearing and
 neither is in vLLM's config — see memory `flashnext-baremetal-prereqs`:
 
 - **64 GiB swap.** The PLE table is 47.7 GiB and the weights alone are 122.9 GiB against a 121.6 GiB
