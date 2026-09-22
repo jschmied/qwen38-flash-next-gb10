@@ -2490,3 +2490,47 @@ twice. The largest remaining kernel-level waste it names is the **small-M blockw
 32 % of kernel time at ~2.5x its byte floor at M=4**, then the BF16 leftovers at 16.5 % (shared
 expert, hc low-rank, router, MTP dense). That is the next fix target, not staged PLE.
 
+## Finding 204 — DeepGEMM repacks the lm_head block scales; our draft-vocab patch assumes the CUTLASS layout (2026-09-22)
+
+Turning DeepGEMM on (`VLLM_USE_DEEP_GEMM=1 VLLM_USE_DEEP_GEMM_E8M0=1`) **does open the route** —
+the gate is not the obstacle our older note implied:
+
+```
+deep_gemm.py:136  DeepGEMM E8M0 enabled on current platform.
+__init__.py:698   Selected DeepGemmFp8BlockScaledMMKernel for MergedColumnParallelLinear
+__init__.py:698   Selected DeepGemmFp8BlockScaledMMKernel for QKVParallelLinear
+__init__.py:698   Selected DeepGemmFp8BlockScaledMMKernel for RowParallelLinear
+__init__.py:698   Selected DeepGemmFp8BlockScaledMMKernel for ParallelLMHead
+```
+
+All four linear classes leave `CutlassFp8BlockScaledMMKernel`, which is what the live engine selects
+today (172 occurrences each, current boot). `qwen4_exp_text` is **not** in
+`_DEEPGEMM_BLACKWELL_EXCLUDED_MODEL_TYPES` (only `qwen3_5_text`, `qwen3_5_moe_text`), so nothing
+auto-disables it for us.
+
+**But the engine then dies ~10 min in, and the cause is ours, not DeepGEMM's:**
+
+```
+v1/worker/gpu/spec_decode/speculator.py:350 _validate_local_argmax_reduction -> _fn_attach()
+models/qwen4_exp/nvidia/mtp.py:86 _fn_attach_draft_vocab
+  assert K % bk == 0 and s.shape[0] == (N+bn-1)//bn and s.shape[1] == K//bk
+AssertionError: ([128, 128], (248320, 5), (248320, 2560))
+```
+
+Our draft-vocab slicer expects the CUTLASS block-scale layout — for `N=248320, K=2560, bs=[128,128]`
+that is `(1940, 20)`. DeepGEMM's `process_weights_after_loading` calls
+`deepgemm_post_process_fp8_weight_block`, which requantizes to UE8M0 **and repacks**: the observed
+`(248320, 5)` is row-major with `20/4 = 5` int32 lanes, i.e. four UE8M0 scales packed per int32
+along K. So the slicer's row arithmetic is simply wrong against that tensor.
+
+**Scope.** This is a defect in *our* patch (`tools/draft_vocab/`), not in vLLM or DeepGEMM, and it
+only fires when both the 32k draft-vocab slice and DeepGEMM are on. It does not affect prod, which
+runs CUTLASS. The two levers are currently **mutually exclusive**: the slice is worth +6.4-6.8 % at
+c=1 (det-135), so if DeepGEMM wins the A/B, teaching the slicer the packed layout becomes required
+work rather than optional.
+
+**Method note.** The wrapper error is the useless `Failed core proc(s): {}` again — the real
+exception is only in the `(Worker pid=...)` lines. Same signature as an OOM-kill at ~200/206 shards
+(`flashnext-baremetal-prereqs`), and I nearly attributed it there; the worker traceback is what
+separates the two. Grep the worker lines, never the EngineCore wrapper.
+
