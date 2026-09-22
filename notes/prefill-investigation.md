@@ -2236,3 +2236,39 @@ acceptance is deterministic in both workload size and restarts.
 **NVFP4 wins every axis.** The format asked for -- per-tensor FP8 -- is worst on acceptance and
 not separable from BF16 on speed.
 
+---
+
+## Finding 198 — the 32k draft-vocab slice stacks on the NVFP4 drafter: +7.8% (2026-09-22)
+
+`armrun` spec `nvfp4-drafter-plus-vocab32k`, 2 arms x 2 starts, exit 0. Both arms serve the NVFP4
+drafter (`mtpfp4`) on the `FN_SPEC_METHOD=mtp FN_SPEC_N=3 FN_SPEC_NODROP=1` path — `FN_MTP` does NOT
+wire `FN_SPEC_LOCALARGMAX` (it builds `XM`, the flag sets `X`), so the shortcut silently ignores the
+slice. Raw: `notes/data/nvfp4-vocab32k.txt`.
+
+| arm | start 0 | start 1 | range | accepted/drafted | acceptance length |
+|---|---|---|---|---|---|
+| **NVFP4 + 32k slice** | 43.02 | 43.13 | **[43.02, 43.13]** | 1132/636 | 2.780 |
+| NVFP4 full vocab | 39.99 | 39.96 | [39.96, 39.99] | 1136/632 | 2.797 |
+
+**+7.8%, sign holds in both rounds, ranges disjoint**, within-arm spreads 0.3% and 0.1%.
+Acceptance costs 0.6% (2.780 vs 2.797) — matching det-135's "no acceptance loss" at 32k.
+
+**The two drafter levers stack.** On this harness, cumulative over the BF16 full-vocab baseline:
+
+| config | tok/s | vs baseline |
+|---|---|---|
+| BF16 drafter, full vocab (finding 197) | 38.40 | — |
+| NVFP4 drafter, full vocab | 40.16 | +4.6% |
+| **NVFP4 drafter + 32k slice** | **43.08** | **+12.2%** |
+
+Both are drafter-side only. The staged-PLE / `FULL_DECODE_ONLY` change that finding 161 identified
+as the prerequisite for full-graph decode is **not** included and remains the largest untried lever.
+
+**Trap, paid for twice.** `tools/draft_vocab/dv_patch.py` hooked only
+`v1/spec_decode/llm_base_proposer.py`, which is dead code for this model on Model Runner V2. The
+failure is silent by construction: `get_top_tokens` falls back to the full head when
+`_fn_draft_weight` is None, so the arm produces a plausible null instead of an error. Only the void
+check on `FNDV draft vocab:` caught it. `dv_patch.py` now also patches
+`v1/worker/gpu/spec_decode/speculator.py`, attaching inside `_validate_local_argmax_reduction`
+(which `load_model` already calls and which has just verified `get_top_tokens` exists).
+

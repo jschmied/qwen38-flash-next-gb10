@@ -2,7 +2,11 @@
 # Env FN_DRAFT_VOCAB=<file of token ids, one per line> -> the drafter's argmax runs over an exact BF16 dequant of those head rows.
 import sys, shutil, os
 mode, venv = sys.argv[1], sys.argv[2]; sp = f"{venv}/lib/python3.12/site-packages/vllm"
-MTP = f"{sp}/models/qwen4_exp/nvidia/mtp.py"; PROP = f"{sp}/v1/spec_decode/llm_base_proposer.py"; FILES = [MTP, PROP]
+MTP = f"{sp}/models/qwen4_exp/nvidia/mtp.py"; PROP = f"{sp}/v1/spec_decode/llm_base_proposer.py"
+# V2: the llm_base_proposer hook above is DEAD CODE for this model (#53896 pins Flash-Next to
+# Model Runner V2). Without the speculator hook the slice attaches nowhere, get_top_tokens
+# silently falls back to the full head, and the arm looks like a null result. Cost two runs.
+SPEC2 = f"{sp}/v1/worker/gpu/spec_decode/speculator.py"; FILES = [MTP, PROP, SPEC2]
 def rep(s, old, new):
     assert s.count(old) == 1, (old[:80], s.count(old)); return s.replace(old, new)
 HELPER = '''
@@ -66,7 +70,17 @@ if mode == "apply":
     s = rep(s, CL, CL + GTT); open(MTP, "w").write(s)
     s = open(PROP).read(); assert "_fn_attach_draft_vocab" not in s
     s = rep(s, LI, LI + '            _fn_attach = getattr(self.model, "_fn_attach_draft_vocab", None)\n            if _fn_attach is not None:\n                _fn_attach()\n')
-    open(PROP, "w").write(s); print("applied")
+    open(PROP, "w").write(s)
+    # V2 hook: attach inside _validate_local_argmax_reduction, which load_model already calls
+    # and which has just verified the model exposes get_top_tokens. Without this the slice
+    # attaches nowhere and get_top_tokens silently uses the full head.
+    s = open(SPEC2).read(); assert "_fn_attach_draft_vocab" not in s
+    V2 = '''        if not hasattr(self.model, "get_top_tokens"):'''
+    s = rep(s, V2, '''        _fn_attach = getattr(self.model, "_fn_attach_draft_vocab", None)
+        if _fn_attach is not None:
+            _fn_attach()
+''' + V2)
+    open(SPEC2, "w").write(s); print("applied")
 else:
     for p in FILES:
         b = p + ".orig-dv"; assert os.path.exists(b), b; shutil.copy2(b, p); os.remove(b)
