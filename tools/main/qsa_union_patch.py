@@ -336,14 +336,16 @@ GATE_NEW = GATE_ANCHOR + '''    if union is not None and not qsa_union_layout_ok
                                                 num_requests=union["num_requests"], raw=union.get("raw"))
 '''
 SIG_ANCHOR = '''    token_to_req: torch.Tensor,
+    use_prefill_config: bool,
     out: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """Run sparse GQA directly over paged BF16 K/V caches."""'''
+    """Run sparse GQA directly over paged BF16 K/V caches.'''
 SIG_NEW = '''    token_to_req: torch.Tensor,
+    use_prefill_config: bool,
     out: torch.Tensor | None = None,
     union: dict | None = None,  # QSA UNION: {compress_ratio, token_topk, num_requests, raw} or None
 ) -> torch.Tensor:
-    """Run sparse GQA directly over paged BF16 K/V caches."""'''
+    """Run sparse GQA directly over paged BF16 K/V caches.'''
 OWNER_ANCHOR = '''        from .ops.qsa import qsa_sparse_paged_attention
 
         qsa_sparse_paged_attention(
@@ -353,6 +355,7 @@ OWNER_ANCHOR = '''        from .ops.qsa import qsa_sparse_paged_attention
             logical_indices,
             attn_metadata.block_table,
             token_to_req,
+            use_prefill_config,
             output[:num_tokens],
         )'''
 OWNER_NEW = '''        from .ops.qsa import qsa_sparse_paged_attention, qsa_union_eligible  # QSA UNION
@@ -371,6 +374,7 @@ OWNER_NEW = '''        from .ops.qsa import qsa_sparse_paged_attention, qsa_unio
             logical_indices,
             attn_metadata.block_table,
             token_to_req,
+            use_prefill_config,
             output[:num_tokens],
             union=union,
         )'''

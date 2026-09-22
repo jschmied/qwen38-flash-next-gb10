@@ -25,6 +25,10 @@ ap.add_argument("--src", default="/opt/llm/models/qwen38-flash-next-fp8head")
 ap.add_argument("--dst", default="/opt/llm/models/qwen38-flash-next-mtpfp4")
 ap.add_argument("--device", default="cuda")
 ap.add_argument("--dry-run", action="store_true")
+ap.add_argument("--dense", action="store_true",
+                help="also quantize the drafter's 2-D dense projections (self_attn q/k/v/o, fc_*). "
+                     "The body quantizes self_attn.*_proj, so leaving them BF16 is an inconsistency; "
+                     "fc_embedding/fc_hidden the body leaves alone, included here for completeness.")
 a = ap.parse_args()
 
 from flashinfer.fp4_quantization import fp4_quantize   # same path the body was built with
@@ -88,6 +92,23 @@ for sh in sorted({s for s in wm.values()}):
     out = {}
     for k, v in t.items():
         b_old += v.numel() * v.element_size()
+        dense = a.dense and v.dim() == 2 and v.dtype == torch.bfloat16 and k.endswith(".weight") and (
+            re.search(r"mtp\..*self_attn\.(q|k|v|o)_proj\.weight$", k)
+            or re.search(r"mtp\.fc_(embedding|hidden)\.weight$", k))
+        if dense:
+            # same NVFP4 scheme as the experts; both dims must be divisible by the 16-element
+            # group, which every one of these shapes satisfies.
+            q, sf, gs = nvfp4(v)
+            base = k[: -len(".weight")]
+            out[f"{base}.weight"] = q
+            out[f"{base}.weight_scale"] = sf
+            out[f"{base}.weight_scale_2"] = gs
+            out[f"{base}.input_scale"] = torch.tensor(0.00404576, dtype=torch.float32)
+            n_q += 1
+            b_old_dense = v.numel() * v.element_size()
+            print(f"    dense: {k.split('mtp.')[-1]} {tuple(v.shape)} -> NVFP4 ({b_old_dense/1e6:.1f} MB)", flush=True)
+            continue
+
         m = re.match(r"(.*mtp\.layers\.\d+\.mlp\.experts)\.(gate_up_proj|down_proj)$", k)
         if m and v.dim() == 3:
             base, which = m.group(1), m.group(2)
@@ -140,6 +161,13 @@ _entry = {"quant_algo": "NVFP4", "group_size": SF_VEC}
 for _i in (_nl, 0):
     ql[f"mtp.layers.{_i}.mlp.experts"] = dict(_entry)
     ql[f"model.mtp.layers.{_i}.mlp.experts"] = dict(_entry)
+    if a.dense:
+        for _p in ("self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj"):
+            ql[f"mtp.layers.{_i}.{_p}"] = dict(_entry)
+            ql[f"model.mtp.layers.{_i}.{_p}"] = dict(_entry)
+if a.dense:
+    for _p in ("mtp.fc_embedding", "mtp.fc_hidden", "model.mtp.fc_embedding", "model.mtp.fc_hidden"):
+        ql[_p] = dict(_entry)
 print(f"  quantized_layers: mtp runtime layer index {_nl}")
 json.dump(hq, open(f"{a.dst}/hf_quant_config.json", "w"), indent=1)
 
@@ -162,6 +190,18 @@ if _qc is not None:
     for _i in (_nl, 0):
         _cql[f"mtp.layers.{_i}.mlp.experts"] = dict(_entry)
         _cql[f"model.mtp.layers.{_i}.mlp.experts"] = dict(_entry)
+        # the dense modules must be declared HERE too -- adding them only to
+        # hf_quant_config.json leaves them undeclared in the file vLLM reads, so the layers
+        # build unquantized and the load dies on the extra tensors. Same trap as the experts.
+        if a.dense:
+            for _p in ("self_attn.q_proj", "self_attn.k_proj",
+                       "self_attn.v_proj", "self_attn.o_proj"):
+                _cql[f"mtp.layers.{_i}.{_p}"] = dict(_entry)
+                _cql[f"model.mtp.layers.{_i}.{_p}"] = dict(_entry)
+    if a.dense:
+        for _p in ("mtp.fc_embedding", "mtp.fc_hidden",
+                   "model.mtp.fc_embedding", "model.mtp.fc_hidden"):
+            _cql[_p] = dict(_entry)
     json.dump(_c, open(_cfg, "w"), indent=1)
     print(f"  config.json quantization_config updated ({len(_cql)} quantized_layers)")
 
