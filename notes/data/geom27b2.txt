@@ -1,0 +1,11 @@
+=== build: 0.28.1rc1.dev524+g5db652225 ===
+=== model_type: qwen3_5 qwen3_5_text ===
+START 2026-09-22 17:04:26
+Running as unit: geom27b2-srv.service; invocation ID: a26222a47f0142aaa57064e3b12dca31
+server UP after 530s
+=== GEOMETRY LINES (journal scoped to this boot's start) ===
+Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+Using block size 200 for hidden-state cache layer cache_only_layers.64; page alignment wastes 1228800 bytes (37.50%) per block
+=== errors, if any ===
+GEOM27B2 COMPLETE 2026-09-22T17:13:06+02:00
+prod restarting

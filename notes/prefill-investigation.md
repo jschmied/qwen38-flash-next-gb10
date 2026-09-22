@@ -2658,3 +2658,55 @@ looked for `weight_scale`; it printed a clean header and an empty table, which i
 "guard that passes on empty output" failure ([[verify-guards-on-empty-output]]) — the layer count
 line was what exposed it.
 
+## Finding 208 — #54076's heterogeneous geometry IS reachable, and job 30's "not reachable" is withdrawn (2026-09-22)
+
+MaCoredroid asked (2026-09-21) for a rerun of their hidden-state-extraction config on a newer build.
+Ran it. Raw: `notes/data/geom27b2.txt`.
+
+**Build:** `0.28.1rc1.dev524+g5db652225`, dated **2026-09-08**, **777 commits behind upstream/main**
+(their static reference `382970ee6c` is 2026-09-21, 38 behind). Newer than the 0.28.0 they ran,
+**older than the main they asked about** — say so in any post.
+**Model:** local `qwen38-27b-fp8`, `model_type: qwen3_5` / `qwen3_5_text`, hybrid
+(linear_attention + full_attention, 64 layers), fp8 blockwise `[128, 128]`. TP=1, GB10 sm_121.
+Config: `--enable-prefix-caching --mamba-cache-mode align`, `extract_hidden_states` k=1 with
+`eagle_aux_hidden_state_layer_ids=[32]`, `ExampleHiddenStatesConnector` as `kv_producer`.
+
+**Both lines reproduce, identical to their 0.28.0 output:**
+
+```
+Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+Using block size 200 for hidden-state cache layer cache_only_layers.64; page alignment wastes 1228800 bytes (37.50%) per block
+```
+
+Same 800/200 split, same 1,228,800 bytes, same 37.50 %. Server booted and served. So the divergence
+**persisted past 0.28.0 through 2026-09-08**; it was not fixed in that window.
+
+**WITHDRAWN: job 30's conclusion.** We recorded "#54076's heterogeneous geometry is NOT reachable on
+dev524" and withdrew the arm on 09-17 on that basis. It **is** reachable on dev524. Job 30 tried to
+force it with an explicit `--block-size`, which `interface.py:931` floors (816 -> 1568) and `:957`
+equalizes — that path genuinely cannot produce it. The hidden-state cache layer reaches it by a
+different route entirely: `cache_only_layers.64` is sized at 200 against the mamba page at 800. The
+finding was true of the path we probed and false as the general claim we wrote down.
+
+**Config spelling differs between builds, and that is itself evidence of the gap.** On dev524
+`eagle_aux_hidden_state_layer_ids` is **not** a `SpeculativeConfig` keyword — it is read off the
+draft model's `hf_config` (`config/speculative.py:627`). The working form here is:
+
+```
+--speculative-config '{"method":"extract_hidden_states","num_speculative_tokens":1,
+  "draft_model_config":{"hf_config":{"eagle_aux_hidden_state_layer_ids":[32]}}}'
+```
+
+Resolved in three ~30 s offline rounds (`SpeculativeConfig(target_model_config=..., target_parallel_config=...)`,
+reading `aux_layer_ids` back) rather than by 11-minute server starts. Note the intermediate
+`AttributeError: 'NoneType' has no attribute ...` failures were the *harness* missing a config
+object, not the spelling being rejected — a pydantic `ValidationError` is the real rejection signal.
+
+**What this does NOT answer:** whether main still has it. That needs a build at/near main, which on
+this box means a nightly wheel in its own venv (no source builds — [[gb10-source-build-oom]]; and a
+*fresh* venv breaks torch `+cu130`, so it must be cloned — [[vllm-026-cutover]]).
+
+**Unexplained, not quoted upstream:** the log carries two weight-load timings, `227.33 seconds` and
+`203577.82 seconds` (56.5 h). The second is nonsense — probably an unset start time on the
+extraction draft's no-op load. Neither number goes in a post until it is understood.
+
