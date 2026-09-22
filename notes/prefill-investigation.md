@@ -2620,3 +2620,41 @@ DeepGEMM at an 8 % speed cost. The upstream defect reported in PR #58157 stands 
 people's models take this path silently and may be paying accuracy for it, whether or not it is
 also slower for them.
 
+## Finding 207 — the UE8M0 requant moves our blockwise-FP8 weights 2.6 %, uniformly (2026-09-22)
+
+Measures what finding 205 argued. Baseline is what CUTLASS actually consumes — the checkpoint's FP8
+weights with their float32 block scales. The DeepGEMM path consumes the same weights after
+`requant_weight_ue8m0_inplace`. The divergence between the two *dequantized* tensors is the added
+error, and needs no eval harness. Tool: `tools/ue8m0_cost.py`, raw:
+`notes/data/ue8m0-requant-cost.txt`. CPU-only, 40 of the 157 `FP8_PB_WO` tensors.
+
+| metric | mean | min | max |
+|---|---|---|---|
+| relative Frobenius error | **0.02645** | 0.02575 | 0.02715 |
+| `1 - cos` | 3.50e-04 | — | 3.686e-04 |
+
+Sampled across 7 families (`linear_attn.{in_proj_qkv,in_proj_z,out_proj}`,
+`self_attn.{q,k,v,o}_proj`) and shapes from `(512, 2560)` to `(12288, 2560)`.
+
+**2.6 % +/- 0.07 %, flat across family and shape.** That tightness is the result: the perturbation is
+a systematic property of the format — ceiling every block scale to a power of two, then round to
+e4m3 a second time — not something data or shape dependent that a lucky checkpoint escapes. It is
+applied to **all 157** blockwise layers.
+
+**Scale of it.** 2.6 % is roughly what one e4m3 rounding costs, so the double quantization adds
+approximately a second full rounding's worth of weight error on top of the one the checkpoint
+already baked in. That is a much larger statement than "0.4-0.5 bits of scale precision" suggests,
+and it is consistent with #37804's -12pp GSM8K once compounded over ~80 layers (we have 157).
+
+**What this does NOT establish:** an end-task accuracy number for this model. Weight divergence is
+not task loss — [[lower-nll-can-be-softening]] is the standing warning against reading one for the
+other. It bounds and explains, it does not measure. Our own lever is closed regardless on speed
+(finding 206), so no eval is planned.
+
+**Method note.** The blockwise scales are named `weight_scale_inv`, not `weight_scale` — DeepSeek's
+naming, which also corroborates the argument in PR #58157 that a scheme-keyed *auto-disable* would
+catch DeepSeek FP8 checkpoints. The first run of the tool silently sampled zero tensors because it
+looked for `weight_scale`; it printed a clean header and an empty table, which is exactly the
+"guard that passes on empty output" failure ([[verify-guards-on-empty-output]]) — the layer count
+line was what exposed it.
+

@@ -1,0 +1,47 @@
+FP8_PB_WO layers in checkpoint: 157; sampling 40
+  model.language_model.layers.0.linear_attn.in_proj_qkv      (10240, 2560)    rel_fro=0.02624  1-cos=3.453e-04
+  model.language_model.layers.0.linear_attn.in_proj_z        (6144, 2560)     rel_fro=0.02662  1-cos=3.543e-04
+  model.language_model.layers.0.linear_attn.out_proj         (2560, 6144)     rel_fro=0.02622  1-cos=3.436e-04
+  model.language_model.layers.1.linear_attn.in_proj_qkv      (10240, 2560)    rel_fro=0.02622  1-cos=3.446e-04
+  model.language_model.layers.1.linear_attn.in_proj_z        (6144, 2560)     rel_fro=0.02670  1-cos=3.565e-04
+  model.language_model.layers.1.linear_attn.out_proj         (2560, 6144)     rel_fro=0.02633  1-cos=3.463e-04
+  model.language_model.layers.10.linear_attn.in_proj_qkv     (10240, 2560)    rel_fro=0.02653  1-cos=3.528e-04
+  model.language_model.layers.10.linear_attn.in_proj_z       (6144, 2560)     rel_fro=0.02653  1-cos=3.515e-04
+  model.language_model.layers.10.linear_attn.out_proj        (2560, 6144)     rel_fro=0.02682  1-cos=3.598e-04
+  model.language_model.layers.11.self_attn.k_proj            (512, 2560)      rel_fro=0.02581  1-cos=3.321e-04
+  model.language_model.layers.11.self_attn.o_proj            (2560, 6144)     rel_fro=0.02647  1-cos=3.508e-04
+  model.language_model.layers.11.self_attn.q_proj            (12288, 2560)    rel_fro=0.02650  1-cos=3.518e-04
+  model.language_model.layers.11.self_attn.v_proj            (512, 2560)      rel_fro=0.02575  1-cos=3.315e-04
+  model.language_model.layers.12.linear_attn.in_proj_qkv     (10240, 2560)    rel_fro=0.02646  1-cos=3.508e-04
+  model.language_model.layers.12.linear_attn.in_proj_z       (6144, 2560)     rel_fro=0.02663  1-cos=3.543e-04
+  model.language_model.layers.12.linear_attn.out_proj        (2560, 6144)     rel_fro=0.02641  1-cos=3.486e-04
+  model.language_model.layers.13.linear_attn.in_proj_qkv     (10240, 2560)    rel_fro=0.02615  1-cos=3.428e-04
+  model.language_model.layers.13.linear_attn.in_proj_z       (6144, 2560)     rel_fro=0.02633  1-cos=3.464e-04
+  model.language_model.layers.13.linear_attn.out_proj        (2560, 6144)     rel_fro=0.02608  1-cos=3.401e-04
+  model.language_model.layers.14.linear_attn.in_proj_qkv     (10240, 2560)    rel_fro=0.02642  1-cos=3.493e-04
+  model.language_model.layers.14.linear_attn.in_proj_z       (6144, 2560)     rel_fro=0.02634  1-cos=3.463e-04
+  model.language_model.layers.14.linear_attn.out_proj        (2560, 6144)     rel_fro=0.02624  1-cos=3.442e-04
+  model.language_model.layers.15.self_attn.k_proj            (512, 2560)      rel_fro=0.02700  1-cos=3.645e-04
+  model.language_model.layers.15.self_attn.o_proj            (2560, 6144)     rel_fro=0.02648  1-cos=3.510e-04
+  model.language_model.layers.15.self_attn.q_proj            (12288, 2560)    rel_fro=0.02645  1-cos=3.510e-04
+  model.language_model.layers.15.self_attn.v_proj            (512, 2560)      rel_fro=0.02618  1-cos=3.417e-04
+  model.language_model.layers.16.linear_attn.in_proj_qkv     (10240, 2560)    rel_fro=0.02644  1-cos=3.497e-04
+  model.language_model.layers.16.linear_attn.in_proj_z       (6144, 2560)     rel_fro=0.02636  1-cos=3.473e-04
+  model.language_model.layers.16.linear_attn.out_proj        (2560, 6144)     rel_fro=0.02631  1-cos=3.461e-04
+  model.language_model.layers.17.linear_attn.in_proj_qkv     (10240, 2560)    rel_fro=0.02651  1-cos=3.516e-04
+  model.language_model.layers.17.linear_attn.in_proj_z       (6144, 2560)     rel_fro=0.02665  1-cos=3.547e-04
+  model.language_model.layers.17.linear_attn.out_proj        (2560, 6144)     rel_fro=0.02624  1-cos=3.442e-04
+  model.language_model.layers.18.linear_attn.in_proj_qkv     (10240, 2560)    rel_fro=0.02635  1-cos=3.469e-04
+  model.language_model.layers.18.linear_attn.in_proj_z       (6144, 2560)     rel_fro=0.02652  1-cos=3.513e-04
+  model.language_model.layers.18.linear_attn.out_proj        (2560, 6144)     rel_fro=0.02661  1-cos=3.539e-04
+  model.language_model.layers.19.self_attn.k_proj            (512, 2560)      rel_fro=0.02712  1-cos=3.664e-04
+  model.language_model.layers.19.self_attn.o_proj            (2560, 6144)     rel_fro=0.02647  1-cos=3.510e-04
+  model.language_model.layers.19.self_attn.q_proj            (12288, 2560)    rel_fro=0.02681  1-cos=3.604e-04
+  model.language_model.layers.19.self_attn.v_proj            (512, 2560)      rel_fro=0.02715  1-cos=3.686e-04
+  model.language_model.layers.2.linear_attn.in_proj_qkv      (10240, 2560)    rel_fro=0.02661  1-cos=3.544e-04
+
+sampled 40 layers
+  rel_fro   mean=0.02645  min=0.02575  max=0.02715
+  1-cos     mean=3.500e-04  max=3.686e-04
+
+reference: NVFP4 weights sit 4.5x further from BF16 than FP8 (memory nvfp4-quantization-cost-measured) -- compare against that scale.
