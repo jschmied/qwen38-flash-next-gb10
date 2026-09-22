@@ -1274,3 +1274,13 @@ wait on one ~100 GB pull, and they share one serve.
     task-accuracy claim; plus the aside that DeepGEMM is ~8 % slower here (finding 206). Findings
     206/207. <https://github.com/vllm-project/vllm/pull/58157#issuecomment-5778436798>
 
+- **2026-09-22 — vllm#54076 comment.** RETRACTS our 2026-09-20 "it cannot be produced on this build".
+  MaCoredroid's hidden-state-extraction config reproduces the heterogeneous geometry on the *same*
+  dev524 build: attention block 800, hidden-state cache layer 200, 1,228,800 bytes wasted (37.50 %),
+  identical to their 0.28.0 excerpt. Explains why our negative was wrong (we forced `--block-size` on
+  a different model; that route really is floored+equalized, but it is not the only route). Flags the
+  777-commit gap so it is not read as a main result, and gives the working `--speculative-config`
+  spelling (aux ids live in `draft_model_config.hf_config`, not as a top-level kwarg — true on main
+  too). Finding 208/209. Draft: `notes/upstream/54076-geometry-reproduced.md`.
+  <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5779194753>
+
