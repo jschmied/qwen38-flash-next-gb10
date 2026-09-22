@@ -2309,3 +2309,33 @@ capture `[1,2,4,5,8,10]` vs stock) isolates this.
 (38.79 / 38.80) while the slice arms spread 2.2%; at n=3 both spread 0.1-0.3%. Whatever drives the
 MTP restart instability, it is not depth alone.
 
+## Finding 200 — cudagraph capture width at n=4: NOT established (2026-09-22)
+
+`armrun` spec `mtp4-capture`, 2 arms x 2 starts, exit 0. n=4 and the 32k slice held fixed; the ONLY
+variable is `FN_CG_SIZES`. Raw: `notes/data/mtp4-capture.txt`.
+
+| arm | start 0 | start 1 | range | spread |
+|---|---|---|---|---|
+| `[1,2,4,5,8,10]` (width 5 captured) | 42.38 | 42.32 | [42.32, 42.38] | 0.1% |
+| `[1,2,4,8]` (stock, width 5 absent) | **40.69** | **42.24** | [40.69, 42.24] | **3.8%** |
+
+Sign holds 2/2 and the ranges are disjoint — **by 0.08 tok/s**. But round 0 shows +4.2% and round 1
+shows **+0.2%**, and the stock arm's own spread (3.8%) is nearly double the mean effect (2.1%).
+**Direction supported, magnitude not. Needs >=3 starts.** Same shape as finding 194's withdrawn
++7.2%: one low start driving an apparent effect.
+
+Acceptance is identical in all four arms (2.980), as it must be — the capture set cannot change what
+the drafter proposes. That is a useful internal control: it confirms the arms differ only in the
+intended variable.
+
+**What is solid regardless of the tok/s question:** the stock capture set is mistuned for MTP.
+Single-stream decode width is `1+n`, so widths **1 and 2 are unreachable** under any MTP depth, and
+**width 5 (n=4) is absent**. Two of four captured sizes are dead weight. For `SEQS>1` the reachable
+widths are `(1+n) x seqs`, so a concurrent deployment at n=3 wants `[4,8,12,16,20,24]` — none of
+which, above 8, we currently capture.
+
+**Correction to an interim claim made during this run:** I read `cg_w5`'s 42.38 against the PREVIOUS
+run's stock numbers and said the capture set "changes nothing", then read round 0's in-run control
+and said "+4.2%". Both were premature; the first was a cross-run comparison of the exact kind that
+produced finding 195's withdrawn KV figure.
+

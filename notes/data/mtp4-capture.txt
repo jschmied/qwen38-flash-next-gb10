@@ -1,0 +1,29 @@
+== armrun mtp4-capture: 2 arms x 2 start(s), port 8092 ==
+-- mtp4-capture-cg_w50  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt', 'FN_CG_SIZES': '[1,2,4,5,8,10]'}
+Running as unit: fx-armrun-mtp4-capture.service; invocation ID: 3eee367496e7414e84759c9bd15d1cee
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 41.62, "tok_s": 42.38, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 594.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2376.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1176.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1176.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 594.0, "draft_tokens": 2376.0, "accepted": 1176.0, "acceptance_rate": 0.4949, "acceptance_length": 2.98, "spec_n": 4.0}
+-- mtp4-capture-cg_stock0  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-mtp4-capture.service; invocation ID: b55b4eea5c27484691e4cf544d0964f3
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 43.36, "tok_s": 40.69, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 594.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2376.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1176.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1176.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 594.0, "draft_tokens": 2376.0, "accepted": 1176.0, "acceptance_rate": 0.4949, "acceptance_length": 2.98, "spec_n": 4.0}
+-- mtp4-capture-cg_w51  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt', 'FN_CG_SIZES': '[1,2,4,5,8,10]'}
+Running as unit: fx-armrun-mtp4-capture.service; invocation ID: b011d5a756254397ac73c6de0381d214
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 41.68, "tok_s": 42.32, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 594.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2376.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1176.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1176.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 594.0, "draft_tokens": 2376.0, "accepted": 1176.0, "acceptance_rate": 0.4949, "acceptance_length": 2.98, "spec_n": 4.0}
+-- mtp4-capture-cg_stock1  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-mtp4-capture.service; invocation ID: 9f59245864394869adff205662d43e2a
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 41.76, "tok_s": 42.24, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 594.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 2376.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1176.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1176.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 594.0, "draft_tokens": 2376.0, "accepted": 1176.0, "acceptance_rate": 0.4949, "acceptance_length": 2.98, "spec_n": 4.0}
+
+== RESULT ==
+  cg_w5        requests 12  completion_tokens 1764  seconds 41.62–41.68  tok_s 42.32–42.38  m_spec_decode_num_drafts_total 594.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 2376.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1176.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1176.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 594.0  draft_tokens 2376.0  accepted 1176.0  acceptance_rate 0.4949  acceptance_length 2.98  spec_n 4.0  start 0–1
+  cg_stock     requests 12  completion_tokens 1764  seconds 41.76–43.36  tok_s 40.69–42.24  m_spec_decode_num_drafts_total 594.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 2376.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1176.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1176.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 594.0  draft_tokens 2376.0  accepted 1176.0  acceptance_rate 0.4949  acceptance_length 2.98  spec_n 4.0  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0
+=== KV pool per arm (pin removed, so this IS comparable) ===
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+KVGAIN COMPLETE 2026-09-22T12:07:36+02:00
+prod restarting
