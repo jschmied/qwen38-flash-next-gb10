@@ -1269,4 +1269,8 @@ wait on one ~100 GB pull, and they share one serve.
   (DeepSeek ships fp32 `weight_scale_inv` and is DeepGEMM's target). Draft:
   `notes/upstream/deepgemm-e8m0-requant-warning.md`.
   <https://github.com/vllm-project/vllm/pull/58157>
+  - **comment 2026-09-22** — measured requant cost on our checkpoint: rel-Frobenius 0.02645
+    (40 of 157 tensors, flat across 7 families), framed explicitly as weight divergence and NOT a
+    task-accuracy claim; plus the aside that DeepGEMM is ~8 % slower here (finding 206). Findings
+    206/207. <https://github.com/vllm-project/vllm/pull/58157#issuecomment-5778436798>
 
