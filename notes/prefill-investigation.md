@@ -2452,3 +2452,41 @@ tractable route.
 **Verification is free:** staging changes no kernels, so a correct implementation must still emit
 exactly **1764** completion tokens and acceptance 2.780. Any other value is a correctness bug.
 
+## Finding 203 — withdraws finding 202's mechanism: the eager breaks are already no-ops on decode (2026-09-22)
+
+Finding 202's **measurement stands** (FDO null, `fdo [43.01,43.04]` vs `piecewise [42.57,43.06]`).
+Its **explanation is wrong**, and the fix it scoped is aimed at nothing. Two source facts, neither
+of which needs the GPU:
+
+1. `CUDAGraphMode.FULL_DECODE_ONLY = (FULL, NONE)` and `decode_mode()` returns `CUDAGraphMode(self.value[0])`
+   — a uniform decode batch dispatches runtime mode **FULL** (`config/compilation.py`).
+2. `eager_break_during_capture`'s wrapper opens with
+   `if mode == CUDAGraphMode.FULL: return fn(*args, **kwargs)`, and the decorator itself returns `fn`
+   unwrapped when `VLLM_USE_BREAKABLE_CUDAGRAPH` is off (`compilation/breakable_cudagraph.py`).
+
+So on a decode step under FDO **the two `@eager_break_during_capture` sites do not break at all.**
+They cannot be what prevents full decode capture, and "remove the per-request metadata dependency at
+`ple_layer.py:1243` / `qsa.py:355`" does not unlock a graph. vllm#54361 states the same contract for
+Qwen GDN: *"The wrapper does not introduce an eager break in FULL mode."* Withdrawn.
+
+**And the question was already closed.** det-136 ran this A/B — PIECEWISE vs FULL_AND_PIECEWISE vs
+FULL_DECODE_ONLY, all three equal (`results/cg.txt`) — and attributed the 46 % c=1 idle to
+**profiler overhead**, not to graph fragmentation. Finding 202 spent two engine starts re-deriving
+it. The rule in `check-field-before-expensive-steps` says to check our own record first; I checked
+upstream PRs and not det-136.
+
+**What was genuinely learned**, and is not in det-136: the short-conv backend is *already* fully
+built for uniform-batch capture and nothing uses it. `PleShortConvAttentionMetadataBuilder` declares
+`_cudagraph_support = AttentionCGSupport.UNIFORM_BATCH` (`short_conv_attn.py:108`), allocates
+persistent buffers at init (:138-151), and under `use_full_cuda_graph and num_prefills == 0 and
+num_decodes == 0` copies the spec tensors into them and pads the tail rows — `NULL_BLOCK_ID` for
+`spec_state_indices_tensor`, `fill_(1)` for `num_accepted_tokens` (:449-487). Those padded rows are
+**dead code**: `ple_layer.py` re-narrows with `spec_state_indices_tensor[:metadata.num_spec_decodes]`,
+so nothing ever reads them. That is a real latent inconsistency in the backend, worth a note upstream
+independent of whether it buys throughput — but it is not our decode lever.
+
+**Redirect.** det-136's own ranking of decode levers stands, and cudagraph mode is now measured null
+twice. The largest remaining kernel-level waste it names is the **small-M blockwise-FP8 dense GEMM:
+32 % of kernel time at ~2.5x its byte floor at M=4**, then the BF16 leftovers at 16.5 % (shared
+expert, hc low-rank, router, MTP dense). That is the next fix target, not staged PLE.
+
