@@ -2534,3 +2534,53 @@ exception is only in the `(Worker pid=...)` lines. Same signature as an OOM-kill
 (`flashnext-baremetal-prereqs`), and I nearly attributed it there; the worker traceback is what
 separates the two. Grep the worker lines, never the EngineCore wrapper.
 
+## Finding 205 — `requant_weight_ue8m0_inplace` is correct but lossy; the DeepGEMM route is quality-blocked (2026-09-22)
+
+**Is the function broken?** No. Read end to end:
+
+- It dequantizes with the old fp32 scales and genuinely **re-quantizes** via
+  `per_block_cast_to_fp8(..., use_ue8m0=True)` — it does not merely rewrite the scales, which would
+  rescale every weight by up to 2x and be catastrophic.
+- `_ceil_to_ue8m0(x) = 2**ceil(log2(|x|))` is a true **ceiling**, so `sf_new >= sf_old` and nothing
+  can saturate. Rounding direction is right.
+- No upstream issue reports the function as wrong.
+
+**But the loss is larger than "0.4-0.5 bits" implies**, for two compounding reasons:
+
+1. FP8 e4m3 carries **3 mantissa bits**. A power-of-two scale maps a block's amax into
+   `[0.5, 1.0] x fp8_max` instead of onto `1.0`, forfeiting ~half a bit of ~4 effective — a 10-25 %
+   relative precision loss on every weight.
+2. For an already-FP8 checkpoint like ours it is a **double quantization**: BF16 -> FP8 (fp32
+   scales) at build time, then dequant -> FP8 (UE8M0) at load. Two roundings stacked. A checkpoint
+   quantized to UE8M0 *directly from BF16* would beat anything this load-time path can produce.
+
+**Upstream evidence (vllm#37804, closed 2026-03-26, Qwen3.5-35B-A3B-FP8 / B200, GSM8K, 3 runs):**
+
+| config | dense FP8 kernel | mean | verdict |
+|---|---|---|---|
+| DeepGEMM off | CUTLASS block FP8 | **0.8122** | PASS 3/3 |
+| DG on, default | hybrid (M<32 swapAB) | 0.6917 | FAIL 3/3 |
+| DG on, always `fp8_gemm_nt` | DeepGEMM only | 0.7048 | FAIL 3/3 |
+| DG on, always swapAB | FlashInfer only | 0.7000 | FAIL 3/3 |
+
+**Both kernels fail identically** — the signature of damage in the shared weight prep, not in either
+GEMM. The issue was closed by adding the model-type denylist (`should_auto_disable_deep_gemm`),
+i.e. **avoidance, not repair**. `_DEEPGEMM_BLACKWELL_EXCLUDED_MODEL_TYPES` = {`qwen3_5_text`,
+`qwen3_5_moe_text`}; our `qwen4_exp_text` is absent because nobody evaluated it, not because it was
+cleared. And per #57512 the 120 family has **no working float32-scale path**, so on GB10 there is no
+"DeepGEMM without E8M0" to retreat to.
+
+Also open and on our exact hardware: **#50332** (GB10 sm_121 + SM120, still in v0.28.0) — the
+denylist does not reach the FP8 MoE path at all; its fix #47258 has sat open since 2026-08-19. Our
+MoE is NVFP4 so that specific gap misses us, but the area is unmaintained rather than settled.
+
+**Verdict: the route is quality-blocked, not quality-unknown.** The A/B in flight measures speed
+only. Its value is as a **bound**: it prices what an E8M0-free small-M blockwise-FP8 path would be
+worth, which is the thing to chase if the number is large.
+
+**QUEUED (needs the GPU idle — a tensor job contends for unified-memory bandwidth and would skew a
+live A/B, `gb10-quant-speed-q8-vs-q5`):** run `requant_weight_ue8m0_inplace` over real `FP8_PB_WO`
+tensors from our checkpoint and measure relative error vs the original dequantized weights. That
+converts "~11 GSM8K points on a sibling model" into a number for *this* one. Unverified aside noticed
+on the way: `x_amax.clamp(1e-4)` inflates the scale for blocks whose true amax is below 1e-4.
+
