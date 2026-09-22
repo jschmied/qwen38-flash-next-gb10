@@ -2688,9 +2688,14 @@ equalizes — that path genuinely cannot produce it. The hidden-state cache laye
 different route entirely: `cache_only_layers.64` is sized at 200 against the mamba page at 800. The
 finding was true of the path we probed and false as the general claim we wrote down.
 
-**Config spelling differs between builds, and that is itself evidence of the gap.** On dev524
-`eagle_aux_hidden_state_layer_ids` is **not** a `SpeculativeConfig` keyword — it is read off the
-draft model's `hf_config` (`config/speculative.py:627`). The working form here is:
+**Config spelling.** On dev524 `eagle_aux_hidden_state_layer_ids` is **not** a `SpeculativeConfig`
+keyword — it is read off the draft model's `hf_config` (`config/speculative.py:627`). The working
+form here is:
+
+> **CORRECTED by finding 209:** I first read this as "the API moved after 2026-09-08". It did not.
+> Current main (`1ea7c63f4`) reads the ids from `draft_model_config.hf_config` exactly as dev524
+> does (`config/speculative.py:638`). MaCoredroid's `eagle_aux_hidden_state_layer_ids=[32]` was
+> descriptive prose, not a literal CLI flag, and the spelling is **not** evidence of a build gap.
 
 ```
 --speculative-config '{"method":"extract_hidden_states","num_speculative_tokens":1,
@@ -2709,4 +2714,45 @@ this box means a nightly wheel in its own venv (no source builds — [[gb10-sour
 **Unexplained, not quoted upstream:** the log carries two weight-load timings, `227.33 seconds` and
 `203577.82 seconds` (56.5 h). The second is nonsense — probably an unset start time on the
 extraction draft's no-op load. Neither number goes in a post until it is understood.
+
+## Finding 209 — current-main nightly retires NOTHING of our overlay (2026-09-22)
+
+Pulled `vllm-0.29.1rc1.dev533+g1ea7c63f4-cp38-abi3-manylinux_2_28_aarch64.whl` (301 MB, 14 s).
+`1ea7c63f4` **is** the upstream/main HEAD of 2026-09-22, so this is a true current-main build.
+Audited by **extracting the wheel and diffing** — no venv, no install, so no risk to prod and none
+of the `+cu130` / shebang traps ([[vllm-026-cutover]], [[venv-copy-shebang-trap]]).
+
+Wheels live at `https://wheels.vllm.ai/<full-40-char-sha>/<file>` — **not** under
+`/nightly/vllm/`, which only serves an HTML listing of relative links; fetching the listed name
+directly returns a 281-byte `NoSuchKey` XML that `curl -sSL -o` happily saves *as* the .whl.
+
+**Retirement audit of `tools/main/fnmain-overlay-dev524.diff` (17 files):**
+
+| overlay piece | added lines | present in main | verdict |
+|---|---:|---:|---|
+| `v1/ple_offload/{__init__,connector,protocol,worker}.py` | 578 | — | **file absent** |
+| `model_executor/layers/ple_offload_layer.py` | 136 | — | **file absent** |
+| `models/qwen4_exp/nvidia/ple_layer.py` | 292 | 14 (5 %) | still ours |
+| `v1/worker/gpu_worker.py` | 77 | 8 (10 %) | still ours |
+| `v1/worker/gpu/model_runner.py` | 26 | 1 (4 %) | still ours |
+| `vocab_parallel_embedding.py` | 10 | 3 (30 %) | still ours |
+| `envs.py`, `config/parallel.py`, `{multi,uni}proc_executor.py`, `model.py`, `mtp.py`, `weight_utils.py` | 25 | 0 | still ours |
+
+**Nothing is retired.** The partial hits are incidental (imports, signatures), not our logic. The
+whole overlay is the **#53899 PLE-offload backport**, still unmerged, so a nightly upgrade costs the
+full re-port and gives back nothing. Main *does* ship `models/qwen4_exp`; it does not ship the
+offload.
+
+**Also checked on main, all verified against the extracted wheel:**
+
+- **`_DEEPGEMM_BLACKWELL_EXCLUDED_MODEL_TYPES` is still exactly `{"qwen3_5_text", "qwen3_5_moe_text"}`.**
+  Unchanged on current main — so PR #58157's premise holds against main, not merely against our
+  build. Our `qwen4_exp_text` is still uncovered.
+- **#57512 is not merged**: `should_use_deepgemm_for_fp8_linear` on main still tests only dtype and
+  N/K multiples, never the scale format. The float32-scales-on-SM12x hazard is live upstream.
+- **#57946 (ours) is not merged** — no padding-sentinel mask in `flashinfer_b12x_moe.py`.
+- **#55122 (ours) is not merged** — no `persistent_topk`.
+
+**Consequence:** the upgrade calculus is unchanged. We stay on dev524 until #53899 lands; there is
+no longer any need to re-ask "has main caught up" — it has not, on any axis we depend on.
 
