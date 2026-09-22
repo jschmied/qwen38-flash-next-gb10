@@ -1,0 +1,28 @@
+== armrun fdo-retest: 2 arms x 2 start(s), port 8092 ==
+-- fdo-retest-fdo0  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt', 'FN_CG_MODE': 'FULL_DECODE_ONLY'}
+Running as unit: fx-armrun-fdo-retest.service; invocation ID: a65f809a7bb444e6959fd62412c31947
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 40.98, "tok_s": 43.04, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 636.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1908.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1132.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1132.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 636.0, "draft_tokens": 1908.0, "accepted": 1132.0, "acceptance_rate": 0.5933, "acceptance_length": 2.78, "spec_n": 3.0}
+-- fdo-retest-piecewise0  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-fdo-retest.service; invocation ID: dfd64c4884434059aa9197a45ae990b1
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 41.44, "tok_s": 42.57, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 636.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1908.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1132.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1132.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 636.0, "draft_tokens": 1908.0, "accepted": 1132.0, "acceptance_rate": 0.5933, "acceptance_length": 2.78, "spec_n": 3.0}
+-- fdo-retest-fdo1  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt', 'FN_CG_MODE': 'FULL_DECODE_ONLY'}
+Running as unit: fx-armrun-fdo-retest.service; invocation ID: e0d4b56b0f1a4209a1484d7b19e4211e
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 41.01, "tok_s": 43.01, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 636.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1908.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1132.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1132.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 636.0, "draft_tokens": 1908.0, "accepted": 1132.0, "acceptance_rate": 0.5933, "acceptance_length": 2.78, "spec_n": 3.0}
+-- fdo-retest-piecewise1  env={'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-fdo-retest.service; invocation ID: 30fe11a2376948ca85edbf1217da5cf7
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 40.97, "tok_s": 43.06, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 636.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1908.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1132.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1132.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 636.0, "draft_tokens": 1908.0, "accepted": 1132.0, "acceptance_rate": 0.5933, "acceptance_length": 2.78, "spec_n": 3.0}
+
+== RESULT ==
+  fdo          requests 12  completion_tokens 1764  seconds 40.98–41.01  tok_s 43.01–43.04  m_spec_decode_num_drafts_total 636.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 1908.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1132.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1132.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 636.0  draft_tokens 1908.0  accepted 1132.0  acceptance_rate 0.5933  acceptance_length 2.78  spec_n 3.0  start 0–1
+  piecewise    requests 12  completion_tokens 1764  seconds 40.97–41.44  tok_s 42.57–43.06  m_spec_decode_num_drafts_total 636.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 1908.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1132.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1132.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 636.0  draft_tokens 1908.0  accepted 1132.0  acceptance_rate 0.5933  acceptance_length 2.78  spec_n 3.0  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0
+=== KV pool per arm (pin removed, so this IS comparable) ===
+    model_tag': '/opt/llm/models/qwen38-flash-next-fp8head'
+KVGAIN COMPLETE 2026-09-22T15:01:46+02:00
+prod restarting

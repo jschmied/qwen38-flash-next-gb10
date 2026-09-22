@@ -2406,3 +2406,49 @@ principle as `acceptance-is-not-quality` ("+-10 pp from a 1-ulp kernel change"),
 so a correct implementation must still emit **1764**. A different token count is a correctness bug,
 not an optimisation.
 
+## Finding 202 — FULL_DECODE_ONLY is still null on dev524: no env shortcut to the staged-PLE fix (2026-09-22)
+
+Finding 161 measured this null on dev401, where the PLE was a `splitting_ops` partition. That
+mechanism is gone (finding 201), so the flag was worth re-testing on the new one.
+
+`armrun` spec `fdo-retest`, 2 arms x 2 starts, exit 0. NVFP4 drafter + 32k slice, n=3; only
+`FN_CG_MODE` differs. Raw: `notes/data/fdo-retest.txt`.
+
+| arm | r0 | r1 | range | tokens | accept len |
+|---|---|---|---|---|---|
+| FULL_DECODE_ONLY | 43.04 | 43.01 | [43.01, 43.04] | 1764 | 2.780 |
+| PIECEWISE | 42.57 | 43.06 | [42.57, 43.06] | 1764 | 2.780 |
+
+**Null.** Sign holds in only one round and the ranges overlap. Output and acceptance are identical,
+as a graph-mode change must leave them — the 1764 invariant held.
+
+**The mode reaches the engine.** `cudagraph_mode': <CUDAGraphMode.FULL_DECODE_ONLY: (2, 0)>` in both
+processes, no silent fallback. And `has_full_cudagraphs()` is therefore true, which is the gate on
+the short-conv backend's own capture path (`short_conv_attn.py:122`), whose class already declares
+`_cudagraph_support = AttentionCGSupport.UNIFORM_BATCH` (:108). Yet no capture-path activity appears
+in the log, and `CompilationMode` stays `NONE` because breakable cudagraph is auto-enabled.
+
+**So the conclusion survives the mechanism change: there is no env shortcut.** The
+`@eager_break_during_capture` sites fragment the decode segment regardless of `cudagraph_mode`, by
+construction — the decorator ends the segment, runs eagerly, and starts a new one. The uniform-batch
+support the backend advertises cannot engage while those breaks remain.
+
+**The fix is therefore pinned to two lines**, and it is a metadata change, not a memory-placement
+one:
+
+| file:line | dependency to remove |
+|---|---|
+| `qwen4_exp/nvidia/ple_layer.py:1243` `_short_conv` | `get_forward_context().attn_metadata[self.prefix]` -> `PleShortConvAttentionMetadata` |
+| `qwen4_exp/nvidia/qsa.py:355` | same decorator |
+
+`PleShortConvAttentionMetadata` splits cleanly into (a) **Python scalars** — `num_spec_decodes`,
+`num_spec_decode_tokens`, `num_actual_tokens`, `spec_query_len`, `max_prefill_query_len` — which a
+captured graph cannot re-read, and (b) **device tensors** — `query_start_loc`,
+`state_indices_tensor`, `has_initial_states_d`, `non_spec_query_start_loc` — which can sit at fixed
+addresses. For a *uniform decode batch* the scalars are constant per capture width
+(`spec_query_len == 1+n`, `num_actual_tokens == width`), so specialising per captured size is the
+tractable route.
+
+**Verification is free:** staging changes no kernels, so a correct implementation must still emit
+exactly **1764** completion tokens and acceptance 2.780. Any other value is a correctness bug.
+
