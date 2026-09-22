@@ -162,6 +162,25 @@ Rewritten 2026-08-31, then appended to per working day. **The sections are chron
 oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
 as archaeology unless it is cross-referenced from here.**
 
+## QUEUED — shapebench the hyper-connection shapes (needs prod DOWN)
+
+`tools/shapebench.py` is the check finding 213 calls for: does FP8 `_scaled_mm` actually beat cuBLAS
+BF16 at `(10240, 320)` / `(336, 10240)` at M=1..8, with a control shape FP8 is known to help. Two
+minutes of GPU, **but it cannot run beside a live prod.**
+
+**Attempted 2026-09-22, OOM'd.** `MemAvailable` read 5.4 GiB and the tool's peak is ~1.5 GB, so I
+ran it — and it failed on the first `torch.randn`. **`MemAvailable` is not a proxy for
+GPU-allocatable memory when vLLM holds a `gpu_memory_utilization=0.90` reservation**: on unified
+memory the host sees free pages a second CUDA context cannot obtain. The failure was clean (Python
+exception, MemAvailable 5.4 → 5.1, no reset), but the guard was measuring the wrong quantity.
+
+**Do not shrink the working set to make it fit.** The ~300 MB rotation exists to defeat L2; the
+tool's own docstring notes that anything faster than roofline is timing cache. A smaller run would
+produce a confident number that is false.
+
+**Run it in the next prod-down window**, before any quantization work on these shapes. Expectation
+from 213: FP8 loses here, because the shape is padded specifically for cuBLAS BF16 heuristics.
+
 ## FIELD READ 2026-09-22 — the EXL3 GB10 recipe: what transfers and what does not
 
 Source is an **EXL3 (ExLlamaV3)** recipe, a different engine, so every percentage in it is relative
