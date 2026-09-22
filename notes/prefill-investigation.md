@@ -2933,3 +2933,42 @@ and the standing rule "verify the lever at the shape level before building"). No
 `single-stream-limit.md:356` already records a **2.20x** kernel win available at `(320, 10240)` M=1
 that is a *kernel* optimisation, not a quantization one — that is the likelier route.
 
+## Finding 214 — shapebench: FP8 wins one hyper-connection GEMM and loses the other; they cancel (2026-09-22, overnight job 10)
+
+Ran `tools/shapebench.py` with the box to itself. Raw: `notes/data/shapebench-hc.txt`. Every row
+flagged `cache-lie? no` (measured time above the BF16 roofline), and the control behaves, so the
+instrument is sound.
+
+| shape | M=1 | M=2 | M=4 | M=8 | bf16 roofline |
+|---|---|---|---|---|---|
+| hyper-connection **UP** `(10240, 320)` | **1.21x** | 1.23x | 1.31x | 1.08x | 24.0 us |
+| hyper-connection **DOWN** `(336, 10240)` | **0.93x** | 0.83x | 0.87x | 0.87x | 25.2 us |
+| GDN `in_proj` `(10240, 2560)` — control | 2.47x | 1.85x | 1.85x | 1.81x | 192.0 us |
+
+**Finding 213's verdict survives; its stated reason does not.** I predicted FP8 would lose on *both*
+hyper-connection shapes because the merged shape is padded for cuBLAS heuristics. It loses on the
+DOWN (fused, padded-to-16) shape — 0.83-0.93x, exactly as argued — and **wins 1.08-1.31x on the UP
+shape**, which I had lumped in with it. The padding argument applies to the *merged* GEMM only.
+
+**The lever is dead anyway, because they cancel.** Taking the pair together at M=1:
+UP 30.7 -> 25.5 us (**-5.2**), DOWN 38.3 -> 41.4 us (**+3.1**) = **-2.1 us of 69.0**, i.e. **-3.0 %**
+on those two kernels. At M=8 it *inverts*: UP -2.2, DOWN +5.4 = **+3.2 us, a net loss**. Against
+hyper-connections' 13.7 % of kernel time that is **~0.4 % end-to-end at M=1 and negative at M=8** —
+before counting the work to remove four hardcoded `quant_config=None` opt-outs and find a scheme
+whose group size divides 320.
+
+**Why FP8 underperforms here, precisely:** BF16 runs at ~78 % of its roofline (30.7 vs 24.0 us) —
+so it is *not* leaving bandwidth on the table — while FP8 lands at 25.5 us against its own ~12 us
+roofline, i.e. **~47 %**. FP8 is kernel-limited at these skinny shapes, not bandwidth-limited, so
+halving the bytes buys almost nothing. That is the same mechanism as
+[[block-size-is-not-a-kernel-limit]] and finding 206, now with the roofline gap quantified rather
+than inferred.
+
+**Consequence for the EXL3 read:** their "INT8 mixer weights, 7-13 %" does **not** transfer to our
+hyper-connection shapes. It may still transfer to other BF16 leftovers — the control proves FP8 pays
+2.47x at `(10240, 2560)` — so re-target the lever at non-skinny leftovers rather than dropping it.
+
+**Also confirmed:** `MemAvailable` after stopping prod was **117.8 GiB**, against 5.4 with prod up.
+Today's OOM was entirely prod's `util=0.90` reservation, exactly as recorded — nothing else on the
+box was to blame.
+

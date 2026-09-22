@@ -1,0 +1,26 @@
+MemAvailable after prod stop: 117.8 GiB
+
+=== hyper-connection UP   (what we quantized)  weight (10240, 320) ===
+  rotating over 46 weights (301 MB bf16) to defeat L2
+    M   bf16 us    fp8 us  speedup  bf16 roofline  cache-lie?
+    1      30.7      25.5    1.21x          24.0          no
+    2      31.0      25.3    1.23x          24.0          no
+    4      33.1      25.3    1.31x          24.0          no
+    8      30.5      28.3    1.08x          24.0          no
+
+=== hyper-connection DOWN (fused, skinny-GEMM target)  weight (336, 10240) ===
+  rotating over 44 weights (303 MB bf16) to defeat L2
+    M   bf16 us    fp8 us  speedup  bf16 roofline  cache-lie?
+    1      38.3      41.4    0.93x          25.2          no
+    2      36.1      43.2    0.83x          25.2          no
+    4      35.9      41.3    0.87x          25.2          no
+    8      36.0      41.4    0.87x          25.2          no
+
+=== GDN in_proj (control: a shape FP8 is known to help)  weight (10240, 2560) ===
+  rotating over 8 weights (419 MB bf16) to defeat L2
+    M   bf16 us    fp8 us  speedup  bf16 roofline  cache-lie?
+    1     304.3     123.3    2.47x         192.0          no
+    2     227.2     122.8    1.85x         192.0          no
+    4     230.1     124.3    1.85x         192.0          no
+    8     226.0     124.8    1.81x         192.0          no
+shapebench rc=0
