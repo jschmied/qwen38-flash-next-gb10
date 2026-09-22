@@ -125,3 +125,39 @@ journal greps generously; "the line is absent" is a claim about the window, not 
 `mtp-kvgain-spec.json` — does the ~3.6 GB freed from the drafter become usable KV? The speed A/B
 (finding 194) pinned KV at 2 GiB and could not see it. Staged, not run.
 
+## The draft and target share ONE lm_head (2026-09-22)
+
+Checked because the idea came up of giving the drafter a 4-bit head while the body keeps FP8.
+
+`Qwen4ExpMTP` does construct its own `ParallelLMHead` (`mtp.py:384`,
+`prefix=maybe_prefix(prefix, "lm_head")`), and `tie_word_embeddings` is `False`. But
+`load_eagle_model` then **throws that copy away**
+(`v1/worker/gpu/spec_decode/eagle/utils.py:111-127`):
+
+```python
+if target_lm_head is not None and _should_share(eagle_model, "has_own_lm_head", draft_lm_head, target_lm_head):
+    if draft_lm_head is not None:
+        del eagle_model.lm_head
+    eagle_model.lm_head = target_lm_head
+    # per-layer shared_head.head copies are deleted too
+```
+
+`_should_share` returns `True` as soon as the model does not set `has_own_lm_head`, and Qwen4Exp does
+not set it. So **there is no second head in memory** — an earlier claim in this session that there
+were two 636 MB copies was wrong.
+
+Consequences for a distinct 4-bit draft head:
+
+- it **costs** ~318 MB (a new NVFP4 copy), it does not free 318 MB;
+- it needs a vLLM change: set `has_own_lm_head` on `Qwen4ExpMTP` and give the draft head a
+  distinguishable prefix. The resolver needs no change — `_quantized_layer_prefix_candidates()` tries
+  the full prefix first, so an explicit `quantized_layers["mtp.lm_head"]` entry beats the `lm_head`
+  fallback it appends for anything ending in `.lm_head`;
+- the payoff is drafting bandwidth, not capacity. `lm_head` is 636 MB at FP8 = ~2.3 ms per read at
+  273 GB/s, read ~4x per step at MTP n=3 against a ~25 ms step. Consistent with our own BF16->FP8
+  head result (+11% decode). A 4-bit draft head plausibly buys ~10% decode for ~1.3% of KV.
+- body logits are untouched, and both axes are already measurable here: acceptance for draft quality,
+  tok/s for the gain.
+
+Not built. Recorded so the arithmetic is not re-derived.
+
