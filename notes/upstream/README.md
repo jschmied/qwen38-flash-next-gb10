@@ -1262,3 +1262,11 @@ wait on one ~100 GB pull, and they share one serve.
 - Related: #54788 (merged) already fixes `speculative_config.moe_backend` on Model Runner V2;
   our dev524 predates it. #56832 is the issue #56964 fixes.
 
+- **2026-09-22 — vLLM PR #58157** — "[Bugfix][Quantization] Warn when DeepGEMM requantizes fp32
+  block scales to UE8M0". The E8M0 accuracy guard (#38083/#37804) is keyed on `model_type`, but the
+  loss is a property of the quantization path, so uncovered models are requantized silently. Adds
+  one `warning_once` at the requant site + a test. Argues *against* a scheme-keyed auto-disable
+  (DeepSeek ships fp32 `weight_scale_inv` and is DeepGEMM's target). Draft:
+  `notes/upstream/deepgemm-e8m0-requant-warning.md`.
+  <https://github.com/vllm-project/vllm/pull/58157>
+
