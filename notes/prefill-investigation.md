@@ -2843,3 +2843,34 @@ quantize safely, not that everyone missed it** — and our own rule already says
 *gate* must stay BF16 (we comply by inheritance, not by check). Establish *why* before spending a
 quantization run.
 
+## Finding 212 — #54076's geometry divergence PERSISTS on current main `1ea7c63f4` (2026-09-22)
+
+MaCoredroid asked for their config on the nightly; ran it. Raw: `notes/data/geomnight.txt`.
+
+**Build: stock upstream main.** `0.29.1rc1.dev533+g1ea7c63f4` — the nightly wheel, run through
+`PYTHONPATH` at the extracted tree, so our site-packages PLE-offload overlay is **shadowed**. The
+runner logs `vllm.__version__` *and its path* first, precisely so a silent shadowing failure would
+show dev524 instead of a fake "main" result. It resolved to the wheel. The 27B needs no PLE offload,
+which is what makes a stock-main run possible at all here.
+
+**Both lines reproduce, identical to 0.28.0 and to our dev524 run (finding 208):**
+
+```
+Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+Using block size 200 for hidden-state cache layer cache_only_layers.64; page alignment wastes 1228800 bytes (37.50%) per block
+Initializing a V1 LLM engine (v0.29.1rc1.dev533+g1ea7c63f4)
+```
+
+Same 800/200, same 1,228,800 bytes, same 37.50 %. **Server reached UP after 480 s**, so the engine,
+KV cache and workers all initialized on main — not merely config parsing.
+
+**So the three-point chain is now complete:** 0.28.0 (MaCoredroid) → dev524, 2026-09-08 (finding 208)
+→ **main `1ea7c63f4`, 2026-09-22 (here)**. The split the PR corrects is still reachable on main and
+was not fixed in between.
+
+**What is still not tested:** token generation. The probe checks `/v1/models` and stops; the trap
+tore the server down before I could send a completion, because the runner breaks on "server UP",
+greps and exits. MaCoredroid's own note — "this still leaves runtime correctness untested" — remains
+true. **Runner fix for next time: put the completion inside the runner**, not in a follow-up shell
+racing the cleanup trap.
+

@@ -1,0 +1,12 @@
+=== vllm version served (must be the nightly, not site-packages) ===
+   0.29.1rc1.dev533+g1ea7c63f4 /tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/nightly/x/vllm
+START 2026-09-22 19:31:57
+Running as unit: geomnight-srv.service; invocation ID: 0f55191e6d4242d089693fbdc0bcc3ae
+server UP after 480s
+=== GEOMETRY LINES (journal scoped to this run's start) ===
+Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+Using block size 200 for hidden-state cache layer cache_only_layers.64; page alignment wastes 1228800 bytes (37.50%) per block
+=== version line + any error ===
+Initializing a V1 LLM engine (v0.29.1rc1.dev533+g1ea7c63f4)
+GEOMNIGHT COMPLETE 2026-09-22T19:39:48+02:00
+prod restarting
