@@ -1,0 +1,26 @@
+== armrun prodpromo2: 2 arms x 2 start(s), port 8092 ==
+-- prodpromo2-nospec0  env=(spec default)
+Running as unit: fx-armrun-prodpromo2.service; invocation ID: 5a21d9de1bf244b39db116f85890fa68
+   void checks passed (1 required, 1 forbidden)
+   {"total_s": 16.4, "turns": 8, "s_per_turn": 2.05, "tokens": 224, "ms_per_tok": 73.12, "accept_rate": null, "accept_len": null, "hits_last_turn": 6272, "hits_sum": 43904}
+-- prodpromo2-mtp3dv0  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4', 'FN_SPEC_METHOD': 'mtp', 'FN_SPEC_N': '3', 'FN_SPEC_NODROP': '1', 'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-prodpromo2.service; invocation ID: 4c8ea044018b45c09dbbe2b2720d5b90
+   void checks passed (3 required, 1 forbidden)
+   {"total_s": 13.2, "turns": 8, "s_per_turn": 1.65, "tokens": 222, "ms_per_tok": 59.4, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+-- prodpromo2-nospec1  env=(spec default)
+Running as unit: fx-armrun-prodpromo2.service; invocation ID: b50f5198fbba4b508bf4a600cf30de47
+   void checks passed (1 required, 1 forbidden)
+   {"total_s": 16.2, "turns": 8, "s_per_turn": 2.03, "tokens": 224, "ms_per_tok": 72.37, "accept_rate": null, "accept_len": null, "hits_last_turn": 6272, "hits_sum": 43904}
+-- prodpromo2-mtp3dv1  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4', 'FN_SPEC_METHOD': 'mtp', 'FN_SPEC_N': '3', 'FN_SPEC_NODROP': '1', 'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-prodpromo2.service; invocation ID: 48c35150defc47e890ffabb609c3d233
+   void checks passed (3 required, 1 forbidden)
+   {"total_s": 13.2, "turns": 8, "s_per_turn": 1.65, "tokens": 222, "ms_per_tok": 59.49, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+
+== RESULT ==
+  nospec       total_s 16.2–16.4  turns 8  s_per_turn 2.03–2.05  tokens 224  ms_per_tok 72.37–73.12  hits_last_turn 6272  hits_sum 43904  start 0–1
+  mtp3dv       total_s 13.2  turns 8  s_per_turn 1.65  tokens 222  ms_per_tok 59.4–59.49  accept_rate 0.509  accept_len 2.53  hits_last_turn 6400  hits_sum 44800  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0
+PRODPROMO2 COMPLETE 2026-09-22T18:39:19+02:00
+prod restarting

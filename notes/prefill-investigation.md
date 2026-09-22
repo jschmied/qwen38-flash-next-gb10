@@ -2756,3 +2756,77 @@ offload.
 **Consequence:** the upgrade calculus is unchanged. We stay on dev524 until #53899 lands; there is
 no longer any need to re-ask "has main caught up" — it has not, on any axis we depend on.
 
+## Finding 210 — PROD PROMOTED: MTP n=3 + NVFP4 drafter + 32k draft-vocab slice, −19.4 %/turn (2026-09-22)
+
+Decided on the **agent loop in the prod shape**, not on single-shot tok/s. `armrun` spec
+`prodpromo2`, 2 arms x 2 starts, `armrun exit: 0`. Raw: `notes/data/prodpromo2.txt`.
+Shape: `FN_MAXLEN=32768 FN_SEQS=16 FN_UTIL=0.90 FN_BATCH=4096`, prefix caching on, no KV pin, PLE
+offload on, det overlays on. Probe: `agentloop2.py`, 8 dependent turns with real prefix reuse.
+
+| arm | r0 | r1 | range (s/turn) | ms/tok | hits_last_turn | accept len |
+|---|---|---|---|---|---|---|
+| nospec (old prod) | 2.05 | 2.03 | **[2.03, 2.05]** | 72.4–73.1 | 6272 | — |
+| mtp3dv (promoted) | 1.65 | 1.65 | **[1.65, 1.65]** | 59.4–59.5 | **6400** | 2.53 |
+
+**Ranges disjoint, sign holds in both rounds: −19.4 % per turn.**
+
+**Why single-shot would have been the wrong basis.** `spec-decode-prefix-cost-agentloop` measured MTP
+K=3 costing a whole prefix block (plateau 4x1568 -> 3x1600, hit rate 69.4 -> 42.5 %) and 3x TTFT —
+invisible to a single-shot probe. **That cost does not appear here**, and the reason is
+`FN_SPEC_NODROP=1` (`disable_eagle_block_drop`, #53388): MTP holds **6400 = 4x1600** against
+no-spec's **6272 = 4x1568** — *more* cache, not less. The old finding measured MTP without the flag.
+
+The second documented penalty is absent too. `hits_sum` is exactly `7 x hits_last_turn` in **both**
+arms (43904 = 7x6272; 44800 = 7x6400), so both reach plateau on turn 2 — MTP pays no extra cold
+turn. (Recovered arithmetically because my probe wrapper sends the per-turn lines to stderr, which
+armrun discards unless an arm voids. armrun takes the *last* `{`-line from stdout, so the
+human-readable output can safely go to stdout — fix pending.)
+
+**Why this is a speed change and not a quality trade:** `mtpfp4` and `fp8head` share the same target
+body (157 `FP8_PB_WO` + the same NVFP4 set); only the drafter differs, and the target verifies every
+draft. `mtpfp4` is also **120 G vs 123 G**, i.e. smaller against 121.6 GiB MemTotal.
+
+**Applied as a systemd drop-in** (`/etc/systemd/system/vllm-flashnext.service.d/20-mtp-promote.conf`)
+so the base unit is untouched; revert = `rm` + `daemon-reload` + restart.
+
+**Limit of the evidence:** this qualifies the config for **agent-shaped, single-stream** traffic.
+Prod serves `FN_SEQS=16`, and MTP under concurrent load (c=16/c=32) is still unmeasured — the
+remaining axis, and the natural next run.
+
+## Finding 211 — the "69 % BF16" figure is RadixArk's, not ours; and nobody quantizes what is left (2026-09-22)
+
+**Correction.** I repeated the 2026-08-27 measurement (58.8 ms/token, **69.4 %** of wall in cuBLAS
+BF16 GEMV, 4.84 B dense BF16 params = 9.7 GB/token) as if it described our current stack. It does
+not — it describes **RadixArk**, and prod moved to the FP8-mixed lineage after
+`lovedheart/Qwen3.8-Flash-Next-NVFP4-FP8` rewrote exactly the 4 BF16 body shards (+39 % at c=1).
+
+Measured from the shard headers today:
+
+| | fp8head | mtpfp4 (now prod) |
+|---|---|---|
+| BF16 total | 9.39 GB / 4.694 B | **4.36 GB / 2.178 B** |
+| mtp drafter | 2.581 B | 0.065 B (we NVFP4'd it) |
+| hyper_connection | 0.660 B | 0.660 B |
+| embed (sparse read) | 0.636 B | 0.636 B |
+| other dense | 0.477 B | 0.477 B |
+| shared_expert | 0.241 B | 0.241 B |
+| gates / PLE / norms | 0.099 B | 0.099 B |
+
+Excluding the embedding, ~**1.5 B params ~ 2.95 GB/token** is still BF16 — about **27 %** of the
+byte budget at 273 GB/s, not 69 %. Quantizing it is worth roughly **+16 %** (8-bit) or **+26 %**
+(4-bit) at c=1 no-spec — real, but not the 1.5-1.8x I claimed from the stale figure.
+
+**Field check: nobody has quantized the remainder, including NVIDIA.** Every readable checkpoint
+excludes the same modules —
+`nvidia/Qwen3.8-Flash-Next-NVFP4`: `lm_head, embed_tokens, hyper_connection_mixer*,
+attn_hyper_connection*, linear_attn*, mlp.gate, mlp.shared_expert*`;
+`tcclaviger/…-MXFP4-FP8-GPTQ`: `hyper_connection`, `ple`, `mlp.gate`, `shared_expert_gate`,
+`lm_head`, `linear_attn.{conv1d,in_proj_a,in_proj_b,in_proj_ba}`.
+
+So `hyper_connection` (0.660 B) is both the largest untouched BF16 block **and** 13.7 % of kernel
+time (finding 190) — consistent with "nobody is in this lane". **But when the vendor recipe and
+three independent forks all exclude the same modules, the prior is that some of them do not
+quantize safely, not that everyone missed it** — and our own rule already says the shared-expert
+*gate* must stay BF16 (we comply by inheritance, not by check). Establish *why* before spending a
+quantization run.
+
