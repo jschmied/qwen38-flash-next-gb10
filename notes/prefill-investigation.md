@@ -2192,3 +2192,47 @@ at launch, which is already on record as what governs this box's memory behaviou
 **tok/s here is 1 start per arm and not quotable** (BF16's own across-restart spread is 9.3%).
 The 3-start speed pass is staged.
 
+---
+
+## Finding 197 — drafter speed A/B/C, 3 starts: NVFP4 is faster, and it is established (2026-09-22)
+
+`armrun` spec `mtp-three-speed`, 3 arms x 3 starts, arms alternating, exit 0, every arm's
+`model_tag` asserted. 12 requests per probe (double finding 196's). Raw: `notes/data/mtp-three-speed.txt`.
+
+| drafter | start 0 | start 1 | start 2 | range | within-arm spread | mean |
+|---|---|---|---|---|---|---|
+| **NVFP4** | 40.16 | 40.02 | 40.31 | [40.02, 40.31] | **0.7%** | **40.16** |
+| FP8 | 39.14 | 38.93 | 39.13 | [38.93, 39.14] | 0.5% | 39.07 |
+| BF16 | 39.10 | 39.79 | 36.31 | [36.31, 39.79] | **9.6%** | 38.40 |
+
+| comparison | sign holds every round | ranges disjoint | verdict |
+|---|---|---|---|
+| NVFP4 > FP8 | **yes 3/3** | **yes** | **+2.8%, established** |
+| NVFP4 > BF16 | **yes 3/3** | **yes** (40.02 > 39.79) | **+4.6%, established** |
+| FP8 > BF16 | no — round 1 flips (38.93 vs 39.79) | no | **not separable** |
+
+**This clears the bar that finding 194's +7.2% did not.** Three starts, sign in every round, and
+disjoint ranges. What made the difference was not more starts alone but the **12-request probe**:
+the quantized arms' within-arm spread collapsed to 0.5-0.7% against 9.3% on the 6-request probe.
+
+**BF16 remains unstable at 9.6%**, driven by one low start (36.31). The quantized drafters are an
+order of magnitude steadier. That is consistent with `mtp-restart-instability` and suggests the
+instability scales with drafter weight bytes — worth remembering when designing future MTP A/Bs:
+a smaller drafter is not just faster, it is easier to measure.
+
+**Acceptance was byte-identical to finding 196 at double the workload** in all nine arms
+(NVFP4 1136/632, BF16 1134/632, FP8 1120/648 — exactly 2x the 6-request counts), confirming
+acceptance is deterministic in both workload size and restarts.
+
+### Drafter scoreboard, all axes measured
+
+| axis | BF16 | FP8 (per-tensor) | NVFP4 (block-16) |
+|---|---|---|---|
+| acceptance length | 2.794 | 2.728 | **2.797** |
+| KV tokens (finding 196) | 382,293 | 408,819 | **434,566** |
+| decode tok/s | 38.40 | 39.07 | **40.16** |
+| shards | 11.54 GB | 9.02 GB | **7.92 GB** |
+
+**NVFP4 wins every axis.** The format asked for -- per-tensor FP8 -- is worst on acceptance and
+not separable from BF16 on speed.
+
