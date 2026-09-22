@@ -2584,3 +2584,39 @@ tensors from our checkpoint and measure relative error vs the original dequantiz
 converts "~11 GSM8K points on a sibling model" into a number for *this* one. Unverified aside noticed
 on the way: `x_amax.clamp(1e-4)` inflates the scale for blocks whose true amax is below 1e-4.
 
+## Finding 206 — DeepGEMM is 8 % SLOWER than the CUTLASS fallback on our blockwise-FP8 layers; lever CLOSED (2026-09-22)
+
+`armrun` spec `dgemm2`, 2 arms x 2 starts, `armrun exit: 0`. NVFP4 drafter, MTP n=3, no draft-vocab
+slice in either arm (finding 204 — the slicer cannot read DeepGEMM's packed scales). Only
+`VLLM_USE_DEEP_GEMM`/`_E8M0` differ. Raw: `notes/data/dgemm2.txt`.
+
+| arm | r0 | r1 | range | tokens | accept len | kernel (path line) |
+|---|---|---|---|---|---|---|
+| deepgemm | 36.98 | 37.26 | **[36.98, 37.26]** | 1804 | 2.792 | `DeepGemmFp8BlockScaledMMKernel` |
+| cutlass | 39.98 | 40.41 | **[39.98, 40.41]** | 1764 | 2.797 | `CutlassFp8BlockScaledMMKernel` |
+
+**Ranges disjoint, sign holds in both rounds — this clears the bar.** CUTLASS is **+8.3 %**
+(DeepGEMM −7.7 %). Both arms carry their path line in both directions, so neither is a silent
+fallback.
+
+**So the answer to "can the 32 % small-M blockwise-FP8 waste be recovered by using the kernel family
+built for it" is no — it is worse.** That closes the lever on speed alone, before the quality
+question (finding 205) even has to be argued. Note the narrower claim is what is proven: *this*
+alternative kernel is slower at our shapes. It does not prove the waste is irreducible; a kernel
+tuned for M=4 with K-blocked 128 scales could still exist. What is dead is "just turn DeepGEMM on".
+
+**Two clean secondary observations:**
+
+- **Each arm reproduces its own token count exactly** (1804 twice, 1764 twice) while differing
+  *between* arms. That is the kernel numerics difference surfacing in output, exactly as a GEMM
+  swap must, and it confirms neither arm drifts across restarts — unusual on this model
+  ([[mtp-restart-instability]]).
+- **Acceptance is unchanged** (2.792 vs 2.797). The drafter is undisturbed by the target's kernel
+  swap. Per `acceptance-is-not-quality` this says nothing about output quality; it only rules out
+  the drafter as an explanation for the speed gap.
+
+**Consequence for the E8M0 quality question:** moot for us in practice — we would never enable
+DeepGEMM at an 8 % speed cost. The upstream defect reported in PR #58157 stands on its own: other
+people's models take this path silently and may be paying accuracy for it, whether or not it is
+also slower for them.
+

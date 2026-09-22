@@ -1,0 +1,27 @@
+== armrun dgemm2: 2 arms x 2 start(s), port 8092 ==
+-- dgemm2-deepgemm0  env={'VLLM_USE_DEEP_GEMM': '1', 'VLLM_USE_DEEP_GEMM_E8M0': '1'}
+Running as unit: fx-armrun-dgemm2.service; invocation ID: 48bc58a71b0445829a0a3d6f0635fa36
+   void checks passed (2 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1804, "seconds": 48.78, "tok_s": 36.98, "first_reply": "Mixture-of-experts models consist of multiple specialized sub-networks, each optimized for", "m_spec_decode_num_drafts_total": 644.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1932.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1154.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1154.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 644.0, "draft_tokens": 1932.0, "accepted": 1154.0, "acceptance_rate": 0.5973, "acceptance_length": 2.792, "spec_n": 3.0}
+-- dgemm2-cutlass0  env=(spec default)
+Running as unit: fx-armrun-dgemm2.service; invocation ID: 7b7dc90407ba45978600833a8659e4b3
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 44.12, "tok_s": 39.98, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 632.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1896.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1136.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1136.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 632.0, "draft_tokens": 1896.0, "accepted": 1136.0, "acceptance_rate": 0.5992, "acceptance_length": 2.797, "spec_n": 3.0}
+-- dgemm2-deepgemm1  env={'VLLM_USE_DEEP_GEMM': '1', 'VLLM_USE_DEEP_GEMM_E8M0': '1'}
+Running as unit: fx-armrun-dgemm2.service; invocation ID: b02721b83a5a497389941436851890fb
+   void checks passed (2 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1804, "seconds": 48.42, "tok_s": 37.26, "first_reply": "Mixture-of-experts models consist of multiple specialized sub-networks, each optimized for", "m_spec_decode_num_drafts_total": 644.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1932.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1154.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1154.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 644.0, "draft_tokens": 1932.0, "accepted": 1154.0, "acceptance_rate": 0.5973, "acceptance_length": 2.792, "spec_n": 3.0}
+-- dgemm2-cutlass1  env=(spec default)
+Running as unit: fx-armrun-dgemm2.service; invocation ID: fe7a862c8fc34762a76f143dd1f74670
+   void checks passed (1 required, 1 forbidden)
+   {"requests": 12, "completion_tokens": 1764, "seconds": 43.65, "tok_s": 40.41, "first_reply": "Mixture-of-experts models rely on a router to dynamically select the most relevant subset ", "m_spec_decode_num_drafts_total": 632.0, "m_spec_decode_num_drafts_created": 0.0, "m_spec_decode_num_draft_tokens_total": 1896.0, "m_spec_decode_num_draft_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_total": 1136.0, "m_spec_decode_num_accepted_tokens_created": 0.0, "m_spec_decode_num_accepted_tokens_per_pos_total": 1136.0, "m_spec_decode_num_accepted_tokens_per_pos_created": 0.0, "drafts": 632.0, "draft_tokens": 1896.0, "accepted": 1136.0, "acceptance_rate": 0.5992, "acceptance_length": 2.797, "spec_n": 3.0}
+
+== RESULT ==
+  deepgemm     requests 12  completion_tokens 1804  seconds 48.42–48.78  tok_s 36.98–37.26  m_spec_decode_num_drafts_total 644.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 1932.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1154.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1154.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 644.0  draft_tokens 1932.0  accepted 1154.0  acceptance_rate 0.5973  acceptance_length 2.792  spec_n 3.0  start 0–1
+  cutlass      requests 12  completion_tokens 1764  seconds 43.65–44.12  tok_s 39.98–40.41  m_spec_decode_num_drafts_total 632.0  m_spec_decode_num_drafts_created 0.0  m_spec_decode_num_draft_tokens_total 1896.0  m_spec_decode_num_draft_tokens_created 0.0  m_spec_decode_num_accepted_tokens_total 1136.0  m_spec_decode_num_accepted_tokens_created 0.0  m_spec_decode_num_accepted_tokens_per_pos_total 1136.0  m_spec_decode_num_accepted_tokens_per_pos_created 0.0  drafts 632.0  draft_tokens 1896.0  accepted 1136.0  acceptance_rate 0.5992  acceptance_length 2.797  spec_n 3.0  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun exit: 0
+=== kernel actually selected, per arm log ===
+DGEMM COMPLETE 2026-09-22T16:25:25+02:00
+prod restarting
