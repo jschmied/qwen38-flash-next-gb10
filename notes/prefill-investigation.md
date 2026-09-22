@@ -2874,3 +2874,44 @@ greps and exits. MaCoredroid's own note — "this still leaves runtime correctne
 true. **Runner fix for next time: put the completion inside the runner**, not in a follow-up shell
 racing the cleanup trap.
 
+## Finding 213 — why everyone excludes `hyper_connection`: the model refuses, and the shape is cuBLAS-tuned on purpose (2026-09-22)
+
+Finding 211 left the question open: `hyper_connection` is the largest untouched BF16 block (0.660 B)
+**and** 13.7 % of kernel time (finding 190), yet NVIDIA's own recipe and three independent forks all
+exclude it. Read the module. Three reasons, and the third is the one that matters.
+
+**1. The model hardcodes the opt-out.** `models/qwen4_exp/nvidia/hyperconnection.py` passes
+`quant_config=None` on **every** Linear it builds — `input_mix_weight_down_block_inject` (:103),
+`input_mix_weight_down` (:114), `input_mix_weight_up` (:123). So the checkpoint exclusions are a
+*consequence*, not an independent safety judgement: a checkpoint may declare these layers quantized
+and **the model never asks** (`single-stream-limit.md:337`). Nobody "decided" they were unsafe; the
+plumbing opts out.
+
+**2. The shapes cannot be expressed in blockwise FP8.** `hc_lowrank = 320`, `hc_count = 4`,
+`hidden_size = 2560`, so `hyper_hidden_size = 4 x 2560 = 10240` and the two weights are
+`(10240 -> 320)` down and `(320 -> 10240)` up. `320 % 128 = 64`, so `FP8_PB_WO` is out. NVFP4
+(group 16) and MXFP8 (group 32) both divide 320 and *could* express them.
+
+**3. The shape is deliberately tuned for cuBLAS BF16 — and that is the real caution.** From the
+source, unprompted:
+
+> `# The merged skinny-GEMM shape is physically padded to 16 rows to ensure`
+> `# good alignment and performant implementation chosen by CuBLAS heuristics.`
+> `self.pad_size = (-(self.lora_rank + self.hc_count)) % 16`   → 12 rows of padding
+
+The author padded the merged shape *specifically* so cuBLAS picks a good BF16 kernel. That is the
+same regime where we have now been burned three times: `block-size-is-not-a-kernel-limit.md:98`
+(cuBLAS skinny BF16 GEMV beats the Triton blockwise path at `(10240, 320)`, M=1 — "removing bytes is
+not sufficient, you also have to land on a kernel at least as good"), finding 206 (DeepGEMM 8 %
+**slower** on shapes built for it), and the EXL3 recipe's own counterintuitive result (INT8
+activation GEMV turned **off** because FP16 GEMV was faster on a Spark).
+
+**Verdict: demote this lever.** The 13.7 % is not sitting there unclaimed because the field missed
+it; it is a skinny GEMM the vendor tuned for cuBLAS, in exactly the regime where quantization has
+repeatedly cost us speed. Bytes say ~0.660 B x 2 = 1.3 GB/token; the kernel says the replacement
+must beat a cuBLAS path that was shaped for its own heuristics. **Before any quantization run,
+settle it at the shape level** — `tools/shapebench.py`, two minutes ([[check-field-before-expensive-steps]],
+and the standing rule "verify the lever at the shape level before building"). Note
+`single-stream-limit.md:356` already records a **2.20x** kernel win available at `(320, 10240)` M=1
+that is a *kernel* optimisation, not a quantization one — that is the likelier route.
+
