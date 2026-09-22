@@ -1084,3 +1084,26 @@ a different execution model.
 
 The upload landed: 48 `layer*.safetensors`, 63.3 GiB, and the live card no longer contains the
 banner string. Nothing to do.
+
+## Levers queued 2026-09-22 (after findings 196-200)
+
+Ranked by value / cost. None started; the blockers above them are being worked first.
+
+1. **Slice the draft head in FP8 or NVFP4, not BF16.** `tools/draft_vocab/dv_patch.py` builds the
+   32k slice as an *exact BF16 dequant* of the FP8_PB_WO head rows: 32k x 2560 x 2 = **164 MB read
+   per draft token**. FP8 -> 82 MB, NVFP4 -> ~41 MB. We measured **+7.8%** (finding 198) from cutting
+   248,320 -> 32,768 rows; this attacks the same projection again on bytes. Needs `torch._scaled_mm`
+   for the FP8 path (`get_top_tokens` currently does a plain `F.linear` on a BF16 weight).
+   **Cheapest remaining large win.**
+2. **fp8 KV** — vllm#55557 merged 2026-09-16; our base is 2026-09-08. Measured ×1.72 KV pool on this
+   box (`notes/fp8-kv.md`). Stacks with the drafter's +13.7% (finding 196) because they are
+   different bytes. Gated on the upgrade blocker.
+3. **Capture widths at concurrency.** `[4,8,12,16,20,24]` at `SEQS=6`. Finding 200 could not separate
+   it single-stream, but above width 8 we capture nothing at all, so concurrent serving runs
+   uncaptured decode shapes. Cheap: `FN_CG_SIZES` is a launcher env knob.
+4. **MoE epilogue fusion** — findings 144/145, the 36.4% bucket sitting at the DRAM floor. Largest
+   kernel-side prize, largest effort.
+5. **65k vs 32k draft vocab** — one arm. Expectation is that 32k holds (99.6% coverage, +0.5 pp
+   acceptance at 32k, det-135), so this is cheap disconfirmation rather than a likely win.
+6. **`--dense` drafter A/B** — `mtpfp4d` is built and config-verified (shards 7.83 GB vs 7.92 GB).
+   ~90 MB, ~+0.4% KV, no speed change predicted. Not worth 4 loads unless something else needs it.
