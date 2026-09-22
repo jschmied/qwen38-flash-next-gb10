@@ -162,6 +162,43 @@ Rewritten 2026-08-31, then appended to per working day. **The sections are chron
 oldest ranking sits at the top — read "Live state" first and treat everything above the 09-06 line
 as archaeology unless it is cross-referenced from here.**
 
+## UPSTREAM NEWS 2026-09-22 — three open PRs that change our constraints
+
+**1. vllm#56273 — packed NVFP4 PLE embeddings. Potentially removes our overlay dependency.**
+*"Enable the `local-inference-lab/Qwen3.8-Flash-Next-NVFP4` checkpoint to run on 1x DGX Spark
+**without CPU or disk PLE offloading**. Its packed NVFP4 ngram table occupies **26.822 GiB** and
+remains resident."* Validated on one GB10, 4,096-token context, 2 GiB KV, MTP off; load reported
+97.47 GiB. **Our 17-file overlay IS the #53899 PLE-offload backport** (finding 209) — if the table
+fits resident at 26.8 GiB instead of 47.7, the offload worker, the 64 GiB swap prerequisite and the
+`CAP_SYS_PTRACE` unit hack may all become unnecessary, and with them the blocker that keeps us off
+mainstream. That checkpoint was already in our HF survey (`local-inference-lab/…-NVFP4`, 23,673 dl).
+**Highest-value item on this list.** Open, +431/-28, updated 09-16.
+
+**2. vllm#54912 — widens the QSA raw-key ring instead of asserting. Unblocks the MTP depth band.**
+It quotes our exact failure verbatim: `QSA ring capacity 12 must divide the attention block size
+848`. With `compress_ratio = 4`, depths **5..8 and 13..16** need a 12- (20-) row ring that neither
+the power-of-two nor the hybrid 848/1616 sizes have. `qsa_ring_capacity()` returns the smallest
+whole-group ring `>= span` that divides the block size, logs when it widens, and errors with numbers
+when impossible; previously legal depths keep their ring, so it is a no-op for existing configs.
+Our own note calls the untried depth band *"the most concrete untested speed lever we have"*
+(`## The MTP depth sweep was cut short by a misread constraint`). **Caveat:** finding 155 measured
+k=4 at **−3.4 %** at c=1, so depth alone is not obviously a win — pair any sweep with the dynamic
+stopping idea from the EXL3 field read. Open, +98/-11, updated 09-15.
+
+**3. vllm issue #46307 — `gpu_memory_utilization` is not respected on GB10 unified memory; the host
+wedges.** *"With a conservative `gpu_memory_utilization=0.70` … available memory to ~7 GiB during
+`profile_run` … the entire host becomes unresponsive (SSH dies; requires a hard power-cycle)."*
+**This is our phenomenon, three times over:** the two hard resets behind
+[[vllm-load-needs-fit-check]] and [[pinned-sweep-crashed-box]], and the shapebench OOM today where
+`MemAvailable` 5.4 GiB was not GPU-allocatable beside a `util=0.90` prod. Only **1 comment**. We have
+more evidence on this than the reporter — a candidate post, but note vLLM's policy and get a go.
+
+Also seen, lower priority: #58114 (reduce PLE metadata construction overhead), #57105 (QSA indexer
+logits workspace fragmentation), #57039 (GDN: avoid two per-layer copies in FlashInfer prefill),
+#56742 (Qwen4Exp MTP buffer placement / config parsing), #56322 (sequence parallelism),
+#46329 + #55976 (NVFP4 KV on sm12x), issue #57608 (host-context hook between draft proposal and
+verification — the plumbing that *dynamic stopping* would need).
+
 ## QUEUED — shapebench the hyper-connection shapes (needs prod DOWN)
 
 `tools/shapebench.py` is the check finding 213 calls for: does FP8 `_scaled_mm` actually beat cuBLAS
