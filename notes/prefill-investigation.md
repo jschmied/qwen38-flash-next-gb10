@@ -3793,3 +3793,27 @@ index. Now resolved and logged.
 The round-4 mutation run itself was void, because it failed on the same device-index bug; round 4b redid it
 correctly. **PR branch pushed at c929c09a9** (two commits on upstream main 9f07d023d; squash before
 submission). No upstream PR opened.
+
+## Finding 231 — PROD on vLLM main with `checkpoint_mapped`; the "env stripped" alarm was two broken instruments (2026-09-23)
+
+**Prod switched (20:49, `25-main-mapped.conf`):**
+- venv `vllm-venv-main1ea7`: nightly `1ea7c63f4` + PR `c929c09a9` files + our prod patches (QSADET, DETFIN,
+  LMHEAD*, SCALEINV, draft-vocab);
+- `--engram-config {"checkpoint_mapped": true}`, auto KV (642,096 tokens);
+- smoke test: ready 861 s, agent loop 236 tok at 1.66 s/turn, swap 6 GiB (dev524 prod: 50–53 GiB),
+  `_C_det.so` mapped in the worker (QSADET active).
+- **Revert:** `rm /etc/systemd/system/vllm-flashnext.service.d/25-main-mapped.conf; systemctl daemon-reload;
+  systemctl restart vllm-flashnext` (back to dev524 + the #53899 overlay).
+- The 64 GiB swap and `CAP_SYS_PTRACE` prerequisites are no longer needed on this path. They stay configured,
+  because they are harmless and the revert needs them.
+
+**Withdrawn: "vLLM main strips the launcher's `VLLM_*` exports".** The first switch (19:45) was reverted on that
+evidence. Both instruments behind it were invalid:
+1. `/proc/<pid>/environ` of `VLLM::EngineCore` / `VLLM::Worker` lacked the variables, but the **dev524 reference,
+   with QSADET demonstrably active, lacked them identically**. setproctitle overwrites that region.
+2. The QSADET `print` was missing in m12, m13 and prod-main. But in a probe-free replica of prod-main (`detmap`),
+   `_C_det.so` was **mapped in the worker (4 maps) with 0 prints**. With in-worker probes (`envab` A/B, exact prod
+   drop-in ± an extra line), the worker had `VLLM_QSA_DET_TOPK='1'` both times.
+
+QSADET was active in every main run; only its log line was lost. The reliable check is `/proc/<worker>/maps`. The
+revert was a defensible precaution on the evidence then available, but it was unnecessary.

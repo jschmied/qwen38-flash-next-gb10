@@ -1,0 +1,12 @@
+=== prod switch 2026-09-23T20:49:43+02:00
+20-mtp-promote.conf
+25-main-mapped.conf
+ready after 861s
+(EngineCore pid=643082) INFO 09-23 20:52:15 [core.py:129] Initializing a V1 LLM engine (v0.29.1rc1.dev533+g1ea7c63f4) with config: model='/opt/llm/models/qwen38-flash-next-mtpfp4', speculative_config=
+(Worker pid=643179) INFO 09-23 21:01:59 [ngram_embedding.py:675] Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files; no table-sized device or pinned allocation
+(Worker pid=643179) INFO 09-23 21:03:05 [mtp.py:95] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+(EngineCore pid=643082) INFO 09-23 21:03:31 [kv_cache_utils.py:2432] GPU KV cache size: 642,096 tokens, Maximum concurrency for 32,768 tokens per request: 19.60x
+{"arm": "prod-main", "total_s": 13.3, "turns": 8, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.19, "accept_rate": 0.5329999999999999, "accept_len": 2.6, "hits_last_turn": 6400, "hits_sum": 44800}
+worker 643179 maps _C_det.so=4 (QSADET active iff > 0)
+mem: avail=3 swap_used=6G
+== DONE ==

@@ -1,0 +1,18 @@
+=== envab 2026-09-23T20:16:33+02:00
+## A drop-in:
+[Service]
+Environment=FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7
+Environment=FN_PLE_OFFLOAD=0
+Environment="FN_EXTRA=--engram-config {\"checkpoint_mapped\":true}"
+(Worker pid=636492) ENVPROBE _topk pid=636492 VLLM_QSA_DET_TOPK='1'
+(Worker pid=636492) QSADET active: /opt/llm/kernel-det/_C_det.so
+## B drop-in:
+[Service]
+Environment=FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7
+Environment=FN_PLE_OFFLOAD=0
+Environment="FN_EXTRA=--engram-config {\"checkpoint_mapped\":true}"
+Environment=FN_ENVPROBE_DUMMY=1
+(Worker pid=637847) ENVPROBE _topk pid=637847 VLLM_QSA_DET_TOPK='1'
+(Worker pid=637847) QSADET active: /opt/llm/kernel-det/_C_det.so
+probe reverted
+prod restored (dev524) 2026-09-23T20:38:25+02:00

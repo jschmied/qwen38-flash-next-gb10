@@ -1,0 +1,7 @@
+=== detmap 2026-09-23T20:38:30+02:00; probe-free qsa_indexer: 0 probe lines, QSADET lines: 2
+20-mtp-promote.conf
+25-main-mapped.conf
+before request: worker 640300 maps _C_det.so=4
+after request:  worker 640300 maps _C_det.so=4
+journal QSADET prints: 0
+prod restored (dev524) 2026-09-23T20:49:20+02:00
