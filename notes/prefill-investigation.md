@@ -3451,3 +3451,24 @@ without reading them. Env: `VLLM_PLE_PAGEABLE=checkpoint`, `VLLM_PLE_CPU_OFFLOAD
     determinism overlays hold. A difference in the mixed batch only is a batch-invariance question, not a
     PLE defect, and gets debugged.
   - Auto KV sizing under sustained diverse traffic comes after that, as its own run.
+
+**Debug results before the re-run (2026-09-23 ~11:30):**
+- **Review fixes pass on the GPU** (`v2_validation_test.py`, 7/7): a missing shard, 8-for-12 rows, a short
+  interior shard and an extra shard are all refused; ids 11/12/−1/1e9 give zero rows; in-range rows are
+  bit-exact with an unaligned start and a short last shard. k1/k2 still hold. k3's first run after the server
+  stopped read 89 µs (out of range); two repeats read 14.8 and 14.9 µs, so memory draining disturbed that run.
+- **v2 prefetch bug, root-caused** (`touch_bench.py`, cold page cache, 2 seeds per arm, 51,200 rows):
+  - v1: 240–243 ms
+  - v2 as written, flat 5 GB byte arrays: **4,079–4,117 ms**
+  - v2 with sorted offsets: 460–481 ms
+  - v2 per-shard 2-D views: **265–285 ms**
+
+  Fancy-indexing the flat byte arrays is the slow path. The real `touch()` with 2-D views measures 214 and
+  281 ms (51,200 rows) and 1.2–1.3 ms (64 rows).
+- **Correction:** the "+1 token corpus drift" was the arm label inside the prompt (`v2a` is one character longer
+  than `q0`), not the corpus. The corpus is frozen to `corpus_frozen.txt` anyway, with a fixed request salt.
+- **s1 (ready time), open:** main weight load is prod 476–489 s, v1 544–630 s, v2 613 s. The extra time is common
+  to both `VLLM_PLE_CPU_OFFLOAD=0` arms, so it is not the v2 mapping. Not yet explained.
+- **Re-run ranges:** KV fixed at 31 GiB in both arms. s2 agent loop v2 1.55–1.62 against prodkv 1.63–1.67;
+  s3 TTFT on the frozen corpus within ±5 % (unresolved before); s4 c=16 v2 195–212 tok/s against prod 206–209
+  (q0, same launcher); s6 as above.
