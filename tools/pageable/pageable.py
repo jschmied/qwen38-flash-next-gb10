@@ -98,9 +98,14 @@ class PagePrefetcher:
     def __init__(self, model, device, input_ids_source, query_start_loc_source, ngram_context_source,
                  max_tokens: int, max_seqs: int) -> None:
         self.device = device
-        self.host = MAPPING["host"]
-        self.fd = MAPPING["fd"]
-        self.row_bytes = MAPPING["row_bytes"]
+        self.table = TABLE.get("t")
+        if self.table is None:
+            self.host = MAPPING["host"]
+            self.fd = MAPPING["fd"]
+            self.row_bytes = MAPPING["row_bytes"]
+            self.num_rows = self.host.shape[0]
+        else:
+            self.num_rows = self.table.num_rows
         self.sources = (input_ids_source, query_start_loc_source, ngram_context_source)
         self.layers = []
         for m in model.modules():
@@ -199,8 +204,13 @@ class PagePrefetcher:
             t0 = time.perf_counter()
             try:
                 rows = self._cpu_rows(ids, qsl, ctx)
-                rows = rows[(rows >= 0) & (rows < self.host.shape[0])]
-                self._touch(rows)
+                rows = rows[(rows >= 0) & (rows < self.num_rows)]
+                if self.table is not None:
+                    if rows.size > 4096:
+                        self.stats["big"] += 1
+                    self.table.touch(rows, self.pool)
+                else:
+                    self._touch(rows)
             except Exception:
                 logger.exception("PLE pageable: prefetch failed (gather unaffected)")
                 continue
@@ -216,3 +226,140 @@ class PagePrefetcher:
                             st["steps"], st["skipped"], st["big"], st["rows"] / st["steps"],
                             st["ms"] / st["steps"], st["lag_ms"] / st["steps"], num_tokens, rows.size,
                             (t1 - t0) * 1e3)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# v2: map the checkpoint's own safetensors files (no copy step). VLLM_PLE_PAGEABLE=checkpoint.
+# The 128 shard tensors live in 10 files, in string order, starting at unaligned offsets (data starts at byte
+# 2,239), so the GPU gathers through a 128-entry table of shard base addresses with byte loads.
+# ---------------------------------------------------------------------------------------------------------------
+import glob as _glob
+import json as _json
+import re as _re
+import struct as _struct
+
+import triton
+import triton.language as tl
+
+_SHARD_RE = _re.compile(r"\.ngram_embedding\.shard_(\d+)\.weight$")
+
+
+def pageable_mode() -> str:
+    return os.environ.get("VLLM_PLE_PAGEABLE", "")
+
+
+def is_pageable_shard_name(name: str) -> bool:
+    return pageable_mode() == "checkpoint" and _SHARD_RE.search(name) is not None
+
+
+@triton.jit
+def _gather_rows_kernel(ids_ptr, shard_base_ptr, out_ptr, rows_per_shard, num_shards,
+                        ROW: tl.constexpr, BLOCK: tl.constexpr):
+    pid = tl.program_id(0)
+    r = tl.load(ids_ptr + pid).to(tl.int64)
+    s = r // rows_per_shard
+    s = tl.minimum(tl.maximum(s, 0), num_shards - 1)
+    local = r - s * rows_per_shard
+    base = tl.load(shard_base_ptr + s).to(tl.pointer_type(tl.uint8))
+    offs = tl.arange(0, BLOCK)
+    m = offs < ROW
+    v = tl.load(base + local * ROW + offs, mask=m)
+    tl.store(out_ptr + pid.to(tl.int64) * ROW + offs, v, mask=m)
+
+
+class CheckpointTable:
+    """Read-only mappings of the checkpoint files that hold the PLE shards, plus a GPU gather over them."""
+
+    def __init__(self, model_dir: str, num_rows: int, row_bytes: int) -> None:
+        if not getattr(torch.cuda.get_device_properties(torch.cuda.current_device()), "is_integrated", 1):
+            raise RuntimeError("VLLM_PLE_PAGEABLE=checkpoint needs an integrated GPU with pageable memory access")
+        self.row_bytes = row_bytes
+        libc = ctypes.CDLL("libc.so.6", use_errno=True)
+        shards: dict[int, tuple[str, int, list]] = {}
+        files = sorted(_glob.glob(os.path.join(model_dir, "*.safetensors")))
+        for f in files:
+            with open(f, "rb") as b:
+                n = _struct.unpack("<Q", b.read(8))[0]
+                h = _json.loads(b.read(n))
+            for k, v in h.items():
+                m = _SHARD_RE.search(k)
+                if m and v.get("dtype") == "F8_E4M3":
+                    i = int(m.group(1))
+                    if i in shards:
+                        raise ValueError(f"PLE shard {i} appears twice ({shards[i][0]}, {f})")
+                    shards[i] = (f, 8 + n + v["data_offsets"][0], v["shape"])
+        if not shards or sorted(shards) != list(range(len(shards))):
+            raise ValueError(f"PLE pageable: shard set incomplete in {model_dir}: {sorted(shards)[:5]}...")
+        self.num_shards = len(shards)
+        self.rows_per_shard = shards[0][2][0]
+        if any(s[2][1] != row_bytes for s in shards.values()):
+            raise ValueError("PLE pageable: shard row width mismatch")
+        self.files: dict[str, dict] = {}
+        for f in sorted({s[0] for s in shards.values()}):
+            fd = os.open(f, os.O_RDONLY)
+            size = os.path.getsize(f)
+            mm = mmap.mmap(fd, size, mmap.MAP_SHARED, mmap.PROT_READ)
+            arr = np.frombuffer(mm, dtype=np.uint8)
+            addr = arr.__array_interface__["data"][0]
+            if libc.madvise(ctypes.c_void_p(addr), ctypes.c_size_t(size), _MADV_RANDOM) != 0:
+                logger.warning("PLE pageable: madvise(MADV_RANDOM) failed on %s", f)
+            _KEEP.extend([mm, arr])
+            self.files[f] = dict(fd=fd, arr=arr, addr=addr, idx=len(self.files))
+        fl = list(self.files)
+        self.shard_file = np.array([self.files[shards[i][0]]["idx"] for i in range(self.num_shards)], np.int64)
+        self.shard_off = np.array([shards[i][1] for i in range(self.num_shards)], np.int64)
+        self.shard_rows = np.array([shards[i][2][0] for i in range(self.num_shards)], np.int64)
+        self.file_list = [self.files[f] for f in fl]
+        bases = [self.files[shards[i][0]]["addr"] + shards[i][1] for i in range(self.num_shards)]
+        dev = torch.cuda.current_device()
+        self.shard_base = torch.tensor(bases, dtype=torch.int64, device=f"cuda:{dev}")
+        self.num_rows = min(num_rows, int(self.shard_rows.sum()))
+        logger.info("PLE pageable: mapped %d shards x %d rows from %d checkpoint files in %s, no copy, nothing "
+                    "pinned; GPU gathers through a %d-entry shard-address table", self.num_shards,
+                    self.rows_per_shard, len(self.files), model_dir, self.num_shards)
+
+    def gather(self, ids: torch.Tensor) -> torch.Tensor:
+        flat = ids.reshape(-1)
+        out = torch.empty((flat.numel(), self.row_bytes), dtype=torch.uint8, device=flat.device)
+        if flat.numel():
+            _gather_rows_kernel[(flat.numel(),)](flat, self.shard_base, out, self.rows_per_shard,
+                                                 self.num_shards, ROW=self.row_bytes,
+                                                 BLOCK=triton.next_power_of_2(self.row_bytes))
+        return out.view(torch.float8_e4m3fn).reshape(*ids.shape, self.row_bytes)
+
+    # --- CPU side, for the prefetcher -------------------------------------------------------------------------
+    def byte_addresses(self, rows: np.ndarray):
+        s = np.clip(rows // self.rows_per_shard, 0, self.num_shards - 1)
+        local = rows - s * self.rows_per_shard
+        return self.shard_file[s], self.shard_off[s] + local * self.row_bytes
+
+    def touch(self, rows: np.ndarray, pool) -> None:
+        fidx, off = self.byte_addresses(rows)
+        order = np.argsort(fidx, kind="stable")
+        fidx, off = fidx[order], off[order]
+        cuts = np.flatnonzero(np.diff(fidx)) + 1
+        groups = [(int(g[0]), o) for g, o in zip(np.split(fidx, cuts), np.split(off, cuts)) if g.size]
+        if rows.size <= 4096:
+            for fi, o in groups:
+                f = self.file_list[fi]
+                for p in np.unique(np.concatenate([o // _PAGE, (o + self.row_bytes - 1) // _PAGE])):
+                    os.posix_fadvise(f["fd"], int(p) * _PAGE, _PAGE, os.POSIX_FADV_WILLNEED)
+                int(f["arr"][o].sum()) + int(f["arr"][o + self.row_bytes - 1].sum())
+            return
+        tasks = []
+        for fi, o in groups:
+            arr = self.file_list[fi]["arr"]
+            for c in np.array_split(o, max(1, min(64, o.size // 256))):
+                tasks.append((arr, c))
+        list(pool.map(lambda t: int(t[0][t[1]].sum()) + int(t[0][t[1] + self.row_bytes - 1].sum()), tasks))
+
+
+TABLE: dict = {}
+
+
+def map_checkpoint_table(num_rows: int, row_bytes: int) -> "CheckpointTable":
+    from vllm.config import get_current_vllm_config
+    model_dir = get_current_vllm_config().model_config.model
+    t = CheckpointTable(model_dir, num_rows, row_bytes)
+    TABLE["t"] = t
+    return t

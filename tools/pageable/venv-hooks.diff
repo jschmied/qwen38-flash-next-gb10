@@ -1,5 +1,5 @@
---- models/qwen4_exp/nvidia/ple_layer.py.orig-pageable	2026-09-23 08:36:31.640703367 +0200
-+++ models/qwen4_exp/nvidia/ple_layer.py	2026-09-23 08:36:31.653572637 +0200
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py.orig-pageable	2026-09-23 08:36:31.640703367 +0200
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py	2026-09-23 10:23:47.428355308 +0200
 @@ -2,6 +2,7 @@
  # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
  """GPU-resident Qwen4Exp position-learning enhancement layers."""
@@ -8,7 +8,7 @@
  from collections.abc import Iterable, Sequence
  
  import torch
-@@ -110,9 +111,23 @@
+@@ -110,9 +111,34 @@
      ) -> None:
          del input_size, output_size, params_dtype
          weight_loader = extra_weight_attrs.get("weight_loader")
@@ -17,7 +17,18 @@
 -        )
 +        # PAGEABLE-PROTO (finding 225): map the table instead of allocating it.
 +        _pageable_file = os.environ.get("VLLM_PLE_PAGEABLE_FILE")
-+        if _pageable_file:
++        if os.environ.get("VLLM_PLE_PAGEABLE") == "checkpoint":
++            # v2: gather straight from the checkpoint's safetensors mappings.
++            from vllm.v1.ple_offload.pageable import map_checkpoint_table
++
++            layer._pageable_table = map_checkpoint_table(
++                sum(output_partition_sizes), input_size_per_partition
++            )
++            weight = nn.Parameter(
++                torch.empty(0, input_size_per_partition, dtype=torch.float8_e4m3fn),
++                requires_grad=False,
++            )
++        elif _pageable_file:
 +            from vllm.v1.ple_offload.pageable import map_table
 +
 +            weight = nn.Parameter(
@@ -35,19 +46,31 @@
          layer.register_parameter("weight", weight)
  
          weight_scale = create_fp8_scale_parameter(
-@@ -828,6 +843,10 @@
+@@ -140,6 +166,9 @@
+         raise NotImplementedError("PLE FP8 weights only support embedding lookup")
+ 
+     def embedding(self, layer: nn.Module, input_: torch.Tensor) -> torch.Tensor:
++        table = getattr(layer, "_pageable_table", None)
++        if table is not None:
++            return table.gather(input_)
+         return F.embedding(input_, layer.weight)
+ 
+ 
+@@ -828,6 +857,12 @@
                  and name.startswith(shard_prefix)
                  and name.endswith(".weight")
              ):
-+                if os.environ.get("VLLM_PLE_PAGEABLE_FILE"):
++                if os.environ.get("VLLM_PLE_PAGEABLE_FILE") or (
++                    os.environ.get("VLLM_PLE_PAGEABLE") == "checkpoint"
++                ):
 +                    # PAGEABLE-PROTO: the rows already live in the mapped file.
 +                    loaded.add("ngram_embedding.weight")
 +                    continue
                  shard_text = name[len(shard_prefix) : -len(".weight")]
                  if not shard_text.isdigit():
                      regular_weights.append((name, loaded_weight))
---- v1/worker/gpu/model_runner.py.orig-pageable	2026-09-23 08:36:31.646239939 +0200
-+++ v1/worker/gpu/model_runner.py	2026-09-23 08:36:31.659953545 +0200
+--- a/vllm/v1/worker/gpu/model_runner.py.orig-pageable	2026-09-23 08:36:31.646239939 +0200
++++ b/vllm/v1/worker/gpu/model_runner.py	2026-09-23 10:23:47.434125778 +0200
 @@ -18,6 +18,7 @@
  """
  
@@ -56,13 +79,20 @@
  import gc
  import time
  from contextlib import AbstractContextManager
-@@ -1836,6 +1837,24 @@
+@@ -1836,6 +1837,31 @@
                  input_batch.num_tokens_after_padding,
                  dummy_run,
              )
 +        # PAGEABLE-PROTO (finding 225): CPU prefetch of this step's PLE rows.
 +        _pp = getattr(self, "_ple_pageable", None)
-+        if _pp is None and os.environ.get("VLLM_PLE_PAGEABLE_FILE") and not dummy_run:
++        if (
++            _pp is None
++            and (
++                os.environ.get("VLLM_PLE_PAGEABLE_FILE")
++                or os.environ.get("VLLM_PLE_PAGEABLE") == "checkpoint"
++            )
++            and not dummy_run
++        ):
 +            from vllm.v1.ple_offload.pageable import PagePrefetcher
 +
 +            _pp = self._ple_pageable = PagePrefetcher(
@@ -81,3 +111,35 @@
  
          # Run model.
          if batch_desc.cg_mode == CUDAGraphMode.FULL:
+--- a/vllm/model_executor/model_loader/weight_utils.py.orig-pageable	2026-09-23 10:23:47.419585299 +0200
++++ b/vllm/model_executor/model_loader/weight_utils.py	2026-09-23 10:23:47.439591207 +0200
+@@ -864,6 +864,17 @@
+     threading.Thread(target=_run_prefetch, daemon=True).start()
+ 
+ 
++_PLE_PAGEABLE_EMPTY = torch.empty(0)
++
++
++def _ple_pageable_skip(name: str) -> bool:
++    if os.environ.get("VLLM_PLE_PAGEABLE") != "checkpoint":
++        return False
++    from vllm.v1.ple_offload.pageable import is_pageable_shard_name
++
++    return is_pageable_shard_name(name)
++
++
+ def safetensors_weights_iterator(
+     hf_weights_files: list[str],
+     use_tqdm_on_load: bool,
+@@ -999,6 +1010,11 @@
+                 for name in f.keys():  # noqa: SIM118
+                     if should_skip_weight(name, local_expert_ids):
+                         continue
++                    if _ple_pageable_skip(name):
++                        # PAGEABLE-PROTO v2: the GPU reads these rows from the mapped file;
++                        # yield the name only so the loader marks the parameter loaded.
++                        yield name, _PLE_PAGEABLE_EMPTY
++                        continue
+                     param = f.get_tensor(name)
+                     yield name, param
+ 

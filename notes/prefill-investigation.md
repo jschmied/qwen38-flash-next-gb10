@@ -3407,3 +3407,22 @@ the 64 GiB swap prerequisite and `CAP_SYS_PTRACE`, and uses no IPC.
 Code: `tools/pageable/pageable.py`, plus `venv-hooks.diff` (env-gated: `VLLM_PLE_PAGEABLE_FILE`,
 `VLLM_PLE_CPU_OFFLOAD=0`; installed in `vllm-venv-fnmain3`, originals kept as `*.orig-pageable`).
 Data: `notes/data/pageable-p{0,1,2,3}.txt`.
+
+## Finding 226 — pageable PLE v2: gather straight from the checkpoint files, no copy step (2026-09-23, IN PROGRESS)
+
+v2 maps the 10 `model-plefp8-*.safetensors` files read-only. A Triton kernel gathers through a 128-entry
+shard-base-address table with byte loads (the data starts at byte 2,239). The loader yields the 128 shard names
+without reading them. Env: `VLLM_PLE_PAGEABLE=checkpoint`, `VLLM_PLE_CPU_OFFLOAD=0`.
+
+**Hypotheses, before running:**
+
+| | expected | reference |
+|---|---|---|
+| k1. kernel == v1 contiguous file, 500k random rows + every shard's first/last row | bit-exact | v1 file verified against the checkpoint (2,000 rows, 0 mismatches) |
+| k2. CUDA-graph replay == eager | bit-exact | — |
+| k3. warm gather, 64 rows | ≤ 50 µs | v1 `index_select` 10 µs for 16 rows |
+| s1. ready time | 600–670 s | prod 641/650 s; v1 701/790 s (it read the 51 GB it then discarded) |
+| s2. agent loop cold | 1.55–1.62 s/turn | v1 1.57/1.59 (finding 225) |
+| s3. TTFT sums, 30k / 8k | within ±3 % of v1 (33.5–34.5 / 9.2–9.4 s) | finding 225 |
+| s4. c=16 decode, MTP n=3 | 190–205 tok/s | prod [200.2, 202.1] (finding 222, `decodecell_json.py`) |
+| s5. auto KV (util 0.90, no fixed bytes) | KV 30–35 GiB; swap < 6 GiB; MemAvailable ≥ 1 GiB | prod 31.4–31.9 GiB auto |
