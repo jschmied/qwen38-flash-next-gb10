@@ -1319,3 +1319,6 @@ wait on one ~100 GB pull, and they share one serve.
   (4) `usage.cached_tokens` noted as reading 0 on real hits, so unusable. Findings 217/218/219/221.
   <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5789112191>
 
+- **2026-09-23 — vLLM PR #58157, reply to hclsys** — confirms the #57512 interaction: on SM12x with both landed,
+  every fp32-scale checkpoint warns once per worker process per start; intended (finding 206/207 costs).
+  Draft `58157-reply-hclsys.md`. <https://github.com/vllm-project/vllm/pull/58157#issuecomment-5790068605>
