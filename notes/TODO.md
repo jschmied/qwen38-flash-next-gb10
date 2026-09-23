@@ -1248,3 +1248,20 @@ Ranked by value / cost. None started; the blockers above them are being worked f
    acceptance at 32k, det-135), so this is cheap disconfirmation rather than a likely win.
 6. **`--dense` drafter A/B** — `mtpfp4d` is built and config-verified (shards 7.83 GB vs 7.92 GB).
    ~90 MB, ~+0.4% KV, no speed change predicted. Not worth 4 loads unless something else needs it.
+
+## PLE OFFLOAD — upstream direction vs GB10 (assessed 2026-09-23, needs user decision)
+
+- Upstream mainline is #54371 (merged 09-09): Device or **pinned** host + UVA. Right for discrete GPUs with separate
+  host RAM, wrong for GB10: 47.7 GiB pinned = unswappable, the hard-reset condition (memory gb10-pinned-ple-thrash).
+  #53899 (our overlay's source) closed unmerged 09-21 → the overlay is a dead end.
+- The fit for GB10 is **file-backed**: #54129 (Trosfy, mmap from the safetensors, no worker, MRV2; CONFLICTING,
+  unreviewed, open illegal-address bug on sm120 from 09-22). The access pattern supports it: TSUMUGI-XE measured
+  17.6 rows/step, 2.8 KiB/step, 0 % step-to-step reuse (#54129 comment 09-21).
+- Measured 2026-09-23: GB10 reports `PAGEABLE_MEMORY_ACCESS=1` and `..._USES_HOST_PAGE_TABLES=1` (cuDeviceGetAttribute
+  88/100). So the GPU can gather straight from an mmap'd file: no pin, no CPU gather, no staging copy, no swap.
+  → proposal: a third Level-2 backend in #54371's hierarchy (`PageableHost`: mmap + direct device gather, gated on
+  that attribute), plus a CPU `madvise(WILLNEED)` prefetch of the next step's rows at input prep.
+- The SSD cost falls on prefill, not decode (estimates, NOT measured): decode ≈18 random 4K reads/step ≈0.1 ms vs a
+  ~58 ms step; 30k-token cold prefill ≈528k reads ≈2 GiB random → ~0.5-1 s on top of 10.9 s TTFT; the page cache absorbs repeats.
+- Hypothesis before any test: decode within ±2 % of prod (1.65 s/turn agent loop cold); 30k TTFT +3..+10 % cold, ±2 % warm;
+  swap use drops from ~48 GiB to ~0; steady MemAvailable rises (clean pages reclaimable). Out of range → debug.
