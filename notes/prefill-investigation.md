@@ -3733,3 +3733,16 @@ it cannot reveal a PLE race; t3 (+#57785) is void for the same reason. The upstr
 tested on GB10 with real weights**: its 47.7 GiB pinned table is exactly the condition that thrashes the box, and
 the tiny-table variant needs dummy weights. The remaining evidence for I2 is m10: the real model, our backend
 switched back to the inherited side-stream flow, with #57785 applied.
+
+**I2 m10, #57785 does NOT fix the side-stream race (2026-09-23 18:14):** the real model, our backend switched back to
+the inherited PinnedHost side-stream flow (`VLLM_PLE_SIDESTREAM=1`), with #57785's `torch.accelerator.synchronize()`
+in `_begin_segment` applied (logged "57785 applied", reverted after). Cold == warm **1/8**, |Δlp| up to 1.41. That is
+as bad as m4 without it. **Hypothesis "#57785's capture-time leak is the mechanism": falsified.** The race happens at
+replay.
+
+Next hypothesis (m11, not yet run): the ids tensor the side stream reads lives in the graph pool. After
+`start_prefetch` returns it is dead to the graph, so a later segment reuses its storage, and at replay the main
+stream overwrites it while the side stream still reads it; `record_stream` cannot protect within a graph pool.
+Test: copy the ids into a persistent buffer outside the pool (current stream) before the side-stream gather.
+Reproducible then means pool reuse is the mechanism, which would apply to PinnedHost too; still irreproducible
+means look elsewhere. Our PR keeps the current-stream lookup either way.
