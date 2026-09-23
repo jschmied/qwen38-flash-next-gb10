@@ -3721,3 +3721,15 @@ variability on this build therefore comes from outside PLE.
 
 m8 also: A-set == m6/m7 (auto KV and the recorder do not change output); auto KV 33.38 GiB. The sustained run is
 under review (swap 8.6 GiB, PSI max 38 out of range; rerun with a time series pending).
+
+**I3b, BF16 table end to end (m9, 2026-09-23 17:44):** a BF16-table copy of the checkpoint, whose rows are the
+FP8 path's own `fp8.to(bf16) * scale`, mapped as 320,001,536 × 320 B (unquantized method). **Bit-identical to the
+FP8 table:** all 8 A-set hashes and all 8 detprobe hashes equal m6's, and cold == warm 8/8. Hypothesis met
+exactly. The BF16 path of the backend works end to end.
+
+**I2 tiny-table pinned arms (t1 stock, t2 sync): VOID.** With `--load-format dummy`, every prompt in every pass
+produced the same output hash (`6ed37a921f`). The random-weight model's output does not depend on its input, so
+it cannot reveal a PLE race; t3 (+#57785) is void for the same reason. The upstream PinnedHost backend **cannot be
+tested on GB10 with real weights**: its 47.7 GiB pinned table is exactly the condition that thrashes the box, and
+the tiny-table variant needs dummy weights. The remaining evidence for I2 is m10: the real model, our backend
+switched back to the inherited side-stream flow, with #57785 applied.

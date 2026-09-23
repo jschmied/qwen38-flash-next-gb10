@@ -1,0 +1,10 @@
+=== arm t1 mode tiny 2026-09-23T18:01:42+02:00
+ready after 101s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=510036) INFO 09-23 18:02:26 [mtp.py:95] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+(EngineCore pid=504756) INFO 09-23 18:02:50 [kv_cache_utils.py:2432] GPU KV cache size: 590,604 tokens, Maximum concurrency for 32,768 tokens per request: 18.02x
+(Worker pid=510036) QSADET active: /opt/llm/kernel-det/_C_det.so
+mem after ready: used=118 avail=3 swap_used=1G
+{"label": "t1", "cold": ["6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f"], "warm": ["6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f"], "salted": ["6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f", "6ed37a921f"], "cold_eq_warm": 8, "max_dlogprob_cold_warm": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+== ALL DONE ==
