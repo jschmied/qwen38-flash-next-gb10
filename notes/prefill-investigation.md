@@ -3695,3 +3695,29 @@ min 504–521): flat K=600 337 / 274 ms, K=1000 245 / 292 ms, 2-D views 207 / 22
 Without the ≤ 500-index tails, the leftover gap shrinks from 2.0–2.4× to within about the arms' own cold-cache
 spread (v2rows measured 207–304 ms across runs). **No evidence of a second mechanism:** the GIL threshold
 explains the flat-indexing slowdown, and the earlier 2× remainder was the tails, as review 4 predicted.
+
+## Finding 228 — I1: the PLE tensor the model consumes is exactly determined by its inputs, in every mixed step (2026-09-23)
+
+Closes review 3's open item for the main port (`checkpoint_mapped`, current-stream lookup). A local-only recorder
+(`VLLM_PLE_RECORD`) queued stream-ordered async D2H copies of each step's model inputs, n-gram ids, and the
+`_prefetch_buffer` rows the model consumes next, with no sync before the consumer. 2,500 steps of m8: 3 mixed
+batches with proven overlap, then sustained traffic. Verified offline (`tools/pageable/verify_record.py`):
+
+| | all steps | mixed prefill+decode steps |
+|---|---|---|
+| recorded | 2,500 | 255 |
+| consumed rows == checkpoint bytes for the step's ids | **2,500 / 2,500** (11.36 M rows) | **255 / 255** |
+| ids == CPU hash of the recorded inputs | 2,492 / 2,500 | **255 / 255** |
+
+**The 8 id mismatches were debugged, not waved through** (hypothesis was 100 %). They are steps 2, 4, 6, 8 and
+17, 19, 21, 23: all-zero input ids, sizes 8/4/2/1 = the CUDA-graph capture sizes, the second call of each pair.
+They are **capture-time eager calls**. During breakable capture the preceding graph segment that produces the
+ids is captured, not executed, so the ids buffer holds stale values. The recorder ran because no stream capture
+is active between segments. Those lookups feed discarded warm-up output; the gap is in the instrument, not a
+serving defect.
+
+**Every serving step verifies on both counts, including all 255 mixed steps.** Any mixed-batch output
+variability on this build therefore comes from outside PLE.
+
+m8 also: A-set == m6/m7 (auto KV and the recorder do not change output); auto KV 33.38 GiB. The sustained run is
+under review (swap 8.6 GiB, PSI max 38 out of range; rerun with a time series pending).

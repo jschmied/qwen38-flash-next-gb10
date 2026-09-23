@@ -1,0 +1,22 @@
+=== arm m8 mode main 2026-09-23T16:51:30+02:00
+ready after 791s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=440043) INFO 09-23 17:01:48 [default_loader.py:430] Loading weights took 572.40 seconds
+(Worker pid=440043) INFO 09-23 17:01:58 [ngram_embedding.py:636] Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files; no device or pinned memory
+(Worker pid=440043) INFO 09-23 17:03:29 [default_loader.py:430] Loading weights took 85.95 seconds
+(Worker pid=440043) INFO 09-23 17:03:29 [mtp.py:95] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+(Worker pid=440043) QSADET active: /opt/llm/kernel-det/_C_det.so
+(Worker pid=440043) INFO 09-23 17:04:03 [gpu_worker.py:674] Available KV cache memory: 33.38 GiB
+(EngineCore pid=439966) INFO 09-23 17:04:03 [kv_cache_utils.py:2432] GPU KV cache size: 635,855 tokens, Maximum concurrency for 32,768 tokens per request: 19.40x
+mem after ready: used=117 avail=4 swap_used=6G
+{"label": "m8", "A": ["bad99b9969f5", "42414c8f68dc", "b0fb82d1c831", "035076d72b7e", "de5946235f92", "b4d92fb61c85", "e9fc213aca18", "f4e3656d8ba7"], "B": [{"dec": ["ae85ff26918a", "2d83d9f36e64"], "pre": ["2b150ff5a229", "cc8a2efc2183"], "overlap": true}, {"dec": ["fe43afec0968", "3534f3427f4a"], "pre": ["0ba9ef8b7cfe", "2f7029536124"], "overlap": true}, {"dec": ["7625cdc6e824", "0adaf272bf64"], "pre": ["caafda18e9f0", "ed94ec981f85"], "overlap": true}], "solo": ["25a12b785045", "ca12e18937c7"], "overlap_all": true, "dec_stable_across_reps": false, "dec_equals_solo": [false, false]}
+{"minutes": 20.0, "concurrency": 8, "ok": 238, "err": 0, "prompt_tokens": 1578858, "completion_tokens": 69851, "memavail_min_gib": 1.5, "swap_max_gib": 8.6, "psi_full_avg10_max": 38.08, "psi_full_avg10_p90": 3.04, "samples": 120}
+(Worker pid=440043) INFO 09-23 17:03:56 [ngram_embedding.py:692] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=4096, rows=65536)
+(Worker pid=440043) INFO 09-23 17:04:02 [ngram_embedding.py:692] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=8, rows=128)
+(Worker pid=440043) INFO 09-23 17:04:02 [ngram_embedding.py:692] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=4, rows=64)
+(Worker pid=440043) INFO 09-23 17:04:03 [gpu_worker.py:674] Available KV cache memory: 33.38 GiB
+(EngineCore pid=439966) INFO 09-23 17:04:03 [kv_cache_utils.py:2432] GPU KV cache size: 635,855 tokens, Maximum concurrency for 32,768 tokens per request: 19.40x
+(Worker pid=440043) INFO 09-23 17:14:28 [ngram_embedding.py:784] PLE RECORD: dumped 2500 steps to /opt/llm/runners/record/m8.pt
+mem at end: used=116 avail=4 swap_used=8G
+== ALL DONE ==
