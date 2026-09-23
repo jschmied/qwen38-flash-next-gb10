@@ -3746,3 +3746,32 @@ stream overwrites it while the side stream still reads it; `record_stream` canno
 Test: copy the ids into a persistent buffer outside the pool (current stream) before the side-stream gather.
 Reproducible then means pool reuse is the mechanism, which would apply to PinnedHost too; still irreproducible
 means look elsewhere. Our PR keeps the current-stream lookup either way.
+
+## Finding 229 — the side-stream race is graph-pool reuse of the ids tensor; auto KV validated (2026-09-23)
+
+**Mechanism confirmed (m11).** m11 is the PR code with a local variant: the side-stream lookup reads a
+**persistent copy of the ids**, made on the current stream outside the CUDA-graph pool. The join is still
+deferred to finalize, as in the inherited PinnedHost flow. Result: cold == warm **8/8**, |Δlp| 0, and the hashes
+equal m6's (`4e5bd…`).
+
+| arm | ids read by the side-stream gather | cold == warm |
+|---|---|---|
+| m4 | graph-pool tensor (inherited flow) | 2/8 |
+| m10 | graph-pool tensor + #57785 | 1/8 |
+| **m11** | **persistent copy outside the pool** | **8/8** |
+| m5 / m12 | current-stream lookup (this PR) | 8/8 |
+
+The ids tensor the side stream reads is produced inside a captured graph segment. Once `start_prefetch`
+returns, the graph treats it as dead, so later segments reuse its pool memory, and at replay the main stream
+overwrites it while the side stream is still gathering. `record_stream` does not protect memory inside a graph
+pool, and #57785 (a capture-time sync) does not touch replay. **Upstream PinnedHost runs exactly this flow**, so
+it very likely has the race, with a narrower window because pinned UVA reads are fast. This is not shown on
+PinnedHost itself: its pinned table cannot run on this box. A precise upstream issue is warranted, **pending
+the user's go**. The PR's current-stream lookup avoids it by construction.
+
+**Auto KV validated (m12, the exact PR code d136ec732, no recorder):** KV 628,833 tokens (auto); 20 min at c=8,
+248 requests, **0 errors**, 1.64 M prompt tokens. MemAvailable min 2.0 GiB, swap max 6.8 GiB, memory PSI
+`full avg10` max 6.8 % (p90 3.3 %): all in range. m8's excursions (swap 8.6 GiB, PSI 38 %) were the recorder's
+per-step pinned allocations, not the backend. The time series is in `notes/data/sustain-m12.jsonl`.
+
+m12 also: A-set = `bad99…`, detprobe cold `4e5bd…`, cold == warm 8/8; TTFT 30k sum 32.74 s; c=16 198.0 tok/s.

@@ -1,0 +1,30 @@
+=== arm m12 mode main 2026-09-23T18:32:08+02:00
+ready after 771s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=541156) INFO 09-23 18:45:06 [default_loader.py:430] Loading weights took 608.49 seconds
+(Worker pid=541156) INFO 09-23 18:45:07 [ngram_embedding.py:640] Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files; no device or pinned memory
+(Worker pid=541156) INFO 09-23 18:46:09 [default_loader.py:430] Loading weights took 60.09 seconds
+(Worker pid=541156) INFO 09-23 18:46:09 [mtp.py:95] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+(Worker pid=541156) INFO 09-23 18:46:36 [gpu_worker.py:674] Available KV cache memory: 32.98 GiB
+(EngineCore pid=541040) INFO 09-23 18:46:36 [kv_cache_utils.py:2432] GPU KV cache size: 628,833 tokens, Maximum concurrency for 32,768 tokens per request: 19.19x
+mem after ready: used=116 avail=5 swap_used=6G
+  m12-cold turn 1:   3.47 s    29 tok  hits+      0  acc  63.3% len 2.90
+  m12-cold turn 2:   1.24 s    30 tok  hits+   6400  acc  70.0% len 3.10
+  m12-cold turn 3:   1.22 s    32 tok  hits+   6400  acc  85.2% len 3.56
+  m12-cold turn 4:   1.46 s    28 tok  hits+   6400  acc  38.5% len 2.15
+  m12-cold turn 5:   1.64 s    29 tok  hits+   6400  acc  33.3% len 2.00
+  m12-cold turn 6:   1.31 s    29 tok  hits+   6400  acc  63.3% len 2.90
+  m12-cold turn 7:   1.57 s    34 tok  hits+   6400  acc  47.6% len 2.43
+  m12-cold turn 8:   1.41 s    25 tok  hits+   6400  acc  45.5% len 2.36
+{"arm": "m12-cold", "total_s": 13.3, "turns": 8, "s_per_turn": 1.67, "tokens": 236, "ms_per_tok": 56.44, "accept_rate": 0.5329999999999999, "accept_len": 2.6, "hits_last_turn": 6400, "hits_sum": 44800}
+{"label": "m12", "A": ["bad99b9969f5", "42414c8f68dc", "b0fb82d1c831", "035076d72b7e", "de5946235f92", "b4d92fb61c85", "e9fc213aca18", "f4e3656d8ba7"], "B": [{"dec": ["ae85ff26918a", "2d83d9f36e64"], "pre": ["2b150ff5a229", "cc8a2efc2183"], "overlap": true}, {"dec": ["33c5d743df66", "b910b315f104"], "pre": ["bce3c0ee0ec8", "abc3cc76fe90"], "overlap": true}, {"dec": ["b11dc6d6ebc9", "22c83fd5e4d6"], "pre": ["a958c8444c1d", "a72420fce399"], "overlap": true}], "solo": ["25a12b785045", "ca12e18937c7"], "overlap_all": true, "dec_stable_across_reps": false, "dec_equals_solo": [false, false]}
+  m12 TTFT 8k: 3.06s/7201tok 3.13s/7976tok 2.93s/7086tok
+  m12 TTFT 30k: 10.75s/27148tok 11.66s/28780tok 10.33s/24164tok
+{"label": "m12", "8k": [[3.06, 7201], [3.13, 7976], [2.93, 7086]], "30k": [[10.75, 27148], [11.66, 28780], [10.33, 24164]]}
+{"arm": "m12-after", "total_s": 10.8, "turns": 8, "s_per_turn": 1.35, "tokens": 236, "ms_per_tok": 45.93, "accept_rate": 0.5329999999999999, "accept_len": 2.6, "hits_last_turn": 6400, "hits_sum": 51200}
+{"arm": "m12-c16", "c": 16, "reps_all": [182.1, 201.6, 194.8, 198.0], "warm_reps": [201.6, 194.8, 198.0], "warm_median": 198.0, "warm_min": 194.8, "warm_max": 201.6}
+{"label": "m12", "cold": ["4e5bd85440", "9bbad04fa3", "ea37726ed7", "c8283bf26f", "876b001f58", "5e8d47be91", "8ce19cbb64", "dcf9807142"], "warm": ["4e5bd85440", "9bbad04fa3", "ea37726ed7", "c8283bf26f", "876b001f58", "5e8d47be91", "8ce19cbb64", "dcf9807142"], "salted": ["49e9273681", "5e5bfe7dad", "3573502758", "df5e5e1f75", "a9daecaef3", "887c7898ed", "2ca0d8fca5", "3370c904a8"], "cold_eq_warm": 8, "max_dlogprob_cold_warm": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"minutes": 20.0, "concurrency": 8, "ok": 248, "err": 0, "prompt_tokens": 1643079, "completion_tokens": 73616, "memavail_min_gib": 2.0, "swap_max_gib": 6.8, "psi_full_avg10_max": 6.79, "psi_full_avg10_p90": 3.34, "samples": 120}
+mem at end: used=116 avail=4 swap_used=6G
+== ALL DONE ==

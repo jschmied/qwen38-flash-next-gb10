@@ -30,9 +30,10 @@ by every process that maps the same files.
   existing ETP all-reduce combines ranks.
 - **Current stream.** The lookup runs on the current stream, not the pinned backend's side stream. With the
   inherited side-stream lookup, greedy outputs on GB10 were not reproducible within one server start
-  (identical prompts, cold vs warm: 2/8 equal, |Δlogprob| up to 1.41). #57785's capture-time synchronization
-  was tested on top and did not fix it (1/8); the mechanism is open. On the current stream: 8/8,
-  |Δlogprob| 0, and identical across fresh starts.
+  (identical prompts, cold vs warm: 2/8 equal, |Δlogprob| up to 1.41). The cause: the side stream reads the
+  ids tensor from the CUDA-graph memory pool after the graph has released it, and later segments overwrite it
+  at replay. Reading a persistent copy instead made it reproducible (8/8); #57785's capture-time sync did not
+  (1/8). On the current stream: 8/8, |Δlogprob| 0, and identical across fresh starts.
 - **Host-side page prefetch.** GPU faults on non-resident file pages are serviced one page at a time. A cold
   30k-token prefill (≈480k rows) took **88 s** with GPU faults alone, and **1.6 s** when 64 CPU threads fault
   the step's rows in first. The prefetch is driven from `Qwen4ExpModelState.prepare_inputs`, from a CPU hash
@@ -111,10 +112,10 @@ offload implementation (#53899's worker, never merged) serving the same checkpoi
 - A BF16-table copy of the checkpoint (rows = the FP8 path's `fp8 * scale` in BF16, mapped as 320 B rows)
   generates **bit-identical** output to the FP8 table: 8/8 sequential prompts and 8/8 determinism probes.
 
-**Auto KV sizing** (no `--kv-cache-memory-bytes`) was exercised but is **not validated under sustained memory
-pressure.** KV sized itself to 33.4 GiB, and 20 min of c=8 diverse traffic completed 238 requests with 0
-errors. But MemAvailable dropped to 1.5 GiB, swap reached 8.6 GiB, and memory PSI `full avg10` peaked at 38 %
-(p90 3 %). The performance numbers above use the explicit 31 GiB KV cap.
+**Auto KV sizing** (no `--kv-cache-memory-bytes`): KV sized itself to about 33 GiB. 20 min of c=8 diverse
+traffic (2k–60k-token prompts): 248 requests, 0 errors, MemAvailable ≥ 2.0 GiB, swap ≤ 6.8 GiB, memory PSI
+`full avg10` ≤ 6.8 % (p90 3.3 %). The speed numbers above use an explicit 31 GiB KV cap, so both arms are
+compared at equal KV.
 
 **Not covered:**
 - TP>1 on hardware (single-GPU box; the ETP range is unit-tested).
@@ -131,8 +132,9 @@ errors. But MemAvailable dropped to 1.5 GiB, swap reached 8.6 GiB, and memory PS
   unified-memory variant: the GPU reads the mapping directly, so there is no host gather and no staging copy.
   The validation approach borrows from it.
 - **#57785 (open):** eager-break side-stream work left unjoined at capture. Tested with the inherited
-  side-stream lookup on GB10: it does not remove the non-reproducibility above, so this PR does not depend
-  on it. Whether the stock pinned backend is affected could not be tested here (its pinned table does not fit).
+  side-stream lookup on GB10: it does not remove the non-reproducibility above, whose cause is graph-pool
+  reuse of the ids at replay. The stock pinned backend runs the same flow; that could not be tested here
+  (its pinned table does not fit), so it is reported separately rather than claimed.
 - **#58310, #56926:** host-memory guards and serialization for the pinned path. They are orthogonal.
 
 ---
