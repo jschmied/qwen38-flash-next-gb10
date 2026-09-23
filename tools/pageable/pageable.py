@@ -154,6 +154,7 @@ class PagePrefetcher:
         self.work: queue.Queue = queue.Queue()
         self.pool = ThreadPoolExecutor(64, thread_name_prefix="ple-touch")
         self.checks_left = 3
+        self.row_checks_left = 6   # gathered rows == file bytes, on real MIXED prefill+decode steps
         self.stats = dict(steps=0, skipped=0, rows=0, ms=0.0, lag_ms=0.0, big=0)
         self.thread = threading.Thread(target=self._loop, name="ple-prefetch", daemon=True)
         self.thread.start()
@@ -166,6 +167,8 @@ class PagePrefetcher:
         ids_src, qsl_src, ctx_src = self.sources
         if self.checks_left > 0:
             self._check_ids(num_reqs, num_tokens)
+        if self.row_checks_left > 0 and self.table is not None and num_reqs >= 2:
+            self._check_rows(num_reqs, num_tokens)
         try:
             slot = self.free.get_nowait()
         except queue.Empty:
@@ -195,6 +198,25 @@ class PagePrefetcher:
         cpu = self._cpu_rows(ids_src[:num_tokens].cpu(), qsl_src[: num_reqs + 1].cpu(), ctx_src[:num_reqs].cpu())
         ok = np.array_equal(gpu.reshape(-1).numpy()[: cpu.size // len(self.layers)], cpu[: cpu.size // len(self.layers)])
         logger.info("PLE pageable: prefetch ids match GPU ids: %s (tokens=%d reqs=%d)", ok, num_tokens, num_reqs)
+
+    def _check_rows(self, num_reqs: int, num_tokens: int) -> None:
+        # Void check (review 2026-09-23): in the serving process, on steps that mix a prefill with decodes,
+        # the kernel's rows for the step's real ids must equal the bytes in the checkpoint files.
+        ids_src, qsl_src, ctx_src = self.sources
+        qsl = qsl_src[: num_reqs + 1].cpu().numpy()
+        lens = np.diff(qsl)
+        if lens.max(initial=0) <= 8 or (lens > 0).sum() < 2:
+            return   # not a mixed step
+        self.row_checks_left -= 1
+        m = self.layers[0][0]
+        ids = m.compute_ngram_ids(ids_src[:num_tokens], qsl_src[: num_reqs + 1], ctx_src[:num_reqs])
+        got = self.table.gather(ids).view(torch.uint8).reshape(-1, self.table.row_bytes).cpu().numpy()
+        flat = ids.reshape(-1).cpu().numpy()
+        sh = flat // self.table.rows_per_shard
+        loc = flat - sh * self.table.rows_per_shard
+        ref = np.stack([self.table.views[int(a)][int(b)] for a, b in zip(sh, loc)])
+        logger.info("PLE pageable: gathered rows match file bytes: %s (mixed step, reqs=%d, query_lens max=%d, "
+                    "rows=%d)", bool(np.array_equal(got, ref)), int((lens > 0).sum()), int(lens.max()), flat.size)
 
     def _touch(self, rows: np.ndarray) -> None:
         h = self.host
@@ -283,9 +305,11 @@ def _gather_rows_kernel(ids_ptr, shard_base_ptr, out_ptr, rows_per_shard, num_ro
     local = r - s * rows_per_shard
     base = tl.load(shard_base_ptr + s).to(tl.pointer_type(tl.uint8))
     offs = tl.arange(0, BLOCK)
-    m = (offs < ROW) & ok
-    v = tl.load(base + local * ROW + offs, mask=m, other=0)
-    tl.store(out_ptr + pid.to(tl.int64) * ROW + offs, v, mask=m)
+    in_row = offs < ROW
+    # Load only from valid rows; store the full row always, so an invalid id yields zeros and never
+    # leaves allocator residue or a previous graph replay's bytes in the output.
+    v = tl.load(base + local * ROW + offs, mask=in_row & ok, other=0)
+    tl.store(out_ptr + pid.to(tl.int64) * ROW + offs, v, mask=in_row)
 
 
 class CheckpointTable:

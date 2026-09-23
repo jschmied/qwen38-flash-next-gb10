@@ -46,6 +46,18 @@ else:
             for g, l in zip(np.split(cs, cuts), np.split(loc[ci], cuts)): tasks.append((views[int(g[0])], l))
         list(POOL.map(lambda t: int(t[0][t[1], 0].sum()) + int(t[0][t[1], -1].sum()), tasks))
         tasks = []
+    elif ARM == "v2flatsame":   # ISOLATION: exactly v2rows' sorted rows and task split, but flat byte indexing
+        # HYPOTHESIS (review 2): if ordering/grouping is the cause, this lands within 1.3x of v2rows;
+        # if >1.5x, the 2-D indexing path itself contributes.
+        r = np.sort(rows); sh = r // S; loc = r - sh * S
+        tasks = []
+        for ci in np.array_split(np.arange(r.size), 64):
+            if not ci.size: continue
+            cs = sh[ci]; cuts = np.flatnonzero(np.diff(cs)) + 1
+            for g, l in zip(np.split(cs, cuts), np.split(loc[ci], cuts)):
+                i = int(g[0]); tasks.append((arrs[sf[i]], so[i] + l * 160))
+        list(POOL.map(lambda t: int(t[0][t[1]].sum()) + int(t[0][t[1] + 159].sum()), tasks))
+        tasks = []
     else:  # v2sorted
         key = fidx * (1 << 40) + off; order = np.argsort(key); fidx, off = fidx[order], off[order]
         tasks = []

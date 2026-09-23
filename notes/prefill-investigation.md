@@ -3544,3 +3544,29 @@ not yet installed; no effect on these runs, because serving produces no invalid 
   "within 1.3×" range, so the indexing path itself contributes; that is the isolation review 2 asked for.
   Flat indexing is also sensitive to task layout: `v2sorted`, grouped by file and byte offset, is 0.46–0.68 s.
   The numpy mechanism is not identified. The shipped `touch()` uses 2-D views.
+
+**Equivalence v3 results (e1 v2, e2 prod; `notes/data/pageable-e{1,2}.txt`):**
+
+| | v2 (e1) | prod (e2) |
+|---|---|---|
+| A-set, 8 sequential prompts at c=1 with MTP | identical to prod, and to all 4 earlier starts | same |
+| mixed-batch overlap, 3 reps | **proven in 3/3** | proven in 3/3 |
+| in-server check "gathered rows match file bytes" | **True on 6/6 mixed steps** (2 decodes + one 3,200-token prefill chunk, up to 51,328 rows) | n/a |
+| Bdec stable across the 3 reps | no | **no** |
+| Bdec equals solo | no | **no** |
+| solo decode hashes | 54cb2a6c7dee, 8f524851b0ca | **identical** |
+| Bpre rep 1 | 0e9e93fb9768, a72420fce399 | **identical** |
+
+Every result matches the written prediction. Mixed-batch decode output depends on batch composition on
+**both** modes: prod is just as unstable across reps and just as different from solo. That is the known
+batch-variance of this stack (memory `temp0-not-reproducible-under-load`), not a PLE effect. The PLE path itself
+is shown correct directly: the serving process's gathered rows equal the checkpoint bytes on real mixed steps, and
+every batch-invariant comparison (c=1 sequential, solo, first-rep prefills) is bit-identical between v2 and prod.
+
+**Finding 226 status: v2 VALIDATED on GB10 at TP=1, FP8 table.**
+- Supported: swap 50–53 → 5–6 GiB; agent turn −3.9 %; TTFT −3 % (both pass the 223 rule, two starts per arm,
+  matched KV); c=16 decode unchanged; generation equivalent wherever the stack is batch-invariant.
+- Open:
+  - ready time +110–130 s (common to both offload-off modes, unexplained);
+  - auto KV sizing under sustained diverse traffic;
+  - the port onto main's #54371 hierarchy (TP>1, NVFP4/BF16 tables, pytest-style tests).

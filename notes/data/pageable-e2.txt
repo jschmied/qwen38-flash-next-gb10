@@ -1,0 +1,13 @@
+=== arm e2 mode prodkv 2026-09-23T12:19:54+02:00
+ready after 641s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(PleOffloadWorker pid=250985) INFO 09-23 12:20:35 [parallel_state.py:1798] world_size=1 rank=0 local_rank=0 distributed_init_method=file:///tmp/vllm_ple_offload_4cc7rg8d/store backend=gloo
+(PleOffloadWorker pid=250985) INFO 09-23 12:21:52 [worker.py:449] PLE offload matched 132 checkpoint tensor(s), loaded 5 offload entries, and verified 2/2 materialized parameter(s) for layers: ['language_model.model.layers.1.ple.ple_embedding']
+(Worker pid=250829) INFO 09-23 12:28:39 [default_loader.py:430] Loading weights took 485.99 seconds
+(Worker pid=250829) INFO 09-23 12:29:52 [default_loader.py:430] Loading weights took 67.13 seconds
+(EngineCore pid=250712) INFO 09-23 12:30:20 [kv_cache_utils.py:2312] GPU KV cache size: 590,604 tokens, Maximum concurrency for 32,768 tokens per request: 18.02x
+mem after ready: used=117 avail=4 swap_used=53G
+{"label": "e2", "A": ["5441f43b8998", "0ab13c28130e", "832b3e14dfb3", "0f6fbb45db94", "7d6b096ad7df", "1ffb050e2808", "98135973fea8", "a74e90dc1619"], "B": [{"dec": ["9628f55fd634", "118b41c5bb90"], "pre": ["0e9e93fb9768", "a72420fce399"], "overlap": true}, {"dec": ["679ed34df952", "4bf773edbe9e"], "pre": ["8c8b4bd3b7c3", "aed381666695"], "overlap": true}, {"dec": ["b5405f06174b", "4455746edccf"], "pre": ["e9a14e256a72", "74ecdc4d6d14"], "overlap": true}], "solo": ["54cb2a6c7dee", "8f524851b0ca"], "overlap_all": true, "dec_stable_across_reps": false, "dec_equals_solo": [false, false]}
+mem at end: used=118 avail=2 swap_used=51G
+== ALL DONE ==

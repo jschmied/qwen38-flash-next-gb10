@@ -1,0 +1,25 @@
+=== arm e1 mode v2 2026-09-23T12:04:15+02:00
+ready after 781s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=249004) INFO 09-23 12:04:49 [pageable.py:377] PLE pageable: mapped 128 shards x 2500012 rows from 10 checkpoint files in /opt/llm/models/qwen38-flash-next-mtpfp4, no copy, nothing pinned; GPU gathers through a 128-entry shard-address table
+(Worker pid=249004) INFO 09-23 12:15:18 [default_loader.py:430] Loading weights took 625.90 seconds
+(Worker pid=249004) INFO 09-23 12:16:20 [default_loader.py:430] Loading weights took 55.66 seconds
+(EngineCore pid=248928) INFO 09-23 12:16:49 [kv_cache_utils.py:2312] GPU KV cache size: 590,604 tokens, Maximum concurrency for 32,768 tokens per request: 18.02x
+(Worker pid=249004) INFO 09-23 12:16:53 [pageable.py:161] PLE pageable: prefetcher up, 1 PLE layer(s), 4 slots, 64 touch threads
+(Worker pid=249004) INFO 09-23 12:16:53 [pageable.py:200] PLE pageable: prefetch ids match GPU ids: True (tokens=80 reqs=16)
+(Worker pid=249004) INFO 09-23 12:16:53 [pageable.py:200] PLE pageable: prefetch ids match GPU ids: True (tokens=64 reqs=16)
+(Worker pid=249004) INFO 09-23 12:16:54 [pageable.py:200] PLE pageable: prefetch ids match GPU ids: True (tokens=5 reqs=2)
+mem after ready: used=115 avail=6 swap_used=5G
+{"label": "e1", "A": ["5441f43b8998", "0ab13c28130e", "832b3e14dfb3", "0f6fbb45db94", "7d6b096ad7df", "1ffb050e2808", "98135973fea8", "a74e90dc1619"], "B": [{"dec": ["a76d2cefa91f", "cbbef9bd0dac"], "pre": ["0e9e93fb9768", "a72420fce399"], "overlap": true}, {"dec": ["a330984f2d96", "6bf88133f005"], "pre": ["44e3a1a2da0f", "997d24209370"], "overlap": true}, {"dec": ["ed4b528806ff", "6c922835fcec"], "pre": ["843ac70c9d8b", "74fe78aa40ad"], "overlap": true}], "solo": ["54cb2a6c7dee", "8f524851b0ca"], "overlap_all": true, "dec_stable_across_reps": false, "dec_equals_solo": [false, false]}
+(Worker pid=249004) INFO 09-23 12:16:53 [pageable.py:200] PLE pageable: prefetch ids match GPU ids: True (tokens=80 reqs=16)
+(Worker pid=249004) INFO 09-23 12:16:53 [pageable.py:200] PLE pageable: prefetch ids match GPU ids: True (tokens=64 reqs=16)
+(Worker pid=249004) INFO 09-23 12:16:54 [pageable.py:200] PLE pageable: prefetch ids match GPU ids: True (tokens=5 reqs=2)
+(Worker pid=249004) INFO 09-23 12:18:12 [pageable.py:218] PLE pageable: gathered rows match file bytes: True (mixed step, reqs=2, query_lens max=36, rows=1152)
+(Worker pid=249004) INFO 09-23 12:18:15 [pageable.py:218] PLE pageable: gathered rows match file bytes: True (mixed step, reqs=3, query_lens max=3200, rows=51328)
+(Worker pid=249004) INFO 09-23 12:18:16 [pageable.py:218] PLE pageable: gathered rows match file bytes: True (mixed step, reqs=3, query_lens max=3200, rows=51328)
+(Worker pid=249004) INFO 09-23 12:18:18 [pageable.py:218] PLE pageable: gathered rows match file bytes: True (mixed step, reqs=3, query_lens max=3200, rows=51328)
+(Worker pid=249004) INFO 09-23 12:18:20 [pageable.py:218] PLE pageable: gathered rows match file bytes: True (mixed step, reqs=3, query_lens max=3200, rows=51328)
+(Worker pid=249004) INFO 09-23 12:18:22 [pageable.py:218] PLE pageable: gathered rows match file bytes: True (mixed step, reqs=3, query_lens max=3200, rows=51328)
+mem at end: used=116 avail=4 swap_used=5G
+== ALL DONE ==
