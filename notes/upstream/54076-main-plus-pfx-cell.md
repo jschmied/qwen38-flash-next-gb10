@@ -1,5 +1,8 @@
-POSTED 2026-09-23 — vllm#54076 comment
-<https://github.com/vllm-project/vllm/pull/54076#issuecomment-5789031488>
+DELETED BY THE USER 2026-09-23 — second deletion. Reason: the post justified 'stock main' by
+PLE-offload shadowing, but qwen38-27b-fp8 is qwen3_5 and has NO PLE (finding 221). The
+measurements stand; the methodology paragraph was wrong. Do not repost without fixing that
+paragraph AND getting a fresh go.
+
 
 Ran the `1ea7c63f4` nightly, and also the prefix-cache cell @wickist accepted on 09-16. Three results.
 

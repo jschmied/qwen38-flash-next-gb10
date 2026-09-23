@@ -2848,7 +2848,8 @@ quantization run.
 MaCoredroid asked for their config on the nightly; ran it. Raw: `notes/data/geomnight.txt`.
 
 **Build: stock upstream main.** `0.29.1rc1.dev533+g1ea7c63f4` — the nightly wheel, run through
-`PYTHONPATH` at the extracted tree, so our site-packages PLE-offload overlay is **shadowed**. The
+`PYTHONPATH` at the extracted tree, so our site-packages overlay is **shadowed** — for the shared
+worker/executor/loader files, not the PLE ones; the 27B has no PLE (finding 221). The
 runner logs `vllm.__version__` *and its path* first, precisely so a silent shadowing failure would
 show dev524 instead of a fake "main" result. It resolved to the wheel. The 27B needs no PLE offload,
 which is what makes a stock-main run possible at all here.
@@ -3180,3 +3181,35 @@ which is the process change this miss produced ([[hypothesis-before-experiment]]
 so I believed I was firing 129k prompt tokens when it was ~26k. Relabelled to
 `approx_tokens_{conversation,prompt}` in `/opt/llm/runners/schedwidth_prompts.json`.
 
+## Finding 221 — CORRECTION: the 27B has no PLE at all; I described it with Flash-Next's architecture (2026-09-23)
+
+**The user deleted the #54076 post a second time**, for: *"its qwen38 27b and you are talking about ple
+offload"*. Correct, and the error is the mechanism, not the wording.
+
+Verified on the checkpoint and the nightly tree:
+
+| claim | reality |
+|---|---|
+| `qwen38-27b-fp8` has a PLE table | **No.** Zero `ple`/`ngram` keys in `config.json`, **0 of 1606** tensors match `ple|ngram`. |
+| our overlay is on its path via the PLE | **No.** It is `model_type: qwen3_5` -> `model_executor/models/qwen3_5.py` (`Qwen3_5ForCausalLM`). Our PLE code is `models/qwen4_exp/` + `v1/ple_offload/`, packages this model never imports. |
+
+So "PYTHONPATH shadows my PLE-offload patches, therefore this is stock main" was reasoning about a
+code path the 27B does not touch — in a public post, which reads as not knowing which architecture is
+being served.
+
+**The shadowing was still load-bearing, for the other half of the overlay.** 9 of the 17 files are
+shared infrastructure that *is* on every model's path: `v1/worker/gpu_worker.py`,
+`v1/worker/gpu/model_runner.py`, `v1/executor/{multiproc,uniproc}_executor.py`, `envs.py`,
+`config/parallel.py`, `vocab_parallel_embedding.py`, `weight_utils.py`,
+`compilation/passes/utility/fix_functionalization.py`. Those are the reason a shadowed run is a stock
+run. The PLE files (`v1/ple_offload/*`, `ple_offload_layer.py`, `qwen4_exp/nvidia/*`) are irrelevant
+here and naming them was the mistake.
+
+**The measurements are unaffected** — findings 212, 217, 218, 219 stand; the resolved
+`vllm.__version__` *and path* were logged and pointed at the wheel, which is what actually
+established "stock main". Only the stated justification was wrong.
+
+**Rule taken from it:** when a run touches a model, name *that model's* architecture. Two Qwen
+checkpoints live on this box with different `model_type`s and disjoint model packages
+(`qwen3_5` vs `qwen4_exp`), and reaching for the familiar one's vocabulary put a false statement
+upstream twice in two days.
