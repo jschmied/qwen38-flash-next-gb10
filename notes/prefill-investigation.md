@@ -3115,3 +3115,36 @@ resumed state is wrong. We measured hits; we did **not** compare the resumed out
 one. That is the test that would actually exercise the PR's claim, it is cheap on the same server,
 and it is queued as job 60.
 
+## Finding 219 — #54076: the prefix-cache resume is already EXACT unpatched on this config (2026-09-23, overnight job 60)
+
+Finding 218 showed the hit *count* does not move. A count can match while the resumed state is
+wrong, which is what the PR actually claims to guard against — so this tests the state. At
+temperature 0 with a fixed seed, a correct resume must reproduce the cold output exactly.
+Same config as 218 (`qwen38-27b-fp8`, hidden-state extraction, align mode, prefix caching, GB10 TP1),
+patch toggled per arm with the marker verified, 2 arms x 2 starts, 3 passes each.
+Raw: `notes/data/pfxeq54076.txt`.
+
+| arm | pass SHAs | hits | cold == resumed |
+|---|---|---|---|
+| `off0` | `3667a4cc` x3 | 0, 200, 200 | **True** |
+| `on0` | `3667a4cc` x3 | 0, 200, 200 | **True** |
+| `off1` | `3667a4cc` x3 | 0, 200, 200 | **True** |
+| `on1` | `3667a4cc` x3 | 0, 200, 200 | **True** |
+
+**One output hash across all 12 passes.** The cold pass (0 hits) and the resumed passes (200 hits
+each) produce byte-identical text, patched and unpatched. So on this configuration:
+
+1. the prefix-cache resume is **already correct without the patch**, and
+2. the patch **perturbs nothing** — expected, it is a scheduling change, and worth having confirmed
+   rather than assumed.
+
+**Taken with 218, the cell is fully answered:** where `cache_config.block_size` (200) genuinely
+differs from `MambaSpec.block_size` (800), #54076 changes neither the hit rate nor the resumed
+output. That is consistent with wickist's own defence-in-depth framing — the fix protects layouts we
+cannot reach from the CLI on this model — and it is now measured rather than inferred.
+
+**Scope, stated plainly:** this is one prompt shape (238 tokens, one 200-token block plus remainder)
+on one model and one config, at temperature 0. It does not show the PR is unnecessary in general; it
+shows the failure does not manifest here. A layout with more than one mamba group, or a prompt
+spanning many blocks, is untested.
+
