@@ -3027,10 +3027,15 @@ Raw: `notes/data/mtpfp4d-ab.txt`.
 | `mtpfp4` (shipped prod) | 1.65, 1.66 | **[1.65, 1.66]** | 2.53 | 0.509 | 222 |
 | `mtpfp4d` | 1.79, 1.67 | **[1.67, 1.79]** | 2.52 | 0.506 | 222 |
 
-**`mtpfp4d` is never faster.** Ranges are disjoint (1.66 < 1.67) and the sign holds in both rounds,
-so the direction is established — but its own spread is **1.67-1.79, a 7 % within-arm swing**
-([[mtp-restart-instability]]), so the *magnitude* is not: anywhere from 0.6 % to 8 % slower. The
-honest statement is the sign, not a number.
+> **CORRECTED 2026-09-23 (repeatability audit, finding 223):** the claim below overstates it.
+> The gap between the ranges is **0.01 s** (1.66 vs 1.67) while `mtpfp4d`'s own spread is **7.2 %**
+> (~0.12 s) — the separation is a tenth of the arm's noise, so a third start could erase it. The
+> direction is **unresolved at 2 starts**. What stands: no *demonstrated* speed gain and no
+> attributable KV gain, so it still does not earn a place. Superseded text follows.
+
+~~**`mtpfp4d` is never faster.** Ranges are disjoint (1.66 < 1.67) and the sign holds in both rounds,
+so the direction is established~~ — but its own spread is **1.67-1.79, a 7 % within-arm swing**
+([[mtp-restart-instability]]), so the *magnitude* is not: anywhere from 0.6 % to 8 % slower.
 
 **Drafting is untouched, so this is purely a speed cost.** Accept length 2.52 vs 2.53, rate 0.506 vs
 0.509, completion tokens **222 in both** — the dense quantization does not change what the drafter
@@ -3247,4 +3252,35 @@ never have been reported.
 **Consequence for prod:** the promoted config (finding 210) is now measured good on all three axes —
 −19.4 %/turn at c=1, no scheduler collapse at c=16 (finding 220), and +37 % aggregate decode at c=16
 here. Finding 210's stated limit is fully closed.
+
+## Finding 223 — repeatability audit of the night: four arms failed to repeat; 216 corrected; the bar tightened (2026-09-23)
+
+Within-arm spread (max-min over min) for every arm measured overnight, computed from the logs:
+
+| job | arm | starts | spread | effect |
+|---|---|---|---|---|
+| 20 depth | n3 | 1.65, 1.66 | 0.6 % | repeats |
+| 20 depth | n4 | 1.63, 1.64 | 0.6 % | repeats |
+| 20 depth | n5 | 1.72, 1.70 | 1.2 % | repeats |
+| 20 depth | **n6** | 1.90, 1.72 | **10.5 %** | 215 already says n6 cannot be ranked vs n5 |
+| 30 dense | mtpfp4 | 1.65, 1.66 | 0.6 % | repeats |
+| 30 dense | **mtpfp4d** | 1.79, 1.67 | **7.2 %** | **216 corrected — direction unresolved** |
+| 70 schedw | **mtp3** (wall) | 14.2, 12.9 | **10.1 %** | 220 survives: arms 3.2 s apart |
+| 70 schedw | **nospec** (wall) | 18.5, 17.4 | **6.3 %** | 220 survives |
+| 80 dcell | mtp3 | 200.2, 202.1 | 0.9 % | repeats |
+| 80 dcell | nospec | 144.4, 149.1 | 3.3 % | marginal, conclusion unaffected |
+
+**The failures cluster**: the MTP configs furthest from prod (deepest draft n6, heaviest drafter
+quantisation mtpfp4d) and the schedwidth instrument, which is inherently noisy (prefill-dominated,
+requests stopping at variable lengths). Consistent with [[mtp-restart-instability]].
+**The prod config is the most reproducible thing measured tonight**: n3/mtpfp4 at 1.65, 1.65, 1.65,
+1.66 across four independent runs.
+
+**What went wrong with 216, and the rule it produces.** "Disjoint ranges + sign holds every round" was
+satisfied by a **0.01 s** gap against an arm whose own spread was **~0.12 s**. The bar was met on
+paper, not in substance. **Tightened bar: the gap between the ranges must also exceed the larger
+arm's own within-arm spread**; otherwise report the direction as unresolved and add a start. By that
+rule 216 fails, 220 passes (3.2 s gap vs ~1.3 s spread), 222 passes (51 tok/s gap vs ~5), and 215's
+n4-vs-n3 passes narrowly (0.01 s gap vs 0.01 s spread — **marginal**, worth a third start before the
+n=3 -> n=4 prod change is acted on).
 
