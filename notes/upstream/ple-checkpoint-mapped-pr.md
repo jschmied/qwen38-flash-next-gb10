@@ -130,6 +130,43 @@ compared at equal KV.
   prefill is slow.
 - Kernel-format weight reload (a full table cannot be copied into the mapping; this fails loudly).
 
+## Comparison with other PLE-table storage implementations
+
+What each implementation documents, plus what we measured ourselves on GB10. Other PRs' numbers are not repeated
+here, and nothing was measured for #54129.
+
+| | where the table lives | who gathers rows | copies per step | extra process / privileges | target hardware | status |
+|---|---|---|---|---|---|---|
+| #54371 device | GPU memory | GPU kernel | — | — | any CUDA-alike | merged; on GB10 does not fit next to the weights |
+| #54371 pinned host (default) | pinned host memory (full table) | GPU kernel via UVA, on a side stream | — | — | UVA-capable | merged; on GB10 the 47.7 GiB pinned table plus weights plus KV exceeds the unified pool |
+| #53899 offload worker | anonymous host memory in a CPU worker process | CPU | rows over IPC to the GPU | 1 process, `CAP_SYS_PTRACE` | any | closed unmerged; **was our GB10 production path: 50–53 GiB swap** |
+| #54070 disk dir | file mapping of a table written at first boot to `VLLM_PLE_DISK_OFFLOAD_DIR` | CPU (the #53899 worker) | as #53899 | as #53899 | any | open, but built on the closed #53899 |
+| #54129 mmap | read-only mapping of the checkpoint safetensors (page cache) | CPU worker threads at input preparation | staged H2D copy into stable GPU buffers | — | any GPU (MRV2) | open |
+| #57497 ROCm | pinned host memory | GPU via UVA | — | — | AMD | open |
+| **this PR** | read-only mapping of the checkpoint safetensors (page cache) | **GPU kernel reading the mapping directly**; CPU threads only fault pages in | none beyond the kernel writing the selected rows | — | GPUs that read pageable memory through host page tables (validated: DGX Spark) | — |
+
+**Relation to #54129.** Both keep the table file-backed and reclaimable in the page cache, and share the
+discovery and validation concerns; this PR borrows #54129's approach to resolving and validating checkpoint
+files.
+- **#54129** is the portable path: a CPU gather plus a host-to-device copy, which works on discrete GPUs.
+- **This PR** is the unified-memory variant: where the GPU can dereference pageable memory, the gather reads the
+  mapping directly, with no host-side gather or staging copy.
+
+The two could share discovery code, or `checkpoint_mapped` could become the unified-memory mode of one
+file-backed backend. We are happy to rebase onto #54129 if it lands first. SGLang has an NVMe-backed path for
+the same table (sgl-project/sglang#36567).
+
+## Open design questions
+
+1. **File resolution.** It reuses `DefaultModelLoader._prepare_weights`, a private method, to get exactly the
+   files the loader read (download dir, index filter). Should the loader expose the resolved file list instead?
+2. **Host page prefetch.** A 64-thread CPU prefetcher lives in `Qwen4ExpModelState`. It is only a hint; the
+   lookup is correct without it, but cold prefill is about 50× slower. Is the model state the right home, or
+   should it hang off a runner hook?
+3. **Selection.** Opt-in today. Should it be auto-selected on integrated GPUs that report pageable host-page-table
+   access, where the pinned default does not fit?
+4. **Relation to #54129.** One file-backed backend with two gather modes, or two backends?
+
 ## Related
 
 - **#54371:** the storage hierarchy this extends.
