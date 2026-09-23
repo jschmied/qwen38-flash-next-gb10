@@ -3047,3 +3047,34 @@ paid; the dense half costs speed for ~90 MB. Same pattern as findings 206, 214 a
 own INT8-GEMV result: on this box, removing bytes from small/skinny GEMMs loses to the kernel that
 was already there.
 
+## Finding 217 — #54076 on stock main: geometry persists AND the engine generates (2026-09-23, overnight job 40)
+
+Completes finding 212, which measured the geometry but never exercised generation — the gap that
+made the 09-22 post unpostable. Raw: `notes/data/geomnight-full.txt`.
+
+**Build:** `0.29.1rc1.dev533+g1ea7c63f4` = upstream/main HEAD, run through `PYTHONPATH` at the
+extracted wheel so our site-packages PLE-offload overlay is shadowed. Model
+`qwen38-27b-fp8`, MaCoredroid's config verbatim. Server reached serving state after **400 s**.
+
+**Geometry — identical for the third time** (0.28.0 -> dev524 -> main):
+
+```
+Setting attention block size to 800 tokens to ensure that attention page size is >= mamba page size.
+Using block size 200 for hidden-state cache layer cache_only_layers.64; page alignment wastes 1228800 bytes (37.50%) per block
+```
+
+**Generation works.** `finish_reason: length`, 40 completion tokens, 57 prompt tokens, coherent text,
+`system_fingerprint: vllm-0.29.1rc1.dev533+g1ea7c63f4`. The response also carries
+`kv_transfer_params.hidden_states_path` pointing at a written `.safetensors`, i.e. the
+`ExampleHiddenStatesConnector` producer path actually ran rather than merely being configured.
+So "runtime correctness" is no longer untested on main for this config.
+
+**Prefix cache after two identical requests: `queries 114, hits 0`.** That is **expected, not a
+defect** — in align mode the first repetition never hits ([[prefix-cache-align-mode-dead]]), so a
+hit needs a **third** pass. `external_prefix_cache_{queries,hits} = 114 / 0` likewise: a
+`kv_producer` with no consumer has nothing to hit. **Any prefix-cache cell on this config must use
+three passes**; two would read as a null and be wrong.
+
+**Not posted.** Finding 212's post was deleted for publishing a half-finished run; this completes it,
+but posting needs a fresh go ([[finish-before-posting]]).
+
