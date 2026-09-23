@@ -1297,3 +1297,14 @@ wait on one ~100 GB pull, and they share one serve.
   re-run. Finding 212. Draft: `notes/upstream/54076-main-nightly-result.md`.
   <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5781703498>
 
+- **2026-09-23 — vllm#54076 comment.** The COMPLETE answer, replacing the 09-22 post the user deleted
+  for being half-finished. Three results: (1) geometry persists on stock main `1ea7c63f4` (nightly
+  wheel via shadowed `PYTHONPATH`, version+path logged as the guard), identical across 0.28.0 →
+  dev524 → main; (2) it generates — 40 tokens, and `kv_transfer_params.hidden_states_path` shows the
+  connector producer path really ran, closing the runtime caveat; (3) **the prefix-cache cell wickist
+  accepted on 09-16: the patch is a no-op on both axes** — hit rate byte-identical (2 arms x 3 starts,
+  marker verified 0/4 per arm) and one output hash across 12 passes with `cold == resumed` true, so
+  the resume is already exact unpatched. Scope stated: one prompt shape, one model, temp 0; consistent
+  with the defence-in-depth framing. Findings 217/218/219.
+  <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5789031488>
+
