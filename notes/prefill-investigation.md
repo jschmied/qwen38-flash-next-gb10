@@ -2753,6 +2753,10 @@ offload.
 - **#57946 (ours) is not merged** — no padding-sentinel mask in `flashinfer_b12x_moe.py`.
 - **#55122 (ours) is not merged** — no `persistent_topk`.
 
+> **CORRECTED 2026-09-23 (finding 224):** #53899 was **closed unmerged on 2026-09-21** — peakcrosser7:
+> *"We don't currently plan to continue the PLE offload implementation."* It will never land, so
+> "stay on dev524 until #53899 lands" is void. See 224 for what that leaves.
+
 **Consequence:** the upgrade calculus is unchanged. We stay on dev524 until #53899 lands; there is
 no longer any need to re-ask "has main caught up" — it has not, on any axis we depend on.
 
@@ -3283,4 +3287,30 @@ arm's own within-arm spread**; otherwise report the direction as unresolved and 
 rule 216 fails, 220 passes (3.2 s gap vs ~1.3 s spread), 222 passes (51 tok/s gap vs ~5), and 215's
 n4-vs-n3 passes narrowly (0.01 s gap vs 0.01 s spread — **marginal**, worth a third start before the
 n=3 -> n=4 prod change is acted on).
+
+## Finding 224 — #53899 closed unmerged: our PLE-offload overlay has no upstream path (2026-09-23)
+
+Found on a watch-list check. **vllm#53899 ("Support PLE-Offload for Qwen3.8-Flash-Next") was closed on
+2026-09-21 without merging**; the author wrote on 09-19: *"We don't currently plan to continue the PLE
+offload implementation."*
+
+**Why this matters more to us than to upstream:** finding 209 showed our entire 17-file overlay *is* the
+#53899 backport, and concluded we would stay on `dev524` *until #53899 lands*. It will not land. So the
+offload worker, the 64 GiB swap prerequisite and the `CAP_SYS_PTRACE` unit capability are now a
+**permanently self-maintained fork**, re-ported by hand on every vLLM upgrade, unless another path
+appears.
+
+**What upstream offers instead, and why none of it replaces ours today:**
+
+| path | status | fits GB10 unified memory? |
+|---|---|---|
+| #54371 device / pinned-host PLE | merged 09-09 | **no** — `pin_memory=True` for the full table; pinned pages cannot be evicted, the condition that hard-reset this box twice ([[gb10-pinned-ple-thrash]]) |
+| #56273 packed NVFP4 resident PLE (26.8 GiB) | open | technically yes, but it **spends ~26.8 GiB of KV** to remove a cost we measured at **zero** (PLE gather fully hidden, det-134) — user rejected on that basis |
+| #54129 disk-backed mmap PLE | open | unmeasured here |
+| #57497 CPU offload + async prefetch | open, ROCm-scoped | unmeasured here |
+
+**Consequence:** the upgrade question is no longer "wait for #53899". It is a choice between (a) carrying
+the overlay indefinitely, (b) upstreaming our own unified-memory offload — we hold the only
+unified-memory measurements in any of these threads — or (c) evaluating #54129/#57497 as a replacement.
+That is a decision for the user, not a default.
 
