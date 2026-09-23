@@ -1,0 +1,92 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_prefetcher_staging_survives_short_then_long_steps ____________
+
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="needs CUDA events")
+    def test_prefetcher_staging_survives_short_then_long_steps():
+        """The per-step input_ids view changes size; staging must be at capacity."""
+        table = MappedTable.zeros(1000, ROW, torch.device("cuda"))
+        source = PrefetchSource(
+            lambda: table,
+            (0, 1000),
+            lambda: (lambda ids, qsl, ctx: torch.zeros(ids.shape[0], 16, dtype=torch.long)),
+        )
+        prefetcher = PagePrefetcher([source], torch.device("cuda"), 4096, 16, 2)
+        qsl = torch.zeros(17, dtype=torch.int32, device="cuda")
+        ctx = torch.zeros(16, 2, dtype=torch.int32, device="cuda")
+        for num_tokens in (64, 4096, 7):
+            ids = torch.zeros(num_tokens, dtype=torch.int32, device="cuda")
+            qsl[1:] = num_tokens
+>           prefetcher.prepare(ids, qsl, ctx, 1, num_tokens)
+
+test_ple_pageable.py:420: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <vllm.models.qwen4_exp.nvidia.ple_pageable.PagePrefetcher object at 0xfc23632c1670>
+input_ids = tensor([0, 0, 0,  ..., 0, 0, 0], device='cuda:0', dtype=torch.int32)
+query_start_loc = tensor([   0, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096, 4096,
+        4096, 4096, 4096, 4096, 4096], device='cuda:0', dtype=torch.int32)
+ngram_context = tensor([[0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+      ...],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0]], device='cuda:0', dtype=torch.int32)
+num_reqs = 1, num_tokens = 4096
+
+    def prepare(
+        self,
+        input_ids: torch.Tensor,
+        query_start_loc: torch.Tensor,
+        ngram_context: torch.Tensor,
+        num_reqs: int,
+        num_tokens: int,
+    ) -> None:
+        max_tokens, max_reqs, ctx_len = self.capacity
+        if (
+            num_tokens > max_tokens
+            or num_reqs > max_reqs
+            or ngram_context.shape[1] > ctx_len
+        ):
+            logger.warning_once(
+                "PLE page prefetch skipped a step larger than its staging "
+                "capacity; lookups are unaffected"
+            )
+            return
+        if not self.slots:
+            self.slots = [
+                (
+                    torch.empty(input_ids.shape, dtype=input_ids.dtype).pin_memory(),
+                    torch.empty(max_reqs + 1, dtype=query_start_loc.dtype).pin_memory(),
+                    torch.empty(
+                        max_reqs, ctx_len, dtype=ngram_context.dtype
+                    ).pin_memory(),
+                )
+                for _ in range(self.SLOTS)
+            ]
+        try:
+            slot = self.free.get_nowait()
+        except queue.Empty:
+            self.skipped += 1  # a hint only: the lookup stays correct
+            return
+        ids, qsl, ctx = self.slots[slot]
+>       ids[:num_tokens].copy_(input_ids[:num_tokens], non_blocking=True)
+E       RuntimeError: The size of tensor a (64) must match the size of tensor b (4096) at non-singleton dimension 0
+
+../../runtime/vllm-venv-main1ea7/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ple_pageable.py:424: RuntimeError
+=============================== warnings summary ===============================
+../../runtime/vllm-venv-main1ea7/lib/python3.12/site-packages/torch/jit/_script.py:365: 14 warnings
+  /opt/llm/runtime/vllm-venv-main1ea7/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_ple_pageable.py::test_prefetcher_staging_survives_short_then_long_steps
+1 failed, 21 deselected, 14 warnings in 4.51s

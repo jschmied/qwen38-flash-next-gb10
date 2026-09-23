@@ -3775,3 +3775,21 @@ the user's go**. The PR's current-stream lookup avoids it by construction.
 per-step pinned allocations, not the backend. The time series is in `notes/data/sustain-m12.jsonl`.
 
 m12 also: A-set = `bad99…`, detprobe cold `4e5bd…`, cold == warm 8/8; TTFT 30k sum 32.74 s; c=16 198.0 tok/s.
+
+## Finding 230 — the review fixes are verified on GB10; PR branch at c929c09a9 (2026-09-23)
+
+The two reviews' fixes (staging at capacity, remap on reload, `embedding_across_dp` rejected, wording), plus a
+bug that round 4's GPU pytest found: the prefetch thread died silently on a `torch.device("cuda")` without an
+index. Now resolved and logged.
+
+| check | result |
+|---|---|
+| GPU pytest, amended code | **22/22** |
+| P1 mutation (old per-step staging) | fails with the exact P1 error: `size of tensor a (64) must match … (4096)` |
+| CPU mutation checks (reload A→B, in-memory reload, DP) | all three fail on the old behaviour |
+| m13: first request "Hi" (tiny step), then long prefills | served; A-set `bad99…`, detprobe `4e5bd…`, cold == warm |
+| m13 speed | TTFT 30k sum 32.52 s, 8k 9.12 s; c=16 201.0 tok/s; agent loop 1.66 s/turn, 236 tok |
+
+The round-4 mutation run itself was void, because it failed on the same device-index bug; round 4b redid it
+correctly. **PR branch pushed at c929c09a9** (two commits on upstream main 9f07d023d; squash before
+submission). No upstream PR opened.
