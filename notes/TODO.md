@@ -273,6 +273,13 @@ not results ([[check-field-before-expensive-steps]]).
   at **0.7-0.9 %** against the field's claimed 5-6.6 % (finding 156). Same class, did not transfer.
 - **8-bit KV cache** — already wanted, not new: #55557 (fp8 KV x1.72), **blocked behind #53899**.
 
+## ~~QUEUED 2026-09-10 — quantize the MTP module's own body~~ — CLOSED 2026-09-23 (finding 216)
+
+**Measured and rejected.** `mtpfp4d` (dense projections NVFP4) is never faster than `mtpfp4`
+(disjoint ranges, sign holds both rounds), at identical acceptance and identical output tokens, for
+~90 MB of shards and no attributable KV gain. The experts half already shipped to prod and paid
+(finding 210). Original rationale below for the record.
+
 ## QUEUED 2026-09-10 — quantize the MTP module's own body (memory, not bandwidth)
 
 **Not the MTP head — that question is closed.** MTP has no head of its own; it shares the main

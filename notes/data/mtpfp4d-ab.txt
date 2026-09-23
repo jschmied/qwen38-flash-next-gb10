@@ -1,0 +1,24 @@
+== armrun mtpdense: 2 arms x 2 start(s), port 8092 ==
+-- mtpdense-mtpfp40  env=(spec default)
+Running as unit: fx-armrun-mtpdense.service; invocation ID: 00be83df04954676a6ab2289bcc7a41f
+   void checks passed (2 required, 2 forbidden)
+   {"total_s": 13.2, "turns": 8, "s_per_turn": 1.65, "tokens": 222, "ms_per_tok": 59.34, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+-- mtpdense-mtpfp4d0  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4d'}
+Running as unit: fx-armrun-mtpdense.service; invocation ID: 71c96b10659b4a7a843f59972ec99ff7
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 14.3, "turns": 8, "s_per_turn": 1.79, "tokens": 222, "ms_per_tok": 64.38, "accept_rate": 0.506, "accept_len": 2.52, "hits_last_turn": 6400, "hits_sum": 44800}
+-- mtpdense-mtpfp41  env=(spec default)
+Running as unit: fx-armrun-mtpdense.service; invocation ID: ce57daa249a342308c89ceb7b51e3722
+   void checks passed (2 required, 2 forbidden)
+   {"total_s": 13.3, "turns": 8, "s_per_turn": 1.66, "tokens": 222, "ms_per_tok": 59.77, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+-- mtpdense-mtpfp4d1  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4d'}
+Running as unit: fx-armrun-mtpdense.service; invocation ID: 9d0a65168e834aff9252f4855ca08b6d
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.4, "turns": 8, "s_per_turn": 1.67, "tokens": 222, "ms_per_tok": 60.25, "accept_rate": 0.506, "accept_len": 2.52, "hits_last_turn": 6400, "hits_sum": 44800}
+
+== RESULT ==
+  mtpfp4       total_s 13.2–13.3  turns 8  s_per_turn 1.65–1.66  tokens 222  ms_per_tok 59.34–59.77  accept_rate 0.509  accept_len 2.53  hits_last_turn 6400  hits_sum 44800  start 0–1
+  mtpfp4d      total_s 13.4–14.3  turns 8  s_per_turn 1.67–1.79  tokens 222  ms_per_tok 60.25–64.38  accept_rate 0.506  accept_len 2.52  hits_last_turn 6400  hits_sum 44800  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun rc=0

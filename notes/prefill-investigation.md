@@ -3013,3 +3013,37 @@ is negative.
 **Open decision, NOT applied:** moving prod n=3 -> n=4 buys ~1.2 % for one env var on the same
 checkpoint, with no new patch. Real but marginal, and it costs a 13-minute reload. User's call.
 
+## Finding 216 — the `--dense` drafter (`mtpfp4d`) is never faster; closes the "quantize the MTP body" item (2026-09-23, overnight job 30)
+
+`mtpfp4d` NVFP4s the drafter's 2-D dense projections (`self_attn` q/k/v/o, `fc_*`) on top of
+`mtpfp4`'s fused experts — 72 NVFP4 layers against 52. Built 2026-09-22, config-verified, never
+measured until now. Same agent-loop instrument as the promotion, so directly comparable to
+finding 210. `armrun` spec `mtpdense`, 2 arms x 2 starts, `armrun exit: 0`.
+Raw: `notes/data/mtpfp4d-ab.txt`.
+
+| arm | starts (s/turn) | range | accept len | accept rate | tokens |
+|---|---|---|---|---|---|
+| `mtpfp4` (shipped prod) | 1.65, 1.66 | **[1.65, 1.66]** | 2.53 | 0.509 | 222 |
+| `mtpfp4d` | 1.79, 1.67 | **[1.67, 1.79]** | 2.52 | 0.506 | 222 |
+
+**`mtpfp4d` is never faster.** Ranges are disjoint (1.66 < 1.67) and the sign holds in both rounds,
+so the direction is established — but its own spread is **1.67-1.79, a 7 % within-arm swing**
+([[mtp-restart-instability]]), so the *magnitude* is not: anywhere from 0.6 % to 8 % slower. The
+honest statement is the sign, not a number.
+
+**Drafting is untouched, so this is purely a speed cost.** Accept length 2.52 vs 2.53, rate 0.506 vs
+0.509, completion tokens **222 in both** — the dense quantization does not change what the drafter
+proposes or what the target accepts. It only makes the forward slower.
+
+**And the memory case does not materialise either.** The queued item's argument was resident bytes,
+not bandwidth: *"~4.1 GiB freed resident"*. Measured, the shards differ by ~90 MB (7.83 vs 7.92 GB)
+and `du` reports both checkpoints at 120 G. KV pools: `mtpfp4` 624,932 / 622,592 tokens vs `mtpfp4d`
+644,437 / 625,712 — the **between-start spread (19k tokens) exceeds the between-arm difference**, so
+no KV gain is attributable. The 4.1 GiB was already banked when `mtpfp4` quantized the fused experts
+and went to prod (finding 210); the dense projections are the small remainder.
+
+**Closes `## QUEUED 2026-09-10 — quantize the MTP module's own body`.** The experts half shipped and
+paid; the dense half costs speed for ~90 MB. Same pattern as findings 206, 214 and the EXL3 recipe's
+own INT8-GEMV result: on this box, removing bytes from small/skinny GEMMs loses to the kernel that
+was already there.
+
