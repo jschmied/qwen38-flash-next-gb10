@@ -1,0 +1,36 @@
+=== arm m2 mode main 2026-09-23T14:25:52+02:00
+ready after 690s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=342756) INFO 09-23 14:35:35 [default_loader.py:430] Loading weights took 534.26 seconds
+(Worker pid=342756) INFO 09-23 14:35:38 [ngram_embedding.py:632] Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files; no device or pinned memory
+(Worker pid=342756) INFO 09-23 14:36:39 [default_loader.py:430] Loading weights took 59.05 seconds
+(Worker pid=342756) INFO 09-23 14:36:39 [mtp.py:95] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+(EngineCore pid=342657) INFO 09-23 14:37:06 [kv_cache_utils.py:2432] GPU KV cache size: 590,604 tokens, Maximum concurrency for 32,768 tokens per request: 18.02x
+(Worker pid=342756) QSADET active: /opt/llm/kernel-det/_C_det.so
+mem after ready: used=114 avail=6 swap_used=6G
+  m2-cold turn 1:   3.46 s    29 tok  hits+      0  acc  63.3% len 2.90
+  m2-cold turn 2:   1.24 s    30 tok  hits+   6400  acc  66.7% len 3.00
+  m2-cold turn 3:   1.20 s    32 tok  hits+   6400  acc  85.2% len 3.56
+  m2-cold turn 4:   1.45 s    28 tok  hits+   6400  acc  38.5% len 2.15
+  m2-cold turn 5:   1.61 s    29 tok  hits+   6400  acc  33.3% len 2.00
+  m2-cold turn 6:   1.31 s    29 tok  hits+   6400  acc  63.3% len 2.90
+  m2-cold turn 7:   1.57 s    34 tok  hits+   6400  acc  47.6% len 2.43
+  m2-cold turn 8:   1.70 s    35 tok  hits+   6400  acc  39.6% len 2.19
+{"arm": "m2-cold", "total_s": 13.5, "turns": 8, "s_per_turn": 1.69, "tokens": 246, "ms_per_tok": 55.02, "accept_rate": 0.515, "accept_len": 2.55, "hits_last_turn": 6400, "hits_sum": 44800}
+{"label": "m2", "A": ["d967d10fab71", "e178300fca16", "faed3a4f2005", "413ef91c28ff", "649ca90b5a8a", "05fe8fc85f2b", "d111bd0c37aa", "3f3985731e59"], "B": [{"dec": ["98a84e2e2903", "4ff6e671cb69"], "pre": ["2b150ff5a229", "cc8a2efc2183"], "overlap": true}, {"dec": ["149930390898", "5cda4dda7b41"], "pre": ["0ba9ef8b7cfe", "2f7029536124"], "overlap": true}, {"dec": ["6e611ee409d3", "32aef70f579e"], "pre": ["caafda18e9f0", "ed94ec981f85"], "overlap": true}], "solo": ["81894b51490e", "3a763f3332dd"], "overlap_all": true, "dec_stable_across_reps": false, "dec_equals_solo": [false, false]}
+  m2 TTFT 8k: 3.04s/7201tok 3.11s/7976tok 2.90s/7086tok
+  m2 TTFT 30k: 10.69s/27148tok 11.45s/28780tok 10.01s/24164tok
+{"label": "m2", "8k": [[3.04, 7201], [3.11, 7976], [2.9, 7086]], "30k": [[10.69, 27148], [11.45, 28780], [10.01, 24164]]}
+{"arm": "m2-after", "total_s": 9.0, "turns": 8, "s_per_turn": 1.12, "tokens": 168, "ms_per_tok": 53.56, "accept_rate": 0.5329999999999999, "accept_len": 2.6, "hits_last_turn": 6400, "hits_sum": 51200}
+{"arm": "m2-c16", "c": 16, "reps_all": [189.9, 196.6, 201.3, 203.2], "warm_reps": [196.6, 201.3, 203.2], "warm_median": 201.3, "warm_min": 196.6, "warm_max": 203.2}
+main1ea7 ['This code snippet is part of a **metaclass or decorator impl', 'This code snippet is part of a **custom compilation wrapper*', 'The provided code consists of three distinct Python modules ', 'This code defines a set of **pattern matching and replacemen', 'The capital of Australia is Canberra.', 'One pool, shared by all, CPU and GPU breathe, No copies, jus']
+(Worker pid=342756) INFO 09-23 14:37:01 [ngram_embedding.py:676] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=4096, rows=65536)
+(Worker pid=342756) INFO 09-23 14:37:08 [ngram_embedding.py:676] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=4096, rows=65536)
+(Worker pid=342756) INFO 09-23 14:37:09 [ngram_embedding.py:676] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=80, rows=1280)
+(Worker pid=342756) INFO 09-23 14:37:10 [ngram_embedding.py:676] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=64, rows=1024)
+(Worker pid=342756) INFO 09-23 14:37:10 [ngram_embedding.py:676] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=5, rows=80)
+(Worker pid=342756) INFO 09-23 14:37:10 [ngram_embedding.py:676] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=2, rows=32)
+mem at end: used=115 avail=5 swap_used=6G
+== ALL DONE ==
+prod restored 2026-09-23T14:42:00+02:00

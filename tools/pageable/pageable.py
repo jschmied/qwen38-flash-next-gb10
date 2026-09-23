@@ -153,8 +153,12 @@ class PagePrefetcher:
             self.free.put(i)
         self.work: queue.Queue = queue.Queue()
         self.pool = ThreadPoolExecutor(64, thread_name_prefix="ple-touch")
-        self.checks_left = 3
-        self.row_checks_left = 6   # gathered rows == file bytes, on real MIXED prefill+decode steps
+        # Diagnostics are opt-in (review 3): VLLM_PLE_PAGEABLE_SELFCHECK=N enables N id checks and N mixed-step row
+        # checks. Every attempt is charged BEFORE any device->host copy, so the sync cost is bounded by 4*N steps.
+        n = int(os.environ.get("VLLM_PLE_PAGEABLE_SELFCHECK", "0"))
+        self.checks_left = min(n, 3)
+        self.row_checks_left = n
+        self.row_check_attempts = 4 * n
         self.stats = dict(steps=0, skipped=0, rows=0, ms=0.0, lag_ms=0.0, big=0)
         self.thread = threading.Thread(target=self._loop, name="ple-prefetch", daemon=True)
         self.thread.start()
@@ -167,7 +171,9 @@ class PagePrefetcher:
         ids_src, qsl_src, ctx_src = self.sources
         if self.checks_left > 0:
             self._check_ids(num_reqs, num_tokens)
-        if self.row_checks_left > 0 and self.table is not None and num_reqs >= 2:
+        if (self.row_checks_left > 0 and self.row_check_attempts > 0 and self.table is not None
+                and num_reqs >= 2 and num_tokens > num_reqs):
+            self.row_check_attempts -= 1   # charged before the D2H copy below
             self._check_rows(num_reqs, num_tokens)
         try:
             slot = self.free.get_nowait()
@@ -205,8 +211,10 @@ class PagePrefetcher:
         ids_src, qsl_src, ctx_src = self.sources
         qsl = qsl_src[: num_reqs + 1].cpu().numpy()
         lens = np.diff(qsl)
-        if lens.max(initial=0) <= 8 or (lens > 0).sum() < 2:
-            return   # not a mixed step
+        has_prefill = bool((lens > 8).any())
+        has_decode = bool(((lens >= 1) & (lens <= 4)).any())   # 1 token + up to 3 MTP drafts
+        if not (has_prefill and has_decode):
+            return   # not a mixed step (review 3: a two-prefill step used to pass)
         self.row_checks_left -= 1
         m = self.layers[0][0]
         ids = m.compute_ngram_ids(ids_src[:num_tokens], qsl_src[: num_reqs + 1], ctx_src[:num_reqs])

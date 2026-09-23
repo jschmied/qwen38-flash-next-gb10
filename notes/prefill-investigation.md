@@ -3551,19 +3551,25 @@ not yet installed; no effect on these runs, because serving produces no invalid 
 |---|---|---|
 | A-set, 8 sequential prompts at c=1 with MTP | identical to prod, and to all 4 earlier starts | same |
 | mixed-batch overlap, 3 reps | **proven in 3/3** | proven in 3/3 |
-| in-server check "gathered rows match file bytes" | **True on 6/6 mixed steps** (2 decodes + one 3,200-token prefill chunk, up to 51,328 rows) | n/a |
+| in-server check "gathered rows match file bytes" | True on 6/6 checked steps: **5 mixed** (2 decodes + one 3,200-token prefill chunk, up to 51,328 rows) **+ 1 prefill-only** (2 × 36-token prefills, 1,152 rows; the predicate never required a decode) — corrected after review 3 | n/a |
 | Bdec stable across the 3 reps | no | **no** |
 | Bdec equals solo | no | **no** |
 | solo decode hashes | 54cb2a6c7dee, 8f524851b0ca | **identical** |
 | Bpre rep 1 | 0e9e93fb9768, a72420fce399 | **identical** |
 
-Every result matches the written prediction. Mixed-batch decode output depends on batch composition on
-**both** modes: prod is just as unstable across reps and just as different from solo. That is the known
-batch-variance of this stack (memory `temp0-not-reproducible-under-load`), not a PLE effect. The PLE path itself
-is shown correct directly: the serving process's gathered rows equal the checkpoint bytes on real mixed steps, and
-every batch-invariant comparison (c=1 sequential, solo, first-rep prefills) is bit-identical between v2 and prod.
+Every result matches the written prediction. **Scope, corrected after review 3:**
+- **Shown:** every batch-invariant comparison is bit-identical between v2 and prod: c=1 sequential, solo, and the
+  first-rep prefills. The kernel returns the checkpoint bytes for the step's ids on 5 real mixed steps.
+- **Not shown:** that PLE contributes **nothing** to the mixed-batch variability. All 6 Bdec comparisons, and the
+  rep-2/3 prefills, differ between modes. Variability in both modes cannot exclude an extra PLE contribution. The
+  in-server check ran a **separate eager gather** and synchronized first, so it did not examine the tensor the model
+  consumed, at the time it consumed it. (The same blind spot hid a real side-stream race in the main port the same
+  day, finding 227.)
+- **What would close it:** a fixed batch schedule with forced input tokens, comparing the PLE output actually
+  consumed, unsynchronized, between modes.
 
-**Finding 226 status: v2 VALIDATED on GB10 at TP=1, FP8 table.**
+**Finding 226 status: v2 VALIDATED on GB10 at TP=1, FP8 table, for the batch-invariant cases above;** mixed-batch
+equivalence is open (see scope).
 - Supported: swap 50–53 → 5–6 GiB; agent turn −3.9 %; TTFT −3 % (both pass the 223 rule, two starts per arm,
   matched KV); c=16 decode unchanged; generation equivalent wherever the stack is batch-invariant.
 - Open:
@@ -3598,3 +3604,13 @@ comparison paired v2's GPU worker with prod's offload worker and was wrong. Spli
 
 The earlier off-mode loads ranged 544–630 s (prod 476–490 s), so the off-mode variance is also larger. Next step
 if wanted: a py-spy profile of the GPU worker during the load in both modes.
+
+**Review 3 (2026-09-23 ~16:00) on the start-up gap:** 59.18 s of the 62.83 s main-load gap is in expert files.
+That localizes the cost; it does not yet say whether the time is CPU processing, copying or page faults.
+
+**Review 3 on the flat-indexing slowdown:** a proposed mechanism is NumPy's GIL threshold. In NumPy 2.3.5, simple
+1-D fancy indexing releases the GIL only above 500 indices (`NPY_MAX_...`), while the general path used by
+`view[rows, 0]` releases it with no threshold. The reconstructed task split (190–191 tasks) is all below 500
+indices per task, which would serialize the cold page faults in the flat arms. Hypothesis, test queued: flat
+selections just above 500 indices per task run near the 2-D speed; just below 500 they serialize. The serving
+NumPy version is to be confirmed first.

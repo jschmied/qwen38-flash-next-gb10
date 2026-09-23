@@ -1,0 +1,19 @@
+=== arm m4 mode main 2026-09-23T15:02:17+02:00
+ready after 701s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=385334) INFO 09-23 15:14:00 [default_loader.py:430] Loading weights took 536.47 seconds
+(Worker pid=385334) INFO 09-23 15:14:01 [ngram_embedding.py:632] Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files; no device or pinned memory
+(Worker pid=385334) INFO 09-23 15:15:10 [default_loader.py:430] Loading weights took 67.60 seconds
+(Worker pid=385334) INFO 09-23 15:15:10 [mtp.py:95] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+(EngineCore pid=385259) INFO 09-23 15:15:35 [kv_cache_utils.py:2432] GPU KV cache size: 590,604 tokens, Maximum concurrency for 32,768 tokens per request: 18.02x
+(Worker pid=385334) QSADET active: /opt/llm/kernel-det/_C_det.so
+mem after ready: used=113 avail=7 swap_used=6G
+{"label": "m4", "cold": ["30f6618f45", "9bbad04fa3", "3c0ef41e84", "97d6d64d78", "b00f8d2cb0", "5e8d47be91", "58f7d2471f", "e32360da9b"], "warm": ["4e5bd85440", "9bbad04fa3", "ea37726ed7", "c8283bf26f", "92fe154b7c", "5e8d47be91", "26b9a4b687", "f333fa5bee"], "salted": ["267f0464ce", "c38e0f7fef", "c6f9fd995d", "df5e5e1f75", "7373ac4c7e", "c163c6fd7b", "2ca0d8fca5", "3370c904a8"], "cold_eq_warm": 2, "max_dlogprob_cold_warm": [0.9691, 0.2784, 0.8548, 1.2998, 1.1468, 0.0, 1.4077, 0.9925]}
+(Worker pid=385334) INFO 09-23 15:15:30 [ngram_embedding.py:684] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=4096, rows=65536)
+(Worker pid=385334) INFO 09-23 15:15:41 [ngram_embedding.py:684] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=4096, rows=65536)
+(Worker pid=385334) INFO 09-23 15:15:42 [ngram_embedding.py:684] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=80, rows=1280)
+(Worker pid=385334) INFO 09-23 15:15:43 [ngram_embedding.py:684] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=64, rows=1024)
+(Worker pid=385334) INFO 09-23 15:15:43 [ngram_embedding.py:684] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=5, rows=80)
+(Worker pid=385334) INFO 09-23 15:15:43 [ngram_embedding.py:684] PLE SELFCHECK: rows handed to the model match checkpoint bytes: True (tokens=2, rows=32)
+== ALL DONE ==

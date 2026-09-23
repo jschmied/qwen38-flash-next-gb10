@@ -1,0 +1,28 @@
+=== arm m1 mode main 2026-09-23T13:56:14+02:00
+ready after 761s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=302295) INFO 09-23 14:06:24 [default_loader.py:430] Loading weights took 563.60 seconds
+(Worker pid=302295) INFO 09-23 14:06:26 [ngram_embedding.py:632] Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files; no device or pinned memory
+(Worker pid=302295) INFO 09-23 14:07:25 [default_loader.py:430] Loading weights took 56.26 seconds
+(Worker pid=302295) INFO 09-23 14:07:25 [mtp.py:95] FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 160 MiB per draft step (BF16 slice of the FP8 head)
+(EngineCore pid=302178) INFO 09-23 14:07:50 [kv_cache_utils.py:2432] GPU KV cache size: 590,604 tokens, Maximum concurrency for 32,768 tokens per request: 18.02x
+(Worker pid=302295) QSADET active: /opt/llm/kernel-det/_C_det.so
+mem after ready: used=115 avail=6 swap_used=6G
+  m1-cold turn 1:   3.84 s    28 tok  hits+      0  acc  54.5% len 2.64
+  m1-cold turn 2:   1.12 s    22 tok  hits+   6400  acc  62.5% len 2.88
+  m1-cold turn 3:   1.06 s    21 tok  hits+   6400  acc  71.4% len 3.14
+  m1-cold turn 4:   1.19 s    19 tok  hits+   6400  acc  40.7% len 2.22
+  m1-cold turn 5:   1.10 s    13 tok  hits+   6400  acc  28.6% len 1.86
+  m1-cold turn 6:   1.09 s    16 tok  hits+   6400  acc  47.6% len 2.43
+  m1-cold turn 7:   1.25 s    21 tok  hits+   6400  acc  44.4% len 2.33
+  m1-cold turn 8:   1.20 s    16 tok  hits+   6400  acc  33.3% len 2.00
+{"arm": "m1-cold", "total_s": 11.9, "turns": 8, "s_per_turn": 1.48, "tokens": 156, "ms_per_tok": 75.96, "accept_rate": 0.48, "accept_len": 2.44, "hits_last_turn": 6400, "hits_sum": 44800}
+{"label": "m1", "A": ["10c61c878460", "487bd41d4a2f", "b41d906339e0", "591216c7620c", "8c209238c8c3", "9ce4cb285491", "365efaf56323", "5bde04f29746"], "B": [{"dec": ["277056c6f9e5", "2d83d9f36e64"], "pre": ["2b150ff5a229", "cc8a2efc2183"], "overlap": true}, {"dec": ["3a7884136c27", "4387751435c2"], "pre": ["bce3c0ee0ec8", "abc3cc76fe90"], "overlap": true}, {"dec": ["da2eda3de33e", "a2c975dbda8b"], "pre": ["a958c8444c1d", "a72420fce399"], "overlap": true}], "solo": ["b1ba89ae00e6", "23914a7c4f1a"], "overlap_all": true, "dec_stable_across_reps": false, "dec_equals_solo": [false, false]}
+  m1 TTFT 8k: 3.08s/7201tok 3.14s/7976tok 3.11s/7086tok
+  m1 TTFT 30k: 10.75s/27148tok 11.53s/28780tok 10.06s/24164tok
+{"label": "m1", "8k": [[3.08, 7201], [3.14, 7976], [3.11, 7086]], "30k": [[10.75, 27148], [11.53, 28780], [10.06, 24164]]}
+{"arm": "m1-after", "total_s": 10.7, "turns": 8, "s_per_turn": 1.33, "tokens": 236, "ms_per_tok": 45.17, "accept_rate": 0.544, "accept_len": 2.63, "hits_last_turn": 6400, "hits_sum": 51200}
+{"arm": "m1-c16", "c": 16, "reps_all": [196.0, 205.1, 199.3, 195.2], "warm_reps": [205.1, 199.3, 195.2], "warm_median": 199.3, "warm_min": 195.2, "warm_max": 205.1}
+mem at end: used=116 avail=5 swap_used=6G
+== ALL DONE ==
