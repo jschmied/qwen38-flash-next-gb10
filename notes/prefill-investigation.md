@@ -3315,7 +3315,7 @@ unified-memory measurements in any of these threads — or (c) evaluating #54129
 That is a decision for the user, not a default.
 
 
-## Finding 225 — PageableHost PLE prototype works: the GPU reads the table straight from an mmap'd file; −48 GiB swap, −4 % per agent turn, +2–5 % cold 30k TTFT (2026-09-23)
+## Finding 225 — PageableHost PLE prototype works: the GPU reads the table straight from an mmap'd file; swap 52–54 → 5 GiB, −4 % per agent turn; TTFT direction unresolved (2026-09-23; corrected after review)
 
 **Why.** Upstream's PLE offload (#54371) is pinned host memory, which does not fit a 121.6 GiB unified pool.
 GB10 reports `CU_DEVICE_ATTRIBUTE_PAGEABLE_MEMORY_ACCESS=1` and `..._USES_HOST_PAGE_TABLES=1`, so a kernel can
@@ -3372,30 +3372,36 @@ Void checks for the pageable arm:
 | | pageable p1, p2 | prod p0, p3 | range check |
 |---|---|---|---|
 | agent loop cold, s/turn | **1.59, 1.57** | 1.65, 1.66 | disjoint; gap 0.06 vs spread 0.01–0.02 |
-| decode ms/token (cold loop) | 57.3, 56.5 | 59.4, 59.7 | −4 % |
+| whole-loop ms per output token (12.7 s / 222; includes prefill and request overhead, NOT decode) | 57.3, 56.5 | 59.4, 59.7 | same −4 % as the row above, not a separate decode figure |
 | agent loop warm, s/turn | 1.30, 1.30 | 1.32, 1.33 | −2 % |
-| TTFT, 3 prompts 24–29k tok, sum | 34.46, 33.56 s | 33.19, 32.94 s | **+1.9 … +4.6 %** |
-| TTFT, 3 prompts 7–8k tok, sum | 9.44, 9.21 s | 9.71, 9.62 s | −3 … −5 % |
+| TTFT, 3 prompts 24–29k tok, sum | 34.46, 33.56 s | 33.19, 32.94 s | gap 0.37 s < within-arm spread 0.90 s → **fails the finding-223 rule** |
+| TTFT, 3 prompts 7–8k tok, sum | 9.44, 9.21 s | 9.71, 9.62 s | gap 0.18 s < spread 0.23 s → **fails the rule** |
 | swap used, steady | **5 GiB** | 52–54 GiB | −48 GiB |
 | MemAvailable, steady | 1–2 GiB | 3–6 GiB | pageable arm held 2.4–3 GiB more KV (fixed 34.36 vs auto 31.4–31.9) |
 
 Against the hypotheses:
 - **e** (1.60–1.75) is out of range on the good side, **reproducibly**, and the prod arm reproduces its own
-  1.64–1.65 baseline, so the instrument is fine. The range was wrong, not the measurement: it assumed the PLE path
-  is neutral for decode.
-  Candidate cause, **not measured**: prod's GPU worker waits every step on the offload worker's IPC semaphore and
-  CPU gather, and the pageable path has no wait. The counterfactual would be a prod arm with the semaphore wait
-  timed per step.
-- **f** (+3…+10 % cold): in range at 30k (+1.9…+4.6 %). At 8k the pageable arm is 3–5 % faster, which is the same
-  decode-side effect.
-- **g** (swap < 5 GiB): at the edge (5 GiB). MemAvailable is about equal once the KV difference is counted.
+  1.64–1.65 baseline, so the instrument is fine. The range was wrong, not the measurement. The supported claim is
+  **turn latency −4 %**. It is not a decode-rate claim: "ms/token" was whole-loop time divided by output tokens,
+  so it includes prefill. Candidate cause, **not measured**: prod's per-step wait on the offload worker's IPC
+  semaphore.
+- **f** (TTFT): neither the 30k nor the 8k difference clears the finding-223 bar; the gap is smaller than the
+  within-arm spread. They are observed results **with unresolved direction**. The earlier "8k faster = decode-side
+  effect" line is withdrawn, because `max_tokens=1` has no decode.
+- **g** (swap < 5 GiB): at the edge (5 GiB, both pageable starts still used swap). The table moved from anonymous
+  memory to **reclaimable clean file pages**. That does not create 48 GiB of RAM: those pages still compete with
+  KV in the shared pool.
+- **Confound:** the KV budgets differed. The pageable arms had a fixed 34.36 GiB; prod sized itself to
+  31.4–31.9 GiB. The v2 A/B uses identical fixed budgets.
 
 During prefill the prefetch takes 12–17 ms per step and lags submission by 120–150 ms. That sits inside the
 ~1.3 s chunk, so it does not throttle.
 
-**What this establishes.** On a unified-memory Spark the PLE table does not need to live in anon memory, swap,
-pinned memory or a worker process. A read-only file mapping plus a CPU page prefetch is at least as fast. It frees
-the 64 GiB swap prerequisite and `CAP_SYS_PTRACE`, and uses no IPC.
+**What this establishes (corrected).** On a unified-memory Spark the PLE table does not need to live in anon
+memory, swap, pinned memory or a worker process. Supported: swap 52–54 → 5 GiB, and turn latency 1.65–1.66 →
+1.57–1.59 s. TTFT is unresolved. The earlier blanket "at least as fast" is withdrawn. Open gate (review
+2026-09-23): identical fixed KV budgets, generation equivalence across mixed prefill/decode + MTP, and auto KV
+sizing under sustained diverse traffic.
 
 **Prototype-only shortcuts:**
 - A 51 GB contiguous copy of the table (`tools/pageable/build_ple_file.py`). A real version maps the checkpoint's
@@ -3426,3 +3432,22 @@ without reading them. Env: `VLLM_PLE_PAGEABLE=checkpoint`, `VLLM_PLE_CPU_OFFLOAD
 | s3. TTFT sums, 30k / 8k | within ±3 % of v1 (33.5–34.5 / 9.2–9.4 s) | finding 225 |
 | s4. c=16 decode, MTP n=3 | 190–205 tok/s | prod [200.2, 202.1] (finding 222, `decodecell_json.py`) |
 | s5. auto KV (util 0.90, no fixed bytes) | KV 30–35 GiB; swap < 6 GiB; MemAvailable ≥ 1 GiB | prod 31.4–31.9 GiB auto |
+
+**Plan revised after the 2026-09-23 review (before the re-run):**
+- **Code:** shard validation now mirrors `load_weights`. Every shard that owns rows must exist with its exact
+  shape, there is no silent truncation, and the kernel returns zero rows for ids outside `[0, num_rows)`. The
+  device guard queries `CU_DEVICE_ATTRIBUTE_PAGEABLE_MEMORY_ACCESS` and `..._USES_HOST_PAGE_TABLES` instead of
+  `is_integrated`. Tests: `v2_validation_test.py`, covering a missing shard, 8-for-12 rows, a short interior
+  shard, an extra shard and out-of-range ids.
+- **v2a (first start) is VOID for TTFT.** The v2 CPU prefetch took 393–1,321 ms per 3,200-token chunk against
+  v1's 50–150 ms, and TTFT came out +25–40 %. Being debugged offline (`touch_bench.py`).
+- **The `ttft_real.py` corpus drifted:** it reads the venv's sources, which the patches edit (+1 token per
+  prompt). It gets frozen to a file; only arms on the same corpus are compared.
+- **Re-run gate:**
+  - s5 replaced: **identical fixed KV** in both arms (`--kv-cache-memory-bytes`, same value).
+  - New **s6, generation equivalence:** temp-0 outputs identical between prod and v2 for 8 sequential prompts
+    (c=1, with MTP) and for a mixed batch (4 concurrent: 2 long prefills + 2 decoding). Expected bit-identical
+    at c=1: the PLE bytes and the dequant path are the same. The mixed batch is expected identical if the
+    determinism overlays hold. A difference in the mixed batch only is a batch-invariance question, not a
+    PLE defect, and gets debugged.
+  - Auto KV sizing under sustained diverse traffic comes after that, as its own run.
