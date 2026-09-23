@@ -1,0 +1,83 @@
+--- models/qwen4_exp/nvidia/ple_layer.py.orig-pageable	2026-09-23 08:36:31.640703367 +0200
++++ models/qwen4_exp/nvidia/ple_layer.py	2026-09-23 08:36:31.653572637 +0200
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ """GPU-resident Qwen4Exp position-learning enhancement layers."""
+ 
++import os
+ from collections.abc import Iterable, Sequence
+ 
+ import torch
+@@ -110,9 +111,23 @@
+     ) -> None:
+         del input_size, output_size, params_dtype
+         weight_loader = extra_weight_attrs.get("weight_loader")
+-        weight = create_fp8_weight_parameter(
+-            sum(output_partition_sizes), input_size_per_partition, weight_loader
+-        )
++        # PAGEABLE-PROTO (finding 225): map the table instead of allocating it.
++        _pageable_file = os.environ.get("VLLM_PLE_PAGEABLE_FILE")
++        if _pageable_file:
++            from vllm.v1.ple_offload.pageable import map_table
++
++            weight = nn.Parameter(
++                map_table(
++                    _pageable_file,
++                    sum(output_partition_sizes),
++                    input_size_per_partition,
++                ),
++                requires_grad=False,
++            )
++        else:
++            weight = create_fp8_weight_parameter(
++                sum(output_partition_sizes), input_size_per_partition, weight_loader
++            )
+         layer.register_parameter("weight", weight)
+ 
+         weight_scale = create_fp8_scale_parameter(
+@@ -828,6 +843,10 @@
+                 and name.startswith(shard_prefix)
+                 and name.endswith(".weight")
+             ):
++                if os.environ.get("VLLM_PLE_PAGEABLE_FILE"):
++                    # PAGEABLE-PROTO: the rows already live in the mapped file.
++                    loaded.add("ngram_embedding.weight")
++                    continue
+                 shard_text = name[len(shard_prefix) : -len(".weight")]
+                 if not shard_text.isdigit():
+                     regular_weights.append((name, loaded_weight))
+--- v1/worker/gpu/model_runner.py.orig-pageable	2026-09-23 08:36:31.646239939 +0200
++++ v1/worker/gpu/model_runner.py	2026-09-23 08:36:31.659953545 +0200
+@@ -18,6 +18,7 @@
+ """
+ 
+ import functools
++import os
+ import gc
+ import time
+ from contextlib import AbstractContextManager
+@@ -1836,6 +1837,24 @@
+                 input_batch.num_tokens_after_padding,
+                 dummy_run,
+             )
++        # PAGEABLE-PROTO (finding 225): CPU prefetch of this step's PLE rows.
++        _pp = getattr(self, "_ple_pageable", None)
++        if _pp is None and os.environ.get("VLLM_PLE_PAGEABLE_FILE") and not dummy_run:
++            from vllm.v1.ple_offload.pageable import PagePrefetcher
++
++            _pp = self._ple_pageable = PagePrefetcher(
++                self.model,
++                self.device,
++                self.input_buffers.input_ids,
++                self.model_state.ple_query_start_loc,
++                self.model_state.ngram_context,
++                self.scheduler_config.max_num_batched_tokens,
++                self.scheduler_config.max_num_seqs,
++            )
++        if _pp is not None:
++            _pp.prepare_forward(
++                input_batch.num_reqs, input_batch.num_tokens_after_padding, dummy_run
++            )
+ 
+         # Run model.
+         if batch_desc.cg_mode == CUDAGraphMode.FULL:

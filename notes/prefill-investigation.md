@@ -3314,3 +3314,96 @@ the overlay indefinitely, (b) upstreaming our own unified-memory offload — we 
 unified-memory measurements in any of these threads — or (c) evaluating #54129/#57497 as a replacement.
 That is a decision for the user, not a default.
 
+
+## Finding 225 — PageableHost PLE prototype works: the GPU reads the table straight from an mmap'd file; −48 GiB swap, −4 % per agent turn, +2–5 % cold 30k TTFT (2026-09-23)
+
+**Why.** Upstream's PLE offload (#54371) is pinned host memory, which does not fit a 121.6 GiB unified pool.
+GB10 reports `CU_DEVICE_ATTRIBUTE_PAGEABLE_MEMORY_ACCESS=1` and `..._USES_HOST_PAGE_TABLES=1`, so a kernel can
+dereference an ordinary host virtual address, including a file-backed `mmap`. Then the table needs no pin,
+no swap, no worker process, no CPU gather and no staging copy.
+
+**Prototype.** The checkpoint's 128 `plefp8` shard tensors are rewritten once into a single contiguous file
+in logical row order, 320,001,536 × 160 B = 47.68 GiB, page aligned. The safetensors data starts at byte 2,239,
+so the tensors are not even 16-byte aligned. `VLLM_PLE_PAGEABLE_FILE=<path>` makes
+`Qwen4ExpPLEFp8EmbeddingMethod.create_weights` register an mmap-backed "cuda" tensor instead of allocating,
+and makes `load_weights` skip the shard tensors. Served with `VLLM_PLE_CPU_OFFLOAD=0`: the stock non-offload
+`F.embedding` path runs unchanged, but over host pages.
+
+**Hypotheses, written before running:**
+
+| | expected | out of range means |
+|---|---|---|
+| a. correctness: GPU `index_select` over the mapping == CPU gather of the same rows | bit-identical | pageable access does not cover file-backed `MAP_SHARED`; debug |
+| b. warm gather, 16 rows (one decode token) | 20–200 µs | |
+| c. cold gather, 16 rows (file dropped from the page cache) | 0.2–5 ms | GPU faults serialize worse than expected |
+| d. cold gather, 480k rows (a 30k-token prefill) | 0.5–10 s; > 3 s means a CPU `WILLNEED` prefetch is required | |
+| e. server, agent loop on a cold start (prod 1.64–1.65 s/turn) | 1.60–1.75 s/turn | |
+| f. server, TTFT at 30k on a cold page cache (prod ~10.9 s) | +3 … +10 %; warm ±2 % | |
+| g. memory: swap used (prod ~48–53 GiB) | < 5 GiB; steady MemAvailable ≥ prod's 2.5 GiB | |
+
+### Results
+
+**Micro-test** (`tools/pageable/pageable_probe.py`, `pageable_prefetch.py`; server down, 118 GiB free).
+Each prefetch arm ran in its own process after `drop_caches`, with `MADV_RANDOM`. The first two runs were void and are
+not quoted: one used a page-cache "drop" that cannot evict mapped pages, the other had readahead from earlier arms
+warming later ones.
+
+| rows | no prefetch | `fadvise(WILLNEED)` | 32 threads touch both row ends | 64 threads |
+|---|---|---|---|---|
+| 64 (one MTP step) | 4.6 ms | **1.3 ms** | 2.6 ms | 3.1 ms |
+| 480k (a 30k-token prefill) | **88 s** | 5.4 s | 2.8 s | **1.6 s** |
+
+- a. bit-exact, 480k rows: **in range**.
+- b. warm 16 rows 10 µs: below the 20–200 µs range, because the range assumed server overheads.
+- c/d **out of range** without prefetch. GPU faults on non-resident file pages are serviced **one page at a time**,
+  ≈0.16–0.18 ms per page, so a GPU-only design is unusable. With a CPU prefetch, d is in range.
+- A 160 B row straddles a 4 KiB page ~4 % of the time. Touching only the first byte left those faults to the GPU,
+  which cost +3.2 s at 480k rows. Touch both ends.
+
+**Server A/B.** Prod config, two fresh starts per arm, alternating p1 → p0 → p2 → p3, page cache dropped before each
+start. Same probes: `agentloop_json.py` cold first, then `ttft_real.py`, a new probe (diverse text, a distinct
+slice per request, a salted prefix; the old `ttft.py` repeats a 34-token unit, touches few PLE rows and assumes the
+cache is off), then the agent loop warm.
+
+Void checks for the pageable arm:
+- "prefetch ids match GPU ids: True" 3/3 per start;
+- tokens and accept length identical in every arm (222 / 2.53).
+
+| | pageable p1, p2 | prod p0, p3 | range check |
+|---|---|---|---|
+| agent loop cold, s/turn | **1.59, 1.57** | 1.65, 1.66 | disjoint; gap 0.06 vs spread 0.01–0.02 |
+| decode ms/token (cold loop) | 57.3, 56.5 | 59.4, 59.7 | −4 % |
+| agent loop warm, s/turn | 1.30, 1.30 | 1.32, 1.33 | −2 % |
+| TTFT, 3 prompts 24–29k tok, sum | 34.46, 33.56 s | 33.19, 32.94 s | **+1.9 … +4.6 %** |
+| TTFT, 3 prompts 7–8k tok, sum | 9.44, 9.21 s | 9.71, 9.62 s | −3 … −5 % |
+| swap used, steady | **5 GiB** | 52–54 GiB | −48 GiB |
+| MemAvailable, steady | 1–2 GiB | 3–6 GiB | pageable arm held 2.4–3 GiB more KV (fixed 34.36 vs auto 31.4–31.9) |
+
+Against the hypotheses:
+- **e** (1.60–1.75) is out of range on the good side, **reproducibly**, and the prod arm reproduces its own
+  1.64–1.65 baseline, so the instrument is fine. The range was wrong, not the measurement: it assumed the PLE path
+  is neutral for decode.
+  Candidate cause, **not measured**: prod's GPU worker waits every step on the offload worker's IPC semaphore and
+  CPU gather, and the pageable path has no wait. The counterfactual would be a prod arm with the semaphore wait
+  timed per step.
+- **f** (+3…+10 % cold): in range at 30k (+1.9…+4.6 %). At 8k the pageable arm is 3–5 % faster, which is the same
+  decode-side effect.
+- **g** (swap < 5 GiB): at the edge (5 GiB). MemAvailable is about equal once the KV difference is counted.
+
+During prefill the prefetch takes 12–17 ms per step and lags submission by 120–150 ms. That sits inside the
+~1.3 s chunk, so it does not throttle.
+
+**What this establishes.** On a unified-memory Spark the PLE table does not need to live in anon memory, swap,
+pinned memory or a worker process. A read-only file mapping plus a CPU page prefetch is at least as fast. It frees
+the 64 GiB swap prerequisite and `CAP_SYS_PTRACE`, and uses no IPC.
+
+**Prototype-only shortcuts:**
+- A 51 GB contiguous copy of the table (`tools/pageable/build_ple_file.py`). A real version maps the checkpoint's
+  10 safetensors files and gathers through a 128-entry shard-pointer table; the data starts at byte 2,239, so it
+  needs byte loads.
+- The CPU hash path is recomputed in the prefetch thread.
+- No TP > 1 and no NVFP4 table.
+
+Code: `tools/pageable/pageable.py`, plus `venv-hooks.diff` (env-gated: `VLLM_PLE_PAGEABLE_FILE`,
+`VLLM_PLE_CPU_OFFLOAD=0`; installed in `vllm-venv-fnmain3`, originals kept as `*.orig-pageable`).
+Data: `notes/data/pageable-p{0,1,2,3}.txt`.

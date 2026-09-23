@@ -1,0 +1,34 @@
+=== arm p2 mode pageable 2026-09-23T09:29:39+02:00
+ready after 790s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=112351) INFO 09-23 09:30:16 [pageable.py:88] PLE pageable: mapped /opt/llm/models/ple-cache/qwen38-fn-plefp8.bin (47.68 GiB, 320001536 rows) at 0xeadea4200000, GPU reads it in place, nothing pinned
+(EngineCore pid=112253) INFO 09-23 09:42:30 [kv_cache_utils.py:2312] GPU KV cache size: 654,579 tokens, Maximum concurrency for 32,768 tokens per request: 19.98x
+(Worker pid=112351) INFO 09-23 09:42:34 [pageable.py:135] PLE pageable: prefetcher up, 1 PLE layer(s), 4 slots, 64 touch threads
+(Worker pid=112351) INFO 09-23 09:42:34 [pageable.py:172] PLE pageable: prefetch ids match GPU ids: True (tokens=80 reqs=16)
+(Worker pid=112351) INFO 09-23 09:42:35 [pageable.py:172] PLE pageable: prefetch ids match GPU ids: True (tokens=64 reqs=16)
+(Worker pid=112351) INFO 09-23 09:42:35 [pageable.py:172] PLE pageable: prefetch ids match GPU ids: True (tokens=5 reqs=2)
+mem after ready: used=118 avail=2 swap_used=5G
+  p2-cold turn 1:   3.33 s    28 tok  hits+      0  acc  63.3% len 2.90
+  p2-cold turn 2:   1.25 s    33 tok  hits+   6400  acc  66.7% len 3.00
+  p2-cold turn 3:   1.15 s    26 tok  hits+   6400  acc  63.0% len 2.89
+  p2-cold turn 4:   1.34 s    22 tok  hits+   6400  acc  25.0% len 1.75
+  p2-cold turn 5:   1.25 s    27 tok  hits+   6400  acc  56.7% len 2.70
+  p2-cold turn 6:   1.42 s    29 tok  hits+   6400  acc  43.6% len 2.31
+  p2-cold turn 7:   1.34 s    26 tok  hits+   6400  acc  48.5% len 2.45
+  p2-cold turn 8:   1.47 s    31 tok  hits+   6400  acc  48.7% len 2.46
+{"arm": "p2-cold", "total_s": 12.5, "turns": 8, "s_per_turn": 1.57, "tokens": 222, "ms_per_tok": 56.52, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+  p2 TTFT 8k: 3.19s/7201tok 3.14s/7976tok 2.88s/7086tok
+  p2 TTFT 30k: 10.60s/27148tok 11.97s/28780tok 10.99s/24164tok
+{"label": "p2", "8k": [[3.19, 7201], [3.14, 7976], [2.88, 7086]], "30k": [[10.6, 27148], [11.97, 28780], [10.99, 24164]]}
+{"arm": "p2-after", "total_s": 10.4, "turns": 8, "s_per_turn": 1.3, "tokens": 222, "ms_per_tok": 46.69, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 51200}
+(Worker pid=112351) INFO 09-23 09:43:55 [pageable.py:214] PLE pageable: steps=151 skipped=0 big=47 avg_rows=12796 avg_prefetch_ms=17.21 avg_lag_ms=145.27 last(tokens=1103 rows=17648 ms=16.0)
+(Worker pid=112351) INFO 09-23 09:43:57 [pageable.py:214] PLE pageable: steps=163 skipped=0 big=48 avg_rows=11972 avg_prefetch_ms=16.15 avg_lag_ms=139.85 last(tokens=1158 rows=18528 ms=13.8)
+(Worker pid=112351) INFO 09-23 09:43:58 [pageable.py:214] PLE pageable: steps=176 skipped=0 big=49 avg_rows=11202 avg_prefetch_ms=15.14 avg_lag_ms=134.88 last(tokens=1218 rows=19488 ms=11.8)
+(Worker pid=112351) INFO 09-23 09:43:59 [pageable.py:214] PLE pageable: steps=187 skipped=0 big=50 avg_rows=10656 avg_prefetch_ms=14.39 avg_lag_ms=131.27 last(tokens=1271 rows=20336 ms=13.3)
+(Worker pid=112351) INFO 09-23 09:44:00 [pageable.py:214] PLE pageable: steps=201 skipped=0 big=51 avg_rows=10023 avg_prefetch_ms=13.57 avg_lag_ms=127.22 last(tokens=1320 rows=21120 ms=15.2)
+(Worker pid=112351) INFO 09-23 09:44:02 [pageable.py:214] PLE pageable: steps=213 skipped=0 big=52 avg_rows=9565 avg_prefetch_ms=12.94 avg_lag_ms=124.25 last(tokens=1374 rows=21984 ms=12.9)
+(Worker pid=112351) INFO 09-23 09:44:03 [pageable.py:214] PLE pageable: steps=228 skipped=0 big=53 avg_rows=9040 avg_prefetch_ms=12.24 avg_lag_ms=120.83 last(tokens=1430 rows=22880 ms=15.3)
+(Worker pid=112351) INFO 09-23 09:44:04 [pageable.py:214] PLE pageable: steps=241 skipped=0 big=54 avg_rows=8654 avg_prefetch_ms=11.70 avg_lag_ms=118.35 last(tokens=1483 rows=23728 ms=14.2)
+mem at end: used=120 avail=1 swap_used=5G
+== ALL DONE ==
