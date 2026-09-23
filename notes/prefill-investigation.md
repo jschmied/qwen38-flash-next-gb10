@@ -2972,3 +2972,44 @@ hyper-connection shapes. It may still transfer to other BF16 leftovers — the c
 Today's OOM was entirely prod's `util=0.90` reservation, exactly as recorded — nothing else on the
 box was to blame.
 
+## Finding 215 — MTP depth: n=4 is the optimum, n>=5 is worse, and the unreachable band was not worth unlocking (2026-09-23, overnight job 20)
+
+The sweep our own note called *"the most concrete untested speed lever we have"*. Depths 5..8 needed
+the QSA ring widening from **our** PR #54912 (issue #54552 is ours too) — applied to the serving venv
+for the job and reverted in its trap (`revert verified`, 0 occurrences after). `armrun` spec
+`mtpdepth`, 4 arms x 2 starts, `armrun exit: 0`, agent loop in the prod shape.
+Raw: `notes/data/mtpdepth-sweep.txt`.
+
+| arm | starts (s/turn) | range | accept len | accept rate | hits/turn |
+|---|---|---|---|---|---|
+| n3 (shipped prod) | 1.65, 1.66 | [1.65, 1.66] | 2.53 | 0.509 | 6400 |
+| **n4** | 1.63, 1.64 | **[1.63, 1.64]** | 2.84 | 0.459 | 6464 |
+| n5 | 1.72, 1.70 | [1.70, 1.72] | 2.88 | 0.375 | 6464 |
+| n6 | 1.90, 1.72 | [1.72, 1.90] | 3.05 | 0.342 | 6528 |
+
+**n4 beats n3 by ~1.2 %, and it clears the bar** — ranges disjoint, sign holds in both rounds.
+**n5 is worse than n3 by ~3.5 %**, also disjoint. **n6 cannot be ranked against n5**: its own spread
+is 1.72-1.90, a **10 % within-arm swing**, which is [[mtp-restart-instability]] exactly (up to 1.83x
+on MTP alone). n6 is clearly worse than n3/n4 and that is all this says about it.
+
+**The mechanism is visible in the two counters.** Accept *length* rises monotonically with depth
+(2.53 -> 3.05) while accept *rate* collapses (0.509 -> 0.342). Up to n=4 the longer draft pays; past
+it the wasted draft tokens dominate.
+
+**This does not contradict finding 155 (k=4 = −3.4 % at c=1) — it measures a different thing.** 155
+was single-shot decode; this is agent turns. At turn level n4's longer accept length outweighs its
+lower rate; in pure decode it did not. Different instrument, not a reversal
+([[agentic-speed-is-ttft-bound]]).
+
+**Cache counts are NOT comparable across arms.** `hits_last_turn` rises 6400 -> 6464 -> 6528 because
+block size tracks speculative depth (4x1600, 4x1616, 4x1632) — [[prefix-cache-hit-measurement-trap]].
+Only `s/turn` is comparable here.
+
+**Verdict on the unlocked band: not worth having.** #54912 is still a correct fix — the assert it
+removes is genuinely one-sided — but the depths it makes reachable (5..8) are all *slower* than the
+n=3/n=4 pair that was already legal. The "most concrete untested speed lever" is now tested, and it
+is negative.
+
+**Open decision, NOT applied:** moving prod n=3 -> n=4 buys ~1.2 % for one env var on the same
+checkpoint, with no new patch. Real but marginal, and it costs a 13-minute reload. User's call.
+

@@ -1,0 +1,46 @@
+patching file vllm/models/qwen4_exp/common/qsa_cache.py
+ring patch present
+== armrun mtpdepth: 4 arms x 2 start(s), port 8092 ==
+-- mtpdepth-n30  env={'FN_SPEC_N': '3'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: f4201f5cd98f4d8fba2b3ebe343ce0a0
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.2, "turns": 8, "s_per_turn": 1.65, "tokens": 222, "ms_per_tok": 59.6, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+-- mtpdepth-n40  env={'FN_SPEC_N': '4'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 836172fe99b845fb9459b6849c387861
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.1, "turns": 8, "s_per_turn": 1.63, "tokens": 221, "ms_per_tok": 59.13, "accept_rate": 0.45899999999999996, "accept_len": 2.84, "hits_last_turn": 6464, "hits_sum": 45248}
+-- mtpdepth-n50  env={'FN_SPEC_N': '5'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 8c4c2e051fed4ba495c68fc6e1debbd3
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.7, "turns": 8, "s_per_turn": 1.72, "tokens": 221, "ms_per_tok": 62.14, "accept_rate": 0.375, "accept_len": 2.88, "hits_last_turn": 6464, "hits_sum": 45248}
+-- mtpdepth-n60  env={'FN_SPEC_N': '6'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: c598b76363d547c3b0b78cdbb92124ec
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 15.2, "turns": 8, "s_per_turn": 1.9, "tokens": 225, "ms_per_tok": 67.46, "accept_rate": 0.342, "accept_len": 3.05, "hits_last_turn": 6528, "hits_sum": 45696}
+-- mtpdepth-n31  env={'FN_SPEC_N': '3'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 5311207787e44e7284e0e0ac6690f44e
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.3, "turns": 8, "s_per_turn": 1.66, "tokens": 222, "ms_per_tok": 59.82, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+-- mtpdepth-n41  env={'FN_SPEC_N': '4'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 596862472b6d4b29ac296cbc8e07673b
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.1, "turns": 8, "s_per_turn": 1.64, "tokens": 221, "ms_per_tok": 59.19, "accept_rate": 0.45899999999999996, "accept_len": 2.84, "hits_last_turn": 6464, "hits_sum": 45248}
+-- mtpdepth-n51  env={'FN_SPEC_N': '5'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 97217a190bd94d029644ed92dbb78423
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.6, "turns": 8, "s_per_turn": 1.7, "tokens": 221, "ms_per_tok": 61.64, "accept_rate": 0.375, "accept_len": 2.88, "hits_last_turn": 6464, "hits_sum": 45248}
+-- mtpdepth-n61  env={'FN_SPEC_N': '6'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 5895d9d8fa584921af329a96467b7855
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.8, "turns": 8, "s_per_turn": 1.72, "tokens": 225, "ms_per_tok": 61.26, "accept_rate": 0.342, "accept_len": 3.05, "hits_last_turn": 6528, "hits_sum": 45696}
+
+== RESULT ==
+  n3           total_s 13.2–13.3  turns 8  s_per_turn 1.65–1.66  tokens 222  ms_per_tok 59.6–59.82  accept_rate 0.509  accept_len 2.53  hits_last_turn 6400  hits_sum 44800  start 0–1
+  n4           total_s 13.1  turns 8  s_per_turn 1.63–1.64  tokens 221  ms_per_tok 59.13–59.19  accept_rate 0.45899999999999996  accept_len 2.84  hits_last_turn 6464  hits_sum 45248  start 0–1
+  n5           total_s 13.6–13.7  turns 8  s_per_turn 1.7–1.72  tokens 221  ms_per_tok 61.64–62.14  accept_rate 0.375  accept_len 2.88  hits_last_turn 6464  hits_sum 45248  start 0–1
+  n6           total_s 13.8–15.2  turns 8  s_per_turn 1.72–1.9  tokens 225  ms_per_tok 61.26–67.46  accept_rate 0.342  accept_len 3.05  hits_last_turn 6528  hits_sum 45696  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun rc=0
+ring patch REVERTED
+revert verified

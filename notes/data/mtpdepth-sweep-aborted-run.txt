@@ -1,0 +1,31 @@
+patching file vllm/models/qwen4_exp/common/qsa_cache.py
+ring patch present
+== armrun mtpdepth: 4 arms x 2 start(s), port 8092 ==
+-- mtpdepth-n30  env={'FN_SPEC_N': '3'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 0ba6773157334ac4b0df90b721fc3eac
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.2, "turns": 8, "s_per_turn": 1.65, "tokens": 222, "ms_per_tok": 59.49, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+-- mtpdepth-n40  env={'FN_SPEC_N': '4'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 4205921d66554dafb323039c15a5a9c6
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.2, "turns": 8, "s_per_turn": 1.65, "tokens": 221, "ms_per_tok": 59.9, "accept_rate": 0.45899999999999996, "accept_len": 2.84, "hits_last_turn": 6464, "hits_sum": 45248}
+-- mtpdepth-n50  env={'FN_SPEC_N': '5'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: b492baac06dd4713a905e04ce42b3b90
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.6, "turns": 8, "s_per_turn": 1.7, "tokens": 221, "ms_per_tok": 61.55, "accept_rate": 0.375, "accept_len": 2.88, "hits_last_turn": 6464, "hits_sum": 45248}
+-- mtpdepth-n60  env={'FN_SPEC_N': '6'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: b1e186f06c9e49af8922e6bee399a91d
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 14.5, "turns": 8, "s_per_turn": 1.81, "tokens": 225, "ms_per_tok": 64.35, "accept_rate": 0.342, "accept_len": 3.05, "hits_last_turn": 6528, "hits_sum": 45696}
+-- mtpdepth-n31  env={'FN_SPEC_N': '3'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 32b3aa573bfc4015812a0c982c364853
+   void checks passed (2 required, 1 forbidden)
+   {"total_s": 13.2, "turns": 8, "s_per_turn": 1.65, "tokens": 222, "ms_per_tok": 59.53, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+-- mtpdepth-n41  env={'FN_SPEC_N': '4'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: 2c4443e4342e48f3b3d59e0992c18c20
+   void checks passed (2 required, 1 forbidden)
+   {"error": "TOTAL line not found"}
+-- mtpdepth-n51  env={'FN_SPEC_N': '5'}
+Running as unit: fx-armrun-mtpdepth.service; invocation ID: ebe20046a11a4d9dadf4e86e5e8fa961
+ring patch REVERTED
+revert verified
