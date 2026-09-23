@@ -1,0 +1,10 @@
+{"arm": "flatk600", "tasks": 80, "min_task": 521, "p10_task": 600, "max_task": 1034, "le500": 0}
+{"arm": "flatk600", "rows": 51200, "ms": 336.8}
+{"arm": "flatk1000", "tasks": 50, "min_task": 504, "p10_task": 1000, "max_task": 1291, "le500": 0}
+{"arm": "flatk1000", "rows": 51200, "ms": 244.6}
+{"arm": "v2rows", "rows": 51200, "ms": 206.8}
+{"arm": "flatk600", "tasks": 80, "min_task": 516, "p10_task": 600, "max_task": 1080, "le500": 0}
+{"arm": "flatk600", "rows": 51200, "ms": 273.9}
+{"arm": "flatk1000", "tasks": 49, "min_task": 1000, "p10_task": 1000, "max_task": 1448, "le500": 0}
+{"arm": "flatk1000", "rows": 51200, "ms": 291.5}
+{"arm": "v2rows", "rows": 51200, "ms": 227.4}

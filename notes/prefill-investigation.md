@@ -3689,3 +3689,9 @@ Not ported: the #53899 backport (replaced), QSA union (off), GENFIX56964 and #57
 - **Out of range for my "within 1.3×" half:** above the threshold, flat indexing is still 2.0–2.4× slower than the
   2-D views. A second, smaller effect remains and is unexplained. The shipped code uses 2-D views, which are
   fastest either way.
+
+**GIL test, tails merged (review 4), 2026-09-23 16:51** (`notes/data/gilbench2.txt`; every task > 500 indices,
+min 504–521): flat K=600 337 / 274 ms, K=1000 245 / 292 ms, 2-D views 207 / 227 ms, a ratio of 1.2–1.6×.
+Without the ≤ 500-index tails, the leftover gap shrinks from 2.0–2.4× to within about the arms' own cold-cache
+spread (v2rows measured 207–304 ms across runs). **No evidence of a second mechanism:** the GIL threshold
+explains the flat-indexing slowdown, and the earlier 2× remainder was the tails, as review 4 predicted.
