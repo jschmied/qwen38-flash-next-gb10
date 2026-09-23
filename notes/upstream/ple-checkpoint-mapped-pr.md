@@ -1,5 +1,6 @@
 DRAFT — needs the user's go. vllm-project/vllm PR from jschmied:pr/ple-checkpoint-mapped (2026-09-23), updated after two reviews.
-Pending before submission: round-4 GPU verification of 75f38224c (then push), and a squash to one commit.
+Review commit: jschmied/vllm:pr/ple-checkpoint-mapped @ 0886ea160 (one squashed commit on upstream main 9f07d023d; tree identical
+to the GPU-verified c929c09a9, kept as pr/ple-checkpoint-mapped-history). Not opened upstream.
 
 # [Qwen4Exp] Checkpoint-mapped PLE storage for unified-memory GPUs (DGX Spark)
 
