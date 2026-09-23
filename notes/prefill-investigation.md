@@ -3515,3 +3515,32 @@ starts alternating w1 → r1 → w2 → r2, code d6dcd48. Data: `notes/data/page
 clearing the finding-223 bar with two starts per arm. c=16 decode is unchanged. Swap drops about 47 GiB. Open:
 ready time +110–130 s, the equivalence re-run with the hardened probe, and the kernel store-mask fix (review 2,
 not yet installed; no effect on these runs, because serving produces no invalid ids).
+
+**Next runs, hypotheses written before running (2026-09-23 ~12:05):**
+- **Validation v3** (poisoned allocator + graph replay valid→invalid): all PASS expected.
+- **Touch isolation** (`v2flatsame`: identical sorted rows and task split as `v2rows`, flat byte indexing): within
+  1.3× of `v2rows` means ordering and grouping are the cause; above 1.5× means the 2-D path contributes.
+- **Equivalence v3,** 1 start per mode, prod re-verifies its own start-to-start variance:
+  - A-set identical across modes (as in all 4 earlier starts);
+  - overlap proven in all 3 reps;
+  - in-server check "gathered rows match file bytes" True on every mixed step checked (v2);
+  - Bdec: within each server, 3 reps + solo. Batch-variance, if any, shows on BOTH modes. A PLE defect would show
+    as v2-only instability or a False row check.
+
+**Results (~12:15):**
+- **Validation v3: 8/8 PASS on the fixed kernel.** Counterfactual: the same test on the pre-fix kernel (d6dcd48)
+  **FAILS** both new checks (poisoned allocation, graph replay valid→invalid). So the test can detect the defect.
+- **Touch isolation,** cold cache, 51,200 rows:
+
+  | arm | ms, per start |
+  |---|---|
+  | `v2rows` (2-D) | 304, 278, 212 |
+  | `v2flatsame` (same tasks, flat) | 3,619, 3,591, 3,593 |
+  | `v1` | 274, 262 |
+  | `v2cur` | 3,713 |
+  | `v2sorted` | 677 (earlier 460–481) |
+
+  With identical sorted rows and task split, flat indexing is **12× slower** than the 2-D view. Out of the
+  "within 1.3×" range, so the indexing path itself contributes; that is the isolation review 2 asked for.
+  Flat indexing is also sensitive to task layout: `v2sorted`, grouped by file and byte offset, is 0.46–0.68 s.
+  The numpy mechanism is not identified. The shipped `touch()` uses 2-D views.
