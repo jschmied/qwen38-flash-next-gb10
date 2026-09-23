@@ -3488,3 +3488,30 @@ without reading them. Env: `VLLM_PLE_PAGEABLE=checkpoint`, `VLLM_PLE_CPU_OFFLOAD
 - **Consequence for w1/r1:** both printed all 12 keys, so no request failed. But overlap is **unproven**, so the
   Bdec difference between w1 and r1 is **not evaluable** yet. The A-set (8 sequential c=1 prompts with MTP)
   and the Bpre results are identical between w1 and r1.
+
+**Matched-KV A/B, fixed prefetch** (2026-09-23 10:56–11:57): KV fixed at 31 GiB in both arms, frozen corpus,
+starts alternating w1 → r1 → w2 → r2, code d6dcd48. Data: `notes/data/pageable-{w1,r1,w2,r2}.txt`.
+
+| | v2 w1, w2 | prod r1, r2 | finding-223 rule (gap vs larger within-arm spread) | vs range |
+|---|---|---|---|---|
+| agent loop cold, s/turn | 1.59, 1.59 | 1.65, 1.66 | gap 0.06 > 0.01 → **passes**, −3.9 % | s2 in range |
+| agent loop warm, s/turn | 1.29, 1.30 | 1.33, 1.32 | gap 0.02 > 0.01 → passes | — |
+| TTFT sum, 3 prompts 24–29k | 31.87, 32.23 s | 32.99, 33.47 s | gap 0.76 > 0.48 → **passes**, −2.6…−4.8 % | s3 in range |
+| TTFT sum, 3 prompts 7–8k | 9.03, 8.97 s | 9.27, 9.37 s | gap 0.24 > 0.10 → passes, −3 % | s3 in range |
+| c=16 decode, warm median tok/s | 203.5, 201.7 | 197.6, 201.1 | gap 0.6 < within-arm reps spread (up to 14) → **no difference** | s4 in range |
+| swap used, steady | 5–6 GiB | 50–53 GiB | — | — |
+| ready time | 760, 781 s | 651, 651 s | +110–130 s | s1 **out**, open (common to both offload-off modes) |
+| tokens / accept length (agent loop) | 222 / 2.53 | 222 / 2.53 | identical | — |
+
+**s6, equivalence (pre-review-2 probe):**
+- A-set (8 sequential prompts at c=1 with MTP): **identical hashes in all 4 starts**.
+- Bpre (the mixed batch's prefills): identical in all 4 starts.
+- Bdec (the mixed batch's decodes): v2 reproduced itself (w1 = w2). Prod did **not**: Bdec0 differs between r1
+  and r2, while Bdec1 matches. So the mixed-batch decode varies start to start on prod alone, which points at
+  timing-dependent batch composition, not the table. Overlap was not proven by this probe version, so Bdec is
+  **not evaluable** until the fixed probe re-runs.
+
+**Status:** with the fixed prefetch and matched KV, v2 is faster per agent turn (−3.9 %) and at TTFT (−3 %), both
+clearing the finding-223 bar with two starts per arm. c=16 decode is unchanged. Swap drops about 47 GiB. Open:
+ready time +110–130 s, the equivalence re-run with the hardened probe, and the kernel store-mask fix (review 2,
+not yet installed; no effect on these runs, because serving produces no invalid ids).

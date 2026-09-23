@@ -1,0 +1,38 @@
+=== arm w2 mode v2 2026-09-23T11:26:29+02:00
+ready after 781s
+Starting vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host...
+Started vllm-flashnext.service - Qwen3.8-Flash-Next (NVFP4 + FP8 head) on vLLM, PLE offloaded to host.
+(Worker pid=206058) INFO 09-23 11:27:06 [pageable.py:353] PLE pageable: mapped 128 shards x 2500012 rows from 10 checkpoint files in /opt/llm/models/qwen38-flash-next-mtpfp4, no copy, nothing pinned; GPU gathers through a 128-entry shard-address table
+(Worker pid=206058) INFO 09-23 11:37:23 [default_loader.py:430] Loading weights took 614.61 seconds
+(Worker pid=206058) INFO 09-23 11:38:45 [default_loader.py:430] Loading weights took 70.77 seconds
+(EngineCore pid=205919) INFO 09-23 11:39:13 [kv_cache_utils.py:2312] GPU KV cache size: 590,604 tokens, Maximum concurrency for 32,768 tokens per request: 18.02x
+(Worker pid=206058) INFO 09-23 11:39:17 [pageable.py:160] PLE pageable: prefetcher up, 1 PLE layer(s), 4 slots, 64 touch threads
+(Worker pid=206058) INFO 09-23 11:39:17 [pageable.py:197] PLE pageable: prefetch ids match GPU ids: True (tokens=80 reqs=16)
+(Worker pid=206058) INFO 09-23 11:39:17 [pageable.py:197] PLE pageable: prefetch ids match GPU ids: True (tokens=64 reqs=16)
+(Worker pid=206058) INFO 09-23 11:39:18 [pageable.py:197] PLE pageable: prefetch ids match GPU ids: True (tokens=5 reqs=2)
+mem after ready: used=115 avail=6 swap_used=5G
+  w2-cold turn 1:   3.40 s    28 tok  hits+      0  acc  63.3% len 2.90
+  w2-cold turn 2:   1.27 s    33 tok  hits+   6400  acc  66.7% len 3.00
+  w2-cold turn 3:   1.17 s    26 tok  hits+   6400  acc  63.0% len 2.89
+  w2-cold turn 4:   1.36 s    22 tok  hits+   6400  acc  25.0% len 1.75
+  w2-cold turn 5:   1.26 s    27 tok  hits+   6400  acc  56.7% len 2.70
+  w2-cold turn 6:   1.44 s    29 tok  hits+   6400  acc  43.6% len 2.31
+  w2-cold turn 7:   1.36 s    26 tok  hits+   6400  acc  48.5% len 2.45
+  w2-cold turn 8:   1.48 s    31 tok  hits+   6400  acc  48.7% len 2.46
+{"arm": "w2-cold", "total_s": 12.7, "turns": 8, "s_per_turn": 1.59, "tokens": 222, "ms_per_tok": 57.37, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 44800}
+{"label": "w2", "A0": ["5441f43b8998", 200], "A1": ["0ab13c28130e", 200], "A2": ["832b3e14dfb3", 200], "A3": ["0f6fbb45db94", 200], "A4": ["7d6b096ad7df", 200], "A5": ["1ffb050e2808", 200], "A6": ["98135973fea8", 200], "A7": ["a74e90dc1619", 200], "Bdec0": ["a76d2cefa91f", 400], "Bdec1": ["cbbef9bd0dac", 400], "Bpre0": ["4e041c8a5a51", 64], "Bpre1": ["ed94ec981f85", 64]}
+  w2 TTFT 8k: 3.01s/7201tok 3.08s/7976tok 2.88s/7086tok
+  w2 TTFT 30k: 10.69s/27148tok 11.47s/28780tok 10.07s/24164tok
+{"label": "w2", "8k": [[3.01, 7201], [3.08, 7976], [2.88, 7086]], "30k": [[10.69, 27148], [11.47, 28780], [10.07, 24164]]}
+{"arm": "w2-after", "total_s": 10.4, "turns": 8, "s_per_turn": 1.3, "tokens": 222, "ms_per_tok": 46.8, "accept_rate": 0.509, "accept_len": 2.53, "hits_last_turn": 6400, "hits_sum": 51200}
+{"arm": "w2-c16", "c": 16, "reps_all": [196.1, 198.8, 202.3, 201.7], "warm_reps": [198.8, 202.3, 201.7], "warm_median": 201.7, "warm_min": 198.8, "warm_max": 202.3}
+(Worker pid=206058) INFO 09-23 11:42:12 [pageable.py:244] PLE pageable: steps=1079 skipped=0 big=91 avg_rows=3341 avg_prefetch_ms=5.61 avg_lag_ms=81.56 last(tokens=3849 rows=61584 ms=65.8)
+(Worker pid=206058) INFO 09-23 11:42:13 [pageable.py:244] PLE pageable: steps=1080 skipped=0 big=92 avg_rows=3395 avg_prefetch_ms=5.66 avg_lag_ms=81.54 last(tokens=3879 rows=62064 ms=53.9)
+(Worker pid=206058) INFO 09-23 11:42:22 [pageable.py:244] PLE pageable: steps=1126 skipped=0 big=94 avg_rows=3358 avg_prefetch_ms=5.77 avg_lag_ms=80.97 last(tokens=3846 rows=61536 ms=103.1)
+(Worker pid=206058) INFO 09-23 11:42:23 [pageable.py:244] PLE pageable: steps=1127 skipped=0 big=95 avg_rows=3410 avg_prefetch_ms=5.83 avg_lag_ms=80.96 last(tokens=3874 rows=61984 ms=71.0)
+(Worker pid=206058) INFO 09-23 11:42:24 [pageable.py:244] PLE pageable: steps=1128 skipped=0 big=96 avg_rows=3423 avg_prefetch_ms=5.84 avg_lag_ms=80.91 last(tokens=1154 rows=18464 ms=25.8)
+(Worker pid=206058) INFO 09-23 11:42:32 [pageable.py:244] PLE pageable: steps=1174 skipped=0 big=97 avg_rows=3378 avg_prefetch_ms=5.89 avg_lag_ms=80.44 last(tokens=3845 rows=61520 ms=72.7)
+(Worker pid=206058) INFO 09-23 11:42:33 [pageable.py:244] PLE pageable: steps=1175 skipped=0 big=98 avg_rows=3428 avg_prefetch_ms=5.95 avg_lag_ms=80.44 last(tokens=3875 rows=62000 ms=77.3)
+(Worker pid=206058) INFO 09-23 11:42:34 [pageable.py:244] PLE pageable: steps=1176 skipped=0 big=99 avg_rows=3441 avg_prefetch_ms=5.96 avg_lag_ms=80.39 last(tokens=1154 rows=18464 ms=22.6)
+mem at end: used=116 avail=4 swap_used=5G
+== ALL DONE ==
