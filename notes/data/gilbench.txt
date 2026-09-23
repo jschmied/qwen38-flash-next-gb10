@@ -1,0 +1,12 @@
+=== 2026-09-23T16:15:56+02:00 numpy 2.2.6
+{"arm": "flatk400", "rows": 51200, "ms": 3826.1}
+{"arm": "flatk600", "rows": 51200, "ms": 508.3}
+{"arm": "v2rows", "rows": 51200, "ms": 213.1}
+{"arm": "flatk1000", "rows": 51200, "ms": 404.9}
+{"arm": "flatk300", "rows": 51200, "ms": 3795.6}
+{"arm": "flatk400", "rows": 51200, "ms": 3578.6}
+{"arm": "flatk600", "rows": 51200, "ms": 445.3}
+{"arm": "v2rows", "rows": 51200, "ms": 221.8}
+{"arm": "flatk1000", "rows": 51200, "ms": 404.5}
+{"arm": "flatk300", "rows": 51200, "ms": 3757.8}
+prod restored 2026-09-23T16:16:17+02:00

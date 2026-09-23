@@ -58,6 +58,16 @@ else:
                 i = int(g[0]); tasks.append((arrs[sf[i]], so[i] + l * 160))
         list(POOL.map(lambda t: int(t[0][t[1]].sum()) + int(t[0][t[1] + 159].sum()), tasks))
         tasks = []
+    elif ARM.startswith("flatk"):   # review 3: NumPy GIL threshold test, flat 1-D indexing with K indices per task
+        K = int(ARM[5:]); r = np.sort(rows); sh = r // S; loc = r - sh * S
+        fi = sf[sh]; off = so[sh] + loc * 160
+        order = np.lexsort((off, fi)); fi, off = fi[order], off[order]
+        tasks = []
+        for f in np.unique(fi):
+            o = off[fi == f]
+            for c in range(0, o.size, K): tasks.append((arrs[int(f)], o[c:c + K]))
+        list(POOL.map(lambda t: int(t[0][t[1]].sum()) + int(t[0][t[1] + 159].sum()), tasks))
+        tasks = []
     else:  # v2sorted
         key = fidx * (1 << 40) + off; order = np.argsort(key); fidx, off = fidx[order], off[order]
         tasks = []

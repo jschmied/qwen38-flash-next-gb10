@@ -3675,3 +3675,17 @@ Not ported: the #53899 backport (replaced), QSA union (off), GENFIX56964 and #57
 - auto KV sizing;
 - the load-time gap (unchanged on main: 534–564 s);
 - whether PinnedHost races.
+
+**GIL-threshold test (review 3), 2026-09-23 16:16, NumPy 2.2.6** (`notes/data/gilbench.txt`, cold cache per arm,
+51,200 rows, 2 seeds, same sorted rows and flat 1-D indexing, only the indices per task varied):
+
+| indices per task | 300 | 400 | **600** | 1,000 | 2-D views |
+|---|---|---|---|---|---|
+| ms | 3,796 / 3,758 | 3,826 / 3,579 | **508 / 445** | 405 / 405 | 213 / 222 |
+
+- **Confirmed as the dominant mechanism:** the ~8× step sits exactly at NumPy's 500-index GIL-release threshold,
+  and the serving NumPy (2.2.6) has it too. Below the threshold, the flat 1-D path holds the GIL through every
+  cold page fault, so 64 threads serialize.
+- **Out of range for my "within 1.3×" half:** above the threshold, flat indexing is still 2.0–2.4× slower than the
+  2-D views. A second, smaller effect remains and is unexplained. The shipped code uses 2-D views, which are
+  fastest either way.
