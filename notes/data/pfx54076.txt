@@ -1,0 +1,14 @@
+-- pfx-off0  (marker count 0) --
+{"arm": "pfx-off0", "passes": [{"pass": 1, "s": 3.533, "queries": 238.0, "hits": 0.0, "rate": 0.0, "finish": "length"}, {"pass": 2, "s": 3.05, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}, {"pass": 3, "s": 3.05, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}], "hit_pass3": 200.0, "rate_pass3": 0.8403, "any_hit": true}
+-- pfx-on0  (marker count 4) --
+{"arm": "pfx-on0", "passes": [{"pass": 1, "s": 3.237, "queries": 238.0, "hits": 0.0, "rate": 0.0, "finish": "length"}, {"pass": 2, "s": 3.052, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}, {"pass": 3, "s": 3.047, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}], "hit_pass3": 200.0, "rate_pass3": 0.8403, "any_hit": true}
+-- pfx-off1  (marker count 0) --
+{"arm": "pfx-off1", "passes": [{"pass": 1, "s": 3.255, "queries": 238.0, "hits": 0.0, "rate": 0.0, "finish": "length"}, {"pass": 2, "s": 3.093, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}, {"pass": 3, "s": 3.053, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}], "hit_pass3": 200.0, "rate_pass3": 0.8403, "any_hit": true}
+-- pfx-on1  (marker count 4) --
+{"arm": "pfx-on1", "passes": [{"pass": 1, "s": 3.255, "queries": 238.0, "hits": 0.0, "rate": 0.0, "finish": "length"}, {"pass": 2, "s": 3.072, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}, {"pass": 3, "s": 3.072, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}], "hit_pass3": 200.0, "rate_pass3": 0.8403, "any_hit": true}
+-- pfx-off2  (marker count 0) --
+{"arm": "pfx-off2", "passes": [{"pass": 1, "s": 3.256, "queries": 238.0, "hits": 0.0, "rate": 0.0, "finish": "length"}, {"pass": 2, "s": 3.071, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}, {"pass": 3, "s": 3.074, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}], "hit_pass3": 200.0, "rate_pass3": 0.8403, "any_hit": true}
+-- pfx-on2  (marker count 4) --
+{"arm": "pfx-on2", "passes": [{"pass": 1, "s": 3.266, "queries": 238.0, "hits": 0.0, "rate": 0.0, "finish": "length"}, {"pass": 2, "s": 3.075, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}, {"pass": 3, "s": 3.077, "queries": 238.0, "hits": 200.0, "rate": 0.8403, "finish": "length"}], "hit_pass3": 200.0, "rate_pass3": 0.8403, "any_hit": true}
+PFX54076 COMPLETE 2026-09-23T04:17:43+02:00
+patch reverted

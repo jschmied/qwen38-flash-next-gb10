@@ -3078,3 +3078,40 @@ three passes**; two would read as a null and be wrong.
 **Not posted.** Finding 212's post was deleted for publishing a half-finished run; this completes it,
 but posting needs a fresh go ([[finish-before-posting]]).
 
+## Finding 218 — #54076 is a NO-OP for prefix-cache hit rate, measured on the config where the geometry does diverge (2026-09-23, overnight job 50)
+
+The cell wickist accepted on 2026-09-16 and we withdrew on 09-17. Unblocked by finding 208 (the
+divergent geometry IS reachable) and finally run **on that configuration** rather than on the one
+where the fix cannot matter. `qwen38-27b-fp8`, MaCoredroid's hidden-state-extraction config,
+`--enable-prefix-caching --mamba-cache-mode align`, GB10 TP1. Patch toggled per arm by the validated
+`source_toggle` (marker `mamba_state_block_sizes`, verified **0 for every `off` arm and 4 for every
+`on` arm** before each measurement). 2 arms x **3 starts**. Raw: `notes/data/pfx54076.txt`.
+
+| arm | pass 1 | pass 2 | pass 3 |
+|---|---|---|---|
+| `off0` / `on0` | q238 h0 | q238 h200 | q238 h200 |
+| `off1` / `on1` | q238 h0 | q238 h200 | q238 h200 |
+| `off2` / `on2` | q238 h0 | q238 h200 | q238 h200 |
+
+**Byte-identical, all six arms.** `vllm:prefix_cache_hits_total` deltas, not `usage.cached_tokens`
+(inert here — [[prefix-cache-hit-measurement-trap]]). So **the patch does not move the metric the cell
+asked for**, even where `cache_config.block_size` (200) genuinely differs from `MambaSpec.block_size`
+(800).
+
+**200 is exactly one block**, not a coincidence: `cache_config.block_size` on this config *is* 200, so
+a 238-token prompt has one cacheable block plus a 38-token remainder, and it plateaus there from
+pass 2 on.
+
+**Corrects finding 217's "three passes are required".** That was over-generalised. 217 saw 0 hits
+after two passes because its prompt was **57 tokens — shorter than one 200-token block**, so nothing
+was cacheable at all. The governing condition is **prompt length vs block size**, not pass count;
+pass 2 hits fine once the prompt spans a block. My probe's 6x-repeated prompt satisfied that by luck,
+not design.
+
+**What this does NOT establish, and it is the more interesting question.** The PR's claim is about
+*state materialisation* — that align-mode split on the wrong grid means no state materialises and the
+mamba group publishes no or a misaligned prefix hash. A hit *count* can be identical while the
+resumed state is wrong. We measured hits; we did **not** compare the resumed output against a cold
+one. That is the test that would actually exercise the PR's claim, it is cheap on the same server,
+and it is queued as job 60.
+
