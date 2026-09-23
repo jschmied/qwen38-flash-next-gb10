@@ -1,6 +1,6 @@
 DRAFT — needs the user's go. vllm-project/vllm PR from jschmied:pr/ple-checkpoint-mapped (2026-09-23), updated after two reviews.
-Review commit: jschmied/vllm:pr/ple-checkpoint-mapped @ 0886ea160 (one squashed commit on upstream main 9f07d023d; tree identical
-to the GPU-verified c929c09a9, kept as pr/ple-checkpoint-mapped-history). Not opened upstream.
+Review commit: jschmied/vllm:pr/ple-checkpoint-mapped @ 12689c164 (one squashed commit on upstream main 711fc55c1), after review 3.
+Earlier heads: 0886ea160 (squash of c929c09a9), c929c09a9 kept as pr/ple-checkpoint-mapped-history. Not opened upstream.
 
 # [Qwen4Exp] Checkpoint-mapped PLE storage for unified-memory GPUs (DGX Spark)
 
@@ -31,9 +31,9 @@ by every process that maps the same files.
   existing ETP all-reduce combines ranks.
 - **Current stream.** The lookup runs on the current stream, not the pinned backend's side stream. With the
   inherited side-stream lookup, greedy outputs on GB10 were not reproducible within one server start
-  (identical prompts, cold vs warm: 2/8 equal, |Δlogprob| up to 1.41). The cause: the side stream reads the
-  ids tensor from the CUDA-graph memory pool after the graph has released it, and later segments overwrite it
-  at replay. Reading a persistent copy instead made it reproducible (8/8); #57785's capture-time sync did not
+  (identical prompts, cold vs warm: 2/8 equal, |Δlogprob| up to 1.41). The observed cause on GB10: the side
+  stream reads the ids tensor from the CUDA-graph memory pool after the graph has released it, and later
+  segments overwrite it at replay. Reading a persistent copy instead made it reproducible (8/8); #57785's capture-time sync did not
   (1/8). On the current stream: 8/8, |Δlogprob| 0, and identical across fresh starts.
 - **Host-side page prefetch.** GPU faults on non-resident file pages are serviced one page at a time. A cold
   30k-token prefill (≈480k rows) took **88 s** with GPU faults alone, and **1.6 s** when 64 CPU threads fault
@@ -44,9 +44,12 @@ by every process that maps the same files.
   the `model.safetensors.index.json` filter apply exactly as for loading. Every shard that owns rows must exist
   once, with its exact shape and dtype; nothing is truncated.
 - **Formats.** FP8 and unquantized (BF16) tables. `--load-format dummy` maps private anonymous zero pages.
-- **Reload.** `reload_weights(weights_path=...)` remaps the new checkpoint. The loader samples a few rows of every
-  incoming shard, and the rebuilt mapping is verified against them. PLE rows delivered from memory (weight sync)
-  cannot be mapped and are rejected, not silently ignored.
+- **Reload.** On a reload every incoming PLE shard is compared **in full** with the newly mapped files.
+  `reload_weights(weights_path=...)` streams those files, so it matches and remaps the new checkpoint (during
+  reload processing, or at the latest on the next lookup). PLE weights delivered from memory (weight sync)
+  differ from the files and are rejected. A rejected load stays rejected rather than falling back to the
+  previous mapping, and binding commits its state only after the mapping succeeded. The cost is one extra
+  pass over the table, on reloads only.
 - **Guards.** Rejected with `dp_shared_memory` (mapped pages are already shared), with `embedding_across_dp`
   (the host prefetch only sees this DP rank's requests), and for architectures without this backend (DeepSeek
   V4.1). A warning is logged on non-integrated GPUs that report the attribute, such as Grace Hopper or Grace
@@ -57,14 +60,15 @@ by every process that maps the same files.
 **Unit tests** (`tests/models/qwen4_exp/test_ple_pageable.py`, wired into the existing `models_basic` Qwen4Exp
 job):
 
-- CPU tests, 17:
+- CPU tests, 19:
   - discovery across files, short last shard, other layers ignored;
   - refusals: missing, short-coverage, extra, short-interior and duplicate shards, dtype mismatch;
   - index-filtered discovery;
   - CPU views address the checkpoint rows;
   - the zero mapping commits no memory when read (RSS);
   - config rejections (DeepSeek V4.1, `dp_shared_memory`, `embedding_across_dp`);
-  - reload A→B remaps to B, and an in-memory reload is rejected.
+  - reload A→B remaps to B; an in-memory reload is rejected, including one with a single changed row that
+    no sample would hit; a rejected load stays rejected and a later reload from disk recovers.
 - GPU tests, 5, skipped without pageable access (the prefetcher test without CUDA):
   - bit-exact FP8/BF16 gather with an ETP range over a 0xFF-poisoned allocation;
   - CUDA-graph replay switching valid ids to invalid ids yields zeros, not stale bytes;

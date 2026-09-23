@@ -3817,3 +3817,36 @@ evidence. Both instruments behind it were invalid:
 
 QSADET was active in every main run; only its log line was lost. The reliable check is `/proc/<worker>/maps`. The
 revert was a defensible precaution on the evidence then available, but it was unnecessary.
+
+## Finding 232 — review 3 fixed; PR candidate 12689c164 verified and serving prod (2026-09-23)
+
+Review 3 on 0886ea160:
+- **P1:** the reload check sampled 3 rows per shard, so an in-memory reload changing one other row would pass
+  silently.
+- **P2:** `_bind` cleared its pending state before validating.
+- **P2/P3:** reload wording; "the cause" → "the observed cause on GB10".
+- **Upstream moved 9 commits.**
+
+Fixed in **12689c164** (one commit, rebased on upstream main 711fc55c1):
+- On a reload, every incoming PLE shard is compared **in full** (chunked, no copy) with the newly mapped files.
+  A reload from disk streams those files and matches; in-memory weights are rejected deterministically. A
+  rejected load stays rejected, and the next load attempt is verified from scratch.
+- `_bind` commits only after success.
+- Tests:
+  - a single changed row in a 10-row shard is rejected. **Mutation:** with 3-row sampling put back, that test
+    fails;
+  - a rejected load keeps raising on bind and keeps the old table untouched;
+  - a later reload from disk recovers.
+
+Verification:
+
+| check | result |
+|---|---|
+| pre-commit | clean |
+| CI job set (CPU) | 49 passed, 34 skipped |
+| GPU pytest on GB10 | **24/24** |
+| prod restarted on 12689c164 | ready 661 s; mapping line (first-load bind via the new path); `_C_det.so` mapped; agent loop 236 tok, 1.67 s/turn; swap 5 GiB |
+
+The real `GPUModelRunner.reload_weights` lifecycle is not integration-tested; the wording says the remap
+completes during reload processing or at the latest on the next lookup. Pushed to
+`jschmied/vllm:pr/ple-checkpoint-mapped`; not opened upstream.
