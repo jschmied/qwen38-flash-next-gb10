@@ -1322,3 +1322,8 @@ wait on one ~100 GB pull, and they share one serve.
 - **2026-09-23 — vLLM PR #58157, reply to hclsys** — confirms the #57512 interaction: on SM12x with both landed,
   every fp32-scale checkpoint warns once per worker process per start; intended (finding 206/207 costs).
   Draft `58157-reply-hclsys.md`. <https://github.com/vllm-project/vllm/pull/58157#issuecomment-5790068605>
+- **2026-09-23 — vLLM PR #58439 (opened)** — "[Qwen4Exp] Checkpoint-mapped PLE storage for unified-memory GPUs (DGX
+  Spark)". Head jschmied:pr/ple-checkpoint-mapped @ 12689c164 on upstream main 711fc55c1. Findings 225–232: comparison
+  table with #54371/#53899/#54070/#54129/#57497, 4 open design questions, cc peakcrosser7 and Trosfy. Draft
+  `ple-checkpoint-mapped-pr.md`. <https://github.com/vllm-project/vllm/pull/58439>
+  NOT posted: the PinnedHost side-stream issue (`pinnedhost-sidestream-graphpool-issue.md`), which needs its own go.

@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. vllm-project/vllm PR from jschmied:pr/ple-checkpoint-mapped (2026-09-23), updated after two reviews.
+POSTED 2026-09-23 as vllm-project/vllm#58439. vllm-project/vllm PR from jschmied:pr/ple-checkpoint-mapped (2026-09-23), updated after two reviews.
 Review commit: jschmied/vllm:pr/ple-checkpoint-mapped @ 12689c164 (one squashed commit on upstream main 711fc55c1), after review 3.
 Earlier heads: 0886ea160 (squash of c929c09a9), c929c09a9 kept as pr/ple-checkpoint-mapped-history. Not opened upstream.
 
@@ -83,9 +83,9 @@ the `1ea7c63f4` nightly wheel). Qwen3.8-Flash-Next with an NVFP4 body, the FP8 P
 ## Test Result
 
 **Unit tests:**
-- `models_basic` Qwen4Exp job set (`test_config.py`, `test_ple.py`, `test_ple_pageable.py`): 47 passed,
+- `models_basic` Qwen4Exp job set (`test_config.py`, `test_ple.py`, `test_ple_pageable.py`): 49 passed,
   34 skipped (GPU-only) on CPU.
-- GPU tests on GB10: all pass (re-run on the final commit in round 4).
+- `test_ple_pageable.py` on GB10: 24/24 (19 CPU + 5 GPU) on this commit.
 - pre-commit clean.
 
 **Memory.** There is no working baseline on unmodified main (see Purpose), so the reference is the previous
@@ -175,8 +175,8 @@ the same table (sgl-project/sglang#36567).
   The validation approach borrows from it.
 - **#57785 (open):** eager-break side-stream work left unjoined at capture. Tested with the inherited
   side-stream lookup on GB10: it does not remove the non-reproducibility above, whose cause is graph-pool
-  reuse of the ids at replay. The stock pinned backend runs the same flow; that could not be tested here
-  (its pinned table does not fit), so it is reported separately rather than claimed.
+  reuse of the ids at replay. The stock pinned backend runs the same start_prefetch/finalize flow. That could
+  not be tested here (its pinned table does not fit), so no claim about it is made.
 - **#58310, #56926:** host-memory guards and serialization for the pinned path. They are orthogonal.
 
 ---
@@ -190,6 +190,8 @@ the same table (sgl-project/sglang#36567).
 - [x] Documentation update: `docs/features/engram.md`.
 - [ ] (Optional) Release notes update.
 </details>
+
+cc @peakcrosser7 (#54371) @Trosfy (#54129)
 
 **AI assistance:** this PR was developed with Claude (Anthropic). The human submitter reviewed every changed
 line, ran the tests and measurements above on the hardware named, and takes responsibility for the change.
