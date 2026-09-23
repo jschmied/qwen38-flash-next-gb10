@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. vllm-project/vllm new issue (2026-09-23). Not posted.
+POSTED 2026-09-23 (short version) as vllm-project/vllm#58441. vllm-project/vllm new issue (2026-09-23). Not posted.
 
 # [Bug]: Qwen4Exp PinnedHost PLE prefetch reads n-gram ids from the CUDA-graph pool after release (replay race)
 

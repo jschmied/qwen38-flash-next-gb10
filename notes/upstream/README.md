@@ -1326,4 +1326,8 @@ wait on one ~100 GB pull, and they share one serve.
   Spark)". Head jschmied:pr/ple-checkpoint-mapped @ 12689c164 on upstream main 711fc55c1. Findings 225–232: comparison
   table with #54371/#53899/#54070/#54129/#57497, 4 open design questions, cc peakcrosser7 and Trosfy. Draft
   `ple-checkpoint-mapped-pr.md`. <https://github.com/vllm-project/vllm/pull/58439>
-  NOT posted: the PinnedHost side-stream issue (`pinnedhost-sidestream-graphpool-issue.md`), which needs its own go.
+- **2026-09-23 — vLLM issue #58441** — "[Bug]: Qwen4Exp PinnedHost PLE prefetch reads n-gram ids from graph-pool memory
+  that later segments reuse" (short version, user go "yes, short"). Evidence: findings 227 and 229 (2/8, #57785 1/8,
+  persistent ids 8/8, current stream 8/8); caveat that PinnedHost itself was not run. Posted text:
+  `pinnedhost-sidestream-graphpool-issue-posted.md`. <https://github.com/vllm-project/vllm/issues/58441>
+  Plus a one-line link comment on #58439 pointing to it.
