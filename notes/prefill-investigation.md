@@ -3614,3 +3614,64 @@ That localizes the cost; it does not yet say whether the time is CPU processing,
 indices per task, which would serialize the cold page faults in the flat arms. Hypothesis, test queued: flat
 selections just above 500 indices per task run near the 2-D speed; just below 500 they serialize. The serving
 NumPy version is to be confirmed first.
+
+## Finding 227 — PLE port onto vLLM main: `checkpoint_mapped` backend works; a side-stream race found and fixed (2026-09-23)
+
+**What was built.** Branch `jschmied/vllm:feat/ple-pageable-host`, based on `1ea7c63f4` (the nightly = main of 2026-09-22):
+- `Qwen4ExpPLEPageableHostEmbedding`, a third storage backend beside Device and PinnedHost in #54371's
+  hierarchy. Opt-in via `--engram-config '{"checkpoint_mapped": true}'`, refused unless the GPU reports
+  `PAGEABLE_MEMORY_ACCESS(_USES_HOST_PAGE_TABLES)`.
+- Discovery and validation mirror `load_weights`, matched by layer index. There is a Triton byte-gather through a
+  shard-address table with the ETP row range, FP8 and BF16 tables, a zero mapping for `--load-format dummy`, and a
+  CPU page prefetch hooked into `Qwen4ExpModelState.prepare_inputs`.
+- Main has **no NVFP4 PLE method**, so NVFP4 tables are out of scope for this backend.
+- Tests: `tests/models/qwen4_exp/test_ple_pageable.py`, **15/15 on GB10** (11 CPU, 4 GPU).
+
+**Main venv** `vllm-venv-main1ea7`: a clone of fnmain3 (same torch 2.13, FlashInfer 0.6.18.post1) with the nightly's
+`vllm` package and a branch overlay. Prod patches ported onto `local/prod-on-main2`, never for review. All seven
+applied cleanly (3-way):
+- QSADET, DETFIN;
+- LMHEADQ(+MTP), LMHEADSCALE, SCALEINV(+MTP);
+- the draft-vocab slice + attach hooks.
+
+Not ported: the #53899 backport (replaced), QSA union (off), GENFIX56964 and #57946 (b12x only), GDN #55715
+(merged).
+
+**Serving on GB10** (prod config, KV fixed at 31 GiB, `notes/data/pageable-m{1..7}.txt`):
+
+| check | result |
+|---|---|
+| startup markers | "Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files", FNDV, QSADET present; ready 680–761 s |
+| in-server self-check (local branch; compares the `_prefetch_buffer` the model consumes, after a sync) | 6/6 True per start (m2, m3, m4, m5), incl. 4,096-token prefill chunks |
+| logprobs vs dev524, 6 prompts | first token 6/6, median \|Δlp\| 0.021 (hypothesis < 0.05), divergence only at near-ties: a version difference |
+| TTFT sums 30k / 8k | m6 31.97 / 9.02 s, m7 31.77 / 9.01 s (dev524 prod 32.99–33.47 / 9.27–9.37) |
+| c=16 decode | 199.1, 198.7 tok/s (dev524 prod 197.6–201.1) |
+| swap | 6 GiB (prod 50–53) |
+
+**The race.** The first main starts were not reproducible: m1 ≠ m2 ≠ m3 on all 8 sequential prompts.
+- **Autotune-cache hypothesis FALSIFIED:** m3 loaded the same 40 configs as m2 and still differed.
+- **Kernel selection identical to dev524.**
+- **Within one start** (`detprobe.py`, cold vs warm identical prompts):
+
+  | arm | cold == warm | max \|Δlp\| |
+  |---|---|---|
+  | dev524 reference | 8/8 | 0.0 |
+  | m4, main, the side-stream lookup inherited from PinnedHost | **2/8** | **1.41** |
+  | m5, main, the same lookup on the current stream | **8/8** | **0.0** |
+
+- The side-stream flow is non-reproducible. The self-check never saw it because it synchronizes first; this is the
+  same blind spot review 3 named for finding 226.
+- **Fix** (`6861aaad5`): the pageable backend looks up on the current stream. The CPU page prefetch already runs
+  ahead of the step.
+- **Validation of the fix:** m6 and m7 are identical on all 8 sequential prompts and in the agent loop (236 tokens,
+  acceptance 2.60 both). Cold == warm 8/8 with Δlp 0 in both, and m5 = m6 = m7 on the cold pass.
+- **Not shown:** whether upstream's PinnedHost has the same race (not runnable here: pinning the table thrashes
+  this box). No upstream issue or PR describes it (searched 2026-09-23).
+
+**Still open:**
+- mixed-batch equivalence against the consumed tensor (review 3);
+- TP>1 on hardware;
+- BF16 table end-to-end (tested in units only);
+- auto KV sizing;
+- the load-time gap (unchanged on main: 534–564 s);
+- whether PinnedHost races.
