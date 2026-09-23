@@ -3148,3 +3148,35 @@ on one model and one config, at temperature 0. It does not show the PR is unnece
 shows the failure does not manifest here. A layout with more than one mamba group, or a prompt
 spanning many blocks, is untested.
 
+## Finding 220 — vllm#55533's scheduler collapse does NOT reproduce; MTP still wins at c=16 (2026-09-23, overnight job 70)
+
+Closes finding 210's stated limit: the promoted config was qualified for **single-stream** agent
+traffic, while prod runs `FN_SEQS=16`. vllm#55533 reports that on hybrid GDN + MTP the v1 scheduler
+runs only ~3 of N sequences (`MambaSpec` charges 1+k mamba blocks per request for its lifetime),
+making MTP **2-3x slower** than no-spec above bs=3. If that held here, today's promotion would be
+harmful under load. `schedwidth.py`, C=16, 2 arms x 2 starts. Raw: `notes/data/schedwidth16.txt`.
+
+| arm | wall (s) | `running_median` of 16 | max waiting |
+|---|---|---|---|
+| nospec | 18.5, 17.4 | 8.0, 9.0 | 12, 12 |
+| **mtp3** | **14.2, 12.9** | **9.0, 10.0** | 9, 9 |
+
+**No collapse.** The scheduler runs a median of **9-10 of 16** concurrent sequences *with* MTP —
+slightly **more** than without (8-9) — and fewer requests wait (9 vs 12). MTP completes the same work
+in 12.9-14.2 s against 17.4-18.5 s, disjoint across starts with the sign holding both rounds.
+So #55533 does not manifest on Flash-Next/GB10, and the promotion is safe at the batch prod serves.
+
+**The `agg_tok_s` column of this probe is NOT a throughput figure — do not quote it.** It reads
+55-72 tok/s, which looks catastrophic against our 156 tok/s c=16 baseline
+([[flashnext-concurrency-scaling]]), and I did quote it before the user caught it. Two reasons it is
+the wrong quantity: (a) it is `completion_tokens / wall` where the wall is dominated by prefill —
+~26k prompt tokens at ~1,958 tok/s is ~13 s of the 14.2 s; and (b) requests hit EOS at ~59 tokens
+each, far short of the 200 cap, so the decode phase is a sliver. A sustained decode number needs
+`decode_cell2`, which forces 128 new tokens — queued as job 80 **with a written expected range**,
+which is the process change this miss produced ([[hypothesis-before-experiment]]).
+
+**Also my error:** the prompts file I built for this carried `approx_tokens` from the parent
+*conversation* (median 10,643) while the extracted text was only the last user turn (~1,609 tokens),
+so I believed I was firing 129k prompt tokens when it was ~26k. Relabelled to
+`approx_tokens_{conversation,prompt}` in `/opt/llm/runners/schedwidth_prompts.json`.
+

@@ -1,0 +1,24 @@
+== armrun schedw16: 2 arms x 2 start(s), port 8092 ==
+-- schedw16-nospec0  env=(spec default)
+Running as unit: fx-armrun-schedw16.service; invocation ID: 34652b86a1b54c04831a0123263dc3bc
+   void checks passed (0 required, 1 forbidden)
+   {"c": 16, "wall_s": 18.5, "tokens": 1020, "agg_tok_s": 55.2, "running_samples": 68, "running_median": 8.0, "max_waiting": 12, "acceptance": 0.0}
+-- schedw16-mtp30  env={'FN_SPEC_METHOD': 'mtp', 'FN_SPEC_N': '3', 'FN_SPEC_NODROP': '1', 'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-schedw16.service; invocation ID: 6b937ea4f41a489d8bdfd527c5e25d93
+   void checks passed (2 required, 1 forbidden)
+   {"c": 16, "wall_s": 14.2, "tokens": 950, "agg_tok_s": 66.8, "running_samples": 54, "running_median": 9.0, "max_waiting": 9, "acceptance": 0.884}
+-- schedw16-nospec1  env=(spec default)
+Running as unit: fx-armrun-schedw16.service; invocation ID: 3771540d0aa84203ad4df8c01a77326c
+   void checks passed (0 required, 1 forbidden)
+   {"c": 16, "wall_s": 17.4, "tokens": 974, "agg_tok_s": 56.1, "running_samples": 64, "running_median": 9.0, "max_waiting": 12, "acceptance": 0.0}
+-- schedw16-mtp31  env={'FN_SPEC_METHOD': 'mtp', 'FN_SPEC_N': '3', 'FN_SPEC_NODROP': '1', 'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-schedw16.service; invocation ID: b52de2496975403fa877a5f735e642a4
+   void checks passed (2 required, 1 forbidden)
+   {"c": 16, "wall_s": 12.9, "tokens": 936, "agg_tok_s": 72.4, "running_samples": 49, "running_median": 10.0, "max_waiting": 9, "acceptance": 0.886}
+
+== RESULT ==
+  nospec       c 16  wall_s 17.4–18.5  tokens 974–1020  agg_tok_s 55.2–56.1  running_samples 64–68  running_median 8.0–9.0  max_waiting 12  acceptance 0.0  start 0–1
+  mtp3         c 16  wall_s 12.9–14.2  tokens 936–950  agg_tok_s 66.8–72.4  running_samples 49–54  running_median 9.0–10.0  max_waiting 9  acceptance 0.884–0.886  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun rc=0
