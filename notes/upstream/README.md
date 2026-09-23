@@ -1310,3 +1310,12 @@ wait on one ~100 GB pull, and they share one serve.
   with the defence-in-depth framing. Findings 217/218/219.
   <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5789031488>
 
+- **2026-09-23 — vllm#54076 comment, v2 (POSTED, after two deletions).** Same three results; four
+  claims fixed after a double-check: (1) no PLE mention — the 27B is `qwen3_5` and has none, so the
+  shadowing is justified by the **shared** worker/executor/loader files instead (finding 221);
+  (2) `1ea7c63f4` described as **main as of 2026-09-22, since moved 39 commits**, not "current HEAD";
+  (3) the 200-token hit plateau reported as an observed match to the logged hidden-state block size,
+  **not** as `cache_config.block_size` — I could not substantiate that from the retained logs;
+  (4) `usage.cached_tokens` noted as reading 0 on real hits, so unusable. Findings 217/218/219/221.
+  <https://github.com/vllm-project/vllm/pull/54076#issuecomment-5789112191>
+
