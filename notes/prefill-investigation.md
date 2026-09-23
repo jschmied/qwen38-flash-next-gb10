@@ -3570,3 +3570,31 @@ every batch-invariant comparison (c=1 sequential, solo, first-rep prefills) is b
   - ready time +110–130 s (common to both offload-off modes, unexplained);
   - auto KV sizing under sustained diverse traffic;
   - the port onto main's #54371 hierarchy (TP>1, NVFP4/BF16 tables, pytest-style tests).
+
+**s1 start-up gap: localized, mechanism open** (2026-09-23 13:00–13:20, env-gated `VLLM_LOAD_FILE_TIMING` in the
+safetensors iterator; one start per mode; `notes/data/pageable-l{1,2}.txt`).
+
+Hypothesis before the run: the gap is either concentrated in specific files (a code path) or spread evenly
+(systemic).
+
+Pitfall caught: the prod log interleaves the offload worker's own fast pass over all 206 files (74 s). The first
+comparison paired v2's GPU worker with prod's offload worker and was wrong. Split by pid, **GPU worker, main pass:**
+
+| | v2 (l1) | prod (l2) | diff |
+|---|---|---|---|
+| 192 expert files (63.4 GiB) | 495.0 s | 435.8 s | **+59.2 s** (per file: median ×1.17, p10 ×0.99, p90 ×1.40) |
+| 4 bf16 files | 48.9 s | 45.2 s | +3.7 s |
+| 10 plefp8 files | 0.1 s | 0.1 s | 0: both modes read none of the PLE bytes, so the loader skip works |
+| main pass total | 544 s | 481 s | +63 s |
+| MTP pass | 50.6 s | 61.4 s | −11 s |
+| after load to ready | ~50 s | ~42 s | ≈ |
+| ready | 691 s | 631 s | +60 s |
+
+**Result: systemic.** The whole start-up gap is in the main weight pass, spread across the expert files. Each takes
+~15 % longer in the offload-off process, and nothing after the load differs. The mechanism is NOT identified:
+- OMP threads = 20 in both;
+- no affinity code on either path;
+- free RAM at load start 39 GiB in both.
+
+The earlier off-mode loads ranged 544–630 s (prod 476–490 s), so the off-mode variance is also larger. Next step
+if wanted: a py-spy profile of the GPU worker during the load in both modes.
