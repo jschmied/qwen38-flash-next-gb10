@@ -3213,3 +3213,38 @@ established "stock main". Only the stated justification was wrong.
 checkpoints live on this box with different `model_type`s and disjoint model packages
 (`qwen3_5` vs `qwen4_exp`), and reaching for the familiar one's vocabulary put a false statement
 upstream twice in two days.
+
+## Finding 222 — real c=16 decode throughput: MTP 200 tok/s vs no-spec 146; the 66.8 scare was instrumental (2026-09-23, overnight job 80)
+
+First experiment run under the 2026-09-23 hypothesis rule. **Hypothesis written before the run:**
+nospec 120-170 tok/s, mtp3 130-200, sourced from `flashnext-fp8mix-checkpoint`'s 156.0 tok/s
+aggregate at c=16 measured with `decode_cell` — the same instrument class. `armrun` spec `dcell16`,
+2 arms x 2 starts x 4 reps, rep 1 discarded per the warm-reps rule. Raw:
+`notes/data/decodecell16.txt`.
+
+| arm | warm medians | range | all reps |
+|---|---|---|---|
+| nospec | 144.4, 149.1 | **[144.4, 149.1]** | 144.4/147.0/144.4/143.2, 140.9/150.0/147.7/149.1 |
+| **mtp3** | 200.2, 202.1 | **[200.2, 202.1]** | 195.2/197.5/203.4/200.2, 193.7/196.7/202.1/204.9 |
+
+**Both in range, disjoint, sign holds in both rounds: MTP is +37 % at c=16** (201 vs 147 median of
+medians). Note this is a *larger* gain than at c=1, where MTP gives ~1.24x on `ms_per_tok` — so
+speculation amortises better when each forward carries more work, not worse.
+
+**The hypothesis did its job twice.** `nospec` at 144-149 against the 156 reference confirmed
+`decode_cell2` measures what the baseline measured, which is what makes the comparison meaningful.
+And `mtp3` landing on the stated **ceiling** (200) triggered the check the hypothesis demanded rather
+than a celebration: verified **128 completion tokens on all 64 requests in both arms** over the same
+2 prompts, so tok/s divides identical work; accept length **2.973 of a possible 4**, not pinned at
+max (which would be the corruption signature). Not an artefact.
+
+**This retires finding 220's 55-72 tok/s as a throughput number for good.** That figure was
+`schedwidth`'s `completion_tokens / wall` over a prefill-dominated window with requests stopping at
+~59 of 200 tokens. The same box, same config, same concurrency, measured with the right instrument,
+is **~3.5x higher**. Had the hypothesis been written before job 70 instead of after, the 66.8 would
+never have been reported.
+
+**Consequence for prod:** the promoted config (finding 210) is now measured good on all three axes —
+−19.4 %/turn at c=1, no scheduler collapse at c=16 (finding 220), and +37 % aggregate decode at c=16
+here. Finding 210's stated limit is fully closed.
+

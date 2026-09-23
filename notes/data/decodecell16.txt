@@ -1,0 +1,24 @@
+== armrun dcell16: 2 arms x 2 start(s), port 8092 ==
+-- dcell16-nospec0  env=(spec default)
+Running as unit: fx-armrun-dcell16.service; invocation ID: 72ee33d9b180467081e495ecce83c28f
+   void checks passed (0 required, 1 forbidden)
+   {"c": 16, "reps_all": [144.4, 147.0, 144.4, 143.2], "warm_reps": [147.0, 144.4, 143.2], "warm_median": 144.4, "warm_min": 143.2, "warm_max": 147.0}
+-- dcell16-mtp30  env={'FN_SPEC_METHOD': 'mtp', 'FN_SPEC_N': '3', 'FN_SPEC_NODROP': '1', 'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-dcell16.service; invocation ID: 96b86e07e3804577b50bc61e5cda87cf
+   void checks passed (2 required, 1 forbidden)
+   {"c": 16, "reps_all": [195.2, 197.5, 203.4, 200.2], "warm_reps": [197.5, 203.4, 200.2], "warm_median": 200.2, "warm_min": 197.5, "warm_max": 203.4}
+-- dcell16-nospec1  env=(spec default)
+Running as unit: fx-armrun-dcell16.service; invocation ID: 3a1eecd0786e43979df66e605c766aea
+   void checks passed (0 required, 1 forbidden)
+   {"c": 16, "reps_all": [140.9, 150.0, 147.7, 149.1], "warm_reps": [150.0, 147.7, 149.1], "warm_median": 149.1, "warm_min": 147.7, "warm_max": 150.0}
+-- dcell16-mtp31  env={'FN_SPEC_METHOD': 'mtp', 'FN_SPEC_N': '3', 'FN_SPEC_NODROP': '1', 'FN_SPEC_LOCALARGMAX': '1', 'FN_DRAFT_VOCAB': '/opt/llm/runners/dv/draft_vocab_32768.txt'}
+Running as unit: fx-armrun-dcell16.service; invocation ID: 7b31e441bcba437185c2a02997b45513
+   void checks passed (2 required, 1 forbidden)
+   {"c": 16, "reps_all": [193.7, 196.7, 202.1, 204.9], "warm_reps": [196.7, 202.1, 204.9], "warm_median": 202.1, "warm_min": 196.7, "warm_max": 204.9}
+
+== RESULT ==
+  nospec       c 16  warm_median 144.4–149.1  warm_min 143.2–147.7  warm_max 147.0–150.0  start 0–1
+  mtp3         c 16  warm_median 200.2–202.1  warm_min 196.7–197.5  warm_max 203.4–204.9  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun rc=0
