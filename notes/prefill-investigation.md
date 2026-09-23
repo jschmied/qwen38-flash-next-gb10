@@ -3463,8 +3463,10 @@ without reading them. Env: `VLLM_PLE_PAGEABLE=checkpoint`, `VLLM_PLE_CPU_OFFLOAD
   - v2 with sorted offsets: 460–481 ms
   - v2 per-shard 2-D views: **265–285 ms**
 
-  Fancy-indexing the flat byte arrays is the slow path. The real `touch()` with 2-D views measures 214 and
-  281 ms (51,200 rows) and 1.2–1.3 ms (64 rows).
+  **Cause NOT isolated (review 2026-09-23):** most of the gain (4.1 → 0.46–0.48 s) already comes from sorting
+  and rechunking. The 2-D arm also changed ordering and task grouping, so dimensionality is not shown to be the
+  cause. The fix works either way: the real `touch()` measures 214 and 281 ms (51,200 rows) and 1.2–1.3 ms
+  (64 rows). An isolating arm (flat vs 2-D with identical sorted tasks) is queued.
 - **Correction:** the "+1 token corpus drift" was the arm label inside the prompt (`v2a` is one character longer
   than `q0`), not the corpus. The corpus is frozen to `corpus_frozen.txt` anyway, with a fixed request salt.
 - **s1 (ready time), open:** main weight load is prod 476–489 s, v1 544–630 s, v2 613 s. The extra time is common
@@ -3472,3 +3474,17 @@ without reading them. Env: `VLLM_PLE_PAGEABLE=checkpoint`, `VLLM_PLE_CPU_OFFLOAD
 - **Re-run ranges:** KV fixed at 31 GiB in both arms. s2 agent loop v2 1.55–1.62 against prodkv 1.63–1.67;
   s3 TTFT on the frozen corpus within ±5 % (unresolved before); s4 c=16 v2 195–212 tok/s against prod 206–209
   (q0, same launcher); s6 as above.
+
+**Review 2, 2026-09-23 ~11:45, before the w2/r2 results:**
+- **Kernel defect:** the store was masked with `ok`, so invalid ids left allocator residue, or a previous graph
+  replay's bytes, instead of zeros. My zero-row test passed only because the allocation happened to be zeros.
+  Fixed: the load is masked by `ok`, the store by `offs < ROW`. The test now poisons the allocator with 0xFF and
+  replays a graph switching valid ids to invalid ids. Serving never produces invalid ids, so the running A/B
+  is unaffected, but the fix is required.
+- **`equiv.py` defect:** thread exceptions did not propagate, so a failing mixed batch passed silently, and the
+  1.5 s delay did not prove overlap. Rewritten: futures with `.result()`, all 12 keys required, and streamed
+  token timestamps prove each decode emitted tokens before each prefill was submitted and after that prefill's
+  first token. VOID otherwise.
+- **Consequence for w1/r1:** both printed all 12 keys, so no request failed. But overlap is **unproven**, so the
+  Bdec difference between w1 and r1 is **not evaluable** yet. The A-set (8 sequential c=1 prompts with MTP)
+  and the Bpre results are identical between w1 and r1.
