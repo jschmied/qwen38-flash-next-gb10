@@ -20,7 +20,7 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 
 ## Open — speed levers, ranked by value / cost
 
-1. ~~**Slice the draft head in FP8 or NVFP4, not BF16.**~~ **DONE 2026-09-24 (finding 234): NVFP4 slice −3.4 % c=1, +2.6 % c=4, acceptance unchanged; prod promotion awaits go.** The 32k slice is an exact BF16 dequant (the log says "draft
+1. ~~**Slice the draft head in FP8 or NVFP4, not BF16.**~~ **DONE 2026-09-24 (finding 234): NVFP4 slice −3.4 % c=1, +2.8 % c=4, acceptance unchanged; prod promotion awaits go.** The 32k slice is an exact BF16 dequant (the log says "draft
    head 606 -> 160 MiB per draft step"). FP8 would halve that and NVFP4 would quarter it. Finding 198 measured +7.8%
    from cutting the row count, and this attacks the same projection on bytes. `get_top_tokens` needs
    `torch._scaled_mm` instead of `F.linear`. **Cheapest large win left.**

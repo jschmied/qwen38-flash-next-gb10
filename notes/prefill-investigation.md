@@ -3883,7 +3883,7 @@ starts per arm:
 **Verdict.** Correct on GB10, with no speed benefit on this config. Not worth carrying as a prod overlay; it
 lands on its own when merged. Raw data: `notes/data/pr58449.txt`, `pr58449-server.jsonl`.
 
-## Finding 234 — NVFP4 draft-head slice: −3.4 % c=1 decode, +2.6 % c=4, acceptance unchanged, output identical (2026-09-24)
+## Finding 234 — NVFP4 draft-head slice: −3.4 % c=1 decode, +2.8 % c=4, acceptance unchanged, output identical (2026-09-24)
 
 **Change.** The drafter's 32k draft-vocab slice of the FP8 lm_head was an exact BF16 dequant: 160 MiB read per
 draft step, 3 steps per verify cycle at n=3. It is now kept as NVFP4:
@@ -3907,7 +3907,7 @@ draft step, 3 steps per verify cycle at n=3. It is now kept as NVFP4:
 | NVFP4 slice | 23.433 / 23.317 / 23.314 | 86.75 / 86.38 / 86.07 | 2.535 / 2.460 | 1.66 |
 
 - **Decode:** the c=1 ranges are disjoint, the sign held in every round, and the gap (0.63–0.98 ms/tok) exceeds
-  either arm's spread (0.23 and 0.12). Means are −3.4 % at c=1 and +2.6 % at c=4. That sits at the top of the
+  either arm's spread (0.23 and 0.12). Means are −3.4 % at c=1 and +2.8 % at c=4. That sits at the top of the
   hypothesis (−0.5…−3 %).
 - **Acceptance rose slightly** (+0.4 % at c=1, +0.9 % at c=4). The slice quantization error does not hurt draft
   choice on real text, unlike the random-x agreement suggested. Saren's full int4 draft head lost 1–8 points, but
