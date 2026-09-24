@@ -1331,3 +1331,8 @@ wait on one ~100 GB pull, and they share one serve.
   persistent ids 8/8, current stream 8/8); caveat that PinnedHost itself was not run. Posted text:
   `pinnedhost-sidestream-graphpool-issue-posted.md`. <https://github.com/vllm-project/vllm/issues/58441>
   Plus a one-line link comment on #58439 pointing to it.
+- **2026-09-24 — #58441 fixed by others:** #58489 (Juntian777, "Fixes #58441", maintainer-triggered CI) computes the
+  pinned prefetch ids into a persistent per-layer buffer via `compute_ngram_ids(output=)`. Its mechanism: eager-break
+  args are weak refs, so `record_stream` is a no-op, and the only strong ref dies at return. Unit repro 3/3 on main.
+  hclsys (GB10) commented on #58441 agreeing with row 3. Our planned fix PR was dropped as a duplicate (open-PR
+  search first). No reply posted.
