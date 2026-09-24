@@ -1,0 +1,16 @@
+{
+  "name": "dyndraft",
+  "venv": "/opt/llm/runtime/vllm-venv-main1ea7",
+  "model": "/opt/llm/models/qwen38-flash-next-mtpfp4",
+  "env": {"FN_MAXLEN": "32768", "FN_SEQS": "16", "FN_SPEC_METHOD": "mtp",
+          "FN_SPEC_NODROP": "1", "FN_SPEC_LOCALARGMAX": "1",
+          "FN_DRAFT_VOCAB": "/opt/llm/runners/dv/draft_vocab_32768.txt",
+          "FN_PLE_OFFLOAD": "0", "FN_EXTRA": "--engram-config {\"checkpoint_mapped\":true}",
+          "FN_DYN_DRAFT": "1", "FN_DYN_DRAFT_THR_FILE": "/opt/llm/runners/dyndraft/thr"},
+  "probe_cmd": ["<venv>/bin/python", "/opt/llm/runners/dyndraft/dynprobe.py", "{arm}"],
+  "starts": 2,
+  "arms": [
+    {"name": "n3", "env": {"FN_SPEC_N": "3"}, "log_must_contain": ["FNDYN active", "Mapped PLE table", "BF16 slice of the FP8 head"]},
+    {"name": "n4", "env": {"FN_SPEC_N": "4"}, "log_must_contain": ["FNDYN active", "Mapped PLE table", "BF16 slice of the FP8 head"]}
+  ]
+}

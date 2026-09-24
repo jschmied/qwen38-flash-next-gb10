@@ -3919,3 +3919,44 @@ draft step, 3 steps per verify cycle at n=3. It is now kept as NVFP4:
 **Verdict:** a clean win. Promoting it to prod means installing `fnnvfp4_patch.py` into the prod venv plus two env
 lines in a drop-in. That is a prod change and awaits the user's go. Raw data: `notes/data/nvfp4head.txt`,
 `nvfp4head-server.jsonl`.
+
+## Finding 235 — dynamic draft length (confidence-gated MTP early exit): −1.7 % c=1 at n=3 / thr 0.3; n=4 loses; output identical (2026-09-24)
+
+**Change.** FNDYN, env-gated (`tools/dyndraft/`). After each MTP draft token, take the drafter's max softmax
+probability over the 32k slice logits and keep a running product. Stop drafting before the next step once every
+request's product is below the threshold. The unused slots repeat the last draft, and the target verifies them as
+usual. It costs one host sync per draft step. The threshold is re-read from a file on each cycle, so one server
+start sweeps 0 (off) / 0.3 / 0.5 / 0.7 and then the reverse. The control sits inside each start, and the
+symmetric order cancels linear drift. Field prior: vcruz305 (exllamav3, GB10), +27 % on prose.
+
+**Result.** 2 starts per arm; c=1 decode ms/tok is the mean of the two positions in each start:
+
+| | off | thr 0.3 | thr 0.5 | thr 0.7 |
+|---|---|---|---|---|
+| n=3, start 1 / 2 | 23.69 / 23.62 | **23.22 / 23.27** | 23.82 / 23.78 | 24.39 / 24.37 |
+| n=3 acceptance length c=1 | 2.525 | 2.518 | 2.452 | 2.354 |
+| n=3 c=4 tok/s | 87.9 / 87.5 | **89.8 / 90.0** | 88.9 / 88.5 | 87.9 / 87.7 |
+| n=4, start 1 / 2 | 24.62 / 24.65 | 24.07 / 24.14 | 24.35 / 24.28 | 25.23 / 25.30 |
+| n=4 acceptance length c=1 | 2.697 | 2.675 | 2.611 | 2.453 |
+
+- **Output:** c=1 output hashes are identical at every threshold, in all four starts.
+- **n=3, thr 0.3:** −2.0 % and −1.5 % at c=1 (the same in both starts), +2.2…+2.9 % at c=4. The stop counter is pooled
+  over all non-zero thresholds (0.3/0.5/0.7): 29 % of those cycles stopped early (14 % before step 1, 15 % before
+  step 2). The per-threshold split was not logged. At 0.3 the acceptance cost is almost nil. Higher thresholds
+  cost more acceptance than they save.
+- **n=4** accepts more (2.70) but is slower than plain n=3 at every threshold. Gating does not rescue depth here.
+- **Against the hypothesis:** the n=3 best is inside the expected −2…−10 %, at its bottom. The n=4 best is +1.6 %
+  against n=3 off, inside the expected −3…+5 %. The field's +27 % does not transfer. Our position-1 and position-2
+  drafts are accepted often enough that stopping rarely pays. That fits their essay per-position numbers
+  (0.65 / 0.38) against ours (acceptance length 2.5 at n=3).
+
+**Side finding: warm-up drift after a restart.** Within the first n=3 start the `off` control went from 24.45 ms/tok
+(first slot) to 22.93 (last slot), and c=4 from 84.3 to 91.4 tok/s: ~6 % faster over ~15 min of load. The
+suspected cause is PLE table pages entering the page cache after startup (the table is read in place from the
+checkpoint), not verified. It matters for every A/B that compares a probe's first cell against later cells.
+Symmetric designs cancel it, and our per-arm A/Bs are unaffected because every arm runs the probe in the same
+order.
+
+**Verdict:** a small real win (−1.7 % c=1, +2.5 % c=4) at n=3 with thr 0.3. Not in prod yet. It stacks with the
+NVFP4 draft head only after the confidence is also computed in the NVFP4 path, which is a small patch and needs its
+own A/B.

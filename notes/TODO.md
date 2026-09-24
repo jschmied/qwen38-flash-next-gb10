@@ -40,7 +40,7 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
    - The four hardcoded `quant_config=None` opt-outs also have to go.
    - The EXL3 field read suggests 7–13 %.
    - Run the shapebench (below) first.
-5. **Dynamic stopping / adaptive draft length.**
+5. ~~**Dynamic stopping / adaptive draft length.**~~ **MEASURED 2026-09-24 (finding 235): n=3 thr 0.3 −1.7 % c=1 / +2.5 % c=4, n=4 loses; not in prod; stacking with the NVFP4 head needs a small patch + A/B.**
    - Depth alone loses: finding 155 measured k=4 at −3.4 %.
    - The depth band 5..8 needs the QSA-ring widening from our PR #54912. It is patched locally already (det-204).
    - The plumbing is issue #57608 (a host hook between proposal and verify).
