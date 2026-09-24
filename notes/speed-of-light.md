@@ -108,3 +108,25 @@ largest kernel-level waste". Measured on real inputs with L2 flushed, it is at *
 and the 14 ms gap is elsewhere. Not yet measured: v1 never reached the MoE experts and hyper-connection mixers
 (called with kwargs) or the lm_head (applied through the logits processor). **Step 2b** (`20-fncap2`) benchmarks
 those.
+
+## Step 2b — experts, lm_head (`20-fncap2`, `notes/data/fncap/bench2.json`)
+
+| module | graph µs | floor µs (220 GB/s) | ratio |
+|---|---|---|---|
+| FP8 lm_head [248320×2560], M=4 | 2,729.7 | 2,890 | **0.94** (effective ~234 GB/s: our 220 GB/s is slightly conservative) |
+| target MoE block, layer 3, 4 rows | 435.4 | 391 at E=26.6 (routed + shared + router) | **1.11** |
+| target MoE block, layer 4, 4 rows | 383.9 | 391 | **0.98** |
+| drafter MoE block, 1 row (E=10) | 240.6 | 182 | 1.32 |
+| BF16 `in_proj_ba`, M=4 | 15.7 | 2.2 | 7.1 (fixed launch cost, as in 2a) |
+
+**Instrument note.** `MoERunner` takes `hidden_states` and routes internally. Its kwarg named `router_logits` is the
+`[4, 2560]` hidden state, so `bench.json`'s `distinct_experts` (28/30) and `floor_us` (71/76) for the MoE blocks are
+**wrong**. The table uses the measured average E = 26.6 from the routing log. The `draft.lm_head` entry is the full
+head, but drafting uses the NVFP4 slice through `get_top_tokens`, so that entry is ignored.
+
+**So far every large module sits at 0.94–1.15× its byte floor:** FP8 dense, lm_head, and the target MoE. Only the
+drafter MoE at M=1 (1.32×) and the tiny `in_proj_ba` run well above their floors, and neither explains a 14 ms gap.
+**Still unmeasured:** the hyper-connection mixer linears, which the model calls from `GatedResidual.mix` /
+`combine_and_mix`, so the v2 hooks on the parent never fired. `30-fncap3` targets their sub-linears. If they are
+near their floor too, the gap is not in any single dense module, and a whole-step kernel profile (GDN, QSA,
+elementwise, inter-kernel gaps) is the next instrument.

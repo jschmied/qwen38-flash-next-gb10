@@ -1,0 +1,15 @@
+{
+ "hooked": [
+  "language_model.model.layers.3.mlp.experts",
+  "language_model.model.layers.3.attn_hyper_connection",
+  "language_model.model.layers.3.mlp_hyper_connection",
+  "language_model.model.layers.4.linear_attn.in_proj_ba",
+  "language_model.model.layers.4.mlp.experts",
+  "language_model.model.layers.4.attn_hyper_connection",
+  "language_model.model.layers.4.mlp_hyper_connection",
+  "language_model.lm_head",
+  "draft.model.layers.0.mlp.experts",
+  "draft.lm_head"
+ ],
+ "routers": 49
+}

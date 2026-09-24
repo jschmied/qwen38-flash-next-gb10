@@ -1,0 +1,38 @@
+{
+ "name": "fncap3",
+ "venv": "/opt/llm/runtime/vllm-venv-main1ea7",
+ "model": "/opt/llm/models/qwen38-flash-next-mtpfp4",
+ "env": {
+  "FN_MAXLEN": "32768",
+  "FN_SEQS": "16",
+  "FN_SPEC_METHOD": "mtp",
+  "FN_SPEC_N": "3",
+  "FN_SPEC_NODROP": "1",
+  "FN_SPEC_LOCALARGMAX": "1",
+  "FN_DRAFT_VOCAB": "/opt/llm/runners/dv/draft_vocab_32768.txt",
+  "FN_DRAFT_HEAD_NVFP4": "1",
+  "FN_NVFP4_CFG": "64,4",
+  "FN_PLE_OFFLOAD": "0",
+  "FN_EXTRA": "--engram-config {\"checkpoint_mapped\":true} --enforce-eager",
+  "FN_CAPTURE_DIR": "/opt/llm/capture/fncap3-0924",
+  "FN_CAPTURE_RE": "(layers\\.(3|4)\\.(attn|mlp)_hyper_connection\\.(input_mix_weight_down_block_inject|input_mix_weight_down|input_mix_weight_up)$)|(^|\\.)hyper_connection_mixer\\.(input_mix_weight_down_block_inject|input_mix_weight_down|input_mix_weight_up)$|^model\\.layers\\.0\\.self_attn\\.(qkv_proj|q_proj|o_proj)$",
+  "FN_CAPTURE_N": "12"
+ },
+ "probe_cmd": [
+  "<venv>/bin/python",
+  "/opt/llm/runners/fncap/capprobe.py",
+  "{arm}",
+  "/opt/llm/capture/fncap3-0924"
+ ],
+ "starts": 1,
+ "arms": [
+  {
+   "name": "cap",
+   "log_must_contain": [
+    "FNCAP installed",
+    "NVFP4 slice, FNNVFP4",
+    "Mapped PLE table"
+   ]
+  }
+ ]
+}

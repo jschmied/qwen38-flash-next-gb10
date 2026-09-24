@@ -1,0 +1,74 @@
+[
+ {
+  "name": "language_model.lm_head",
+  "class": "ParallelLMHead",
+  "quant_method": "ModelOptLinearMethod",
+  "eager_us": 2793.3,
+  "graph_us": 2729.7,
+  "rows": 4,
+  "weight_bytes": 635854400,
+  "distinct_experts": null,
+  "floor_us": 2890.2,
+  "ratio_to_floor": 0.94
+ },
+ {
+  "name": "draft.lm_head",
+  "class": "ParallelLMHead",
+  "quant_method": "ModelOptLinearMethod",
+  "eager_us": 2796.3,
+  "graph_us": 2738.3,
+  "rows": 4,
+  "weight_bytes": 635854400,
+  "distinct_experts": null,
+  "floor_us": 2890.2,
+  "ratio_to_floor": 0.95
+ },
+ {
+  "name": "draft.model.layers.0.mlp.experts",
+  "class": "MoERunner",
+  "quant_method": "NoneType",
+  "eager_us": 297.7,
+  "graph_us": 240.6,
+  "rows": 1,
+  "weight_bytes": 5578292,
+  "distinct_experts": 10,
+  "floor_us": 25.4,
+  "ratio_to_floor": 9.47
+ },
+ {
+  "name": "language_model.model.layers.3.mlp.experts",
+  "class": "MoERunner",
+  "quant_method": "NoneType",
+  "eager_us": 502.5,
+  "graph_us": 435.4,
+  "rows": 4,
+  "weight_bytes": 16734876,
+  "distinct_experts": 30,
+  "floor_us": 76.1,
+  "ratio_to_floor": 5.72
+ },
+ {
+  "name": "language_model.model.layers.4.linear_attn.in_proj_ba",
+  "class": "MergedColumnParallelLinear",
+  "quant_method": "UnquantizedLinearMethod",
+  "eager_us": 22.2,
+  "graph_us": 15.7,
+  "rows": 4,
+  "weight_bytes": 491520,
+  "distinct_experts": null,
+  "floor_us": 2.2,
+  "ratio_to_floor": 7.14
+ },
+ {
+  "name": "language_model.model.layers.4.mlp.experts",
+  "class": "MoERunner",
+  "quant_method": "NoneType",
+  "eager_us": 450.3,
+  "graph_us": 383.9,
+  "rows": 4,
+  "weight_bytes": 15619217,
+  "distinct_experts": 28,
+  "floor_us": 71.0,
+  "ratio_to_floor": 5.41
+ }
+]
