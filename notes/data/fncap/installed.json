@@ -1,0 +1,28 @@
+{
+ "hooked": [
+  "language_model.model.layers.3.self_attn.qkv_proj",
+  "language_model.model.layers.3.self_attn.o_proj",
+  "language_model.model.layers.3.mlp.gate",
+  "language_model.model.layers.3.mlp.shared_expert",
+  "language_model.model.layers.3.mlp.shared_expert.gate_up_proj",
+  "language_model.model.layers.3.mlp.shared_expert.down_proj",
+  "language_model.model.layers.3.mlp.shared_expert.act_fn",
+  "language_model.model.layers.3.mlp.experts",
+  "language_model.model.layers.3.attn_hyper_connection",
+  "language_model.model.layers.3.mlp_hyper_connection",
+  "language_model.model.layers.4.linear_attn.in_proj_qkvz",
+  "language_model.model.layers.4.linear_attn.in_proj_ba",
+  "language_model.model.layers.4.linear_attn.out_proj",
+  "language_model.model.layers.4.mlp.gate",
+  "language_model.model.layers.4.mlp.shared_expert",
+  "language_model.model.layers.4.mlp.shared_expert.gate_up_proj",
+  "language_model.model.layers.4.mlp.shared_expert.down_proj",
+  "language_model.model.layers.4.mlp.shared_expert.act_fn",
+  "language_model.model.layers.4.mlp.experts",
+  "language_model.model.layers.4.attn_hyper_connection",
+  "language_model.model.layers.4.mlp_hyper_connection",
+  "language_model.lm_head",
+  "draft.lm_head"
+ ],
+ "routers": 49
+}

@@ -53,3 +53,58 @@ logged routing:
 - kernels mapped to modules (`kernelroster.py`, `prof_attrib.py`);
 - each group's floor from its bytes, sorted into necessary-efficient, necessary-inefficient and unnecessary
   (copies, casts, repeated metadata, rejected-draft verify work, drafter re-prefill, graph padding).
+
+## Plain decode (no speculation): the exact floor
+
+Without MTP each token routes to exactly 10 experts per layer, so nothing is unknown: 6.6 GiB per token →
+**31.5 ms/tok at 220 GB/s (31.8 tok/s), 25.4 ms/tok at 273 GB/s (39.4 tok/s).** The last measured no-spec c=1 decode
+was 40.2 ms/tok (finding 210, older dev524 stack), i.e. 1.28× the 220 GB/s floor.
+
+## Step 2a — live capture + per-module bench (2026-09-24 night, `tools/fncap/`, data `notes/data/fncap/`)
+
+One eager start in the prod config (`12-fncap`). The capture ran on real traffic: c=1 essays, c=4, and the agent
+loop.
+
+**Routing, measured** (top-10 ids from every router call, all 48 layers):
+
+| call rows | distinct experts per layer, mean | independent would be |
+|---|---|---|
+| 4 (c=1 verify batch), n = 69,648 calls | **26.6** (median 27) | 38.8 |
+| 8 | 47.3 | 74.7 |
+| 16 (c=4 verify) | 82.5 | 138.6 |
+| drafter, 1 row | 10.0 | 10.0 |
+| drafter, 4 rows (its prefill of the verified tokens) | 35.7 | 38.8 |
+
+**Floor with measured routing: 45.2 ms per verify cycle at 220 GB/s** (36.4 at 273). By part:
+
+| part | ms |
+|---|---|
+| target dense | 21.3 |
+| target experts | 16.1 |
+| lm_head | 2.9 |
+| drafter (dense, head, experts) | 3.8 |
+| GDN state | 1.0 |
+| QSA | 0.2 |
+
+Measured 59.2 ms → **1.31× the floor, a gap of 14.0 ms per cycle** (17.8 ms/tok floor vs 23.4 measured).
+
+**Per-module bench** (inside the worker, real inputs at M=4, 64 MiB memset before each call to evict L2, eager
+event timing and CUDA-graph timing):
+
+| module | graph µs | floor µs | ratio |
+|---|---|---|---|
+| FP8 `in_proj_qkvz` (GDN) | 197.5 | 190.7 | **1.04** |
+| FP8 `qkv_proj` (QSA layer) | 164.9 | 154.9 | **1.06** |
+| FP8 `out_proj` / `o_proj` | 78.9 / 82.2 | 71.5 | 1.10 / 1.15 |
+| BF16 shared expert (block) | 55.5–56.4 | 44.7 | 1.24–1.26 |
+| BF16 router gate | 9.1–16.6 | 11.9 | 0.76–1.39 (tiny weights partly survive the flush) |
+| BF16 `in_proj_ba` (96×2560) | 15.2 | 2.2 | 6.9 (fixed per-launch cost; ~0.5 ms/forward over 36 layers) |
+
+Eager timings are 1.4–1.9× the graph timings, but that is per-call launch latency that a pipelined forward hides
+(finding 237: FULL decode graphs are a null).
+
+**Correction to the historical ranking.** det-134 put the small-M FP8 blockwise GEMM at "~2.5× its byte floor, the
+largest kernel-level waste". Measured on real inputs with L2 flushed, it is at **1.04–1.15×**. That lever is gone,
+and the 14 ms gap is elsewhere. Not yet measured: v1 never reached the MoE experts and hyper-connection mixers
+(called with kwargs) or the lm_head (applied through the logits processor). **Step 2b** (`20-fncap2`) benchmarks
+those.
