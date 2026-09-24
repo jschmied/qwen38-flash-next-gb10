@@ -130,3 +130,28 @@ drafter MoE at M=1 (1.32×) and the tiny `in_proj_ba` run well above their floor
 `combine_and_mix`, so the v2 hooks on the parent never fired. `30-fncap3` targets their sub-linears. If they are
 near their floor too, the gap is not in any single dense module, and a whole-step kernel profile (GDN, QSA,
 elementwise, inter-kernel gaps) is the next instrument.
+
+## Step 2c — hyper-connection mixer linears (`30-fncap3`, `notes/data/fncap/bench3.json`)
+
+| module (M=4 target, M=1 drafter) | graph µs | floor µs | ratio |
+|---|---|---|---|
+| mixer `input_mix_weight_down_block_inject` [324×10240] BF16, layers 3/4 attn+mlp | 33.6–35.5 | 31.3 | **1.07–1.13** |
+| mixer `input_mix_weight_up` [10240×320] BF16, layers 3/4 attn+mlp | 28.9–30.3 | 29.8 | **0.97–1.02** |
+| top-level mixer down / up | 32.8 / 30.0 | 29.8 | 1.10 / 1.01 |
+| drafter mixer down / up (M=1) | 34.5 / 29.1 | 29.8 | 1.16 / 0.98 |
+| drafter `o_proj` BF16 (M=1) | 134.1 | 143.0 | 0.94 |
+
+The older profile's single-warp sm80 WMMA kernels for these shapes (`where-the-gpu-time-goes.md`) are gone on this
+stack: **the mixers run at their byte floor.**
+
+**Conclusion of step 2: no dense module is meaningfully above its byte floor.** FP8 dense runs at 1.04–1.15×, BF16
+mixers/shared/router at 0.97–1.26×, lm_head at 0.94×, target MoE at 0.98–1.11×. The only outliers are small: the
+drafter MoE at M=1 (1.32×, ~0.1 ms per draft step) and `in_proj_ba` (7×, but ~0.5 ms per forward in absolute
+terms). The 14 ms/cycle gap to the 45.2 ms floor must therefore sit where module benches cannot see:
+- GDN recurrence, conv and gating; the QSA indexer, top-k and attention; PLE;
+- norms, RoPE, activation quant and elementwise work between modules;
+- sampling and rejection;
+- inter-kernel idle.
+
+**Step 3** (`40-prof`, hypothesis in `tools/prof/HYPOTHESIS.md`) profiles one whole step in the prod config to
+attribute it.
