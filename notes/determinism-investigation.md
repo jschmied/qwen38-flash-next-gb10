@@ -6163,3 +6163,17 @@ continuations (B) against 3 `prompt_logprobs=1` references (R).
 
 A null for our config at this dose, not proof the path is safe. #57128 stays on the watch list. The mechanism of
 the difference (draft depth vs MTP state selection) is not established.
+
+**det-236 addendum — which #53912-cluster fixes prod carries** (checked 2026-09-24 against the installed venv; the
+local clone is shallow, so ancestry was checked by date and by the fixes' added lines):
+
+| fix | mechanism | in prod? |
+|---|---|---|
+| #50729 (merged 08-17) | overlapping conv-state shift copy race | **yes**: 31/31 added lines present in `mamba_utils.py` |
+| #51113 (merged 08-06) | align prefill chunks block-aligned | **yes**, in refactored form (`end < prefill_end` invariant present) |
+| #53077 (merged) | GDN spec-decode count reset for an empty draft schedule | **yes** |
+| #53919 (open) | async accepted-token copy race (#51571) | no. It patches the V1 `gpu_model_runner.py`; prod runs the V2 runner (`v1/worker/gpu/model_runner.py`), so it is not our code path |
+| #43650 / #48375 / #57128 (open) | honor `drop_eagle_block` in `MambaManager` | no. Tested null for our config in det-236 |
+| #58368 (open) | prompt-tail prefix-cache hits with MTP after #55390 | no; its trigger is `drop_eagle_checkpoint_block`, which our nodrop disables |
+
+No new thread activity since Suppressor72's 15:39 comment; #57128 has had no comments since 09-22.
