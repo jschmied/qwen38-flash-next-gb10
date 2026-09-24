@@ -16,6 +16,11 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
   offload worker runs. Swap use fell from ~50 GiB to 5–6 GiB (findings 225–232).
 - Drop-ins `20-mtp-promote.conf` and `25-main-mapped.conf`. Revert: `rm 25-main-mapped.conf`, then `daemon-reload`
   and a restart. That returns prod to dev524 with PLE offload.
+- **Since 2026-09-24 17:23: NVFP4 draft-head slice** (finding 234). This is drop-in `30-nvfp4-draft-head.conf`
+  (`FN_DRAFT_HEAD_NVFP4=1`, `FN_NVFP4_CFG=64,4`) plus the FNNVFP4 patch in the venv (`tools/nvfp4head/`).
+  - Verified live: the log line reads `606 -> 45 MiB (NVFP4 slice, FNNVFP4)`; c=1 23.26 ms/tok; output identical.
+  - Revert: `rm 30-nvfp4-draft-head.conf`, then `daemon-reload` and a restart. The patch is inert without the env
+    lines.
 - The unit still grants `CAP_SYS_PTRACE`, which only the offload worker needed. The mapped path does not use it.
 
 ## Open — speed levers, ranked by value / cost
