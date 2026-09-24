@@ -37,6 +37,6 @@ full-sort workaround. I did not run their variant.
 Not measured: decode, because the arms generate different text so per-token timings are not comparable; TP > 1;
 and contexts beyond 30k.
 
-Data and scripts: [finding](SHA_LINK_FINDING) · [bench tools](SHA_LINK_TOOLS)
+Data and scripts: [finding](https://github.com/jschmied/qwen38-flash-next-gb10/blob/d2b6a53acf597a95571ac9b89a9988ff198781c9/notes/determinism-investigation.md#L6005) · [bench tools](https://github.com/jschmied/qwen38-flash-next-gb10/tree/d2b6a53acf597a95571ac9b89a9988ff198781c9/tools/topk55122)
 
 *AI assistance was used in preparing this comment; the measurements were run and checked by me.*
