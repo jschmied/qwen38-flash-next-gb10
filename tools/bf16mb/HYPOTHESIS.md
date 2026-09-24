@@ -11,3 +11,15 @@ Standalone, M=4, weights rotated over >= 96 MiB so L2 never holds them, a CUDA g
 - H2: at least one alternative (cuBLASLt via preferred_blas_library, FlashInfer mm_bf16 / tinygemm_bf16, a Triton
   split-K GEMV) reaches <= 1.10x floor on the mixer down and router shapes. Expected saving if swapped in-model:
   2-4 ms/step (4-7 %). Outside: nothing beats cuBLAS by > 5 % -> BF16 lever is only the 8-bit weights (-8 %).
+
+## Server A/B (45-bf16sk, written 2026-09-25 01:12, before the run)
+
+Deterministic two-pass kernel (`fn_bf16sk.py`), standalone <= 1.06x floor on all six shapes at M=1/4/16. Replacing
+cuBLAS in-model removes ~1.0 ms (mixer down) + ~0.6 ms (mixer up) + ~0.5 ms (in_proj_ba) + the ~190 splitKreduce
+launches per step; shared/router gains are uncertain (contention-bound in-model).
+- Expected c=1 decode: +2.5 % to +5 % tok/s (sk vs base), every start of sk above every start of base.
+- c=4: +1 % to +4 %.
+- Acceptance within +-2 pp (numerics change, drafter shares the kernel); within-arm output hashes identical across
+  starts (the kernel is deterministic); cross-arm hashes are EXPECTED to differ (different reduction order).
+- Outside: < +1 % -> the in-model win is eaten by contention/launch cost; > +6 % -> something else changed, check
+  the path lines.
