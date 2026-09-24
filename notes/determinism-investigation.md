@@ -6123,3 +6123,43 @@ merge base's launcher calls it (in `sampler.cu`) when a cooperative launch would
 - it said "a 20 % kernel win", but that holds only at ≤ 4096 columns;
 - it listed "two cells out of range"; there were six;
 - it attributed all of k3dani's 21–28 % to the full sort, which is confounded (above).
+
+## det-236 — vllm#53912's rejected-draft cache poisoning does NOT reproduce on our prod (MTP n=3 + nodrop) (2026-09-24)
+
+**Why it looked like ours.** Suppressor72's repro on #53912 (2026-09-24, Qwen3.8-27B, DFlash K=7) shows cached reads
+of blocks whose state checkpoint was written during low-acceptance decode diverging from cold reads: 5/5 divergent
+at ~4 % acceptance, 0/5 at 89 %, fixed by removing `disable_eagle_block_drop`. Their config matches ours on:
+- `mamba_cache_mode=align` + prefix caching;
+- `disable_eagle_block_drop=true`;
+- the "no KV cache group could be identified as the draft model's" fallback, which our prod log also shows.
+
+The difference is DFlash K=7 on their side, MTP n=3 on ours. Upstream fix: #57128 (open).
+
+**Probe** (`tools/i53912/probe53912.py`, run against live prod with the NVFP4 draft head). It is their v4
+discriminator adapted to our stack:
+- `guided_regex` is a removed field on our build (warned and ignored), so the high-acceptance arm continues a
+  descending number list greedily and the low-acceptance arm samples random numbers at T=1.0;
+- `ignore_eos` keeps generation A at 2400 tokens;
+- cache hits are measured per request from `vllm:prefix_cache_hits_total` deltas (`cached_tokens` is not reported).
+
+Per arm: a 3,999-token prompt, generation A, then ctx = prompt + A's first ~470 groups; 5 cache-read greedy
+continuations (B) against 3 `prompt_logprobs=1` references (R).
+
+| arm | seeds | draft acceptance during A | B hits | R hits | B ≠ R |
+|---|---|---|---|---|---|
+| countdown, greedy | 202/303/404/505 | 99.7–99.9 % | up to 4,800 | 0 | 0/5 each |
+| random, T=1.0 | 202/303/404/505 | 9.0 / 79.1 / 9.2 / 9.0 % | up to 4,800 | 0 | 0/5 each |
+
+- A 4,800-token hit covers a block that holds the decode-written region (3,999–4,799). Its align checkpoint at
+  4,800 was written during low-acceptance decode in three of the random arms.
+- The references read 0 cached tokens, so they are genuine cold recomputes.
+- **15 cache reads at ~9 % acceptance, 0 divergent**, and each arm's five B requests produced a single output.
+- An earlier pass without hit accounting (seeds 101/202) was also 0/5 everywhere.
+
+**Scope:**
+- one block boundary per arm, n=3 (their K=7 exposes more rejected positions per step);
+- c=1;
+- MTP in the flag-all fallback.
+
+A null for our config at this dose, not proof the path is safe. #57128 stays on the watch list. The mechanism of
+the difference (draft depth vs MTP state selection) is not established.

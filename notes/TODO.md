@@ -114,6 +114,11 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
   - #49845, the KV block size chosen to suit every attention backend;
   - #58459, adaptive `--long-prefill-token-threshold`.
 
+**vllm#53912 / #57128** (prefix cache + spec decode + `disable_eagle_block_drop` poisoning cached Mamba state): our
+exact config family. **Tested 2026-09-24 (det-236): not reproduced on prod.** 15 low-acceptance cache reads into
+decode-written blocks, 0 divergent. Keep watching; a comment with the MTP counter-datapoint could help, but needs a
+go.
+
 **Stale drafts** from 09-08/09, measured on dev401/fnmain2: `comment-54521-zc502-isolation.md`,
 `comment-54521-tcorrupt.md`, `comment-miaai-19-cudagraph-widths.md`. Re-check them against the current stack before
 any post, or drop them.
