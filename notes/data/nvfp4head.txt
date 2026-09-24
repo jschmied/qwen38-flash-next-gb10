@@ -1,0 +1,58 @@
+=== 13:52:39 start
+=== 13:52:42 prod stopped; MemAvailable 118 GiB
+=== 13:52:42 kernel gate on the real head
+slice (32768, 2560): bf16 160.0 MiB -> nvfp4 45.0 MiB, g=1.533e-04
+weight rel-RMSE nvfp4 vs exact: 0.0945
+M= 1 kernel-vs-ref max rel 1.30e-06 argmax 1.000 | quant effect: logit rel-RMSE 0.1004, argmax agree vs bf16 1.000
+M= 4 kernel-vs-ref max rel 1.21e-06 argmax 1.000 | quant effect: logit rel-RMSE 0.0914, argmax agree vs bf16 0.750
+M=16 kernel-vs-ref max rel 1.49e-06 argmax 1.000 | quant effect: logit rel-RMSE 0.0953, argmax agree vs bf16 0.812
+M=37 kernel-vs-ref max rel 1.45e-06 argmax 1.000 | quant effect: logit rel-RMSE 0.0965, argmax agree vs bf16 0.703
+M= 1 bf16:  982.3us  32,4:  243.6us  64,4:  241.8us  64,8:  247.6us  128,4:  261.6us  128,8:  259.2us  256,8:  267.1us
+M= 2 bf16:  725.1us  32,4:  255.7us  64,4:  244.3us  64,8:  248.8us  128,4:  272.3us  128,8:  257.6us  256,8:  269.0us
+M= 4 bf16:  722.1us  32,4:  258.2us  64,4:  244.3us  64,8:  248.9us  128,4:  261.9us  128,8:  254.1us  256,8:  264.7us
+M= 8 bf16:  736.6us  32,4:  264.4us  64,4:  249.1us  64,8:  248.2us  128,4:  264.3us  128,8:  259.5us  256,8:  268.8us
+M=16 bf16:  742.2us  32,4:  267.3us  64,4:  259.0us  64,8:  262.0us  128,4:  272.5us  128,8:  272.7us  256,8:  280.3us
+best cfg block_n=64 num_warps=4; nvfp4/bf16 time at M=1,2,4: 0.307
+== HEADBENCH OK ==
+=== 13:52:56 headbench rc=0
+  fnnvfp4 INSTALLED (inert unless FN_DRAFT_HEAD_NVFP4=1)
+spec written, FN_NVFP4_CFG = 64,4
+== armrun nvfp4head: spec valid (2 arms). Nothing started. ==
+== armrun nvfp4head: 2 arms x 3 start(s), port 8092 ==
+-- nvfp4head-base0  env=(spec default)
+Running as unit: fx-armrun-nvfp4head.service; invocation ID: 933b8d2dfbc64022a56403996fa49c41
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.065}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 83.24, "wall_s": 31.548}, "agent": {"total_s": 13.3, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.41}, "fallback_line": true, "c1_ms_tok": 24.065, "c4_tok_s": 83.24, "c1_acc_len": 2.525, "s_turn": 1.66}
+-- nvfp4head-nvfp40  env={'FN_DRAFT_HEAD_NVFP4': '1', 'FN_NVFP4_CFG': '64,4'}
+Running as unit: fx-armrun-nvfp4head.service; invocation ID: 32e415ed09b64145a8b853ab12f6689e
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.17, "accept_len": 2.535, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.433}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 86.75, "wall_s": 30.246}, "agent": {"total_s": 13.2, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.11}, "fallback_line": true, "c1_ms_tok": 23.433, "c4_tok_s": 86.75, "c1_acc_len": 2.535, "s_turn": 1.66}
+-- nvfp4head-base1  env=(spec default)
+Running as unit: fx-armrun-nvfp4head.service; invocation ID: 5861d9917b924eb08ad52b86bd95a32e
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.19}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 84.61, "wall_s": 31.038}, "agent": {"total_s": 13.4, "s_per_turn": 1.67, "tokens": 236, "ms_per_tok": 56.61}, "fallback_line": true, "c1_ms_tok": 24.19, "c4_tok_s": 84.61, "c1_acc_len": 2.525, "s_turn": 1.67}
+-- nvfp4head-nvfp41  env={'FN_DRAFT_HEAD_NVFP4': '1', 'FN_NVFP4_CFG': '64,4'}
+Running as unit: fx-armrun-nvfp4head.service; invocation ID: a1161f526f2147c6b1eaef3966240093
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.17, "accept_len": 2.535, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.317}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 86.38, "wall_s": 30.376}, "agent": {"total_s": 13.3, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.15}, "fallback_line": true, "c1_ms_tok": 23.317, "c4_tok_s": 86.38, "c1_acc_len": 2.535, "s_turn": 1.66}
+-- nvfp4head-base2  env=(spec default)
+Running as unit: fx-armrun-nvfp4head.service; invocation ID: e3aaef21880949ecbce76a10be9ce37b
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.291}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 84.2, "wall_s": 31.187}, "agent": {"total_s": 14.0, "s_per_turn": 1.74, "tokens": 236, "ms_per_tok": 59.11}, "fallback_line": true, "c1_ms_tok": 24.291, "c4_tok_s": 84.2, "c1_acc_len": 2.525, "s_turn": 1.74}
+-- nvfp4head-nvfp42  env={'FN_DRAFT_HEAD_NVFP4': '1', 'FN_NVFP4_CFG': '64,4'}
+Running as unit: fx-armrun-nvfp4head.service; invocation ID: 854906740ba94637bdb2e15abc9bc43e
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.17, "accept_len": 2.535, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.314}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 86.07, "wall_s": 30.488}, "agent": {"total_s": 13.3, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.28}, "fallback_line": true, "c1_ms_tok": 23.314, "c4_tok_s": 86.07, "c1_acc_len": 2.535, "s_turn": 1.66}
+
+== RESULT ==
+  base         fallback_line True  c1_ms_tok 24.065–24.291  c4_tok_s 83.24–84.61  c1_acc_len 2.525  s_turn 1.66–1.74  start 0–2
+  nvfp4        fallback_line True  c1_ms_tok 23.314–23.433  c4_tok_s 86.07–86.75  c1_acc_len 2.535  s_turn 1.66  start 0–2
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+=== 15:13:42 armrun rc=0
+== ALL DONE ==
+=== 15:13:42 restore: patch off, prod start
+  fnnvfp4 REMOVED
+0
+=== 15:24:52 prod restored after 680s
+== JOB END ==

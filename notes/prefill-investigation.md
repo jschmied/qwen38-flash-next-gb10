@@ -3882,3 +3882,40 @@ starts per arm:
 
 **Verdict.** Correct on GB10, with no speed benefit on this config. Not worth carrying as a prod overlay; it
 lands on its own when merged. Raw data: `notes/data/pr58449.txt`, `pr58449-server.jsonl`.
+
+## Finding 234 — NVFP4 draft-head slice: −3.4 % c=1 decode, +2.6 % c=4, acceptance unchanged, output identical (2026-09-24)
+
+**Change.** The drafter's 32k draft-vocab slice of the FP8 lm_head was an exact BF16 dequant: 160 MiB read per
+draft step, 3 steps per verify cycle at n=3. It is now kept as NVFP4:
+- E2M1 values, one E4M3 scale per 16 values, an FP32 global scale; plain-max scaling; 40 + 5 MiB;
+- quantized once at load from the exact FP8 values;
+- a Triton W4A16 kernel (BF16 activations, fp32 accumulate) replaces `F.linear`;
+- env-gated (`FN_DRAFT_HEAD_NVFP4=1`, tile `FN_NVFP4_CFG=64,4`). Code and the hypothesis are in `tools/nvfp4head/`.
+
+**Kernel gate on the real slice**, prod down (`headbench.py`):
+- The kernel matches a torch reference on the same quantized weights to 1.2–1.5e-6, argmax 100 %.
+- Weight rel-RMSE vs exact is 9.45 %, matching the earlier NVFP4-max measurement on this head.
+- CUDA-graph time at M=1–16: 242–259 µs, against 722–982 µs for BF16 `F.linear` (0.31×, at 45 vs 160 MiB).
+- On *random* hidden states, draft argmax agreed with the BF16 slice only 70–100 % of the time, so only the server
+  could say whether acceptance survives.
+
+**Server A/B**, prod config, 3 interleaved starts:
+
+| arm | c=1 decode ms/tok | c=4 aggregate tok/s | accept len c=1 / c=4 | agent s/turn |
+|---|---|---|---|---|
+| base (BF16 slice) | 24.065 / 24.190 / 24.291 | 83.24 / 84.61 / 84.20 | 2.525 / 2.437 | 1.66–1.74 |
+| NVFP4 slice | 23.433 / 23.317 / 23.314 | 86.75 / 86.38 / 86.07 | 2.535 / 2.460 | 1.66 |
+
+- **Decode:** the c=1 ranges are disjoint, the sign held in every round, and the gap (0.63–0.98 ms/tok) exceeds
+  either arm's spread (0.23 and 0.12). Means are −3.4 % at c=1 and +2.6 % at c=4. That sits at the top of the
+  hypothesis (−0.5…−3 %).
+- **Acceptance rose slightly** (+0.4 % at c=1, +0.9 % at c=4). The slice quantization error does not hurt draft
+  choice on real text, unlike the random-x agreement suggested. Saren's full int4 draft head lost 1–8 points, but
+  that was the full head without a vocab slice.
+- **Output:** c=1 hashes are identical in all six starts. At c=4, 2 of 4 outputs differ, as expected: different
+  acceptance changes the verify batch shapes, and this model is not batch-invariant.
+- **Agent loop:** short turns do not resolve 3 %.
+
+**Verdict:** a clean win. Promoting it to prod means installing `fnnvfp4_patch.py` into the prod venv plus two env
+lines in a drop-in. That is a prod change and awaits the user's go. Raw data: `notes/data/nvfp4head.txt`,
+`nvfp4head-server.jsonl`.
