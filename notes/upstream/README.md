@@ -1343,3 +1343,16 @@ wait on one ~100 GB pull, and they share one serve.
 
   Evidence: det-235. Text: `comment-55122-perf-bench-head.md`.
   <https://github.com/vllm-project/vllm/pull/55122#issuecomment-5809971218>
+- **2026-09-24 — two #55122 comments corrected IN PLACE** (user go "correct comment on 55122 in place"). Both
+  carry an italic "Edited 2026-09-24" note at the top, and the wrong text is struck through.
+  - Today's perf comment
+    (<https://github.com/vllm-project/vllm/pull/55122#issuecomment-5809971218>):
+    - k3dani attribution corrected (arms confounded by image and version; single-image 10–15 %);
+    - TTFT claim tightened (kernel win ~20 % at 8k shapes, ~4 % at 30k);
+    - eager-floor caveat added;
+    - finding link repinned to `d7bbbb8`.
+  - The 09-12 #55872 result
+    (<https://github.com/vllm-project/vllm/pull/55122#issuecomment-5645230534>): the `native` arm ran our det kernel
+    (`VLLM_QSA_DET_TOPK=0` is truthy), so it was not stock; the FlashInfer init failure stands.
+  - Source: the determinism-investigation audit (commit d7bbbb8). The new-comment draft
+    `comment-55122-audit-corrections.md` is superseded.

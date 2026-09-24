@@ -61,7 +61,7 @@ The corrections that change conclusions:
 - **Two public comments on #55122 carry claims corrected here:**
   - the 09-12 #55872 result: its `native` arm ran our det kernel;
   - the 09-24 perf comment: the k3dani attribution.
-  Corrections are drafted in `notes/upstream/comment-55122-audit-corrections.md` and await a go.
+  Both were corrected in place on 2026-09-24 (upstream README).
 
 ## Established (measured, replicated where stated)
 

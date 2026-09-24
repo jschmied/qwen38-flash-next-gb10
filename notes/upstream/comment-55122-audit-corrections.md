@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. GitHub vllm-project/vllm PR #55122, corrections to two of our comments (2026-09-24).
+SUPERSEDED 2026-09-24: not posted as a new comment; the user chose in-place edits of both comments instead (see README). GitHub vllm-project/vllm PR #55122, corrections to two of our comments (2026-09-24).
 
 Two corrections to my own comments here, found while auditing our notes.
 
