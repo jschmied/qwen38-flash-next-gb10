@@ -1,0 +1,38 @@
+=== 07:31:37 start; prod requests running: 0.0
+=== 07:31:41 prod stopped; MemAvailable 118 GiB
+=== 07:31:41 build
+built /opt/llm/runners/topk55122/build-pr-server/_C_det.so ns=_C_det rev=b2312b2de793ba12ac5822286e832e0ea332e9e0
+built /opt/llm/runners/topk55122/build-pr-bench/_C_detpr.so ns=_C_detpr rev=b2312b2de793ba12ac5822286e832e0ea332e9e0
+  File "/opt/llm/runtime/vllm-venv-main1ea7/lib/python3.12/site-packages/torch/utils/cpp_extension.py", line 2937, in _import_module_from_library
+    torch.ops.load_library(filepath)
+  File "/opt/llm/runtime/vllm-venv-main1ea7/lib/python3.12/site-packages/torch/_ops.py", line 1518, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /opt/llm/runners/topk55122/build-base-bench/_C_detbase.so
+-rwxr-xr-x 1 root root 3458344 Sep 24 07:32 /opt/llm/runners/topk55122/build-base-bench/_C_detbase.so
+-rwxr-xr-x 1 root root 2148288 Sep 24 07:32 /opt/llm/runners/topk55122/build-pr-bench/_C_detpr.so
+-rwxr-xr-x 1 root root 2148280 Sep 24 07:31 /opt/llm/runners/topk55122/build-pr-server/_C_det.so
+=== 07:32:18 kernel bench
+Traceback (most recent call last):
+  File "/opt/llm/runtime/vllm-venv-main1ea7/lib/python3.12/site-packages/torch/_ops.py", line 1516, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: /opt/llm/runners/topk55122/build-base-bench/_C_detbase.so: undefined symbol: _Z20top_k_per_row_decodeRKN5torch6stable6TensorElS3_RS1_llll
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/llm/runners/topk55122/kbench.py", line 7, in <module>
+    torch.ops.load_library(sys.argv[1]); torch.ops.load_library(sys.argv[2])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/llm/runtime/vllm-venv-main1ea7/lib/python3.12/site-packages/torch/_ops.py", line 1518, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /opt/llm/runners/topk55122/build-base-bench/_C_detbase.so
+=== 07:32:19 kbench rc=1
+== VOID ==
+=== 07:32:19 restore: patch off, prod start
+  qsaexact not installed
+0
+=== 07:43:10 prod restored after 660s
+== JOB END ==

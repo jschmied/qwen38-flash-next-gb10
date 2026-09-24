@@ -1,0 +1,81 @@
+=== 07:43:11 start; prod requests running: 0.0
+=== 07:43:14 prod stopped; MemAvailable 118 GiB
+=== 07:43:14 build
+built /opt/llm/runners/topk55122/build-pr-server/_C_det.so ns=_C_det rev=b2312b2de793ba12ac5822286e832e0ea332e9e0
+built /opt/llm/runners/topk55122/build-pr-bench/_C_detpr.so ns=_C_detpr rev=b2312b2de793ba12ac5822286e832e0ea332e9e0
+built /opt/llm/runners/topk55122/build-base-bench/_C_detbase.so ns=_C_detbase rev=3df4ae153eb385e27b52f26c81f8edb9e20b9984
+-rwxr-xr-x 1 root root 4451704 Sep 24 07:43 /opt/llm/runners/topk55122/build-base-bench/_C_detbase.so
+-rwxr-xr-x 1 root root 2148288 Sep 24 07:43 /opt/llm/runners/topk55122/build-pr-bench/_C_detpr.so
+-rwxr-xr-x 1 root root 2148280 Sep 24 07:43 /opt/llm/runners/topk55122/build-pr-server/_C_det.so
+=== 07:43:26 kernel bench
+prechecks: OK
+phase   rows     n data  |        wheel         base           pr        exact exact_sorted | pr/base  pr/wheel  exact/pr
+decode     4  2048 rand  |   10.3-10.3    10.3-12.1     8.2-8.2     51.0-52.0    93.9-93.9  |   0.73     0.80     6.25
+decode     4  4096 rand  |   10.3-10.3    10.3-10.3     8.2-8.3     57.4-57.5   100.0-100.0 |   0.80     0.80     6.96
+decode     4  8192 rand  |   11.9-11.9    10.3-10.3    10.1-10.2    67.8-67.8   110.4-110.5 |   0.99     0.86     6.66
+decode     8  2048 rand  |   10.3-10.3    10.3-10.3     8.2-8.2     50.8-50.9    94.2-94.3  |   0.80     0.80     6.19
+decode     8  4096 rand  |   10.3-10.3    10.3-10.3     8.2-8.3     59.6-59.6   102.2-102.3 |   0.80     0.80     7.22
+decode     8  8192 rand  |   12.0-12.0    10.3-10.3    10.3-10.3    74.0-74.0   116.6-116.8 |   1.00     0.86     7.18
+decode    16  2048 rand  |   10.3-10.3    10.3-10.3     8.2-8.3     50.6-50.8    95.1-95.1  |   0.80     0.80     6.15
+decode    16  4096 rand  |   10.3-10.3    10.3-10.3     8.3-8.3     59.6-59.7   102.1-102.2 |   0.80     0.80     7.18
+decode    16  8192 rand  |   12.1-12.2    10.3-10.3    10.3-10.3    77.1-77.1   119.3-119.4 |   1.00     0.85     7.48
+decode    32  2048 rand  |   10.3-10.3    10.3-10.3     8.2-8.2     50.8-50.8    95.7-95.9  |   0.80     0.80     6.17
+decode    32  4096 rand  |   10.3-10.3    10.3-10.3     8.3-8.3     62.4-62.5   105.0-105.0 |   0.81     0.80     7.52
+decode    32  8192 rand  |   12.3-12.4    10.4-11.1    10.3-10.3    78.0-78.1   120.7-120.9 |   0.96     0.83     7.58
+decode    64  2048 rand  |   14.4-15.7    14.4-14.4    10.3-10.3    70.3-70.5   115.0-115.6 |   0.72     0.69     6.81
+decode    64  4096 rand  |   16.5-16.5    16.4-16.5    12.4-12.5    80.0-80.0   124.9-125.0 |   0.76     0.75     6.44
+decode    64  8192 rand  |   18.5-18.5    18.5-18.5    14.4-14.4   125.9-126.0  170.8-170.9 |   0.78     0.78     8.72
+decode     4  8192 ties  |   12.4-12.4    12.4-12.4    10.3-10.3    76.0-76.1   118.6-118.9 |   0.84     0.84     7.35
+decode    16  8192 ties  |   12.4-12.4    12.4-12.5    10.3-10.3    81.1-81.2   123.6-123.7 |   0.83     0.84     7.85
+decode    64  8192 ties  |   20.6-23.1    20.5-20.5    16.5-16.5   121.4-121.8  166.5-166.6 |   0.80     0.75     7.38
+prefill 4096  1024 rand  |  168.0-168.3  164.0-164.0  132.0-132.0 1472.9-1473.1 2717.7-2726.3 |   0.80     0.78    11.16
+prefill 4096  1024 ties  |  255.3-255.6  251.0-251.0  168.3-168.5 1423.3-1427.9 2667.8-2680.4 |   0.67     0.66     8.46
+prefill 4096  2048 rand  |  376.2-376.3  371.0-371.3  302.8-308.0 2462.2-2473.3 3689.6-3691.3 |   0.82     0.81     8.08
+prefill 4096  2048 ties  |  525.0-525.2  519.5-519.7  386.4-386.5 2453.1-2462.4 3696.9-3697.8 |   0.74     0.74     6.36
+prefill 4096  4096 rand  |  467.5-471.5  463.4-466.6  372.5-381.3 3720.9-3749.1 4988.1-5010.2 |   0.81     0.80     9.91
+prefill 4096  4096 ties  |  591.2-592.1  583.6-584.2  474.0-480.7 3944.9-3946.2 5200.6-5211.2 |   0.82     0.81     8.27
+prefill 4096  8192 rand  |  637.4-649.0  636.3-644.3  619.0-637.3 6634.0-6663.5 7916.6-7922.7 |   0.98     0.98    10.58
+prefill 4096  8192 ties  |  749.5-764.0  746.2-746.5  724.8-725.6 6784.6-6786.1 8042.9-8043.7 |   0.97     0.96     9.36
+== KBENCH DONE ==
+=== 07:44:13 server A/B
+  qsaexact INSTALLED (inert unless VLLM_QSA_EXACT_TOPK=1; logs QSATOPK path lines)
+== armrun topk55122: spec valid (3 arms). Nothing started. ==
+== armrun topk55122: 3 arms x 2 start(s), port 8092 ==
+-- topk55122-stock0  env={'FN_DET_TOPK': '0'}
+Running as unit: fx-armrun-topk55122.service; invocation ID: 2dd32c6d0a4048919e384f934fe6ef17
+   void checks passed (2 required, 2 forbidden)
+   {"ttft8k_med": 2.746, "ttft8k_all": [3.142, 2.746, 2.738], "ptok8k": 7532, "ttft30k_med": 10.37, "ttft30k_all": [10.37, 10.343, 10.398], "ptok30k": 29298, "total_s": 12.3, "s_per_turn": 1.54, "tokens": 203, "ms_per_tok": 60.8, "accept_rate": 56.1, "accept_len": 2.68, "agentloop_raw": ["  topk55122-stock0 turn 1:   3.44 s    28 tok  hits+      0  acc  54.5% len 2.64", "  topk55122-stock0 turn 2:   1.50 s    35 tok  hits+   6400  acc  59.0% len 2.77", "  topk55122-stock0 turn 3:   1.17 s    29 tok  hits+   6400  acc  83.3% len 3.50", "  topk55122-stock0 turn 4:   1.36 s    26 tok  hits+   6400  acc  45.5% len 2.36", "  topk55122-stock0 turn 5:   1.26 s    19 tok  hits+   6400  acc  33.3% len 2.00", "  topk55122-stock0 turn 6:   1.25 s    20 tok  hits+   6400  acc  37.0% len 2.11", "  topk55122-stock0 turn 7:   1.14 s    22 tok  hits+   6400  acc  76.2% len 3.29", "  topk55122-stock0 turn 8:   1.22 s    24 tok  hits+   6400  acc  70.8% len 3.12", "  topk55122-stock0 TOTAL 12.3 s over 8 turns  (1.54 s/turn)  203 tok  60.80 ms/tok", "  ACCEPT topk55122-stock0-post: drafts=76 draft_tok=228 accepted=128 rate=56.1%  mean_accept_len=2.68"], "env_path": ["stock"], "call_path": ["stock"], "det_libs_mapped": []}
+-- topk55122-pr0  env={'FN_DET_TOPK': '1', 'FN_DET_LIB': '/opt/llm/runners/topk55122/build-pr-server/_C_det.so'}
+Running as unit: fx-armrun-topk55122.service; invocation ID: c5fa00349be248649489a21d7471c1a7
+   void checks passed (2 required, 2 forbidden)
+   {"ttft8k_med": 2.736, "ttft8k_all": [2.896, 2.736, 2.72], "ptok8k": 7536, "ttft30k_med": 10.303, "ttft30k_all": [10.303, 10.285, 10.351], "ptok30k": 29296, "total_s": 13.3, "s_per_turn": 1.67, "tokens": 236, "ms_per_tok": 56.48, "accept_rate": 53.3, "accept_len": 2.6, "agentloop_raw": ["  topk55122-pr0 turn 1:   3.37 s    29 tok  hits+      0  acc  63.3% len 2.90", "  topk55122-pr0 turn 2:   1.24 s    30 tok  hits+   6400  acc  70.0% len 3.10", "  topk55122-pr0 turn 3:   1.21 s    32 tok  hits+   6400  acc  85.2% len 3.56", "  topk55122-pr0 turn 4:   1.47 s    28 tok  hits+   6400  acc  38.5% len 2.15", "  topk55122-pr0 turn 5:   1.65 s    29 tok  hits+   6400  acc  33.3% len 2.00", "  topk55122-pr0 turn 6:   1.34 s    29 tok  hits+   6400  acc  63.3% len 2.90", "  topk55122-pr0 turn 7:   1.60 s    34 tok  hits+   6400  acc  47.6% len 2.43", "  topk55122-pr0 turn 8:   1.45 s    25 tok  hits+   6400  acc  45.5% len 2.36", "  topk55122-pr0 TOTAL 13.3 s over 8 turns  (1.67 s/turn)  236 tok  56.48 ms/tok", "  ACCEPT topk55122-pr0-post: drafts=92 draft_tok=276 accepted=147 rate=53.3%  mean_accept_len=2.60"], "env_path": ["det:/opt/llm/runners/topk55122/build-pr-server/_C_det.so"], "call_path": ["det:/opt/llm/runners/topk55122/build-pr-server/_C_det.so"], "det_libs_mapped": ["/opt/llm/runners/topk55122/build-pr-server/_C_det.so"]}
+-- topk55122-exact0  env={'FN_DET_TOPK': '0', 'VLLM_QSA_EXACT_TOPK': '1'}
+Running as unit: fx-armrun-topk55122.service; invocation ID: 2c659a07393e481e96724ee39e361053
+   void checks passed (2 required, 2 forbidden)
+   {"ttft8k_med": 2.757, "ttft8k_all": [2.867, 2.757, 2.756], "ptok8k": 7537, "ttft30k_med": 10.652, "ttft30k_all": [10.673, 10.652, 10.618], "ptok30k": 29294, "total_s": 12.7, "s_per_turn": 1.58, "tokens": 216, "ms_per_tok": 58.7, "accept_rate": 58.2, "accept_len": 2.75, "agentloop_raw": ["  topk55122-exact0 turn 1:   3.63 s    32 tok  hits+      0  acc  51.3% len 2.54", "  topk55122-exact0 turn 2:   1.36 s    34 tok  hits+   6400  acc  72.7% len 3.18", "  topk55122-exact0 turn 3:   1.09 s    25 tok  hits+   6400  acc  85.7% len 3.57", "  topk55122-exact0 turn 4:   1.17 s    19 tok  hits+   6400  acc  41.7% len 2.25", "  topk55122-exact0 turn 5:   1.36 s    29 tok  hits+   6400  acc  63.3% len 2.90", "  topk55122-exact0 turn 6:   1.40 s    31 tok  hits+   6400  acc  60.6% len 2.82", "  topk55122-exact0 turn 7:   1.49 s    23 tok  hits+   6400  acc  33.3% len 2.00", "  topk55122-exact0 turn 8:   1.19 s    23 tok  hits+   6400  acc  71.4% len 3.14", "  topk55122-exact0 TOTAL 12.7 s over 8 turns  (1.58 s/turn)  216 tok  58.70 ms/tok", "  ACCEPT topk55122-exact0-post: drafts=79 draft_tok=237 accepted=138 rate=58.2%  mean_accept_len=2.75"], "env_path": ["exact"], "call_path": ["exact"], "det_libs_mapped": []}
+-- topk55122-stock1  env={'FN_DET_TOPK': '0'}
+Running as unit: fx-armrun-topk55122.service; invocation ID: 22d103b65ea6467cb62f64ce322f390c
+   void checks passed (2 required, 2 forbidden)
+   {"ttft8k_med": 2.727, "ttft8k_all": [2.916, 2.725, 2.727], "ptok8k": 7533, "ttft30k_med": 10.309, "ttft30k_all": [10.317, 10.288, 10.309], "ptok30k": 29297, "total_s": 12.4, "s_per_turn": 1.55, "tokens": 208, "ms_per_tok": 59.75, "accept_rate": 57.3, "accept_len": 2.72, "agentloop_raw": ["  topk55122-stock1 turn 1:   3.35 s    31 tok  hits+      0  acc  70.0% len 3.10", "  topk55122-stock1 turn 2:   1.40 s    36 tok  hits+   6400  acc  69.4% len 3.08", "  topk55122-stock1 turn 3:   1.06 s    25 tok  hits+   6400  acc  85.7% len 3.57", "  topk55122-stock1 turn 4:   1.31 s    22 tok  hits+   6400  acc  43.3% len 2.30", "  topk55122-stock1 turn 5:   1.47 s    30 tok  hits+   6400  acc  50.0% len 2.50", "  topk55122-stock1 turn 6:   1.13 s    20 tok  hits+   6400  acc  66.7% len 3.00", "  topk55122-stock1 turn 7:   1.35 s    20 tok  hits+   6400  acc  33.3% len 2.00", "  topk55122-stock1 turn 8:   1.35 s    24 tok  hits+   6400  acc  50.0% len 2.50", "  topk55122-stock1 TOTAL 12.4 s over 8 turns  (1.55 s/turn)  208 tok  59.75 ms/tok", "  ACCEPT topk55122-stock1-post: drafts=78 draft_tok=234 accepted=134 rate=57.3%  mean_accept_len=2.72"], "env_path": ["stock"], "call_path": ["stock"], "det_libs_mapped": []}
+-- topk55122-pr1  env={'FN_DET_TOPK': '1', 'FN_DET_LIB': '/opt/llm/runners/topk55122/build-pr-server/_C_det.so'}
+Running as unit: fx-armrun-topk55122.service; invocation ID: 3cdeb85c9bc04a32aad12955864c6768
+   void checks passed (2 required, 2 forbidden)
+   {"ttft8k_med": 2.732, "ttft8k_all": [3.365, 2.731, 2.732], "ptok8k": 7534, "ttft30k_med": 10.332, "ttft30k_all": [10.343, 10.32, 10.332], "ptok30k": 29295, "total_s": 13.3, "s_per_turn": 1.67, "tokens": 236, "ms_per_tok": 56.51, "accept_rate": 53.3, "accept_len": 2.6, "agentloop_raw": ["  topk55122-pr1 turn 1:   3.38 s    29 tok  hits+      0  acc  63.3% len 2.90", "  topk55122-pr1 turn 2:   1.26 s    30 tok  hits+   6400  acc  70.0% len 3.10", "  topk55122-pr1 turn 3:   1.22 s    32 tok  hits+   6400  acc  85.2% len 3.56", "  topk55122-pr1 turn 4:   1.49 s    28 tok  hits+   6400  acc  38.5% len 2.15", "  topk55122-pr1 turn 5:   1.65 s    29 tok  hits+   6400  acc  33.3% len 2.00", "  topk55122-pr1 turn 6:   1.32 s    29 tok  hits+   6400  acc  63.3% len 2.90", "  topk55122-pr1 turn 7:   1.59 s    34 tok  hits+   6400  acc  47.6% len 2.43", "  topk55122-pr1 turn 8:   1.43 s    25 tok  hits+   6400  acc  45.5% len 2.36", "  topk55122-pr1 TOTAL 13.3 s over 8 turns  (1.67 s/turn)  236 tok  56.51 ms/tok", "  ACCEPT topk55122-pr1-post: drafts=92 draft_tok=276 accepted=147 rate=53.3%  mean_accept_len=2.60"], "env_path": ["det:/opt/llm/runners/topk55122/build-pr-server/_C_det.so"], "call_path": ["det:/opt/llm/runners/topk55122/build-pr-server/_C_det.so"], "det_libs_mapped": ["/opt/llm/runners/topk55122/build-pr-server/_C_det.so"]}
+-- topk55122-exact1  env={'FN_DET_TOPK': '0', 'VLLM_QSA_EXACT_TOPK': '1'}
+Running as unit: fx-armrun-topk55122.service; invocation ID: 0b5000d6c8b64019b925aa32db0175fc
+   void checks passed (2 required, 2 forbidden)
+   {"ttft8k_med": 2.767, "ttft8k_all": [2.976, 2.767, 2.763], "ptok8k": 7539, "ttft30k_med": 10.704, "ttft30k_all": [10.729, 10.693, 10.704], "ptok30k": 29296, "total_s": 12.7, "s_per_turn": 1.59, "tokens": 216, "ms_per_tok": 58.79, "accept_rate": 58.2, "accept_len": 2.75, "agentloop_raw": ["  topk55122-exact1 turn 1:   3.61 s    32 tok  hits+      0  acc  51.3% len 2.54", "  topk55122-exact1 turn 2:   1.34 s    34 tok  hits+   6400  acc  72.7% len 3.18", "  topk55122-exact1 turn 3:   1.10 s    25 tok  hits+   6400  acc  85.7% len 3.57", "  topk55122-exact1 turn 4:   1.18 s    19 tok  hits+   6400  acc  41.7% len 2.25", "  topk55122-exact1 turn 5:   1.37 s    29 tok  hits+   6400  acc  63.3% len 2.90", "  topk55122-exact1 turn 6:   1.44 s    31 tok  hits+   6400  acc  60.6% len 2.82", "  topk55122-exact1 turn 7:   1.49 s    23 tok  hits+   6400  acc  33.3% len 2.00", "  topk55122-exact1 turn 8:   1.17 s    23 tok  hits+   6400  acc  71.4% len 3.14", "  topk55122-exact1 TOTAL 12.7 s over 8 turns  (1.59 s/turn)  216 tok  58.79 ms/tok", "  ACCEPT topk55122-exact1-post: drafts=79 draft_tok=237 accepted=138 rate=58.2%  mean_accept_len=2.75"], "env_path": ["exact"], "call_path": ["exact"], "det_libs_mapped": []}
+
+== RESULT ==
+  stock        ttft8k_med 2.727–2.746  ptok8k 7532–7533  ttft30k_med 10.309–10.37  ptok30k 29297–29298  total_s 12.3–12.4  s_per_turn 1.54–1.55  tokens 203–208  ms_per_tok 59.75–60.8  accept_rate 56.1–57.3  accept_len 2.68–2.72  start 0–1
+  pr           ttft8k_med 2.732–2.736  ptok8k 7534–7536  ttft30k_med 10.303–10.332  ptok30k 29295–29296  total_s 13.3  s_per_turn 1.67  tokens 236  ms_per_tok 56.48–56.51  accept_rate 53.3  accept_len 2.6  start 0–1
+  exact        ttft8k_med 2.757–2.767  ptok8k 7537–7539  ttft30k_med 10.652–10.704  ptok30k 29294–29296  total_s 12.7  s_per_turn 1.58–1.59  tokens 216  ms_per_tok 58.7–58.79  accept_rate 58.2  accept_len 2.75  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+=== 08:59:16 armrun rc=0
+== ALL DONE ==
+=== 08:59:16 restore: patch off, prod start
+  qsaexact REMOVED
+0
+=== 09:09:48 prod restored after 630s
+== JOB END ==

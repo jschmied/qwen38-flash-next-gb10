@@ -77,7 +77,7 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 | #58439 PLE checkpoint-mapped backend | PR | open, bot comments only |
 | #58441 PinnedHost side-stream race | issue | fixed by #58489 (Juntian777, open) |
 | #54076 prefix-cache arm | owed → **delivered** 09-23 (comment v2) | watch for wickist / MaCoredroid |
-| #55122 det top-k | PR | open. **The perf arm is no longer structurally blocked**: main serves this model since 09-23. It is the one cell nobody has measured (the 21–28 % claim). Post a measurement or nothing. |
+| #55122 det top-k | PR | open. **Perf measured on the head, det-235:** the kernel is 4–26 % faster than stock on GPU time and indistinguishable end to end; it is 3–4 % faster than exact `torch.topk` in 30k TTFT. Draft `comment-55122-perf-bench-head.md` awaits a go. |
 | #54912 QSA ring widening | PR | open, no human review since 09-02 |
 | #38315 FLA fused kkt+solve | not ours | open; our `pr-fla-fused-kkt-solve.md` stays unopened as a duplicate |
 

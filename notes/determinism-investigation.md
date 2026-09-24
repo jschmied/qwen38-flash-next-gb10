@@ -6001,3 +6001,69 @@ runs on the installed artifact.
 
 `mtp-remeasure3` would not have caught any of this: it runs at 8,192 context, far from the failure
 regime, so prod could have carried an unvalidated kernel while looking healthy.
+
+## det-235 — #55122 perf bench on the current head: the PR kernel is 4–26 % FASTER than stock, and costs nothing end to end
+
+2026-09-24. The perf cell nobody had measured on the current head (`b2312b2de`, the port onto
+`filtered_topk_row`). Hypothesis and ranges were written before the run: `tools/topk55122/HYPOTHESIS.md`.
+Box: GB10 sm_121, vLLM main `1ea7c63f4`, prod config (MTP n=3, nodrop, 32k draft-vocab slice, checkpoint-mapped
+PLE, prefix cache on). Raw data: `notes/data/topk55122*.{txt,json,jsonl}`.
+
+**Kernel, GPU time only.** Measured by CUDA-graph replay, so host launch overhead is excluded. The profiler shows
+all three builds launch the same `persistent_topk_kernel<512,4u>`, so no routing differs; the difference is inside
+the kernel. The `base` and `pr` builds are standalone with identical flags; they differ only by the PR diff. The
+wheel's top-k sources are byte-identical to `base`.
+
+| shape (rows × columns) | wheel | base | **pr** | pr/base | exact `torch.topk` |
+|---|---:|---:|---:|---:|---:|
+| decode 4 × 2048 | 6.74 | 6.59 | **4.89** | 0.74 | 34.9 |
+| decode 4 × 8192 | 8.61 | 8.28 | **6.74** | 0.81 | 52.4 |
+| decode 64 × 8192 | 15.69 | 15.03 | **11.84** | 0.79 | 76.1 |
+| prefill 4096 × 1024 (causal) | 179.6 | 177.9 | **142.5** | 0.80 | 1,344 |
+| prefill 4096 × 2048 (causal) | 371.9 | 366.6 | **294.6** | 0.80 | 2,374 |
+| prefill 4096 × 8192 (causal) | 645.6 | 633.9 | **610.6** | 0.96 | 6,763 |
+
+All values are µs per call. The eager event-timed bench (`topk55122-kbench.json`, 26 shapes, 2 rounds with the arm
+order reversed) agrees: pr/base is 0.67–1.00, including tie-heavy data.
+
+The correctness pre-checks passed before any timing:
+- set equality with exact on tie-free data, for decode and causal prefill shapes;
+- `pr` bitwise repeatable over 20 calls on tie data;
+- every `pr` selection is a valid top-k.
+
+**Server.** Three arms, two interleaved starts each, ranges shown. Every arm's void checks passed: the path line
+(`QSATOPK env/call path=`) matched each time, and `/proc/*/maps` showed `build-pr-server/_C_det.so` mapped only in
+the pr arm.
+
+| arm | TTFT 8k cold | TTFT 30k cold | agent loop s/turn | tokens | accept len |
+|---|---|---|---|---|---|
+| stock | 2.727–2.746 | 10.309–10.370 | 1.54–1.55 | 203–208 | 2.68–2.72 |
+| **pr** | 2.732–2.736 | 10.303–10.332 | 1.67 | 236 / 236 | 2.60 |
+| exact `torch.topk` | 2.757–2.767 | 10.652–10.704 | 1.58–1.59 | 216 / 216 | 2.75 |
+
+**Readings.**
+1. **pr vs stock end to end: no difference.** The TTFT ranges overlap at both lengths. A 20 % kernel win on
+   under 1 % of the step does not show up.
+2. **exact vs pr: +3.1…+3.9 % TTFT at 30k, +0.8…+1.3 % at 8k.** The ranges are disjoint and the gap exceeds either
+   arm's own spread.
+3. **Decode is not separable in this probe.** The arms generate different text: 203–236 tokens and different
+   acceptance. So s/turn and ms/tok compare different workloads and are not reported as an effect.
+4. **Side observation, not the question, n=2.** Both deterministic arms reproduced their agent-loop output token
+   count exactly across the two starts (236/236, 216/216). Stock did not (203 vs 208).
+
+**Hypothesis check: two cells were out of range.** The explanations are confirmed, not assumed.
+- **`pr/base` 0.74–0.96, against an expected 0.95–1.35.** That range came from the dev401-era v2.x revisions
+  (1.14–1.30×). The follow-up probe (profiler roster plus graph replay) rules out the two instrument explanations.
+  It is not host overhead: the gap holds in graph replay. It is not a different stock routing: `base` never took
+  its `top_k_per_row_decode` fallback, and the roster has the same kernel in every arm. The mechanism inside the
+  kernel is **not attributed**.
+- **`exact/pr` 7–11× at kernel level, against an expected 1.1–3.0.** The range was built on a misreading. k3dani's
+  21–28 % is **end-to-end prefill tok/s**, not kernel time.
+- **Why k3dani's end-to-end gap is larger than ours (21–28 % vs 3–4 %).** Their workaround
+  (`k3net/docai-evals` `…/patch/qsa_exact_topk.patch`, mode 1) does a **full stable descending sort** of every row.
+  Our `exact` arm does `torch.topk`, the cheapest exact variant. Their number is the PR against a full-sort
+  workaround, and ours bounds the gap against the cheapest workaround. We did not run their variant.
+
+**Voided first run, recorded.** The `base` build failed to load: `undefined symbol top_k_per_row_decode`. The merge
+base's launcher falls back to it (in `sampler.cu`) on parts with <128 KiB smem, and the PR head removed that call.
+The fix added `sampler.cu` to the base build. `topk55122-run1-void.txt`.
