@@ -1,0 +1,38 @@
+{
+ "name": "fullcg-pre",
+ "venv": "/opt/llm/runtime/vllm-venv-main1ea7",
+ "model": "/opt/llm/models/qwen38-flash-next-mtpfp4",
+ "env": {
+  "FN_MAXLEN": "32768",
+  "FN_SEQS": "16",
+  "FN_SPEC_METHOD": "mtp",
+  "FN_SPEC_N": "3",
+  "FN_SPEC_NODROP": "1",
+  "FN_SPEC_LOCALARGMAX": "1",
+  "FN_DRAFT_VOCAB": "/opt/llm/runners/dv/draft_vocab_32768.txt",
+  "FN_DRAFT_HEAD_NVFP4": "1",
+  "FN_NVFP4_CFG": "64,4",
+  "FN_PLE_OFFLOAD": "0",
+  "FN_EXTRA": "--engram-config {\"checkpoint_mapped\":true}"
+ },
+ "probe_cmd": [
+  "<venv>/bin/python",
+  "/opt/llm/runners/fullcg/decprobe.py",
+  "{arm}"
+ ],
+ "starts": 1,
+ "arms": [
+  {
+   "name": "full",
+   "env": {
+    "FN_CG_MODE": "FULL_DECODE_ONLY",
+    "FN_CG_SIZES": "[4,8,12,16,20,24,32,48,64]"
+   },
+   "log_must_contain": [
+    "Capturing CUDA graphs (FULL)",
+    "NVFP4 slice, FNNVFP4",
+    "Mapped PLE table"
+   ]
+  }
+ ]
+}

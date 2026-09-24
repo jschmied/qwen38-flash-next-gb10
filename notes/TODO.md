@@ -55,11 +55,7 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 8. **Finish the MTP re-measurement** (`mtp-remeasure-plan.md`). The Quant Map page flags its depth curve as under
    re-measurement.
 
-## NEW 2026-09-24: FULL_DECODE_ONLY decode graphs (finding 236)
-
-Now that the PLE finalize fix (local `be7a84fe4`) is in the prod venv, FULL_DECODE_ONLY captures and serves on
-Flash-Next. Prod decode runs uncaptured under PIECEWISE (det-193/194). Next: an A/B of FULL_DECODE_ONLY vs
-PIECEWISE at c=1/4 with MTP n=3, checking output identity. Pushing `be7a84fe4` to PR #58439 needs a go.
+## ~~FULL_DECODE_ONLY decode graphs~~ — MEASURED 2026-09-24 (finding 237): decode null, agent turns 3–4 % slower; keep PIECEWISE. `be7a84fe4` pushed to #58439.
 
 ## Needs prod DOWN
 

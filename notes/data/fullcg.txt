@@ -1,0 +1,48 @@
+=== 20:56:48 start
+=== 20:56:51 prod stopped; MemAvailable 118 GiB
+== armrun fullcg-pre: 1 arms x 1 start(s), port 8092 ==
+-- fullcg-pre-full0  env={'FN_CG_MODE': 'FULL_DECODE_ONLY', 'FN_CG_SIZES': '[4,8,12,16,20,24,32,48,64]'}
+Running as unit: fx-armrun-fullcg-pre.service; invocation ID: 44a9603275414b0ab53894500de8d0b3
+   void checks passed (3 required, 0 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.09, "accept_len": 2.533, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.046}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 88.92, "wall_s": 29.51}, "agent": {"total_s": 13.4, "s_per_turn": 1.68, "tokens": 236, "ms_per_tok": 56.79}, "fallback_line": true, "c1_ms_tok": 23.046, "c4_tok_s": 88.92, "c1_acc_len": 2.533, "s_turn": 1.68}
+
+== RESULT ==
+  full         fallback_line True  c1_ms_tok 23.046  c4_tok_s 88.92  c1_acc_len 2.533  s_turn 1.68  start 0
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+=== 21:10:15 preflight (FULL, default compile) rc=0
+== armrun fullcg: 2 arms x 3 start(s), port 8092 ==
+-- fullcg-base0  env=(spec default)
+Running as unit: fx-armrun-fullcg.service; invocation ID: 93aac3ad9a494788a78ea0fa94959a92
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.17, "accept_len": 2.535, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.29}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 86.8, "wall_s": 30.232}, "agent": {"total_s": 13.1, "s_per_turn": 1.64, "tokens": 236, "ms_per_tok": 55.7}, "fallback_line": true, "c1_ms_tok": 23.29, "c4_tok_s": 86.8, "c1_acc_len": 2.535, "s_turn": 1.64}
+-- fullcg-full0  env={'FN_CG_MODE': 'FULL_DECODE_ONLY', 'FN_CG_SIZES': '[4,8,12,16,20,24,32,48,64]'}
+Running as unit: fx-armrun-fullcg.service; invocation ID: 042b3000cc2c44ea93a18a18f0873609
+   void checks passed (3 required, 0 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.09, "accept_len": 2.533, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.059}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 89.56, "wall_s": 29.3}, "agent": {"total_s": 13.5, "s_per_turn": 1.69, "tokens": 236, "ms_per_tok": 57.33}, "fallback_line": true, "c1_ms_tok": 23.059, "c4_tok_s": 89.56, "c1_acc_len": 2.533, "s_turn": 1.69}
+-- fullcg-base1  env=(spec default)
+Running as unit: fx-armrun-fullcg.service; invocation ID: 06e28d41c9bc48638d0bb1b4e204b43c
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.17, "accept_len": 2.535, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.14}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 87.17, "wall_s": 30.102}, "agent": {"total_s": 13.2, "s_per_turn": 1.65, "tokens": 236, "ms_per_tok": 55.92}, "fallback_line": true, "c1_ms_tok": 23.14, "c4_tok_s": 87.17, "c1_acc_len": 2.535, "s_turn": 1.65}
+-- fullcg-full1  env={'FN_CG_MODE': 'FULL_DECODE_ONLY', 'FN_CG_SIZES': '[4,8,12,16,20,24,32,48,64]'}
+Running as unit: fx-armrun-fullcg.service; invocation ID: 45830e1e35f74b3eac07884234c078d1
+   void checks passed (3 required, 0 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.09, "accept_len": 2.533, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.345}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 86.06, "wall_s": 30.491}, "agent": {"total_s": 13.6, "s_per_turn": 1.7, "tokens": 236, "ms_per_tok": 57.72}, "fallback_line": true, "c1_ms_tok": 23.345, "c4_tok_s": 86.06, "c1_acc_len": 2.533, "s_turn": 1.7}
+-- fullcg-base2  env=(spec default)
+Running as unit: fx-armrun-fullcg.service; invocation ID: 8134082c8f8040359d9c89b046085ef3
+   void checks passed (2 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.17, "accept_len": 2.535, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.455}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 86.75, "wall_s": 30.246}, "agent": {"total_s": 13.2, "s_per_turn": 1.65, "tokens": 236, "ms_per_tok": 56.05}, "fallback_line": true, "c1_ms_tok": 23.455, "c4_tok_s": 86.75, "c1_acc_len": 2.535, "s_turn": 1.65}
+-- fullcg-full2  env={'FN_CG_MODE': 'FULL_DECODE_ONLY', 'FN_CG_SIZES': '[4,8,12,16,20,24,32,48,64]'}
+Running as unit: fx-armrun-fullcg.service; invocation ID: a77f113e70b143f8aad3d1177f080064
+   void checks passed (3 required, 0 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 51.09, "accept_len": 2.533, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 23.022}, "c4": {"gen_tokens": 2624.0, "accept_rate": 48.67, "accept_len": 2.46, "shas": ["d80b12075ac4f6dd", "2712bd397de6dfea", "422d24f25f53867d", "4bef1a2bfe0197d6"], "agg_tok_s": 87.41, "wall_s": 30.021}, "agent": {"total_s": 13.7, "s_per_turn": 1.71, "tokens": 236, "ms_per_tok": 58.12}, "fallback_line": true, "c1_ms_tok": 23.022, "c4_tok_s": 87.41, "c1_acc_len": 2.533, "s_turn": 1.71}
+
+== RESULT ==
+  base         fallback_line True  c1_ms_tok 23.14–23.455  c4_tok_s 86.75–87.17  c1_acc_len 2.535  s_turn 1.64–1.65  start 0–2
+  full         fallback_line True  c1_ms_tok 23.022–23.345  c4_tok_s 86.06–89.56  c1_acc_len 2.533  s_turn 1.69–1.71  start 0–2
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+=== 22:31:07 armrun rc=0
+=== 22:31:07 restore: prod start
+=== 22:41:58 prod restored after 660s
+== JOB END ==

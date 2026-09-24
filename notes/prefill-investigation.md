@@ -3997,3 +3997,32 @@ inherited the pinned backend's `_finalize_prefetch`, which joins the pinned side
 **Consequence: a new lever.** FULL_DECODE_ONLY decode graphs now start and serve on Flash-Next (R3). det-202/203
 had closed full decode graphs because of the PLE path. Prod decode is uncaptured under PIECEWISE (det-193/194), so
 a FULL_DECODE_ONLY vs PIECEWISE decode A/B is now worth running (queued).
+
+## Finding 237 — FULL_DECODE_ONLY decode graphs: decode null, agent turns 3–4 % slower; not a promotion candidate (2026-09-24)
+
+**Setup.** With the PLE finalize fix (finding 236), FULL_DECODE_ONLY captures on Flash-Next: 3 `Capturing CUDA
+graphs (FULL)` lines in the full arm and 0 in base. The FULL arm uses prod's default compile mode (the preflight
+start served). Capture sizes are [4,8,12,16,20,24,32,48,64]. Everything else is the prod config (NVFP4 draft head,
+32k slice, MTP n=3, nodrop, mapped PLE). 3 interleaved starts per arm, decode probe (`tools/fullcg/`).
+
+| arm | c=1 decode ms/tok | c=4 aggregate tok/s | agent s/turn | accept len c=1 / c=4 | c=1 output |
+|---|---|---|---|---|---|
+| base (PIECEWISE, prod) | 23.29 / 23.14 / 23.455 (mean 23.30) | 86.8 / 87.17 / 86.75 | 1.64 / 1.65 / 1.65 | 2.535 / 2.46 | reference hashes |
+| FULL_DECODE_ONLY | 23.059 / 23.345 / 23.022 (mean 23.14) | 89.56 / 86.06 / 87.41 | **1.69 / 1.70 / 1.71** | 2.533 / 2.46 | **identical** |
+
+The preflight start (FULL) gave 23.046 / 88.92 / 1.68, in line.
+
+**Readings:**
+- **Decode is null.** The ranges overlap at c=1 (−0.7 % on the means) and at c=4 (+0.9 %). The hypothesis range
+  (−3…−20 % at c=1) is missed on the null side.
+- **This fits the speed-of-light analysis** (`speed-of-light.md`): the GPU is busy through the step, and the gap to
+  the floor is kernel efficiency, not host launch overhead.
+- **Agent turns are 3–4 % slower**, with disjoint ranges in all three rounds. The loop includes prefill of each warm
+  turn, which FULL_DECODE_ONLY leaves outside the graphs. The mechanism is not isolated.
+- **Output is identical** (all c=1 hashes, and the c=4 hashes match too). The acceptance difference (2.533 vs 2.535)
+  is drafter numerics under capture, below any consequence.
+- **Why the field saw +6…+16 %** (tonyd2wild, GB10): their control ran with torch.compile *off*, so graphs replaced
+  eager launches of uncompiled code. Our base is compiled PIECEWISE, which already fuses most of what graphs save.
+
+**Verdict:** keep PIECEWISE. FULL_DECODE_ONLY is now *possible* on our stack (finding 236), but it is not a lever
+here.
