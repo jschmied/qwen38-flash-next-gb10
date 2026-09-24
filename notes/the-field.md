@@ -2089,3 +2089,58 @@ DeepSelect is the reverse. It is not a drop-in answer to the maintainer's "wants
 
 **Queued, cheap, not run:** add a sm_120a gencode line and see whether it compiles and passes its own
 `tests/test.py` on GB10. That is the first fact worth having, and it costs one build.
+
+## Field survey 2026-09-24 — speedups we are not using (three parallel read-only surveys)
+
+**Where we stand.** Per-step decode time in the field is about ours: about 53–60 ms per verify step at c=1 on
+GB10. Higher published tok/s mostly comes from easier text: code accepts 3.4–3.6 tokens per step, our essay probe
+2.5. The best detailed real-prompt single-stream medians are 43–44 tok/s, against our 41.5 on essays. No report
+beats our cold TTFT (2.7 s at 8k, 10.3 s at 30k). The two highest claims do not hold up: MiaAI's 48.7 tok/s is
+contested in their issue #59, and the forum's "64 tok/s" peak is a count-to-100 prompt.
+
+**Candidates, by value and cost.** All numbers are field numbers, so each is a hypothesis about a mechanism:
+1. **Draft-head slice bytes.**
+   - Shinrali (HF): a 65k FP8 slice gave +4.3 % mean decode with acceptance flat.
+   - Saren: a full int4 draft head was a speed wash and cost 1–8 points of acceptance.
+   - Our NVFP4 32k slice is being A/B'd today: −3.2…−3.6 % ms/tok over 2 rounds, acceptance unchanged.
+2. **Dynamic draft length** (vcruz305, exllamav3 on GB10). `-ndt 5 -dds -dc 0.6` took prose from 41.7 to 53 tok/s
+   (+27 %); code was flat. Their per-position acceptance on essays was 0.65 / 0.38 / 0.17 / 0.08. This is our
+   queued lever; it needs the #57608 hook and the ring widening.
+3. **QSA tuning table on sm_121.** `_is_sm120()` checks for exactly (12,0), so GB10 gets the GB300 table: prefill
+   (32,1,1) instead of sm_120's (64,2,2). Found independently by two surveys. A one-line A/B.
+4. **BF16 small GEMMs at M=2–16:**
+   - vllm#57318: FlashInfer `mm_bf16` is 3.5× faster than cuBLAS on GB10 for the GDN b/a projection at M=2–8, and
+     loses at M=1;
+   - vcruz305: int8 hyper-connection mixer weights with a custom GEMV, +6–10 % on GB10 (stock FP8 kernels have a
+     ~41 µs floor on GB10, gitcommit90);
+   - our own note: the mixer is latency-bound at ~78 % of roofline.
+5. **Adaptive prefill budget** (salmanarshad321): 8192 tokens per step when nothing is decoding, 4096 otherwise.
+   A cold 20k prompt went 8.40 → 7.69 s (−8.35 %) with decode unaffected. Drop-in via `--scheduler-cls`. vLLM main
+   #58459 is related.
+6. **`vm.compaction_proactiveness=0`.** bilikaz reports ~10 % from 4–5 s stalls every ~37 s near the memory limit;
+   JBChalnot measured null on TP2. Ours is the default. A sysctl A/B.
+7. **GPU slow state after 13+ min idle** (tonyd2wild, plain PyTorch): 66–80 GB/s against 224–233 GB/s for 7–32 s,
+   with no `nvidia-smi` signal. Our det-231 probe never started from a long idle. Test: idle 15 min, then one
+   request.
+8. **Host-side metadata:**
+   - vllm#52297 computes GDN metadata once per step (H200 build 900 → 300 µs);
+   - vllm#57039 removes two copies per GDN layer in FlashInfer prefill (−1–2 % TTFT, numerically identical).
+9. **FlashInfer 0.7.0:** b12x static MoE is −13 % at M=8–128 on sm_120 and flat at M ≤ 4, so it could flip the
+   c≥4 backend choice. It raises dependency floors. Audit the wheel for sm_121 first.
+10. **Marlin MoE backend.** Untried here. It beat b12x 2–3.3× on a different model with vLLM 0.24 on GB10.
+    W4A16-Marlin Flash-Next recipes step in 53–57 ms against our ~60. Low-to-medium prior because our MoE sits at
+    the DRAM floor. A flag A/B.
+
+**Risks surfaced:**
+- MTP acceptance drops to exactly 0 at ≥163,840-token prompts on vLLM 0.29 (vcruz305). Our max length is 32k, so it
+  does not apply today.
+- Async scheduling + MTP + repetition/presence penalties or `min_tokens` corrupts output at c≥2 (gitcommit90,
+  dev388). Prod has async scheduling on, so check whether any client sends penalties.
+- The BF16 SSM state was rejected on SGLang after a repeated-sample probe fell from 6/20 to 0/20 (shantanugoel).
+  That fits our parked finding 153.
+
+**Checked and not applicable:** PixelML DFlash (unchanged since 09-10; code is a wash). No EAGLE3/DSpark/DFlash2
+drafter for Flash-Next exists. PLE host-gather tricks don't apply because we map in place. Full decode graphs via
+a hoisted PLE gather are closed (det-202/203). Clock caps are a stability fix costing −1…−4 %. The shm spin-wait
+fix is TP≥2 only. SGLang on GB10 does 57.5 tok/s at c=8, behind us. llama.cpp does 23.6 t/s with IQ1_S.
+TensorRT-LLM has no Spark evidence. Reddit was not fetchable.
