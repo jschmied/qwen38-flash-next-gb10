@@ -81,6 +81,33 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 | #54912 QSA ring widening | PR | open, no human review since 09-02 |
 | #38315 FLA fused kkt+solve | not ours | open; our `pr-fla-fused-kkt-solve.md` stays unopened as a duplicate |
 
+**Sweep 2026-09-24:**
+- **#58489** was approved by ZJY0516, and CI is running.
+- **#58439:** hclsys independently confirmed the gate attributes on a second Spark; the PR is still waiting for
+  maintainer review.
+- **#56964** now carries our inverted-check design, so it would retire the prod genfix overlay once merged.
+- **#58157:** hclsys ran our test on GB10 (2 passed). They also flag an interaction with their #57512 (on SM12x
+  every fp32-scale checkpoint would warn) and suggest stating it in the description, which needs a go.
+- **New PRs to watch:**
+  - #58449, fused QSA draft-metadata updates, a direct MTP decode lever for us;
+  - #58040, a QSA metadata clamp for graph-padded offsets;
+  - #58114, PLE metadata overhead;
+  - #58300, peakcrosser7's Qwen4Exp cleanup, which touches `ngram_embedding.py` and so will conflict with #58439;
+  - #58207, the hybrid KV group-size heuristic;
+  - #58068, fixed-width indexer logits;
+  - #58310, the Engram host-memory check.
+- **New issues:**
+  - #58303, Mamba+EAGLE dense retention going back to 0 % prefix reuse under interleaved load, which is our
+    MTP+prefix-cache setup;
+  - #58422, a TP1 engine wedge on a Qwen3.8 GDN hybrid with MTP4 on SM120;
+  - #58080, the MTP draft not inheriting `--hf-overrides`.
+- **Main `b44895cf9`** (109 commits past prod):
+  - FlashInfer **0.7.0** (#58069): the GDN call now passes `backend="flashinfer"`, and jit-cache is `+cu134`. Audit
+    the wheel for sm_121 before any bump.
+  - #57176, per-token NVFP4 MoE backend selection;
+  - #49845, the KV block size chosen to suit every attention backend;
+  - #58459, adaptive `--long-prefill-token-threshold`.
+
 **Stale drafts** from 09-08/09, measured on dev401/fnmain2: `comment-54521-zc502-isolation.md`,
 `comment-54521-tcorrupt.md`, `comment-miaai-19-cudagraph-widths.md`. Re-check them against the current stack before
 any post, or drop them.
