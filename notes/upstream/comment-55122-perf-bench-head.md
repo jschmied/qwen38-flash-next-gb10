@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. GitHub vllm-project/vllm PR #55122, perf numbers on the current head (2026-09-24).
+POSTED 2026-09-24 (user go "do the post") as https://github.com/vllm-project/vllm/pull/55122#issuecomment-5809971218 — GitHub vllm-project/vllm PR #55122, perf numbers on the current head (2026-09-24).
 
 Perf numbers for the current head (`b2312b2de`), which nobody had measured since the port. This is on one DGX Spark
 (GB10, sm_121, TP=1), with vLLM main `1ea7c63f4` and Qwen3.8-Flash-Next.

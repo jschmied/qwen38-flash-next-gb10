@@ -1336,3 +1336,10 @@ wait on one ~100 GB pull, and they share one serve.
   args are weak refs, so `record_stream` is a no-op, and the only strong ref dies at return. Unit repro 3/3 on main.
   hclsys (GB10) commented on #58441 agreeing with row 3. Our planned fix PR was dropped as a duplicate (open-PR
   search first). No reply posted.
+- **2026-09-24 — vllm#55122 perf numbers on the current head** (user go "do the post"). Results:
+  - kernel GPU time: PR/base 0.74–0.96 (same kernel in both arms);
+  - end to end: PR = stock in TTFT; exact `torch.topk` +3–4 % at 30k;
+  - k3dani's 21–28 % attributed to their full-sort workaround.
+
+  Evidence: det-235. Text: `comment-55122-perf-bench-head.md`.
+  <https://github.com/vllm-project/vllm/pull/55122#issuecomment-5809971218>
