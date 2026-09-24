@@ -3850,3 +3850,35 @@ Verification:
 The real `GPUModelRunner.reload_weights` lifecycle is not integration-tested; the wording says the remap
 completes during reload processing or at the latest on the next lookup. Pushed to
 `jschmied/vllm:pr/ple-checkpoint-mapped`; not opened upstream.
+
+## Finding 233 — vllm#58449 (fused QSA draft-metadata update) engages here and is a null; output bit-identical (2026-09-24)
+
+**Question.** Prod logs `Fused multi-step draft decode is not supported by attention backend(s)
+QWEN4_EXP_EXP_QSA_STATE`, so with MTP n=3 the V2 speculator rebuilds the drafter's attention metadata before each
+draft decode step. #58449 (head `848dbf89e`, `qsa_cache.py` only) lets the QSA builder update in place so the
+fused loop runs. Hypothesis, written first (`tools/pr58449/HYPOTHESIS.md`): decode −0…−3 % at c=1, +0…+4 % at c=4,
+outputs identical.
+
+**Gate.** The PR's own unit test on GB10: 3/3 pass with the patched file and 3/3 fail with the original, so the
+test exercises the swap. The void checks also held: the fallback line is present in every `base` log and absent
+in every `pr` log.
+
+**Result.** Prod config (main1ea7, mtpfp4, MTP n=3, nodrop, 32k slice, checkpoint-mapped PLE), 3 interleaved
+starts per arm:
+
+| arm | c=1 decode ms/tok | c=4 aggregate tok/s | agent s/turn | accept len c=1 / c=4 |
+|---|---|---|---|---|
+| base | 24.057–24.351 | 83.72–85.25 | 1.66–1.67 | 2.525 / 2.437 |
+| pr | 24.148–24.229 | 84.00–85.29 | 1.66–1.76 | 2.525 / 2.437 |
+
+- **Every output hash is identical** across all six starts and both arms, at c=1 and c=4. Acceptance is identical
+  to the last digit. As expected, the change moves only drafting bookkeeping, never tokens.
+- **Speed: no effect.** The ranges overlap in every column, and the means differ by 0.04 % at c=1 (pr slower) and 0.08 % at
+  c=4 (pr faster). The single 1.76 s/turn is one `pr` start's agent loop (the other two read 1.66/1.67), and both its decode
+  cells sit inside `base`'s range.
+- **This is within the hypothesis at its lower bound.** The removed work is host-side, and c=1 decode here is
+  GPU-bound with async scheduling hiding host time (det-134/136), so saving one metadata build per verify cycle
+  changes nothing measurable.
+
+**Verdict.** Correct on GB10, with no speed benefit on this config. Not worth carrying as a prod overlay; it
+lands on its own when merged. Raw data: `notes/data/pr58449.txt`, `pr58449-server.jsonl`.

@@ -89,7 +89,8 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 - **#58157:** hclsys ran our test on GB10 (2 passed). They also flag an interaction with their #57512 (on SM12x
   every fp32-scale checkpoint would warn) and suggest stating it in the description, which needs a go.
 - **New PRs to watch:**
-  - #58449, fused QSA draft-metadata updates, a direct MTP decode lever for us;
+  - #58449, fused QSA draft-metadata updates: **measured 2026-09-24 (finding 233): correct on GB10, speed null,
+    outputs bit-identical**; not carried in prod;
   - #58040, a QSA metadata clamp for graph-padded offsets;
   - #58114, PLE metadata overhead;
   - #58300, peakcrosser7's Qwen4Exp cleanup, which touches `ngram_embedding.py` and so will conflict with #58439;

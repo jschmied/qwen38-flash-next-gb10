@@ -1,0 +1,54 @@
+=== 11:46:03 start
+=== 11:46:05 prod stopped; MemAvailable 118 GiB
+=== 11:46:05 PR unit test, patch ON (must pass)
+  qsa_cache.py: orig -> pr
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+3 passed, 72 deselected, 14 warnings in 6.62s
+=== 11:46:20 PR unit test, patch OFF (must fail)
+  qsa_cache.py: pr -> orig
+FAILED test_qsa_reference.py::test_qsa_draft_decode_metadata_update_matches_rebuild[circular]
+3 failed, 72 deselected, 14 warnings in 5.08s
+=== 11:46:34 unit gate: on_rc=0 (want 0) off_rc=1 (want !=0)
+=== 11:46:34 server A/B
+   source restored to OFF (marker present: False)
+   source restored to OFF (marker present: False)
+== armrun pr58449: spec valid (2 arms). Nothing started. ==
+== armrun pr58449: 2 arms x 3 start(s), port 8092 ==
+-- pr58449-base0  env=(spec default)
+Running as unit: fx-armrun-pr58449.service; invocation ID: 44969b048ef643b4a653760f7c4a0274
+   void checks passed (2 required, 0 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.093}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 83.72, "wall_s": 31.365}, "agent": {"total_s": 13.3, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.36}, "fallback_line": true, "c1_ms_tok": 24.093, "c4_tok_s": 83.72, "c1_acc_len": 2.525, "s_turn": 1.66}
+-- pr58449-pr0  env=(spec default)
+Running as unit: fx-armrun-pr58449.service; invocation ID: 2d02c7ce2c5f4bb398b1167533e56b7d
+   void checks passed (1 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.148}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 84.0, "wall_s": 31.262}, "agent": {"total_s": 14.1, "s_per_turn": 1.76, "tokens": 236, "ms_per_tok": 59.7}, "fallback_line": false, "c1_ms_tok": 24.148, "c4_tok_s": 84.0, "c1_acc_len": 2.525, "s_turn": 1.76}
+-- pr58449-base1  env=(spec default)
+Running as unit: fx-armrun-pr58449.service; invocation ID: e00396d60f834a93bdedaf906a7c7443
+   void checks passed (2 required, 0 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.351}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 84.92, "wall_s": 30.921}, "agent": {"total_s": 13.4, "s_per_turn": 1.67, "tokens": 236, "ms_per_tok": 56.74}, "fallback_line": true, "c1_ms_tok": 24.351, "c4_tok_s": 84.92, "c1_acc_len": 2.525, "s_turn": 1.67}
+-- pr58449-pr1  env=(spec default)
+Running as unit: fx-armrun-pr58449.service; invocation ID: 369fc6c123634227be0e7e51a3307bbe
+   void checks passed (1 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.229}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 85.29, "wall_s": 30.787}, "agent": {"total_s": 13.3, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.19}, "fallback_line": false, "c1_ms_tok": 24.229, "c4_tok_s": 85.29, "c1_acc_len": 2.525, "s_turn": 1.66}
+-- pr58449-base2  env=(spec default)
+Running as unit: fx-armrun-pr58449.service; invocation ID: 89d762c154a544ffb9eda9c0491853d7
+   void checks passed (2 required, 0 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.057}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 85.25, "wall_s": 30.804}, "agent": {"total_s": 13.3, "s_per_turn": 1.66, "tokens": 236, "ms_per_tok": 56.23}, "fallback_line": true, "c1_ms_tok": 24.057, "c4_tok_s": 85.25, "c1_acc_len": 2.525, "s_turn": 1.66}
+-- pr58449-pr2  env=(spec default)
+Running as unit: fx-armrun-pr58449.service; invocation ID: 13e9f00768004e768e29ac130bfec7f9
+   void checks passed (1 required, 1 forbidden)
+   {"c1": {"gen_tokens": 2706.0, "accept_rate": 50.82, "accept_len": 2.525, "shas": ["c0c061e654928aa4", "3ee89e0fd1307b82", "22da7d96563196ac", "1e78a6be70de999e"], "decode_ms_per_tok": 24.153}, "c4": {"gen_tokens": 2626.0, "accept_rate": 47.9, "accept_len": 2.437, "shas": ["d80b12075ac4f6dd", "0316227244867174", "422d24f25f53867d", "f29e4fb8cbf3b728"], "agg_tok_s": 84.8, "wall_s": 30.968}, "agent": {"total_s": 13.3, "s_per_turn": 1.67, "tokens": 236, "ms_per_tok": 56.45}, "fallback_line": false, "c1_ms_tok": 24.153, "c4_tok_s": 84.8, "c1_acc_len": 2.525, "s_turn": 1.67}
+
+== RESULT ==
+  base         fallback_line True  c1_ms_tok 24.057–24.351  c4_tok_s 83.72–85.25  c1_acc_len 2.525  s_turn 1.66–1.67  start 0–2
+  pr           fallback_line False  c1_ms_tok 24.148–24.229  c4_tok_s 84.0–85.29  c1_acc_len 2.525  s_turn 1.66–1.76  start 0–2
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+=== 13:07:54 armrun rc=0
+== ALL DONE ==
+=== 13:07:54 restore: qsa_cache.py -> orig, prod start
+  qsa_cache.py: orig -> orig
+=== 13:18:35 prod restored after 650s
+== JOB END ==

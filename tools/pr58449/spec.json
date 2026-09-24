@@ -1,0 +1,24 @@
+{
+  "name": "pr58449",
+  "venv": "/opt/llm/runtime/vllm-venv-main1ea7",
+  "model": "/opt/llm/models/qwen38-flash-next-mtpfp4",
+  "env": {"FN_MAXLEN": "32768", "FN_SEQS": "16", "FN_SPEC_METHOD": "mtp", "FN_SPEC_N": "3",
+          "FN_SPEC_NODROP": "1", "FN_SPEC_LOCALARGMAX": "1",
+          "FN_DRAFT_VOCAB": "/opt/llm/runners/dv/draft_vocab_32768.txt",
+          "FN_PLE_OFFLOAD": "0", "FN_EXTRA": "--engram-config {\"checkpoint_mapped\":true}"},
+  "probe_cmd": ["<venv>/bin/python", "/opt/llm/runners/pr58449/decprobe.py", "{arm}"],
+  "starts": 3,
+  "arms": [
+    {"name": "base",
+     "source_toggle": {"script": "/opt/llm/runners/pr58449/qsa58449_toggle.py",
+                       "file": "<pkg>/models/qwen4_exp/common/qsa_cache.py",
+                       "marker": "def update_draft_decode_metadata", "on": false, "restore": false},
+     "log_must_contain": ["Fused multi-step draft decode is not supported", "Mapped PLE table"]},
+    {"name": "pr",
+     "source_toggle": {"script": "/opt/llm/runners/pr58449/qsa58449_toggle.py",
+                       "file": "<pkg>/models/qwen4_exp/common/qsa_cache.py",
+                       "marker": "def update_draft_decode_metadata", "on": true, "restore": false},
+     "log_must_contain": ["Mapped PLE table"],
+     "log_must_not_contain": ["Fused multi-step draft decode is not supported"]}
+  ]
+}
