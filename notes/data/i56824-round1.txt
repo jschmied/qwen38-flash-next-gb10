@@ -1,0 +1,16 @@
+=== 18:49:36 start
+=== 18:49:39 prod stopped; MemAvailable 118 GiB
+baseline meminfo: {"MemFree": 116.55, "MemAvailable": 118.41, "SwapTotal": 64.0, "SwapFree": 62.34, "residual": 1.11}
+Running as unit: fx-i56824-r0_control.service; invocation ID: c2851d15b13b4a51816685974609ce51
+{"arm": "R0_control", "outcome": "ready", "served": true, "min_MemAvailable_GiB": 27.92, "max_residual_GiB": 85.46, "nvrm_no_memory_lines": 1, "kv_tokens": "198,332", "secs": 639}
+Running as unit: fx-i56824-r1_repro.service; invocation ID: e30858de2ab5456dbdc8a29490e18e42
+{"arm": "R1_repro", "outcome": "DIED at phase=capturing | (EngineCore pid=1579189) Search for `cudaErrorStreamCaptureInvalidated' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information. || (APIServer pid=1578814) Traceback (most recent call last): || (APIServer pid=1578814)     raise RuntimeError( || (APIServer pid=1578814) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}", "served": null, "min_MemAvailable_GiB": 32.42, "max_residual_GiB": 83.93, "nvrm_no_memory_lines": 0, "kv_tokens": null, "secs": 654}
+Running as unit: fx-i56824-r2_repro_piecewise.service; invocation ID: ec8f963c375e4efdb3e42096e5067354
+{"arm": "R2_repro_piecewise", "outcome": "ready", "served": true, "min_MemAvailable_GiB": 28.7, "max_residual_GiB": 86.08, "nvrm_no_memory_lines": 0, "kv_tokens": "256,292", "secs": 716}
+Running as unit: fx-i56824-r3_repro_seqs16.service; invocation ID: f50f959f28a4462b8e5463160ddf8209
+{"arm": "R3_repro_seqs16", "outcome": "DIED at phase=capturing | (EngineCore pid=1620340) Search for `cudaErrorStreamCaptureInvalidated' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information. || (APIServer pid=1619949) Traceback (most recent call last): || (APIServer pid=1619949)     raise RuntimeError( || (APIServer pid=1619949) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}", "served": null, "min_MemAvailable_GiB": 32.18, "max_residual_GiB": 83.96, "nvrm_no_memory_lines": 0, "kv_tokens": null, "secs": 703}
+== ALL DONE ==
+=== 19:34:52 driver rc=0
+=== 19:34:52 restore: prod start
+=== 19:46:02 prod restored after 680s
+== JOB END ==

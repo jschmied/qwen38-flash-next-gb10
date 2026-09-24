@@ -3960,3 +3960,40 @@ order.
 **Verdict:** a small real win (−1.7 % c=1, +2.5 % c=4) at n=3 with thr 0.3. Not in prod yet. It stacks with the
 NVFP4 draft head only after the confidence is also computed in the NVFP4 path, which is a small patch and needs its
 own A/B.
+
+## Finding 236 — vllm#56824 (GB10 startup memory collapse) does not reproduce here; it exposed a FULL-graph bug in our PR #58439, now fixed, and FULL_DECODE_ONLY decode graphs now start on Flash-Next (2026-09-24)
+
+**#56824.** Flash-Next NVFP4 on GB10 with fp8 KV, util 0.70, 256 seqs, MTP 3 and compile mode 0 + FULL_DECODE_ONLY
+[4..24]. The reporter saw host memory collapse (29 GiB in 9 s) during KV sizing and graph capture, with
+`NV_ERR_NO_MEMORY` while `MemAvailable` showed 22 GiB. They run v0.29.0 plus their own PLE disk-offload overlay.
+Driver: `tools/i56824/drive56824.py`, prod down, 0.5 s sampling of MemAvailable, residual, swap and NVRM lines,
+with a SIGKILL guard at MemAvailable < 5 GiB (never fired). Raw data: `notes/data/i56824*`.
+
+| round | arm | outcome | min MemAvailable | max residual | NVRM OOM lines |
+|---|---|---|---|---|---|
+| 1 | R0: control, BF16 KV, PIECEWISE, 256 seqs | ready, serves, 198k KV tokens | 27.9 GiB | 85.5 GiB | 1 |
+| 1 | R1: the reporter's flags | **died at capture: `cudaErrorStreamCaptureIsolation` in our PLE finalize** | 32.4 | 83.9 | 0 |
+| 1 | R2: R1 but PIECEWISE | ready, serves, 256k KV tokens | 28.7 | 86.1 | 0 |
+| 1 | R3: R1 but 16 seqs | died at capture, same error | 32.2 | 84.0 | 0 |
+| 2 | R1 with the fix | past capture, then a clean config refusal: "lower max_num_seqs to at most 224 (each decode sequence requires one Mamba cache block)" | 32.0 | 83.9 | 0 |
+| 2 | R3 with the fix | **ready, serves**, 275k KV tokens, FULL_DECODE_ONLY captured | 28.6 | 85.9 | 0 |
+
+- **No collapse on our stack in any arm.** The reporter's exact config ends in a clean vLLM refusal (Mamba blocks at
+  256 seqs), not in memory exhaustion. The collapse is likely specific to their overlay or v0.29.0; not
+  established.
+
+**The bug it exposed (ours).** The checkpoint-mapped backend (PR #58439) looks up on the current stream but
+inherited the pinned backend's `_finalize_prefetch`, which joins the pinned side stream.
+- In FULL cudagraph mode `eager_break_during_capture` runs the function inline inside the capture. The join then
+  adds a dependency on a stream outside the capture, and CUDA rejects it.
+- The pinned backend is fine: its `start_prefetch` forks the side stream into the capture.
+- **Fix** (local commit `be7a84fe4` on `pr/ple-checkpoint-mapped`, not pushed): a `_join_prefetch_stream()` hook on
+  the pinned backend, a no-op for the pageable one.
+- **New GPU test** `test_full_graph_captures_prefetch_and_forward` captures `start_prefetch` + `forward` in one FULL
+  graph and replays new ids. It fails on the old head and passes with the fix; the whole file passes (25/25) on GB10.
+- **Prod** runs the fixed file since 20:23. It is behaviour-neutral under PIECEWISE (sha 109c7010).
+- Our earlier graph test captured only the gather kernel, which is why it missed this.
+
+**Consequence: a new lever.** FULL_DECODE_ONLY decode graphs now start and serve on Flash-Next (R3). det-202/203
+had closed full decode graphs because of the PLE path. Prod decode is uncaptured under PIECEWISE (det-193/194), so
+a FULL_DECODE_ONLY vs PIECEWISE decode A/B is now worth running (queued).

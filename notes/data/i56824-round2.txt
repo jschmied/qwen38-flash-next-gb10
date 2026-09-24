@@ -1,0 +1,23 @@
+=== 19:49:21 start
+=== 19:49:24 prod stopped; MemAvailable 118 GiB
+=== 19:49:24 new test on PR-HEAD file (must FAIL)
+=========================== short test summary info ============================
+FAILED test_ple_pageable.py::test_full_graph_captures_prefetch_and_forward - ...
+1 failed, 24 deselected, 14 warnings in 7.00s
+=== 19:49:39 whole test file on the fixed file (must PASS)
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+25 passed, 14 warnings in 5.01s
+=== 19:49:52 gate: head_rc=1 (want !=0) fix_rc=0 (want 0)
+=== 19:49:52 #56824 continuation: FULL_DECODE_ONLY arms
+baseline meminfo: {"MemFree": 115.25, "MemAvailable": 118.3, "SwapTotal": 64.0, "SwapFree": 62.32, "residual": 1.27}
+Running as unit: fx-i56824-r1_repro.service; invocation ID: a62d0af2bb7b497589367759763f9d82
+{"arm": "R1_repro", "outcome": "DIED at phase=captured | h decode sequence requires one Mamba cache block, so CUDA graph capture cannot proceed. Please lower max_num_seqs to at most 224 or increase gpu_memory_utilization.', please check the stack trace above for the root cause || (APIServer pid=1626523) Traceback (most recent call last): || (APIServer pid=1626523)     raise RuntimeError( || (APIServer pid=1626523) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}", "served": null, "min_MemAvailable_GiB": 32.02, "max_residual_GiB": 83.86, "nvrm_no_memory_lines": 0, "kv_tokens": "262,144", "secs": 609}
+Running as unit: fx-i56824-r3_repro_seqs16.service; invocation ID: ae1f8de8e1bb4d7c8905a551c119d52b
+{"arm": "R3_repro_seqs16", "outcome": "ready", "served": true, "min_MemAvailable_GiB": 28.6, "max_residual_GiB": 85.93, "nvrm_no_memory_lines": 0, "kv_tokens": "275,017", "secs": 681}
+== ALL DONE ==
+=== 20:11:22 driver rc=0
+=== 20:11:22 restore: prod start (ngram_embedding: 109c7010fe208679)
+=== 20:23:33 prod restored after 740s
+== JOB END ==
