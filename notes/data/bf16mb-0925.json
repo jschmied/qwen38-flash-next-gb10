@@ -1,0 +1,813 @@
+[
+ {
+  "shape": "mixer_down",
+  "N": 324,
+  "K": 10240,
+  "floor_us": 30.2,
+  "inmodel_us": 40.5,
+  "cands": {
+   "cublas_default": {
+    "us": 41.5,
+    "x_floor": 1.38
+   },
+   "fi_mm_bf16:cutlass": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cutlass' with capability 121"
+   },
+   "fi_mm_bf16:cudnn": {
+    "us": 32.3,
+    "x_floor": 1.07
+   },
+   "fi_mm_bf16:cublaslt": {
+    "us": 32.3,
+    "x_floor": 1.07
+   },
+   "fi_mm_bf16:tgv": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'tgv' with capability 121"
+   },
+   "fi_mm_bf16:tinygemm": {
+    "error": "ValueError: The TinyGEMM backend requires the output feature dimension to be a multiple of 16."
+   },
+   "fi_mm_bf16:cute-dsl": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cute-dsl' with capability 121"
+   },
+   "fi_mm_bf16:auto": {
+    "us": 32.3,
+    "x_floor": 1.07
+   },
+   "fi_tinygemm_bf16": {
+    "error": "AttributeError: module 'flashinfer' has no attribute 'tinygemm_bf16'"
+   },
+   "triton_bn16_bk128_s1": {
+    "us": 43.0,
+    "x_floor": 1.43
+   },
+   "triton_bn16_bk256_s1": {
+    "us": 35.6,
+    "x_floor": 1.18
+   },
+   "triton_bn16_bk128_s2": {
+    "us": 34.0,
+    "x_floor": 1.13
+   },
+   "triton_bn16_bk256_s2": {
+    "us": 31.5,
+    "x_floor": 1.04
+   },
+   "triton_bn16_bk128_s4": {
+    "us": 31.3,
+    "x_floor": 1.04
+   },
+   "triton_bn16_bk256_s4": {
+    "us": 30.6,
+    "x_floor": 1.01
+   },
+   "triton_bn16_bk128_s8": {
+    "us": 31.1,
+    "x_floor": 1.03
+   },
+   "triton_bn16_bk256_s8": {
+    "us": 31.5,
+    "x_floor": 1.04
+   },
+   "triton_bn16_bk128_s16": {
+    "us": 31.0,
+    "x_floor": 1.03
+   },
+   "triton_bn16_bk256_s16": {
+    "us": 31.2,
+    "x_floor": 1.03
+   },
+   "triton_bn32_bk128_s1": {
+    "us": 46.2,
+    "x_floor": 1.53
+   },
+   "triton_bn32_bk256_s1": {
+    "us": 37.5,
+    "x_floor": 1.24
+   },
+   "triton_bn32_bk128_s2": {
+    "us": 35.2,
+    "x_floor": 1.17
+   },
+   "triton_bn32_bk256_s2": {
+    "us": 32.3,
+    "x_floor": 1.07
+   },
+   "triton_bn32_bk128_s4": {
+    "us": 32.3,
+    "x_floor": 1.07
+   },
+   "triton_bn32_bk256_s4": {
+    "us": 31.3,
+    "x_floor": 1.04
+   },
+   "triton_bn32_bk128_s8": {
+    "us": 32.3,
+    "x_floor": 1.07
+   },
+   "triton_bn32_bk256_s8": {
+    "us": 31.4,
+    "x_floor": 1.04
+   },
+   "triton_bn32_bk128_s16": {
+    "us": 32.0,
+    "x_floor": 1.06
+   },
+   "triton_bn32_bk256_s16": {
+    "us": 32.2,
+    "x_floor": 1.07
+   },
+   "triton_bn64_bk128_s1": {
+    "us": 51.3,
+    "x_floor": 1.7
+   },
+   "triton_bn64_bk256_s1": {
+    "us": 42.0,
+    "x_floor": 1.39
+   },
+   "triton_bn64_bk128_s2": {
+    "us": 37.9,
+    "x_floor": 1.26
+   },
+   "triton_bn64_bk256_s2": {
+    "us": 34.2,
+    "x_floor": 1.13
+   },
+   "triton_bn64_bk128_s4": {
+    "us": 34.1,
+    "x_floor": 1.13
+   },
+   "triton_bn64_bk256_s4": {
+    "us": 32.8,
+    "x_floor": 1.09
+   },
+   "triton_bn64_bk128_s8": {
+    "us": 34.3,
+    "x_floor": 1.14
+   },
+   "triton_bn64_bk256_s8": {
+    "us": 32.8,
+    "x_floor": 1.09
+   },
+   "triton_bn64_bk128_s16": {
+    "us": 33.2,
+    "x_floor": 1.1
+   },
+   "triton_bn64_bk256_s16": {
+    "us": 34.7,
+    "x_floor": 1.15
+   }
+  },
+  "cublas_kernels": [
+   "void cublasLt::splitKreduce_kernel<32, 16, int, __nv_bfloat16, __nv_bfloat16, float, __nv_",
+   "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_128x2_tn_align2"
+  ],
+  "best": "triton_bn16_bk256_s4"
+ },
+ {
+  "shape": "mixer_up",
+  "N": 10240,
+  "K": 320,
+  "floor_us": 29.8,
+  "inmodel_us": 33.9,
+  "cands": {
+   "cublas_default": {
+    "us": 39.6,
+    "x_floor": 1.33
+   },
+   "fi_mm_bf16:cutlass": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cutlass' with capability 121"
+   },
+   "fi_mm_bf16:cudnn": {
+    "us": 39.4,
+    "x_floor": 1.32
+   },
+   "fi_mm_bf16:cublaslt": {
+    "us": 40.1,
+    "x_floor": 1.35
+   },
+   "fi_mm_bf16:tgv": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'tgv' with capability 121"
+   },
+   "fi_mm_bf16:tinygemm": {
+    "us": 47.2,
+    "x_floor": 1.58
+   },
+   "fi_mm_bf16:cute-dsl": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cute-dsl' with capability 121"
+   },
+   "fi_mm_bf16:auto": {
+    "us": 28.7,
+    "x_floor": 0.96
+   },
+   "fi_tinygemm_bf16": {
+    "error": "AttributeError: module 'flashinfer' has no attribute 'tinygemm_bf16'"
+   },
+   "triton_bn16_bk128_s1": {
+    "us": 30.4,
+    "x_floor": 1.02
+   },
+   "triton_bn16_bk256_s1": {
+    "us": 30.4,
+    "x_floor": 1.02
+   },
+   "triton_bn16_bk128_s2": {
+    "us": 31.2,
+    "x_floor": 1.05
+   },
+   "triton_bn32_bk128_s1": {
+    "us": 30.8,
+    "x_floor": 1.03
+   },
+   "triton_bn32_bk256_s1": {
+    "us": 31.1,
+    "x_floor": 1.04
+   },
+   "triton_bn32_bk128_s2": {
+    "us": 30.9,
+    "x_floor": 1.04
+   },
+   "triton_bn64_bk128_s1": {
+    "us": 31.3,
+    "x_floor": 1.05
+   },
+   "triton_bn64_bk256_s1": {
+    "us": 32.7,
+    "x_floor": 1.1
+   },
+   "triton_bn64_bk128_s2": {
+    "us": 31.5,
+    "x_floor": 1.06
+   }
+  },
+  "cublas_kernels": [
+   "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_tn_align8"
+  ],
+  "best": "fi_mm_bf16:auto"
+ },
+ {
+  "shape": "shared_gate_up",
+  "N": 1280,
+  "K": 2560,
+  "floor_us": 29.8,
+  "inmodel_us": 46.0,
+  "cands": {
+   "cublas_default": {
+    "us": 32.8,
+    "x_floor": 1.1
+   },
+   "fi_mm_bf16:cutlass": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cutlass' with capability 121"
+   },
+   "fi_mm_bf16:cudnn": {
+    "us": 32.9,
+    "x_floor": 1.1
+   },
+   "fi_mm_bf16:cublaslt": {
+    "us": 33.2,
+    "x_floor": 1.11
+   },
+   "fi_mm_bf16:tgv": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'tgv' with capability 121"
+   },
+   "fi_mm_bf16:tinygemm": {
+    "us": 29.9,
+    "x_floor": 1.0
+   },
+   "fi_mm_bf16:cute-dsl": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cute-dsl' with capability 121"
+   },
+   "fi_mm_bf16:auto": {
+    "us": 32.9,
+    "x_floor": 1.1
+   },
+   "fi_tinygemm_bf16": {
+    "error": "AttributeError: module 'flashinfer' has no attribute 'tinygemm_bf16'"
+   },
+   "triton_bn16_bk128_s1": {
+    "us": 31.3,
+    "x_floor": 1.05
+   },
+   "triton_bn16_bk256_s1": {
+    "us": 30.9,
+    "x_floor": 1.04
+   },
+   "triton_bn16_bk128_s2": {
+    "us": 31.3,
+    "x_floor": 1.05
+   },
+   "triton_bn16_bk256_s2": {
+    "us": 31.4,
+    "x_floor": 1.05
+   },
+   "triton_bn16_bk128_s4": {
+    "us": 31.2,
+    "x_floor": 1.05
+   },
+   "triton_bn16_bk256_s4": {
+    "us": 31.5,
+    "x_floor": 1.06
+   },
+   "triton_bn16_bk128_s8": {
+    "us": 31.7,
+    "x_floor": 1.06
+   },
+   "triton_bn16_bk256_s8": {
+    "us": 31.1,
+    "x_floor": 1.04
+   },
+   "triton_bn16_bk128_s16": {
+    "us": 31.1,
+    "x_floor": 1.04
+   },
+   "triton_bn32_bk128_s1": {
+    "us": 31.4,
+    "x_floor": 1.05
+   },
+   "triton_bn32_bk256_s1": {
+    "us": 30.7,
+    "x_floor": 1.03
+   },
+   "triton_bn32_bk128_s2": {
+    "us": 31.5,
+    "x_floor": 1.06
+   },
+   "triton_bn32_bk256_s2": {
+    "us": 30.9,
+    "x_floor": 1.04
+   },
+   "triton_bn32_bk128_s4": {
+    "us": 31.2,
+    "x_floor": 1.05
+   },
+   "triton_bn32_bk256_s4": {
+    "us": 31.4,
+    "x_floor": 1.05
+   },
+   "triton_bn32_bk128_s8": {
+    "us": 31.7,
+    "x_floor": 1.06
+   },
+   "triton_bn32_bk256_s8": {
+    "us": 30.9,
+    "x_floor": 1.04
+   },
+   "triton_bn32_bk128_s16": {
+    "us": 31.5,
+    "x_floor": 1.06
+   },
+   "triton_bn64_bk128_s1": {
+    "us": 32.3,
+    "x_floor": 1.08
+   },
+   "triton_bn64_bk256_s1": {
+    "us": 32.0,
+    "x_floor": 1.07
+   },
+   "triton_bn64_bk128_s2": {
+    "us": 32.2,
+    "x_floor": 1.08
+   },
+   "triton_bn64_bk256_s2": {
+    "us": 31.5,
+    "x_floor": 1.06
+   },
+   "triton_bn64_bk128_s4": {
+    "us": 31.6,
+    "x_floor": 1.06
+   },
+   "triton_bn64_bk256_s4": {
+    "us": 31.7,
+    "x_floor": 1.06
+   },
+   "triton_bn64_bk128_s8": {
+    "us": 31.7,
+    "x_floor": 1.06
+   },
+   "triton_bn64_bk256_s8": {
+    "us": 33.1,
+    "x_floor": 1.11
+   },
+   "triton_bn64_bk128_s16": {
+    "us": 31.6,
+    "x_floor": 1.06
+   }
+  },
+  "cublas_kernels": [
+   "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x2_tn_align8"
+  ],
+  "best": "fi_mm_bf16:tinygemm"
+ },
+ {
+  "shape": "shared_down",
+  "N": 2560,
+  "K": 640,
+  "floor_us": 14.9,
+  "inmodel_us": 23.2,
+  "cands": {
+   "cublas_default": {
+    "us": 15.6,
+    "x_floor": 1.05
+   },
+   "fi_mm_bf16:cutlass": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cutlass' with capability 121"
+   },
+   "fi_mm_bf16:cudnn": {
+    "us": 15.6,
+    "x_floor": 1.05
+   },
+   "fi_mm_bf16:cublaslt": {
+    "us": 15.6,
+    "x_floor": 1.05
+   },
+   "fi_mm_bf16:tgv": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'tgv' with capability 121"
+   },
+   "fi_mm_bf16:tinygemm": {
+    "us": 15.9,
+    "x_floor": 1.07
+   },
+   "fi_mm_bf16:cute-dsl": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cute-dsl' with capability 121"
+   },
+   "fi_mm_bf16:auto": {
+    "us": 15.6,
+    "x_floor": 1.05
+   },
+   "fi_tinygemm_bf16": {
+    "error": "AttributeError: module 'flashinfer' has no attribute 'tinygemm_bf16'"
+   },
+   "triton_bn16_bk128_s1": {
+    "us": 17.0,
+    "x_floor": 1.14
+   },
+   "triton_bn16_bk256_s1": {
+    "us": 17.4,
+    "x_floor": 1.17
+   },
+   "triton_bn16_bk128_s2": {
+    "us": 17.5,
+    "x_floor": 1.17
+   },
+   "triton_bn16_bk256_s2": {
+    "us": 17.7,
+    "x_floor": 1.19
+   },
+   "triton_bn16_bk128_s4": {
+    "us": 17.3,
+    "x_floor": 1.16
+   },
+   "triton_bn32_bk128_s1": {
+    "us": 17.0,
+    "x_floor": 1.14
+   },
+   "triton_bn32_bk256_s1": {
+    "us": 17.9,
+    "x_floor": 1.2
+   },
+   "triton_bn32_bk128_s2": {
+    "us": 17.3,
+    "x_floor": 1.16
+   },
+   "triton_bn32_bk256_s2": {
+    "us": 17.6,
+    "x_floor": 1.18
+   },
+   "triton_bn32_bk128_s4": {
+    "us": 17.2,
+    "x_floor": 1.15
+   },
+   "triton_bn64_bk128_s1": {
+    "us": 17.4,
+    "x_floor": 1.17
+   },
+   "triton_bn64_bk256_s1": {
+    "us": 17.6,
+    "x_floor": 1.18
+   },
+   "triton_bn64_bk128_s2": {
+    "us": 17.4,
+    "x_floor": 1.17
+   },
+   "triton_bn64_bk256_s2": {
+    "us": 18.9,
+    "x_floor": 1.27
+   },
+   "triton_bn64_bk128_s4": {
+    "us": 17.6,
+    "x_floor": 1.18
+   }
+  },
+  "cublas_kernels": [
+   "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_tn_align8"
+  ],
+  "best": "cublas_default"
+ },
+ {
+  "shape": "router",
+  "N": 512,
+  "K": 2560,
+  "floor_us": 11.9,
+  "inmodel_us": 25.6,
+  "cands": {
+   "cublas_default": {
+    "us": 14.9,
+    "x_floor": 1.25
+   },
+   "fi_mm_bf16:cutlass": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cutlass' with capability 121"
+   },
+   "fi_mm_bf16:cudnn": {
+    "us": 20.9,
+    "x_floor": 1.75
+   },
+   "fi_mm_bf16:cublaslt": {
+    "us": 20.9,
+    "x_floor": 1.75
+   },
+   "fi_mm_bf16:tgv": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'tgv' with capability 121"
+   },
+   "fi_mm_bf16:tinygemm": {
+    "us": 17.5,
+    "x_floor": 1.47
+   },
+   "fi_mm_bf16:cute-dsl": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cute-dsl' with capability 121"
+   },
+   "fi_mm_bf16:auto": {
+    "us": 14.9,
+    "x_floor": 1.25
+   },
+   "fi_tinygemm_bf16": {
+    "error": "AttributeError: module 'flashinfer' has no attribute 'tinygemm_bf16'"
+   },
+   "triton_bn16_bk128_s1": {
+    "us": 16.3,
+    "x_floor": 1.37
+   },
+   "triton_bn16_bk256_s1": {
+    "us": 15.0,
+    "x_floor": 1.26
+   },
+   "triton_bn16_bk128_s2": {
+    "us": 14.8,
+    "x_floor": 1.24
+   },
+   "triton_bn16_bk256_s2": {
+    "us": 14.5,
+    "x_floor": 1.22
+   },
+   "triton_bn16_bk128_s4": {
+    "us": 14.4,
+    "x_floor": 1.21
+   },
+   "triton_bn16_bk256_s4": {
+    "us": 14.4,
+    "x_floor": 1.21
+   },
+   "triton_bn16_bk128_s8": {
+    "us": 14.6,
+    "x_floor": 1.23
+   },
+   "triton_bn16_bk256_s8": {
+    "us": 14.7,
+    "x_floor": 1.23
+   },
+   "triton_bn16_bk128_s16": {
+    "us": 14.6,
+    "x_floor": 1.23
+   },
+   "triton_bn32_bk128_s1": {
+    "us": 16.5,
+    "x_floor": 1.38
+   },
+   "triton_bn32_bk256_s1": {
+    "us": 15.0,
+    "x_floor": 1.26
+   },
+   "triton_bn32_bk128_s2": {
+    "us": 14.8,
+    "x_floor": 1.24
+   },
+   "triton_bn32_bk256_s2": {
+    "us": 14.5,
+    "x_floor": 1.22
+   },
+   "triton_bn32_bk128_s4": {
+    "us": 14.5,
+    "x_floor": 1.22
+   },
+   "triton_bn32_bk256_s4": {
+    "us": 14.4,
+    "x_floor": 1.21
+   },
+   "triton_bn32_bk128_s8": {
+    "us": 14.3,
+    "x_floor": 1.2
+   },
+   "triton_bn32_bk256_s8": {
+    "us": 14.3,
+    "x_floor": 1.2
+   },
+   "triton_bn32_bk128_s16": {
+    "us": 14.7,
+    "x_floor": 1.23
+   },
+   "triton_bn64_bk128_s1": {
+    "us": 18.2,
+    "x_floor": 1.53
+   },
+   "triton_bn64_bk256_s1": {
+    "us": 16.1,
+    "x_floor": 1.35
+   },
+   "triton_bn64_bk128_s2": {
+    "us": 15.5,
+    "x_floor": 1.3
+   },
+   "triton_bn64_bk256_s2": {
+    "us": 14.9,
+    "x_floor": 1.25
+   },
+   "triton_bn64_bk128_s4": {
+    "us": 14.8,
+    "x_floor": 1.24
+   },
+   "triton_bn64_bk256_s4": {
+    "us": 14.9,
+    "x_floor": 1.25
+   },
+   "triton_bn64_bk128_s8": {
+    "us": 14.7,
+    "x_floor": 1.23
+   },
+   "triton_bn64_bk256_s8": {
+    "us": 14.9,
+    "x_floor": 1.25
+   },
+   "triton_bn64_bk128_s16": {
+    "us": 15.0,
+    "x_floor": 1.26
+   }
+  },
+  "cublas_kernels": [
+   "void cublasLt::splitKreduce_kernel<32, 16, int, __nv_bfloat16, __nv_bfloat16, float, __nv_",
+   "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x2_tn_align8"
+  ],
+  "best": "triton_bn32_bk128_s8"
+ },
+ {
+  "shape": "in_proj_ba",
+  "N": 96,
+  "K": 2560,
+  "floor_us": 2.2,
+  "inmodel_us": 17.2,
+  "cands": {
+   "cublas_default": {
+    "us": 16.4,
+    "x_floor": 7.34
+   },
+   "fi_mm_bf16:cutlass": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cutlass' with capability 121"
+   },
+   "fi_mm_bf16:cudnn": {
+    "us": 16.4,
+    "x_floor": 7.34
+   },
+   "fi_mm_bf16:cublaslt": {
+    "us": 16.4,
+    "x_floor": 7.34
+   },
+   "fi_mm_bf16:tgv": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'tgv' with capability 121"
+   },
+   "fi_mm_bf16:tinygemm": {
+    "us": 5.3,
+    "x_floor": 2.37
+   },
+   "fi_mm_bf16:cute-dsl": {
+    "error": "BackendSupportedError: mm_bf16 does not support backend 'cute-dsl' with capability 121"
+   },
+   "fi_mm_bf16:auto": {
+    "us": 16.8,
+    "x_floor": 7.52
+   },
+   "fi_tinygemm_bf16": {
+    "error": "AttributeError: module 'flashinfer' has no attribute 'tinygemm_bf16'"
+   },
+   "triton_bn16_bk128_s1": {
+    "us": 9.8,
+    "x_floor": 4.39
+   },
+   "triton_bn16_bk256_s1": {
+    "us": 7.8,
+    "x_floor": 3.49
+   },
+   "triton_bn16_bk128_s2": {
+    "us": 6.8,
+    "x_floor": 3.04
+   },
+   "triton_bn16_bk256_s2": {
+    "us": 5.9,
+    "x_floor": 2.64
+   },
+   "triton_bn16_bk128_s4": {
+    "us": 5.5,
+    "x_floor": 2.46
+   },
+   "triton_bn16_bk256_s4": {
+    "us": 5.4,
+    "x_floor": 2.42
+   },
+   "triton_bn16_bk128_s8": {
+    "us": 4.9,
+    "x_floor": 2.19
+   },
+   "triton_bn16_bk256_s8": {
+    "us": 5.0,
+    "x_floor": 2.24
+   },
+   "triton_bn16_bk128_s16": {
+    "us": 4.8,
+    "x_floor": 2.15
+   },
+   "triton_bn32_bk128_s1": {
+    "us": 9.9,
+    "x_floor": 4.43
+   },
+   "triton_bn32_bk256_s1": {
+    "us": 8.1,
+    "x_floor": 3.63
+   },
+   "triton_bn32_bk128_s2": {
+    "us": 6.8,
+    "x_floor": 3.04
+   },
+   "triton_bn32_bk256_s2": {
+    "us": 6.2,
+    "x_floor": 2.78
+   },
+   "triton_bn32_bk128_s4": {
+    "us": 5.6,
+    "x_floor": 2.51
+   },
+   "triton_bn32_bk256_s4": {
+    "us": 5.4,
+    "x_floor": 2.42
+   },
+   "triton_bn32_bk128_s8": {
+    "us": 5.0,
+    "x_floor": 2.24
+   },
+   "triton_bn32_bk256_s8": {
+    "us": 5.0,
+    "x_floor": 2.24
+   },
+   "triton_bn32_bk128_s16": {
+    "us": 4.7,
+    "x_floor": 2.1
+   },
+   "triton_bn64_bk128_s1": {
+    "us": 12.1,
+    "x_floor": 5.42
+   },
+   "triton_bn64_bk256_s1": {
+    "us": 10.1,
+    "x_floor": 4.52
+   },
+   "triton_bn64_bk128_s2": {
+    "us": 8.1,
+    "x_floor": 3.63
+   },
+   "triton_bn64_bk256_s2": {
+    "us": 7.1,
+    "x_floor": 3.18
+   },
+   "triton_bn64_bk128_s4": {
+    "us": 6.3,
+    "x_floor": 2.82
+   },
+   "triton_bn64_bk256_s4": {
+    "us": 6.1,
+    "x_floor": 2.73
+   },
+   "triton_bn64_bk128_s8": {
+    "us": 5.6,
+    "x_floor": 2.51
+   },
+   "triton_bn64_bk256_s8": {
+    "us": 5.9,
+    "x_floor": 2.64
+   },
+   "triton_bn64_bk128_s16": {
+    "us": 5.2,
+    "x_floor": 2.33
+   }
+  },
+  "cublas_kernels": [
+   "void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x1_tn_align8"
+  ],
+  "best": "triton_bn32_bk128_s16"
+ }
+]

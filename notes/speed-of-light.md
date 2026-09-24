@@ -142,7 +142,7 @@ elementwise, inter-kernel gaps) is the next instrument.
 | drafter `o_proj` BF16 (M=1) | 134.1 | 143.0 | 0.94 |
 
 The older profile's single-warp sm80 WMMA kernels for these shapes (`where-the-gpu-time-goes.md`) are gone on this
-stack: **the mixers run at their byte floor.**
+stack: **the mixers run at their byte floor.** **[Withdrawn in step 3: the prod PIECEWISE path still uses those kernels; mixer down is 40.5 µs in-model.]**
 
 **Conclusion of step 2: no dense module is meaningfully above its byte floor.** FP8 dense runs at 1.04–1.15×, BF16
 mixers/shared/router at 0.97–1.26×, lm_head at 0.94×, target MoE at 0.98–1.11×. The only outliers are small: the
@@ -155,3 +155,71 @@ terms). The 14 ms/cycle gap to the 45.2 ms floor must therefore sit where module
 
 **Step 3** (`40-prof`, hypothesis in `tools/prof/HYPOTHESIS.md`) profiles one whole step in the prod config to
 attribute it.
+
+## Step 3 — whole-step kernel profile in the prod config (`40-prof`, 2026-09-25 00:40)
+
+Prod config (PIECEWISE compiled, MTP n=3, NVFP4 draft head), torch profiler over 54 c=1 decode steps, first 5 skipped.
+Parsers: `tools/prof/stream.py` (streams the 300 MB trace line by line, ~10 MB RSS), `an2.py` (per-step categories),
+`an3.py` (stream overlap). Summary: `notes/data/prof-0925-summary.txt`; profiler table
+`notes/data/prof-0925-profiler_out.txt`. Profiled steps took 55.0 ms. The unprofiled chunks at the start of the same
+run took 59.6 ms, most likely the ~6 % warm-up drift after a restart, so the profiler did not slow anything down.
+
+**The GPU is not idle:** busy (union of all streams) is 52.7 ms of the 55.0 ms step, so idle is 2.4 ms (4 %). This
+agrees with finding 237 (FULL graphs null). The routed MoE runs on per-layer aux streams: 20.7 ms/step, but only
+4.6 ms of it overlaps the main stream, so the step is essentially serial.
+
+| category (ms/step) | measured | byte floor (220 GB/s) | ratio |
+|---|---|---|---|
+| MoE grouped GEMM (`GemmUniversal`, aux streams) | 18.2 | ~16.9 (target E=26.6 + drafter) | 1.08 |
+| FP8 blockwise GEMM (dense + lm_head) | 16.3 | 15.1 | 1.08 |
+| **BF16 GEMM (cuBLAS `cutlass_80_wmma` 32-thread blocks, 424 calls) + gemv** | **16.7** | ~11.6 (target 9.1 + drafter 2.5) | **1.44** |
+| GDN `fused_sigmoid_gating_delta_rule_update` | 1.5 | 1.0 (state read+write) | 1.5 |
+| MoE routing/finalize, elementwise, norms, QSA, NVFP4 head, act-quant, other | ~5.3 | — | — |
+
+Target BF16 GEMMs in the model, per call (grid → shape, µs):
+
+| linear | calls/step | in-model | floor | in-model ÷ floor |
+|---|---|---|---|---|
+| mixer down [324×10240], split-K 9 | 100 | 40.5 | 30.2 | 1.34 |
+| mixer up [10240×320] | 100 | 33.9 | 29.8 | 1.14 |
+| shared expert gate_up [1280×2560] | 49 | 46.0 | 29.8 | 1.54 |
+| shared expert down [2560×640] | 49 | 23.2 | 14.9 | 1.56 |
+| router [512×2560] | 49 | 25.6 | 11.9 | 2.15 |
+| GDN `in_proj_ba` [96×2560] | 36 | 17.2 | 2.2 | 7.8 |
+
+**Correction to step 2c.** Step 2c's "the single-warp sm80 WMMA kernels are gone, the mixers run at their floor" is
+wrong for the prod path. The same `cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_16x16_128x{1,2}` kernels serve every
+BF16 linear inside the PIECEWISE graphs. 2c's graph timings (33.6–35.5 µs for mixer down) were a different call path;
+the in-model kernel takes 40.5 µs.
+
+### Step 3b — standalone BF16 microbench (`tools/bf16mb/`, `notes/data/bf16mb-0925.json`)
+
+M=4, weights rotated over ≥ 96 MiB (never L2-resident), CUDA graph of 48 back-to-back calls. Hypothesis in
+`tools/bf16mb/HYPOTHESIS.md`.
+
+| linear | floor | in-model | cuBLAS standalone | best alternative |
+|---|---|---|---|---|
+| mixer down | 30.2 | 40.5 | 41.5 | Triton split-K (BN16, BK256, S4) **30.6** (1.01×); cuDNN/cuBLASLt via FlashInfer 32.3 |
+| mixer up | 29.8 | 33.9 | 39.6 | FlashInfer `mm_bf16` auto **28.7**; Triton 30.4 |
+| shared gate_up | 29.8 | 46.0 | 32.8 | FlashInfer tinygemm 29.9 |
+| shared down | 14.9 | 23.2 | 15.6 | cuBLAS is best |
+| router | 11.9 | 25.6 | 14.9 | Triton 14.3 |
+| in_proj_ba | 2.2 | 17.2 | 16.4 | Triton split-K S16 **4.7**; FlashInfer tinygemm 5.3 |
+
+Reading:
+- H1 holds for mixer down and `in_proj_ba`: standalone cuBLAS reproduces the in-model time within 5 %, so the kernel
+  is the cost.
+- For the shared expert and the router, standalone cuBLAS sits at 1.05–1.25× floor. Their in-model excess comes from
+  running concurrently with the routed MoE on the aux streams, where both share DRAM. That is not a kernel problem.
+- H2 holds for mixer down (1.01×). For the router the best alternative only reaches 1.2×.
+- **Kernel-swap saving, in-model:** mixer down 100 × (40.5 − 30.6) ≈ 1.0 ms, mixer up 100 × (33.9 − 28.7) ≈ 0.5 ms,
+  `in_proj_ba` 36 × (17.2 − 4.7) ≈ 0.45 ms. That is **≈ 2 ms/step ≈ 3.5 %**, the low end of the 2–4 ms expected.
+- Caveat: the Triton kernel in the bench uses fp32 `atomic_add` split-K. That reduction order is nondeterministic, which
+  prod (QSADET/DETFIN) cannot accept. A deterministic two-pass or fixed-order variant must be re-benched first.
+
+**Where the 14 ms gap now sits** (at 55.0 ms profiled vs 45.2 floor = 9.8 ms):
+- BF16 GEMMs ≈ 5 ms, of which ≈ 2 ms is kernel choice and the rest is MoE-overlap contention and drafter M=1 GEMVs;
+- MoE and FP8 at ~1.08× ≈ 2.5 ms;
+- idle 2.4 ms;
+- GDN update ≈ 0.5 ms.
+The remaining lever that no kernel choice can reach is fewer bytes (BF16 leftovers at 8 bits, −8 %).

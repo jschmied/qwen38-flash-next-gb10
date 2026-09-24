@@ -1,0 +1,36 @@
+steps used 49; GPU span/step median 55.06 ms; busy(union) 52.68 ms
+step start interval median 55.05 ms
+cutlass GemmUniversal              18.16 ms/step  n=   156
+fp8 blockwise gemm                 16.29 ms/step  n=    99
+bf16 wmma gemm (cutlass80)         14.60 ms/step  n=   424
+other                               2.28 ms/step  n=   480
+cublas gemv                         2.09 ms/step  n=    67
+moe misc                            1.89 ms/step  n=   382
+aten elementwise/copy               1.66 ms/step  n=   884
+nvfp4 draft head                    0.74 ms/step  n=     3
+attention/qsa                       0.47 ms/step  n=    83
+norm                                0.40 ms/step  n=   158
+gdn                                 0.22 ms/step  n=    52
+sum of kernel durations 58.81
+
+top 'other':
+ 1.533 ms/step fused_sigmoid_gating_delta_rule_update_kernel
+ 0.182 ms/step void per_token_group_quant_8bit_kernel<c10::BFloat16, c10::Float8_e4m3fn, true, false, flo
+ 0.133 ms/step void vllm::cvt_fp16_to_fp4<__nv_bfloat16, false, false>(int, int, int, int, __nv_bfloat16 
+ 0.129 ms/step _hc_gate_mix_kernel
+ 0.100 ms/step void vllm::act_and_mul_kernel<c10::BFloat16, __nv_bfloat162, &(c10::BFloat16 vllm::silu_ke
+ 0.085 ms/step _hc_silu_kernel
+ 0.016 ms/step nvjet_sm121_tst_mma_64x32x64_8_32x16x64_tmaAB_splitK_TNNN
+ 0.012 ms/step _compute_local_logits_stats_kernel
+ 0.010 ms/step nvjet_sm121_tst_mma_64x32x64_8_32x16x64_tmaAB_bz_TNNN
+ 0.008 ms/step _update_draft_inputs_kernel
+ 0.008 ms/step _compute_slot_mappings_kernel
+ 0.008 ms/step nvjet_sm121_tst_mma_32x32x64_12_32x8x64_tmaAB_bz_TNNN
+
+side-stream busy (merged) 20.70 ms/step
+other                  exclusive   3.35  overlapped-with-side   0.57 ms/step
+bf16 wmma              exclusive   9.81  overlapped-with-side   3.22 ms/step
+bf16 gemv              exclusive   1.17  overlapped-with-side   0.70 ms/step
+moe grouped gemm       exclusive   0.18  overlapped-with-side   0.11 ms/step
+fp8 blockwise          exclusive  15.97  overlapped-with-side   0.00 ms/step
+gdn recurrent update   exclusive   1.53  overlapped-with-side   0.00 ms/step
