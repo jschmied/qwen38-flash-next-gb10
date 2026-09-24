@@ -9,45 +9,78 @@ This file is chronological and long. It answers "what happened on the 4th" well 
 cost" badly, which is the question people actually arrive with. Added 2026-09-08 after three
 subagents *and I* re-asked a question this file had answered twice (det-168). **Keep it current:
 a stale answer here is worse than no answer, because this is the part people trust.** Last
-reconciled against the findings at det-191.
+reconciled against the findings at det-235 (2026-09-24).
 
 | question | answer | findings |
 | --- | --- | --- |
 | Is the QSA top-k kernel deterministic? | Stock: no (0/4 prompts, 0/81 shapes). Our #55122: yes, 81/81, and index-canonical. | 76, det-151, det-165 |
-| **What does the deterministic kernel cost end to end?** | **Nothing measurable.** TTFT and s/turn inside the start-to-start band over 3 starts/arm; independently, 99–100 % of stock prefill throughput. (87–90 % is the *Python* fallback, not the kernel.) | **82, 76** |
-| What does it cost per call, in the microbenchmark? | **0.72–1.78× over 43 cells** since the blocked emission + `RADIX_THRESHOLD` 22,016; at or below stock on 27 of them. Was 1.01–2.13× before those. | det-171, det-172, **det-173** |
-| Which cell is worst, and can it be fixed? | 64 × 24,576, at 1.78×. It sits just above the caching bound (n ≤ 24,280) so it is multi-CTA under *every* legal threshold — that constant cannot reach it. | det-172, det-173 |
-| Is the opt-in FlashInfer backend (#55872) an alternative on GB10? | **No — it does not start on sm_121**: `TopKRaggedTransform … operation not supported` at engine init. Their patch is fine; the kernel has no sm_121 path. | det-175 |
+| **What does the deterministic kernel cost end to end?** | **Nothing measurable.** TTFT and s/turn inside the start-to-start band over 3 starts/arm; independently, 99–100 % of stock prefill throughput. (87–90 % was k3dani's Python full-sort fallback, not the kernel.) Re-confirmed on PR head `b2312b2de`: TTFT ranges overlap stock at 8k and 30k, 2 interleaved starts/arm (det-235). | **82, 76**, det-235 |
+| What does it cost per call, in the microbenchmark? | Current head `b2312b2de`: **0.74–0.96× the merge-base kernel** in CUDA-graph replay (6 shapes), **0.67–1.00×** eager over 26 shapes incl. tie-heavy, never slower; grid tops out at n = 8,192 (det-235). Sep-8 revision vs installed `_C`: 0.72–1.78× over 43 cells after the blocked emission + `RADIX_THRESHOLD` 22,016 (1.01–2.13× before). | **det-235**, det-171, det-172, det-173 |
+| Which cell is worst, and can it be fixed? | On the Sep-8 revision: 64 × 24,576, at 1.78×. It sits just above the caching bound (n ≤ 24,280) so it is multi-CTA under *every* legal threshold — that constant cannot reach it. Not re-measured on head `b2312b2de` (det-235's grid stops at n = 8,192). | det-172, det-173 |
+| Is the opt-in FlashInfer backend (#55872) an alternative on GB10? | **No — it fails at engine init on sm_121**: `TopKRaggedTransform … operation not supported` (cudaErrorNotSupported 801, not a missing kernel image; the sm_120 cubin loads on sm_121). Probable cause is its shared-memory requirement (131,072 B/SM vs GB10's 102,400), not instrumented. Same on dev524 + FlashInfer 0.6.18.post1; posted on #55872 (09-09) and #55122 (09-12). | det-175, **det-223** |
 | Does prefix caching work under MTP, despite the "reuse will be disabled" warning? | **Yes** — 92.1 % hit rate on repeat requests, exactly 4 full blocks. The warning's operative clause is about an external KV offload tier, which we do not run. | det-174 |
 | Does it change output quality? | Third-party 50-item suite: 95/100 with 0/50 unstable, vs stock 97/100 with 13/50 unstable. | 76 |
 | Does it give batch invariance? | No, and it cannot — GDN has no batch-invariant path. | 76 |
 | Is #55314 an alternative? | No. It fixes the set nearly for free but not the order, and its tie clips make the set scheduling-dependent. | det-165, det-166, det-167 |
 | Is a merged #55122+#55314 kernel worth building? | No — closed, not deferred, on the end-to-end number above. | det-166, det-167, det-168 |
 | Is ZC502's position-parity collector usable here? | The **client** one is: 12/12 runs on sm_121. The offline one is not (it constructs `LLM()` in-process). | det-155, det-178 |
-| **Does greedy decoding actually diverge end to end on TRUE stock?** | **Yes, badly.** 335 disagreeing positions on a 2.5k-token prompt, forced-logprob spread 10.63, first divergence at position 2, 104 modal top-1 mismatches. With all four fixes: exactly 0. Eight earlier "nulls" had three of the four silently active. | **det-181**, det-180 |
-| Which of the four fixes carries that? | **No single one — they are jointly necessary.** Isolated: none 333, qsadet 330, cachekey 334, plefix 285, detfin+cachekey 280, **all four 0**. And `plefix` is *not upstream* (det-182), so our own #55122 is **not** the load-bearing fix; say so upstream. | **det-184** |
-| Is the nondeterminism the top-k SELECTION or the SCORES fed to it? | **The scores.** Across 7 identical requests on stock, all 13 comparable prefill calls have differing input scores; **zero** have identical scores with a differing selection. `all4` is bit-identical on both. Answers @rybruscoe's discriminator on #54521. | **det-191** |
-| Why does `qsadet` alone do nothing? | Because the defect is unreachable on this traffic: of 6,192 rows that actually performed a top-k selection, **0 had any tie at the k-th value** (and 93 % of rows had fewer visible blocks than k, so selection was a no-op). #55122 is kernel correctness under ties, not end-to-end determinism here. | **det-190** |
-| Is the PLE offload subsystem upstream? | **No.** Zero `vllm/v1/ple_offload/` files in the dev524 wheel and 404 on vllm main; vllm#53899 is open and `mergeable_state: dirty`; our semaphore fix (PR #13 on its fork branch) is open. It exists only here and on that branch. | **det-182** |
+| **Does greedy decoding actually diverge end to end on TRUE stock?** | **Yes, badly.** 335 disagreeing positions on a 2.5k-token prompt, forced-logprob spread 10.63, first divergence at position 2, 104 modal top-1 mismatches. With all four fixes: exactly 0. Eight earlier "nulls" (vpp4–6) had **all four** fixes on in *both* arms: the `det0` "stock" arm logged `QSADET active` because `FN_DET_TOPK=0` is truthy, so det0 ≡ det1. | **det-181**, det-180, det-226 |
+| Which of the four fixes carries that? | **No single one — they are jointly necessary.** Isolated: none 333, qsadet 330, cachekey 334, plefix 285, detfin+cachekey 280, **all four 0**. And `plefix` is *not upstream* (det-182), so our own #55122 is **not** the load-bearing fix; say so upstream. Since: `cachekey` is absorbed by FlashInfer ≥ 0.6.18 (det-209); `plefix`'s host subsystem died with vllm#53899 (closed unmerged 2026-09-21), and prod has run no offload worker since 2026-09-23. | **det-184**, det-209 |
+| Is the nondeterminism the top-k SELECTION or the SCORES fed to it? | **The scores.** Across 7 identical requests on stock, all 13 comparable prefill calls have differing input scores; no stock call had identical scores, so the stock kernel's behaviour on identical input is untested here (the identical-score calls were all in `all4`, on the det kernel). Prefill only, one model. `all4` is bit-identical on both. Answers @rybruscoe's discriminator on #54521. | **det-191** |
+| Why does `qsadet` alone do nothing? | Because the defect is unreachable on this traffic: of 6,192 rows that actually performed a top-k selection, **0 had any tie at the k-th value** (and 93 % of rows had fewer visible blocks than k, so selection was a no-op). #55122 is kernel correctness under ties, not end-to-end determinism here. Bound: Qwen3.8-Flash-Next, 16k, two prompts. **Field counter-evidence 2026-09-22:** Bizuayeu (2×GB10, GLM-5.3-Flash NVFP4, FP8 indexer) measured real ties at rank 512 (513 of 540 pools at the 512th value), so 0 ties is a property of this model and sample, not of real traffic. | **det-190** |
+| Is the PLE offload subsystem upstream? | **The `vllm/v1/ple_offload/` worker subsystem never merged:** vllm#53899 closed unmerged 2026-09-21; our semaphore fix (peakcrosser7/vllm#13) is still open on that dead branch. Upstream PLE storage came via vllm#54371 (merged 2026-09-09, Device/PinnedHost backends). Our checkpoint-mapped backend is vllm#58439 (open); prod has run it since 2026-09-23, with no offload worker. | **det-182** |
+| Does the deterministic top-k work at long context? | **Yes, since 2026-09-12.** Before that, the kernel's shared-memory budget omitted its static smem and killed EngineCore above ~93.6k tokens; the budget fix is installed in prod and validated at 100k on the shipped binary. | det-179, det-222, det-224, **det-234** |
+
+### Audit 2026-09-24 — read before trusting any older entry
+
+Eight read-only auditors checked every claim in this file against the later findings, the raw files in
+`notes/data/`, and upstream state. About 180 of roughly 600 claims checked did not hold as written.
+- They are marked in place with `*[Audit 2026-09-24: …]*`, and wrong numbers were corrected where they stand.
+- **An unmarked entry is not guaranteed current.** The file is chronological, and early hypotheses (findings
+  1–60) were routinely overturned a few entries later.
+
+The corrections that change conclusions:
+- **The `det0` arms of vpp4/5/6 and all thaidet arms were not stock.** `FN_DET_TOPK=0` is truthy, so the det
+  kernel ran in every arm (det-226/230). Findings 178–180 therefore say nothing about stock or about any single
+  fix. True stock is det-181.
+- **Findings 1–60 were routinely superseded:**
+  - the align machinery is not the cause (finding 27);
+  - the healthy/broken MTP split and "defect C" are the `ignore_eos` artifact (finding 59);
+  - finding 30's "root cause located" covers the 55-token probe only (det-184 needs all four fixes).
+- **det-179's "~93.6k context ceiling on GB10" was a shared-memory budget bug**, since fixed and in prod
+  (det-222/224/234).
+- **det-190's "0 ties" is one model, 16k, two prompts.** A third party measured real rank-512 ties on GLM-5.3-Flash
+  with FP8 indexer logits on 2026-09-22.
+- **Devanagari (det-210..215):**
+  - the counter missed fnmain3's second failing prompt, so fnmain3 scores 0/12 exact vs fnmain2's 12/12 on
+    markprobe;
+  - p = 0.318 counts byte-identical repeats as independent (p = 0.64 per prompt);
+  - det-221 ties hi-01 to #55272, not to the checkpoint.
+- **det-235 was rewritten.** k3dani's 21–28 % is only partly the full-sort workaround; their arms also differed in
+  image and vLLM version.
+- **Two public comments on #55122 carry claims corrected here:**
+  - the 09-12 #55872 result: its `native` arm ran our det kernel;
+  - the 09-24 perf comment: the k3dani attribution.
+  Corrections are drafted in `notes/upstream/comment-55122-audit-corrections.md` and await a go.
 
 ## Established (measured, replicated where stated)
 
 1. **A single forward pass is deterministic.** With `--no-enable-prefix-caching`, three identical
    single-token requests return bit-identical logits (`lp=-0.2308074981`, `sig=e22e0de36cac`, 3x).
    This *reverses* the working assumption held for most of the session.
-   → `prefill-divergence.md`
+   → `prefill-divergence.md` *[Audit 2026-09-24: Holds only for the one 55-token unchunked shape without cudagraphs: a 7.5k-token prefill diverges at late rows (finding 51), and under PIECEWISE the cold first request differs from warm ones (finding 138).]*
 
 2. **The divergence happens at 0.0% prefix-cache hit rate.** The probe prompt is ~60 tokens against
    a **1616-token** block, so no block ever completes and nothing is ever reused; sub-block hits
    need `--prefix-match-unit`, which we never set. The same build hits **55.3%** on the 8-turn
    agent loop, so the cache is not broken — the probe simply cannot hit it. **Therefore the cause
    is the align-mode state machinery running, not cached state being reused.** This kills every
-   "stale/wrong/truncated checkpoint" hypothesis for this probe.
-   → `prefix-cache-is-not-reuse.md`
+   "stale/wrong/truncated checkpoint" hypothesis for this probe. *[Audit 2026-09-24: the cause is superseded by finding 27; the align machinery only chunked the prefill so the MoE ran in its diverging configuration (findings 26, 27, 31), and later the four fixes (det-184).]*
+   → `prefix-cache-is-not-reuse.md` *[Audit 2026-09-24: Superseded by finding 27: the align machinery only chunked the prefill (52+3) so the MoE ran in a diverging configuration; the cause is the MoE fused finalize (findings 26-27, 31, 37).]*
 
 3. **Generation diverges independently.** With the prefix cache off, a 1040-token generation still
    gives 3 distinct outputs of 3. So there are **two** paths, not one. Not established: whether
-   they share a cause.
+   they share a cause. *[Audit 2026-09-24: answered by finding 27: the same kernel (`mlp.experts`, FlashInfer CUTLASS NVFP4 MoE) explains both.]*
 
 4. **Divergence enters at layer 1** — with an important caveat added later by the sub-bisection:
    the fingerprint used to group passes (a layer's output tensor) is **too weak on this
@@ -55,7 +88,7 @@ reconciled against the findings at det-191.
    1's `in_proj_qkvz` differs while `layers.0`'s output is identical, and a plain GEMM cannot do
    that unless its input differs. So read this as "the first HOOKED module that differs", not
    "where divergence starts". Everything PLE-table-derived is identical; everything
-   hidden-state-derived differs. See `prefill-divergence.md`.
+   hidden-state-derived differs. See `prefill-divergence.md`. *[Audit 2026-09-24: Superseded by findings 25-26: layer 1 is only where it becomes visible; the source is layer 0's MoE (mlp.experts) output carried as deferred HC block state.]*
 
    *(original finding as measured)*
 
@@ -63,18 +96,18 @@ reconciled against the findings at det-191.
    with passes grouped by their **layer-0 hash** so like meets like: `layers.0` identical x3,
    `layers.1.ple.ple_embedding` identical x3, `layers.1` differs. Replicated in two independent
    groups of three passes. Layer 1 is the only layer carrying the PLE; layers 0-2 are all
-   `linear_attention`, so attention type is not the difference.
+   `linear_attention`, so attention type is not the difference. *[Audit 2026-09-24: Superseded by findings 25-26: the first differing input comes from layer 0's MoE via the deferred HC state, not from layer 1.]*
 
 5. *(QSA top-k: superseded by finding 54 — the exclusion held only while the MoE masked it.)* **Excluded as causes:** speculation (`P_nospec`, `G_eager_nospec`), CUDA-graph replay
    (`G_eager_*`, verified 0 captures), the QSA top-k (`torch.topk` substitution still diverged),
    PLE FP8 quantisation (0 dead rows in 2100 sampled, 2.9x total dynamic range), missing Triton
    bounds masks (every unmasked access is bounded by construction), and the top-k -> block
-   expansion interface (the consumer re-derives the bound from `sequence_length`).
+   expansion interface (the consumer re-derives the bound from `sequence_length`). *[Audit 2026-09-24: CUDA graphs too are excluded only as a sole cause: graph capture is the trigger of the PLE-offload one-step-behind defect (finding 138).]*
 
 6. **MTP throughput is not reproducible across restarts** — up to **1.83x** within one config,
    while no-spec (1.10x) and ngram (1.09x) are stable. This killed the "MTP n=6 anomaly", which
    never existed. `k=2 slower than no speculation` survived and got *stronger* (4 arms >= 47.8 vs
-   12 arms <= 47.7, non-overlapping).
+   12 arms <= 47.7, non-overlapping). *[Audit 2026-09-24: Superseded: the 1.83x spread came from the multi-prefill corruption + PLE semaphore and is 1.15x on the fixed stack (finding 162); k=2 beats no-spec by 1.62-1.91x (finding 163) and +46.5 % (det-225); these ms/tok also carry the ignore_eos artifact (finding 59).]*
    → `mtp-depth-anomaly.md`, `failure-modes.md`
 
 7. **`VLLM_BATCH_INVARIANT` cannot run on this architecture.** No mamba/linear-attention backend
@@ -95,7 +128,7 @@ reconciled against the findings at det-191.
 
    **pearson r = -0.964.** Same binary, same flags, same prompts: MTP keeps either ~89% or ~27%
    of its draft work, and the no-spec reference is 43.5 ms/tok — so the collapsed arms are
-   **worse than not speculating at all** while the healthy ones are ~26% better.
+   **worse than not speculating at all** while the healthy ones are ~26% better. *[Audit 2026-09-24: Contaminated per finding 59: under ignore_eos the healthy/collapsed acceptance mostly measured the drafter's prediction of post-EOS filler, not the target's divergence.]*
 
 9. **The regime is per-TURN — and, CORRECTED, it is NOT one-way early on.** A 40-turn run
    (`DEG_a`, per-turn acceptance deltas, raw table in `notes/data/DEG_a-per-turn.txt`) shows:
@@ -153,12 +186,12 @@ reconciled against the findings at det-191.
    | DEG_c (MTP) | 4.30 | 2.67x | 0.29 | 33 | 3 | 3 |
    | **DEG_nospec** | **5.32** | **1.29x** | **0.05** | 0 | 1 | **38** |
 
-   Without a drafter, 38 of 39 turns sit in 5.06-5.56 s (the outlier is turn 2's warm-up tail);
+   Without a drafter, 38 of 39 turns sit in 5.06-6.06 s (the outlier is turn 2's warm-up tail, 6.52 s);
    the MTP arms are bimodal with almost nothing in the middle. **The flip lives entirely in
    speculative acceptance; the base decode path is steady.** This retires the alternative reading
    that something degrades regardless of the drafter.
 
-   Raw tables: `notes/data/DEG_{a,b,c,nospec}-per-turn.txt`.
+   Raw tables: `notes/data/DEG_{a,b,c,nospec}-per-turn.txt`. *[Audit 2026-09-24: Contaminated per finding 59: the bimodal per-turn flip in the DEG runs was which post-EOS filler the target picked under ignore_eos; the per-start bias is reframed as a per-request draw by finding 41.]*
 
    (earlier n=1 text:) **n=1.** Whether the lock-in position (~7th block) replicates is what `DEG_b`/`DEG_c` decide;
    `DEG_nospec` is the control that must stay flat.
@@ -208,14 +241,14 @@ reconciled against the findings at det-191.
     **Which conclusions survive**: all the categorical ones. "1 distinct of 3" is still
     deterministic and "3 of 3" still diverges whatever the token; the layer-1 bisection is still
     a divergence. What is retracted is any *value* quoted from a sort-affected arm — the -1.51
-    logprob, the `'The'` token, and finding 2's "top-k changes the answer", which is withdrawn.
+    logprob, the `'The'` token, and finding 2's "top-k changes the answer", which is withdrawn. *[Audit 2026-09-24: Dangling reference: finding 2 contains no "top-k changes the answer" claim (checked in every git version).]*
 
 12. **Async scheduling is not the mechanism either.** `NOASYNC` (cache on, `--no-async-scheduling`,
     log evidence: `(APIServer pid=275763) INFO 09-01 23:51:00 [api_utils.py:272] non-default args: {'model_tag': '/opt/llm/models`): 3 distinct of 3. So neither the postprocess sync
     (finding 10) nor removing the second in-flight batch restores prefill determinism.
     `LAUNCHBLOCK` (`CUDA_LAUNCH_BLOCKING=1`) is the remaining race test: if it also diverges, the
     prefill source is not a launch-ordering race at all but a deterministic-yet-scheduler- or
-    state-dependent path.
+    state-dependent path. *[Audit 2026-09-24: The quoted log excerpt is truncated before any async-scheduling argument, so it does not by itself show the flag took effect.]*
 
 13. **The prefill divergence is NOT a race.** `LAUNCHBLOCK` (cache on, `CUDA_LAUNCH_BLOCKING=1`,
     delivered via the same `$12` slot verified for `SYNC` — that mechanism is the sole basis; an
@@ -225,7 +258,7 @@ reconciled against the findings at det-191.
     sync, single batch in flight, serialised launches — all three leave it diverging. **The source
     is a deterministic-but-state-dependent path**: something the align machinery does that depends
     on state carried between requests, not on timing. This fits the per-start bias (finding 9,
-    12-55%) far better than any race did, since a race gives the same bias every start.
+    12-55%) far better than any race did, since a race gives the same bias every start. *[Audit 2026-09-24: Superseded by findings 26 and 31: the source is non-associative atomics inside the MoE fused finalize, which launch serialisation cannot order, not a state-dependent align path; the per-start-bias reasoning is dead after findings 41, 42 and 59. Delivery also rests on the $12 slot alone, without the in-log trace that finding 22 later requires.]*
 
     Oracle test note: `persistent_topk` accepts only k in {512, 1024, 2048}; the test's default
     k=16 was wrong and it is re-queued at the production k=512 (`oracle` unit, after `rerun`).
@@ -248,7 +281,7 @@ reconciled against the findings at det-191.
 16. **`mamba_cache_mode=all` diverges exactly like `align`** — `M_all_a/b/c`, cache on, mode
     verified in the log (`mamba_cache_mode': 'all'`): 3 distinct of 3 in all three arms. As
     vllm#54173 reported and finding 13 implied, the state-dependent path is in machinery
-    **common to both checkpoint policies**, not in `align`'s last-token-of-scheduler-step rule.
+    **common to both checkpoint policies**, not in `align`'s last-token-of-scheduler-step rule. *[Audit 2026-09-24: Superseded by finding 27: the common element is the chunked prefill feeding the MoE fused finalize, not the mamba state machinery.]*
     `M_align_*` follows as the explicit control.
 
     **Scatter, not offset.** On the cleaned venv the cache-off reference (`GENBIS`, -0.2566) sits
@@ -261,7 +294,7 @@ reconciled against the findings at det-191.
 
 17. **`mamba_cache_mode` is irrelevant to the divergence.** `M_align_a/b/c` (the explicit control):
     3 distinct of 3 in all three. With finding 16 that is **6 of 6 arms diverging across both
-    checkpoint policies**. The state-dependent path is in machinery common to both.
+    checkpoint policies**. The state-dependent path is in machinery common to both. *[Audit 2026-09-24: Superseded by finding 27: the common element is the chunked prefill feeding the MoE fused finalize.]*
 
 18. **Oracle test at the production k=512 (`persistent_topk` on sm_121):**
     - **T1-T4: no failure at any of 11 swept sizes >= 512** (512, 513, 1023-1025, 4095-4097,
@@ -298,7 +331,7 @@ reconciled against the findings at det-191.
     to decode — a state cache that exists whether or not prefix caching is on — and (b) the
     decode-shaped kernels. Whether the divergence reaches the sampled tokens within 4 steps is
     unmeasured (the fixed probe now hashes every token); over 1040 tokens it does (`F_noprefix`
-    NOFB). Re-run queued as `GENBIS3`.
+    NOFB). Re-run queued as `GENBIS3`. *[Audit 2026-09-24: Superseded by findings 25-26: the decode divergence originates in layer 0's MoE (mlp.experts), not in the GDN state handoff or layer 1.]*
 
 21. **With the prefix cache OFF and speculation OFF, the first decode step's OUTPUT already
     differs** (`GENBIS3`, eager, fixed probe hashing every token):
@@ -315,7 +348,7 @@ reconciled against the findings at det-191.
     recurrent-state path**: cache-on prefill (align machinery writing/reading state) and cache-off
     decode (the state handed from prefill to decode step 1). Next single-flag test:
     `VLLM_GDN_DECODE_KERNEL=cuda` vs the `triton` we run (chosen because cuda hung at c~32; c=1
-    is safe) — separates "the decode kernel" from "the state handoff".
+    is safe) — separates "the decode kernel" from "the state handoff". *[Audit 2026-09-24: Superseded by findings 26-27: both divergences come from the MoE fused finalize, not the recurrent-state path.]*
 
 22. **`GDNCUDA_a` was a triton replicate, not the cuda test.** Its log reads `GDN decode kernel:
     triton`; the runner lineage it came from never had the `$12` env slot, so
@@ -344,7 +377,7 @@ reconciled against the findings at det-191.
     on the same state path (`state=self.kv_cache[1]`, read/written in place). Neither is "the source": both variants lose determinism on the GDN recurrent-state
     path, cuda one step earlier. **The state write at the end of prefill and its read at decode
     step 1 are now the narrowest suspect**, and the next instrument is to hash the GDN state
-    tensors directly at those two points.
+    tensors directly at those two points. *[Audit 2026-09-24: Superseded: finding 24 shows the prefill state write is deterministic, and findings 25-26 place the source in layer 0's MoE.]*
 
 24. **THE STATE HASHES SPLIT IT: layer 0 is deterministic through decode; layer 1 diverges at
     decode step 1; the only structural difference is the PLE.** `STATEHASH` arm (cache off, spec
@@ -372,7 +405,7 @@ reconciled against the findings at det-191.
       machinery, not the model.
 
     **Next, and decisive**: hash the PLE's return value and layer 1's GDN input at decode step 1
-    (with the double-hash race detector), across three identical requests.
+    (with the double-hash race detector), across three identical requests. *[Audit 2026-09-24: Superseded by finding 25: the PLE returns identical output; the differing input comes from layer 0's deferred HC (MoE) output.]*
 
 25. **The PLE is exonerated; the divergence enters between layer 0's return and the PLE's input,
     in the hyperconnection's DEFERRED block output.** `PLEHASH` arm (cache off, spec off, eager,
@@ -397,7 +430,7 @@ reconciled against the findings at det-191.
       (finding 24), so the differing pending output must come from **after** the GDN: layer 0's
       MLP — the **MoE** — or the HC combine itself, in the single-token decode shape.
     - `convstate` in this run is a whole-buffer hash across different slots and is not comparable;
-      instrument limitation, disregarded.
+      instrument limitation, disregarded. *[Audit 2026-09-24: Holds in eager mode only: under the served PIECEWISE mode the PLE offload output buffer is read one step behind and carries the residual divergence (finding 138), and its fix plefix is one of four jointly necessary fixes (det-184). Prod since 2026-09-23 uses checkpoint-mapped PLE with no offload worker.]*
 
     Consistent with the standing memory that Flash-Next (MoE) diverges at c=1 while the dense
     27B does not, attributed then to MoE routing ties. Next arm: hash every submodule of layer 0
@@ -469,7 +502,7 @@ reconciled against the findings at det-191.
     **Unification complete at the component level**: one kernel explains the cache-on prefill
     divergence, the decode divergence, the deferred-HC puzzle, the LAUNCHBLOCK null and the clean
     runtime test. The mamba/align state machinery is exonerated as a *cause* — its role was
-    chunking the prefill so the MoE ran in a diverging configuration.
+    chunking the prefill so the MoE ran in a diverging configuration. *[Audit 2026-09-24: Scope: the 55-token probe only. At real lengths the QSA top-k (finding 54), the align seed/split defect (finding 46) and the PLE semaphore (finding 138) also diverge; det-184 needs all four fixes (detfin+cachekey alone: 280 disagreeing positions).]*
 
 28. **MoE backend A/B, round 1: `marlin` and `humming` are WORSE than the incumbent.** Same probe
     as finding 21 (cache off, spec off, eager, max_tokens=4, per-token signatures), backend
@@ -492,7 +525,7 @@ reconciled against the findings at det-191.
     `flashinfer_b12x`, `marlin`, `humming`, `emulation`; with trtllm (SM121 garbage bug) and
     cutedsl/b12x (vetoed on this checkpoint) excluded, **every serving-grade backend is measured
     and none is deterministic**. `emulation` (dequantised) runs as a control (`moeab3`). `vllm_cutlass` was an invalid CLI
-    name (the choice is `cutlass`) and died at argparse — corrected.
+    name (the choice is `cutlass`) and died at argparse — corrected. *[Audit 2026-09-24: Stale: flashinfer_b12x serves and generates correctly since 2026-09-21 (moe-backend-axis.md); its determinism is unmeasured.]*
 
 29. **Upstream cousin: [flashinfer#3957](https://github.com/flashinfer-ai/flashinfer/issues/3957)**
     — nvfp4 unified-MoE, *silent* out-of-bounds device write from one call that corrupts a later
@@ -514,7 +547,7 @@ reconciled against the findings at det-191.
     `flashinfer_cutlass` 43.92 ms/tok — on the 12-arm reference — vs `emulation` 51.38; n=1 for
     emulation, TTFT/concurrency unmeasured; raw in `notes/data/EMUCOST-run.txt`). I had written
     "far too slow to serve with" without measuring — withdrawn. It is a serving-viable
-    deterministic mode at modest cost.
+    deterministic mode at modest cost. *[Audit 2026-09-24: The ms/tok here is total turn wall time per generated token (EMUCOST-run.txt: 45.7 s / 1040 tok), so prefill is included and this is not decode-only; n=1 each inside the 42.8-47.7 no-spec band (evidence-audit.md). The 'not in the model, the recurrent state, the PLE' exclusion holds for this probe only (findings 54, 138, det-184).]*
 
     **Final backend table** (same probe; backend verified per arm):
 
@@ -528,7 +561,7 @@ reconciled against the findings at det-191.
     | **`emulation`** | **identical** | **identical** |
 
     **Stop condition (a) met**: root cause located, deterministic configuration demonstrated,
-    upstream report drafted (`upstream-report-draft.md`).
+    upstream report drafted (`upstream-report-draft.md`). *[Audit 2026-09-24: Root cause for the 55-token probe only; three further jointly necessary defects surfaced later (findings 46, 54, 138; det-184).]*
 
 31. **FIX CANDIDATE: FlashInfer's own `use_fused_finalize=False`.** `flashinfer/fused_moe/core.py`
     documents the knob on `cutlass_fused_moe`: *"The fused epilogue reduces expert outputs via
@@ -552,7 +585,7 @@ reconciled against the findings at det-191.
     non-fused path works on this build with default tactics; if all 4 tokens are then identical,
     the fix is confirmed and the remaining questions are its cost and whether tuned tactics can be
     restored for it. Reportable upstream on its own: `use_fused_finalize=False` cannot be used
-    with the autotuner on sm_121 in this FlashInfer.
+    with the autotuner on sm_121 in this FlashInfer. *[Audit 2026-09-24: Superseded by findings 34 and 36: the failure was fused-range tactic ids from the shared persisted autotune cache, and the non-fused path works with a clean cache key.]*
 
 33. **The non-fused finalize path cannot start on this FlashInfer build — three attempts.**
     (1) `use_fused_finalize=False` → `Invalid gemm2 profile id: 50` at init; (2) plus
@@ -564,7 +597,7 @@ reconciled against the findings at det-191.
     defect on sm_121 NVFP4: **the documented deterministic finalize is unusable**. The deterministic
     serving option on this box therefore remains `--moe-backend emulation` (+17% decode). Both
     defects belong in the upstream report: the atomic finalize's nondeterminism (documented, but
-    the default and the only working path) and the broken opt-out.
+    the default and the only working path) and the broken opt-out. *[Audit 2026-09-24: Withdrawn by findings 34, 36 and 37: the non-fused runner starts and is deterministic; the ids 48/50 came from a cache key omitting use_fused_finalize, so emulation is not the only deterministic option.]*
 
     **Mechanism, from the shipped JIT source**
     (`flashinfer/data/csrc/fused_moe/cutlass_backend/flashinfer_cutlass_fused_moe_binding.cu:866-869`):
@@ -592,7 +625,7 @@ reconciled against the findings at det-191.
     arms wrote entries for these shapes, and the cache key omits `use_fused_finalize`. Finding 33's
     "getter" hypothesis is withdrawn; the defect is the cache key. **Fix attempt 4** (`DETFIN4`):
     non-fused finalize with a fresh, empty cache dir and tuning enabled. Reportable: the autotune
-    cache key must include `use_fused_finalize` (or the runner's tactic-table identity).
+    cache key must include `use_fused_finalize` (or the runner's tactic-table identity). *[Audit 2026-09-24: Superseded by finding 39: the cache-key fix already exists upstream (FlashInfer >= 0.6.18rc2), so there is nothing to report.]*
 
 35. **Upstream check (in parallel with attempt 4): no existing fix for either defect, but the
     cache-key defect is documented almost verbatim.** vLLM `main` still does not pass
@@ -608,7 +641,7 @@ reconciled against the findings at det-191.
     `tools/determinism/moe_cachekey_patch.py` implements it (not env-gated: widening a key is
     pure correctness). Other related, not fixes: flashinfer#3957 (atomic finalize, 3-token
     victim), #4043 (autotuner hash collisions), #2501 (autotune fails for W4A8 cutlass MoE),
-    #3537 (tuner picks slower tactics), #3935 (SM120 regression suspected on #3367).
+    #3537 (tuner picks slower tactics), #3935 (SM120 regression suspected on #3367). *[Audit 2026-09-24: Superseded by finding 39: the cache-key defect was already fixed in FlashInfer main (first release v0.6.18rc2). The vLLM side was filed as vllm#54945 / PR #54948 (open as of 2026-09-19).]*
 
 36. **FIX CONFIRMED: `use_fused_finalize=False` is deterministic on the production kernel.**
     `DETFIN4` (FlashInfer CUTLASS NVFP4 MoE, verified in the log; cache off, spec off, eager; fresh
@@ -633,13 +666,13 @@ reconciled against the findings at det-191.
     The cache-key patch does against the shared cache what a fresh directory did in `DETFIN4`,
     so attempts 1-3's failures are fully explained and closed. Every configuration that diverged
     in this investigation is now bit-reproducible on the fast kernel. Cost measurement
-    (`DETCOST`, 8-turn agent loop) running.
+    (`DETCOST`, 8-turn agent loop) running. *[Audit 2026-09-24: Scope: the short probes above. At 2.5k tokens detfin+cachekey alone leaves 280 disagreeing positions; all four fixes are jointly necessary (det-184; also findings 54, 138).]*
 
 38. **The fix costs +3.6% decode.** `DETCOST` (8-turn agent loop, 130 tok/turn, c=1, no spec,
     cache on, both patches, backend verified): **45.50 ms/tok** vs 43.92 fused (12-arm reference
     42.8-47.7) vs 51.38 emulation. n=1, but no-spec arms reproduce to ~1.10x, and 45.50 sits
     inside the fused reference band's upper half. Only the finalize changes — the expert GEMMs stay
-    tuned — which is why it lands far below emulation's +17%. TTFT and concurrency unmeasured.
+    tuned — which is why it lands far below emulation's +17%. TTFT and concurrency unmeasured. *[Audit 2026-09-24: n=1 against an 11 %-wide band (evidence-audit.md); ms/tok is total turn time per generated token with prefill included, not decode-only; no DETCOST raw file is in notes/data.]*
 
 39. **The cache-key defect is already fixed upstream — our FlashInfer patch is a backport.**
     FlashInfer `main` has `MoERunner.get_cache_key_extras()` with the comment *"Include those
@@ -651,7 +684,7 @@ reconciled against the findings at det-191.
     FlashInfer to 0.6.18 would bring it, but 0.6.18 drops the SM121a cubins from the aarch64 JIT
     cache on this box ([[flashinfer-jit-oom-after-driver-upgrade]] / working-config memory), so
     the backport stays until that is resolved; (c) the **vLLM** side is the only new upstream item:
-    `main` still never passes `use_fused_finalize`. No rebase of the box is needed for the fix.
+    `main` still never passes `use_fused_finalize`. No rebase of the box is needed for the fix. *[Audit 2026-09-24: Superseded by det-208/det-209: the 0.6.18 cubin concern was refuted (neither wheel ships sm121 cubins), prod moved to 0.6.18.post1 and the cache-key backport is retired as upstream. vLLM side: vllm#54945 / PR #54948 (open as of 2026-09-19).]*
 
 40. **The fix does NOT stabilise MTP — the per-start bimodality is a separate defect.** `MTPFIX`
     (both patches installed, `VLLM_MOE_DET_FINALIZE=1`, MTP n=5, 8-turn agent loop, prefix cache
@@ -663,7 +696,7 @@ reconciled against the findings at det-191.
     | b | 32.45 | 66.3 % | 4.32 |
     | c | 49.78 | 25.7 % | 2.28 |
 
-    Spread 2.07× across starts — the same spread as without the fix (1.83×, `AC1..5`). With a
+    Spread 2.07× across starts — comparable to the spread without the fix (1.83×, `AC1..5`). With a
     bit-deterministic target the drafter still alternates between the good and the bad regime per
     start, and per turn inside a start (arm a: turns 1–6 at ~10 s, turn 7 at 4.0 s when the
     prefix-cache hit count jumped 4848→6464). So the explanation in the draft report — "acceptance
@@ -671,7 +704,7 @@ reconciled against the findings at det-191.
     is real and fixed, but it is not what makes MTP unstable. Whatever sets the regime is chosen
     per start and per turn independently of the target's arithmetic; the prefix-cache-hit
     coincidence points at drafter state under the block-aligned mamba split (the #47861 thread),
-    not at the MoE. Raw: `notes/data/mtpfix.txt`.
+    not at the MoE. Raw: `notes/data/mtpfix.txt`. *[Audit 2026-09-24: Superseded by findings 57, 59 and 61: the healthy/broken regime was the ignore_eos post-EOS filler artifact, and with align + exact top-k + det MoE the loop is bit-reproducible. mtpfix.txt shows the det-finalize patch installed but no activation trace for VLLM_MOE_DET_FINALIZE=1 (the patch logs nothing).]*
 
 41. **The MTP flip is per REQUEST, and none of async scheduling / CUDA graphs / ring widening /
     prefix cache is the switch.** `MTPROOT` (12 starts, MTP agent loop, per-turn acceptance from
@@ -694,8 +727,8 @@ reconciled against the findings at det-191.
 
 healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
 
-    Every turn is in one of two clean states — healthy (≈50–77 % accepted, accept len ≈3.5–4.9)
-    or broken (≈3–21 %, len ≈1.1–1.9) — with almost nothing between. The state holds for the
+    Every turn is in one of two clean states — healthy (40–88 % accepted, accept len 2.6–5.4)
+    or broken (3–25 %, len 1.1–2.0) — with almost nothing between. The state holds for the
     request's lifetime and is drawn afresh per request; three starts (EAGER_c and NOCACHE_b here,
     MTPFIX_b before) were healthy on all 8 turns, so something at start decides whether the per-request
     draw can come up broken at all. The earlier "per-start bias" (finding 40) was 8-turn
@@ -706,7 +739,7 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     for their own validation. Raw: `notes/data/mtproot.txt`. Survivors:
     the drafter's unzeroed per-request QSA ring block (claimed FIFO, excluded from zeroing,
     polluted by warmup — `mtpring` queued), a shape-bucketed drafter kernel tactic per start,
-    and the drafter's own top-k.
+    and the drafter's own top-k. *[Audit 2026-09-24: Superseded: the align seed/split patches lift healthy turns from 44 % to 88 % (finding 46), the ring is excluded (finding 47), the source is the target's QSA top-k (findings 53-54), and the whole healthy/broken split is the ignore_eos artifact (finding 59).]* *[Audit 2026-09-24: the two-state healthy/broken split in findings 41–48 is the ignore_eos post-EOS filler artifact (finding 59, post-mortem-2026-09-03.md); the per-request draw was which filler the target picked, not a drafter state.]*
 
 42. **The per-request draw does not follow the prompt.** `BASE_replay` (one start, unpatched):
     pass 1 runs the 8-turn loop live; passes 2 and 3 resend the byte-identical conversation
@@ -734,7 +767,7 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     path alone (NOCACHE removed it and stayed at 14/24), so the effect would sit in what else the
     patch changes — prefill chunk ends at every 1616 boundary (chunks ≤1616 instead of ≤4096) and
     the state seed for resumed requests. `MTPFIX3` (3 more starts of both, then seed-only ×2,
-    split-only ×2) is queued to confirm and separate. Raw: `notes/data/mtpfix2.txt`.
+    split-only ×2) is queued to confirm and separate. Raw: `notes/data/mtpfix2.txt`. *[Audit 2026-09-24: healthy-turn rates here are contaminated by the ignore_eos artifact (finding 59); the figures were withdrawn upstream (comment-54076-withdraw-acceptance.md).]*
 
 44. **Under MTP the generated text is not reproducible even with the deterministic MoE.** `MTPQ`
     (det finalize installed, MTP n=5, 2 starts × 3 passes of byte-identical prompts): pass 2 vs
@@ -744,7 +777,7 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     kernels are deterministic but not batch-invariant, so any acceptance difference changes
     downstream logits and the text forks. The target-or-drafter question needs a no-spec
     reference and the *position* of first divergence per turn (`MTPQ2`, queued). Patterns:
-    a `ssFFsFss` `sssFssss` `ssFsFsss`, b `ssFssFss` `ssssFssF` `sssFssss` — 6 of 48 healthy,
+    a `ssFFsFss` `sssFssss` `ssFsFsss`, b `ssFssFss` `ssssFssF` `sssFssss` — 11 of 48 healthy,
     the lowest rate of any start so far. Raw: `notes/data/mtpq.txt`.
 
 45. **The broken state does not corrupt the target's text — the defect is in the drafter.** `MTPQ2`:
@@ -754,21 +787,21 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
 
     | | t1 | t2 | t3 | t4 | t5 | t6 | t7 | t8 |
     | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-    | a p1 `sFsssFss` | 56 | 194 | 142 | 15 | = | 44 | 15 | 15 |
+    | a p1 `sFsssFss` | 56 | 194 | 142 | 15 | = | 15 | 44 | 15 |
     | a p2 `sssssFFF` | 56 | 93 | 142 | 15 | 84 | 15 | 44 | 15 |
     | a p3 `ssssssss` | 56 | 986 | 142 | 15 | 84 | 33 | 104 | 15 |
     | b p1 `Fsssssss` | 127 | 878 | 142 | 15 | 1279 | 33 | 104 | 15 |
     | b p2 `sssssssF` | 56 | 150 | 142 | 77 | = | 140 | 44 | 15 |
     | b p3 `FssssFFs` | 56 | 34 | 142 | 15 | 79 | 140 | 44 | 15 |
 
-    The fork position is a property of the turn (56, 142, 15, 15 recur in every pass whatever the
+    The fork position is a property of the turn (142 at t3 and 15 at t8 recur in every pass, 56 at t1 and 15 at t4 in five of six, whatever the
     state), i.e. near-ties in the reference where MTP's verify shapes tip the argmax; a broken turn
     reproduced the reference exactly twice (a/p1 t5, b/p2 t5) and stayed with it to char 1279 once.
     Healthy and broken turns fork at the same places. So the broken state changes how many drafts
     the target accepts, not what the target says: the drafter is wrong, the target is not. Also:
     even with a bit-deterministic MoE, MTP output is not greedy-equivalent on this stack (cf. the
     new upstream CI test #54893, which asserts that equality on its hardware). Raw:
-    `notes/data/mtpq2.txt`, reference texts `notes/data/mtpq2-ref.json`.
+    `notes/data/mtpq2.txt`, reference texts `notes/data/mtpq2-ref.json`. *[Audit 2026-09-24: superseded by finding 59 — broken turns were post-EOS `<|im_start|>` filler the drafter cannot predict, so "the drafter is wrong" does not follow; the reference compared filler against filler (post-mortem-2026-09-03.md item 5).]*
 
 46. **Bug A confirmed and split: EITHER align patch alone gives ~90 % healthy — the seed (#53798)
     and the chunk split (#54076) act on the same wrong-block-size defect.** `MTPFIX3`, MTP n=5, prefix cache on:
@@ -792,7 +825,7 @@ healthy turns: n=42, acceptance 40–88 %; broken turns: n=54, 3–25 %
     stale) GDN state. With MTP every agent turn is a resume, and the drafter's inputs come from a
     target running on a wrong state until the next checkpoint realigns it — the per-turn draw.
     Not an elimination: 9 broken turns remain under both patches (bug B, per request, also present
-    with the cache off where the seed path is never taken). Raw: `notes/data/mtpfix3.txt`.
+    with the cache off where the seed path is never taken). Raw: `notes/data/mtpfix3.txt`. *[Audit 2026-09-24: the healthy rates (~90 %, 63/72) are contaminated by the ignore_eos artifact (finding 59) and were withdrawn upstream; the block-size mechanism stands on the code.]*
 
 47. **The ring block is not the switch.** `MTPRING` (unpatched align path; ring block id logged per
     request; then ring blocks included in allocation zeroing via `VLLM_RING_ZERO=1`):
@@ -838,7 +871,7 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     (45) but the numerics do not; that is the align seed/split defect (46) delivering a different
     GDN state on every resume. Bisection of bug B needs a reproducible input: `MTPDH2` runs the
     same instrument with the align patches installed (DH2) and with the cache off (DH3). Raw:
-    `notes/data/fnext-DH_a.log.txt`; report: `tools/determinism/drafthash_report.py`.
+    `notes/data/fnext-DH_a.log.txt`; report: `tools/determinism/drafthash_report.py`. *[Audit 2026-09-24: attribution to the align defect superseded — finding 50 shows the resumed state still differs with the align patches on, and findings 52–53 locate the source in the QSA indexer with the GDN exact.]*
 
 50. **The nondeterminism enters at the prefill chunk boundary, not at the resume.** `MTPDH2`:
     - `DH2_a` (align patches ON, cache on): eight prefill chunks starting at the cached position
@@ -855,7 +888,7 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     robust (45) but the drafter's input differs (49). Bug A (46) is the same class at the cache
     boundary — the seed/split fix made it *rarer*, not exact. `MTPDH3` next: one-chunk prefill
     (`--max-num-batched-tokens 8192`) vs four chunks (2048), hashing also the last row of each
-    chunk (kernel-internal vs handoff). Raw: `notes/data/fnext-DH2_a.log.txt`, `fnext-DH3_a.log.txt` (when done).
+    chunk (kernel-internal vs handoff). Raw: `notes/data/fnext-DH2_a.log.txt`, `fnext-DH3_a.log.txt` (when done). *[Audit 2026-09-24: corrected by finding 51 — a single-chunk prefill also differs at its last row, so it is not the chunk handoff; the residual after the align fix is bug B, not bug A.]*
 
 51. **Not the chunk handoff either — the long prefill itself is nondeterministic.** `MTPDH3`
     (cache off, det MoE, eager, hashes of the FIRST and LAST row of every draft-prefill chunk):
@@ -911,7 +944,7 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     → the drafter (whose only attention is this same QSA path) draws healthy or broken per
     request → MTP acceptance flips. `MTPQSA` tests the two fixes at the call site: canonical
     ordering of the selected blocks (padding kept trailing) and an exact `torch.topk`. Raw:
-    `notes/data/fnext-LHSUB3.log.txt`, `mtplh2.txt`.
+    `notes/data/fnext-LHSUB3.log.txt`, `mtplh2.txt`. *[Audit 2026-09-24: only `index_qk_proj` was hashed, not the scores computed inside the indexer, so "same inputs" is not shown for the top-k itself (det-191 found selection differences always with differing scores); the last link of the chain (acceptance flips) is superseded by finding 59.]*
 
 54. **CONFIRMED: an exact top-k at the QSA selection site makes the entire 7.5k-token forward
     bit-identical.** `MTPQSA`, same probe as 52/53 (3 identical 7503-token requests, det MoE,
@@ -928,7 +961,7 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     in one of three requests; fixed by the exact selection). Correction to finding 5: "QSA top-k
     excluded" was measured on a 55-token prompt with the MoE still nondeterministic, so it only
     showed top-k was not the sole source then. Raw: `notes/data/lhsort_hashes.txt`,
-    `lhexact_hashes.txt`. The MTP replay arms under each fix follow (`MTP_EXACT`, `MTP_SORT`).
+    `lhexact_hashes.txt`. The MTP replay arms under each fix follow (`MTP_EXACT`, `MTP_SORT`). *[Audit 2026-09-24: the varying ORDER is kernel-side (the sort fixes layers 3 and 7); the varying SET is inferred from one of three requests at an unhooked layer and is not shown to be the kernel — det-190 (0 k-th-value ties on one model, 16k, two prompts) and det-191 (score differences) point elsewhere.]*
 
 55. **With exact top-k the MTP loop is bit-deterministic; the "flip" becomes a fixed property of
     the turn.** `MTP_EXACT` (exact `torch.topk` at the QSA selection, det MoE, cache off, MTP n=5,
@@ -940,7 +973,7 @@ RINGZERO_c: claims=8 turns=8  blk4:sss  blk28:ss  blk43:Fs  blk49:s
     time and turns 3, 6, 7 have ~61–66 %. A systematic, reproducible drafter/target disagreement
     that depends on the turn (its prompt, length or position) — a third defect, deterministic
     and therefore bisectable per turn. `MTPDH4` (drafter hashes under exact top-k) gives the
-    per-turn prompt lengths and chunking to correlate against. Raw: `notes/data/mtpqsa.txt`.
+    per-turn prompt lengths and chunking to correlate against. Raw: `notes/data/mtpqsa.txt`. *[Audit 2026-09-24: the "third defect" (defect C) is the ignore_eos artifact, not a defect — see finding 59.]*
 
 56. **WITHDRAWN.** `DH4_a` ran WITHOUT exact top-k: its log has no `QSAFIX active` line. Two env
     vars had been passed in ONE systemd `Environment=` entry (`"VLLM_DRAFT_HASH=1 VLLM_QSA_EXACT_TOPK=1"`),
@@ -976,7 +1009,7 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
     drafter's state is built incrementally during decode and every turn is healthy. So C lives in
     the draft-prefill path (position/content dependent, deterministic), and does not affect the
     served configuration. `MTPACC` (per-step acceptance, cache off) characterises it; the depth
-    grid (`MTPGRID2`) runs on the validated stack. Raw: `notes/data/mtppad.txt`.
+    grid (`MTPGRID2`) runs on the validated stack. Raw: `notes/data/mtppad.txt`. *[Audit 2026-09-24: healthy/broken and "defect C" here are the ignore_eos artifact (finding 59); the ms/tok comes from the contaminated loop.]*
 
 58. **The depth grid on the full fix stack is bit-reproducible across starts, and four depths are
     broken deterministically.** `MTPGRID2` (prefix cache on, align + exact top-k + det MoE, compiled,
@@ -1004,7 +1037,7 @@ PAD_PROD p3: 63.2% 68.0% 60.6% 55.9% 56.5% 58.2% 69.0% 72.4%
     used it), but the fresh-cache arm still runs as the control. Next arms, in order: per-step
     acceptance (where in a turn does n=2 fail?), fresh compile cache, DENSE drafter (llama.cpp's
     MTP head attends densely; ours re-selects through QSA — `densedraft_patch.py`), index sharing
-    (SGLang's strategy; `index_share_for_mtp_iteration`). Raw: `notes/data/mtpgrid2.txt`.
+    (SGLang's strategy; `index_share_for_mtp_iteration`). Raw: `notes/data/mtpgrid2.txt`. *[Audit 2026-09-24: retired — the "broken" depths are the ignore_eos artifact (finding 59); the EOS-correct grid (finding 61) finds no broken depth.]*
 
 59. **The per-turn "healthy/broken" split is a BENCHMARK ARTIFACT of `ignore_eos`.** `MTPACC2`
     (per-step acceptance from the scheduler + saved texts, full fix stack, n=2 and n=5, cache on):
@@ -1066,7 +1099,7 @@ all depths counter-identical across 3 starts: True
     tokens): 2.1 s/turn without speculation, 2.6–2.8 s with any MTP depth, because the one-block
     prefix-cache back-off costs more re-prefill than the decode saved (cf. #54713 for the Mamba
     side of that). The old-loop numbers (58) are retired; the served config's choice is a
-    workload question, not a defect question. Raw: `notes/data/mtpgrid3.txt`.
+    workload question, not a defect question. Raw: `notes/data/mtpgrid3.txt`. *[Audit 2026-09-24: preview stack without `disable_eagle_block_drop`; with it MTP beats no-spec per turn (prefill-investigation findings 94 and 210: MTP n=3 −19.4 %/turn, promoted to prod 2026-09-22).]*
 
 62. **Prefill cost of the exact-top-k workaround: +6 % TTFT.** `MTPTTFT` (no spec, prefix cache
     off, det MoE on both arms, 3 starts each, 3 requests per point, per-arm activation verified):
@@ -1080,7 +1113,7 @@ all depths counter-identical across 3 starts: True
     below the community overlay's −8…−40 % (which replaced the kernel on every layer with a
     Python top-k over the full logits *and* a canonical sort). The kernel fix (`patches/
     kernel-det/`) is meant to bring this to ≈0; its microbenchmark is queued. Decode cost of the
-    workaround at c=1 is inside the run-to-run band (finding 61 vs 57). Raw: `notes/data/mtpttft.txt`.
+    workaround at c=1 is inside the run-to-run band (finding 82, `kdetab`: exact vs stock s/turn inside the band). Raw: `notes/data/mtpttft.txt`. *[Audit 2026-09-24: preview-stack numbers; on vLLM main the exact-top-k TTFT cost is not flat — +0.8…+1.3 % at 8k and +3.1…+3.9 % at 30k (det-235).]*
 
 63. **Kernel fix `patches/kernel-det` v2.3: correct and deterministic on sm_121; 1.3–4× the stock
     kernel's per-call time.** Built standalone as `_C_det` (three build defects fixed first, all in
@@ -1122,10 +1155,10 @@ all depths counter-identical across 3 starts: True
     (1 row k=2048: 71.8 → 37.5 µs; 64 rows: 207 → 127 µs; only 24 rows regresses, 73 → 85). 8192 was
     also tried and loses at 64 rows × 16k (49 → 60 µs). Installed as `/opt/llm/kernel-det/_C_det.so`;
     `tools/determinism/qsadet_patch.py` (`VLLM_QSA_DET_TOPK=1`) routes the QSA selection to it for
-    the end-to-end A/B. Not installed yet (queue: `mtpgrid0` running).
+    the end-to-end A/B. Not installed yet (queue: `mtpgrid0` running). *[Audit 2026-09-24: v2.3 per-call ratios and the 16384 threshold are superseded (det-143, det-171–173: 0.72–1.78×, threshold 22,016); the current PR #55122 head is 0.74–0.96× the merge-base kernel, i.e. faster (det-235).]*
 
 64. **PR #55122's test file: 70 / 70 pass against the built kernel, 70 / 70 fail against the stock op.**
-    The three new pytest cases (`test_persistent_topk_deterministic`, `_all_equal`, `_pivot_ties`,
+    The four new pytest cases (`test_persistent_topk_deterministic`, `_all_equal`, `_pivot_ties`,
     `_narrow_value_range`; 70 parametrisations, 8 skipped for k ≥ n) run on the box with a plugin that
     swaps the op for `_C_det` (`patches/kernel-det/detplugin.py`): **70 passed** in 0.7 s. The same file
     against the venv's stock `_C.persistent_topk`: **70 failed** — every case, including the tie-free
@@ -1145,7 +1178,7 @@ all depths counter-identical across 3 starts: True
     batch-invariant path). MoE fused finalize: 0 divergences across 80 warm requests on their shapes
     (shape-dependent; a data point for #54945). Quality, 50-item Hungarian KIE suite × 3 runs:
     **95/100 with 0/50 unstable items** vs stock 97/100 with **13/50 unstable**; the one-point gap is a
-    single near-tie reasoning fork. Artefacts: k3net/docai-evals, experiments/2026-09-03-qwen38-flash-next-det-topk-kernel-batch-invariance-gb10.
+    single near-tie reasoning fork. Artefacts: k3net/docai-evals, experiments/2026-09-03-qwen38-flash-next-det-topk-kernel-batch-invariance-gb10. *[Audit 2026-09-24: k3dani's 'exact' arm was their full stable-sort patch (mode 1), not torch.topk — see det-235.]*
 
 80. **The preview build lacks vllm#50729 (overlapping Mamba state-copy race, merged 2026-08-17).**
     Found via blazux/qwen3.8-Flash-DGX (their image carries it plus a bounds guard by Saren-Arterius):
@@ -1162,7 +1195,7 @@ all depths counter-identical across 3 starts: True
     Upstream merged since the preview fork that the main build has and the preview does not (our
     files only): #52789 internal prefill checkpoints for Mamba prefix caching (9–25 % TTFT claimed),
     #53388 disabling the trailing prefix-cache block drop under spec decode (= plan §5 item 1),
-    #53877 GDN decode beta in FP32, #53456 XD-RoPE grid on prefix hit, #54251 GDN RMSNorm warm-up.
+    #53877 GDN decode beta in FP32, #53456 XD-RoPE grid on prefix hit, #54251 GDN RMSNorm warm-up. *[Audit 2026-09-24: the FLA shared-memory gate + `num_warps=2` pin was measured as a no-op (±1 %, identical numerics) — prefill-investigation finding 86; not worth adopting.]*
 
 81. **Grid start c (stock preview stack, EOS-correct agent loop, 22:23): the MTP acceptance ladder is
     the same for the third time.** Rate by n: 60 / 58 / 46 / 40 / 37 / 29 / 26 % for n = 2..8 (a/b:
@@ -1171,9 +1204,9 @@ all depths counter-identical across 3 starts: True
     table: `notes/data/mtpgrid0-partial.md`). Three starts agree within the run-to-run band of finding 61,
     so the before-column for the #53142 correction is complete except n=1 (redo queued) — and the
     conclusion holds: on the preview stack spec decode does not buy the agent loop a faster turn at
-    130–230-token turns; the no-spec arm is the fastest per turn at every start. Three arms of this run
+    ~15–30-token turns (120–250 tokens per 8-turn loop); the no-spec arm is the fastest per turn at every start. Three arms of this run
     died for two reasons that are both infrastructure, now fixed and documented in `failure-modes.md`
-    (the swapfile the reboot dropped; the PSI guard's "some" rule).
+    (the swapfile the reboot dropped; the PSI guard's "some" rule). *[Audit 2026-09-24: the #53142/#54076 before/after correction was never supplied — the figures were withdrawn upstream (comment-54076-withdraw-acceptance.md); "spec decode does not pay" is superseded with `disable_eagle_block_drop` (prefill-investigation findings 94 and 210).]*
 
 82. **Server-level A/B of the deterministic top-k kernel (`kdetab`, 22:24–01:24, three starts per arm,
     stock preview stack, det-finalize/qsafix inert, align patch on both arms; raw `notes/data/kdetab.txt`).**
@@ -1192,7 +1225,7 @@ all depths counter-identical across 3 starts: True
 84. **`_C_det` rebuilt from the PR #55122 follow-up source (per-call device properties, k=1024 test
     shapes) — 177/177 tests pass, installed 02:21** (`notes/data/kdetrebuild.txt`). The box copy now
     matches the PR head `cbd0642a`; the kdetab A/B (finding 82) ran on the previous build, whose kernel
-    body is identical (the follow-up only moved the smem query per call).
+    body is identical (the follow-up only moved the smem query per call). *[Audit 2026-09-24: stale — the PR #55122 head has since moved to `b2312b2de` (port onto `filtered_topk_row`, det-235).]*
 
 87. **Grid complete: three starts for every n = 0..8 on the stock preview stack** (redo arms
     `notes/data/s7redo.txt`: S7_b 29.9 % / 3.09 / 2.89 s, S8_b 32.2 % / 3.58 / 2.89 s, S1_c 71.2 % / 1.71 /
@@ -1201,7 +1234,7 @@ all depths counter-identical across 3 starts: True
     n=6 39 / 30 / 37, n=7 27 / 30 / 29, n=8 25 / 32 / 26. Seconds per turn never beat the no-spec arm
     (1.85–2.09) on this stack. Infrastructure notes from the redo: the swapfile fix holds (both arms that
     died twice loaded and ran); the headroom guard in the redo runner sat *before* the previous arm's
-    stop, so it only added a 10-min wait per arm — fixed in the runner afterwards, not a measurement issue.
+    stop, so it only added a 10-min wait per arm — fixed in the runner afterwards, not a measurement issue. *[Audit 2026-09-24: "never beat the no-spec arm" holds only without `disable_eagle_block_drop`; with it MTP n=3 is −19.4 %/turn vs no-spec (prefill-investigation finding 210).]*
 88. **vllm#50729 (overlapping Mamba state-copy race) applied to the preview venv 03:21**, all four hunks
     at offsets 5–6, `py_compile` clean, backup `mamba_utils.py.pre50729` (`notes/data/race50729.txt`).
     Every preview measurement from here on carries it; nothing above was re-measured with it.
@@ -1223,25 +1256,25 @@ all depths counter-identical across 3 starts: True
 model and same GB10 sm_121 hardware** — independently reports both of our findings: prefix caching
 implicated, *and* "nondeterministic greedy decoding above ~2K tokens with prefix caching disabled".
 It also reports `mamba_cache_mode` "align" and "all" failing identically, which predicts our queued
-`M_all` vs `M_align` discriminator will come back null.
+`M_all` vs `M_align` discriminator will come back null. *[Audit 2026-09-24: ran, and null as predicted (findings 16–17).]*
 
 [vllm#47861](https://github.com/vllm-project/vllm/pull/47861) fixed MTP + prefix caching correctness
 for hybrid Mamba models (tool-call leakage, needle recall failures, ~20% accuracy drops). It was
 **closed unmerged**; only its scheduler half landed via #51113, which **is** present in our build
 (`_mamba_block_aligned_split`, `mamba_partial_cache_hit`). The unmerged half — *don't apply
 EAGLE/MTP peek-and-drop to Mamba state groups, since recurrent snapshots cannot be rewound* — is a
-live candidate for what we are seeing.
+live candidate for what we are seeing. *[Audit 2026-09-24: no longer a candidate: finding 27 exonerates the align machinery, and the four fixes reach 0 without this change (det-184).]*
 
 ## Narrowed to
 
 The align-mode state machinery, which runs regardless of hits: copy-on-write into private blocks
 (`_producer_partial_tail_reqs`, `last_state_block_idx`) and `postprocess_mamba_align_gpu`, a fused
 GPU postprocess that mixes state copies with accepted-token updates **without a CPU-GPU sync**.
-Plus whatever drives the separate generation-side path.
+Plus whatever drives the separate generation-side path. *[Audit 2026-09-24: superseded: sync ruled out (finding 10), race ruled out (finding 13), cache mode irrelevant (findings 16–17), align exonerated (finding 27); the cause set is the four fixes (det-184).]*
 
 ## Refuted this session (kept so they are not re-run)
 
-- PLE gather as the source — bit-identical output in both bisection groups
+- PLE gather as the source — bit-identical output in both bisection groups *[Audit 2026-09-24: eager only; with CUDA graphs the PLE offload read-back is consumed one step behind and IS a source (finding 138), fixed by `plefix` (det-184).]*
 - PLE FP8 global scale destroying rows — 0 dead rows, uniform magnitudes
 - Language-dependent damage via the n-gram hash — the hash *is* token-ID dependent, but all table
   regions quantise equally well, so there is no bad region to land in
@@ -1254,7 +1287,7 @@ Plus whatever drives the separate generation-side path.
 
 | script | what it answers | needs |
 | --- | --- | --- |
-| `layerhash_patch.py` | which layer first differs; includes an async **race detector** (hash twice with a sync between) | server, `--enforce-eager` |
+| `layerhash_patch.py` | which layer first differs; includes an async **race detector** (hash twice with a sync between) | server, `--enforce-eager`. *[Audit 2026-09-24: targets the old `vllm-venv-fnext` paths and needs per-request slicing under concurrency; not usable on current venvs without porting (finding 186).]* |
 | `topk_boundary.py` | off-by-one / reads-past-bound in `persistent_topk`, vs a `torch.topk` oracle | idle GPU, seconds |
 | `kernelbox_capture.py` / `_replay.py` | kernel determinism **and purity** (`replay(input) == captured output`) | real request, then fresh process |
 | `kernelbox_adversarial.py` | rare events (rate bound, not a boolean), out-of-bounds reads via poison padding, alignment sensitivity | a capture |
@@ -1332,7 +1365,7 @@ Plus whatever drives the separate generation-side path.
     row 0 is bit-identical at every M on sm_120**; per-channel FP8 (identical) and BF16 cuBLAS (1 ulp, M-dependent) stand.
     Their fixed-M repeat check (36 cells × 30 calls, three processes) found no call-to-call divergence in any dense path.
     Consequences: (1) `tools/gemm_m_invariance.py` v2 uses the production layouts; rerun on the GB10 queued (`gemminv2`)
-    to replace finding 112's table; (2) our #54521 reply of 23:4x (posting 29) carried the wrong row — correction to post;
+    to replace finding 112's table; (2) our #54521 reply of 23:4x (posting 29) carried the wrong row — correction posted 2026-09-05 (upstream log 33);
     (3) the unposted #54928 draft loses its blockwise sentence: on this evidence the E == V ≠ A channel on an FP8-dense
     stack cannot come from the blockwise GEMM, only from BF16 cuBLAS paths (1 ulp) or elsewhere. Lesson for the harness:
     a `stride(0) == 1` assertion on 2-D scales, and a float64 reference on the first cell before any table is quoted.
@@ -1374,7 +1407,7 @@ Plus whatever drives the separate generation-side path.
     configuration, garbles requests whose prefill shares a step; agent clients that fire parallel tool calls hit
     exactly that.** Mitigation until fixed: serve without MTP, or serialise prefills. Bisect running
     (`acceptcell4/5`): equal vs unequal prompt lengths, MTP n=1, `--enforce-eager`, `index_share_for_mtp_iteration`
-    off → finding 128.
+    off → finding 128. *[Audit 2026-09-24: root-caused in det-130 and fixed in det-131 (strided state-index view); vllm#55375 merged 2026-09-05 and is in every serving venv since fnmain2.]*
 
 128. **Bisect of the multi-prefill MTP corruption (`acceptcell4/5`, `notes/data/acceptcell4.txt`, `acceptcell5.txt`): none of
     prompt length, draft depth, CUDA graphs or the shared step-0 selection matters — the drafter's prefill step over
@@ -1397,7 +1430,7 @@ Plus whatever drives the separate generation-side path.
     visible `qsa_store_cache_rows` calls would have gated nothing. Both arms are queued (`acceptcell7`), behind a
     batch-composition log run (`acceptcell6`). Candidate mechanism per that review: slot/metadata ownership of the
     second request in the reused metadata; the store kernels themselves carry no request notion and can only execute
-    a wrong slot mapping faithfully.
+    a wrong slot mapping faithfully. *[Audit 2026-09-24: superseded by det-130 — the drafter is innocent (corruption persists with the drafter never executed); the cause is a strided state-index view fed to the PLE short-conv kernels.]*
 
 129. **Batch-composition log (`acceptcell6`, `notes/data/acceptcell6.txt`, `acceptcell6-BL.jsonl`; one env-gated log line
     in the V2 runner, request ids sent explicitly): the corruption is deterministic on the step's shape. A step whose
@@ -1463,7 +1496,7 @@ Plus whatever drives the separate generation-side path.
     near-tie nondeterminism of finding 116 / #54521, visible here because a 3-token prompt has no context to break
     ties. Draft for the thread: `notes/upstream/comment-53051-gb10-v2.md` (needs go).
 
-    **vllm#55375 merged 2026-09-05 14:02 UTC.** Nightlies after that carry the fix; the overlay venv carries it as `ops/ple.py.orig-dev401`-backed overlay; the production venv (dev352) still needs the one-file overlay or a nightly bump.
+    **vllm#55375 merged 2026-09-05 14:02 UTC.** Nightlies after that carry the fix; the overlay venv carries it as `ops/ple.py.orig-dev401`-backed overlay; the production venv (dev352) still needs the one-file overlay or a nightly bump. *[Audit 2026-09-24: stale — fnmain2 carried #55375 from det-141 on, and every later prod venv (fnmain3, vLLM main 1ea7c63f4 since 2026-09-23) includes it.]*
 
 134. **c=1 MTP-3 decode under the profiler: the GPU is busy 73.5 ms of a 159.6 ms step; the PLE offload handshake is
     fully hidden; the idle is ~2,600 launches per step in PIECEWISE cudagraph mode (`plewait`, overlay venv, record_shapes,
@@ -1475,14 +1508,14 @@ Plus whatever drives the separate generation-side path.
     host time); the rest of the idle is spread thinly between launches — the server runs
     `cudagraph_mode=PIECEWISE` with capture sizes [1,2,4,8], so ~110 compiled pieces per step are called from Python
     (`## Call CompiledFxGraph ##` ×109/step) and every piece boundary pays host time. Caveat: the profiler itself adds
-    per-op host overhead, so the 46 % duty cycle is an upper bound on the idle; the unprofiled step time from the `dv`
+    per-op host overhead, so the 54 % idle (46 % duty cycle) is an upper bound; the unprofiled step time from the `dv`
     run (tok/s and accept length at c=1) decides how much is real, and the `cg` A/B (PIECEWISE vs FULL_AND_PIECEWISE vs
     FULL_DECODE_ONLY) measures the lever directly. GPU-time budget inside the step: blockwise-FP8 dense GEMMs 31.8 %
     (2,804 calls at 237 µs each; at M=4 the ~25 MiB projections have a ~96 µs byte floor → ~2.5× above it, the largest
-    kernel-level waste in decode); MoE grouped GEMMs 32 % (at their expert-byte floor, finding 137); BF16 GEMMs on
+    kernel-level waste in decode); MoE grouped GEMMs 32 % (1.5× above their expert-byte floor at M=4, prefill-investigation finding 137); BF16 GEMMs on
     unquantized weights 16.5 % (shared expert 2560→1280 + 640→2560 = 72 ms, hyper-connection low-rank 42 ms, router
     20 ms, MTP-layer dense ~25 ms per 28 steps); GDN update 2 %; QSA 0.7 %. The c=4 profile was lost: `/stop_profile`
-    took longer than the client's 900 s timeout to export the shaped trace.
+    took longer than the client's 900 s timeout to export the shaped trace. *[Audit 2026-09-24: the per-step medians (73.5 / 85.7 / 159.6 ms) and the 0.00 ms PLE gap are not in `plewait.txt`, whose analyser reports `markers=0` and "no decode steps with PLE kernels found"; its aggregate is 2.093 s of kernel time over a 3.871 s span (54 % busy).]*
 
 
 135. **Reduced-vocabulary MTP drafting on the FP8 head: +6.4–6.8 % single-stream decode at every slice size, +2–3 % at
@@ -1517,17 +1550,17 @@ Plus whatever drives the separate generation-side path.
     noise. The config echoed each mode, but the logs carry no capture messages for any arm, so whether the FULL modes
     actually captured the hybrid GDN/QSA + PLE-offload forward or fell back silently is not established; either way the
     dial does nothing as shipped. Together with the unprofiled step time (≈ AL / tok/s ≈ 72 ms at c=1, equal to the
-    73.5 ms of GPU-busy time in det-134) this closes the "46 % idle" question: it was profiler overhead, the c=1 decode
+    73.5 ms of GPU-busy time in det-134) this closes the "54 % idle" question: it was profiler overhead, the c=1 decode
     step is GPU-bound. Remaining decode levers in order: the small-M blockwise-FP8 GEMM (32 % of the step at 2.5× its byte
     floor), the draft-vocab slice (det-135, measured +6–7 %), FP8 for the BF16 leftovers (shared expert, hc, router, MTP
-    dense; 16.5 %), and drafter quality (acceptance 41–50 % on agent traffic).
+    dense; 16.5 %), and drafter quality (acceptance 41–50 % on agent traffic). *[Audit 2026-09-24: capture is settled — `cg.txt` logs `captured=0` in all three arms, and det-193/194 found zero graphs captured in any mode on this build (cause: det-220). The ≈72 ms step needs the TTFT-subtracted decode rate; AL / tok/s with this run's wall-clock 26.5 tok/s gives ≈94 ms.]*
 
 
 137. **Draft-vocab slice, decode-only (streaming, TTFT subtracted): +6 % per stream at c=1 and c=8, +4 % at c=4, two starts
     per arm (`dvrate`, 32k slice vs full head, MTP-3, 400 output tokens on the held-out agent prompts, `notes/data/dvrate.txt`,
     per-request JSONL in `notes/data/dvrate/`).** Answers "what tok/s": single-stream decode on this traffic is **38.3 tok/s
     with the full head and 40.5 tok/s with the 32k slice** (per-start medians 38.9/38.3 vs 41.7/40.0); c=4 21.9 → 23.0 per
-    stream (88 → 92 aggregate); c=8 19.8 → 21.0 (158 → 168 aggregate). Paired by prompt: +5.8 % mean at c=1 (10/12 wins),
+    stream (88 → 92 as per-stream × 4; measured agg 67–94); c=8 19.8 → 21.0 (158 → 168 as per-stream × 8; measured agg 113–130). Paired by prompt: +5.8 % mean at c=1 (10/12 wins),
     +3.7 % at c=4 (5/6), +6.2 % at c=8 (4/4); acceptance −2.6 pp at c=1, flat at c=4/8. TTFT of the 5k prompts is 2.1 s at
     c=1 and unchanged by the slice. Consistent with det-135's wall-clock +6.4 % (which included that prefill). The c=8 TTFT
     of 26 s is eight cold 5k prefills serialised at 16k chunks — a scheduling artefact of the cell, not a decode effect.
@@ -1561,7 +1594,7 @@ Plus whatever drives the separate generation-side path.
     pristine blocks still lands in B, so KV/state *slots* are not the carrier). The eight "sequential" requests of `posdiv`
     disagree only because request 1 followed a different kind of request than 2–8. The sampled-token route shows the same
     thing (`pdiag`: first token 'Let' at −1.19 / −0.03 / −0.54 across three cold-to-warm stock requests), so it is not the
-    prompt-logprobs path either.
+    prompt-logprobs path either. *[Audit 2026-09-24: reading (b)'s attribution is superseded — det-184 (qsadet alone 333 → 330), det-190 (0 ties at the k-th value on 6,192 selecting rows) and det-191 (stock indexer scores already differ before the top-k) place the divergence upstream of the kernel; these arms also ran one PLE step behind (det-139). det-190 covers one model at 16k with two prompts; a third party reported rank-512 ties on GLM-5.3-Flash with FP8 indexer logits (2026-09-22).]*
 
     Localisation by elimination, each arm a fresh server with det-both and the period test:
 
@@ -1576,7 +1609,7 @@ Plus whatever drives the separate generation-side path.
 
     So with the two fixes the forward is bit-exact sequentially in eager and in compiled-without-graphs mode, at every length,
     and every module's output hashes equal — the leak needs cudagraph mode even though a 1,460-token prefill never replays a
-    graph (capture sizes 1–8). FULL_DECODE_ONLY leaks the same way, so the trigger is graph capture as such, not the piecewise splitting; the MoE-emulation arm leaks too, so the FlashInfer MoE path is not the carrier, and its 32-token completions *converging* over five requests is the signature of a buffer that fills with traffic. **The carrier is the PLE CPU-offload output buffer** (`plecheck`, `notes/data/posdiv/plecheck.txt`: hash and non-zero
+    graph (capture sizes 1–8). FULL_DECODE_ONLY leaks the same way, so the trigger is the `capture_model()` warm-up path (which captures no graphs on this build, det-193/194), not the piecewise splitting; the MoE-emulation arm leaks too, so the FlashInfer MoE path is not the carrier, and its 32-token completions *converging* over five requests is the signature of a buffer that fills with traffic. **The carrier is the PLE CPU-offload output buffer** (`plecheck`, `notes/data/posdiv/plecheck.txt`: hash and non-zero
     row count of every PLE layer's GPU output buffer right after each real forward, before the runner releases it). In
     PIECEWISE mode the model consumes the buffer *one step behind*: the first real step (a 32-token warm-up request) saw
     0 non-zero rows, the cold 1,460-token request saw exactly 32 (the previous step's rows), the second and third 1,460
@@ -1586,7 +1619,7 @@ Plus whatever drives the separate generation-side path.
     side's `vllm::ple_offload_wait` (cuStreamWaitValue32 on the cross-process semaphore) does not hold before the read
     in this mode; a probe inside the wait op (`plewait2`, `pleflag`) shows why: in PIECEWISE every real wait finds the flag already at 1, and the runner-side probe reads 1 at the entry of the very first real step, before any request was submitted, and 1 again after every release — the CPU worker's signal for step k lands after the GPU consumed on the stale 1 and after the release's reset, so the flag is perpetually one step ahead; in NONE mode the first real wait finds 0 and blocks correctly, and later waits see 0 or 1 depending on whether the worker was faster than the launch, with correct rows either way. The unmatched raise originates in engine init, which NONE performs without graph capture. A trace of every semaphore operation in both processes (`plesem`, `notes/data/posdiv/plesem.txt`) names it: `capture_model()` signals dummy outputs (flag 1) and then runs real steps through `execute_model()` — 32, 16, 2, 1 tokens — that submit real requests to the offload worker. The 32-token wait passes on the dummy signal (0 rows), its release resets the flag, the 16-token wait blocks on 0 and is released by the worker's signal *for the 32-token step* (consumes 16 of its 32 rows), and from then on every release is followed within milliseconds by the previous step's late signal. NONE never signals dummy outputs outside `execute_model` and is correct. **Fix:** reset every layer's semaphore on the model stream before a real request is launched (`PleOffloadConnector.prepare_forward`, 11 lines), so the wait can only be satisfied by this step's copy; committed on `jschmied/vllm:ple-offload-wait-fix` on top of the #53899 head. Validation (PIECEWISE, `plefix`): every real step consumes exactly its own rows from the first one (32/16/2/1 at init, then 1,460 ×3, 1,999 ×2; hashes equal to the NONE run's), the cold first request gives the warm logprob (−0.2638), 16 identical requests = 1 class, and the position-resolved set is bit-exact sequentially at 1,460 / 1,999 / 5,960 tokens (0 flips, spread 0.000, 1/8 distinct 64-token completions each); the concurrent batches keep 0 / 416 / 665 flips, identical to the cudagraph-off run — the batch-shape axis, not this defect. What remains after that is the batch-shape axis only: 8 identical prompts in
     one prefill batch diverge from each other (1,460: eager from position 429 / 194 flips, compiled 0; 1,999: from position 1
-    in both), the known non-batch-invariance, a separate issue.
+    in both), the known non-batch-invariance, a separate issue. *[Audit 2026-09-24: vllm#53899 closed unmerged 2026-09-21; prod since 2026-09-23 runs vLLM main 1ea7c63f4 with checkpoint-mapped PLE and no offload worker, so this fix no longer applies to prod.]*
 
     Two traps this run paid for. The FlashInfer autotune cache is keyed on the same `compute_hash()` as the compile cache, so
     the det-finalize arm reused the fused-finalize tactic table and died with `Invalid gemm2 profile id: 59` (per-arm
@@ -1598,12 +1631,12 @@ Plus whatever drives the separate generation-side path.
 139. **Prod carries the four fixes (2026-09-06 17:4x; `prodcheck`, `notes/data/posdiv/prodcheck.txt`).** `prod_det_overlays.sh`
     installed on `vllm-venv-fnmain2`: deterministic `persistent_topk` (kernel-det v2.4), bit-stable MoE finalize, the FlashInfer
     autotune cache-key backport (needed by the non-fused runner), and the PLE offload semaphore reset (PR #13); the launcher
-    defaults the two env-gated ones on (`FN_DET_TOPK=0 FN_DET_FINALIZE=0` = stock arm). Validation start with the documented
+    defaults the two env-gated ones on (`FN_DET_TOPK=0 FN_DET_FINALIZE=0` was meant as the stock arm but left both ON until the det-226 launcher fix). Validation start with the documented
     prod configuration (fp8head, 32k context, 16 seqs, batch 16384, **MTP 3, prefix cache on**, PIECEWISE): `QSADET active`
     logged, MoE backend `FLASHINFER_CUTLASS`, 16 identical sequential requests = **one class including the cold first one**
     (full 1,460-position vector hash `17450eec` ×16; 32-token completions 16/16), a tool-call request returns a well-formed
     `tool_calls` finish, speculation live (single-sample acceptance not quoted). Every quality number taken on this build
-    between the #53899 port (2026-09-03) and now was measured one PLE step behind and is due for a re-measure.
+    between the #53899 port (2026-09-03) and now was measured one PLE step behind and is due for a re-measure. *[Audit 2026-09-24: historical prod state — the cache-key backport is now upstream (det-209), and prod since 2026-09-23 is vLLM main 1ea7c63f4 with checkpoint-mapped PLE (no offload worker, so the semaphore reset no longer applies).]*
 
 140. **`FN_MTP` now defaults `disable_eagle_block_drop` on — installed, but the validation start did NOT
     exercise it (2026-09-06 20:46–21:09, `mtpnodrop`, `notes/data/mtpnodrop.txt`).** The launcher
@@ -1621,7 +1654,7 @@ Plus whatever drives the separate generation-side path.
     summary line **truncates before** `disable_eagle_block_drop`, and the launcher `exec`s vLLM so the
     command line never reaches the log — neither is a usable gate. **Open:** a warm-turn probe of ≥4
     identical turns (or `agentloop2.py`, which grows its prefix) × 3 starts, on the re-measurement stack
-    of item 3 — finding 141's −26 % is itself inside the one-PLE-step-behind window.
+    of item 3 — prefill-investigation finding 94's −26 % is itself inside the one-PLE-step-behind window.
 
 141. **`disable_eagle_block_drop` on the fixed prod stack: −19 % per agent turn, three starts per arm,
     ranges non-overlapping (`mtpnodrop2`, 2026-09-06 21:14–22:28, `notes/data/mtpnodrop2.txt`).**
@@ -1635,7 +1668,7 @@ Plus whatever drives the separate generation-side path.
     | ON (`FN_SPEC_NODROP=1`, the new default) | **1.76 / 1.74 / 1.75** | 215 | 51.8 % | 2.55 |
     | OFF (`=0`, vLLM's default) | **2.16 / 2.17 / 2.15** | 131 | 42.2 % | 2.27 |
 
-    **The mechanism is visible per turn, and it is what finding 94 predicted.** ON: turn 1 cold
+    **The mechanism is visible per turn, and it is what prefill-investigation finding 94 predicted.** ON: turn 1 cold
     (`hits+0`, 3.70 s), then `hits+6400` on every turn. OFF: turn 1 **and turn 2** cold (`hits+0`,
     3.63 / 3.40 s), then `hits+4800` — exactly one 1,600-token block less, on every warm turn, plus
     a whole extra cold turn per loop. That hit delta is the gate det-140 lacked: the engine's
@@ -1679,7 +1712,7 @@ Plus whatever drives the separate generation-side path.
       (order does not), but **differs from it on every tie-heavy shape** — precisely #51782 / #54521.
     - **Speed: it is the faster kernel.** Against our det kernel, 0.15–0.92× everywhere. Against
       stock `persistent_topk`, 0.40–0.80× at n ≤ 8k and at 64 rows, but **1.10–1.48× (slower)** at
-      16k–32k with 1–8 rows, so it is not a free win against stock either.
+      16k–32k with 1–8 rows, so it is not a free win against stock either. *[Audit 2026-09-24: the 0.15–0.92× ratio was against v2.4 and is stale; against v2.8 it is 0.42–1.18× (det-146).]*
 
     Our own det/stock ratios on this grid are 1.33–4.31×, consistent with the PR body's "1.3–3× per
     call" — which is the number the reviewer read as a "3× regression". The server-level answer is
@@ -1690,7 +1723,7 @@ Plus whatever drives the separate generation-side path.
     pivot could be applied to `top_k_per_row_decode`, which is already the non-CUDA branch for this
     model, and would then be both deterministic and faster than what we propose. That is a separate
     PR, not a change to this one. Not offered upstream yet — draft in
-    `notes/upstream/comment-55122-tkprd.md`, awaiting the go.
+    `notes/upstream/comment-55122-tkprd.md`, awaiting the go. *[Audit 2026-09-24: posted 2026-09-07 06:5x (upstream log 60).]*
 
 143. **v2.5: the single-CTA path's final sort was a merge all along — worst-case cost ratio 4.31× →
     1.97×, and the shapes this model runs 2.9–3.1× → 1.5× (`kdet25`, 2026-09-07 07:15,
@@ -1735,9 +1768,9 @@ Plus whatever drives the separate generation-side path.
     mutually exclusive `fgt`/`feq` flags where one packed scan would do.
 
     **Not installed on prod** (`/opt/llm/kernel-det/_C_det.so` is still v2.4) and not pushed to
-    PR #55122 — both await the go.
+    PR #55122 — both await the go. *[Audit 2026-09-24: superseded by v2.7, which was pushed to PR #55122 as `b8d09ecb` (upstream log 66).]*
 
-144. **v2.6: three more single-CTA levers — the deterministic kernel now runs at or below stock on
+144. **v2.6: three more single-CTA levers — the deterministic kernel now runs within 1.33× of stock (below it on several cells) on
     every shape it owns (`kdet26`, 2026-09-07 07:36, `notes/data/kdet26.txt`). 210/210 pass.**
     All three are output-preserving; none touches the guarantee.
 
@@ -1794,7 +1827,7 @@ Plus whatever drives the separate generation-side path.
     | 24 / 32,768 / 2048 | 3.72× | 3.73× | **2.45×** |
     | 48 / 32,768 / 2048 | 3.20× | 3.20× | **2.05×** |
 
-    **Whole grid now 1.00–2.45×** (v2.4 was 1.25–4.31×), 14 of 43 cells at or below stock.
+    **Whole grid now 0.83–2.45×** (v2.4 was 1.25–4.31×), 14 of 43 cells at or below stock.
 
     **The two cells still above 2× are a stock-side artefact, not ours.** At n=32,768 / k=2048 our
     kernel takes 55.4 µs at both 24 and 32 rows, while *stock* jumps 22.6 → 39.0 between them. The
@@ -1806,7 +1839,7 @@ Plus whatever drives the separate generation-side path.
     change replaces a sort with a merge over data already in order, removes block syncs, or skips
     radix passes that provably cannot change the pivot.
 
-    **Not installed on prod, not pushed to PR #55122** — both await the go.
+    **Not installed on prod, not pushed to PR #55122** — both await the go. *[Audit 2026-09-24: v2.7 was pushed to PR #55122 as `b8d09ecb` (upstream log 66).]*
 
 146. **Re-measured `top_k_per_row_decode` against v2.8: it no longer beats us everywhere, and our own
     posted comparison is now stale in our disfavour (`tkprd2`, 2026-09-07, `notes/data/tkprd2.txt`).**
@@ -1836,7 +1869,7 @@ Plus whatever drives the separate generation-side path.
 
     **Owed:** a short correction on PR #55122 — our own comment currently tells a reviewer the
     alternative dominates us, which is no longer true and is an argument against our own PR. Not posted;
-    awaiting the go.
+    awaiting the go. *[Audit 2026-09-24: posted 2026-09-07 13:2x (upstream log 68).]*
 
 147. **Launcher bug: the chunk is sized from the opt-in rather than the dynamic budget, and 8 of 40
     wide-row shapes cannot launch at all on GB10 (found 2026-09-07 while re-sweeping RADIX_THRESHOLD;
@@ -1867,7 +1900,7 @@ Plus whatever drives the separate generation-side path.
     upstream's 32768 would cost **60–100 % at n = 24,576–32,768**. I expected the optimisations to have
     pushed the crossover past 32768 and would have argued for reverting the constant on that basis; the
     measurement says the opposite. It does mean the software-barrier exposure that the lower threshold
-    creates cannot be reduced by raising it back — that concern stands on its own.
+    creates cannot be reduced by raising it back — that concern stands on its own. *[Audit 2026-09-24: superseded by det-172 — with widths that straddle the threshold, single-CTA wins the whole 16,384 < n ≤ 22,016 band at every row count (16–53 %); the crossover near 24,576 is the row-caching limit (n ≤ 24,280), so 16384 is too low.]*
 
     ⚠️ The 64-row column above 16k is missing because finding 147's launch failure aborted that arm.
     Re-run it on v3.2 before quoting a 64-row crossover.
@@ -1889,7 +1922,7 @@ Plus whatever drives the separate generation-side path.
     row ≥ 24,576 to the cooperative path that loses 8–35 %**. This sharpens the portability objection:
     the constant is not merely GPU-dependent, it is row-count dependent on a single GPU, so no scalar
     value is optimal. Making it a function of rows would be another fitted heuristic — the kind #55661
-    was closed for — so this is documented, not fixed.
+    was closed for — so this is documented, not fixed. *[Audit 2026-09-24: superseded by det-172 — 16384 is too low at every row count; single-CTA wins up to 22,016, and the 24,576 crossover is the caching limit.]*
 
     **Regression found while re-benching, and it is ours.** Bisecting the four builds on
     8 rows / 16,384 / k=2048: v2.7 18.5 µs, v3.0 18.5, **v3.1 19.3–19.5**, v3.2 19.3–19.5, with a
@@ -1903,7 +1936,7 @@ Plus whatever drives the separate generation-side path.
 
     Whole grid: v2.7 0.83–2.45×, **v3.2 0.74–2.14×** — better at both ends, with these cells worse.
     ⚠️ The "N of 43 at or below stock" statistic (14 → 9) is not robust: the stock arm is re-timed each
-    run and several cells sit within 1 % of 1.00. Quote the range, not the count.
+    run and several cells sit within 1 % of 1.00. Quote the range, not the count. *[Audit 2026-09-24: older kernel revision; current head b2312b2de is 0.74–0.96× of its merge base on GB10 GPU time (det-235).]*
 
 150. **The v3.1 regression is not explained, and the code-layout hypothesis is refuted (2026-09-07).**
     Chasing det-149's ~5 % on single-CTA k=2048 cells, three candidate causes were eliminated by
@@ -1935,7 +1968,7 @@ Plus whatever drives the separate generation-side path.
       all-equal cases. It would fix the bug. Cost is what rules it out: **4.4–9.9×** with the ragged
       mask and the sort the op's contract needs, and still **1.9–4.7×** stripped bare on a dense row,
       so the gap is the algorithm, not the wrapper. Do not quote the tie behaviour as a contract —
-      it is undocumented and this is one PyTorch build on one device.
+      it is undocumented and this is one PyTorch build on one device. *[Audit 2026-09-24: end to end, exact `torch.topk` costs +3.1…+3.9 % TTFT at 30k, +0.8…+1.3 % at 8k (det-235).]*
     - **The bitonic top-k is deterministic and exact by value.** Its 29/58 "set mismatches" against
       our reference are a *tie-choice* difference, not a wrong answer: the selected values equal the
       exact top-k multiset on every case checked, with no duplicates and no out-of-range indices. The
@@ -1961,7 +1994,7 @@ Plus whatever drives the separate generation-side path.
       bug is present on Hopper, not just on GB10.
     - **Cost: 1.01–2.43× over three starts, and it grows with n.** 64 rows: 1.01–1.45× at n=4096,
       1.47–1.85× at 8192, 2.13–2.24× at 20000 (k=512), **2.31–2.43× at 40000** (k=512). The large-n
-      cells are stable to ±0.05; only the n=4096 cells move run to run.
+      cells are stable to ±0.05; only the n=4096 cells move run to run. *[Audit 2026-09-24: measured on the 2026-09-07 branch head and not re-measured on H100; current head b2312b2de is 0.74–0.96× of its merge base on GB10 GPU time (det-235).]*
     - **Why: the Filtered path is a big win for upstream and a small one for us.** Crossing rows
       32→33 at n=16384, upstream drops 17.5 → 11.4 µs while we drop 23.0 → 18.0, so the ratio opens
       from 1.31× to 1.55–1.58× exactly where the path turns on.
@@ -2035,7 +2068,7 @@ Plus whatever drives the separate generation-side path.
     while the systemd unit kept running — a background-shell death is a symptom to investigate, not
     the event itself. Check `systemctl is-active` and `free` before concluding anything died.
     **Owed:** if ZC502 adds a server/OpenAI-endpoint mode, run it the same day on the #55122 cases
-    (see upstream log 80).
+    (see upstream log 80). *[Audit 2026-09-24: ZC502's client collector was run on sm_121 instead (det-178).]*
 
 156. **Routing is NOT the fix: the `rows > 32 → FilteredTopK` dispatch is sound (2026-09-07, 1 start,
     `notes/data/routing-ab-H100-persistent.txt`).** Step 1 of the filtered-path plan, and it closes it.
@@ -2085,7 +2118,7 @@ Plus whatever drives the separate generation-side path.
     - This is a code-reading result. It predicts that widening `FN_CG_SIZES` to cover 4×S changes c≥4
       throughput and changes nothing at c=1. **Do not quote it as a measurement until that A/B runs**
       — it is exactly the shape of claim that has been wrong before.
-    - Owed to a public thread: our MiaAI #19 comment made the c=16 ceiling provisional on this test.
+    - Owed to a public thread: our MiaAI #19 comment made the c=16 ceiling provisional on this test. *[Audit 2026-09-24: superseded — det-193/194 found no graphs captured at any width or mode, so c=1 and c=2 run eager too, and det-136 also ran c=4. The c=16 ceiling claim is withdrawn (det-163 measured 115–170 tok/s at c=16) and MiaAI #19 was answered (upstream log 99).]*
 
 158. **The capture-width A/B is VACUOUS — no cudagraphs were captured in EITHER arm (2026-09-07,
     6 arms, `notes/data/cgsize2.txt`).** Ran det-157's prediction: prod `[1,2,4,8]` vs wide
@@ -2110,7 +2143,7 @@ Plus whatever drives the separate generation-side path.
       56.1/48.9 at c=16, inside the prod1/prod2 range, so it is not an outlier — but the asymmetry is
       recorded rather than hidden.
     - **Owed:** the MiaAI #19 commitment ("our c=16 numbers are provisional until this is tested") is
-      NOT discharged by this run. Nothing to post until the NONE arm settles what is actually running.
+      NOT discharged by this run. Nothing to post until the NONE arm settles what is actually running. *[Audit 2026-09-24: answered by det-193/194 (nothing captured in any configuration; cause det-220) — the NONE arm as designed was void; MiaAI #19 discharged (upstream log 99).]*
 
 159. **Our prod has been serving dense NVFP4 linears through a W4A16 kernel, not W4A4 (2026-09-07,
     verified in the prod venv; upstream #55397, fix #55405).** `_POSSIBLE_NVFP4_KERNELS[CUDA]` is
@@ -2136,7 +2169,7 @@ Plus whatever drives the separate generation-side path.
     - **Action, queued behind `mtprem`:** apply #55405 (reorder the list so W4A16 ranks below the
       native W4A4 kernels), confirm `is_supported` selection flips, then A/B prefill/TTFT and the
       c=1 decode ladder. We have the affected hardware and the issue author does not appear to —
-      this is a cheap, high-value contribution to a fix that is already written.
+      this is a cheap, high-value contribution to a fix that is already written. *[Audit 2026-09-24: inert for this model — the checkpoint has no NVFP4 dense Linears (det-164, det-180), the kernel A/B was null, and the [[w4a16-vs-w4a4-measured]] confound is retired.]*
 
 160. **ngram / ngram_gpu speculation is IMPOSSIBLE on this stack: it forces model runner V1, and
     `VLLM_PLE_CPU_OFFLOAD` refuses V1 (2026-09-07, `mtprem` group 1).** Both ngram arms died at engine
@@ -2155,7 +2188,7 @@ Plus whatever drives the separate generation-side path.
       headline claim rests on; 6 starts are saved and the run finishes sooner.
     - Untested alternative if the comparison is ever wanted: `FN_PLE_OFFLOAD=0` puts the tables on the
       GPU. Whether they fit alongside a 0.80 utilisation KV pool is unknown, and it would no longer be
-      the same configuration as every other arm — so it is a different measurement, not a repair.
+      the same configuration as every other arm — so it is a different measurement, not a repair. *[Audit 2026-09-24: this blocker was lifted by the PLE mmap port (det-203), but ngram then fails on a second, independent assertion (QSA ring capacity vs block size 1616; det-203/204). Prod since 2026-09-23 has no offload worker.]*
 
 161. **A production Flash-Next NVFP4 deployment on GB10 exists with a different PLE path and no
     cudagraphs (2026-09-07, [Radar105/qwen38-flash-next-nvfp4-spark](https://github.com/Radar105/qwen38-flash-next-nvfp4-spark)).**
@@ -2171,7 +2204,7 @@ Plus whatever drives the separate generation-side path.
     - **Their patch stack is our determinism chain**: #55375 (merged), #53798 and #54076 (the two legs
       still open, both of which we have read this week), plus #54713 and #55390, which are new to us.
       **They do not carry #55122**, so their production retains the QSA top-k nondeterminism — a
-      concrete answer to "who else needs this fix".
+      concrete answer to "who else needs this fix". *[Audit 2026-09-24: det-203 answered the mmap/V1 question (blocker lifted, ngram blocked elsewhere); det-190/191 found no top-k boundary ties on our traffic and nondeterminism originating in the indexer scores, so lacking #55122 is not shown to cause nondeterminism.]*
     - **Cross-check on our numbers, and they agree**: 26.83 tok/s decode at 47,643 input, 33.84 at
       29,985, production median 22.7 / peak 35.1 over 392 decode windows. Our c=1 cells the same night
       are 26.7–28.0 at short prompts. No discrepancy to chase.
@@ -2200,7 +2233,7 @@ Plus whatever drives the separate generation-side path.
       the corruption and the semaphore, and both are fixed in `vllm-venv-fnmain2`.
     - Caveat: one workload (short agent-style prompt, 551 tokens, c=1). The old 1.83× was measured at a
       different cell. A single workload closing the spread is strong evidence, not proof, that it
-      closed everywhere.
+      closed everywhere. *[Audit 2026-09-24: not retired — prefill-investigation finding 215 (2026-09-23) attributes a 10 % within-arm swing at MTP n=6 to this instability.]*
 
 163. **MTP RE-MEASUREMENT COMPLETE on the fixed prod stack (2026-09-07/08, `mtprem`, 69 cells,
     `notes/data/mtprem.txt`).** Groups 0a/1/2/3, three starts each, arms interleaved across starts,
@@ -2231,12 +2264,12 @@ Plus whatever drives the separate generation-side path.
       0.4 s across all sixteen streams.
     - **The published c=16 cells (99.1 / 100.5 tok/s) are BELOW even our no-spec arm (115.5–130.6).**
       Those cells were measured while the multi-prefill corruption was live and are understated, not
-      merely stale.
+      merely stale. *[Audit 2026-09-24: unsupported attribution — the published cells also differ in build (preview vs dev401) and config, and no run isolated the corruption.]*
     - **Depth: flat through n=2–4, then falls.** Acceptance rate decays monotonically (80 % → 28 %)
       while accepted length rises (2.4 → 4.5); the two cancel to n=4 and the rate collapse wins by
       n=9, costing ~25 %. n=2/3/4 overlap each other completely, so the honest statement is "flat to
       4", not an ordering. **n=5–8 remain unmeasurable** (the `block_size`/`compress_ratio` hole), so
-      the curve has a permanent gap between 4 and 9.
+      the curve has a permanent gap between 4 and 9. *[Audit 2026-09-24: superseded — prefill-investigation finding 215 measured n=5 and n=6 with the #54912 ring widening: n=4 beats n=3 by ~1.2 % per agent turn, n≥5 is slower.]*
     - **k=2 vs k=3 is unresolved at both concurrencies** — the ranges overlap. What differs is the
       mechanism, consistently: k=3 buys ~0.45 more accepted tokens per draft at ~8 pp lower acceptance.
 
@@ -2287,14 +2320,14 @@ Plus whatever drives the separate generation-side path.
     | self-consistent over 6 calls | 0 | **0** | **81** |
     | valid exact top-k by value (16 tie-heavy shapes) | — | **16 / 16** | 16 / 16 |
     | index-canonical order | 0 | 0 | **81** |
-    | cost vs stock | 1.00× | **1.00–1.15×** | 0.88–1.54× |
+    | cost vs stock | 1.00× | **0.87–1.21×** | 0.88–1.54× |
 
     - **Their exactness fix works and is nearly free.** On the tie-heavy and all-equal shapes their
-      selection is always a valid exact top-k by value: 0 of 16 wrong. Cost 1.00–1.15× of stock.
+      selection is always a valid exact top-k by value: 0 of 16 wrong. Cost 0.87–1.21× of stock.
     - **It does not touch reproducibility.** 81 of 81 shapes still fail self-consistency over six
       calls, exactly as the retained `atomicAdd` slot assignment predicts.
     - **Ours costs most where theirs costs nothing**: 1.24× at 64×16384, **1.54× at 64×32768**, while
-      theirs is 1.01–1.04× at the same cells. That is the price of removing the candidate buffers.
+      theirs is 1.01–1.04× at the same cells. That cell is a RADIX_THRESHOLD routing artifact (det-167), not the price of removing the candidate buffers.
     - **NEAR-ERROR, recorded because it would have been a public accusation.** My first pass scored
       "set" against the *index-canonical* reference (lowest-index ties) and reported #55314 failing 52
       of 81 — I was one step from posting that their fix does not work. Their claim is matching
@@ -2305,7 +2338,7 @@ Plus whatever drives the separate generation-side path.
     - **Conclusion for the union:** their selection is the cheap half and our emission is the correct
       half, and the numbers now say so rather than the argument. Their approach + `union_emit_ordered`
       should land near 1.0–1.2× of stock *with* reproducibility, against our current 1.54× worst cell.
-      That is worth building and is a better artefact than either PR alone.
+      That is worth building and is a better artefact than either PR alone. *[Audit 2026-09-24: superseded — det-166 built the union as a post-pass and it was worse (1.76–1.99× vs 1.14–1.31× stock); det-168 closed the merged kernel.]*
 
 166. **The union is WORSE than our own PR as a post-pass — do not propose it (2026-09-08,
     `notes/data/tkunion2.txt`).** Built #55314's selection + #55122's ordering and measured it.
@@ -2315,8 +2348,8 @@ Plus whatever drives the separate generation-side path.
     - **It works.** Wiring it into `histogram_256_topk` made exactly the shapes that use that path
       (8192 < n ≤ 32768, i.e. n=20000 in the grid) fully self-consistent — 18/81 shapes, and *only*
       that path — while the value check stayed 0/16 wrong. Path-by-path determinism, as designed.
-    - **And it costs too much.** On the wired path it is **1.76–1.99× stock** against our #55122 at
-      **1.14–1.31×** on the same cells. The safety that makes it unable to break their set — running
+    - **And it costs too much.** On the wired path it is **1.76–2.44× stock** against our #55122 at
+      **1.08–1.53×** on the same cells. The safety that makes it unable to break their set — running
       after them rather than inside them — is what makes it expensive: two extra full-row scans, one
       to count above-pivot and one to emit. That is roughly +0.8× of stock, and it swamps the
       1.00–1.15× their selection costs.
@@ -2407,7 +2440,7 @@ Plus whatever drives the separate generation-side path.
     the two cheapest changes attack the same costs with none of the architectural risk, in a file two
     PRs are already contending over. Order of work:
     1. `RADIX_THRESHOLD` 16384 → 20480 (`thr`, queued). `det_select_row` caches while
-       `fixed + 4n <= smem`; static 4256 B → dyn 97120 B → caching holds to n = 22712, so 20480 is
+       `fixed + 4n <= smem`; static 4256 B → dyn 97120 B → caching holds to n = 24,280, so 20480 is
        legal with margin. If it moves the regressed band back onto the cached path, the honest fix to
        the PR is a better threshold plus a corrected sentence, not a caveat.
     2. Blocked 4-item emission. ~60 lines, provably set- and order-preserving.
@@ -2431,7 +2464,7 @@ Plus whatever drives the separate generation-side path.
     | source | measurement | result |
     | --- | --- | --- |
     | us, 2026-09-04 (PR #55122 comment) | TTFT at 7.5k and 29k, 8-turn agent loop, 3 server starts per arm, MTP n=5 | **every pair inside the start-to-start band** — no measurable TTFT or per-turn cost |
-    | k3dani, 2026-09-03 (independent, different config: MTP=2, PIECEWISE, 8k chunks, FlashInfer 0.6.17) | prefill throughput at 6,082 and 24,416 tokens | **99–100 % of stock** (the 87–90 % figure in that comment is the *Python `torch.topk` fallback*, not this kernel) |
+    | k3dani, 2026-09-03 (independent, different config: MTP=2, PIECEWISE, 8k chunks, FlashInfer 0.6.17) | prefill throughput at 6,082 and 24,416 tokens | **99–100 % of stock** (the 87–90 % figure in that comment is k3dani's fallback, their full stable-sort patch, not this kernel; the cheapest exact path (torch.topk) costs +3.1…+3.9 % TTFT at 30k (det-235)) |
 
     So the kernel's 1.14–1.30× microbenchmark ratio is **≤1 % end to end**, on two different
     configurations, measured by two parties who did not coordinate. Consequences:
@@ -2492,7 +2525,7 @@ Plus whatever drives the separate generation-side path.
     batch is 4·c tokens against a captured maximum of 8:
     - **c=1 → 4 tokens, inside the capture set: the graph IS used.** This is the one informative
       cell, and it is a real null — *turning cudagraphs off entirely costs nothing measurable at
-      c=1*, across 3 arms × 4 reps.
+      c=1*, across 3 arms × 4 reps. *[Audit 2026-09-24: superseded by det-193/194 — PIECEWISE with sizes [1,2,4,8] on this dev401 build captures no cudagraphs at all (0.0 GiB, 0 capture lines), so c=1 is also eager vs eager and this cell is vacuous, not a real null.]*
     - **c=4 → 16 tokens and c=16 → 64 tokens, both above 8: BOTH arms run eager.** Their overlap is
       not evidence about cudagraphs; it is two eager arms agreeing with each other. Same vacuity trap
       as `cgsize2`, caught this time before it was written up as a result.
@@ -2501,7 +2534,7 @@ Plus whatever drives the separate generation-side path.
     our c=16 numbers were provisional because prod's capture sizes may leave c≥4 eager. This run
     *confirms the arithmetic* (c≥4 is eager) but cannot answer their question, which is what happens
     with a capture width that actually covers 4·c. That needs a wide-capture arm — which is what
-    `cgsize2` was for, and `cgsize2` was vacuous. **#19 stays owed; re-run the wide arm.**
+    `cgsize2` was for, and `cgsize2` was vacuous. **#19 stays owed; re-run the wide arm.** *[Audit 2026-09-24: stale — #19 was answered on 2026-09-09 (upstream/README #99) and det-193 records it as discharged.]*
 
     **One loose end, flagged and attributed to nothing:** 2 garbage streams, both in PIECEWISE c=16
     (piece1 rep1, piece3 rep0), 0 in the NONE arms. Small n (6 reps per mode), and since c=16 runs
@@ -2536,7 +2569,7 @@ Plus whatever drives the separate generation-side path.
     contain and which must be added: n = 17408, 20480, 21504 flip path between these three
     thresholds; n = 16384 (always single) and 24576, 32768 (always multi) are the controls. Upper
     bound on any threshold is the caching limit — `det_select_row` caches while
-    `fixed(4256) + 4n <= 101376`, i.e. **n <= 24280** — so 22016 is the largest safe value and
+    `fixed(4256) + 4n <= 101376`, i.e. **n <= 24280** — so 22016 is a safe value (22,016–24,280 is legal but untested) and
     24576 would silently fall to the uncached path.
 
     Queued as `thr2` behind `zsign`. Until it reports, **the PR body's Limitations bullet stands
@@ -2573,7 +2606,7 @@ Plus whatever drives the separate generation-side path.
     **review hygiene, not throughput** — but it is much better hygiene than expected. The PR's cost
     table stops being a liability: "1.3–4.3× on the shape grid, 1.54× worst" becomes "faster than
     stock on most shapes, 1.25× worst". Do **not** re-quote the end-to-end story on the back of
-    this — it was already inside the start-to-start band, and 0.72× will not be visible either.
+    this — it was already inside the start-to-start band, and 0.72× will not be visible either. *[Audit 2026-09-24: the 1.25× worst cell held only for bench_det.py's width grid; on the wider grid the worst is 1.78× (det-173). All ratios here are for the dev401-era kernel; the current head measures 0.74–0.96× of its merge base on GPU time (det-235).]*
 
     Not yet measured: the full 81-shape correctness sweep on the blocked path (only `test_det.py`'s
     grid ran), and whether the `uint4` blocked load helps or the barrier reduction is the whole
@@ -2601,7 +2634,7 @@ Plus whatever drives the separate generation-side path.
     routing actually flips, which is what det-170's rule demands.
 
     **Conclusion: raise the threshold to 22016.** Every width in 16384 < n ≤ 22016 is currently
-    routed to a path that costs 16–53 % more, worst at 64 rows. 22016 is the largest value that
+    routed to a path that costs 16–53 % more, worst at 64 rows. 22016 is a legal value that
     keeps the row cached — `fixed(4256) + 4n ≤ 101376` ⇒ n ≤ 24280 — and 24576 would silently drop
     to the uncached path, which is very likely the source of the PR body's "raising it back to
     32,768 costs 60–100 % at n = 24,576–32,768 on 1–8 rows". **That bullet stays true; it just does
@@ -2638,7 +2671,7 @@ Plus whatever drives the separate generation-side path.
     worst is 2.13× at 64 × 24,576**, which `both` only brings to 1.78×. det-171's number was not
     wrong for its grid; it was quoted as if it were the worst cell of the kernel, and it is not. The
     honest headline for the PR is **"worst 1.78×, and faster than stock on 27 of 43 cells"**, not
-    1.25×.
+    1.25×. *[Audit 2026-09-24: these ratios are for the dev401-era kernel revision; the current head (ported onto filtered_topk_row) measures 0.74–0.96× of its merge base on GPU time and equals stock TTFT end to end (det-235).]*
 
     **Why 24,576 is now the worst cell.** It is just above the 22,016 threshold, so it is multi-CTA,
     and it is above the caching bound (n ≤ 24,280) — no legal threshold can rescue it. `blk` helps
@@ -2672,7 +2705,7 @@ Plus whatever drives the separate generation-side path.
     difference between the arms is the block size, not the spec config.
 
     **Consequences.**
-    - **det-169 needs no correction**, and the retraction in `cgnone2-contamination.md` is now
+    - **det-169 needs no correction on the prefix-cache point**, and the retraction in `cgnone2-contamination.md` is now
       *measured* rather than argued from the shape of the numbers: rep 0 takes 0 hits at 3.5–4.3 s,
       reps 1–2 take 6400/6272 hits at 0.7–0.9 s. That 5× TTFT drop is exactly the rep structure.
     - Memory `prefix-cache-works-agent-loop` is **confirmed**, not contradicted.
@@ -2682,7 +2715,7 @@ Plus whatever drives the separate generation-side path.
     - **This is the PRE-#52771 state.** Our venv is `8340fe1bb` (2026-09-04); vllm#52771
       (`4a806d08e`, merged 09-07 12:16) fixes the all-groups drafter fallback that emits this
       warning, and we run `FN_SPEC_NODROP=1`, its precondition. So the fix is still one we are
-      missing — but the degradation I feared it was causing in our benchmarks **did not happen**.
+      missing — but the degradation I feared it was causing in our benchmarks **did not happen**. *[Audit 2026-09-24: stale — #52771 (4a806d08e) is an ancestor of dev524 5db652225 (fnmain3) and of prod main 1ea7c63f4, so it has been in the serving venv since the fnmain3 cutover (det-206).]*
 
     **Method note, because it cost two runs.** The first attempt sent a 22.5k-token prompt against
     `FN_MAXLEN=16384` (six 400s); the second crashed in post-processing on
@@ -2709,7 +2742,7 @@ Plus whatever drives the separate generation-side path.
 
     `operation not supported` from a CUDA call at init is the signature of a kernel with no sm_121
     implementation. The `native` arm on the same patched build started fine, so this is the backend
-    itself, not the patch or our overlay.
+    itself, not the patch or our overlay. *[Audit 2026-09-24: diagnosis corrected by det-223: 'operation not supported' is cudaErrorNotSupported (801), not a missing kernel image (209); sm_120 code loads on sm_121, and the lead is a shared-memory launch request beyond GB10's 101,376 B opt-in.]*
 
     **Why this matters to the #55122 review, stated carefully.** It does not make their design wrong
     — an opt-in backend is a reasonable shape, and this may well be a fixable FlashInfer gap. What it
@@ -2735,7 +2768,7 @@ Plus whatever drives the separate generation-side path.
     are not (yet) explained by the bump (2026-09-08).** det-175 left two candidates for the 0/8 empty
     completions: (a) my probe reads the wrong response field, or (b) fnmain3's hand-ported PLE hunks
     are broken. Checked (b) directly instead of inferring it from an end-to-end run, using fnmain2
-    (dev401, same overlay, known good) as the reference and comparing normalised ASTs so comments and
+    (dev401, same PLE-offload overlay, known good) as the reference and comparing normalised ASTs so comments and
     formatting cannot mask a difference:
 
     | site | fnmain2 vs fnmain3 |
@@ -2775,7 +2808,7 @@ Plus whatever drives the separate generation-side path.
 
        | shape | fnmain2 | fnmain3 |
        | --- | --- | --- |
-       | short | `\n\nHello!` | **byte-identical** |
+       | short | `\n\nHello!` | **content byte-identical; reasoning differs (24 vs 26 tokens)** |
        | effort | `\n\nHello! 👋 How are you doing today? …` | **byte-identical** |
        | long, 3,018 tok | coherent summary | coherent summary, different wording |
 
@@ -2783,7 +2816,7 @@ Plus whatever drives the separate generation-side path.
        different builds. The long-shape wording difference is **not** evidence of a defect: the two
        builds differ by 123 dev revisions including the removal of torch.compile for this model, and
        memory `temp0-not-reproducible-under-load` records that Flash-Next diverges at temperature 0
-       from ~30 tokens even on one build. Two byte-identical shapes is the strong result here.
+       from ~30 tokens even on one build. Two byte-identical shapes is the strong result here. *[Audit 2026-09-24: only the effort shape is fully identical; the short shape's reasoning differs. det-218/220 show the venvs also differ in tile-union kernel and compile mode, and det-213/221 measure fnmain3 at 8/12 vs fnmain2 10/12 on Hindi copy (one prompt explained by #55272). 'Working' here means serving correctly, not output-equivalent.]*
     5. **PLE offload exercised, not merely present** — `PleOffload: spawning worker (rank=0 …
        ipc://…)` and a separate `PleOffloadWorker` process, 238 log lines, no fallback. The only
        `ERROR` lines are 8 copies of a `Qwen3VLVideoProcessorInitKwargs` docstring complaint from
@@ -2816,7 +2849,7 @@ Plus whatever drives the separate generation-side path.
     live validation.
 
     **Primary answer: it works.** 12 of 12 collector runs `exit=0` on GB10 / sm_121 — two arms
-    (`FN_DET_TOPK` 0 and 1) × three prompt lengths (1,460 / 1,999 / 5,960 tokens) × sequential and
+    (`FN_DET_TOPK` 0 and 1) × three prompt lengths (1,271 / 1,741 / 5,201 tokens; prompt files p1460/p1999/p5960) × sequential and
     concurrent — producing 7.5–31 MB canonical JSON each, and `analyze.py` consumes them and emits
     reports. The blocker is genuinely gone: no launch flags to reproduce, no in-process model load,
     no PLE memory problem.
@@ -2826,24 +2859,24 @@ Plus whatever drives the separate generation-side path.
 
     | case | det0 = stock, disagreeing positions | det1 = #55122 | cross-arm mismatch |
     | --- | --- | --- | --- |
-    | 1,460 / 1,999 / 5,960 **sequential** | **0 / 0 / 0** | 0 / 0 / 0 | 0 / 0 / 0 |
-    | 1,460 / 1,999 / 5,960 **concurrent** | 619 / 635 / 3,055 | **identical: 619 / 635 / 3,055** | 0 / 0 / 65 |
+    | 1,271 / 1,741 / 5,201 **sequential** | **0 / 0 / 0** | 0 / 0 / 0 | 0 / 0 / 0 |
+    | 1,271 / 1,741 / 5,201 **concurrent** | 619 / 635 / 3,055 | **identical: 619 / 635 / 3,055** | 0 / 0 / 65 |
 
     **Stock is self-consistent on all three sequential cases**, so it never exhibited the bug and
     det1's cleanliness demonstrates nothing about the kernel. The concurrent columns are *identical
     between arms* — same disagreeing-position counts, same max forced-logprob spread (1.35 / 0.987 /
     1.16), same first position — which is the GDN batch-invariance effect (finding 76), not the
-    top-k, and must not be read as a #55122 failure.
+    top-k, and must not be read as a #55122 failure. *[Audit 2026-09-24: det0 was NOT stock: vpp4.txt logs 'QSADET active: 1' in det0, so det0 ≡ det1 with all four fixes on (det-226/230). The sequential nulls and the identical concurrent columns say nothing about stock or the top-k; true stock diverges (det-181).]*
 
     **Why the case missed.** The prompts are `random.choice` over a 10-word vocabulary, inherited from
     the earlier offline harness. That is a poor generator for this defect: the bug needs ties at the
     top-k boundary, and #54521's original reproduction used real text near `indexer_budget`. Length
-    alone was not the discriminator — 5,960 tokens is well above the 2,048 budget and still clean
+    alone was not the discriminator — 5,201 tokens (p5960) is well above the 2,048 budget and still clean
     sequentially.
 
     **Next:** re-run with prompts that actually tie — real prose near the budget, plus a deliberately
     tie-heavy case — before offering ZC502 any det0/det1 numbers. The collector validation stands on
-    its own and can be reported now.
+    its own and can be reported now. *[Audit 2026-09-24: posted 2026-09-09 on #54521 (upstream/README #98).]*
 
     **One usability note for them:** `analyze.py` takes `reference [candidate]` as JSON *files* with
     `--out` a directory; passing the output directory positionally gives
@@ -2870,8 +2903,8 @@ Plus whatever drives the separate generation-side path.
     claims. So this run did not test what it said it tested, and its header is wrong.
 
     **But that does not rescue it**, because det-178 already covered above-budget: 5,960 tokens,
-    sequential, also 0. Taken together that is **six sequential cases from 1,460 to 5,960 tokens,
-    two prompt generators, zero divergence in stock.**
+    sequential, also 0. Taken together that is **six sequential cases from 1,271 to 5,201 tokens,
+    two prompt generators, zero divergence in stock.** *[Audit 2026-09-24: not stock — det0 had the det kernel active ('QSADET active: 1' in vpp4.txt and vpp5.txt), i.e. all four fixes (det-226/230); see det-181 for true stock.]*
 
     **The reconciliation, and the next test.** The kernel *is* non-deterministic — det-151 measures
     0/81 shapes self-consistent at the kernel level, and finding 76 records k3dani seeing 0/4 prompts
@@ -2892,7 +2925,7 @@ Plus whatever drives the separate generation-side path.
 
 180. **The "stock" arm in every `vpp` run was not stock — it carried three of the four determinism
     fixes. That makes det-178/179's nulls a REAL result, differently labelled (2026-09-08, `vpp6`,
-    raw `notes/data/vpp6.txt`).**
+    raw `notes/data/vpp6.txt`).** *[Audit 2026-09-24: this finding's own premise is wrong — det0 had ALL FOUR fixes, not three: vpp6.txt logs 'QSADET=1' for det0 because FN_DET_TOPK=0 exported a truthy '0' (det-226).]*
 
     `vpp6` changed the one variable det-179 pointed at — **prefix caching ON, MTP=3**, prompts
     genuinely above the budget this time (2,447 / 2,496 tokens; the mechanism line confirms
@@ -2913,21 +2946,21 @@ Plus whatever drives the separate generation-side path.
     So `det0` was stock-top-k **plus** the other three, including the PLE semaphore fix that
     finding 138 called "the residual noise of four days". I labelled the arm "stock" in three runners
     and in det-178/179 without checking, which is the same class of error as calling a run's knob
-    verified because the constant changed.
+    verified because the constant changed. *[Audit 2026-09-24: the qsadet row is wrong: the det kernel was on in det0 too (vpp6.txt 'QSADET=1', det-226), so det0 was all four fixes, not 'the other three'.]*
 
     **What the eight cases therefore actually establish** — and it is worth more than what I set out
     to measure: **with the MoE finalize, autotune cache-key and PLE semaphore fixes in place, the
     top-k fix alone is not required for sequential position-level reproducibility on real prompts**,
-    at 1,460–5,960 tokens, cache on or off, spec on or off, across three tie shapes. That is a
+    at 1,271–5,201 tokens, cache on or off, spec on or off, across three tie shapes. That is a
     sharper statement than "we could not reproduce it", and it bears directly on
     LopezCastroRoberto's argument on #55122 that the default should not change without evidence of
-    user-visible harm — it is *evidence on their side*, from us, and we should say so.
+    user-visible harm — it is *evidence on their side*, from us, and we should say so. *[Audit 2026-09-24: unsupported — both arms had all four fixes on, so these runs cannot show any single fix is 'not required'; for per-fix evidence see det-184, det-190, det-191.]*
 
     It does **not** contradict det-151 (the kernel is 0/81 self-consistent on synthetic tie-heavy
     inputs) or finding 76 (k3dani saw 0/4 prompts reproducible on the preview image, before any of
     these fixes existed). Both remain true. The reconciliation is that the top-k defect needs ties at
     the selection boundary, and **real prompt score distributions may simply not produce them** —
-    which is what #53287 concluded independently.
+    which is what #53287 concluded independently. *[Audit 2026-09-24: model-specific — on 2026-09-22 a third party measured ties at the 512th top-k rank in real requests on GLM-5.3-Flash with FP8 indexer logits; our zero-tie census (det-190) is one model, 16k, two prompts.]*
 
     **The next test is now well-posed:** a *true* stock arm — `FN_DET_TOPK=0`, `FN_DET_FINALIZE=0`,
     **and** `prod_det_overlays.sh off` to remove the two ungated patches — against the full-fix arm.
@@ -2957,7 +2990,7 @@ Plus whatever drives the separate generation-side path.
     **It also means the concession drafted from det-180 was wrong in its framing and must not be
     posted as written.** "The top-k fix alone was not required" remains literally true — this run
     does not isolate which fix carries the weight — but the impression it gives, that end-to-end
-    reproducibility is not a real problem here, is refuted by this run. Draft revised.
+    reproducibility is not a real problem here, is refuted by this run. Draft revised. *[Audit 2026-09-24: not 'literally true' either: vpp6's det0 had the top-k fix on (det-226), so no run here tested its absence; the claim rests on det-190/191 instead.]*
 
     **The question this opens, and it decides how #55122 should be argued:** *which* of the four is
     load-bearing? Four one-at-a-time arms against true stock answer it:
@@ -2978,7 +3011,7 @@ Plus whatever drives the separate generation-side path.
     - **The wheel is the evidence.** `vllm-0.28.1rc1.dev524+g5db652225…whl` contains **zero** files
       under `vllm/v1/ple_offload/`, and no `ple_offload_layer.py`. Both the subsystem and our
       semaphore fix exist only here and on peakcrosser7's `release/qwen38next_offload` branch.
-      **vllm#53899 is open and unmerged; our PR #13 on that branch is open and unmerged.**
+      **vllm#53899 is open and unmerged; our PR #13 on that branch is open and unmerged.** *[Audit 2026-09-24: stale — vllm#53899 was CLOSED unmerged on 2026-09-21 (PR #13 is still open), and prod since 2026-09-23 runs vLLM main with checkpoint-mapped PLE and no offload worker, so plefix does not apply to prod.]*
     - **Why I got it wrong.** I regenerated the overlay by diffing fnmain3 against
       `…-pristine-dev524.tgz`, taken right after `pip install --no-deps`. But fnmain3 is a *clone of
       fnmain2*, and `pip install` only overwrites files the wheel contains. Our five added files are
@@ -3019,7 +3052,7 @@ Plus whatever drives the separate generation-side path.
     **So the honest statement for #55122 is: our kernel is one necessary component of a set, not the
     fix.** The body's "Fixes #54521" and "one of three independent defects that together make
     Qwen3.8-Flash-Next reproducible" are both wrong in the same direction — the second because the
-    set is four and includes one that is not upstream at all (det-182).
+    set is four and includes one that is not upstream at all (det-182). *[Audit 2026-09-24: 'necessary' was never tested (no three-of-four arm), and det-190/191 show the top-k defect is unreachable on this traffic and the divergence originates in the scores; #55122 is kernel correctness under ties, not a necessary component here.]*
 
     **Two defects in this run, both predicted by our own notes:**
     1. **`detfin` alone is not a runnable configuration.** It died at engine init with
@@ -3063,14 +3096,14 @@ Plus whatever drives the separate generation-side path.
     qualitative statement does not depend on the ranking, because the gap between "any one fix" and "all four" is not
     a matter of degree: 280…334 versus 0. **The four defects are jointly necessary and individually almost worthless.**
     That is an unusual shape and it is worth saying plainly: each defect alone is enough to destroy reproducibility, so
-    removing three of four buys nothing a user can observe.
+    removing three of four buys nothing a user can observe. *[Audit 2026-09-24: only 'no single fix is sufficient' is measured; necessity of each fix needs three-of-four arms, which were never run, and det-190/191 contradict it for qsadet. Read 'jointly sufficient'.]*
 
     **How far apart the two builds actually are, not just how unstable one of them is.** Running ZC502's `analyze.py`
     in its two-file form over the same traces (`none` as reference, `all4` as candidate) gives a cross-arm block the
     per-arm numbers do not: **110 of 2,504 positions (4.4 %) differ in their MODAL top-1 token**, first at position 2,
     with a maximum absolute difference in mean forced logprob of 5.89. So the defects do not merely make stock jitter
     between runs — they move the answer stock converges on, at one position in twenty-three. That is the number to
-    quote when someone asks whether determinism work changes output quality or only reproducibility.
+    quote when someone asks whether determinism work changes the output or only its reproducibility (direction and quality effect unmeasured).
 
     This is the evidence behind the correction already posted to #55122 (`issuecomment-5590003708`) — that our kernel
     is one necessary component of a set rather than the fix, and that `Fixes #54521` had to go. det-183's headline
@@ -3104,7 +3137,7 @@ Plus whatever drives the separate generation-side path.
     Why this matters more than the throughput work it interrupted: their filing notes that a corrupted tool *name*
     makes the parser emit zero deltas, so the request finishes `stop` with no content and no tool calls and the client
     reports "completed response with no content". **That is a whole agent turn lost**, which costs more than any of
-    tonight's speed levers buys — the best of them (finding 153) is −9.6 % on turn time. MiaAI-Lab report the same class
+    tonight's speed levers buys — the best of them (prefill-investigation.md finding 153) is −9.6 % on turn time. MiaAI-Lab report the same class
     on this checkpoint in their dual-Spark #42 ("corrupted tool-call names in long agent sessions").
 
     This is also the cleanest statement yet of what the four fixes are for. det-184 measured them on a 2,504-token prose
@@ -3112,7 +3145,7 @@ Plus whatever drives the separate generation-side path.
     **40 distinct completions → 1**. The fixes are not a reproducibility nicety for benchmark hygiene; on long agent
     traffic they are the difference between a deterministic server and one that answers differently every time.
 
-    **Draft for #54521 written, NOT posted** (`notes/upstream/comment-54521-tcorrupt.md`) — needs the user's go.
+    **Draft for #54521 written, NOT posted** (`notes/upstream/comment-54521-tcorrupt.md`) — needs the user's go. *[Audit 2026-09-24: stale — posted 2026-09-09 on #54521 (issuecomment-5600094876, upstream/README #97).]*
 
 
 186. **The concurrent nondeterminism is NOT an MTP defect: it is generic batch-shape dependence in prefill, present
@@ -3290,7 +3323,7 @@ Plus whatever drives the separate generation-side path.
 
 ---
 
-## det-190 — the top-k boundary never ties on this traffic: #55122's defect is unreachable end to end
+## det-190 — the top-k boundary never ties on this traffic: #55122's defect is unreachable end to end *[Audit 2026-09-24: superseded in method — on 2026-09-22 Bizuayeu (PR #55122 thread) measured ties at the 512th rank in real requests on GLM-5.3-Flash with FP8 indexer logits (513 of 540 pools at the 512th value). Our 0 ties is one model, 16k, two prompts, a float32 view, and does not show ties are rare in general; current-head perf is det-235.]*
 
 **Run:** `tiecensus` (2026-09-09 14:06), the census patch re-inserted into `qsa_indexer._topk` on
 `vllm-venv-fnmain2`, 400 instrumented calls over two prompts (`repeat`, `prose`, 13,639 chars each),
@@ -3392,7 +3425,7 @@ must key calls by content rather than by index.
 
 ---
 
-## det-179 — kernel-det v2.4 has a context ceiling on GB10 at ~93.6k tokens
+## det-179 — kernel-det v2.4 has a context ceiling on GB10 at ~93.6k tokens *[Audit 2026-09-24: SUPERSEDED — not a GB10 hardware limit. det-222 root-caused it as a budget bug (static 4,256 B shared memory not subtracted when sizing chunk_size), det-224 fixed it (100k returns 12/12) and det-234 put the fix in prod; det-222's 98,080 B at 100k also refutes the linear ~93.6k extrapolation.]*
 
 **2026-09-10, found by accident during the stage-1 re-capture (`fx-lhcap`).**
 
@@ -3419,20 +3452,20 @@ on this box. Prod is unaffected at its current context, but any future long-cont
 choose between the overlay and the context.
 
 The capture itself does not need determinism — it collects activation distributions, not bit-exact
-outputs — so stage 1 re-ran with `FN_DET_TOPK=0`, which is the documented stock arm.
+outputs — so stage 1 re-ran with `FN_DET_TOPK=0`, which is the documented stock arm. *[Audit 2026-09-24: det-226 later showed FN_DET_TOPK=0 never produced a stock arm through serve-fnmain.sh ("0" is truthy to the overlay gate; the only way off is to unset it) — lhcap.sh carries its own unset workaround.]*
 
 **Second defect, same hour, worth its own line:** `lhcap.sh` had `VLLM_QSA_DET_TOPK=1` **hardcoded**,
 so passing `FN_DET_TOPK=0` as a systemd `Environment=` property did nothing and the relaunch would
 have failed identically ten minutes later. Caught by checking the runner rather than trusting the
 launch. Every runner that takes an arm flag must read it as `${FN_X:-default}` — verified after
-launch by reading `/proc/<pid>/environ`, which is now the habit.
+launch by reading `/proc/<pid>/environ`, which is now the habit. *[Audit 2026-09-24: superseded — /proc/<pid>/environ of vLLM EngineCore/Worker processes is invalid evidence (setproctitle overwrites it), and `${FN_X:-default}` also substitutes for empty values (det-226); verify arms by a log marker such as `QSADET active` instead.]*
 
 > **Numbering note (2026-09-11):** finding numbers are **not monotonic in file order** — det-190 and
 > det-191 sit above det-179/det-180. Take the next number as `max + 1` over the whole file, never
 > "the last heading + 1". det-179 and det-180 were both numbered the wrong way; they collide with
-> nothing, so they stand.
+> the plain-numbered findings 179 and 180 (cited as det-179/det-180 in findings 180–182), so those citations are ambiguous; they stand.
 
-## det-180 — the sm_121 W4A16/W4A4 kernel mis-selection is REAL upstream and INERT for us, 2026-09-11
+## det-180 — the sm_121 W4A16/W4A4 kernel mis-selection is REAL upstream and INERT for us, 2026-09-11 *[Audit 2026-09-24: upstream state — #55170 ('Prefer W4A4 linear kernels over weight-only ones on SM120/121', det-202 calls it this finding's subject) merged 2026-09-08 and is not in the dev401/dev524 venvs the selector was called on; #55405 is still open as of 2026-09-24.]*
 
 **Upstream bug confirmed on our hardware** (issue #55397, fix #55405). On sm_121, walking
 `_POSSIBLE_NVFP4_KERNELS[CUDA]` in order with `use_a16=False`:
@@ -3644,7 +3677,7 @@ column headers need rewording.
 **Do not edit the page yet.** The A/B is unmeasured and the page is published and shared; the
 `nvfp4-table` skill owns it and its sources live in `bench/nvfp4-table/`. Sequence: run the A/B
 (`--linear-backend auto` vs `flashinfer_cutedsl`, W4A16 cell, TTFT + c=1 decode, three starts), then
-go through the skill.
+go through the skill. *[Audit 2026-09-24: WITHDRAWN — det-180's WITHDRAWAL section retracts this doubt in full (the one readable 27B log runs W4A4 → CUTLASS, the checkpoint is compressed-tensors with dynamic activations); the map needs no change and this A/B is not queued.]*
 
 ## det-193 — prod captures NO cudagraphs, and it is not the capture sizes, 2026-09-11 08:33
 
@@ -3663,7 +3696,7 @@ three configurations, all on `qwen38-flash-next-nvfp4`, `enforce_eager=False`, v
 It specified `PIECEWISE` vs `NONE`. But PIECEWISE already captures nothing, so `NONE` would have been
 a third non-capturing configuration and the two arms would have been the same behaviour under
 different names. The six `cgab` logs had been on disk since 2026-09-10 and said so; nobody had read
-them for this. **Fifth void run identified — and the first caught before spending the starts.**
+them for this. **Another void run identified (at least the sixth — plain finding 179 was already the fifth) — and the first caught before spending the starts.**
 
 The tool that caught it is `kernelroster.py` ([[kernel-roster-from-logs]]), written the same morning
 for an unrelated question.
@@ -3685,7 +3718,7 @@ batch never lands on 1/2/4/8 — but widening to 64 covers every shape this serv
 - **The capture-width A/B is void**, not merely null, and must not be re-run as designed.
 - **MiaAI #19 is discharged**: the answer to "does it capture" is no, with seven starts behind it.
 - **det-192 (PLE mmap) is UNGATED.** Its blocker was `--enforce-eager` conflicting with our PIECEWISE
-  config. If PIECEWISE captures nothing, eager costs nothing, and the 3-file port is worth doing.
+  config. If PIECEWISE captures nothing, eager costs nothing, and the 3-file port is worth doing. *[Audit 2026-09-24: caveat — on dev401 `--enforce-eager` also disables torch.compile (vllm/config/vllm.py sets mode NONE), and det-220/221 show fnmain2 ran VLLM_COMPILE with inductor and that compile on/off changes output; only the cudagraph half of eager was shown to be free.]*
 
 ### What is NOT established
 
@@ -3738,14 +3771,14 @@ snapshot either.
 **This remains a source-reading hypothesis and is deliberately not asserted.** The clean test is a
 model *without* those custom ops on the same venv and GPU — a plain dense transformer — where a
 non-zero CUDAGraph figure would prove the stack can capture at all and isolate the cause to this
-model family. One start, and it needs a second checkpoint rather than a flag.
+model family. One start, and it needs a second checkpoint rather than a flag. *[Audit 2026-09-24: resolved later — det-218/220/221 tie the zero capture to the compile configuration and #55272 (torch.compile removed), and dev524 also captures nothing (det-218).]*
 
 ### Practical consequence, which does not wait on the cause
 
 Cudagraphs are **inert on this model**, across every knob we can reach. So:
 
 - `--enforce-eager` costs nothing here, and **det-192's PLE mmap port is ungated** — that is the
-  actionable item, and it does not depend on knowing why.
+  actionable item, and it does not depend on knowing why. *[Audit 2026-09-24: caveat — on dev401 eager also turns off torch.compile/inductor (det-220/221), which changes output; 'costs nothing' holds for cudagraphs only.]*
 - Any future A/B that varies a cudagraph knob on Flash-Next is void before it starts. Check
   `kernelroster.py` output first ([[kernel-roster-from-logs]]).
 - det-136's null and the capture-width null both have this as a sufficient explanation.
@@ -3826,7 +3859,7 @@ Functional check: `"The capital of France is"` → `" Paris. The capital of Germ
 
 **−1.51 GiB, not −47.7.** I had written that the point of the port was that the 47.7 GiB table "stops
 being resident" — wrong: **the offload path already kept it off the GPU.** Both arms have it off-GPU;
-the GPU figure was never where this would show.
+the GPU figure was never where this would show. *[Audit 2026-09-24: confounded — the baseline `cgnospec` ran with enforce_eager=False (torch.compile active on dev401, det-220) while `plemmap2` ran eager, so the −1.51 GiB is not attributable to the PLE path alone; det-197 revises the whole comparison.]*
 
 Where it actually shows is the worker's own memory, and there the mechanism is unambiguous:
 
@@ -3837,7 +3870,7 @@ Where it actually shows is the worker's own memory, and there the mechanism is u
 
 The table is *mapped* and not *resident*. On GB10 the distinction is the whole game: memory is
 unified, so the table occupies the same 121 GB pool either way — but file-backed pages are **page
-cache, evictable under pressure**, where the offload worker's anonymous allocation is not.
+cache, evictable under pressure**, where the offload worker's anonymous allocation is not. *[Audit 2026-09-24: corrected by det-197 (offload worker RSS 1.62 GiB, table never resident); anonymous pages are swappable, and the offload path relies on the 64 GiB swap prerequisite (48.3 GiB peak swap, memory flashnext-baremetal-prereqs).]*
 
 ### What is NOT established
 
@@ -3853,7 +3886,7 @@ cache, evictable under pressure**, where the offload worker's anonymous allocati
   only; not a rate, and rep 0 is cold.
 
 **It does revive the ngram comparison** det-160 called impossible: that V1 executor conflict came from
-`VLLM_PLE_CPU_OFFLOAD`, which this path turns off.
+`VLLM_PLE_CPU_OFFLOAD`, which this path turns off. *[Audit 2026-09-24: not revived — det-203/204 found two further blockers (QSA ring-capacity assert, then no PLE input preparation in the V1 runner, vllm#56088), so ngram still does not run on this model.]*
 
 ## det-196 — we DO have vllm#54739's Thai corruption, and it is the base, not our experts
 
@@ -3906,7 +3939,7 @@ nothing, which Thai orthography never permits.
   Validated first against the issue's own examples: catches 2 of its 4 quoted corruptions, 0 false
   positives on 8 correct forms.
 - **Early flags were false positives** — the model discussing Thai orthography in English and quoting
-  bare marks. Excluded by inspection before any rate was quoted, not by the detector.
+  bare marks. Excluded by inspection before any rate was quoted, not by the detector. *[Audit 2026-09-24: not supported by the data — thaiprobe.py counts every detector hit with no exclusion, and notes/data/thai-54739-probe.txt shows English-context quotes of bare marks (e.g. '…using ่ in…', '…d of '่', …') inside the very run whose totals are 62 and 60; the rates include these false positives, though the paired comparison is likely unaffected.]*
 - **Different config from the report.** They ran `Qwen3.8-Flash-Next-FP8` on 2× DGX Spark at tp 2; we
   ran NVFP4 on 1× GB10 at tp 1. That our rate is ~3× below theirs may be the config, the detector's
   blindness, or both. **Not evidence their number is wrong.**
@@ -3936,7 +3969,7 @@ combined **~3.4 GiB**, not the table size.
 det-195 said the win "shows in the worker's own memory" and pointed at 47.7 GiB mapped vs 2.3 GiB
 resident. That contrast is real but it was never the *comparison* — the alternative was not a resident
 table. The honest statement is that both paths keep the PLE table off both GPU and host RAM, by
-different mechanisms, and mmap is ~3.4 GiB cheaper.
+different mechanisms, and mmap is ~3.4 GiB cheaper. *[Audit 2026-09-24: caveat — RSS excludes swapped pages and VmSwap was not measured; the offload worker's table is anonymous memory that sits in swap (48.3 GiB peak swap measured on the same #53899 worker, memory flashnext-baremetal-prereqs), so the comparison omits ~48 GiB of swap the mmap arm does not need.]*
 
 **Incomplete:** one start per arm, measured in different sessions rather than one, and no
 under-pressure or concurrency behaviour. Arm 2 was pre-empted by higher-priority work before a
@@ -3999,7 +4032,7 @@ agent traffic, and it includes prefill and session boundaries this sequence does
 rates also move with sequence length (90.1 % at 20 k tokens, 93.5 % at 4 k — fewer distinct experts
 touched). **The gaps between policies are the finding; the absolute numbers are not portable.**
 
-## det-199 — NVMe read SHAPE, not queue depth: size and depth substitute, and size wins
+## det-199 — NVMe read SHAPE, not queue depth: size and depth substitute, and size wins *[Audit 2026-09-24: HEADLINE WITHDRAWN by det-200 — depth wins (64 KiB reaches 3.90 GB/s at QD128); the 'up to ~2.2×' repacking claim is withdrawn further down this section, and the io_uring conclusion is overturned by det-200.]*
 
 Follow-on from det-198 and the NVFP4 entropy measurement. With the bytes fixed (incompressible)
 and the cache near-optimal (LRU within reach of Belady), the only lossless headroom for a streaming
@@ -4086,7 +4119,7 @@ queue depth rather than layout.
 cannot produce a large bandwidth gain for full-expert loads — its value is at smaller request sizes and
 in reducing submission overhead. Combined with det-198 (paging is near-optimal) and the NVFP4 entropy
 result (bytes are incompressible), **the remaining wins must come from fewer misses, fewer bytes per
-missed expert, or hiding misses behind compute — not from making each large read more sequential.**
+missed expert, or hiding misses behind compute — not from making each large read more sequential.** *[Audit 2026-09-24: overturned by det-200 — the depth sweep to QD128 shows small reads were submission-limited; io_uring-style depth is worth up to 8× at 64 KiB.]*
 
 ## det-200 — det-199's headline is BACKWARDS: depth dominates, not size
 
@@ -4131,8 +4164,8 @@ bandwidth is near the ceiling **provided it issues reads concurrently**. At QD1 
 instead of 6.42 — a 21 % loss for free.
 
 More interesting: **smaller granularity is far more viable than det-199 implied.** If partial-expert or
-finer-grained streaming were ever useful, 256 KiB at depth costs only 8 % against 18 MiB, not the 6.5×
-that the QD4 column suggested.
+finer-grained streaming were ever useful, 256 KiB at depth costs only 8 % against 18 MiB, not the 2.5×
+that the QD4 column suggested (6.5× was the 64 KiB cell).
 
 **Method note.** Three corrections on this thread in one afternoon, and each came from stopping a
 sweep too early or reading a conclusion off an incomplete table. A depth sweep that stops at QD4 on a
@@ -4207,7 +4240,7 @@ figures disagree, or which sits near 70 rather than 210, is not comparable to on
 **We have never observed the bad state** — so this is forward-looking protection, not a diagnosis.
 And because we never measured it before today, **past A/B results cannot be audited for it
 retroactively**. That is the uncomfortable part: every null and every 5–10 % result in this file was
-taken without this control.
+taken without this control. *[Audit 2026-09-24: see det-231 CLOSED — a 62 s probe on this box showed no fast/slow flip (218.6–219.7 GB/s, 1.01×), so this contamination concern is retired for this hardware.]*
 
 ## det-202 — we have NEVER used the FlashInfer GDN prefill kernel, and the fix is merged upstream
 
@@ -4239,7 +4272,7 @@ The kernel itself microbenchmarks **3.83–4.52× faster** at 1k–8k, with `fin
 against the Triton/FLA path (the transpose trap from #40717) and agreement within bf16 tolerance.
 
 **To get it:** a venv bump past 2026-09-08 **and FlashInfer ≥ 0.6.18** — we are on **0.6.17**, so the
-version bump is a hard prerequisite, not incidental.
+version bump is a hard prerequisite, not incidental. *[Audit 2026-09-24: refuted by det-205 — backported onto fnmain3, the kernel selects and runs on FlashInfer 0.6.17; neither the venv bump nor 0.6.18 was a blocker (prod moved to 0.6.18.post1 in det-206 anyway).]*
 
 ### Our own scanner missed this gate, and that is worth recording
 
@@ -4260,14 +4293,14 @@ docstrings mentioning SM families.
   `qwen4_exp_ple_short_conv`, `qwen4_exp_qsa_with_output`. **Those are exactly the ops in our
   `splitting_ops` list**, which is det-194's surviving hypothesis for why cudagraphs capture nothing.
   Upstream removing the compile path for this model is strong corroboration, and it would change the
-  cudagraph picture entirely on a bump.
+  cudagraph picture entirely on a bump. *[Audit 2026-09-24: did not happen — det-218 shows dev524 (with #55272) still logs 0 CUDA-graph capture lines.]*
 - **#55170** *Prefer W4A4 linear kernels over weight-only ones on SM120/121* — det-180's subject,
   merged. Still inert for us (no quantized dense Linear), but the venv would pick it up.
 - **#54110** *Fall back from persistent top-k on low-shared-memory GPUs* — det-179 found a shared-memory
   ceiling on GB10 at ~93.6k tokens; this is the same territory.
 - **#55513** *Fix block FP8 MTP in ModelOpt mixed checkpoints* — merged, and the TODO lists MTP-body
   quantization as gated behind a port of it.
-- **#55375** — our own PLE state-stride fix, merged.
+- **#55375** — peakcrosser7's PLE state-stride fix (our duplicate #55467 was closed; see finding 187), merged 2026-09-05.
 
 ## det-203 — det-160's ngram blocker IS gone; a second, independent one sits behind it
 
@@ -4300,7 +4333,7 @@ assert self.cache_config.block_size % capacity == 0
 ```
 
 With `compress_ratio=6` and `n=5`: span 11, **capacity 12**. The block size is **1616 = 16 × 101**,
-whose only divisors are 1, 2, 4, 8, 16, 101, 202, 404, 808, 1616. **12 is not among them.**
+whose only divisors are 1, 2, 4, 8, 16, 101, 202, 404, 808, 1616. **12 is not among them.** *[Audit 2026-09-24: corrected by det-204 — compress_ratio is 4 and span 9 (not 6 and 11); capacity 12 still fails for n=5.]*
 
 The source comment explains why this normally cannot fire: the capacity *"joins the LCM that sets the
 scheduler block size"*, making the assertion trivially true. It fired here, so **QSA's spec did not
@@ -4308,7 +4341,7 @@ join that LCM** — and the warning above says why: ngram forces the **V1** mode
 block-size computation does not account for QSA's ring capacity.
 
 **No `num_speculative_tokens` escapes it.** Capacities go 6, 12, 18, 24 … and none divides 1616. This
-is not a tuning problem.
+is not a tuning problem. *[Audit 2026-09-24: WRONG — with compress_ratio 4 (det-204) capacities are 8, 12, 16, 20 …; 8 (n=1..4) and 16 (n=9..12) divide 1616, so only n=5..8 fail, which is what our own vllm#54552 title says.]*
 
 ### Where that leaves the ngram question
 
@@ -4347,7 +4380,7 @@ capacity**. So the code deliberately breaks the dependency and then asserts on i
 
 - No `num_speculative_tokens` works. Capacity is `compress_ratio * cdiv(compress_ratio + n,
   compress_ratio)` = 6, 12, 18, 24 …; 1616 = 16 × 101 admits only 1, 2, 4, 8, 16, 101, 202, 404, 808,
-  1616.
+  1616. *[Audit 2026-09-24: wrong under det-204's compress_ratio 4 — capacities are 8/12/16/20 …, and 8 and 16 divide 1616; only n=5..8 are blocked.]*
 - `block_size` is derived from a `min()` over specs, not user-set, so forcing it fights the allocator.
 
 **Upstream has at least three ways out**, none of which we should attempt locally: round the capacity
@@ -4355,7 +4388,7 @@ up to a divisor of the block size (the spec's own docstring already says "rounde
 groups"); let the ring join the size computation with a floor that protects the allocator; or make the
 V1 path resolve this the way V2 evidently does, since MTP at n=3 produces the same capacity 12 and
 works. **CORRECTED:** calling this "a maintainer's call" conflated two things. Which fix belongs *upstream*
-is theirs; whether we can test one *locally* is not — we patch venvs routinely via `venv-overlay`.
+is theirs; whether we can test one *locally* is not — we patch venvs routinely via `venv-overlay`. *[Audit 2026-09-24: the 'MTP at n=3 produces the same capacity 12' premise is wrong — with compress_ratio 4, n=3 gives capacity 8, which divides 1616, so it does not show V2 resolving anything; #54552 says n=5..8 fail on any block size.]*
 
 The patch worth testing is the first: **`capacity = smallest divisor of block_size that is >= span`**,
 giving 16 instead of 12 for n=5. The source comment's safety invariant is `capacity >= span`
@@ -4447,7 +4480,7 @@ blocker 3 is fixed upstream — it will be needed again then.
 
 **Worth reporting upstream** with both tracebacks: the assert in `qsa_cache.py` is unreachable-by-design
 on the V2 path and unsatisfiable on the V1 path, and behind it the V1 path cannot serve this model at
-all. Needs the user's go.
+all. Needs the user's go. *[Audit 2026-09-24: 'unreachable-by-design on the V2 path' is not supported — our own vllm#54552 reports the assert makes n=5..8 unreachable on all block sizes, V2 included.]*
 
 ### det-204 addendum — both blockers were already reported, one of them BY US, with a maintainer waiting
 
@@ -4478,7 +4511,7 @@ Its real state: `REVIEW_REQUIRED`, **no human review in nine days**, and CI show
 The existing implementation is also better than today's patch. It **bounds** the widening at
 `QSA_RING_MAX_WIDENING` (2×), because without a cap `num_speculative_tokens` 13..16 would widen a
 20-row ring to 212 on block size 848 and **404 on 1616** — and every request holds a ring block for
-its lifetime. Today's "smallest divisor ≥ span" had no such bound and would have picked 404 in exactly
+its lifetime. Today's "smallest divisor ≥ span" had no such bound and would have picked 101 (the smallest divisor of 1616 that is ≥ 17..20, and not a whole number of compress groups) in exactly
 that band.
 
 What today's run *does* add is runtime evidence the PR never had: the widening applied on all 12 QSA
@@ -4539,7 +4572,7 @@ against python**; jit-cache is unchecked. A `--no-deps` upgrade of python alone 
 import** with `flashinfer-cubin version (0.6.17) does not match flashinfer version (0.6.18.post1)` —
 hit and reverted during this work.
 
-## det-206 — prod cut over to fnmain3, carrying the FlashInfer GDN prefill kernel
+## det-206 — prod cut over to fnmain3, carrying the FlashInfer GDN prefill kernel *[Audit 2026-09-24: stale — prod has since moved: since 2026-09-23 it is vLLM main 1ea7c63f4 + our checkpoint_mapped PLE backend on the mtpfp4 checkpoint (MTP n=3), not fnmain3.]*
 
 Both tasks the user authorised, done and verified in one chain.
 
@@ -4570,7 +4603,7 @@ and PLE-offload workers, and a correct temp-0 generation (a sound definition of 
 `flashinfer_autotune_cache/0.6.18.post1/121a/<hash>/` — so an upgrade discards the previous tuning and
 the first start pays a full autotune pass (20 profiles for `trtllm::fused_moe::gemm1`, ~1/s, 4 tactics
 skipped as unsupported on sm_121 each time). A ~13-minute first start after this upgrade is expected,
-not a hang.
+not a hang. *[Audit 2026-09-24: the autotune explanation is retracted in det-208: startup is ~12 min on both FlashInfer versions, i.e. the model load, not a cold autotune cache.]*
 
 **`--no-deps` on `flashinfer-python` alone breaks the import.** `flashinfer/jit/env.py` asserts
 `cubin == python`, and `flashinfer-cubin` is not on PyPI above 0.6.13 — it comes from
@@ -4587,7 +4620,7 @@ because cubin must match, and a post-release is packaging-only by PEP 440. Recor
 **We have not measured the TTFT gain on our own box.** The PR reports 7.2 % at ISL 32768 on a GB10 and
 3.83–4.52× on the kernel itself; we confirmed only that the kernel is *selected and correct*. A
 three-start A/B against `fnmain2` (Triton/FLA) is the honest next step, and until then the 7.2 % is
-upstream's number, not ours.
+upstream's number, not ours. *[Audit 2026-09-24: measured since in det-207: +7.1 % cold, +5.0 % warm TTFT on our box.]*
 
 ## det-208 — the "do not take FlashInfer 0.6.18" pin is refuted: neither wheel ships an sm121 cubin
 
@@ -4667,7 +4700,7 @@ guessing about for eleven days.
 
 REPRODUCE.md and `tools/main/README.md` updated in the same commit.
 
-## det-209 — one of the four prod det overlays is now upstream; prod carries three, correctly
+## det-209 — one of the four prod det overlays is now upstream; prod carries three, correctly *[Audit 2026-09-24: stale — current prod (vllm-venv-main1ea7, since 2026-09-23) runs without PLE offload and carries QSADET + DETFIN only; the plefix overlay is absent and moot there.]*
 
 Auditing fnmain3 before building the Thai A/B (which needs a stock arm), the four prod determinism
 overlays came back **3 installed, 1 absent**:
@@ -4752,7 +4785,7 @@ Acceptance was not measured and would not be meaningful across a kernel change a
 a pending decision. The `off` arm is what everyone on stock vLLM below `f6326f53b` is running, and
 on this model that is three of every four layers.
 
-## det-210 — the Thai A/B answers a different question: Devanagari corruption appeared with the fnmain3 bump
+## det-210 — the Thai A/B answers a different question: Devanagari corruption appeared with the fnmain3 bump *[Audit 2026-09-24: partly superseded — det-230 shows the 'stock' arms still ran QSADET+DETFIN (only plefix toggled), det-211b/det-213 recharacterise the Devanagari failure, and the prod-regression framing was withdrawn in det-213.]*
 
 The run was queued to test whether our determinism overlays are why this box never reproduced
 vllm#54739. It is not, and the answer to the question it *was* asked is "no".
@@ -4778,7 +4811,7 @@ with #54739, which is a Thai report — that framing is dropped, and nothing goe
 **The overlays are not the difference.** 6/48 vs 10/48 is Fisher p = **0.412**. Per-start counts are
 suspiciously stable (det 3,3; stock 5,5), but n is small and the test says what it says. The
 hypothesis that our overlays are why we don't reproduce #54739 is **refuted** — we don't reproduce
-it because our Thai is clean on both arms, for reasons this run does not identify.
+it because our Thai is clean on both arms, for reasons this run does not identify. *[Audit 2026-09-24: void for the det kernels — det-230 found `QSADET active` in all three thaidet arms (FN_DET_TOPK=0 gate bug, det-226); only the plefix axis actually differed.]*
 
 ### The result that matters, and it is about prod
 
@@ -4786,12 +4819,12 @@ The same checkpoint, the same five scripts, the same probe, the same flags, earl
 
 | venv | Devanagari | when |
 |---|---|---|
-| fnmain2 — dev401, FlashInfer 0.6.17 | `stock` 0/6, `stock2` 0/12, `pmax` 0/12 → **0/30** | 2026-09-10/11 |
+| fnmain2 — dev401, FlashInfer 0.6.17 | `stock` 0/6, `stock2` 0/12, `pmax` (plain-max rebuild, not the stock checkpoint) 0/12 → **0/30** | 2026-09-10/11 |
 | fnmain3 — dev524, FlashInfer 0.6.18.post1 | det 6/12, stock 10/12 → **16/24** | 2026-09-11 |
 
 Restricted to the stock checkpoint: **0/18 vs 16/24, Fisher p = 4.5e-06**. Restricted further to the
 prod configuration alone: **0/18 vs 6/12, p = 0.0016**. Venv confirmed from each server log
-(`vllm-venv-fnmain2` / `dev401` vs `vllm-venv-fnmain3` / `dev524`).
+(`vllm-venv-fnmain2` / `dev401` vs `vllm-venv-fnmain3` / `dev524`). *[Audit 2026-09-24: these p-values treat byte-identical deterministic reps as independent (effective n is 2 prompts per arm), and the duplicate counter missed fnmain3's hi-2 failure (det-211 audit); do not quote them.]*
 
 Context for how bad 10/12 is: the only other arm that ever hit Devanagari at that rate was `lh_v2`
 at 12/12 — our rebuild **with two broken export contracts**, the build we withdrew. Prod is now
@@ -4814,7 +4847,7 @@ kernel, which toggles with a patch script we already have.
   belongs in a `finally`.
 - Per-script totals for every arm ever probed: `notes/data/markprobe-by-script.txt`.
 
-## det-211 — CONFIRMED: the fnmain3 venv corrupts Devanagari, fnmain2 does not
+## det-211 — CONFIRMED: the fnmain3 venv corrupts Devanagari, fnmain2 does not *[Audit 2026-09-24: superseded — det-211b/det-213 recharacterise the defect and retire the prod alarm, det-218 found the venv cell confounded, and det-221 attributes one of the two differing hiprobe prompts to #55272.]*
 
 det-210's split was across two days. This is the same comparison as one experiment: arms alternating
 inside one driver, same stock RadixArk checkpoint, same flags, det overlays on in both, per-arm
@@ -4836,7 +4869,7 @@ silently invalidated eight measurement arms (`venv-copy-shebang-trap`).
 
 Devanagari 0/12 vs 6/12, Fisher **p = 0.0137**. Per start: fnmain2 (0, 0), fnmain3 (3, 3) — and
 det-210's two fnmain3 arms in the prod configuration were also (3, 3). Four independent fnmain3
-starts, every one at exactly 3/24. Pooling det-210's fnmain3 arms: 0/12 vs 12/24, **p = 2.5e-03**.
+starts, every one at exactly 3/24. Pooling det-210's fnmain3 arms: 0/12 vs 12/24, **p = 2.5e-03**. *[Audit 2026-09-24: by exact copy (raw markprobe.jsonl) every fnmain3 start also fails hi-2 (dropped ी/े, invisible to the duplicate counter): fnmain3 is 0/12 exact vs fnmain2 12/12, 6/24 wrong per start. The p-values count deterministic duplicates as independent.]*
 
 **Thai is clean in both arms, as is everything except Devanagari.** This is not vllm#54739 and must
 not be written up as if it were.
@@ -4850,7 +4883,7 @@ rate was `lh_v2` at 12/12 — our own rebuild with two broken export contracts, 
 exactly this signature.
 
 I am not rolling prod back on my own (no prod changes without the user), but the recommendation is
-on the table and the user has been told.
+on the table and the user has been told. *[Audit 2026-09-24: withdrawn in det-213 (the alarm overstated a 2-of-12 difference), and prod has since moved to vLLM main 1ea7c63f4 + checkpoint_mapped on the mtpfp4 checkpoint.]*
 
 ### What it does not say
 
@@ -4893,10 +4926,10 @@ substitution.
    neighbourhood" of our withdrawn broken build was wrong and I should have read an output first.
 2. The stock-arm outputs are a *different* failure again — `उपयोगकर्ताने पहिले लॉग इन करणे आवश्यक आहे`
    is Marathi, i.e. the model translating instead of copying. So the det/stock gap in det-210 (6 vs
-   10) was partly counting two unlike things. Another reason p = 0.412 deserved no weight.
+   10) was partly counting two unlike things. Another reason p = 0.412 deserved no weight. *[Audit 2026-09-24: the 'stock' arms were not stock for the det kernels (det-230), and their outputs were not byte-stable: stock-s hi-1 has 2 distinct outputs, only one of them Marathi, and hi-2 has 3.]*
 3. **The regression itself is real and is now much better characterised**, and it survives all of
    the above: fnmain2 emits the exact source 6/6; fnmain3 emits a specific wrong codepoint 6/6.
-   Deterministic on both sides.
+   Deterministic on both sides. *[Audit 2026-09-24: incomplete — on the same arms fnmain3 also fails hi-2 by dropping matras (पहले→पहल, खुली→खुल) on every rep, which the duplicate counter cannot see; fnmain2 copies hi-2 exactly.]*
 
 **Why this is good news for the investigation.** A deterministic single-token substitution costs
 **one request** to test, not 24. Every remaining bisection rung is now a server start plus one HTTP
@@ -4904,7 +4937,7 @@ call: ~13 minutes per hypothesis instead of ~28. `notes/data/markprobe-by-script
 valid as a *change* detector; they are just not a duplication count.
 
 The finding to carry forward: **fnmain3 substitutes U+093E → U+094B where fnmain2 copies exactly**,
-and the cause is one of ~123 vLLM commits, the FlashInfer minor, or the #55715 GDN kernel.
+and the cause is one of ~123 vLLM commits, the FlashInfer minor, or the #55715 GDN kernel. *[Audit 2026-09-24: superseded by det-213's 12-prompt probe: the fnmain3-only failures there are a Marathi translation (hi-01) and व→न plus a stray nukta (hi-05); the ा→ो substitution appears in hi-08, which fails on both venvs.]*
 
 ## det-212 — the #55715 GDN kernel is NOT the cause, and the prompt has at least three wrong answers
 
@@ -4912,8 +4945,8 @@ Same venv (fnmain3), same checkpoint, same flags; only the #55715 patch toggles.
 `gdnmark-on{0,1}` announce `Using FlashInfer GDN prefill kernel`, `gdnmark-off{0,1}` announce
 `Using Triton/FLA GDN prefill kernel`.
 
-Counter: **on 6/48, off 6/48**, per start (3, 3) and (3, 3) — indistinguishable. The GDN prefill
-kernel is **exonerated**: turning it off does not restore the correct output.
+Counter: **on 6/48, off 6/48**, per start (3, 3) and (3, 3) — indistinguishable by the counter only; by exact copy the arms differ (gm-on copies hi-2 exactly 6/6, gm-off 0/6). The GDN prefill
+kernel is **exonerated**: turning it off does not restore the correct output. *[Audit 2026-09-24: the exoneration covers only the two markprobe prompts and rests on 'off does not restore'; the kernel was never tested on det-213's 12-prompt probe, so it is not excluded for hi-05.]*
 
 ### But the counters are equal and the outputs are not
 
@@ -4978,20 +5011,20 @@ fnmain2 fails plus two more, and never wins one fnmain2 loses.
    `जोड़ने → जोड़नो`, `करें → करेन` (hi-08); `पूरा नहीं किया → पूरानहो नहो कियान` (hi-11). So this is
    **not a new bug class introduced by fnmain3** — it is a pre-existing Devanagari matra weakness in
    the stock RadixArk NVFP4 checkpoint, and fnmain3 is worse on it by two prompts.
-2. **The rate difference is weak.** 20/24 vs 16/24 is Fisher **p = 0.318**. The nesting and the
+2. **The rate difference is weak.** 10/12 vs 8/12 per prompt is Fisher **p = 0.64** (paired sign test p = 0.5; pooling the byte-identical ra/rb duplicates as 20/24 vs 16/24 gives a pseudo-replicated p = 0.318). The nesting and the
    byte-identical reproducibility are what make it a real deterministic difference; the *rate* is
    not something to quote. det-211's "half of all Devanagari copy tasks" came from two prompts and
-   a metric that counted translations as corruption.
+   a counter that saw only mark increases: it missed fnmain3's hi-2 dropped matras in det-211 and counted translations as corruption in det-210/212.
 
 **Correction to the prod warning.** I told the user prod was carrying a regression in the
 neighbourhood of our withdrawn broken build. On this evidence: prod on fnmain3 fails 4 of 12
 Devanagari copies; prod on fnmain2 would fail 2 of 12. That is a real difference worth chasing but
-it is not the alarm I raised, and the pre-fnmain3 baseline was never clean.
+it is not the alarm I raised, and the pre-fnmain3 baseline was never clean. *[Audit 2026-09-24: prod is no longer fnmain3 or fnmain2 (since 2026-09-23: vLLM main 1ea7c63f4 + checkpoint_mapped, mtpfp4 checkpoint); this probe was not re-run on it, and the stock RadixArk checkpoint is no longer on disk.]*
 
 ### What is probably the more valuable finding here
 
 The **stock RadixArk checkpoint corrupts Devanagari matras on 2–4 of 12 plain Hindi copy tasks, on
-both venvs.** That is a property of the published checkpoint, not of our serving stack. It also
+both venvs.** Attributing it to the published checkpoint rather than our serving stack is untested (no BF16 or other-engine reference was run), and det-221 later showed the serving stack (compile on/off) decides at least hi-01. It also
 corroborates HF discussion #13 from the other side: our per-expert `weight_scale_2` rebuild's single
 largest held-out gain was **Devanagari, −0.0891 NLL**, consistent across all six of its passages. We
 argued that from NLL; this is the behavioural version of the same claim, and it is a stronger form
@@ -5015,13 +5048,13 @@ not just across cache roots.
 
 ### MTP is not the cause
 
-`mtp_off` is indistinguishable from `c_m3` — not merely the same count but the same four prompts.
+`mtp_off` fails the same four prompts as `c_m3` (hi-01 and hi-05 byte-identical; its hi-08 and hi-11 wrong strings differ).
 Speculative decoding does not own the venv gap. Combined with det-212, both cheap hypotheses are
 now dead, and the remaining candidates are the **~123 vLLM commits** (dev401 → dev524) and the
-**FlashInfer minor**.
+**FlashInfer minor**. *[Audit 2026-09-24: incomplete — det-218 found two non-upstream differences (tile-union, ple_layer.py); det-219/220 cleared both, and det-221 attributes hi-01 to #55272.]*
 
 This also settles a smaller question worth stating: MTP is a speed knob here, not a quality knob, on
-this axis. That is what we have always assumed and never tested.
+this axis. That is what we have always assumed and never tested. *[Audit 2026-09-24: MTP does not move the pass/fail set, but it does move tokens: 2 of the 4 wrong outputs differ with MTP off.]*
 
 ### Our LH rebuild is one prompt *worse*, not better
 
@@ -5043,12 +5076,12 @@ Exonerated: the #55715 GDN kernel (det-212), MTP (here). Remaining: FlashInfer 0
 123 vLLM commits.
 
 **Worth weighing before spending more.** The entire venv gap is **2 prompts out of 12**, Fisher
-p = 0.318, on a checkpoint that already fails 2/12 on the *good* venv. The FlashInfer rung is cheap
+p = 0.64 per prompt (0.318 counts byte-identical duplicates), on a checkpoint that already fails 2/12 on the *good* venv. The FlashInfer rung is cheap
 — one venv clone and one start — and is being run. A nightly bisect over dev401 → dev524 is ~7 rungs
 and ~3.5 h of box time for an effect that size; that is the user's call, not one to take
-autonomously at 01:00.
+autonomously at 01:00. *[Audit 2026-09-24: the cost estimate was wrong: det-216 found each rung is a hand-port of the PLE patch, hours per rung.]*
 
-## det-215 — FlashInfer exonerated too; every cheap hypothesis is now dead
+## det-215 — FlashInfer exonerated too; every cheap hypothesis is now dead *[Audit 2026-09-24: the ledger was incomplete — det-218 found our tile-union kernel and a ple_layer.py delta also differed; det-219/220 cleared both, and det-221 attributes hi-01 to #55272 (compile removal), with hi-05 still open.]*
 
 Differing cell: the FlashInfer version alone. Both arms are vLLM `dev524` + stock checkpoint +
 MTP 3. `fi617` is a clone of fnmain3 with `flashinfer-python`, `-cubin` and `-jit-cache` all swapped
@@ -5075,13 +5108,13 @@ Control reproduced for the fourth time. **FlashInfer is not the cause.**
 ### Stopping here deliberately
 
 The remaining bisect is a binary search over nightly wheels, ~7 rungs, each needing a venv clone, a
-wheel fetch and a server start: **2.5–3.5 h of box time**. Against that, the honest size of the
+wheel fetch and a server start: **2.5–3.5 h of box time** (wrong — det-216: each rung is a hand-port, hours per rung). Against that, the honest size of the
 thing being chased:
 
-- the whole effect is **2 prompts out of 12**, Fisher **p = 0.318**;
+- the whole effect is **2 prompts out of 12**, Fisher **p = 0.64** per prompt (0.318 only when byte-identical duplicates are counted);
 - the "good" venv fnmain2 already fails **2/12** on the same probe — there was never a clean baseline;
 - the defect is a **pre-existing Devanagari matra weakness in the published RadixArk checkpoint**,
-  not something fnmain3 introduced;
+  not something fnmain3 introduced; *[Audit 2026-09-24: contradicted by det-221: #55272, inside fnmain3's commit range, introduces the hi-01 failure; no BF16 or other-engine reference was run to attribute the rest to the checkpoint.]*
 - our own LH rebuild does not fix it either (det-214), so it is not a quantization-granularity issue
   we know how to address.
 
@@ -5179,7 +5212,7 @@ So the switch was *added* in range but its default keeps us on bf16. Not the cau
 
 This one genuinely applies to GB10: `torch.cuda.get_device_properties` reports **100 KiB of shared
 memory per multiprocessor**, under the 128 KiB the `FilteredTopK` path needs, so the new
-sub-128-KiB branch is exactly our hardware. On stock vLLM it would change top-k routing on this box.
+sub-128-KiB branch can apply to our hardware — but it fires only when a cooperative launch would exceed the resident-CTA cap (`needs_cooperative && total_ctas > hw_resident_cap`, gated on the per-block optin of 101,376 B), so on stock vLLM it changes top-k routing on this box only for large row counts/lengths.
 
 It cannot be our cause, because our own QSADET overlay short-circuits the selection *before* the
 dispatcher:
@@ -5195,7 +5228,7 @@ else:
 therefore #54110's new fallback inside it — was never reached.
 
 **Worth passing on to other GB10 users even though it is not our bug:** on a stock vLLM in this
-range, GB10 crosses that threshold.
+range, GB10 crosses that threshold. *[Audit 2026-09-24: only for shapes that overflow the cooperative launch: det-235's profiler roster shows stock never took the `top_k_per_row_decode` fallback at the shapes it tested (up to 64 × 8192 decode, 4096 × 8192 prefill).]*
 
 ### Still open, in rough order of suspicion
 
@@ -5244,7 +5277,7 @@ does not.** And it was not dormant — the fnmain2 run log from det-213 says:
 [qwen4_exp_qsa_warmup.py:113] Warmed up Qwen4Exp QSA tile-union kernels (rows, BN, warps): (2, 32, 4)
 ```
 
-The tile-union path changes **which blocks QSA selects**, i.e. what the model attends to. A copy task
+The tile-union path keeps each row's QSA selection (a masked union, finding 103) but changes the sparse-attention tiling and reduction order. A copy task
 landing on a different token because of it is entirely plausible.
 
 ### What this does to det-211 / 213 / 214 / 215
@@ -5255,7 +5288,7 @@ fnmain2, off for fnmain3), our #55715 GDN patch (the reverse), and a `ple_layer.
 
 det-215's conclusion — *"only the ~123 vLLM commits remain"* — is therefore **wrong**. There was a
 fourth candidate the whole time, sitting in our own tree, and I nearly spent hours hand-porting
-nightlies to hunt for something that may not be upstream at all.
+nightlies to hunt for something that may not be upstream at all. *[Audit 2026-09-24: premature — det-219/220 cleared both non-upstream differences, and det-221 found the upstream #55272 behind hi-01, so det-215's upstream-only conclusion held.]*
 
 `notes/method.md`'s "name the differing cell" says to verify the knob could reach the measured
 cells. It does not say to verify the knob is the *only* thing that moved. It does now.
@@ -5500,7 +5533,7 @@ We promised @LopezCastroRoberto this test on #55122. Answer: **it fails at engin
 Setup: clone of a dev524 venv with the PR applied (7 runtime files clean, only `tests/` skipped),
 FlashInfer 0.6.18.post1, stock checkpoint, `VLLM_QSA_DET_TOPK=0` in both arms so our own overlay could
 not mask his — his hook in `qsa_indexer.py` `return`s above ours, so leaving ours on would have made
-the control arm not-native.
+the control arm not-native. *[Audit 2026-09-24: `=0` did NOT turn our kernel off (det-226 gate bug); det-230 found `QSADET active` in this `native` arm, so the control ran our det kernel and "matches our unpatched baseline" is unverified. Only the flashinfer init failure stands, and the posted #55122 comment carries the same wrong setup claim.]*
 
 | arm | result |
 |---|---|
@@ -5587,9 +5620,9 @@ Rebuilding **prod's** kernel with this fix is a prod change and needs the user. 
 `--max-model-len 32768`, under the trigger, so it is not urgent — but `REPRODUCE.md` publishes both
 the kernel and the flag, and a reader who raises context gets the engine kill. The second defect from
 the addendum also stands: a `STD_TORCH_CHECK` in a worker kills EngineCore where a fallback to the
-stock kernel would degrade instead. With the budget corrected that assert should now be unreachable.
+stock kernel would degrade instead. With the budget corrected that assert should now be unreachable. *[Audit 2026-09-24: the prod rebuild is DONE (det-234, installed 2026-09-12, sha acabf852, which matches the live `/opt/llm/kernel-det/_C_det.so`). The fatal-assert defect is still open.]*
 
-## det-225 — MTP re-measured on the current build: k=2 stands, and its published gain understates
+## det-225 — MTP re-measured on the current build: k=2 stands, and its published gain understates *[Audit 2026-09-24: superseded for prod. prefill-investigation Finding 210 (2026-09-22) promoted MTP n=3 on the mtpfp4 checkpoint with nodrop and the 32k draft-vocab slice; k=2 held only on the stock checkpoint without those flags.]*
 
 First run driven end to end by the new tooling (`qnext` → `armrun` → `mtp_probe`). Single stream,
 160 new tokens, `ignore_eos`, 4 reps with **rep 0 dropped as cold**, one start per arm. Differing
@@ -5658,12 +5691,12 @@ value of `FN_DET_TOPK` that produced a stock arm.**
 |---|---|---|
 | `det0` | stock persistent_topk | **present** |
 | `det1` | PR #55122 det kernel | present |
-| `truestock` | added later | absent |
+| `truestock` (a separate run, vpp7, not vpp4) | true stock, overlay source removed before start | absent |
 
 `det0` and `det1` were the same configuration, so that comparison was null by construction; only
 `truestock` is a valid control there. `vpp5/6/7`, `thaidet.py` and `hiprobe6.py` carry the same
 `FN_DET_TOPK=0`-means-stock assumption and should be re-read before any of their stock-arm
-conclusions are reused.
+conclusions are reused. *[Audit 2026-09-24: done in det-230. vpp5/vpp6 did run, and their det0 arms show QSADET on (`notes/data/vpp5.txt`, `vpp6.txt`), as det-180 already found.]*
 
 **Fix** (`serve-fnmain.sh`, default unchanged — on):
 
@@ -5680,7 +5713,7 @@ Verified both ways before use: `FN_DET_TOPK=1` → `'1'`/True, `FN_DET_TOPK=0` �
 voided on the forbidden string and the gate bug fell out. A void check written for one reason caught
 an unrelated defect — which is the argument for asserting on the log rather than trusting the env.
 
-## det-227 — vllm#56457 does NOT reproduce on a single GB10 at 170k, and the default budget costs 5.2 GiB of KV
+## det-227 — vllm#56457 does NOT reproduce on a single GB10 at 170k, and the default budget costs 5.2 GiB of KV *[Audit 2026-09-24: the 5.2 GiB budget claim is WITHDRAWN (CORRECTION below, and finally det-232: ranges overlap at n=3).]*
 
 `spec-56457.json`, one start per arm, det overlays genuinely off (det-226), bf16 KV — the Qwen4Exp
 QSA backend refuses `--kv-cache-dtype fp8` outright (`qsa.py:110`, guard present at the reporter's
@@ -5796,9 +5829,9 @@ where to look; it does not refute their report, and must not be offered as if it
 
 Throughput is flat across lengths (2,376–2,479 tok/s over 170K and 250K), consistent with the
 compute-bound ~2.4k tok/s prefill picture. One start per cell, so no rate is claimed from it —
-completion is a boolean and that is what this finding rests on.
+completion is a boolean and that is what this finding rests on. *[Audit 2026-09-24: det-228's stock512 ran the same 170K cell the same day at 2,259.6 tok/s, so across today's runs the range is 2,260–2,402 for the unpatched 512 MB cell (2,479 was the capped64 cell), not flat.]*
 
-### Budget effect on startup KV — reinstated, with the magnitude as a range
+### Budget effect on startup KV — reinstated, with the magnitude as a range *[Audit 2026-09-24: WITHDRAWN AGAIN in det-232. At n=3 the 64 MB and 512 MB ranges overlap (937,498–974,524).]*
 
 det-227 claimed 5.21 GiB, I withdrew it as restart noise, and both were too hasty. Ranges now:
 
@@ -5820,11 +5853,11 @@ assumption and "should be re-read before reuse". Done, by log rather than by rea
 | run | arm | `QSADET active` | verdict |
 |---|---|---|---|
 | vpp4 | `det0` | present | **null** — `det0` ≡ `det1`; `truestock` is the only valid control (det-226) |
-| vpp4 | `truestock` | absent | valid |
+| vpp7 | `truestock` | absent; overlay source removed before start (`qsadet REMOVED`, `notes/data/vpp7.txt`) | valid |
 | **thaidet** | `det0`, `stock0`, `stock1` | **present in all three** | **det axis collapsed** |
 | hiprobe6 | `native` | present | both arms det-on; see below |
 | hiprobe6 | `fitopk` | absent | *not* a stock arm — it never started |
-| vpp5 / vpp6 / vpp7 | — | no logs exist | **never ran**, nothing to audit |
+| vpp5 / vpp6 | `det0` | present (`notes/data/vpp5.txt`, `vpp6.txt`) | **det axis collapsed**, already found by det-180 |
 
 **thaidet is the new casualty.** All of its "stock" arms ran the det kernel, so any conclusion that
 attributes a difference to the deterministic top-k is void there. Its PLE-fix axis is a *separate*
@@ -5843,10 +5876,10 @@ they were actually testing is unaffected.
 both arms holds it constant, which is what an A/B wants. "Stock" there means stock *weights*. The
 conclusion (our requant neither introduces nor removes the defect, z = +0.28) stands.
 
-Net: **two** contaminated comparisons total (vpp4's det axis, thaidet's det axis), both now labelled;
-three runners needed no correction; three never ran.
+Net: **four** contaminated comparisons total (the det axes of vpp4, vpp5, vpp6 and thaidet), both now labelled;
+three runners needed no correction; vpp5/6/7 did run on 2026-09-08 (det-179 to det-181).
 
-## det-231 (OPEN, probe queued) — a reported GB10 slow state that would contaminate our variance history
+## det-231 (OPEN, probe queued) — a reported GB10 slow state that would contaminate our variance history *[Audit 2026-09-24: CLOSED, see 'det-231 CLOSED' after det-232. No flip was observed.]*
 
 Found in the V4.1-on-Spark field survey, not in our own work. `tonyd2wild` issue #1, **independently
 reproduced by magicbear on 2 of 8 nodes**: GB10 flips between a fast and a slow state that
@@ -5909,7 +5942,7 @@ or retires the hypothesis for free.
    precisely to stop the first two.
 
 **Restart variance is the dominant term**: up to 62,204 tokens (6.4 %) inside `stock512` and 124,408
-(12.4 %) inside `pr56500`, on an unchanged cell. Any KV claim below that needs far more than 3 starts.
+(11.7 %) inside `pr56500`, on an unchanged cell. Any KV claim below that needs far more than 3 starts.
 
 **One sample is contaminated and is disclosed rather than dropped.** `stock5122` (912,320, the lowest
 of all nine) booted while I was running `du -x /` and a `find` over `/opt/llm/models` — heavy host IO
@@ -5934,12 +5967,12 @@ ratio of 1.01x against the 1.8x threshold. tonyd2wild #1 / magicbear saw 7–32 
 27–35 slow seconds per minute; we saw none.
 
 **So the hypothesis is retired, and that is the useful part**: our unexplained variance —
-[[mtp-restart-instability]]'s 1.83x MTP spread and det-232's 12.4 % KV spread on an unchanged cell —
+[[mtp-restart-instability]]'s 1.83x MTP spread and det-232's 11.7 % KV spread on an unchanged cell —
 is **not** this. It has another cause, and a candidate is now eliminated for 62 s of box time.
 
 Consistent with the fleet data: our kernel `6.17.0-1031-nvidia` / driver `580.173.02` is one kernel
 revision off the fleet that showed zero slow seconds on the same driver; the fleets that flipped ran
-kernels 1014/1021 and drivers 580.142/580.159.03.
+kernels 1014/1021 and drivers 580.142/580.159.03. *[Audit 2026-09-24: probed on 6.17.0-1031 / 580.173.02. The box now runs 7.0.0-1019-nvidia / 580.178.04, so this is not re-probed.]*
 
 ## det-233 — PR #56500 carries a 250K real-weights prefill on sm_121
 
@@ -5957,7 +5990,7 @@ integration smoke test, not a model-quality evaluation"). The patch now has a **
 prefill on the hardware #56457 was reported from**, matching the reporter's own prompt length.
 
 **0.6 % apart is not a speedup** — one start per arm, and the same unpatched cell spanned
-2,376–2,480 tok/s across today's runs. No rate claimed.
+2,260–2,402 tok/s at 170K and 2,376–2,388 tok/s at 250K across today's runs. No rate claimed.
 
 Together with det-232 (no KV cost at n=3) the picture for #56500 on one GB10 is: applies to `main`,
 runs on sm_121, no functional regression to 250K, no measurable memory cost. Still **not** a
@@ -6002,12 +6035,14 @@ runs on the installed artifact.
 `mtp-remeasure3` would not have caught any of this: it runs at 8,192 context, far from the failure
 regime, so prod could have carried an unvalidated kernel while looking healthy.
 
-## det-235 — #55122 perf bench on the current head: the PR kernel is 4–26 % FASTER than stock, and costs nothing end to end
+## det-235 — #55122 perf bench on the current head: the PR kernel is 4–26 % faster than stock on GPU time; no measurable TTFT difference end to end (decode not separable)
 
 2026-09-24. The perf cell nobody had measured on the current head (`b2312b2de`, the port onto
 `filtered_topk_row`). Hypothesis and ranges were written before the run: `tools/topk55122/HYPOTHESIS.md`.
 Box: GB10 sm_121, vLLM main `1ea7c63f4`, prod config (MTP n=3, nodrop, 32k draft-vocab slice, checkpoint-mapped
 PLE, prefix cache on). Raw data: `notes/data/topk55122*.{txt,json,jsonl}`.
+*Rewritten the same day after the audit of this file; the first version overclaimed in four places, listed at
+the end.*
 
 **Kernel, GPU time only.** Measured by CUDA-graph replay, so host launch overhead is excluded. The profiler shows
 all three builds launch the same `persistent_topk_kernel<512,4u>`, so no routing differs; the difference is inside
@@ -6023,13 +6058,16 @@ wheel's top-k sources are byte-identical to `base`.
 | prefill 4096 × 2048 (causal) | 371.9 | 366.6 | **294.6** | 0.80 | 2,374 |
 | prefill 4096 × 8192 (causal) | 645.6 | 633.9 | **610.6** | 0.96 | 6,763 |
 
-All values are µs per call. The eager event-timed bench (`topk55122-kbench.json`, 26 shapes, 2 rounds with the arm
-order reversed) agrees: pr/base is 0.67–1.00, including tie-heavy data.
+All values are µs per call. Columns are compressed blocks (context / 4): 2048 ≈ 8k context, 8192 ≈ 32k.
 
-The correctness pre-checks passed before any timing:
-- set equality with exact on tie-free data, for decode and causal prefill shapes;
-- `pr` bitwise repeatable over 20 calls on tie data;
-- every `pr` selection is a valid top-k.
+- **The eager, event-timed bench** (`topk55122-kbench.json`, 26 shapes, 2 rounds with the arm order reversed) never
+  shows `pr` slower than `base`: pr/base is 0.67–1.00, including tie-heavy data. Its decode cells, however, sit on
+  a ~10.3 µs host-launch floor and cannot resolve the difference at n = 8192. The graph-replay table is the
+  measurement.
+- **Correctness pre-checks** passed before any timing:
+  - set equality with exact on tie-free data (decode and causal prefill shapes);
+  - `pr` bitwise repeatable over 20 calls on tie data;
+  - sampled `pr` selections are valid top-k (3 tie-data shapes, up to 16 rows each).
 
 **Server.** Three arms, two interleaved starts each, ranges shown. Every arm's void checks passed: the path line
 (`QSATOPK env/call path=`) matched each time, and `/proc/*/maps` showed `build-pr-server/_C_det.so` mapped only in
@@ -6042,28 +6080,46 @@ the pr arm.
 | exact `torch.topk` | 2.757–2.767 | 10.652–10.704 | 1.58–1.59 | 216 / 216 | 2.75 |
 
 **Readings.**
-1. **pr vs stock end to end: no difference.** The TTFT ranges overlap at both lengths. A 20 % kernel win on
-   under 1 % of the step does not show up.
+1. **pr vs stock end to end: no TTFT difference.** The ranges overlap at both lengths.
+   - The kernel win is ~20 % at the 8k-context shapes but only ~4 % at the n = 8192 shape that 30k exercises.
+   - Top-k is about 0.3–0.5 % of 30k TTFT: (exact − pr) ÷ (exact/pr − 1) ≈ 0.32–0.40 s ÷ ~10. So neither shows.
 2. **exact vs pr: +3.1…+3.9 % TTFT at 30k, +0.8…+1.3 % at 8k.** The ranges are disjoint and the gap exceeds either
    arm's own spread.
 3. **Decode is not separable in this probe.** The arms generate different text: 203–236 tokens and different
-   acceptance. So s/turn and ms/tok compare different workloads and are not reported as an effect.
+   acceptance. So s/turn and ms/tok compare different workloads. The pr arm's +8 % s/turn comes from producing 236
+   tokens instead of 203–208 and is not an effect.
 4. **Side observation, not the question, n=2.** Both deterministic arms reproduced their agent-loop output token
    count exactly across the two starts (236/236, 216/216). Stock did not (203 vs 208).
 
-**Hypothesis check: two cells were out of range.** The explanations are confirmed, not assumed.
-- **`pr/base` 0.74–0.96, against an expected 0.95–1.35.** That range came from the dev401-era v2.x revisions
-  (1.14–1.30×). The follow-up probe (profiler roster plus graph replay) rules out the two instrument explanations.
-  It is not host overhead: the gap holds in graph replay. It is not a different stock routing: `base` never took
-  its `top_k_per_row_decode` fallback, and the roster has the same kernel in every arm. The mechanism inside the
-  kernel is **not attributed**.
-- **`exact/pr` 7–11× at kernel level, against an expected 1.1–3.0.** The range was built on a misreading. k3dani's
-  21–28 % is **end-to-end prefill tok/s**, not kernel time.
-- **Why k3dani's end-to-end gap is larger than ours (21–28 % vs 3–4 %).** Their workaround
-  (`k3net/docai-evals` `…/patch/qsa_exact_topk.patch`, mode 1) does a **full stable descending sort** of every row.
-  Our `exact` arm does `torch.topk`, the cheapest exact variant. Their number is the PR against a full-sort
-  workaround, and ours bounds the gap against the cheapest workaround. We did not run their variant.
+**Hypothesis check: six cells were out of range.** The two server decode cells were also out of range, but
+reading 3 voids them.
 
-**Voided first run, recorded.** The `base` build failed to load: `undefined symbol top_k_per_row_decode`. The merge
-base's launcher falls back to it (in `sampler.cu`) on parts with <128 KiB smem, and the PR head removed that call.
-The fix added `sampler.cu` to the base build. `topk55122-run1-void.txt`.
+| cell | expected | measured | explanation |
+|---|---|---|---|
+| pr/base, random data | 0.95–1.35 | 0.74–0.96 (graph) | range came from the dev401-era v2.x revisions (1.14–1.30×); follow-up rules out host overhead and routing (same kernel in every arm, `base` never took its `top_k_per_row_decode` fallback at these shapes); mechanism inside the kernel **not attributed** |
+| pr/base, tie data | 1.0–2.0 | 0.67–0.97 (eager) | same |
+| exact/pr, decode | 1.1–3.0 | 6.4–7.8× (graph) | range built on a misreading: k3dani's 21–28 % is end-to-end prefill tok/s, not kernel time |
+| exact/pr, prefill | 1.1–4.0 | 8.1–11.1× (graph) | same |
+| base/wheel | 0.95–1.05 | 0.85–1.09 (eager) | host-side: in graph replay it is 0.96–0.99, inside range |
+
+**k3dani's 21–28 % vs our 1–4 %: partly the workaround, partly confounded.**
+- Their workaround (`k3net/docai-evals` `…/patch/qsa_exact_topk.patch`, mode 1) is a **full stable descending
+  sort** of every row. Our `exact` arm is `torch.topk`, the cheapest exact variant.
+- But their 09-12 arms also differ in **image and vLLM version**, per their eval-card: the exact arm ran the
+  preview `0.1.dev20073`, the det arm official `v0.29.0`.
+- On one image (their 09-03 run, PR comment 5526712497) the PR beat the same full-sort workaround by **+15.4 %** at
+  6,082 tokens (2253 vs 1952 tok/s) and **+10.0 %** at 24,416 (1932 vs 1756).
+- So the sort accounts for roughly 10–15 %; the rest of 21–28 % is not attributable. We did not run their variant.
+- **The first version of this finding, and the #55122 comment posted from it (issuecomment-5809971218), attributed
+  all of 21–28 % to the sort. That is wrong.** A correction is owed on the PR.
+
+**Voided first run, recorded.** The `base` build failed to load: `undefined symbol top_k_per_row_decode`. The
+merge base's launcher calls it (in `sampler.cu`) when a cooperative launch would exceed the resident-CTA cap on a
+<128 KiB-smem part. The PR head removed that call. The fix added `sampler.cu` to the base build.
+`topk55122-run1-void.txt`.
+
+**What the first version got wrong** (audit 2026-09-24):
+- the title said "costs nothing end to end", but only TTFT was separable;
+- it said "a 20 % kernel win", but that holds only at ≤ 4096 columns;
+- it listed "two cells out of range"; there were six;
+- it attributed all of k3dani's 21–28 % to the full sort, which is confounded (above).

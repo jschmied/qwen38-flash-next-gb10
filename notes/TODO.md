@@ -91,9 +91,10 @@ any post, or drop them.
 - **Job 90** (`ishare2`), in `~/qwen-night/jobs/parked/`.
 - **Devanagari U+093E → U+094B.** After det-212..219 every cheap hypothesis is dead (GDN kernel, MTP, FlashInfer,
   tile-union).
-  - The effect is 2/12 prompts (Fisher p = 0.318), and fnmain2 fails 2/12 too. It looks like a pre-existing
-    weakness of the checkpoint.
-  - The only remaining step is a 2.5–3.5 h hand-ported bisect.
+  - On the 12-prompt probe fnmain3 is 8/12 vs fnmain2 10/12 (per prompt Fisher p = 0.64; the old 0.318 counted
+    byte-identical repeats). det-221 ties hi-01 to #55272 (compile removal); hi-05 is unexplained. Checkpoint
+    attribution was never tested (no BF16 reference).
+  - Remaining bisect rungs are hand-ports, hours each (det-216).
   - The stock RadixArk checkpoint is no longer on disk.
 - **`--mamba-ssm-cache-dtype bfloat16`** (finding 153). Total agent-turn TTFT improves −9.6 %, but 127/2,504 modal
   top-1 predictions change. Ship only after a task-level eval.
