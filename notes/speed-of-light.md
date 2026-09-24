@@ -207,15 +207,24 @@ M=4, weights rotated over ≥ 96 MiB (never L2-resident), CUDA graph of 48 back-
 | in_proj_ba | 2.2 | 17.2 | 16.4 | Triton split-K S16 **4.7**; FlashInfer tinygemm 5.3 |
 
 Reading:
-- H1 holds for mixer down and `in_proj_ba`: standalone cuBLAS reproduces the in-model time within 5 %, so the kernel
-  is the cost.
+- ~~H1 holds for mixer down~~: a second process (`bf16sk_bench.py`, same shapes, same rotation) measured cuBLAS at
+  **31.8 µs** for mixer down at M=4, not 41.5, and 29.4 µs for mixer up, not 39.6. Triton gave 30.3 vs 30.6 in the
+  two processes, so the bench itself is stable. cuBLAS's kernel choice varies between processes: the first run
+  picked `32x32_128x2_align2` plus `splitKreduce`. **Standalone cuBLAS is no reference.** Only the in-model profile
+  counts, and there mixer down is 40.5 µs and `in_proj_ba` is 17.2 µs (cuBLAS 16.2–16.4 µs standalone in both
+  processes, so that one does reproduce).
+- In-model, cuBLAS also launches **~190 `splitKreduce` kernels per step** (9,324 in the trace). They fall in the
+  elementwise category, not in the 16.7 ms.
 - For the shared expert and the router, standalone cuBLAS sits at 1.05–1.25× floor. Their in-model excess comes from
   running concurrently with the routed MoE on the aux streams, where both share DRAM. That is not a kernel problem.
 - H2 holds for mixer down (1.01×). For the router the best alternative only reaches 1.2×.
 - **Kernel-swap saving, in-model:** mixer down 100 × (40.5 − 30.6) ≈ 1.0 ms, mixer up 100 × (33.9 − 28.7) ≈ 0.5 ms,
   `in_proj_ba` 36 × (17.2 − 4.7) ≈ 0.45 ms. That is **≈ 2 ms/step ≈ 3.5 %**, the low end of the 2–4 ms expected.
-- Caveat: the Triton kernel in the bench uses fp32 `atomic_add` split-K. That reduction order is nondeterministic, which
-  prod (QSADET/DETFIN) cannot accept. A deterministic two-pass or fixed-order variant must be re-benched first.
+- The first Triton kernel used fp32 `atomic_add` split-K, which is nondeterministic. The deterministic two-pass
+  variant (`tools/bf16mb/fn_bf16sk.py`, fixed-order reduction, bitwise repeatable over 20 calls) runs at
+  **≤ 1.06× floor on all six shapes at M = 1/4/16** (`notes/data/bf16sk-0925.json`): mixer down 30.3, mixer up 27.2,
+  `in_proj_ba` 3.6, router 12.6, shared gate_up 28.5, shared down 14.9 µs at M=4. It is installed env-gated
+  (`FN_BF16SK=1`) in the prod venv; the server A/B is `45-bf16sk`.
 
 **Where the 14 ms gap now sits** (at 55.0 ms profiled vs 45.2 floor = 9.8 ms):
 - BF16 GEMMs ≈ 5 ms, of which ≈ 2 ms is kernel choice and the rest is MoE-overlap contention and drafter M=1 GEMVs;
