@@ -111,12 +111,24 @@ def validate_marker(spec_venv: str, t: dict) -> None:
 def start(unit: str, venv: str, model: str, env: dict, tag: str) -> tuple[str | None, str]:
     lg = f"/opt/llm/armrun-{tag}.log"
     sh("systemctl", "stop", unit); sh("systemctl", "reset-failed", unit)
+    # Wait for the unit to actually UNLOAD before reusing the name. stop+reset-failed do not
+    # guarantee it: arm 2 of moe-b12x-vs-cutlass died with "Unit ... was already loaded or
+    # has a fragment file" while arm 1's unit was still draining (2026-09-21).
+    for _ in range(120):
+        r = subprocess.run(["systemctl", "show", "-p", "LoadState", "--value", unit],
+                           capture_output=True, text=True)
+        if r.stdout.strip() in ("not-found", ""):
+            break
+        time.sleep(1)
+    else:
+        log(f"!! unit {unit} still loaded after 120s; the start below may collide")
     args = ["systemd-run", f"--unit={unit}", "--collect",
             "-E", f"FN_VENV={venv}", "-E", f"FN_MODEL={model}",
             "-E", f"FN_CACHE_ROOT=/opt/llm/.cache-armrun/{tag}"]
     for k, v in env.items():
         args += ["-E", f"{k}={v}"]
-    args += ["bash", "-c", f"{LAUNCHER} > {lg} 2>&1"]
+    launcher = env.get("ARMRUN_LAUNCHER", LAUNCHER)   # optional per-spec wrapper launcher (e.g. nsys); default = prod launcher
+    args += ["bash", "-c", f"{launcher} > {lg} 2>&1"]
     subprocess.run(args, check=False)
     deadline = time.time() + STARTUP_TIMEOUT_S
     while time.time() < deadline:
