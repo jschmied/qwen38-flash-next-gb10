@@ -343,3 +343,12 @@ both decode(150) and decode(400). The first request after hours of idle ran at 5
 - Open question: in the cold window, is the GPU waiting on the host (first-touch PLE faults from NVMe, allocator,
   Python warm-up) or are the kernels slower? Next instrument: profile the first 400 tokens of a fresh server, and
   log worker majflt per step, against the warm profile.
+
+### 4d. DS4.1 lessons checked against Flash-Next (`deepseek-moe-gb10`, `dsv41-enginev2` notes)
+| DS4.1 finding | Flash-Next, measured in the prod trace | verdict |
+|---|---|---|
+| First decode of a process slower, "tracking the Engram read time and nothing else" (cold Engram row cache) | the 11 % cold window of 4c; our PLE is the same Engram mechanism, read from mapped checkpoint pages | **same mechanism likely**; test = fresh-start fault log + a pre-warm arm |
+| Up to 11 host syncs per step → one 7-element pinned readback ("lean step") | 5 D2H + 16 H2D pinned + 47 small D2D copies per step, 0.1 ms GPU; no sync storm | clean, no lever |
+| Weights read twice per step (LM head in verify + draft; engram `wkv` twice) | target weights and FP8 lm_head once per verify. Drafter BF16 dense once per draft pass: qkv ~81 MB (M=1 `gemvx`, 2 per step), hc-collapse [2560×10240] 52 MB (`gemv`, 3 per step) | not duplicated, but **~1.8 ms/step of BF16 drafter reads**; DS4.1's fix was a narrower stored format (FP8 head, quality-neutral) → FP8 drafter dense ≈ −0.9 ms/step |
+| "The 32 % slowdown was a host wall clock" (measurement artifact) | PDL double-counting checked: same-stream overlap 0.01 ms/step, kernel durations are real | ruled out |
+| "A mechanism is a hypothesis until something measures it" | the cold window = PLE first-touch is still unmeasured | open |
