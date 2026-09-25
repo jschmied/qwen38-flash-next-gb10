@@ -651,3 +651,36 @@ and the loaded initial state are fp16. The model default is `mamba_ssm_dtype: fl
   (189 vs 124).
 - **Limits:** phase 1 needs `mamba_cache_mode none`, and prod runs align with prefix caching. PIECEWISE graphs only
   (the builder refuses FULL decode graphs). Phase 2 (align, with the PLE short conv on the same protocol) is next.
+
+### 4t. RecoverSSM phase 2 (align + prefix caching, the prod mode): −2.4…−4.0 % c=1, −5.2 % c=4, agent loop −16 %/turn
+- **What:** phase 1 plus `patch_rssm2.py`. Align mode is allowed on the V2 runner, and the PLE short conv follows the
+  same protocol (`ple_recoverssm.py`: one block, compacted conv window, no per-draft blocks). Prefix caching is on,
+  so vLLM picks `mamba_cache_mode align` itself, as in prod.
+- **A/B** `rssm2b`: same venv, MTP n=3, KV 4 GiB, 2 starts per arm, alternating. The probe (`comboprobe2.py`) runs
+  the decode set twice, and the second pass hits the prefix cache.
+- **Path lines required on the rssm arm:** `GDN RecoverSSM path taken … align=True` and
+  `FNRSSM PLE RecoverSSM path taken`. Data: `data/rssm/rssm2b*`.
+
+| arm | c=1 ms/tok | c=1 ms/cycle | c=4 tok/s | c=4 ms/cycle | agent s/turn | agent ms/tok | prefix hit | KV tokens (4 GiB) |
+|---|---|---|---|---|---|---|---|---|
+| base-align | 21.976–22.347 | 55.71–56.65 | 93.35–93.65 | 105.07–105.41 | 1.31 | 44.53–44.57 | 77.4 % | 75,678 |
+| rssm-align | 21.491–21.493 | 54.37–54.38 | 99.69–100.01 | 99.59–99.91 | 1.10 | 39.38–39.39 | 82.1 % | 103,953 |
+| Δ | −2.2…−3.8 % | **−1.3…−2.3 ms** | +6.5…+7.1 % | **−5.2 %** | **−16 %** | −11.6 % | +4.7 pp | **+37 %** |
+
+- **Decode:** as in phase 1, with a slightly larger c=1 gain. Base-align's start-to-start spread (1.7 %) is the
+  bigger uncertainty. Inside the phase-2 hypothesis.
+- **Cache-hit replay is self-consistent:** in every arm and start, the cache-hit pass reproduced the first pass's
+  hashes (8/8). RecoverSSM-align's outputs are identical to RecoverSSM phase 1's, so align mode changes nothing.
+  Divergence vs base-align is unchanged: median 26 tokens. Base-align also equals phase-1 base, byte for byte.
+- **The agent loop gains three times the decode gain.** Two causes can be read off the logs, but neither is
+  decomposed:
+  - no per-draft Mamba blocks (the old spec-decode block cost, memory `spec-decode-prefix-cost-agentloop`), so
+    the prefix hit rate rises 77.4 → 82.1 %;
+  - the same 4 GiB holds 37 % more KV tokens, because a request's Mamba page no longer carries speculative
+    blocks.
+  - The token counts are close (224 vs 236), so ms/tok (−11.6 %) is the fair number.
+- **What it takes to reach prod** (needs the user's go): the three phase-1 patches, `patch_rssm2.py` and the three
+  new modules, installed into the prod venv behind `FN_GDN_RECOVERSSM=1`. PIECEWISE graphs only, which prod
+  already uses.
+- Not measured: long contexts (> 8k) under RecoverSSM; c ≥ 8; a long-horizon quality check. Prompt-logprob
+  probes run prefill only and never take the verify path, so they cannot see this change.

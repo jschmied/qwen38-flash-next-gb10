@@ -17,3 +17,14 @@ Phase 1 (start 1): c=1 per cycle 55.5 -> 54.2 ms (-2.3 %), c=4 per cycle -5.1 %;
 - H-cache: agent-loop s/turn no worse than base-align (+5 % max).
 - Outside: hash mismatch between passes -> wrong boundary state written (commit ALIGN_MODE indices); crash at the
   PLE short-conv layer -> ple_recoverssm compaction.
+
+# Warm node-trace re-profile, base-align vs rssm-align (agenda item 4), written 2026-09-26 ~00:45, before the run
+Both arms: vllm-venv-rssm, prefix caching on (align), MTP n=3, KV 4 GiB, nsys --cuda-graph-trace=node, one ~150-token
+c=1 request after a 2x64 + 400-token warm-up (profprobe_nsys2.py). Analysis with tools/prof (nsysan/gaps/percall).
+- H1: the §4o slow spots disappear with rssm: layer out_proj median ~100 -> 70-78 us, the hyper-connection mixer
+  ~47 -> 31-36 us; base-align reproduces the §4o inflation (out_proj >= 90 us).
+- H2: the GDN spec kernel writes 3 MiB instead of 12 per layer; its own time is within +-15 % of base; the commit
+  kernel(s) cost <= 0.3 ms per step in total (36 GDN layers + PLE).
+- H3: the rest of the overhead map does not move: small-kernel critical path 3.5 +- 0.4 ms, idle 1.8 +- 0.4 ms
+  (GDN eager launch gaps ~0.6 ms of it).
+- Outside: out_proj still slow in rssm -> the write-back is not the (only) cause, and §4o needs revisiting.
