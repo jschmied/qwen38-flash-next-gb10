@@ -406,3 +406,19 @@ worker major/minor faults, NVMe reads. Data `notes/data/{plecold,plekv4,pledrop}
   - (2) replace the GPU's serial ATS faults for missing rows with parallel host reads (~30 rows at 50k IOPS
     ≈ 0.6 ms) behind a GPU wait;
   - (3) make the table fit: an FP4 PLE (~24 GiB) would stay fully resident beside the weights, but costs quality.
+
+### 4g. Option 2 (the lookup waits for a parallel CPU fault-in): null (FN_PLE_SYNCTOUCH, 2 rounds, 1 cold start/arm)
+The user's direction: the PLE must not take KV memory, so fix the cold faults in the lookup path instead of making
+the table resident. `tools/plecold/ple_pageable_synctouch.py`: `gather_into` waits (≤ 50 ms, GIL released) until
+the prefetch thread has faulted the step's pages.
+- **Round 6** (stock touch): outputs identical 6/6, GPU gather 4 ms → 0.11 ms. But ms/step got **worse**
+  (61–64 vs 59–61). The stock `touch()` handles < 4096 rows serially in one thread: 5.6 ms per decode step. The
+  true fault count is ~56/step; base had counted only the CPU's ~25.
+- **Microbench, 56 cold rows** (`smalltouch.py`): serial 4.8 ms; numpy split into 16 tasks 1.66 ms; per-page
+  `MADV_POPULATE_READ` on 32 tasks 1.37 ms ≈ 40k IOPS, near the SSD's parallel ceiling.
+- **Round 7** (per-page POPULATE_READ, 32 tasks): outputs identical 6/6, gather 0.10 ms. But the touch takes
+  **3.7 ms in the server**, ~15k IOPS, so ms/step is 58.6–59.5 vs base 58.0–60.9: **null**. The wait moves the stall
+  from GPU to CPU without shrinking it.
+- **Suspect** (unmeasured): direct reclaim in the fault path. In the server MemFree is ~3 GiB, against 117 GiB in
+  the microbench, so every new page first evicts another.
+- **Data:** `notes/data/plesync-r{6,7}-0925*.jsonl`, `plesync-r7-0925-summaries.txt`.

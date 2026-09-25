@@ -65,3 +65,28 @@ of the gather kernel (CUDA events), whether the GPU started the gather before th
   gather time ~ faults x (60-200 us).
 - H-cpu-slow (prefetch finishes first but takes long): gpu_started... < 0.2, touch_ms p50 >= 3 ms, gather short.
 - Neither (gather short AND prefetch early): the 6 ms is not in the lookup at all -> look elsewhere (host stalls).
+
+## Round 6: the gather waits for the CPU touch (FN_PLE_SYNCTOUCH) — written ~11:05, before the run
+Option 2 (user: the PLE must not take KV memory). The lookup waits (<= 50 ms, GIL released) until the prefetch thread
+has touched the step's rows with 64 threads, so the GPU finds the pages mapped instead of faulting them serially.
+Arms (1 fresh cold start each, KV 4 GiB, no warm, FN_PFTIME=1 on both): `base` vs `sync`.
+- H: sync gather_gpu_us p50 <= 300 us (base ~4,500); lookup_wait_ms p50 <= 1.5 ms; ms/step request 0 <= 56.5
+  (base ~60, warm floor 53.7); per-request output hashes identical between arms (timing-only change).
+- Outside: wait_ms ~ 4-5 ms (CPU touch no faster than GPU faults) -> the parallel-fault speedup does not materialise
+  in-process (page-cache lock / mmap_lock contention) -> host pread into a pinned buffer instead of touches.
+
+## Round 6 result + round 7 (written ~11:45, before the run)
+Round 6: outputs identical (6/6 hashes); sync gather 107-121 us (base ~4,000) but ms/step WORSE (61.2-64.4 vs
+58.8-61.0): the stock touch() handles < 4096 rows serially in one thread -> 5.6 ms of CPU faults while the GPU idles
+(lookup_wait ~45 ms incl. the host's one-step lead); true faults/step ~56 (base counted only the CPU's ~25).
+Microbench (56 cold rows): serial 4.8 ms; numpy split 16 tasks 1.66 ms; per-page MADV_POPULATE_READ 32 tasks
+1.37 ms = ~40k IOPS, near the SSD's ~50k parallel ceiling.
+Round 7: sync touch = per-page POPULATE_READ on 32 pool tasks. Same arms (1 cold start each, KV 4 GiB).
+- H: sync touch_ms p50 <= 2 ms; gather <= 300 us; ms/step <= base - 1.5 ms (base ~59.5 -> sync <= 58); hashes equal.
+- Outside: sync >= base -> the lost host lead (the lookup now waits for the previous step to finish) costs more
+  than the faults save -> move the wait onto the GPU (stream wait on a host-set flag) so the host keeps its lead.
+
+## Round 7 result (12:30)
+sync (per-page POPULATE_READ, 32 tasks): outputs identical 6/6; gather 100-112 us; touch 3.7 ms for ~57 pages
+(in-server ~15k IOPS vs 40k on the idle box) -> ms/step 58.6-59.5 vs base 58.0-60.9: null. Outside H (touch <= 2 ms).
+Suspect: direct reclaim in the fault path (MemFree ~3 GiB in-server vs 117 GiB in the microbench).
