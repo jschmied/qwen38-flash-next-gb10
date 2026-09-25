@@ -352,3 +352,30 @@ both decode(150) and decode(400). The first request after hours of idle ran at 5
 | Weights read twice per step (LM head in verify + draft; engram `wkv` twice) | target weights and FP8 lm_head once per verify. Drafter BF16 dense once per draft pass: qkv ~81 MB (M=1 `gemvx`, 2 per step), hc-collapse [2560×10240] 52 MB (`gemv`, 3 per step) | not duplicated, but **~1.8 ms/step of BF16 drafter reads**; DS4.1's fix was a narrower stored format (FP8 head, quality-neutral) → FP8 drafter dense ≈ −0.9 ms/step |
 | "The 32 % slowdown was a host wall clock" (measurement artifact) | PDL double-counting checked: same-stream overlap 0.01 ms/step, kernel durations are real | ruled out |
 | "A mechanism is a hypothesis until something measures it" | the cold window = PLE first-touch is still unmeasured | open |
+
+### 4e. The cold window is PLE paging, and a fresh server cannot escape it (2026-09-25, prod down; `tools/plecold/`)
+Probe: `tools/plecold/coldprobe.py`, 6 different 300-token requests per fresh start, PLE page-cache residency (mincore),
+worker major/minor faults, NVMe reads. Data `notes/data/{plecold,plekv4,pledrop}-0925.jsonl`, hypotheses in
+`tools/plecold/HYPOTHESIS.md`.
+
+| config (fresh start) | PLE resident at ready → after warm | major faults/step | ms/step (req 0 … 5) |
+|---|---|---|---|
+| prod config (KV 33.5 GiB) | 0.03 GiB → — | 27–32 | 60.1 … 58.7 |
+| + FN_PLE_POPULATE at init | 0.02 (populated at 08:28, evicted by KV/graph init) | 26–36 | 60.1 … 59.0 |
+| KV 4 GiB | 0.03 → — | 29–36 | 60.4 … 58.7 |
+| KV 4 GiB + warm after ready | 0.03 → 16.7 | 15–26 | 59.0 … 57.5 |
+| KV 2 GiB + FNDROPCACHE + warm | 13.8 → 20.7 | 16–23 | 59.0 … 57.6 |
+| warm prod (hours up) | 47.7 (100 %) | ~0 | 53.7 |
+
+- **Loading evicts the table.** It streams ~72 GB of weight shards through the page cache.
+- **KV size makes no difference at ready.** Page cache then caps at ~32 GiB; MemAvailable ~33 GiB with
+  72.4 GiB weights, 7.4 GiB anon and ~5 GiB driver/slab. So at most ~43 % of the 47.7 GiB table fits.
+- **Faults barely fall with traffic.** Rows are hash-spread, so new tokens touch new pages.
+- **Cost:** ≈ 0.2 ms per major fault per step, linear across the configurations. That is 6 ms/step (11 %) in the
+  prod-config restart.
+- **Consequence for earlier measurements.** Every armrun A/B (findings 233–238) ran in the ~30-faults regime. The
+  stall is roughly constant per step in both arms, so relative results are expected to hold and absolute
+  ms/step are ~11 % high. The FNBF16SK null is not explained by an additive stall.
+- **Open.** Warm prod reached 100 % residency while `free` showed only 3 GB buff/cache, so its PLE pages were not
+  ordinary page cache. How prod gets there, and whether a restart can reach it quickly, is the lever: 53.7 vs
+  ~60 ms/step.
