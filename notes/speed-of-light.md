@@ -471,3 +471,10 @@ measured major faults per step is ≥ 12. The EMA starts high (waiting) and the 
   no waits there. Outputs identical 6/6.
 - **Next:** confirm with a second start pair, then the follow-up PR on top of #58439, with the populate helper as a
   `csrc/` CPU op and the fault-rate gate.
+
+**Confirmed, second start pair** (`notes/data/pleauto-r12-0925.jsonl`):
+- cold: base 59.84, auto 57.72 → **−2.12** ms/step;
+- warm: base 54.98, auto 55.17 → +0.19.
+
+Across both pairs: cold −2.56 / −2.12, warm +0.32 / +0.19; outputs identical in every request. The auto-gated
+wait is the candidate for the follow-up PR on top of #58439.
