@@ -108,3 +108,19 @@ Round 9: sync touch through the C helper. Arms base vs sync, 1 cold start each, 
 - H: sync touch_ms p50 <= 1.2 ms; gather <= 300 us; ms/step sync <= base - 2 ms; hashes identical.
 - Outside: touch stays ~3.7 ms in-server with the GIL out of the path -> contention is in the kernel/SSD queue
   under the server's load, not in Python.
+
+## Round 10: confirmation, 2 starts per arm + warm second pass (written ~13:55, before the run)
+Round 9 (1 start/arm): sync+C -2.2 ms/step cold, 6/6 requests, hashes identical. Now base/sync alternating, 2 starts
+each; probe = 6 cold requests then the same 6 prompts again (rows cached + mapped by the first pass).
+- H-cold: sync < base on every paired request in both start pairs, mean delta -1.5 to -3 ms/step.
+- H-warm: second pass majflt ~0 in both arms; |sync - base| <= 0.5 ms/step (the wait costs little once nothing
+  faults). Outside: sync warm >= base + 0.5 -> the lost host lead costs real time in steady state -> gate the wait
+  (only when the previous steps faulted) before any promotion.
+
+## Round 11: auto mode (written ~15:05, before the run)
+Round 10: unconditional wait cold -2.05 ms/step (12/12 paired requests), warm +2.3 ms. Auto: wait only while the
+EMA of measured major faults per step >= 12 (starts cold = waiting). Arms base vs auto, 1 start each, cold + warm pass.
+- H: auto cold within 0.7 ms of round-10 sync (57.5 -> <= 58.2); auto warm within 0.5 ms of base warm (~54.9);
+  hashes identical; the FNPFTIME summaries show fault_ema >= 12 in the cold pass and < 12 in the warm pass.
+- Outside: auto warm still >= base + 1 ms -> the gate does not switch off (EMA stuck) or waits still happen; auto cold
+  ~ base cold -> the gate switches off while cold (undercount).

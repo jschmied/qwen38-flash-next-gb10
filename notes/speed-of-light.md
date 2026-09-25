@@ -456,3 +456,18 @@ the prefetch thread has faulted the step's pages.
   not the 14 ms measured in the paging regime.
 - The unconditional wait costs ~2.3 ms/step whenever nothing faults: the host gives up its one-step lead at every
   lookup. Next: the auto mode, which waits only while ≥ 12 faults/step are measured (`FN_PLE_SYNCTOUCH=auto`).
+
+### 4j. Round 11: the auto-gated wait keeps the cold gain and drops the warm penalty
+`FN_PLE_SYNCTOUCH=auto` (`tools/plecold/ple_pageable_synctouch_auto.py`): the lookup waits only while the EMA of
+measured major faults per step is ≥ 12. The EMA starts high (waiting) and the C populate helper is used.
+1 start per arm (`notes/data/pleauto-r11-0925*`):
+
+| ms/step | base | auto | Δ |
+|---|---|---|---|
+| cold pass | 60.02 | **57.46** | **−2.56**; faster on 6/6 requests |
+| warm pass | 54.88 | 55.20 | +0.32 (unconditional wait: +2.3) |
+
+- The gate switched as designed: fault EMA 51–61 per step in the cold pass (waiting); **0.0** in the warm pass, and
+  no waits there. Outputs identical 6/6.
+- **Next:** confirm with a second start pair, then the follow-up PR on top of #58439, with the populate helper as a
+  `csrc/` CPU op and the fault-rate gate.
