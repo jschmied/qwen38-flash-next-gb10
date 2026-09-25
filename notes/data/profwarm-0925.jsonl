@@ -1,0 +1,1 @@
+{"base_ms_per_chunk": 59.233, "base_chunks": 143, "prof_ms_per_chunk": 55.211, "prof_chunks": 54, "stop_s": 17.8, "trace_files": 2, "trace_mb": 300.4, "arm": "profwarm", "start": 0, "tag": "profwarm-profwarm0", "ts": "2026-09-25 15:50:13"}

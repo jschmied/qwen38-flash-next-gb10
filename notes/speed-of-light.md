@@ -478,3 +478,20 @@ measured major faults per step is ≥ 12. The EMA starts high (waiting) and the 
 
 Across both pairs: cold −2.56 / −2.12, warm +0.32 / +0.19; outputs identical in every request. The auto-gated
 wait is the candidate for the follow-up PR on top of #58439.
+
+### 4k. Warm profile at 4 GiB KV (`profwarm`): the overhead map stands
+Same probe as 40-prof: the prompt is warmed first, so its PLE rows are cached. `notes/data/profwarm-0925-summary.txt`.
+
+| | 40-prof (default KV) | profwarm (KV 4 GiB) |
+|---|---|---|
+| profiled step / GPU busy | 55.1 / 52.7 ms | 55.4 / 53.0 ms |
+| GDN `out_proj` / QSA `o_proj` | 102 / 77 µs | 101.2 / 75.6 µs |
+| mixer down after out/o_proj vs elsewhere | 46.7–49.5 vs 34.6 µs | 47.7–50.4 vs 34.5 µs |
+| BF16 wmma, FP8 blockwise, MoE grouped (ms/step) | 14.6, 16.3, 18.2 | 14.8, 16.1, 18.4 |
+| PLE gather | — | ~13 µs per call |
+
+- 40-prof was already effectively warm (its probe repeats one prompt), so steps 3, 3c, 4a and 4b are **not** paging
+  artifacts.
+- The post-attention slow sites (~1.7 ms/step), the small-kernel budget (~7 ms), the MoE-overlap contention and
+  the 2.4 ms idle are in-model effects of the warm steady state.
+- Unprofiled warm: 54.9 ms/step, i.e. **~9.7 ms above the 45.2 ms floor**.
