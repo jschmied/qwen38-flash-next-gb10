@@ -596,3 +596,27 @@ and the loaded initial state are fp16. The model default is `mamba_ssm_dtype: fl
 - **Not a promotion candidate until quality is measured.** The decode-time divergence probe
   (`tools/gdncs/divprobe.py` / `divcmp.py`) compares base vs fp16 vs a known-benign reference: FNBF16SK, which only
   changes reduction order.
+
+### 4r. fp16 SSM state cache: quality — no drift, but a real per-token perturbation (user decision, not promoted)
+- **Short horizon** (`divprobe.py`, 8 prompts × 512 greedy tokens):
+  - fp16 first diverges at a median of 24.5 tokens; mean |Δlogprob| before divergence 0.037 (p99 0.56);
+  - the reduction-order reference (FNBF16SK) diverges at 31 tokens, 0.023 (p99 0.42).
+- **Long horizon** (`lpprobe.py`/`lpcmp.py`): 3 documents of 5–11k tokens, teacher-forced prompt logprobs,
+  `FN_BATCH=256`, so the state is stored and reloaded every 256 tokens; no prefix cache. Mean |Δlogprob| vs fp32:
+
+| doc | tokens | by position quarter | NLL change |
+|---|---|---|---|
+| a | 11,219 | 0.227 / 0.187 / 0.260 / 0.255 | −0.06 % |
+| b | 4,978 | 0.231 / 0.313 / 0.300 / 0.286 | −0.57 % |
+| c | 9,688 | 0.135 / 0.213 / 0.174 / 0.190 | +0.07 % |
+
+- **Flat across position** (no compounding) and **NLL-neutral**. Per-token size ~0.13–0.31 nats is ~10–20× the
+  FP8-vs-BF16 reference (0.014) and ~1/5 of the full NVFP4-vs-FP8 gap (1.11, `nvfp4-quantization-cost-measured`).
+  b.md's lower NLL could be softening (memory `lower-nll-can-be-softening`).
+- The reference arm is exactly 0 here: FNBF16SK engages only at M ≤ 16, so prefill chunks take the stock path. There
+  is no noise floor from this run.
+- **Verdict: a quality trade, not free speed.** −2.2 % c=1 / −4.4 % c=4 against a per-token perturbation the size of a
+  fifth of the 4-bit step. Not promoted; the user decides. A task-level eval would be needed (SWE-bench resolves
+  only ~12 pp, so it cannot see this).
+- **The principled path remains ReplaySSM (#49887):** fp32 checkpoint plus an fp16 input ring, so no stored-state
+  precision loss. It needs a port to Qwen4Exp.
