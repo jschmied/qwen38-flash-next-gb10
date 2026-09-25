@@ -620,3 +620,34 @@ and the loaded initial state are fp16. The model default is `mamba_ssm_dtype: fl
   only ~12 pp, so it cannot see this).
 - **The principled path remains ReplaySSM (#49887):** fp32 checkpoint plus an fp16 input ring, so no stored-state
   precision loss. It needs a port to Qwen4Exp.
+
+### 4s. RecoverSSM for the GDN layers, phase 1 (no prefix caching): −2.2 % c=1, −5.0 % c=4 per cycle, fp32 state kept
+- **What:** the Kimi-K3 KDA RecoverSSM protocol ported to Qwen4Exp's GDN layers (`vllm-venv-rssm`, a clone; env gate
+  `FN_GDN_RECOVERSSM=1`). Verify runs from the checkpoint state and stores only a per-token (correction, k, g) record,
+  (48, 4, 257) fp32 per layer. After sampling, one commit kernel replays the accepted tokens and writes the state
+  once. This replaces the four full fp32 state snapshots per step that §4o blamed for the slow spots.
+- **Kernel test** (`test_recoverssm_gdn.py`): verify outputs bit-identical to the native kernel; committed states
+  within 1.4e-7 relative, for 1–4 accepted tokens.
+- **Server A/B** `rssm1c`: same venv both arms, MTP n=3, KV 4 GiB, `--no-enable-prefix-caching`, 2 starts per arm,
+  alternating. Path lines required: `FNRSSM: GDN RecoverSSM speculative verify active`, `GDN RecoverSSM path taken`
+  (rssm); base must show neither and bind 2 states. Data: `data/rssm/`.
+
+| arm | c=1 ms/tok | accept len | c=1 ms/cycle | c=4 tok/s | c=4 ms/cycle |
+|---|---|---|---|---|---|
+| base (2 starts) | 21.869–21.89 | 2.535 | 55.44–55.49 | 93.80–93.86 | 104.84–104.90 |
+| rssm (2 starts) | 21.44–21.46 | 2.53 | 54.24–54.29 | 99.99 | 99.61 |
+| Δ | −2.0 % | | **−1.2 ms (−2.2 %)** | +6.6 % | **−5.3 ms (−5.0 %)** |
+
+- Inside the hypothesis written before the run (`data/rssm/HYPOTHESIS.md`: c=1 −0.8…−1.5 ms, c=4 −2…−5 %). c=4 gains
+  more because four rows' snapshots were four times the dirty L2 write-back.
+- **Correctness** (`divprobe.py`, 8 prompts × 512 greedy tokens):
+  - rssm vs base: first divergence median **26 tokens**; mean |Δlogprob| before it 0.026 (p99 0.29).
+  - The reduction-order reference (FNBF16SK) diverges at 31 / 0.023, and the fp16 SSM cache (§4r) at 24.5 / 0.037.
+  - So RecoverSSM perturbs like a summation-order change, less than fp16 storage. The state stays fp32; the
+    difference is the replay's accumulation order.
+  - Each arm reproduces its hashes across restarts (base1 = base0, rssm1 = rssm0). Acceptance is unchanged
+    (2.53 vs 2.535). All 8 texts read correctly.
+- The agent-loop probe's s/turn (3.25 → 2.99) is not comparable: the two arms generated different token counts
+  (189 vs 124).
+- **Limits:** phase 1 needs `mamba_cache_mode none`, and prod runs align with prefix caching. PIECEWISE graphs only
+  (the builder refuses FULL decode graphs). Phase 2 (align, with the PLE short conv on the same protocol) is next.
