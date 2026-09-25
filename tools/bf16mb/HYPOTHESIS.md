@@ -55,3 +55,23 @@ P3 fp32 write of 12 MiB, P4 read-only 12 MiB reduction. Marginal consumer cost =
 H: the same mixer-down chain repeated 40x is bimodal, ~30 and ~41 us (ratio ~1.33 = LPDDR5x 8533/6400 MT/s bins),
 independent of code -> the "in-model excess" is a DRAM frequency/power state. Unimodal -> pairbench noise is
 something else.
+
+## "Slow after out_proj" (pairbench2, written 2026-09-25 ~07:50, before the run)
+Trace fact (both arms, r=0.88): mixer down takes 34.6 us at the MLP-side site but 46-53 us right after the FP8
+blockwise out_proj/o_proj (grid [1,20,1]), after GDN AND after QSA layers alike. Standalone, M=4, weights rotated:
+C0 mixer down alone; C1 out_proj(FP8 blockwise, cutlass_scaled_mm, the in-model call) -> mixer down;
+C2 out_proj -> tiny kernel -> mixer down (the in-model order has _hc_combine_norm between); C3 a BF16 read of the
+same 15.7 MB (Triton) -> mixer down.
+- H-a: the CUTLASS FP8 blockwise kernel itself leaves a state that slows the next read: C1/C2 marginal >= 40 us,
+  C0 and C3 ~31 us.
+- H-b: any preceding large read does it: C1, C2 and C3 all >= 40 us.
+- Neither (all ~31 us): the effect needs the real sequence (e.g. GDN state or the MoE aux-stream join) -> in-worker.
+
+## Profiled-faster-than-unprofiled check (written 2026-09-25 ~08:30, before running, on warm prod)
+40-prof and 47-profsk both measured unprofiled decode(400) at 59.6/59.8 ms/step and the profiled decode(150) at
+55.0/55.6, minutes apart in one server. On the warm prod server (hours up), same prompt, same probe code:
+decode(150) x3 and decode(400) x3, alternating.
+- If decode(150) ~= 55 and decode(400) ~= 59.5: the gap is request length/content, not the profiler; no anomaly.
+- If both ~= 59.5: the profiler speeds decode up by ~4.5 ms/step -> a host-side scheduling interaction (the GPU idles
+  ~7 ms/step unprofiled vs 2.4 profiled); next = measure unprofiled GPU idle.
+- If both ~= 55: warm-up drift explains the probes' 59.6 (the probes ran on a fresh server).

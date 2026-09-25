@@ -1,0 +1,20 @@
+{
+ "producers_alone": {
+  "out_proj": 70.2,
+  "out_proj+tiny": 71.3,
+  "bf16_same_bytes": 67.2,
+  "tiny": 1.0
+ },
+ "triton": {
+  "C0_alone": 31.4,
+  "C1_after_out_proj": 35.2,
+  "C2_after_out_proj+tiny": 31.7,
+  "C3_after_bf16_same_bytes": 31.3
+ },
+ "cublas": {
+  "C0_alone": 32.0,
+  "C1_after_out_proj": 34.1,
+  "C2_after_out_proj+tiny": 32.2,
+  "C3_after_bf16_same_bytes": 32.6
+ }
+}

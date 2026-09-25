@@ -295,3 +295,51 @@ weight read can win while this overhead holds. Total at stake: the BF16 and `out
   inside the real decode sequence. **The next instrument is an in-worker replay of the real kernel sequence**
   (FNCAP-style hook, CUDA graph of one decoder layer's actual kernels on its real weights), cut down until the
   extra cost disappears. That is a day job, not a night job.
+
+## Step 4 — looking for the overhead (2026-09-25 morning, "look for overhead" / "maybe we have a scheduling problem")
+
+### 4a. The mid-size-read overhead is tied to one site per layer
+
+Per-call analysis of both whole-step traces (`tools/prof/percall.py`, `byidx.py`, `context.py`, `idlebefore.py`):
+- Mixer down is **bimodal**: ~34.6 µs (at floor) at the attention-side site, and 46–53 µs at the MLP-side site,
+  which runs right after the attention block's FP8 `out_proj`/`o_proj`. Per-call-index medians correlate at
+  r = 0.88 between cuBLAS and Triton in different processes: the site sets the cost, not the kernel.
+- The FP8 `out_proj` [2560×6144] itself takes **102 µs after a GDN layer** and **77 µs after a QSA layer**
+  (identical shape and kernel; standalone 70.2 µs, floor 71.5).
+- **Ruled out:**
+  - other-stream work: none overlaps the slow calls;
+  - GPU idle before the call: no dose-response within a class, and QSA has more idle yet is faster;
+  - GDN state-write volume: the 33-token prefill step, with one state write instead of four, still has the GDN
+    `out_proj` at 99.8 µs;
+  - the kernel pair itself: standalone `out_proj` → (tiny) → mixer down gives 70.2 / 31.7 µs
+    (`tools/bf16mb/pairbench2.py`, `notes/data/pairbench2-0925.json`).
+- Cost: ≈ 1.1 ms (GDN `out_proj`) + ≈ 0.6 ms (mixer down at that site) per step. Mechanism still open.
+
+### 4b. Small kernels
+1,672 kernels per step under 5 µs (3.0 ms/step) and 454 of 5–20 µs (4.3 ms/step). The biggest groups:
+- aten elementwise 0.74 ms;
+- the hyper-connection helpers (`_hc_combine_norm`, `_hc_gate_mix`, `_hc_silu`) 0.5 ms;
+- cuBLAS `splitKreduce` 0.22 ms;
+- FP8 act-quant 0.18 ms;
+- MoE routing/prefix-sum kernels ~0.5 ms.
+These are fusion candidates.
+
+### 4c. The "restart drift" is 11 %, is over within ~1 minute of decoding — every A/B measures it
+The DS4.1 lesson was to check whether the device waits on the host (`deepseek-moe-gb10/notes/early-submit-profile.md`,
+`ds41-decode-bottleneck-2026-09-16.md`). On warm prod (up 4.5 h), the same probe gives **53.6–53.9 ms/step** for
+both decode(150) and decode(400). The first request after hours of idle ran at 56.6. `tools/prof/lenprobe.py`.
+
+| | ms/step |
+|---|---|
+| fresh server, first 400 tokens after 2×64 warm-up (40-prof, 47-profsk probes) | 59.6 / 59.8 |
+| same server a minute later, under the profiler | 55.0 / 55.6 (profiler ≈ +1.3 ms) |
+| warm prod, unprofiled | **53.7** |
+
+- So the ~6 ms/step "warm-up drift" ends within the first few hundred decode tokens. It is not a 15-minute
+  effect.
+- Every armrun A/B measures its c=1 cell in that transient: decprobe's c=1 runs first, at 59 ms/cycle.
+- Warm prod does not page: 9 worker/engine major faults in a 10 s decode (`tools/prof/faults.py`). All 47.7 GiB of
+  `model-plefp8-*` shards are resident (`tools/prof/resident.py`).
+- Open question: in the cold window, is the GPU waiting on the host (first-touch PLE faults from NVMe, allocator,
+  Python warm-up) or are the kernels slower? Next instrument: profile the first 400 tokens of a fresh server, and
+  log worker majflt per step, against the warm profile.
