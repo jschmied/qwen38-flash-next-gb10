@@ -442,3 +442,17 @@ the prefetch thread has faulted the step's pages.
   - only one start per arm;
   - the warm state is unmeasured (resident pages; the wait still costs the host its one-step lead);
   - the in-server touch is 3× the idle-box microbench.
+
+### 4i. Round 10 (2 starts per arm, cold pass + warm second pass): the wait wins cold, loses warm
+`notes/data/plesync-r10-0925.jsonl`; KV 4 GiB. The warm pass repeats the same 6 prompts, so ~0 major faults per step.
+
+| ms/step | base, start 0 / 1 | sync + C, start 0 / 1 | Δ |
+|---|---|---|---|
+| cold pass (6 requests) | 59.26 / 59.87 | 57.52 / 57.52 | **−2.05**; faster on 12/12 paired requests |
+| warm pass | 54.78 / 54.98 | 57.20 / 57.20 | **+2.3** |
+
+- Output hashes are identical in all 24 requests.
+- **Warm fresh-server baseline: 54.9 ms/step**, close to warm prod's 53.7. The speed-of-light gap is therefore ~10 ms,
+  not the 14 ms measured in the paging regime.
+- The unconditional wait costs ~2.3 ms/step whenever nothing faults: the host gives up its one-step lead at every
+  lookup. Next: the auto mode, which waits only while ≥ 12 faults/step are measured (`FN_PLE_SYNCTOUCH=auto`).
