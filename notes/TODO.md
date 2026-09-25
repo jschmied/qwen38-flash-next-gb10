@@ -77,6 +77,16 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
   - the real `reload_weights` lifecycle, which the unit tests cover but no integration test does.
   - Say so in the PR if a reviewer asks.
 
+- **2026-09-25: cold-start decode wait (FN_PLE_SYNCTOUCH + C populate helper), speed-of-light 4f–4h.** Cold −2.2 ms/step
+  (−3.7 %, outputs identical), but an unconditional wait costs +2.4 ms/step warm → auto mode (wait only while ≥12
+  faults/step) is built, not yet validated. Plan: validate (2–3 starts, cold gain + warm neutral) → follow-up PR on top
+  of #58439 (bounded decode wait + GIL-free page fill as a `csrc/` CPU op), NOT into #58439.
+- **LATER (user 2026-09-25): head-to-head vs #54129** (CPU gather + H2D) on GB10 before claiming "best PLE loader":
+  #54129 overlay vs ours stock vs ours+auto, cold + warm pass, 2 starts/arm, KV 4 GiB (~3 h, prod down).
+- **With a go:** one line in #58439 (open question 2): the prefetch rescues cold prefill (88 s → 1.6 s) but can
+  never win in decode (ids known only when the previous step ends) → a fresh server pays ~4 ms/step of serial GPU
+  faults (~11 %) until warm.
+
 ## Upstream — watch, and never reply without a go
 
 | # | ours? | state (2026-09-24) |
