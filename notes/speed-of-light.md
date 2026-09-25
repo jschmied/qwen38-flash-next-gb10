@@ -281,3 +281,17 @@ Candidates, not yet separated:
 combine → mixer down) against the consumer alone. The levers that would follow are fewer, larger reads: fusing
 router + shared gate_up (same input) and fusing `in_proj_ba` into `in_proj_qkvz`. No new kernel for a mid-size
 weight read can win while this overhead holds. Total at stake: the BF16 and `out_proj` excess, ≈ 5 ms per cycle.
+
+**Standalone follow-ups (03:35–03:45)** (`tools/bf16mb/pairbench.py`, `bimodal.py`; data `notes/data/pairbench-0925.json`,
+`bimodal-0925.log`):
+- **Producer→consumer chain:** it did not separate (a) from (b). The same consumer read 42.1 µs after no producer
+  and 30.8 µs after a tiny one, and 26–33 µs after 3/12 MiB dirty writes or a 12 MiB read. The spread was
+  measurement state, not the producer.
+- **Bimodality, 40 repeats plus 5 after 2 s of sustained load:** unimodal. Triton median 30.9 µs, cuBLAS 31.8 µs,
+  every round. Only single replays right after a 0.5 s idle reach 39–43 µs. The "~30 vs ~41 µs LPDDR speed-bin"
+  idea is rejected for steady state. A cold first replay after idle does cost ~40 µs, which explains pairbench's
+  P0.
+- So standalone, both kernels sit at the floor in every warm configuration tried. The in-model ~41 µs appears only
+  inside the real decode sequence. **The next instrument is an in-worker replay of the real kernel sequence**
+  (FNCAP-style hook, CUDA graph of one decoder layer's actual kernels on its real weights), cut down until the
+  extra cost disappears. That is a day job, not a night job.

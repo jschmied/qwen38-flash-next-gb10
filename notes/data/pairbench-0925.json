@@ -1,0 +1,52 @@
+{
+ "P0_none/triton": {
+  "producer_us": 0.0,
+  "pair_us": 42.1,
+  "consumer_marginal_us": 42.1
+ },
+ "P0_none/cublas": {
+  "producer_us": 0.0,
+  "pair_us": 40.3,
+  "consumer_marginal_us": 40.3
+ },
+ "P1_tiny/triton": {
+  "producer_us": 0.8,
+  "pair_us": 31.6,
+  "consumer_marginal_us": 30.8
+ },
+ "P1_tiny/cublas": {
+  "producer_us": 0.8,
+  "pair_us": 43.7,
+  "consumer_marginal_us": 42.9
+ },
+ "P2_write3MiB/triton": {
+  "producer_us": 34.3,
+  "pair_us": 75.1,
+  "consumer_marginal_us": 40.7
+ },
+ "P2_write3MiB/cublas": {
+  "producer_us": 34.3,
+  "pair_us": 60.5,
+  "consumer_marginal_us": 26.2
+ },
+ "P3_write12MiB/triton": {
+  "producer_us": 110.5,
+  "pair_us": 142.4,
+  "consumer_marginal_us": 31.9
+ },
+ "P3_write12MiB/cublas": {
+  "producer_us": 110.5,
+  "pair_us": 143.9,
+  "consumer_marginal_us": 33.4
+ },
+ "P4_read12MiB/triton": {
+  "producer_us": 54.7,
+  "pair_us": 84.9,
+  "consumer_marginal_us": 30.3
+ },
+ "P4_read12MiB/cublas": {
+  "producer_us": 54.7,
+  "pair_us": 86.4,
+  "consumer_marginal_us": 31.7
+ }
+}

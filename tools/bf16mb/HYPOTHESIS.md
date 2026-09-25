@@ -42,3 +42,16 @@ in-worker bench (2c). H: under sustained c=1 decode the SM and/or memory clock o
 the short-burst level -> the whole-step slowdown vs benches is clock/power, not the kernels. If the clocks during
 decode equal those during a microbench burst, the cause is elsewhere (CPU DRAM traffic on the unified memory,
 TLB/page layout of the model weights).
+
+## Producer->consumer micro-chain (pairbench, written 2026-09-25 ~03:35, before the run)
+Consumer: mixer down [336x10240] (Triton det 2-pass and cuBLAS), M=4, weights rotated. Producers before each call:
+P0 none, P1 tiny elementwise ([4,10240] add, kernel boundary only), P2 fp32 write of 3 MiB (GDN-state-sized per layer),
+P3 fp32 write of 12 MiB, P4 read-only 12 MiB reduction. Marginal consumer cost = graph(P+C) - graph(P alone).
+- (a) dirty-L2 write-back: P2/P3 raise the consumer's marginal cost by >= 5 us (P3 > P2), P4 does not.
+- (b) kernel-boundary ramp: P1 raises it by >= 5 us over P0.
+- Neither -> the in-model overhead needs the real sequence (in-worker replay).
+
+## Bimodality check (written ~03:40 after pairbench showed P0 42.1 vs P1 30.8 us for the same consumer)
+H: the same mixer-down chain repeated 40x is bimodal, ~30 and ~41 us (ratio ~1.33 = LPDDR5x 8533/6400 MT/s bins),
+independent of code -> the "in-model excess" is a DRAM frequency/power state. Unimodal -> pairbench noise is
+something else.
