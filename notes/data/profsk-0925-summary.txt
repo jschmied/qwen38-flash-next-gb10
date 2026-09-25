@@ -1,0 +1,35 @@
+steps used 52; GPU span/step median 55.67 ms; busy(union) 53.19 ms
+step start interval median 55.64 ms
+cutlass GemmUniversal              18.32 ms/step  n=   156
+fp8 blockwise gemm                 16.21 ms/step  n=    99
+other                              15.93 ms/step  n=   885
+moe misc                            1.77 ms/step  n=   382
+cublas gemv                         1.44 ms/step  n=    60
+bf16 wmma gemm (cutlass80)          1.41 ms/step  n=    25
+aten elementwise/copy               1.33 ms/step  n=   870
+nvfp4 draft head                    0.77 ms/step  n=     3
+attention/qsa                       0.46 ms/step  n=    83
+norm                                0.41 ms/step  n=   158
+gdn                                 0.21 ms/step  n=    52
+sum of kernel durations 58.27
+
+top 'other':
+ 8.793 ms/step _direct
+ 4.290 ms/step _partial
+ 1.562 ms/step fused_sigmoid_gating_delta_rule_update_kernel
+ 0.420 ms/step void vllm::cvt_fp16_to_fp4<__nv_bfloat16, false, false>(int, int, int, int, __nv_bfloat16 
+ 0.183 ms/step void per_token_group_quant_8bit_kernel<c10::BFloat16, c10::Float8_e4m3fn, true, false, flo
+ 0.130 ms/step _hc_gate_mix_kernel
+ 0.104 ms/step void vllm::act_and_mul_kernel<c10::BFloat16, __nv_bfloat162, &(c10::BFloat16 vllm::silu_ke
+ 0.085 ms/step _hc_silu_kernel
+ 0.014 ms/step _compute_local_logits_stats_kernel
+ 0.012 ms/step nvjet_sm121_tst_mma_64x32x64_8_32x16x64_tmaAB_splitK_TNNN
+ 0.009 ms/step _compute_slot_mappings_kernel
+ 0.008 ms/step _update_draft_inputs_kernel
+side-stream busy (merged) 21.73 ms/step
+other                  exclusive  11.24  overlapped-with-side   3.28 ms/step
+bf16 wmma              exclusive   1.38  overlapped-with-side   0.00 ms/step
+bf16 gemv              exclusive   1.24  overlapped-with-side   0.14 ms/step
+moe grouped gemm       exclusive   0.18  overlapped-with-side   0.10 ms/step
+fp8 blockwise          exclusive  15.90  overlapped-with-side   0.00 ms/step
+gdn recurrent update   exclusive   1.56  overlapped-with-side   0.00 ms/step

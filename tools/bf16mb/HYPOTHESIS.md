@@ -35,3 +35,10 @@ c=4 +3..5 %. The kernel swap should have removed ~2 ms/cycle. Candidates:
 (c) the lower acceptance means more drafter + verify work per accepted token (already folded into ms/cycle, so it
     cannot explain a per-cycle null).
 Expected: per-cycle BF16 category <= 12 ms (was 14.6 + splitKreduce) if (b); >= 14 ms if (a).
+
+## Clock check (written 2026-09-25 ~03:3x, after 47-profsk)
+47-profsk: Triton mixer down 41.1 us in-model (never overlapping a side stream) vs 30.3 standalone and ~34 in the idle
+in-worker bench (2c). H: under sustained c=1 decode the SM and/or memory clock or the power cap drops >= 15 % below
+the short-burst level -> the whole-step slowdown vs benches is clock/power, not the kernels. If the clocks during
+decode equal those during a microbench burst, the cause is elsewhere (CPU DRAM traffic on the unified memory,
+TLB/page layout of the model weights).

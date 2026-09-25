@@ -232,3 +232,52 @@ Reading:
 - idle 2.4 ms;
 - GDN update ≈ 0.5 ms.
 The remaining lever that no kernel choice can reach is fewer bytes (BF16 leftovers at 8 bits, −8 %).
+
+## Step 3c — why the faster kernel did not help (`47-profsk`, clock check; finding 238)
+
+The server A/B of the deterministic Triton kernel was a per-cycle null (finding 238). A profile of the same prod
+config with `FN_BF16SK=1` (`notes/data/profsk-0925-summary.txt`) shows the Triton kernels in-model **run exactly as
+slow as the cuBLAS kernels they replaced**:
+
+| linear | cuBLAS in-model | Triton in-model | Triton standalone | floor |
+|---|---|---|---|---|
+| mixer down [336×10240] | 40.5 | 41.1 | 30.3 | 31.3 |
+| mixer up [10240×320] | 33.9 | 33.5 | 27.2 | 29.8 |
+| shared gate_up | 46.0 | 42.0 | 28.5 | 29.8 |
+| shared down | 23.2 | 17.3 | 14.9 | 14.9 |
+| router | 25.6 | 43.1 | 12.6 | 11.9 |
+| `in_proj_ba` (+ reduce) | 17.2 | 3.7 + 1.0 | 3.6 | 2.2 |
+
+Only `in_proj_ba` (−0.45 ms/step) and shared down kept their gain; the router got worse. The step went from 55.1 to
+55.7 ms profiled.
+
+**Ruled out:**
+- **Side-stream contention:** the mixer-down split-K kernel never overlaps an aux stream (0 of 7,039 calls), yet it
+  takes 41 µs.
+- **Clocks and power** (`notes/data/clk-decode-0925.csv`, 1,500-token c=1 decode on prod, nvidia-smi every 250 ms):
+  SM clock 2,528 MHz throughout (2,405 idle), 31 W, temperature 47 °C, throttle reasons `0x0` in all 144 busy samples.
+- **The kernel:** two different kernels hit the same in-model time.
+
+**The pattern — per-kernel overhead, not bandwidth.** Big weight reads reach their floor in-model; mid-size ones
+carry a roughly fixed extra cost, whatever kernel does the read:
+
+| FP8 GEMM (base profile) | weights | in-model | floor | ratio |
+|---|---|---|---|---|
+| `in_proj_qkvz` | 42 MB | 187.5 µs | 190.7 | 0.98 |
+| QSA `qkv_proj` | 34 MB | 153.9 | 154.9 | 0.99 |
+| lm_head | 636 MB | 2,754 | 2,890 | 0.95 |
+| `out_proj` / `o_proj` | 15.7 MB | 96.1 | 71.5 | 1.34 |
+
+The BF16 linears (2.6–6.9 MB) carry +6 to +30 µs each. In the step-2c idle in-worker bench, the same weights in the
+same process took ~34 µs, so the extra cost appears **only in the live decode sequence**.
+
+Candidates, not yet separated:
+- (a) write-back of dirty L2 lines left by the producing kernel (GDN state updates, MoE combine) into the
+  consumer's read window;
+- (b) DRAM ramp-up at each kernel boundary, which a 48-call standalone chain of the same kernel does not show;
+- (c) CPU-side traffic on the unified LPDDR5x during live decode.
+
+**Next instrument:** an in-worker replay of real producer→consumer pairs (e.g. GDN update → `out_proj`, MoE
+combine → mixer down) against the consumer alone. The levers that would follow are fewer, larger reads: fusing
+router + shared gate_up (same input) and fusing `in_proj_ba` into `in_proj_qkvz`. No new kernel for a mid-size
+weight read can win while this overhead holds. Total at stake: the BF16 and `out_proj` excess, ≈ 5 ms per cycle.
