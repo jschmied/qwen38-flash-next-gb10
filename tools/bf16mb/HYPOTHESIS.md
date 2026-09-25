@@ -23,3 +23,15 @@ launches per step; shared/router gains are uncertain (contention-bound in-model)
   starts (the kernel is deterministic); cross-arm hashes are EXPECTED to differ (different reduction order).
 - Outside: < +1 % -> the in-model win is eaten by contention/launch cost; > +6 % -> something else changed, check
   the path lines.
+
+## Profile with FN_BF16SK=1 (47-profsk, written 2026-09-25 02:3x, after sk0/sk1 showed a per-cycle null at c=1)
+
+A/B so far: c=1 per verify cycle base 59.1 ms vs sk 59.4-59.9 ms (null or slightly worse), acceptance 51.2 -> 48.7 %,
+c=4 +3..5 %. The kernel swap should have removed ~2 ms/cycle. Candidates:
+(a) the Triton kernels run slower in-model than standalone (mixer down expected ~31 us; if >= 38 us, in-model
+    conditions such as L2 state, launch cost, the partials buffer or graph capture eat the gain);
+(b) the kernels are fast, but the time moved elsewhere (e.g. the MoE aux-stream overlap changed, or the drafter's M=1
+    path got slower);
+(c) the lower acceptance means more drafter + verify work per accepted token (already folded into ms/cycle, so it
+    cannot explain a per-cycle null).
+Expected: per-cycle BF16 category <= 12 ms (was 14.6 + splitKreduce) if (b); >= 14 ms if (a).

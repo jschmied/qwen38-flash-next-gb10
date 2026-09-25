@@ -4026,3 +4026,39 @@ The preflight start (FULL) gave 23.046 / 88.92 / 1.68, in line.
 
 **Verdict:** keep PIECEWISE. FULL_DECODE_ONLY is now *possible* on our stack (finding 236), but it is not a lever
 here.
+
+## Finding 238 — FNBF16SK (deterministic split-K Triton for the small-M BF16 linears): per-cycle null; tok/s moves only with acceptance (2026-09-25)
+
+**Why.** Speed-of-light step 3 (`notes/speed-of-light.md`) found the BF16 linears on cuBLAS `cutlass_80_wmma` kernels
+at 1.44× their byte floor in-model. A deterministic two-pass Triton kernel runs every shape at ≤ 1.06× floor
+standalone. Expected: −2 ms per verify cycle, c=1 +2.5 to +5 % (hypothesis `tools/bf16mb/HYPOTHESIS.md`).
+
+**Setup.** Prod config (PIECEWISE, MTP n=3, NVFP4 draft head, checkpoint-mapped PLE). The overlay
+(`tools/bf16mb/fn_bf16sk.py` plus `patch_linear.py`) hooks `UnquantizedLinearMethod.apply` through a custom op for 7
+(N, K) shapes; `FN_BF16SK=1` turns it on. Probe: `decprobe.py`. Three alternating starts per arm (armrun,
+`notes/data/bf16sk-ab-0925.jsonl`). Void checks: `FNBF16SK active: 7 shapes` and `FNBF16SK call M=4 N=336 K=10240
+-> triton` in the sk logs, and no `FNBF16SK` in the base logs.
+
+**A first run was void, correctly.** On the nvidia path the mixer-down weight is padded to 16 rows, so its shape is
+**(336, 10240), not 324** (`hyperconnection.py`: "physically padded … for CuBLAS heuristics"). The op never saw it,
+and the N=324 void check caught that. The (336, 10240) entry was added and the run repeated.
+
+| | base (3 starts) | sk (3 starts) |
+|---|---|---|
+| c=1 ms/tok | 23.31 / 23.28 / 23.22 | 24.32 / 24.15 / 24.15 |
+| c=1 accept length | 2.535 | 2.461 |
+| **c=1 ms per verify cycle** | **59.10 / 59.01 / 58.85** | **59.85 / 59.43 / 59.44** (+0.9 %) |
+| c=4 agg tok/s | 86.52 / 86.44 / 86.76 | 89.20 / 90.78 / 90.30 (+4.0 %) |
+| c=4 accept length | 2.460 | 2.539 (+3.2 %) |
+| output hashes | identical across starts | identical across starts; differ from base (reduction order) |
+
+**Reading:**
+- Per verify cycle the kernel swap is a **null to −1 %** at c=1. At c=4, ≈ +0.8 % remains after removing the
+  acceptance change. The tok/s gaps at c=1 (−3.8 %) and c=4 (+4.0 %) are acceptance moving with the changed text,
+  opposite in sign at the two concurrencies (memory `acceptance-is-not-quality`).
+- **Outside the hypothesis range** (expected −2 ms per cycle). The standalone per-call gains did not appear in-model.
+- Determinism holds: the sk arm reproduced its hashes bitwise over three restarts.
+- **Not a promotion candidate.** `47-profsk` (the step-3 profile with `FN_BF16SK=1`) is queued to find where the
+  expected 2 ms went: slower Triton kernels in-model, or time moved to other work (hypothesis section "Profile with
+  FN_BF16SK=1").
+- The overlay stays installed in the prod venv, env-gated. Prod runs without `FN_BF16SK`, so on the stock path.

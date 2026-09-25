@@ -43,8 +43,8 @@
    "log_must_contain": [
     "NVFP4 slice, FNNVFP4",
     "Mapped PLE table",
-    "FNBF16SK active: 6 shapes",
-    "FNBF16SK call M=4 N=324 K=10240 -> triton",
+    "FNBF16SK active: 7 shapes",
+    "FNBF16SK call M=4 N=336 K=10240 -> triton",
     "FNBF16SK call M=4 N=96 K=2560 -> triton"
    ]
   }

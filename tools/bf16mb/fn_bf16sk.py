@@ -16,6 +16,7 @@ MAX_M = 16
 # (N, K) -> (BN, BK, SPLIT); chosen by tools/bf16mb/bf16sk_bench.py
 CONFIGS = {  # (N, K): {M bucket: (BN, BK, SPLIT)}, from notes/data/bf16sk-0925.json
     (324, 10240): {1: (16, 256, 4), 4: (16, 256, 2), 16: (16, 256, 2)},      # hyper-connection mixer down+inject
+    (336, 10240): {1: (16, 256, 4), 4: (16, 256, 2), 16: (16, 256, 2)},      # same, padded to 16 rows (nvidia path)
     (10240, 320): {1: (16, 128, 1), 4: (16, 128, 1), 16: (16, 256, 1)},      # hyper-connection mixer up
     (96, 2560): {1: (16, 256, 8), 4: (16, 256, 8), 16: (16, 256, 8)},        # GDN in_proj_ba
     (512, 2560): {1: (16, 256, 1), 4: (16, 256, 1), 16: (16, 256, 1)},       # router
