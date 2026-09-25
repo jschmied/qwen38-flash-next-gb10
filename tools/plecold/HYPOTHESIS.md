@@ -90,3 +90,21 @@ Round 7: sync touch = per-page POPULATE_READ on 32 pool tasks. Same arms (1 cold
 sync (per-page POPULATE_READ, 32 tasks): outputs identical 6/6; gather 100-112 us; touch 3.7 ms for ~57 pages
 (in-server ~15k IOPS vs 40k on the idle box) -> ms/step 58.6-59.5 vs base 58.0-60.9: null. Outside H (touch <= 2 ms).
 Suspect: direct reclaim in the fault path (MemFree ~3 GiB in-server vs 117 GiB in the microbench).
+
+## Round 8: is the in-server fault path doing direct reclaim? (written ~12:40, before the run)
+Round 7 sync touch: 57 pages in 3.7 ms in-server (~15k IOPS) vs 1.37 ms on the idle box (~40k). One cold start, KV
+4 GiB, FN_PLE_SYNCTOUCH=1 + FN_PFTIME=1; per request, /proc/vmstat deltas per step: pgscan_direct, pgsteal_direct,
+allocstall, pgscan_kswapd, workingset_refault_file, compact_stall.
+- H (direct reclaim): pgscan_direct >= 50 pages/step and allocstall > 0 per step (i.e. the faulting threads reclaim
+  inline), or kswapd scanning at >= the fault rate with refaults (thrashing).
+- Refuted if pgscan_direct ~ 0 and allocstall ~ 0: the slowdown is elsewhere (CPU contention of the 64 touch threads
+  with the server's own threads, or the SSD queue shared with other I/O).
+
+## Round 8 result + round 9 (written ~13:00, before the run)
+Round 8: pgscan_direct/pgsteal_direct/allocstall/pgscan_kswapd all 0 per step, MemFree 6.8 GiB -> NO reclaim; the
+in-server slowness is not memory pressure. Microbench: the Python pool doing per-page madvise = 1.8 ms; a C helper
+(libfnpopulate.so, one ctypes call, 16 pthreads, GIL-free) = 0.60 ms for 57 pages (~95k pages/s).
+Round 9: sync touch through the C helper. Arms base vs sync, 1 cold start each, KV 4 GiB.
+- H: sync touch_ms p50 <= 1.2 ms; gather <= 300 us; ms/step sync <= base - 2 ms; hashes identical.
+- Outside: touch stays ~3.7 ms in-server with the GIL out of the path -> contention is in the kernel/SSD queue
+  under the server's load, not in Python.

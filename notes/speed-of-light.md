@@ -422,3 +422,23 @@ the prefetch thread has faulted the step's pages.
 - **Suspect** (unmeasured): direct reclaim in the fault path. In the server MemFree is ~3 GiB, against 117 GiB in
   the microbench, so every new page first evicts another.
 - **Data:** `notes/data/plesync-r{6,7}-0925*.jsonl`, `plesync-r7-0925-summaries.txt`.
+
+### 4h. Round 8: no reclaim. Round 9: the GIL was the bottleneck, and the C helper wins −2.2 ms/step cold
+- **Round 8** (`notes/data/plerecl-r8-0925.jsonl`): pgscan_direct, pgsteal_direct, allocstall and pgscan_kswapd are
+  all 0 per step; MemFree 6.8 GiB. Memory pressure is ruled out.
+- **Microbench:** the Python pool doing per-page `madvise` takes 1.8 ms for 57 pages. `tools/plecold/fnpopulate.c`,
+  one ctypes call that populates from 16 pthreads without the GIL, takes **0.60 ms** (~95k pages/s).
+- **Round 9** (sync touch through the C helper, `tools/plecold/ple_pageable_synctouch_c.py`; 1 cold start per arm,
+  KV 4 GiB; `notes/data/plesync-r9-0925*.jsonl`/`summaries.txt`):
+
+| request | base ms/step | sync+C ms/step | Δ |
+|---|---|---|---|
+| 0–5 | 60.38 / 60.03 / 60.29 / 59.91 / 59.90 / 57.93 | 57.97 / 57.45 / 58.07 / 57.16 / 57.57 / 56.90 | −2.41 / −2.58 / −2.22 / −2.75 / −2.33 / −1.03 |
+| mean | 59.74 | 57.52 | **−2.2 (−3.7 %)** |
+
+  - Outputs identical 6/6.
+  - In-server touch p50 2.0 ms (3.7 ms with the Python pool); GPU gather 80 µs (base 3.7–4.8 ms).
+- **Not yet established:**
+  - only one start per arm;
+  - the warm state is unmeasured (resident pages; the wait still costs the host its one-step lead);
+  - the in-server touch is 3× the idle-box microbench.

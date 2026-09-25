@@ -34,3 +34,10 @@ for k in (1, 8, 16, 32, 56):
         else: list(pool.map(pop, np.array_split(pg, k)))
         ts.append((time.perf_counter() - t) * 1000)
     print(f"POPULATE_READ pages={len(pg)} tasks={k:2d}: median {st.median(ts):6.2f} ms  min {min(ts):5.2f}", flush=True)
+lib = ctypes.CDLL("/opt/llm/runners/plecold/libfnpopulate.so"); lib.fn_populate.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
+for thr in (8, 16, 32, 57):
+    ts = []
+    for rep in range(15):
+        pg = pages(np.sort(rng.integers(0, rows, 56))).astype(np.uint64)
+        t = time.perf_counter(); e = lib.fn_populate(pg.ctypes.data, len(pg), thr); ts.append((time.perf_counter() - t) * 1000)
+    print(f"C fn_populate pages={len(pg)} threads={thr:2d}: median {st.median(ts):6.2f} ms  min {min(ts):5.2f} errors {e}", flush=True)
