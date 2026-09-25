@@ -670,8 +670,10 @@ and the loaded initial state are fp16. The model default is `mamba_ssm_dtype: fl
 - **Decode:** as in phase 1, with a slightly larger c=1 gain. Base-align's start-to-start spread (1.7 %) is the
   bigger uncertainty. Inside the phase-2 hypothesis.
 - **Cache-hit replay is self-consistent:** in every arm and start, the cache-hit pass reproduced the first pass's
-  hashes (8/8). RecoverSSM-align's outputs are identical to RecoverSSM phase 1's, so align mode changes nothing.
-  Divergence vs base-align is unchanged: median 26 tokens. Base-align also equals phase-1 base, byte for byte.
+  hashes (8/8). RecoverSSM-align's decode-probe hashes equal phase 1's, and so do base-align's and phase-1 base's, so
+  align mode changes nothing. Divergence vs base-align is unchanged: median 26 tokens. In the divergence probe,
+  cross-phase pairs agree to 512 tokens except the prompts that also vary between two restarts of the same arm
+  (#3 at ~95–100 tokens, #4 at 408 in rssm). That is existing restart nondeterminism, not a mode effect.
 - **The agent loop gains three times the decode gain.** Two causes can be read off the logs, but neither is
   decomposed:
   - no per-draft Mamba blocks (the old spec-decode block cost, memory `spec-decode-prefix-cost-agentloop`), so
