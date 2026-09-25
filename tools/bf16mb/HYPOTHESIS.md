@@ -98,3 +98,24 @@ tlbbench: 2 MiB-stride sweeps of 6,144 regions / 12 GiB -> no effect (83.8 / 34.
 H-DVFS: after ~300 us of DRAM-LIGHT GPU work (spin kernel torch.cuda._sleep; or 30 tiny L2-resident kernels) the next
 big weight read is slow (out_proj >= 85 us, mixer after >= 40 us); after ~300 us of DRAM-HEAVY work (read a 128 MiB
 buffer) it is fast (out_proj <= 75, mixer <= 36). Refuted if the three producers give the same consumer times (+-5 %).
+
+## nsys node-level trace of a warm step (written ~18:15, before the run)
+Lead: a BF16 GEMM that normally takes 23 us takes 177 us as the first kernel of a graph launch; slow spots sit at
+the start of graph launches after eager sections. nsys --cuda-graph-trace=node shows per-node timing plus the CUDA
+API side (cudaGraphLaunch duration, graph upload, memory ops) that the torch profiler hides.
+- H: the first node(s) of the post-eager graph launches start late or run long while graph-launch work
+  (upload / memory-pool map) completes; the host-side cudaGraphLaunch of those pieces takes >= 50 us.
+- Refuted if node timings under nsys show the same in-kernel slowness with no launch-side activity nearby -> the
+  cause is inside the kernel's execution (memory system state), for which a hardware counter profile (ncu) of that
+  one kernel in place is next.
+
+## nsys result + dirty-L2 test v2 (l2dirty, written ~18:35, before the run)
+nsys (node trace, warm): GDN out_proj 102.0 us, QSA o_proj 75.7 us, back-to-back (0.5 us gap); graphs launched ~75 ms
+ahead -> graph-launch work refuted. Directly before GDN out_proj: fused_sigmoid_gating_delta_rule (42 us, grid
+[1,4,48]) which reads a 3 MiB fp32 state and writes up to 4 speculative states (<= 12 MiB) in 42 us -> faster than
+DRAM, so the writes sit dirty in the 24 MiB L2 and are written back during the next kernels.
+Test: CUDA graph of [read an L2-sized buffer (makes it resident), overwrite X MiB of it (dirty, fast), out_proj,
+mixer down] x N, kernel durations from the torch profiler (CUPTI) -> no launch-latency artifact.
+- H-dirty: out_proj grows ~+10-15 us per 3 MiB dirtied (X = 0/3/6/12 MiB) and the mixer after it grows too; at
+  12 MiB out_proj >= 90 us (clean ~70).
+- Refuted if out_proj stays within +5 us across X.

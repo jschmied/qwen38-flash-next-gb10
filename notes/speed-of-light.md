@@ -540,3 +540,34 @@ decisive test says no broad re-runs are needed. Absolute numbers from the paging
   eager event timing. It is not relevant to the in-model CUPTI kernel durations.
 - **Next:** an nsys trace with `--cuda-graph-trace=node` of one warm server, to see graph-launch-side work
   (upload, memory-pool mapping) that is billed to the first kernels of a launch.
+
+### 4o. SOLVED: the post-attention slow spots are the write-back of the GDN spec-decode state snapshots
+- **nsys node trace** (warm, `--cuda-graph-trace=node`, `tools/prof/nsysan.py`):
+  - GDN `out_proj` 102.0 µs and QSA `o_proj` 75.7 µs, back-to-back (0.5 µs gap);
+  - graphs are launched ~75 ms before their kernels run, so graph-launch work is ruled out.
+- **Directly before GDN `out_proj`:** `fused_sigmoid_gating_delta_rule_update` (42 µs, grid [1,4,48]). In spec decode it
+  stores the full fp32 state after **every** one of the T=4 verify tokens into its own cache slot
+  (`fused_sigmoid_gating.py` lines 155–170): 4 × 48 heads × 128 × 128 × 4 B = **12 MiB per GDN layer per step**,
+  written in 42 µs, faster than DRAM. The lines sit dirty in the 24 MiB L2, and the next kernels pay their
+  write-back.
+- **Reproduced standalone** (`tools/bf16mb/l2dirty.py`, CUDA graph, CUPTI durations; `notes/data/l2dirty-0925.json`):
+
+| dirty L2 before the pair | out_proj | mixer down |
+|---|---|---|
+| 0 MiB | 71.4 | 31.2 |
+| 3 MiB | 74.9 | 37.8 |
+| 6 MiB | 81.6 | 42.4 |
+| **12 MiB** | **99.2** | **45.5** |
+| in-model after a GDN layer | 99–102 | 47.7 |
+
+- **Cost:** ~40 µs per GDN layer × 36 ≈ **1.5 ms/step**.
+- **Waste:** the next step reads only the state after the last accepted token (`num_accepted_tokens − 1`). On average
+  ~2.5 of the 4 snapshots (~7.5 MiB per layer) are written and never read. Writing one snapshot would save ~30 µs per
+  layer ≈ **1.1 ms/step (~2 %)**.
+- **Upstream:** vllm#49887 **ReplaySSM** (Dao AI Lab + NVIDIA, open, stacked on #49847) replaces the T snapshots with one
+  checkpoint plus a ring of per-token inputs (fp16 d/k, fp32 g). It integrates the Qwen3.5 GDN mixer only, and its
+  thread raises prefix caching as a requirement. Our dirty-L2 aftershock is extra evidence for it on unified-memory
+  GB10. Not tested on Qwen4Exp.
+- **Earlier wrong turns**, for the record: graph-launch position, TLB, clocks/power (4n); my first dirty-L2 test
+  (`pairbench.py` P3), whose 110 µs producer drained its own writes; and the prefill counter-check (4a), where the
+  chunked prefill kernel writes differently.
