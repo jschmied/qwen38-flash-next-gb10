@@ -1,0 +1,73 @@
+{
+ "name": "ssm16",
+ "venv": "/opt/llm/runtime/vllm-venv-main1ea7",
+ "model": "/opt/llm/models/qwen38-flash-next-mtpfp4",
+ "env": {
+  "FN_MAXLEN": "32768",
+  "FN_SEQS": "16",
+  "FN_SPEC_METHOD": "mtp",
+  "FN_SPEC_N": "3",
+  "FN_SPEC_NODROP": "1",
+  "FN_SPEC_LOCALARGMAX": "1",
+  "FN_DRAFT_VOCAB": "/opt/llm/runners/dv/draft_vocab_32768.txt",
+  "FN_DRAFT_HEAD_NVFP4": "1",
+  "FN_NVFP4_CFG": "64,4",
+  "FN_PLE_OFFLOAD": "0",
+  "FN_EXTRA": "--engram-config {\"checkpoint_mapped\":true} --kv-cache-memory-bytes 4294967296"
+ },
+ "probe_cmd": [
+  "<venv>/bin/python",
+  "/opt/llm/runners/plecold/warm_twice.py",
+  "/opt/llm/runners/fullcg/decprobe.py",
+  "{arm}"
+ ],
+ "starts": 2,
+ "arms": [
+  {
+   "name": "base",
+   "env_unset": [
+    "FN_GDN_STORE_CS",
+    "FN_BF16SK",
+    "FN_PLE_SYNCTOUCH",
+    "FN_PFTIME"
+   ],
+   "log_must_contain": [
+    "NVFP4 slice, FNNVFP4",
+    "Mapped PLE table",
+    "'kv_cache_memory_bytes': 4294967296"
+   ],
+   "log_must_not_contain": [
+    "FNBF16SK",
+    "FNPOPULATE",
+    "FNDROPCACHE",
+    "FNSYNCTOUCH",
+    "FNGDNCS active"
+   ]
+  },
+  {
+   "name": "ssm16",
+   "env": {
+    "FN_EXTRA": "--engram-config {\"checkpoint_mapped\":true} --kv-cache-memory-bytes 4294967296 --mamba-ssm-cache-dtype float16"
+   },
+   "env_unset": [
+    "FN_GDN_STORE_CS",
+    "FN_BF16SK",
+    "FN_PLE_SYNCTOUCH",
+    "FN_PFTIME"
+   ],
+   "log_must_contain": [
+    "NVFP4 slice, FNNVFP4",
+    "Mapped PLE table",
+    "'kv_cache_memory_bytes': 4294967296",
+    "'mamba_ssm_cache_dtype': 'float16'"
+   ],
+   "log_must_not_contain": [
+    "FNBF16SK",
+    "FNPOPULATE",
+    "FNDROPCACHE",
+    "FNSYNCTOUCH",
+    "FNGDNCS active"
+   ]
+  }
+ ]
+}

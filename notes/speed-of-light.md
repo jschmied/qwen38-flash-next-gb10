@@ -580,3 +580,19 @@ decisive test says no broad re-runs are needed. Absolute numbers from the paging
 - Output hashes identical, as expected: values are unchanged.
 - The cache hint does not avoid the aftershock, so only fewer snapshot bytes can: ReplaySSM (#49887), or narrower
   snapshots. Next: `--mamba-ssm-cache-dtype float16` (halves them to 6 MiB/layer), speed first, then quality.
+
+### 4q. fp16 SSM state cache (`--mamba-ssm-cache-dtype float16`): −2.2 % c=1, −4.4 % c=4 per cycle — quality pending
+Halves the GDN snapshots (12 → 6 MiB per layer per step). The kernel still computes in fp32; only the stored states
+and the loaded initial state are fp16. The model default is `mamba_ssm_dtype: float32`. Warm decprobe, KV 4 GiB,
+2 starts per arm (`notes/data/ssm16-0925.jsonl`):
+
+| per cycle | base (start 0 / 1) | fp16 (start 0 / 1) | Δ |
+|---|---|---|---|
+| c=1 | 55.70 / 55.59 ms | 54.39 / 54.46 ms | **−1.22 ms (−2.2 %)** |
+| c=4 | 105.38 / 105.09 ms | 100.83 / 100.54 ms | **−4.4 %** (4 sequences, 4× the snapshot bytes) |
+
+- fp16 output is deterministic across starts (same hash) but differs from fp32. c=1 acceptance moved 2.535 → 2.424
+  with the changed text, so c=1 tok/s alone is not the metric.
+- **Not a promotion candidate until quality is measured.** The decode-time divergence probe
+  (`tools/gdncs/divprobe.py` / `divcmp.py`) compares base vs fp16 vs a known-benign reference: FNBF16SK, which only
+  changes reduction order.
