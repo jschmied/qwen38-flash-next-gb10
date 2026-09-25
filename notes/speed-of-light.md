@@ -521,3 +521,22 @@ decisive test says no broad re-runs are needed. Absolute numbers from the paging
   - the elementwise glue in the eager GDN section;
   - no `splitKreduce`.
 - The largest single open item remains the post-attention slow sites, ~1.7 ms/step, mechanism unknown.
+
+### 4n. Slow-spot hunt: graph position, TLB, clocks ruled out; first-in-graph kernels are the lead
+- **Graph position** (warm trace, `tools/prof/graphpos.py`): not the cause alone.
+  - Mixer down elsewhere is fast even at graph positions 1–2 (34.1–34.7 µs).
+  - After `out_proj` it is slow at positions 3 and 5 (50.4 / 47.7 µs); `out_proj` itself sits at positions 1–3 and
+    takes 99.4 µs.
+  - But a BF16 GEMM that normally takes 23 µs takes **177 µs as the first kernel of a graph launch** (once per step),
+    and mixer down at positions 1–3 averages 49.8 vs 35.6 µs later.
+- **TLB** (`tools/bf16mb/tlbbench.py`): sweeps of 6,144 distinct 2 MiB regions over 12 GiB before the consumers had
+  no effect.
+- **Clocks / power** (`dvfsbench.py`, default vs `nvidia-smi -lgc 2418`, reverted with `-rgc`):
+  - identical consumer times;
+  - SW power-cap time 1,354 ms in the default run and 0 ms locked.
+  The GB10 does power-cap under load (~2.8 h of SW power capping accumulated since boot), but that is not the slow
+  spots.
+- **Correction:** the standalone "busy vs idle producer" effect (out_proj 74 vs 84 µs) is host launch latency inside
+  eager event timing. It is not relevant to the in-model CUPTI kernel durations.
+- **Next:** an nsys trace with `--cuda-graph-trace=node` of one warm server, to see graph-launch-side work
+  (upload, memory-pool mapping) that is billed to the first kernels of a launch.

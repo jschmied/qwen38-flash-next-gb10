@@ -75,3 +75,26 @@ decode(150) x3 and decode(400) x3, alternating.
 - If both ~= 59.5: the profiler speeds decode up by ~4.5 ms/step -> a host-side scheduling interaction (the GPU idles
   ~7 ms/step unprofiled vs 2.4 profiled); next = measure unprofiled GPU idle.
 - If both ~= 55: warm-up drift explains the probes' 59.6 (the probes ran on a fresh server).
+
+## Decisive re-test at reduced KV (written 2026-09-25 ~09:25, before the run)
+Finding 238 (per-cycle null) ran with 33.5 GiB KV while the checkpoint-mapped PLE paged (~30 major faults/step).
+Same A/B at --kv-cache-memory-bytes 4 GiB, PLE warmed after ready (method taken from the running plekv4 baseline),
+1 start per arm. c=1 ms per verify cycle (ms/tok x accept length):
+- If sk beats base by >= 2 % per cycle -> paging masked kernel gains -> re-run 237, 235, the profile.
+- If |diff| < 1 % -> finding 238 stands; paging only shifted absolute numbers -> correction notes, no re-runs.
+
+## TLB-aftershock test (tlbbench, written 2026-09-25 ~16:55, before the run)
+Warm trace: the slow spots follow the eager GDN/attention section, not graph position (mixer down elsewhere at
+graph position 1-2 is 34 us; after out_proj at position 3/5 it is 48-50 us; out_proj itself 99 us vs 70 standalone).
+Standalone, box idle (prod down): producer = a gather touching one 4-byte element every STRIDE bytes across SPAN GiB
+of a large device buffer (TLB sweep), then the in-model FP8 out_proj (cutlass_scaled_mm, [2560x6144]) and mixer down.
+- H-TLB: after a sweep of >= 2,000 distinct 2 MiB regions, out_proj >= 88 us (vs ~70) and the following mixer down
+  >= 42 us (vs ~31); no effect after a sweep of a small span (<= 64 MiB).
+- Refuted if the consumers stay within +10 % of the no-producer numbers at every span.
+
+## TLB refuted; memory power-state test (dvfsbench, written ~17:10, before the run)
+tlbbench: 2 MiB-stride sweeps of 6,144 regions / 12 GiB -> no effect (83.8 / 34.7 vs 83.4 / 34.6 baseline); heavy
+64 KiB sweeps made out_proj FASTER (73.6-75.9). Eager-with-idle baseline out_proj 83 vs 70 in a busy graph.
+H-DVFS: after ~300 us of DRAM-LIGHT GPU work (spin kernel torch.cuda._sleep; or 30 tiny L2-resident kernels) the next
+big weight read is slow (out_proj >= 85 us, mixer after >= 40 us); after ~300 us of DRAM-HEAVY work (read a 128 MiB
+buffer) it is fast (out_proj <= 75, mixer <= 36). Refuted if the three producers give the same consumer times (+-5 %).

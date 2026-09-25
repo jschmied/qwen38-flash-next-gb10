@@ -1,0 +1,24 @@
+{
+ "spin_cycles": 763593,
+ "heavy_read_us": 9532.4,
+ "idle_gap": {
+  "producer_us": 4.4,
+  "out_proj_us": 83.9,
+  "mixer_down_us": 34.7
+ },
+ "spin_300us_no_dram": {
+  "producer_us": 301.4,
+  "out_proj_us": 74.6,
+  "mixer_down_us": 34.8
+ },
+ "tiny_x30_l2": {
+  "producer_us": 104.5,
+  "out_proj_us": 83.7,
+  "mixer_down_us": 34.6
+ },
+ "dram_heavy_read": {
+  "producer_us": 577.8,
+  "out_proj_us": 73.5,
+  "mixer_down_us": 34.8
+ }
+}
