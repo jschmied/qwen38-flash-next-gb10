@@ -1356,3 +1356,9 @@ wait on one ~100 GB pull, and they share one serve.
     (`VLLM_QSA_DET_TOPK=0` is truthy), so it was not stock; the FlashInfer init failure stands.
   - Source: the determinism-investigation audit (commit d7bbbb8). The new-comment draft
     `comment-55122-audit-corrections.md` is superseded.
+- **2026-09-25 — vLLM PR #58439 rebased, body edited, comment posted** (user go "do 1. 2. and 3."). Force-pushed
+  `pr/ple-checkpoint-mapped` be7a84fe4 → **86f103430** (3 commits on main `378504a54`: rebase over #57497/#58489/
+  #58086; the #58086 4-tuple `_prepare_weights` break fixed + real-loader test; new commit rejecting
+  `checkpoint_mapped` off CUDA; DCO author email fixed). PR now MERGEABLE (blocked on review). Body replaced from
+  `58439-body-update-0925.md`; rebase comment from `58439-rebase-reply-0925.md` (head filled in), replying to
+  hclsys's three GB10 verifications. <https://github.com/vllm-project/vllm/pull/58439#issuecomment-5830452890>
