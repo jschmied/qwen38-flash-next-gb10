@@ -54,3 +54,14 @@ Round 4 `dropwarm`: FN_LOAD_DROPCACHE=1 + KV 2 GiB + warm; full /proc/meminfo at
 - If residency >= 45 GiB (>= 95 %): paging-free measurement setup found -> run the decisive FNBF16SK re-test with it.
 - If residency stays <= 35 GiB: a fresh server cannot hold the table beside the weights; find what warm prod did
   (full meminfo of warm prod) before any re-run.
+
+## Round 5: who takes the PLE faults — CPU prefetch or GPU? (written ~10:25, before the run)
+Fault latency measured on the idle box: one 4 KiB random read ~60 us by any route (O_DIRECT 64, buffered 58, mmap
+fault 58; cached minor fault 1.6 us); in parallel the SSD gives ~50k IOPS, the prefetcher's numpy pattern 231k rows/s
+at 64 threads. Yet the server pays ~0.2 ms per major fault per step (~30/step -> ~6 ms), 3x a serial SSD read.
+FN_PFTIME=1 (1 fresh start, KV 4 GiB, no warm, coldprobe): per step, host prepare->inputs->touch-done times, GPU time
+of the gather kernel (CUDA events), whether the GPU started the gather before the touch finished.
+- H-gpu (GPU loses the race and faults serially): gpu_started_before_touch_done >= 0.5; gather_gpu_us p50 >= 2000 us;
+  gather time ~ faults x (60-200 us).
+- H-cpu-slow (prefetch finishes first but takes long): gpu_started... < 0.2, touch_ms p50 >= 3 ms, gather short.
+- Neither (gather short AND prefetch early): the 6 ms is not in the lookup at all -> look elsewhere (host stalls).

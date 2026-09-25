@@ -379,3 +379,30 @@ worker major/minor faults, NVMe reads. Data `notes/data/{plecold,plekv4,pledrop}
 - **Open.** Warm prod reached 100 % residency while `free` showed only 3 GB buff/cache, so its PLE pages were not
   ordinary page cache. How prod gets there, and whether a restart can reach it quickly, is the lever: 53.7 vs
   ~60 ms/step.
+
+### 4f. Who takes the PLE faults: the GPU, serially, on every step (FN_PFTIME, `tools/plecold/ple_pageable_pftime.py`)
+**Fault latency on the idle box** (`tools/plecold/faultlat.py`, `faultpar.py`):
+- One random 4 KiB read ≈ 60 µs by any route: O_DIRECT 64, buffered 58, mmap fault 58 µs. A cached minor fault is
+  1.6 µs. The OS path adds nothing.
+- In parallel the SSD gives ~50k IOPS; the prefetcher's numpy touch pattern scales to 231k rows/s at 64 threads.
+
+**In the server** (1 cold start, KV 4 GiB, 700 steps, `notes/data/plepf-0925-summaries.txt`), per step, p50:
+
+| | |
+|---|---|
+| prefetch `prepare()` → inputs visible on the host | **~62 ms**, one whole step: the ids come from the previous step's GPU sampling |
+| host touch after that | 3.7–5.4 ms |
+| GPU gather kernel (`_gather_mapped_rows_kernel`) | **3.7–5.5 ms** (p90 5.3–9.3, max 52 ms) |
+| GPU started the gather before the touch finished | **100 % of steps** |
+| major faults during the touch window | 27–32 |
+
+- **The prefetch can never win.** The rows of step N depend on step N's token ids. Those exist only when step N−1's
+  sampling finishes on the GPU, and step N's forward starts the PLE gather immediately. There is zero slack.
+- **So the GPU faults the ~30 pages itself, one at a time**, at ~150 µs each (60 µs SSD + ~90 µs GPU fault
+  handling): 4–5 ms/step. The CPU touch runs concurrently and waits on the same page reads. In the cold state the
+  prefetcher is dead weight.
+- **Fix directions**, none built:
+  - (1) keep the table resident: how does warm prod reach 100 % when a fresh server caps at ~43 %?
+  - (2) replace the GPU's serial ATS faults for missing rows with parallel host reads (~30 rows at 50k IOPS
+    ≈ 0.6 ms) behind a GPU wait;
+  - (3) make the table fit: an FP4 PLE (~24 GiB) would stay fully resident beside the weights, but costs quality.
