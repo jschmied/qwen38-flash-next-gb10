@@ -495,3 +495,7 @@ Same probe as 40-prof: the prompt is warmed first, so its PLE rows are cached. `
 - The post-attention slow sites (~1.7 ms/step), the small-kernel budget (~7 ms), the MoE-overlap contention and
   the 2.4 ms idle are in-model effects of the warm steady state.
 - Unprofiled warm: 54.9 ms/step, i.e. **~9.7 ms above the 45.2 ms floor**.
+
+### 4l. FNBF16SK re-tested warm: the null stands (finding 238 addendum)
+c=1 per cycle 55.62 vs 55.76 ms (+0.25 %); c=4 +0.9 % per cycle. Paging did not mask kernel-level gains, so the
+decisive test says no broad re-runs are needed. Absolute numbers from the paging regime are 6–8 % slow.

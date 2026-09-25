@@ -4062,3 +4062,17 @@ and the N=324 void check caught that. The (336, 10240) entry was added and the r
   expected 2 ms went: slower Triton kernels in-model, or time moved to other work (hypothesis section "Profile with
   FN_BF16SK=1").
 - The overlay stays installed in the prod venv, env-gated. Prod runs without `FN_BF16SK`, so on the stock path.
+
+**Addendum 2026-09-25: re-tested warm, the null stands.** Finding 238 ran while the checkpoint-mapped PLE paged
+(~30 major faults per step, speed-of-light 4e). Re-run at `--kv-cache-memory-bytes 4 GiB`, with decprobe run twice
+per start and the second, warm pass measured (`notes/data/bf16skwarm-0925.jsonl`, 1 start per arm):
+
+| | c=1 ms/tok | accept len | ms per cycle | c=4 tok/s | c=4 accept len |
+|---|---|---|---|---|---|
+| base | 21.94 | 2.535 | 55.62 | 93.61 | 2.460 |
+| sk | 22.66 | 2.461 | 55.76 (+0.25 %) | 97.51 | 2.539 |
+
+- Per cycle, c=1 is null and c=4 is +0.9 % once acceptance is removed, the same as in the paging regime.
+- Paging did not mask kernel gains, so findings 235 and 237 need no re-run.
+- Paging did inflate absolute numbers: the base arm is 23.3 → 21.9 ms/tok at c=1 and 86.5 → 93.6 tok/s at c=4
+  (6–8 %).
