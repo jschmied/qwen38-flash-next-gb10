@@ -571,3 +571,12 @@ decisive test says no broad re-runs are needed. Absolute numbers from the paging
 - **Earlier wrong turns**, for the record: graph-launch position, TLB, clocks/power (4n); my first dirty-L2 test
   (`pairbench.py` P3), whose 110 µs producer drained its own writes; and the prefill counter-check (4a), where the
   chunked prefill kernel writes differently.
+
+### 4p. Streaming stores for the snapshots (FNGDNCS, `.cs`): null
+`tools/gdncs/`; warm decprobe (second pass), KV 4 GiB, 2 starts per arm (`notes/data/gdncs-0925.jsonl`):
+- c=1 per cycle: base 55.70 / 55.69, cs 55.74 / 55.60 ms → **Δ −0.02 ms**;
+- c=4 per cycle: 105.14 (base start 1) vs 104.95 / 104.71 → −0.3 %. Base start 0's c=4 produced different text,
+  hash `2671b9…`, and is excluded.
+- Output hashes identical, as expected: values are unchanged.
+- The cache hint does not avoid the aftershock, so only fewer snapshot bytes can: ReplaySSM (#49887), or narrower
+  snapshots. Next: `--mamba-ssm-cache-dtype float16` (halves them to 6 MiB/layer), speed first, then quality.
