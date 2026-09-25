@@ -499,3 +499,25 @@ Same probe as 40-prof: the prompt is warmed first, so its PLE rows are cached. `
 ### 4l. FNBF16SK re-tested warm: the null stands (finding 238 addendum)
 c=1 per cycle 55.62 vs 55.76 ms (+0.25 %); c=4 +0.9 % per cycle. Paging did not mask kernel-level gains, so the
 decisive test says no broad re-runs are needed. Absolute numbers from the paging regime are 6–8 % slow.
+
+### 4m. The small-kernel bucket on the critical path is 3.5 ms/step, not 7.3 (warm trace, `tools/prof/gaps.py`)
+- Most small kernels in the MoE blocks (shared expert, `act_and_mul`, `_hc_combine_norm`) run on the main stream
+  while the routed experts run on the aux stream (~400 µs/layer). They are hidden, and fusing them saves nothing.
+- **Main-stream time not overlapped by a side stream:** < 5 µs kernels 2.11 ms/step, 5–20 µs 1.42 ms/step, ≥ 20 µs
+  28.5 ms/step.
+- **Critical-path small kernels:**
+  - small BF16 GEMMs 0.86 ms (the FNBF16SK Triton path already cuts `in_proj_ba` by −0.45);
+  - hc helpers (`combine_norm`, `gate_mix`, `silu`, ~106 each) 0.52;
+  - aten elementwise glue (~490) 0.52;
+  - FP8 activation quant (97) 0.18;
+  - cuBLAS `splitKreduce` (119) 0.16;
+  - GDN conv update + norm + D2D copy 0.29;
+  - QSA sparse kernels 0.37 (real work).
+- **GPU idle (union of streams): 1.8 ms/step.** About 0.6 ms is launch gaps in the eager GDN section (~6 gaps per
+  layer × 36 layers), about 0.2 ms in the QSA section.
+- **Realistic fusion prize: ~1–1.5 ms/step (2–3 %)**, spread over 3–4 separate kernel fusions:
+  - `_hc_combine_norm` + `per_token_group_quant`;
+  - `hc_gate_mix` + `silu`;
+  - the elementwise glue in the eager GDN section;
+  - no `splitKreduce`.
+- The largest single open item remains the post-attention slow sites, ~1.7 ms/step, mechanism unknown.
