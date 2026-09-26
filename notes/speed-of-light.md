@@ -60,6 +60,12 @@ Without MTP each token routes to exactly 10 experts per layer, so nothing is unk
 **31.5 ms/tok at 220 GB/s (31.8 tok/s), 25.4 ms/tok at 273 GB/s (39.4 tok/s).** The last measured no-spec c=1 decode
 was 40.2 ms/tok (finding 210, older dev524 stack), i.e. 1.28× the 220 GB/s floor.
 
+**This floor does not bound speculative decoding.** With MTP n=3 one verify cycle reads the target weights once for
+4 tokens (26.6 distinct experts per layer, not 40) and yields 2.53 accepted tokens. The floor that applies to prod
+is 45.2 ms per cycle ≈ **17.9 ms/tok (~56 tok/s)** — step 2a below. Prod measures 21.49 ms/tok (46.5 tok/s, §4t),
+1.2× that floor. The per-token floor scales with acceptance: at 3.0 tokens per cycle it would be ~66 tok/s, minus
+the slightly larger reads of deeper drafting.
+
 ## Step 2a — live capture + per-module bench (2026-09-24 night, `tools/fncap/`, data `notes/data/fncap/`)
 
 One eager start in the prod config (`12-fncap`). The capture ran on real traffic: c=1 essays, c=4, and the agent
