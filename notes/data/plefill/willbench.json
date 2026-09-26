@@ -1,0 +1,27 @@
+{
+ "serial_touch": {
+  "median_ms": 4.707,
+  "p90_ms": 6.046,
+  "cold_pages_median": 57
+ },
+ "c_helper_16thr": {
+  "median_ms": 0.827,
+  "p90_ms": 0.931,
+  "cold_pages_median": 57
+ },
+ "willneed_then_touch": {
+  "median_ms": 0.405,
+  "p90_ms": 0.482,
+  "cold_pages_median": 57
+ },
+ "willneed_then_populate": {
+  "median_ms": 0.355,
+  "p90_ms": 0.408,
+  "cold_pages_median": 57
+ },
+ "willneed_only(issue)": {
+  "median_ms": 0.109,
+  "p90_ms": 0.117,
+  "cold_pages_median": 57
+ }
+}

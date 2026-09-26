@@ -771,3 +771,48 @@ the four patch scripts; backups are `*.orig-rssmprod`. It is enabled by drop-in 
 - The service stays stopped until the user asks for it up (it was down by the user's order).
 - **Revert:** `rm /etc/systemd/system/vllm-flashnext.service.d/35-recoverssm.conf && systemctl daemon-reload`. With
   the flag unset the venv runs stock code, as shown above.
+
+### 4x. Cold PLE pages: readahead beats waiting (follow-up to #58439; `tools/plecold/willbench.py`, `patch_fill.py`)
+**Idle box**, 57 cold pages per rep, page cache dropped, 25 reps (`data/plefill/willbench*.json|txt`):
+
+| fill | median |
+|---|---|
+| serial touch (the #58439 path for < 4096 rows) | 4.6–4.7 ms |
+| C helper, 16 pthreads × `MADV_POPULATE_READ` (§4h) | 0.69–0.83 ms |
+| `MADV_WILLNEED` for every page, then a touch | 0.36–0.41 ms |
+| `MADV_WILLNEED` for every page, then `MADV_POPULATE_READ` per page (ctypes, GIL-free) | **0.355 ms** |
+| issuing `MADV_WILLNEED` alone | 0.11 ms |
+
+**In the server** (`plefill`; clone venv, RecoverSSM off, KV 4 GiB, `coldprobe.py` cold pass + warm pass of 6
+requests; 2 starts per arm, alternating):
+- arms: base; auto (the §4j gated wait + C helper); will (the same, with the fill replaced by WILLNEED +
+  POPULATE_READ).
+
+| ms/step | base | auto | will |
+|---|---|---|---|
+| cold pass, start 0 / 1 | 59.15 / 59.62 | 57.34 / 57.06 | **56.98 / 56.67** |
+| warm pass, start 0 / 1 | 54.61 / 54.78 | 54.87 / 54.95 | 54.91 / 54.83 |
+
+- **will vs auto:** faster on 12/12 paired cold requests (−0.14…−0.60 ms). **will vs base:** −1.15…−4.12 ms.
+  Hashes are identical to base in all 72 requests.
+- **The mechanism is not the wait.** Readahead turns the step's major faults into minor ones, so will's fault EMA
+  fell to ~0 and the auto gate stopped waiting after ~13 steps. The rest of the run is readahead with no wait: the
+  GPU gather still takes ~1.8–2.0 ms (base 3.7–5.5), because its faults land on reads already in flight in
+  parallel, and the host keeps its one-step lead.
+- **Consequence for the follow-up PR:** no wait, no fault-rate gate, no config key and no compiled helper. The fill
+  replaces the serial touch for decode-sized row sets (+94/−1 lines). Hypothesis H1 held, for a different reason
+  than written.
+
+### 4y. Deferred commit: kernels pass (`tools/rssm/defer/`)
+`test_defer.py` runs 7 steps × 3 requests with random acceptance, comparing the immediate and the deferred path of
+the same kernel file. Mode `align` uses block size 6, so every request crosses 3 boundaries.
+- Every block state (boundaries plus the final running state) agrees to 1.05e-7 (`none`) and 8.8e-8 (`align`)
+  relative. Verify outputs agree to 3e-4 (bf16).
+- A stale pending count on a reused block is cleared.
+- **Design as built:**
+  - a row that crosses no block boundary records its accepted count in a per-block `pending` counter;
+  - the next verify replays those records forward, stores the checkpoint, then verifies;
+  - boundary rows commit immediately, and clear source and target;
+  - prefill rows clear their block's counter in the builder;
+  - k/g are stored per value tile, because the next verify rewrites the record while sibling tiles still read it.
+- Data: `data/rssm/defertest-0926.txt`. Server A/B next.

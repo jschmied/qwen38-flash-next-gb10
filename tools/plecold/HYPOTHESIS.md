@@ -124,3 +124,26 @@ EMA of measured major faults per step >= 12 (starts cold = waiting). Arms base v
   hashes identical; the FNPFTIME summaries show fault_ema >= 12 in the cold pass and < 12 in the warm pass.
 - Outside: auto warm still >= base + 1 ms -> the gate does not switch off (EMA stuck) or waits still happen; auto cold
   ~ base cold -> the gate switches off while cold (undercount).
+
+## Chain after round 11 (written ~15:50, before the runs)
+(A) pleauto2, second base/auto pair: auto cold <= base cold - 1.5 ms/step; auto warm <= base warm + 0.5; hashes equal.
+(B) profwarm: 40-prof redone at KV 4 GiB with the probe's same-prompt warm-up (rows cached), stock PLE path.
+    Expect profiled step ~56 ms (54.9 + ~1.3 profiler). The PLE gather is < 0.3 ms/step (was ~4 ms cold).
+    - If the post-attention slow sites persist (GDN out_proj >= 95 us, mixer down after out_proj >= 44 us), they
+      are an in-model effect, not paging.
+    - If they drop to ~floor (out_proj <= 80, mixer <= 38), they were paging artifacts and the step-3/4a overhead
+      map must be redrawn.
+    - Small-kernel budget expected unchanged (~7 ms/step, < 20 us kernels).
+(C) bf16skwarm, FNBF16SK base vs sk; decprobe run twice per start, second pass measured (rows cached).
+    - Per-cycle c=1 delta <= -2 %: paging had masked kernel gains -> re-run 237/235.
+    - |delta| < 1 %: finding 238 stands.
+
+# FNFILL (PR follow-up to #58439): in-server page fill without the C helper, written 2026-09-26 ~03:45, before the run
+Idle box, 57 cold pages: C helper 0.69-0.83 ms, WILLNEED + POPULATE_READ via ctypes 0.355 ms, serial 4.7 ms.
+Arms on vllm-venv-rssm (RecoverSSM off), KV 4 GiB, coldprobe cold pass + warm pass, 2 starts per arm: base / auto (C
+helper, §4j) / will (auto + FN_PLE_FILL=willneed).
+- H1: will is at least as fast as auto in the cold pass (auto vs base -2.1..-2.6 ms/step in §4j; will within
+  -0.3..+0.3 ms of auto, or better).
+- H2: warm pass: will = auto (+0.2..+0.3 vs base; the gate is off, the fill never runs).
+- H3: outputs identical to base in every request.
+- Outside: will slower than auto in-server -> the per-page Python loop suffers GIL contention in the server.

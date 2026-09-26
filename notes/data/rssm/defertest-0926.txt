@@ -1,0 +1,5 @@
+INFO 09-26 11:00:32 [import_utils.py:488] DeepEP v2 requires NCCL >= 2.30.4 but found 2.29.7. deepep_v2 backend will not be available.
+align=False: max verify-output rel diff 3.45e-04 over 7 steps; all block states rel diff 1.05e-07
+align=True: max verify-output rel diff 3.02e-04 over 7 steps; all block states rel diff 8.81e-08; tokens per request [18, 17, 21]
+stale pending cleared: True
+PASS
