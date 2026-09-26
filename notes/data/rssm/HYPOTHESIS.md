@@ -34,3 +34,14 @@ In-model: 23.1 us/layer at c=1 = 145 GB/s on the 3 MiB state read (grid 4x1x48, 
 - H: smaller BV (8-16) with 2-4 warps reaches 15-18 us/layer at batch 1 (190-220 GB/s); batch 4 gains less (already
   4x the CTAs). Outputs and replay records bit-identical for every BV (the per-row reduction is over K, unchanged).
 - Worth a server A/B only if batch 1 saves >= 4 us/layer (>= 0.14 ms/step).
+
+# Deferred commit, server A/B (align + prefix caching), written 2026-09-26 ~11:35, before the run
+Clone venv + patch_defer.py; arms rssm (immediate commit) vs defer (FN_GDN_RECOVERSSM_DEFER=1), both
+FN_GDN_RECOVERSSM=1, prod-like MTP n=3, KV 4 GiB, comboprobe2 (two decode passes + divprobe + agent loop), 2 starts.
+- H-speed: c=1 per cycle -0.3..-0.7 ms (-0.5..-1.3 %; §4u: one full state read = 108 MiB ~ 0.5 ms); c=4 per cycle
+  -1..-2.5 % (four rows' state reads). Agent loop within noise.
+- H-correct: divergence vs rssm-immediate at least as late as a reduction-order change (median >= 20 tokens):
+  forward vs reverse replay order differs only in fp32 rounding (kernel test 1e-7). Cache-hit replay 8/8 in
+  every start; text sane.
+- Outside: slower -> the replay loop in the verify costs more than the saved read (latency-bound kernel, §4v);
+  cache-replay mismatch -> pending clearing is wrong at a block handover.

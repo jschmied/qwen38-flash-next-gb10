@@ -840,3 +840,38 @@ the same kernel file. Mode `align` uses block size 6, so every request crosses 3
 
 - 12/12 paired cold requests are faster (−1.37 … −3.78). Major faults per step fall from 29–33 to 0.1. Hashes
   are identical in 48/48 requests. All three pre-written hypotheses held (`tools/plecold/HYPOTHESIS.md`).
+
+## Step 5 — round 2 (2026-09-26 afternoon, "continue with lightspeed agenda")
+
+### 5a. Deferred commit (§4w/4y), server A/B: null at c=1, slightly worse at c=4 — not a promotion candidate
+`rssmdefer`: clone venv + `tools/rssm/defer/patch_defer.py`; arms immediate vs deferred (`FN_GDN_RECOVERSSM_DEFER=1`),
+align + prefix caching, MTP n=3, KV 4 GiB, `comboprobe2`, 2 starts. Path lines `deferred False|True` required.
+Data: `data/rssm/rssmdefer*`.
+
+| | immediate | deferred |
+|---|---|---|
+| c=1 ms/tok | 21.496–21.549 | 20.913–20.949 |
+| c=1 accept length | 2.53 | 2.59 |
+| **c=1 ms per verify cycle** | 54.38–54.52 | **54.16–54.26** (−0.2…−0.5 %) |
+| **c=4 ms per verify cycle** | 100.29 (start 1; start 0 see below) | **100.84–101.03** (+0.5 %) |
+| agent loop, s/turn (prefix hit rate) | 1.11 (82.1 %) | 0.93–0.94 (89.1 %) |
+
+- **The per-cycle times are the fair speed metric, and they are null.** The ms/tok, acceptance and agent-loop
+  differences come from a different text trajectory:
+  - deferral changes the GDN state at summation-order size (first divergence vs immediate at a median of 31
+    tokens);
+  - so the drafts, the acceptance (2.53 → 2.59), the agent conversation and its prefix-hit pattern (82 → 89 %)
+    all differ;
+  - nothing separates that from a real gain, so none of it is attributed to the deferral.
+- Against the hypothesis: c=1 at the bottom edge of −0.5…−1.3 %; **c=4 outside** (expected −1…−2.5 %, got
+  +0.5 %). The forward replay inside the latency-bound verify kernel (§4v) costs about what the saved state read
+  gave back.
+- **Correct:** cache-hit replay 8/8 in both deferred starts; each arm reproduces itself across restarts; kernel test
+  §4y. The KV pool shrinks 0.8 % (larger replay record).
+- **Verdict: not promoted, not pursued.** It is ~0.4 % at c=1 for extra state across steps and a block-handover
+  hazard. The code stays env-gated in the clone and in `tools/rssm/defer/`.
+- **Anomaly, recorded:** in immediate start 0, the second (cache-hit) c=4 pass diverged in all 4 requests and ran
+  89.45 tok/s, while its first c=4 pass matched every earlier run. Start 1 of the same arm and code reproduced the
+  §4t hashes in both passes (99.31 tok/s). There was no preemption, no error, and the same 82.1 % hit rate. This
+  reads as batch-composition drift at c=4 (greedy is not batch-invariant under concurrency), not corruption; the
+  counterfactual is the clean start 1 on identical code.
