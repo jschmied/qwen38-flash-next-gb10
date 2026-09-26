@@ -1,0 +1,21 @@
+== armrun gdnq: 3 arms x 1 start(s), port 8092 ==
+-- gdnq-bf160  env={'FN_GDN_RECOVERSSM': '1', 'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdnbf16'}
+Running as unit: fx-armrun-gdnq.service; invocation ID: 6347ede5168c4820b1add48b543b8b3b
+   void checks passed (7 required, 7 forbidden)
+   {"docs": 3, "tokens": {"a.md": 11219, "b.md": 4978, "c.md": 9688}}
+-- gdnq-fp80  env={'FN_GDN_RECOVERSSM': '1', 'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4'}
+Running as unit: fx-armrun-gdnq.service; invocation ID: cc515b29314a422cab4416c736814baf
+   void checks passed (7 required, 7 forbidden)
+   {"docs": 3, "tokens": {"a.md": 11219, "b.md": 4978, "c.md": 9688}}
+-- gdnq-nvfp40  env={'FN_GDN_RECOVERSSM': '1', 'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdn4'}
+Running as unit: fx-armrun-gdnq.service; invocation ID: 3945d66b3bdd4b5d9053ddb7e191a62f
+   void checks passed (7 required, 7 forbidden)
+   {"docs": 3, "tokens": {"a.md": 11219, "b.md": 4978, "c.md": 9688}}
+
+== RESULT ==
+  bf16         docs 3  start 0
+  fp8          docs 3  start 0
+  nvfp4        docs 3  start 0
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+armrun rc=0

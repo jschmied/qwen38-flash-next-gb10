@@ -1104,3 +1104,48 @@ NVFP4). Microbench: 698 → 311 µs per single-row draft step, 568 → 308 µs a
   layer whose argmax must agree with the target's, with no later layers to average the error out. A per-layer probe
   (`FN_MTP_DENSE_LAYERS`) could find a tolerant subset, but the best case is ~1 ms/cycle, so it is parked behind the
   GDN-projection NVFP4 test (§5j), which targets ~4 ms/step.
+
+### 5j. GDN projections as NVFP4 W4A16 (Marlin): −5.8 % c=1, +4.5 % c=4, at +0.4…0.6 % NLL (quality trade, the user's call)
+
+The user's request after the myllmbox hibrid48 review ("ok, try it"). The 36 GDN layers' `in_proj_qkv` + `in_proj_z`
+(fused `in_proj_qkvz`) and `out_proj` run FP8 block today. myllmbox ships them as NVFP4 W4A16 through Marlin.
+- **Source weights:** the BF16 originals came from the backup box, from RadixArk's NVFP4 checkpoint, whose ModelOpt run
+  ignored `*.linear_attn.*`. Only the 108 tensors were extracted (4.15 GB, per-tensor sha256 in
+  `data/gdn4/bf16-extract-SOURCE.json`, `tools/gdn4/extract_gdn.py`). Our FP8 copies differ from them by exactly the FP8
+  rounding (2.6 % relative), so they are the same weights.
+- **Variants** (`tools/gdn4/build_gdn_variants.py`): `mtpfp4-gdn4` (NVFP4, codes rounded against the effective
+  fp8-rounded scale, qkv and z share one global scale because vLLM fuses them; weight error 9.36 %) and
+  `mtpfp4-gdnbf16` (the BF16 reference). Everything else is hardlinked; 4 shards rewritten without the FP8 GDN tensors.
+  vLLM loads it natively (`quantized_layers: W4A16_NVFP4`, log: `Using MarlinNvFp4LinearKernel`).
+- **Microbench** (`tools/gdn4/bench_marlin.py`): Marlin NVFP4 runs at its byte floor on GB10 (qkvz 106.8 µs vs a 107.2
+  floor; out_proj 42.2 vs 40.2), against FP8 floors of 190.7 / 71.5 µs.
+
+**Speed** (`gdns`, 2 starts per arm, RecoverSSM + align + prefix cache, KV 4 GiB; data `data/gdn4/gdns.*`):
+
+| | NVFP4 GDN | FP8 GDN (current) |
+|---|---|---|
+| c=1 ms/tok | 20.050 / 20.061 (≈49.9 tok/s) | 21.299 / 21.271 (≈46.9 tok/s) |
+| c=1 accept_len | 2.492 | 2.53 |
+| c=1 per cycle | 49.97 ms | 53.85 ms (−3.9 ms, −7.2 %) |
+| c=4 tok/s | 104.57 / 105.02 | 100.50 / 100.33 |
+| agent s/turn | 1.05 / 1.04 | 1.10 / 1.10 |
+| cache replay | 8/8 both starts | 8/8 both starts |
+
+Within the hypothesis (`tools/gdn4/HYPOTHESIS.md`: −4.6…−7.4 % per cycle): the ~3.9 ms/step byte saving arrives
+in-model almost completely. Acceptance moves (2.53 → 2.49) because the target's outputs change; the text is different
+from the FP8 arm (expected, not a defect).
+
+**Quality** (`gdnq`, teacher-forced prompt logprobs over 3 long documents, 25,885 tokens; reference = BF16 GDN
+projections; `tools/gdn4/lpdist.py`, output `data/gdn4/lpdist.txt`):
+
+| GDN projections vs BF16 | median \|Δlp\| | p90 | tokens with \|Δlp\| > 0.5 | NLL |
+|---|---|---|---|---|
+| FP8 (current) | 0.074 | 0.68 | 14.7 % | −0.19 % |
+| NVFP4 | 0.086 | 0.77 | 17.6 % | **+0.40 %** (docs +0.04 / −0.20 / +1.51 %) |
+
+- On these documents any GDN perturbation already produces most of the per-token spread (the fp16-state test in §4r
+  shows the same size, while the identical computation gives exactly 0). So the |Δlp| distribution barely separates
+  NVFP4 from FP8 (+15 %). NLL is the clearer signal: **+0.40 % vs BF16, +0.58 % vs our FP8**, with one document at +1.5 %.
+- FP8 GDN is effectively free (−0.19 % vs BF16).
+- **Verdict: a quality trade, not free speed**, the same class as §4r. −5.8 % c=1 / +4.5 % c=4 / −5 % agent turn for
+  ~0.4–0.6 % NLL. No task-level eval yet (SWE-bench resolves would decide). Not promoted; the user decides.

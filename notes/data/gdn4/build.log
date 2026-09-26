@@ -1,0 +1,5 @@
+FP8 GDN tensors: 216 in shards: ['model-bf16-00001.safetensors', 'model-bf16-00010.safetensors', 'model-bf16-00011.safetensors', 'model-bf16-00012.safetensors']
+NVFP4 rel weight error: mean 0.0936 max 0.0945
+gdn4 OK: 302882 tensors, 0 stray (not indexed)
+gdnbf16 OK: 302666 tensors, 0 stray (not indexed)
+== BUILD DONE ==

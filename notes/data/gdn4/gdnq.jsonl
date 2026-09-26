@@ -1,0 +1,3 @@
+{"docs": 3, "tokens": {"a.md": 11219, "b.md": 4978, "c.md": 9688}, "arm": "bf16", "start": 0, "tag": "gdnq-bf160", "ts": "2026-09-26 21:28:37"}
+{"docs": 3, "tokens": {"a.md": 11219, "b.md": 4978, "c.md": 9688}, "arm": "fp8", "start": 0, "tag": "gdnq-fp80", "ts": "2026-09-26 21:40:03"}
+{"docs": 3, "tokens": {"a.md": 11219, "b.md": 4978, "c.md": 9688}, "arm": "nvfp4", "start": 0, "tag": "gdnq-nvfp40", "ts": "2026-09-26 21:51:50"}
