@@ -28,3 +28,9 @@ c=1 request after a 2x64 + 400-token warm-up (profprobe_nsys2.py). Analysis with
 - H3: the rest of the overhead map does not move: small-kernel critical path 3.5 +- 0.4 ms, idle 1.8 +- 0.4 ms
   (GDN eager launch gaps ~0.6 ms of it).
 - Outside: out_proj still slow in rssm -> the write-back is not the (only) cause, and §4o needs revisiting.
+
+# Agenda 6: verify kernel launch config (standalone), written 2026-09-26 ~02:30, before the run
+In-model: 23.1 us/layer at c=1 = 145 GB/s on the 3 MiB state read (grid 4x1x48, BV=32, 4 warps).
+- H: smaller BV (8-16) with 2-4 warps reaches 15-18 us/layer at batch 1 (190-220 GB/s); batch 4 gains less (already
+  4x the CTAs). Outputs and replay records bit-identical for every BV (the per-row reduction is over K, unchanged).
+- Worth a server A/B only if batch 1 saves >= 4 us/layer (>= 0.14 ms/step).

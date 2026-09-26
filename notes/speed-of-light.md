@@ -720,3 +720,15 @@ Warm nsys node traces, one ~150-token c=1 request per arm. Setup as in §4t, wit
   - **(b) Verify bandwidth:** the verify reads at 145 GB/s (23.1 µs per layer). At the floor it saves
     **~0.25 ms/step**; try BV/num_warps first.
 - The big buckets are unchanged and all GEMM: NVFP4 MoE 20.6, BF16 16.2, FP8 14.9 ms/step.
+
+### 4v. Verify-kernel launch config: null (standalone, `tools/rssm/verifybench.py`)
+BV ∈ {4…64} × num_warps ∈ {1, 2, 4, 8}. The L2 is flushed before each call, and timings are CUDA-graph replays at
+T=4. Every config's output and replay record were compared with the shipped config (BV 32, 4 warps). Data:
+`data/rssm/verifybench-0926.json`.
+- **Batch 1:** the shipped config, 21.2 µs (148 GB/s; in-model 23.1), is already the fastest bit-identical one.
+  - Faster configs save at most 2.4 µs per layer (BV 8, 1 warp: 18.8 µs), 0.09 ms/step. All of them change the
+    output: the warp count changes the reduction tree over K.
+- **Batch 4:** BV 8 with 4 warps is bit-identical and 4 % faster (68.5 vs 71.4 µs).
+- **Below the pre-set bar** (≥ 4 µs/layer at batch 1), so there is no server A/B. The kernel is latency-bound: each
+  CTA runs a 4-token dependent chain of two K-reductions on a 16 KiB tile, and bandwidth is not the limit. The
+  hypothesis (15–18 µs) missed.

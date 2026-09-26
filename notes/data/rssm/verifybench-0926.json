@@ -1,0 +1,322 @@
+[
+ {
+  "batch": 1,
+  "BV": 4,
+  "nw": 1,
+  "us": 19.46,
+  "GBps": 161.7,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 4,
+  "nw": 2,
+  "us": 23.97,
+  "GBps": 131.2,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 4,
+  "nw": 4,
+  "us": 24.7,
+  "GBps": 127.3,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 4,
+  "nw": 8,
+  "us": 40.58,
+  "GBps": 77.5,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 8,
+  "nw": 1,
+  "us": 18.78,
+  "GBps": 167.5,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 8,
+  "nw": 2,
+  "us": 23.33,
+  "GBps": 134.8,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 8,
+  "nw": 4,
+  "us": 23.46,
+  "GBps": 134.1,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 8,
+  "nw": 8,
+  "us": 26.14,
+  "GBps": 120.3,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 16,
+  "nw": 1,
+  "us": 19.65,
+  "GBps": 160.1,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 16,
+  "nw": 2,
+  "us": 21.76,
+  "GBps": 144.6,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 16,
+  "nw": 4,
+  "us": 23.17,
+  "GBps": 135.8,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 16,
+  "nw": 8,
+  "us": 22.66,
+  "GBps": 138.8,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 32,
+  "nw": 1,
+  "us": 29.5,
+  "GBps": 106.6,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 32,
+  "nw": 2,
+  "us": 20.99,
+  "GBps": 149.9,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 32,
+  "nw": 4,
+  "us": 21.18,
+  "GBps": 148.5,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 32,
+  "nw": 8,
+  "us": 24.26,
+  "GBps": 129.7,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 64,
+  "nw": 1,
+  "us": 104.1,
+  "GBps": 30.2,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 64,
+  "nw": 2,
+  "us": 28.22,
+  "GBps": 111.5,
+  "bit_identical": false
+ },
+ {
+  "batch": 1,
+  "BV": 64,
+  "nw": 4,
+  "us": 23.87,
+  "GBps": 131.8,
+  "bit_identical": true
+ },
+ {
+  "batch": 1,
+  "BV": 64,
+  "nw": 8,
+  "us": 23.26,
+  "GBps": 135.2,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 4,
+  "nw": 1,
+  "us": 66.88,
+  "GBps": 188.1,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 4,
+  "nw": 2,
+  "us": 72.1,
+  "GBps": 174.5,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 4,
+  "nw": 4,
+  "us": 76.64,
+  "GBps": 164.2,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 4,
+  "nw": 8,
+  "us": 154.66,
+  "GBps": 81.4,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 8,
+  "nw": 1,
+  "us": 73.92,
+  "GBps": 170.2,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 8,
+  "nw": 2,
+  "us": 70.78,
+  "GBps": 177.8,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 8,
+  "nw": 4,
+  "us": 68.51,
+  "GBps": 183.7,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 8,
+  "nw": 8,
+  "us": 77.31,
+  "GBps": 162.8,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 16,
+  "nw": 1,
+  "us": 71.81,
+  "GBps": 175.2,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 16,
+  "nw": 2,
+  "us": 72.67,
+  "GBps": 173.1,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 16,
+  "nw": 4,
+  "us": 70.85,
+  "GBps": 177.6,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 16,
+  "nw": 8,
+  "us": 77.12,
+  "GBps": 163.2,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 32,
+  "nw": 1,
+  "us": 91.78,
+  "GBps": 137.1,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 32,
+  "nw": 2,
+  "us": 73.63,
+  "GBps": 170.9,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 32,
+  "nw": 4,
+  "us": 71.36,
+  "GBps": 176.3,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 32,
+  "nw": 8,
+  "us": 78.66,
+  "GBps": 160.0,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 64,
+  "nw": 1,
+  "us": 506.11,
+  "GBps": 24.9,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 64,
+  "nw": 2,
+  "us": 91.23,
+  "GBps": 137.9,
+  "bit_identical": false
+ },
+ {
+  "batch": 4,
+  "BV": 64,
+  "nw": 4,
+  "us": 81.86,
+  "GBps": 153.7,
+  "bit_identical": true
+ },
+ {
+  "batch": 4,
+  "BV": 64,
+  "nw": 8,
+  "us": 73.73,
+  "GBps": 170.7,
+  "bit_identical": true
+ }
+]
