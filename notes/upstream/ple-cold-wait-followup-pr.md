@@ -1,3 +1,5 @@
+SUPERSEDED 2026-09-26 by `ple-cold-fill-pr.md`: speed-of-light §4x showed readahead without any wait beats the gated wait + C helper on 12/12 paired requests, so the follow-up needs no wait, gate, option or compiled helper. Kept for the record; do not post.
+
 DRAFT — needs the user's go. vllm-project/vllm new PR, stacked on #58439 (drafted 2026-09-26 ~00:50). Code not yet in PR form: the helper must become a `csrc/` CPU op first.
 
 Title: [Qwen4Exp][Perf] Checkpoint-mapped PLE: wait for a parallel page fill while the table is cold

@@ -816,3 +816,21 @@ the same kernel file. Mode `align` uses block size 6, so every request crosses 3
   - prefill rows clear their block's counter in the builder;
   - k/g are stored per value tile, because the next verify rewrites the record while sibling tiles still read it.
 - Data: `data/rssm/defertest-0926.txt`. Server A/B next.
+
+### 4z. The #58439 follow-up, as it will be posted: readahead fill, no wait — cold −2.35 / −2.91 ms/step
+- **PR code** (`jschmied:pr/ple-cold-fill`, commit `3f2142c111`): `MappedTable.touch` fills decode-sized row sets
+  (< 4096 rows) with `MADV_WILLNEED` for every page, then `MADV_POPULATE_READ` per page, both via ctypes. There
+  is no wait, no option and no compiled helper; before Linux 5.14 it falls back to the plain touch.
+- **Unit tests** on the exact branch base (a venv from the main `378504a54` wheel + the #58439 head files;
+  `vllm-venv-plepr`): 30 passed. The 2 new tests fail on the #58439 head. Data: `data/plefill/pleprtest-*.txt`.
+- **Current main cannot load our local checkpoints:** the new `MergedColumnParallelLinear.load_weights` falls back
+  to the module for keys it does not know. So the serving A/B replays the PR path on the prod-based stack
+  (`patch_fill2.py`, `FN_PLE_FILL=nowait`, the same page arithmetic and calls) — `plefill2b`, 2 starts per arm:
+
+| ms/step | base | PR path |
+|---|---|---|
+| cold pass, start 0 / 1 | 59.15 / 59.41 | **56.80 / 56.50** |
+| warm pass, start 0 / 1 | 54.73 / 54.71 | 54.95 / 54.75 |
+
+- 12/12 paired cold requests are faster (−1.37 … −3.78). Major faults per step fall from 29–33 to 0.1. Hashes
+  are identical in 48/48 requests. All three pre-written hypotheses held (`tools/plecold/HYPOTHESIS.md`).

@@ -147,3 +147,10 @@ helper, §4j) / will (auto + FN_PLE_FILL=willneed).
 - H2: warm pass: will = auto (+0.2..+0.3 vs base; the gate is off, the fill never runs).
 - H3: outputs identical to base in every request.
 - Outside: will slower than auto in-server -> the per-page Python loop suffers GIL contention in the server.
+
+# FNFILL2 = the #58439 follow-up PR's behaviour on the prod-based stack, written 2026-09-26 ~11:55, before the run
+(Current main cannot load our local checkpoints, so the PR code itself is covered by unit tests on its base only.)
+Arms on vllm-venv-rssm (RecoverSSM off), KV 4 GiB, coldprobe cold + warm pass, no FNPFTIME, 2 starts:
+base (serial touch) vs nowait (FN_PLE_FILL=nowait: readahead fill for < 4096 rows, no wait).
+- H1: cold pass -1.5..-3 ms/step, faster on >= 10/12 paired requests (§4x will-arm: -2.17 / -2.95).
+- H2: warm pass within +-0.3 ms.  H3: hashes identical in every request.
