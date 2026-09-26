@@ -686,3 +686,37 @@ and the loaded initial state are fp16. The model default is `mamba_ssm_dtype: fl
   already uses.
 - Not measured: long contexts (> 8k) under RecoverSSM; c ≥ 8; a long-horizon quality check. Prompt-logprob
   probes run prefill only and never take the verify path, so they cannot see this change.
+
+### 4u. Node trace, base-align vs RecoverSSM-align: the slow spots are gone; the commit is at the DRAM floor
+Warm nsys node traces, one ~150-token c=1 request per arm. Setup as in §4t, with the §4o recipe. Compared by
+`tools/prof/nsyscmp.py` (the window trimmed 10 % at each end; steps = GDN spec kernels / 36). Reports in
+`/opt/llm/capture/nsys-0926/`, output `data/rssm/nsys0926-cmp.txt`.
+
+| per step (ms) | base-align | rssm-align | Δ |
+|---|---|---|---|
+| step | 55.53 | 54.23 | **−1.29** (A/B §4t: −1.3) |
+| GPU busy (all streams) | 53.03 | 51.68 | −1.35 |
+| idle | 2.49 | 2.55 | +0.06 |
+| FP8 blockwise GEMM | 16.07 | 14.93 | −1.14 |
+| BF16 GEMM/GEMV (mixer, lm_head) | 16.76 | 16.24 | −0.52 |
+| GDN spec kernel (fused update → verify) | 1.55 | 0.85 | −0.71 |
+| RecoverSSM commit (3 launches, 12 layers each) | — | 1.05 | +1.05 |
+| NVFP4 MoE | 20.69 | 20.61 | −0.09 |
+
+- **H1 held:** GDN `out_proj` median 101.4 → **73.8 µs** (the §4o standalone clean value is 71.4). QSA `o_proj` is
+  unchanged (76.7 / 75.9). The write-back aftershock is gone, and it accounts for the GEMM deltas.
+- **H2 missed twice:**
+  - The verify kernel got 45 % faster, not ±15 %: it no longer writes state.
+  - The commit costs 1.05 ms, not ≤ 0.3. It must read and write the whole fp32 state of every layer:
+    72 MiB per 12-layer launch in 330 µs = **224 GB/s, the DRAM floor.** My estimate had counted only the replay
+    records.
+- **H3 held:** idle is unchanged. The rest of the overhead map (§4k/§4m) does not move.
+- **What is left on the GDN state path:** verify (read 3 MiB per layer) plus commit (read + write) moves 324 MiB
+  per step, 1.54 ms at 220 GB/s. The floor, one read and one write, is 216 MiB = 1.03 ms. Two levers:
+  - **(a) Deferred commit:** fold step N's commit into step N+1's verify (load the checkpoint, replay the
+    accepted records, store the new checkpoint, then verify the drafts). This is ReplaySSM's layout. It removes
+    one full state read, about **−0.5 ms/step (~1 %)**. It needs the replay record to survive a step and care
+    at request finish and at align-mode block boundaries.
+  - **(b) Verify bandwidth:** the verify reads at 145 GB/s (23.1 µs per layer). At the floor it saves
+    **~0.25 ms/step**; try BV/num_warps first.
+- The big buckets are unchanged and all GEMM: NVFP4 MoE 20.6, BF16 16.2, FP8 14.9 ms/step.

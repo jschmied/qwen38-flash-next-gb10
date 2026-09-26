@@ -1,0 +1,280 @@
+{
+ "base": {
+  "steps": 43.19444444444444,
+  "ms_per_step": 55.525453952411574,
+  "busy_ms": 53.03288905466239,
+  "idle_ms": 2.492564897749191,
+  "class_ms": {
+   "gdn_spec": 1.5537005479099681,
+   "norm_elementwise": 1.401272751125372,
+   "fp8_gemm": 16.06643874983992,
+   "hyper_conn": 0.5238184745980542,
+   "bf16_gemm": 16.76278429582085,
+   "nvfp4_moe": 20.690621872668395,
+   "attention": 0.5145952745980714,
+   "other": 0.16527458778135123,
+   "gdn_other": 0.16988999614147954,
+   "ple_gather": 0.014191454662379421
+  },
+  "out_proj_us": {
+   "gdn_out_proj": [
+    101.4,
+    1555
+   ],
+   "qsa_o_proj": [
+    76.7,
+    519
+   ]
+  },
+  "top_kernels_us": [
+   [
+    "device_kernel",
+    33420.4
+   ],
+   [
+    "Kernel2",
+    14457.2
+   ],
+   [
+    "kernel",
+    2037.1
+   ],
+   [
+    "fused_sigmoid_gating_delta_rule_update_kernel",
+    1553.7
+   ],
+   [
+    "_nvfp4_rows_gemv_kernel",
+    734.9
+   ],
+   [
+    "elementwise_kernel",
+    660.2
+   ],
+   [
+    "finalizeMoeRoutingKernel",
+    458.9
+   ],
+   [
+    "vectorized_elementwise_kernel",
+    363.1
+   ],
+   [
+    "expandInputRowsKernel",
+    348.6
+   ],
+   [
+    "topkGating",
+    344.1
+   ],
+   [
+    "blockExpertPrefixSumKernel",
+    335.1
+   ],
+   [
+    "computeStridesTmaWarpSpecializedKernel",
+    304.4
+   ],
+   [
+    "_hc_combine_norm_kernel",
+    300.4
+   ],
+   [
+    "splitKreduce_kernel",
+    268.4
+   ],
+   [
+    "doActivationKernel",
+    240.7
+   ],
+   [
+    "_qsa_sparse_paged_gqa_splitk_kernel",
+    195.0
+   ],
+   [
+    "per_token_group_quant_8bit_kernel",
+    184.1
+   ],
+   [
+    "mergeExpertPrefixSumKernel",
+    173.6
+   ],
+   [
+    "_causal_conv1d_update_kernel",
+    169.9
+   ],
+   [
+    "cvt_fp16_to_fp4",
+    135.7
+   ],
+   [
+    "_hc_gate_mix_kernel",
+    134.0
+   ],
+   [
+    "_qsa_merge_splitk_kernel",
+    109.2
+   ],
+   [
+    "act_and_mul_kernel",
+    100.9
+   ],
+   [
+    "_hc_silu_kernel",
+    87.4
+   ],
+   [
+    "_qsa_pre_indexer_kernel",
+    85.0
+   ]
+  ]
+ },
+ "rssm": {
+  "steps": 48.0,
+  "ms_per_step": 54.234048,
+  "busy_ms": 51.683255958333326,
+  "idle_ms": 2.5507920416666696,
+  "class_ms": {
+   "gdn_spec": 0.844906,
+   "norm_elementwise": 1.3963492916666354,
+   "fp8_gemm": 14.928991333334091,
+   "hyper_conn": 0.5142113333333104,
+   "bf16_gemm": 16.24192295833449,
+   "nvfp4_moe": 20.605475520833334,
+   "other": 0.17051331250000087,
+   "gdn_other": 0.1604873333333334,
+   "attention": 0.5287878333333335,
+   "rssm_commit": 1.0456413333333332,
+   "ple_gather": 0.013886666666666665
+  },
+  "out_proj_us": {
+   "gdn_out_proj": [
+    73.8,
+    1728
+   ],
+   "qsa_o_proj": [
+    75.9,
+    576
+   ]
+  },
+  "top_kernels_us": [
+   [
+    "device_kernel",
+    32200.5
+   ],
+   [
+    "Kernel2",
+    13893.8
+   ],
+   [
+    "kernel",
+    2077.1
+   ],
+   [
+    "_commit_gdn_state_kernel",
+    988.4
+   ],
+   [
+    "_gdn_recoverssm_verify_kernel",
+    844.9
+   ],
+   [
+    "_nvfp4_rows_gemv_kernel",
+    718.3
+   ],
+   [
+    "elementwise_kernel",
+    652.1
+   ],
+   [
+    "finalizeMoeRoutingKernel",
+    459.7
+   ],
+   [
+    "vectorized_elementwise_kernel",
+    365.0
+   ],
+   [
+    "expandInputRowsKernel",
+    356.8
+   ],
+   [
+    "topkGating",
+    345.8
+   ],
+   [
+    "blockExpertPrefixSumKernel",
+    335.9
+   ],
+   [
+    "_hc_combine_norm_kernel",
+    293.3
+   ],
+   [
+    "computeStridesTmaWarpSpecializedKernel",
+    289.9
+   ],
+   [
+    "splitKreduce_kernel",
+    271.1
+   ],
+   [
+    "doActivationKernel",
+    244.2
+   ],
+   [
+    "_qsa_sparse_paged_gqa_splitk_kernel",
+    194.3
+   ],
+   [
+    "mergeExpertPrefixSumKernel",
+    191.3
+   ],
+   [
+    "per_token_group_quant_8bit_kernel",
+    185.3
+   ],
+   [
+    "_causal_conv1d_update_kernel",
+    160.5
+   ],
+   [
+    "_hc_gate_mix_kernel",
+    132.8
+   ],
+   [
+    "cvt_fp16_to_fp4",
+    130.3
+   ],
+   [
+    "_qsa_merge_splitk_kernel",
+    112.7
+   ],
+   [
+    "act_and_mul_kernel",
+    100.9
+   ],
+   [
+    "_qsa_pre_indexer_kernel",
+    87.5
+   ]
+  ]
+ }
+}
+
+per step         base     rssm     delta
+ms_per_step       55.525   54.234   -1.291
+busy_ms           53.033   51.683   -1.350
+idle_ms            2.493    2.551   +0.058
+nvfp4_moe         20.691   20.605   -0.085
+bf16_gemm         16.763   16.242   -0.521
+fp8_gemm          16.066   14.929   -1.137
+gdn_spec           1.554    0.845   -0.709
+norm_elementwise    1.401    1.396   -0.005
+hyper_conn         0.524    0.514   -0.010
+attention          0.515    0.529   +0.014
+gdn_other          0.170    0.160   -0.009
+other              0.165    0.171   +0.005
+ple_gather         0.014    0.014   -0.000
+rssm_commit        0.000    1.046   +1.046
+out_proj medians (us, n): base {'gdn_out_proj': (101.4, 1555), 'qsa_o_proj': (76.7, 519)} | rssm {'gdn_out_proj': (73.8, 1728), 'qsa_o_proj': (75.9, 576)}
