@@ -1149,3 +1149,19 @@ projections; `tools/gdn4/lpdist.py`, output `data/gdn4/lpdist.txt`):
 - FP8 GDN is effectively free (−0.19 % vs BF16).
 - **Verdict: a quality trade, not free speed**, the same class as §4r. −5.8 % c=1 / +4.5 % c=4 / −5 % agent turn for
   ~0.4–0.6 % NLL. No task-level eval yet (SWE-bench resolves would decide). Not promoted; the user decides.
+
+### 5k. Draft vocabulary: our 32k slice vs TensorFold's 79,591 ids — coverage gap 0.1–0.6 pp, no A/B
+
+From the TensorFold review (ashhart/TensorFold, a standalone CUDA engine for this model; its 79,591-id draft list beat
+a 98,755-id list by 7.7 % on sampled code there). Offline, CPU only: the share of tokens of real text that fall inside
+each list (the model's tokenizer; the three gdncs documents plus ~65k tokens of Python and CUDA source).
+
+| text | tokens | in our 32k slice | in their 79.6k list |
+|---|---|---|---|
+| doc a / b / c | 14,643 / 4,979 / 12,652 | 99.31 / 99.04 / 99.32 % | 99.88 / 99.68 / 99.76 % |
+| Python source | 53,977 | 99.81 % | 99.97 % |
+| CUDA source | 11,669 | 99.86 % | 99.86 % |
+
+- The lists share 31,686 ids; ours has 1,082 they lack, theirs 47,905 we lack.
+- A draft can only be lost to the slice on the 0.1–0.6 % of tokens outside it. Growing the head 2.4× costs time on every
+  draft step (§4 finding 234: the slice size is the head's bytes), so this is a **null: keep 32k**.
