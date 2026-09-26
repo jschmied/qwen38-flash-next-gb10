@@ -1362,3 +1362,10 @@ wait on one ~100 GB pull, and they share one serve.
   `checkpoint_mapped` off CUDA; DCO author email fixed). PR now MERGEABLE (blocked on review). Body replaced from
   `58439-body-update-0925.md`; rebase comment from `58439-rebase-reply-0925.md` (head filled in), replying to
   hclsys's three GB10 verifications. <https://github.com/vllm-project/vllm/pull/58439#issuecomment-5830452890>
+- **2026-09-26 — vLLM PR #58835 (opened)** — "[Qwen4Exp] Checkpoint-mapped PLE: read a decode step's cold pages with
+  readahead" (the user's go, "yes 1..3"). Head `jschmied:pr/ple-cold-fill` @ 3f2142c111, stacked on #58439
+  (86f1034303). The follow-up changed shape after speed-of-light §4x: readahead without any wait beat the gated
+  wait + C helper, so there is no option, no wait and no compiled helper (+94/−1). Evidence §4z: cold −2.35 /
+  −2.91 ms/step on 12/12 paired requests, warm +0.22 / +0.04, hashes identical in 48/48. Unit tests on the
+  branch base: 30 passed. Draft `ple-cold-fill-pr.md` (the old `ple-cold-wait-followup-pr.md` is superseded).
+  <https://github.com/vllm-project/vllm/pull/58835>

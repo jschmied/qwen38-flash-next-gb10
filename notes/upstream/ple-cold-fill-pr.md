@@ -1,4 +1,4 @@
-DRAFT — the user's go covers opening it ("yes 1..3", 2026-09-26). Numbers from plefill2b (speed-of-light §4z). vllm-project/vllm new PR, head jschmied:pr/ple-cold-fill (stacked on #58439).
+POSTED 2026-09-26 as #58835 — the user's go covered opening it ("yes 1..3", 2026-09-26). Numbers from plefill2b (speed-of-light §4z). vllm-project/vllm new PR, head jschmied:pr/ple-cold-fill (stacked on #58439).
 
 Title: [Qwen4Exp] Checkpoint-mapped PLE: read a decode step's cold pages with readahead
 
