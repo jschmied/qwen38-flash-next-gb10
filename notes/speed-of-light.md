@@ -732,3 +732,31 @@ T=4. Every config's output and replay record were compared with the shipped conf
 - **Below the pre-set bar** (≥ 4 µs/layer at batch 1), so there is no server A/B. The kernel is latency-bound: each
   CTA runs a 4-token dependent chain of two K-reductions on a 16 KiB tile, and bandwidth is not the limit. The
   hypothesis (15–18 µs) missed.
+
+### 4w. Deferred commit (fold the commit into the next verify): designed, not built — ~0.9 % for a cache-correctness risk
+**Gain:** it removes one full fp32 state read per step. That is 108 MiB ≈ **0.5 ms/step at c=1, ~0.9 %** (§4u). The
+state path then sits at its floor, one read plus one write.
+
+**Mode `none`, tractable:**
+- The replay record lives in the request's own page slot, and the V2 runner already passes step N's accepted count
+  into step N+1's metadata (`num_accepted_tokens`).
+- The verify kernel would load the checkpoint, replay `a_N` records, store the checkpoint, then verify the new
+  drafts.
+- Needs (1) a per-slot "records valid" flag that the prefill path clears, so a row fresh from prefill replays
+  nothing.
+- Needs (2) per-v-slice copies of k/g in the record, because today only `pid_v == 0` writes them, so a sibling CTA
+  would read the next step's k.
+
+**Mode `align` (prod), hazardous:**
+- (3) The commit plan (final and boundary block, recovery lengths) must persist per request across batch reorder
+  (`idx_mapping`) and across the block moves at `mamba_block_size` boundaries.
+- (4) A finished or preempted request's pending commit must be flushed before its blocks can serve a prefix-cache
+  hit in the very next step's prefill.
+- (5) Any other reader of the state between steps (chunked prefill of a continuing request, block copies) must see
+  a committed state.
+- A mistake in (3)–(5) silently corrupts cached states. `comboprobe2`'s cache-replay check covers only a part of
+  that.
+
+**Decision:** not built tonight; it is ~0.9 % against that risk and needs the user's priority call. If built: mode
+`none` first, to measure the real gain; align only if it holds; the kernel test extended to replay-across-steps
+and flush; the server A/B with `comboprobe2` plus an agent-loop hash check.
