@@ -82,9 +82,4 @@ Server, native GDN spec decode (align) vs RecoverSSM (align), 2 starts per arm
 - [ ] (Optional) Release notes update. If your change is user facing, please update the release notes draft in the [Google Doc](https://docs.google.com/document/d/1YyVqrgX4gHTtrstbq8oWUImOyPCKSGnJ7xtTpmXzlRs/edit?tab=t.0).
 </details>
 
-AI assistance: this PR was developed with Claude (Claude Code); every line was reviewed by the submitter, and the
-numbers come from the linked measurement notes.
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-https://claude.ai/code/session_011SuBgdp87NbfLbiigmzn1z
+Developed with AI assistance (Claude Code); all changes reviewed by the author.
