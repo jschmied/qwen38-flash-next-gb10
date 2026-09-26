@@ -1,0 +1,246 @@
+CALL qsa_indexer.qsa_select_paged_decode(q: torch.Tensor, k_cache: torch.Tensor, page_table: torch.Tensor, visible_blocks: torch.Tensor, token_topk: int, compress_ratio: int, decode_query_len: int, block_indices: torch.Tensor) -> None
+CALL qsa_indexer._topk(logits: torch.Tensor, visible_blocks: torch.Tensor, token_topk: int, compress_ratio: int, block_indices: torch.Tensor, topk_workspace: torch.Tensor) -> None
+OP   _C::persistent_topk(Tensor logits, Tensor lengths, Tensor($0! -> ) output, Tensor workspace, int k, int max_seq_len) -> ()
+device=NVIDIA GB10 cap=(12, 1) variants=['stock', 'det']
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+ERROR stock op=_C.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk, /workspace/csrc/libtorch_stable/topk.cu:276, persistent_topk supports k=512, k=1024, or k=2048, got k=16
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  stock op=_C.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+PASS  stock op=_C.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+QSADET active: /opt/llm/kernel-det/_C_det.so
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=4096 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=1 vis=[1,1,1,2] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=16(k>g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=5 vis=[5,5,5,6] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=512(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=511 vis=[511,511,511,512] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=512(k==g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=512 vis=[512,512,512,513] block_topk=2048(k>g) fill=1e30
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=inf: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+ERROR det   op=_C_det.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=16(k<g) fill=1e30: RuntimeError: persistent_topk_det, /opt/llm/kernel-det-fix/topk_det.cu:306, persistent_topk_det supports k=512, k=1024, or k=2048, got k=16
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=512(k<g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=inf
+PASS  det   op=_C_det.persistent_topk path=topk width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+PASS  det   op=_C_det.persistent_topk path=e2e  width=65536 g=2047 vis=[2047,2047,2047,2048] block_topk=2048(k>g) fill=1e30
+SUMMARY 160/240 passed, 80 failed/errored

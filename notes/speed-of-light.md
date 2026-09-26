@@ -901,3 +901,38 @@ prod-like (RecoverSSM, NVFP4 head, 32k vocab, MTP n=3), KV 4 GiB, `comboprobe2`,
   position and does not have this property. Size: smaller than a reduction-order change (median 186 vs 26–31
   tokens).
 - **Verdict:** rejected; FNDYN stays out of prod. The patch stays in `tools/dyndraft/` (env-gated, off).
+
+### 5c. QSA indexer under speculative decode: rejected drafts cannot leak (code audit + GPU check)
+**Question** (from the user's state-category analysis): the QSA indexer keeps a raw-key ring and compressed 4-token
+rows outside the main KV cache. Can a rejected draft's key be finalized into a compressed row, or linger in the
+ring, where an accepted token later reads it? This is correctness, not speed: the main KV is slot-addressed, and the
+GDN/PLE conv states already use accepted-suffix compaction (~50 µs/step, §4u).
+
+**Code audit** (read-only; paths under `models/qwen4_exp/`):
+- **Raw-key ring: SAFE.**
+  - It holds 4·⌈(4+n)/4⌉ = 8 rows at n=3, sized so a rejected draft cannot overwrite a committed key
+    (`common/qsa_cache.py:839-856`). The slot is `pos % 8`.
+  - Keys inside the current step come from the step's fresh keys; the ring is read only for positions before the
+    step's first token (`nvidia/ops/qsa_pre_indexer.py:236-260`, unfused `ops/qsa.py`).
+  - Writes follow the reads (`qsa_pre_indexer.py:346-372`). A rejected draft sits at most 5 positions ahead, under
+    the ring width.
+- **Compressed rows: SAFE.**
+  - A query at q selects only `visible = min((q+1)//4, seq_len//4)` rows, i.e. groups with 4g+3 ≤ q
+    (`qsa_cache.py:268-275`).
+  - The open group is served from the main KV (`nvidia/ops/qsa_indexer.py:238-262`).
+  - Row g is written only when 4g+3 is in the batch, to slot `pos//4`, and rewritten before any later reader.
+- **Other state: SAFE.** `rope_position_cache` follows the ring; `first_positions` and `k_work_metadata` are rebuilt
+  every forward. The drafter's top-k reuse can only lower acceptance.
+
+**The one assumption, checked on the GPU** (`tools/qsa/qsa_visible_check.py`, `data/qsa/qsa_visible_check-0926.txt`):
+- The audit relies on top-k never returning a block index ≥ the row's `visible`: those logit columns hold leftovers.
+- The check runs the server's own `_topk` and the full `qsa_select_paged_decode` path:
+  - stock `_C.persistent_topk` and the deterministic `_C_det` variant;
+  - visible = [g, g, g, g+1] for g ∈ {1, 5, 511, 512, 2047};
+  - k ∈ {512, 2048};
+  - widths 4096 and 65536;
+  - columns ≥ visible pre-filled with +inf, then 1e30.
+- **160/160 pass, 0 fail.**
+- (k=16 cases error by design: the op supports k ∈ {512, 1024, 2048}; prod uses 512.)
+
+**Verdict:** no transactional handling is needed in the QSA indexer; it is already correct under MTP.
