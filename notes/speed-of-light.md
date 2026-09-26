@@ -1082,3 +1082,25 @@ start per arm (below). Data: `data/mtpd4/`.
 - One start per arm only: the acceptance drop is 0.087 on the same prompts where base reproduces 2.53 in every run
   today (rssmr2d, qkvview1, rssmr3a/b), so a second start would not change the verdict. Stopped early to run the FP8
   variant (user: "fp8 drafter then instead of fp16"), §5i.
+
+### 5i. A2b — the same four drafter layers as FP8 (per-row scales): also rejected
+
+The user's follow-up ("fp8 drafter then instead of fp16"). Same patch, `FN_MTP_DENSE_FP8=1`: FP8 E4M3 with one FP32
+scale per output row through a Triton rows GEMV (`tools/mtpd4/fn_nvfp4_dense.py`), weight error ~2.6 % (vs ~9.5 % for
+NVFP4). Microbench: 698 → 311 µs per single-row draft step, 568 → 308 µs at M=4, ~−1.03 ms per cycle. Hypothesis
+(`tools/mtpd4/HYPOTHESIS-fp8.md`): accept_len within −0.03, −1.3…−2.0 % ms/tok; H0 if accept_len drops > 0.05. Run
+`mtpd8a`, one start per arm (stopped, same reasoning as §5h). Data: `data/mtpd4/mtpd8a.*`.
+
+| | FP8 dense | base |
+|---|---|---|
+| c=1 ms/tok | 21.492 | 21.308 |
+| c=1 accept_len | 2.468 | 2.53 |
+| c=1 per cycle | 53.04 ms | 53.91 ms |
+
+- **H0 again:** the cycle is 0.87 ms cheaper, but acceptance drops 0.062, so each token costs **+0.9 %**. (c=4 is not
+  usable here: base0's c=4 pass drifted to different text, accept 2.446.)
+- So the drafter's dense projections are precision-sensitive even at FP8 per-row, while its routed experts and the
+  sliced head tolerate NVFP4. A plausible reason: the MTP layer's attention and input projections feed a single
+  layer whose argmax must agree with the target's, with no later layers to average the error out. A per-layer probe
+  (`FN_MTP_DENSE_LAYERS`) could find a tolerant subset, but the best case is ~1 ms/cycle, so it is parked behind the
+  GDN-projection NVFP4 test (§5j), which targets ~4 ms/step.
