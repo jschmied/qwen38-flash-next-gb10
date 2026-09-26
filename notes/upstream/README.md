@@ -1397,6 +1397,9 @@ wait on one ~100 GB pull, and they share one serve.
   config test fails 11/13 with the round-2 decorator bug restored). Server validation `rssmr3a` (data
   `notes/data/rssm/rssmr3a.*`): path lines, c1/c4 hashes = reference, replay 8/8, c1 21.53 ms/tok. Mentions the
   FNQKVVIEW follow-up (§5g). <https://github.com/jschmied/vllm/pull/1#issuecomment-5848467487>
+- **2026-09-26 — jschmied/vllm #1, views follow-up be00ee7 + comment** (fork-internal): the §5g FNQKVVIEW change as an
+  ungated branch commit plus a test (42 GDN tests pass). Server `rssmr3b` (data `notes/data/rssm/rssmr3b.*`): c1
+  21.32 ms/tok, c4 100.5 tok/s, hashes + replay = reference. <https://github.com/jschmied/vllm/pull/1#issuecomment-5848598261>
 - **2026-09-26 — MiaAI-Lab single-Spark #19 comment** (the user's go, "post to mia and bilikaz"): pays the two
   09-09 debts:
   - vllm#55533 did not reproduce (finding 155);
