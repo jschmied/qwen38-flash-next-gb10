@@ -957,3 +957,22 @@ Data: `data/cg/`.
   single-stream agent work.
 - **Measurement lesson, again:** c=4 greedy text is not stable run to run (start 0 of the baseline drifted, like
   §5a's). Concurrency numbers are compared only where the hashes match.
+
+### 5e. `vm.compaction_proactiveness` 20 → 0: null at our memory headroom
+Source: bilikaz's recipe (a 4–5 s stall every ~37 s, ~10 %, at their 27 GB KV with ~3 GB free). `compact`: the
+launcher wrapper sets the sysctl per arm, and the driver restores 20. Prod-like, KV 4 GiB. Probe: decprobe (one pass,
+not warmed, so its c=1 ms/tok is not comparable with other sections), then 4 streams × 3,500 tokens sustained,
+timed in 5 s windows. 2 starts. Data: `data/compact/`, tools `tools/compact/`.
+
+| | 20 (default) | 0 |
+|---|---|---|
+| sustained c=4, chunks/s mean (per start) | 36.38 / 36.92 | 36.83 / 35.84 |
+| windows < 70 % of median | 0 / 0 | 0 / 0 |
+| p10 window | 36.0 / 36.0 | 36.0 / 35.2 |
+| kcompactd pages scanned during the run | 0 / 16.0 M | 2,596 / 0 |
+
+- **Null:** the compactor ran in one default start (16 M pages scanned) with no dip and no throughput cost. Outputs
+  are identical (c=1 hashes = §4t's). Hypothesis H1 (+2…10 %) missed; the "outside" line applies: their stall needs
+  their memory edge.
+- **Not measured:** prod's default KV (~33 GiB, closer to their edge) under sustained load. If prod ever runs that
+  close to the edge, re-test there before dismissing it. Not a change for prod now.

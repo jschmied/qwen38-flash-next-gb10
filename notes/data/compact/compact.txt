@@ -1,0 +1,23 @@
+== armrun compact: 2 arms x 2 start(s), port 8092 ==
+-- compact-comp200  env={'FN_GDN_RECOVERSSM': '1', 'FN_COMPACT': '20'}
+Running as unit: fx-armrun-compact.service; invocation ID: 5eec2b9a63604c77b38ab7ae543674f5
+   void checks passed (11 required, 6 forbidden)
+   {"c1_ms_tok": 23.075, "c4_tok_s": 91.71, "c1_shas": ["2f3574ed42d8d759", "e0d6f4c2c0331e3d", "ecf5de063dd96eb7", "6d7036dc59daf3c4"], "sustain": {"windows": 24, "chunks_per_s_median": 36.8, "p10": 36.0, "min": 31.8, "dips_below_70pct": 0, "mean": 36.38, "span_s": 124.8}, "vmstat_delta": {"pgmigrate_success": 0, "thp_migration_success": 0, "compact_migrate_scanned": 0, "compact_free_scanned": 0, "compact_isolated": 0, "compact_stall": 0, "compact_fail": 0, "compact_success": 0, "compact_daemon_wake": 0, "compact_daemon_migrate_scanned": 0, "compact_daemon_free_scanned": 0}}
+-- compact-comp00  env={'FN_GDN_RECOVERSSM': '1', 'FN_COMPACT': '0'}
+Running as unit: fx-armrun-compact.service; invocation ID: 4d82e2ed4e4041258443c601de3883fa
+   void checks passed (11 required, 6 forbidden)
+   {"c1_ms_tok": 23.059, "c4_tok_s": 92.35, "c1_shas": ["2f3574ed42d8d759", "e0d6f4c2c0331e3d", "ecf5de063dd96eb7", "6d7036dc59daf3c4"], "sustain": {"windows": 25, "chunks_per_s_median": 36.8, "p10": 36.0, "min": 32.8, "dips_below_70pct": 0, "mean": 36.83, "span_s": 128.5}, "vmstat_delta": {"pgmigrate_success": 0, "thp_migration_success": 0, "compact_migrate_scanned": 2596, "compact_free_scanned": 5183, "compact_isolated": 135, "compact_stall": 0, "compact_fail": 0, "compact_success": 0, "compact_daemon_wake": 405, "compact_daemon_migrate_scanned": 2596, "compact_daemon_free_scanned": 5183}}
+-- compact-comp201  env={'FN_GDN_RECOVERSSM': '1', 'FN_COMPACT': '20'}
+Running as unit: fx-armrun-compact.service; invocation ID: f276b016fd724de1bb2afd4ae81ad2e0
+   void checks passed (11 required, 6 forbidden)
+   {"c1_ms_tok": 23.004, "c4_tok_s": 92.0, "c1_shas": ["2f3574ed42d8d759", "e0d6f4c2c0331e3d", "ecf5de063dd96eb7", "6d7036dc59daf3c4"], "sustain": {"windows": 25, "chunks_per_s_median": 36.8, "p10": 36.0, "min": 33.4, "dips_below_70pct": 0, "mean": 36.92, "span_s": 128.0}, "vmstat_delta": {"pgmigrate_success": 14460, "thp_migration_success": 0, "compact_migrate_scanned": 16017801, "compact_free_scanned": 29802231, "compact_isolated": 34350, "compact_stall": 0, "compact_fail": 0, "compact_success": 0, "compact_daemon_wake": 529, "compact_daemon_migrate_scanned": 16017801, "compact_daemon_free_scanned": 29802231}}
+-- compact-comp01  env={'FN_GDN_RECOVERSSM': '1', 'FN_COMPACT': '0'}
+Running as unit: fx-armrun-compact.service; invocation ID: 9c3dbdebd70d4e2bb4dd093d0c83d0da
+   void checks passed (11 required, 6 forbidden)
+   {"c1_ms_tok": 22.877, "c4_tok_s": 92.84, "c1_shas": ["2f3574ed42d8d759", "e0d6f4c2c0331e3d", "ecf5de063dd96eb7", "6d7036dc59daf3c4"], "sustain": {"windows": 25, "chunks_per_s_median": 36.0, "p10": 35.2, "min": 27.4, "dips_below_70pct": 0, "mean": 35.84, "span_s": 125.3}, "vmstat_delta": {"pgmigrate_success": 0, "thp_migration_success": 0, "compact_migrate_scanned": 0, "compact_free_scanned": 0, "compact_isolated": 0, "compact_stall": 0, "compact_fail": 0, "compact_success": 0, "compact_daemon_wake": 0, "compact_daemon_migrate_scanned": 0, "compact_daemon_free_scanned": 0}}
+
+== RESULT ==
+  comp20       c1_ms_tok 23.004–23.075  c4_tok_s 91.71–92.0  start 0–1
+  comp0        c1_ms_tok 22.877–23.059  c4_tok_s 92.35–92.84  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==

@@ -1,0 +1,5 @@
+#!/bin/bash
+# Item 7 launcher wrapper: set vm.compaction_proactiveness from FN_COMPACT (root unit), then the normal launcher.
+if [ -n "${FN_COMPACT:-}" ]; then sysctl -q -w vm.compaction_proactiveness="$FN_COMPACT"; fi
+echo "FNCOMPACT vm.compaction_proactiveness=$(cat /proc/sys/vm/compaction_proactiveness)"
+exec /opt/llm/serve-fnmain.sh "$@"
