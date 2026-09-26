@@ -1027,3 +1027,33 @@ about 4–5 ms/step of small items, and the gap share may not transfer 1:1 (find
 4. HC tail fusion on FNBF16SK (−0.5 ms), dropping the HC pad rows (−0.12 ms), 2-D finalize / fused-finalize
    tactic (−0.3…0.45 ms, determinism gate), and `in_proj_ba` 8x1 re-test (7.8× its floor; the FNBF16SK null predates
    RecoverSSM).
+
+### 5g. A1 — GDN verify on strided views + `out=` (FNQKVVIEW): −1.2…−1.6 % c=1, outputs identical
+
+The first §5f counterfactual. Under RecoverSSM verify, `_forward_core` handed `gdn_recoverssm_verify` contiguous
+copies of q/k/v (one `CatArrayBatchedCopy` + three `direct_copy` per GDN layer) and then copied its output into
+`core_attn_out` (a 49,152 B D2D memcpy). The kernel already takes token-strided heads and has an `out=` parameter.
+Patch (`tools/qkvview/patch_qkvview.py`, env `FNQKVVIEW=1`, clone venv only) passes views of the conv output and
+writes in place: 180 launches/step and ~12 MiB/step of copies gone, same kernel on the same values. Unit check
+(`test_views.py`, GPU): output and replay record bit-identical at batch 1/2/4. Hypothesis (written before):
+−0.3…−0.8 ms/cycle, hashes identical. Run `qkvview1`: 2 starts per arm, alternating, KV 4 GiB. Data:
+`data/qkvview/`.
+
+| | view (FNQKVVIEW=1) | base |
+|---|---|---|
+| c=1 ms/tok (per start) | 21.293 / 21.285 | 21.544 / 21.644 |
+| c=1 per verify cycle (× 2.53) | 53.87 / 53.85 | 54.51 / 54.76 |
+| c=1 hashes | = reference (`2f3574ed…`) both | = reference both |
+| c=4 tok/s, hash-matched cells | 100.13 | 99.68 / 99.37 |
+| cache replay | 8/8 in view1; view0's c=4 pass drifted (below) | 8/8 both |
+| agent s/turn | 1.10 / 1.10 | 1.11 / 1.11 |
+
+- **Win: −0.64…−0.91 ms per cycle at c=1 (−1.2…−1.6 %)**, identical text. It lands at the top of the predicted range,
+  so most of the eager-gap time does go away along with the kernels. That answers §5f's open question for this site:
+  unlike finding 237's FULL-graph arm, removing dependent eager ops does transfer here.
+- **c=4:** view0's measured c=4 pass drifted to different text on all 4 prompts (accept 2.47, 90.2 tok/s), while its
+  first pass matched the reference. That is the known c=4 run-to-run instability (§5d note: 2 of ~10 earlier passes
+  drifted, base-only). The same kernel on the same values is bit-identical in the unit check. Excluded by the hash
+  rule; the matched cells give +0.5…+0.8 %.
+- Next: fold it into the RecoverSSM review branch (it belongs to the verify path) and into the prod candidate.
+  The graph-side b/a/z copies and `zeros` (§5f item 6, ~0.25 ms) are the natural follow-up.
