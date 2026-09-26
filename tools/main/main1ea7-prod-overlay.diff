@@ -1,0 +1,2554 @@
+diff -ruN a/vllm/config/engram.py b/vllm/config/engram.py
+--- a/vllm/config/engram.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/config/engram.py	2026-09-23 21:41:52.000000000 +0200
+@@ -21,6 +21,12 @@
+ }
+ 
+ 
++# Architectures whose Engram embedding implements checkpoint_mapped storage.
++_CHECKPOINT_MAPPED_ARCHITECTURES = frozenset(
++    {"Qwen4ExpForCausalLM", "Qwen4ExpForConditionalGeneration"}
++)
++
++
+ def model_has_engram_layers(model_config: "ModelConfig | None") -> bool:
+     """Whether the model carries n-gram embedding layers."""
+     if model_config is None:
+@@ -42,6 +48,15 @@
+     """Shard embeddings across TP and all DP ranks when enabled.
+     Otherwise, each DP rank has a separate TP-sharded embedding replica."""
+ 
++    checkpoint_mapped: bool = False
++    """Read embedding rows in place from the checkpoint's safetensors files
++    instead of storing the table (overrides cpu_offload). Requires a GPU that
++    reads pageable host memory through the host page tables (checked through
++    the CUDA device attributes at startup): there is no table-sized device or
++    pinned allocation, and the table's clean, file-backed page-cache pages can
++    be dropped and re-read and are shared between processes. Qwen4Exp only, not
++    with embedding_across_dp; validated on DGX Spark (GB10, unified memory) only."""
++
+     dp_shared_memory: bool | None = None
+     """Share CPU-offloaded embedding weights between co-located
+     DP replicas. Each node stores one copy of every TP shard, reducing host
+@@ -54,6 +69,16 @@
+     def _validate_shared_memory(self) -> Self:
+         if self.dp_shared_memory and not self.cpu_offload:
+             raise ValueError("dp_shared_memory requires cpu_offload=True")
++        if self.embedding_across_dp and self.checkpoint_mapped:
++            raise ValueError(
++                "checkpoint_mapped does not support embedding_across_dp: its host "
++                "page prefetch only sees this DP rank's requests."
++            )
++        if self.dp_shared_memory and self.checkpoint_mapped:
++            raise ValueError(
++                "dp_shared_memory does not apply to checkpoint_mapped: mapped "
++                "checkpoint pages are already shared between processes"
++            )
+         return self
+ 
+     def verify_model_config(self, model_config: "ModelConfig | None") -> None:
+@@ -75,12 +100,22 @@
+                 "EngramConfig requires a model with supported Engram "
+                 "embeddings, non-empty n-gram layer ids, and CUDA."
+             )
++        if (
++            self.checkpoint_mapped
++            and model_config.architecture not in _CHECKPOINT_MAPPED_ARCHITECTURES
++        ):
++            raise ValueError(
++                "Engram checkpoint_mapped is implemented for "
++                f"{sorted(_CHECKPOINT_MAPPED_ARCHITECTURES)} only, not "
++                f"{model_config.architecture}."
++            )
+ 
+     def resolve_dp_shared_memory(self, parallel_config: "ParallelConfig") -> None:
+         """Share host tables by default wherever the configuration permits."""
+         if self.dp_shared_memory is None:
+             self.dp_shared_memory = (
+                 self.cpu_offload
++                and not self.checkpoint_mapped
+                 and parallel_config.data_parallel_size > 1
+                 and not parallel_config.enable_elastic_ep
+             )
+diff -ruN a/vllm/config/vllm.py b/vllm/config/vllm.py
+--- a/vllm/config/vllm.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/config/vllm.py	2026-09-26 09:02:44.000000000 +0200
+@@ -3307,6 +3307,24 @@
+ 
+     @model_validator(mode="after")
+     def validate_mamba_cached_kernel(self) -> "VllmConfig":
++        # FNRSSM sticky: derived configs (the MTP drafter's) share cache_config and re-validate with
++        # num_speculative_tokens == 0; they must not switch the target's RecoverSSM off again.
++        if os.environ.get("FN_GDN_RECOVERSSM", "") == "1" and self.cache_config.use_kda_recoverssm:
++            return self
++        # FNRSSM (jschmied 2026-09-25, local): GDN RecoverSSM for Qwen4Exp, reusing the KDA RecoverSSM plumbing.
++        if (
++            os.environ.get("FN_GDN_RECOVERSSM", "") == "1"
++            and self.num_speculative_tokens > 0
++            and self.model_config is not None
++            and self.model_config.architecture == "Qwen4ExpForConditionalGeneration"
++        ):
++            if self.cache_config.mamba_cache_mode not in ("none", "align"):
++                raise ValueError("FN_GDN_RECOVERSSM supports mamba_cache_mode none and align")
++            if self.cache_config.mamba_cache_mode == "align" and not self.use_v2_model_runner:
++                raise ValueError("FN_GDN_RECOVERSSM with align mode requires the V2 model runner")
++            # FNRSSM2: align mode supported (PLE short conv on the RecoverSSM protocol)
++            self.cache_config.use_kda_recoverssm = True
++            return self
+         if not self.cache_config.use_replayssm:
+             self.cache_config.use_kda_recoverssm = False
+             return self
+diff -ruN a/vllm/model_executor/layers/fn_bf16sk.py b/vllm/model_executor/layers/fn_bf16sk.py
+--- a/vllm/model_executor/layers/fn_bf16sk.py	1970-01-01 01:00:00.000000000 +0100
++++ b/vllm/model_executor/layers/fn_bf16sk.py	2026-09-25 01:36:00.000000000 +0200
+@@ -0,0 +1,105 @@
++# SPDX-License-Identifier: Apache-2.0
++"""FNBF16SK: deterministic split-K Triton GEMM for small-M BF16 linears (jschmied 2026-09-25, local, not upstream).
++
++cuBLAS serves the Flash-Next BF16 linears at M <= 16 with the sm80 `cutlass_80_wmma` 32-thread-block kernels:
++hyper-connection mixer down [324x10240] 40.5 us in-model vs a 30.2 us byte floor, GDN in_proj_ba [96x2560] 17.2 vs
++2.2 (speed-of-light step 3). Two passes, no atomics: pass 1 writes fp32 partials [S, M, N], pass 2 sums them in a
++fixed order, so the result is bitwise reproducible. Dispatch happens inside a custom op, at run time, so a
++torch.compile trace cannot freeze the M branch.
++FN_BF16SK=1 turns it on; UnquantizedLinearMethod.apply routes weights whose (N, K) is in CONFIGS here.
++"""
++import torch
++import triton
++import triton.language as tl
++
++MAX_M = 16
++# (N, K) -> (BN, BK, SPLIT); chosen by tools/bf16mb/bf16sk_bench.py
++CONFIGS = {  # (N, K): {M bucket: (BN, BK, SPLIT)}, from notes/data/bf16sk-0925.json
++    (324, 10240): {1: (16, 256, 4), 4: (16, 256, 2), 16: (16, 256, 2)},      # hyper-connection mixer down+inject
++    (336, 10240): {1: (16, 256, 4), 4: (16, 256, 2), 16: (16, 256, 2)},      # same, padded to 16 rows (nvidia path)
++    (10240, 320): {1: (16, 128, 1), 4: (16, 128, 1), 16: (16, 256, 1)},      # hyper-connection mixer up
++    (96, 2560): {1: (16, 256, 8), 4: (16, 256, 8), 16: (16, 256, 8)},        # GDN in_proj_ba
++    (512, 2560): {1: (16, 256, 1), 4: (16, 256, 1), 16: (16, 256, 1)},       # router
++    (1280, 2560): {1: (32, 256, 1), 4: (64, 256, 1), 16: (32, 256, 1)},      # shared expert gate_up
++    (2560, 640): {1: (16, 128, 1), 4: (16, 128, 1), 16: (32, 128, 1)},       # shared expert down
++}
++
++
++@triton.jit
++def _partial(x_ptr, w_ptr, p_ptr, M, N, K, sxm, KC: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr, MR: tl.constexpr):
++    pn = tl.program_id(0); pk = tl.program_id(1)
++    n = pn * BN + tl.arange(0, BN); m = tl.arange(0, MR)
++    acc = tl.zeros((MR, BN), tl.float32)
++    for k0 in range(pk * KC, pk * KC + KC, BK):
++        k = k0 + tl.arange(0, BK)
++        w = tl.load(w_ptr + n[:, None] * K + k[None, :], mask=(n[:, None] < N) & (k[None, :] < K), other=0.)
++        x = tl.load(x_ptr + m[:, None] * sxm + k[None, :], mask=(m[:, None] < M) & (k[None, :] < K), other=0.)
++        acc += tl.dot(x, tl.trans(w))
++    tl.store(p_ptr + pk * MR * N + m[:, None] * N + n[None, :], acc, mask=(m[:, None] < M) & (n[None, :] < N))
++
++
++@triton.jit
++def _reduce(p_ptr, o_ptr, M, N, S: tl.constexpr, MR: tl.constexpr, BN: tl.constexpr):
++    pn = tl.program_id(0)
++    n = pn * BN + tl.arange(0, BN); m = tl.arange(0, MR)
++    msk = (m[:, None] < M) & (n[None, :] < N)
++    acc = tl.zeros((MR, BN), tl.float32)
++    for s in tl.static_range(S):                                  # fixed order: deterministic
++        acc += tl.load(p_ptr + s * MR * N + m[:, None] * N + n[None, :], mask=msk, other=0.)
++    tl.store(o_ptr + m[:, None] * N + n[None, :], acc.to(o_ptr.dtype.element_ty), mask=msk)
++
++
++@triton.jit
++def _direct(x_ptr, w_ptr, o_ptr, M, N, K, sxm, BN: tl.constexpr, BK: tl.constexpr, MR: tl.constexpr):
++    pn = tl.program_id(0)
++    n = pn * BN + tl.arange(0, BN); m = tl.arange(0, MR)
++    acc = tl.zeros((MR, BN), tl.float32)
++    for k0 in range(0, K, BK):
++        k = k0 + tl.arange(0, BK)
++        w = tl.load(w_ptr + n[:, None] * K + k[None, :], mask=(n[:, None] < N) & (k[None, :] < K), other=0.)
++        x = tl.load(x_ptr + m[:, None] * sxm + k[None, :], mask=(m[:, None] < M) & (k[None, :] < K), other=0.)
++        acc += tl.dot(x, tl.trans(w))
++    tl.store(o_ptr + m[:, None] * N + n[None, :], acc.to(o_ptr.dtype.element_ty),
++             mask=(m[:, None] < M) & (n[None, :] < N))
++
++
++def bf16sk(x: torch.Tensor, w: torch.Tensor, bn: int, bk: int, split: int) -> torch.Tensor:
++    """x [M, K] bf16, unit column stride (M <= 16), w [N, K] bf16 contiguous -> [M, N] bf16."""
++    M, K = x.shape; N = w.shape[0]
++    out = torch.empty(M, N, device=x.device, dtype=x.dtype)
++    if split == 1:
++        _direct[(triton.cdiv(N, bn),)](x, w, out, M, N, K, x.stride(0), BN=bn, BK=bk, MR=MAX_M)
++        return out
++    kc = triton.cdiv(triton.cdiv(K, split), bk) * bk
++    s = triton.cdiv(K, kc)
++    part = torch.empty(s, MAX_M, N, device=x.device, dtype=torch.float32)
++    _partial[(triton.cdiv(N, bn), s)](x, w, part, M, N, K, x.stride(0), KC=kc, BN=bn, BK=bk, MR=MAX_M)
++    _reduce[(triton.cdiv(N, 128),)](part, out, M, N, S=s, MR=MAX_M, BN=128)
++    return out
++
++
++_LOGGED = set()
++
++
++def _fn_bf16sk_impl(x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
++    M = x.shape[0]
++    key = (M, w.shape[0], w.shape[1])
++    if key not in _LOGGED and len(_LOGGED) < 64:
++        _LOGGED.add(key)
++        from vllm.logger import init_logger
++        init_logger(__name__).warning("FNBF16SK call M=%d N=%d K=%d -> %s", M, w.shape[0], w.shape[1],
++                                      "triton" if 0 < M <= MAX_M else "F.linear")
++    cfg = CONFIGS.get((w.shape[0], w.shape[1]))
++    if (cfg is None or M == 0 or M > MAX_M or x.dim() != 2 or x.stride(1) != 1 or not w.is_contiguous()
++            or x.dtype != torch.bfloat16 or w.dtype != torch.bfloat16):
++        return torch.nn.functional.linear(x, w)
++    return bf16sk(x, w, *cfg[1 if M <= 1 else 4 if M <= 4 else 16])
++
++
++def _fn_bf16sk_fake(x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
++    return x.new_empty((x.shape[0], w.shape[0]))
++
++
++def register():
++    from vllm.utils.torch_utils import direct_register_custom_op
++    direct_register_custom_op(op_name="fn_bf16sk", op_func=_fn_bf16sk_impl, fake_impl=_fn_bf16sk_fake)
+diff -ruN a/vllm/model_executor/layers/fused_moe/experts/flashinfer_cutlass_moe.py b/vllm/model_executor/layers/fused_moe/experts/flashinfer_cutlass_moe.py
+--- a/vllm/model_executor/layers/fused_moe/experts/flashinfer_cutlass_moe.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/model_executor/layers/fused_moe/experts/flashinfer_cutlass_moe.py	2026-09-23 16:45:29.000000000 +0200
+@@ -386,6 +386,8 @@
+             use_deepseek_fp8_block_scale=self.use_deepseek_fp8_block_scale,
+             use_mxfp8_act_scaling=use_mxfp8_act_scaling,
+             use_w4_group_scaling=use_w4_group_scaling,
++            # ---- DETFIN (jschmied 2026-09-06, main port): non-fused deterministic finalize on demand
++            use_fused_finalize=not bool(__import__("os").environ.get("VLLM_MOE_DET_FINALIZE")),
+         )
+ 
+     def moe_sum(self, input: torch.Tensor, output: torch.Tensor) -> None:
+diff -ruN a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+--- a/vllm/model_executor/layers/linear.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/model_executor/layers/linear.py	2026-09-25 01:07:44.000000000 +0200
+@@ -162,6 +162,16 @@
+         raise NotImplementedError
+ 
+ 
++# ---- FNBF16SK (jschmied 2026-09-25, local overlay): FN_BF16SK=1 routes small-M BF16 linears to a deterministic
++# split-K Triton GEMM (model_executor/layers/fn_bf16sk.py); off = stock path, untouched ----
++_FN_BF16SK = __import__("os").environ.get("FN_BF16SK", "") == "1"
++if _FN_BF16SK:
++    from vllm.model_executor.layers import fn_bf16sk as _fn_bf16sk
++
++    _fn_bf16sk.register()
++    init_logger(__name__).warning("FNBF16SK active: %d shapes", len(_fn_bf16sk.CONFIGS))
++
++
+ class UnquantizedLinearMethod(LinearMethodBase):
+     """Linear method without quantization."""
+ 
+@@ -236,6 +246,9 @@
+             current_platform.is_cuda_alike() or current_platform.is_xpu()
+         ):
+             return linear_batch_invariant(x, layer.weight, bias)
++        if (_FN_BF16SK and bias is None and x.dim() == 2
++                and tuple(layer.weight.shape) in _fn_bf16sk.CONFIGS):
++            return torch.ops.vllm.fn_bf16sk(x, layer.weight)
+         return self._gemm_impl(layer, x, layer.weight, bias)
+ 
+ 
+diff -ruN a/vllm/model_executor/layers/mamba/abstract.py b/vllm/model_executor/layers/mamba/abstract.py
+--- a/vllm/model_executor/layers/mamba/abstract.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/model_executor/layers/mamba/abstract.py	2026-09-26 09:02:44.000000000 +0200
+@@ -79,6 +79,7 @@
+             num_speculative_blocks=(
+                 0
+                 if vllm_config.cache_config.use_kda_recoverssm
++                # FNRSSM2: the PLE short conv follows the RecoverSSM protocol too (one block, compacted window)
+                 else vllm_config.num_speculative_tokens
+             ),
+         )
+diff -ruN a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py
+--- a/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py	2026-09-26 09:02:44.000000000 +0200
+@@ -373,7 +373,7 @@
+     def get_state_shape(
+         self,
+     ) -> tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
+-        return MambaStateShapeCalculator.gated_delta_net_state_shape(
++        shapes = MambaStateShapeCalculator.gated_delta_net_state_shape(
+             self.tp_size,
+             self.num_k_heads,
+             self.num_v_heads,
+@@ -382,6 +382,23 @@
+             self.conv_kernel_size,
+             self.num_spec,
+         )
++        if getattr(self.cache_config, "use_kda_recoverssm", False) and self.num_spec > 0:
++            # FNRSSM: per-token replay record [HV, spec_query_len, V + K + 1] fp32
++            shapes = (*shapes, (self.num_v_heads // self.tp_size, self.num_spec + 1,
++                                self.head_v_dim + self.head_k_dim + 1))
++        return shapes
++
++    def get_state_dtype(self) -> tuple[torch.dtype, ...]:
++        dtypes = super().get_state_dtype()
++        if getattr(self.cache_config, "use_kda_recoverssm", False) and self.num_spec > 0:
++            dtypes = (*dtypes, torch.float32)  # FNRSSM
++        return dtypes
++
++    def get_attn_backend(self):
++        if getattr(self.cache_config, "use_kda_recoverssm", False) and self.num_spec > 0:
++            from vllm.v1.attention.backends.gdn_recoverssm import GDNRecoverSSMAttentionBackend
++            return GDNRecoverSSMAttentionBackend  # FNRSSM
++        return super().get_attn_backend()
+ 
+     def __init__(
+         self,
+@@ -530,6 +547,14 @@
+             self.gdn_decode_kernel = "XPU"
+ 
+         self.enable_fused_gdn_decode = self.gdn_decode_kernel == "cuda"
++        # FNRSSM: RecoverSSM verify replaces the per-draft snapshot path (Triton decode only)
++        self.use_gdn_recoverssm = bool(getattr(self.cache_config, "use_kda_recoverssm", False)) and self.num_spec > 0
++        if self.use_gdn_recoverssm:
++            self.gdn_decode_kernel = "triton"
++            self.enable_fused_gdn_decode = False
++            self.enable_packed_recurrent_decode = False
++            logger.warning_once("FNRSSM: GDN RecoverSSM speculative verify active (spec_query_len %d)",
++                                self.num_spec + 1)
+         logger.info_once("GDN decode kernel: %s", self.gdn_decode_kernel)
+ 
+         compilation_config = get_current_vllm_config().compilation_config
+@@ -540,7 +565,7 @@
+     def _fused_gdn_decode_unsupported_reason(
+         self, vllm_config: VllmConfig
+     ) -> str | None:
+-        conv_state_dtype, recurrent_state_dtype = self.get_state_dtype()
++        conv_state_dtype, recurrent_state_dtype = self.get_state_dtype()[:2]  # FNRSSM
+         if (
+             self.gqa_interleaved_layout
+             or self.head_k_dim != 128
+@@ -1085,7 +1110,7 @@
+         dtype = qkv_or_qkvz.dtype
+         num_k_heads = self.num_k_heads // self.tp_size
+         num_v_heads = self.num_v_heads // self.tp_size
+-        _, state_dtype = self.get_state_dtype()
++        state_dtype = self.get_state_dtype()[1]  # FNRSSM: 3 dtypes with the replay record
+ 
+         # All kernels use BT = chunk_size, so a single pass with T = chunk_size
+         # is sufficient to populate every autotuner cache. Mirror the real
+@@ -1343,7 +1368,8 @@
+                 ],
+                 num_accepted_tokens=num_accepted_tokens,
+                 query_start_loc=spec_query_start_loc,
+-                max_query_len=spec_state_indices_tensor.size(-1),
++                max_query_len=(self.num_spec + 1 if getattr(self, "use_gdn_recoverssm", False)  # FNRSSM
++                               else spec_state_indices_tensor.size(-1)),
+                 validate_data=False,
+             )
+ 
+@@ -1443,7 +1469,18 @@
+         # 2. Recurrent attention
+ 
+         # 2.1: Process the multi-query part
+-        if spec_sequence_masks is not None:
++        if spec_sequence_masks is not None and getattr(self, "use_gdn_recoverssm", False):
++            # FNRSSM: verify the window off the checkpoint; the commit after sampling writes the state once
++            from vllm.model_executor.layers.mamba.gdn.recoverssm_gdn import gdn_recoverssm_verify
++            _n = attn_metadata.num_spec_decodes
++            core_attn_out_spec = gdn_recoverssm_verify(
++                self.A_log, a_spec, b_spec, self.dt_bias, query_spec, key_spec, value_spec,
++                checkpoint_state=ssm_state, replay_cache=self_kv_cache[2],
++                query_start_loc=spec_query_start_loc[: _n + 1],
++                state_indices=spec_state_indices_tensor[:_n, 0],
++                spec_query_len=self.num_spec + 1, use_qk_l2norm_in_kernel=True)
++            last_recurrent_state = None
++        elif spec_sequence_masks is not None:
+             core_attn_out_spec, last_recurrent_state = (
+                 fused_sigmoid_gating_delta_rule_update(
+                     A_log=self.A_log,
+diff -ruN a/vllm/model_executor/layers/mamba/gdn/recoverssm_gdn.py b/vllm/model_executor/layers/mamba/gdn/recoverssm_gdn.py
+--- a/vllm/model_executor/layers/mamba/gdn/recoverssm_gdn.py	1970-01-01 01:00:00.000000000 +0100
++++ b/vllm/model_executor/layers/mamba/gdn/recoverssm_gdn.py	2026-09-26 09:02:43.000000000 +0200
+@@ -0,0 +1,300 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""RecoverSSM for Gated DeltaNet (Qwen-style GDN): speculative verify from one checkpoint without per-draft state
++snapshots, and accepted-state recovery after sampling.
++
++GDN port of the Kimi-K3 KDA RecoverSSM path (vllm/models/kimi_k3/nvidia/ops/recoverssm.py). Differences from KDA:
++the gate is a scalar per value head (g = -exp(A_log) * softplus(a + dt_bias)), q/k heads are grouped over value
++heads (HV // H), and q/k are L2-normalised inside the kernel when requested. The verify step caches, per token,
++the delta-rule correction c_t = beta_t * (v_t - S'_t k_t) (V floats), the normalised key (K floats) and the
++log-decay g_t (1 float) in one fp32 "replay" record. Recovery folds the accepted prefix:
++    S_n = exp(sum_t g_t) S_0 + sum_t exp(sum_{s>t} g_s) c_t k_t^T
++and writes the checkpoint once (plus the block-boundary state in align mode).
++"""
++from collections.abc import Sequence
++from dataclasses import dataclass
++from typing import Any
++
++import torch
++
++from vllm.triton_utils import tl, triton
++from vllm.v1.attention.backends.utils import NULL_BLOCK_ID
++
++
++@triton.jit
++def _gdn_recoverssm_verify_kernel(
++    q_ptr, k_ptr, v_ptr, a_ptr, b_ptr, A_log_ptr, dt_bias_ptr,
++    state_ptr, replay_ptr, out_ptr, query_start_loc_ptr, state_indices_ptr,
++    scale, softplus_beta, softplus_threshold, null_block_id,
++    stride_q_token, stride_k_token, stride_v_token, stride_a_token, stride_b_token,
++    stride_state_block, stride_state_head, stride_state_v, stride_state_k,
++    stride_replay_block, stride_replay_head, stride_replay_pos, stride_replay_dim,
++    stride_out_token, stride_qsl, stride_si,
++    H: tl.constexpr, HV: tl.constexpr, K: tl.constexpr, V: tl.constexpr,
++    BK: tl.constexpr, BV: tl.constexpr, SPEC_QUERY_LEN: tl.constexpr, USE_QK_L2NORM: tl.constexpr,
++):
++    pid_v = tl.program_id(0)
++    pid_b = tl.program_id(1)
++    pid_hv = tl.program_id(2)
++    pid_h = pid_hv // (HV // H)
++    bos = tl.load(query_start_loc_ptr + pid_b * stride_qsl).to(tl.int64)
++    eos = tl.load(query_start_loc_ptr + (pid_b + 1) * stride_qsl).to(tl.int64)
++    query_len = eos - bos
++    state_idx = tl.load(state_indices_ptr + pid_b * stride_si).to(tl.int64)
++    offs_k = tl.arange(0, BK)
++    offs_v = pid_v * BV + tl.arange(0, BV)
++    mask_k = offs_k < K
++    mask_v = offs_v < V
++    mask_state = mask_v[:, None] & mask_k[None, :]
++    if state_idx <= null_block_id:
++        for t in tl.static_range(SPEC_QUERY_LEN):
++            tl.store(out_ptr + (bos + t) * stride_out_token + pid_hv * V + offs_v,
++                     tl.zeros([BV], dtype=tl.float32), mask=(t < query_len) & mask_v)
++        return
++    state = tl.load(state_ptr + state_idx * stride_state_block + pid_hv * stride_state_head
++                    + offs_v[:, None] * stride_state_v + offs_k[None, :] * stride_state_k,
++                    mask=mask_state, other=0.0).to(tl.float32)
++    neg_A = -tl.exp(tl.load(A_log_ptr + pid_hv).to(tl.float32))
++    dt_bias = tl.load(dt_bias_ptr + pid_hv).to(tl.float32)
++    rec_base = replay_ptr + state_idx * stride_replay_block + pid_hv * stride_replay_head
++    for t in tl.static_range(SPEC_QUERY_LEN):
++        valid = t < query_len
++        tok = bos + t
++        q = tl.load(q_ptr + tok * stride_q_token + pid_h * K + offs_k, mask=valid & mask_k, other=0.0).to(tl.float32)
++        k = tl.load(k_ptr + tok * stride_k_token + pid_h * K + offs_k, mask=valid & mask_k, other=0.0).to(tl.float32)
++        v = tl.load(v_ptr + tok * stride_v_token + pid_hv * V + offs_v, mask=valid & mask_v, other=0.0).to(tl.float32)
++        x = tl.load(a_ptr + tok * stride_a_token + pid_hv, mask=valid, other=0.0).to(tl.float32) + dt_bias
++        sp = tl.where(softplus_beta * x <= softplus_threshold,
++                      (1 / softplus_beta) * tl.log(1 + tl.exp(softplus_beta * x)), x)
++        g = neg_A * sp
++        beta = tl.sigmoid(tl.load(b_ptr + tok * stride_b_token + pid_hv, mask=valid, other=0.0).to(tl.float32))
++        if USE_QK_L2NORM:
++            q = q * tl.rsqrt(tl.sum(q * q) + 1e-6)
++            k = k * tl.rsqrt(tl.sum(k * k) + 1e-6)
++        q = q * scale
++        new_state = state * tl.exp(g)
++        corr = (v - tl.sum(new_state * k[None, :], 1)) * beta
++        new_state = new_state + corr[:, None] * k[None, :]
++        state = tl.where(valid, new_state, state)
++        o = tl.sum(state * q[None, :], 1)
++        tl.store(out_ptr + tok * stride_out_token + pid_hv * V + offs_v, o.to(out_ptr.dtype.element_ty),
++                 mask=valid & mask_v)
++        rec = rec_base + t * stride_replay_pos
++        tl.store(rec + offs_v * stride_replay_dim, corr, mask=valid & mask_v)
++        if pid_v == 0:
++            tl.store(rec + (V + offs_k) * stride_replay_dim, k, mask=valid & mask_k)
++            tl.store(rec + (V + K) * stride_replay_dim, g, mask=valid)
++
++
++def gdn_recoverssm_verify(
++    A_log: torch.Tensor, a: torch.Tensor, b: torch.Tensor, dt_bias: torch.Tensor,
++    q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, *,
++    checkpoint_state: torch.Tensor, replay_cache: torch.Tensor,
++    query_start_loc: torch.Tensor, state_indices: torch.Tensor, spec_query_len: int,
++    scale: float | None = None, softplus_beta: float = 1.0, softplus_threshold: float = 20.0,
++    use_qk_l2norm_in_kernel: bool = True, out: torch.Tensor | None = None,
++) -> torch.Tensor:
++    """Verify a GDN speculative window against its checkpoint without modifying the checkpoint.
++    q, k: [1, T, H, K]; v: [1, T, HV, V]; a, b: [T, HV] (or [1, T, HV]); checkpoint_state: [blocks, HV, V, K];
++    replay_cache: [blocks, HV, spec_query_len, V + K + 1] fp32. Returns out [1, T, HV, V]."""
++    _, total, H, K = q.shape
++    HV, V = v.shape[-2], v.shape[-1]
++    a2 = a.reshape(total, HV); b2 = b.reshape(total, HV)
++    nb = checkpoint_state.shape[0]
++    assert checkpoint_state.shape[1:] == (HV, V, K), "GDN RecoverSSM checkpoint shape"
++    assert replay_cache.shape == (nb, HV, spec_query_len, V + K + 1) and replay_cache.dtype == torch.float32
++    assert HV % H == 0
++    for t_ in (q, k):
++        assert t_.stride(-1) == 1 and t_.stride(-2) == K
++    assert v.stride(-1) == 1 and v.stride(-2) == V
++    if scale is None:
++        scale = K ** -0.5
++    if out is None:
++        out = torch.empty(1, total, HV, V, dtype=v.dtype, device=v.device)
++    batch = state_indices.shape[0]
++    if total == 0 or batch == 0:
++        return out
++    BK = triton.next_power_of_2(K); BV = min(triton.next_power_of_2(V), 32)
++    grid = (triton.cdiv(V, BV), batch, HV)
++    _gdn_recoverssm_verify_kernel[grid](
++        q, k, v, a2, b2, A_log, dt_bias, checkpoint_state, replay_cache, out, query_start_loc, state_indices,
++        scale, softplus_beta, softplus_threshold, NULL_BLOCK_ID,
++        q.stride(1), k.stride(1), v.stride(1), a2.stride(0), b2.stride(0),
++        checkpoint_state.stride(0), checkpoint_state.stride(1), checkpoint_state.stride(2), checkpoint_state.stride(3),
++        replay_cache.stride(0), replay_cache.stride(1), replay_cache.stride(2), replay_cache.stride(3),
++        out.stride(1), query_start_loc.stride(0), state_indices.stride(0),
++        H=H, HV=HV, K=K, V=V, BK=BK, BV=BV, SPEC_QUERY_LEN=spec_query_len,
++        USE_QK_L2NORM=use_qk_l2norm_in_kernel, num_warps=4, num_stages=2,
++    )
++    return out
++
++
++@triton.jit
++def _commit_gdn_state_kernel(
++    state_ref_ptr, state_base_addrs_ptr, state_block_strides_ptr,
++    replay_ref_ptr, replay_base_addrs_ptr, replay_block_strides_ptr,
++    state_indices_ptr, commit_lens_ptr, final_state_indices_ptr, boundary_state_indices_ptr,
++    boundary_recovery_lens_ptr, null_block_id,
++    stride_state_head, stride_state_v, stride_state_k,
++    stride_replay_head, stride_replay_pos, stride_replay_dim, stride_si,
++    K: tl.constexpr, V: tl.constexpr, BK: tl.constexpr, BV: tl.constexpr,
++    NUM_HEADS: tl.constexpr, ALIGN_MODE: tl.constexpr,
++):
++    pid_v = tl.program_id(0)
++    pid_b = tl.program_id(1)
++    pid_lh = tl.program_id(2)
++    pid_l = pid_lh // NUM_HEADS
++    pid_h = pid_lh % NUM_HEADS
++    src = tl.load(state_indices_ptr + pid_b * stride_si).to(tl.int64)
++    if src <= null_block_id:
++        return
++    n = tl.load(commit_lens_ptr + pid_b)
++    if n == 0:
++        return
++    final_idx = tl.load(final_state_indices_ptr + pid_b).to(tl.int64)
++    boundary_idx = tl.load(boundary_state_indices_ptr + pid_b).to(tl.int64)
++    boundary_len = tl.load(boundary_recovery_lens_ptr + pid_b)
++    if final_idx <= null_block_id:
++        return
++    state_ptr = tl.load(state_base_addrs_ptr + pid_l).to(tl.pointer_type(state_ref_ptr.dtype.element_ty))
++    sbs = tl.load(state_block_strides_ptr + pid_l)
++    replay_ptr = tl.load(replay_base_addrs_ptr + pid_l).to(tl.pointer_type(replay_ref_ptr.dtype.element_ty))
++    rbs = tl.load(replay_block_strides_ptr + pid_l)
++    rec_base = replay_ptr + src * rbs + pid_h * stride_replay_head
++    offs_k = tl.arange(0, BK)
++    offs_v = pid_v * BV + tl.arange(0, BV)
++    mask_k = offs_k < K
++    mask_v = offs_v < V
++    mask_state = mask_v[:, None] & mask_k[None, :]
++    sp = (offs_v[:, None] * stride_state_v + offs_k[None, :] * stride_state_k)
++    s0 = tl.load(state_ptr + src * sbs + pid_h * stride_state_head + sp, mask=mask_state, other=0.0).to(tl.float32)
++    fin_decay = 1.0
++    fin_corr = tl.zeros([BV, BK], tl.float32)
++    bnd_decay = 1.0
++    bnd_corr = tl.zeros([BV, BK], tl.float32)
++    for r in range(n):
++        t = n - r - 1
++        rec = rec_base + t * stride_replay_pos
++        c = tl.load(rec + offs_v * stride_replay_dim, mask=mask_v, other=0.0)
++        kk = tl.load(rec + (V + offs_k) * stride_replay_dim, mask=mask_k, other=0.0)
++        g = tl.load(rec + (V + K) * stride_replay_dim)
++        upd = c[:, None] * kk[None, :]
++        dec = tl.exp(g)
++        fin_corr += upd * fin_decay
++        fin_decay *= dec
++        if ALIGN_MODE:
++            before = t < boundary_len
++            bnd_corr += tl.where(before, upd * bnd_decay, 0.0)
++            bnd_decay *= tl.where(before, dec, 1.0)
++    if ALIGN_MODE:
++        bs = s0 * bnd_decay + bnd_corr
++        tl.store(state_ptr + boundary_idx * sbs + pid_h * stride_state_head + sp,
++                 bs.to(state_ref_ptr.dtype.element_ty), mask=mask_state & (boundary_idx > null_block_id))
++    fs = s0 * fin_decay + fin_corr
++    tl.store(state_ptr + final_idx * sbs + pid_h * stride_state_head + sp,
++             fs.to(state_ref_ptr.dtype.element_ty), mask=mask_state)
++
++
++@dataclass
++class GDNRecoverSSMCommitContext:
++    conv_states: tuple[torch.Tensor, ...]
++    conv_state_base_addrs: torch.Tensor
++    conv_state_block_strides: torch.Tensor
++    conv_state_dim_strides: torch.Tensor
++    conv_state_token_strides: torch.Tensor
++    conv_history_len: int
++    checkpoints: tuple[torch.Tensor, ...]
++    state_base_addrs: torch.Tensor
++    state_block_strides: torch.Tensor
++    replays: tuple[torch.Tensor, ...]
++    replay_base_addrs: torch.Tensor
++    replay_block_strides: torch.Tensor
++    commit_lens: torch.Tensor
++    final_state_indices: torch.Tensor
++    boundary_state_indices: torch.Tensor
++    boundary_recovery_lens: torch.Tensor
++    spec_query_len: int
++
++    @classmethod
++    def from_tensors(cls, conv_states: Sequence[torch.Tensor], checkpoints: Sequence[torch.Tensor],
++                     replays: Sequence[torch.Tensor], *, spec_query_len: int, max_num_reqs: int,
++                     conv_dim_first: bool = True) -> "GDNRecoverSSMCommitContext":
++        if not conv_dim_first:
++            conv_states = [s.transpose(-1, -2) for s in conv_states]
++        ref = checkpoints[0]
++        nb, HV, V, K = ref.shape
++        for s in checkpoints:
++            assert s.shape == ref.shape and s.dtype == ref.dtype and s.stride()[1:] == ref.stride()[1:]
++        for r in replays:
++            assert r.shape == (nb, HV, spec_query_len, V + K + 1) and r.dtype == torch.float32
++            assert r.stride()[1:] == replays[0].stride()[1:]
++        conv_ref = conv_states[0]
++        conv_dim, conv_len = conv_ref.shape[1:]
++        hist = conv_len - spec_query_len + 1
++        assert hist > 0, "GDN RecoverSSM conv state is shorter than its window"
++        dev = ref.device
++        addr = lambda ts: torch.tensor([t.data_ptr() for t in ts], dtype=torch.int64, device=dev)
++        bstr = lambda ts: torch.tensor([t.stride(0) for t in ts], dtype=torch.int64, device=dev)
++        z = lambda: torch.empty(max_num_reqs, dtype=torch.int32, device=dev)
++        return cls(tuple(conv_states), addr(conv_states), bstr(conv_states),
++                   torch.tensor([s.stride(1) for s in conv_states], dtype=torch.int64, device=dev),
++                   torch.tensor([s.stride(2) for s in conv_states], dtype=torch.int64, device=dev),
++                   hist, tuple(checkpoints), addr(checkpoints), bstr(checkpoints),
++                   tuple(replays), addr(replays), bstr(replays), z(), z(), z(), z(), spec_query_len)
++
++    @classmethod
++    def create(cls, layers: Sequence[Any], *, spec_query_len: int, max_num_reqs: int) -> "GDNRecoverSSMCommitContext":
++        from vllm.model_executor.layers.mamba.mamba_utils import is_conv_state_dim_first
++        if any(len(layer.kv_cache) != 3 for layer in layers):
++            raise ValueError("GDN RecoverSSM pages must contain conv, state and replay")
++        return cls.from_tensors([l.kv_cache[0] for l in layers], [l.kv_cache[1] for l in layers],
++                                [l.kv_cache[2] for l in layers], spec_query_len=spec_query_len,
++                                max_num_reqs=max_num_reqs, conv_dim_first=is_conv_state_dim_first())
++
++    def commit(self, num_accepted_tokens: torch.Tensor, state_indices: torch.Tensor,
++               query_start_loc: torch.Tensor, request_indices: torch.Tensor | None = None,
++               block_table: torch.Tensor | None = None, num_computed_tokens: torch.Tensor | None = None,
++               mamba_block_size: int | None = None, commit_conv: bool = True) -> None:
++        """Fold accepted GDN and convolution inputs into every layer's checkpoint."""
++        from vllm.models.kimi_k3.nvidia.ops.recoverssm import (
++            _compact_conv_state_kernel, _prepare_commit_plan_kernel)
++        batch = state_indices.shape[0]
++        if batch == 0:
++            return
++        assert batch <= self.commit_lens.shape[0]
++        if mamba_block_size is not None:
++            assert mamba_block_size >= self.spec_query_len
++        bt_stride = (0, 0) if block_table is None else block_table.stride()
++        _prepare_commit_plan_kernel[(batch,)](
++            num_accepted_tokens, request_indices, state_indices, query_start_loc, block_table, num_computed_tokens,
++            self.commit_lens, self.final_state_indices, self.boundary_state_indices, self.boundary_recovery_lens,
++            NULL_BLOCK_ID, mamba_block_size or 1, block_table.shape[1] if block_table is not None else 1,
++            num_accepted_tokens.stride(0), request_indices.stride(0) if request_indices is not None else 0,
++            state_indices.stride(0), query_start_loc.stride(0), bt_stride[0], bt_stride[1],
++            0 if num_computed_tokens is None else num_computed_tokens.stride(0),
++            SPEC_QUERY_LEN=self.spec_query_len, num_warps=1)
++        num_layers = len(self.checkpoints)
++        if commit_conv:
++            conv_ref = self.conv_states[0]
++            conv_dim = conv_ref.shape[1]
++            _compact_conv_state_kernel[(triton.cdiv(conv_dim, 256), batch, num_layers)](
++                conv_ref, self.conv_state_base_addrs, self.conv_state_block_strides, self.conv_state_dim_strides,
++                self.conv_state_token_strides, state_indices, self.commit_lens, self.final_state_indices,
++                self.boundary_state_indices, self.boundary_recovery_lens, NULL_BLOCK_ID, conv_dim,
++                self.conv_history_len, state_indices.stride(0), BLOCK_D=256,
++                BLOCK_HISTORY=triton.next_power_of_2(self.conv_history_len),
++                ALIGN_MODE=block_table is not None, num_warps=4)
++        ref = self.checkpoints[0]
++        _, HV, V, K = ref.shape
++        BK = triton.next_power_of_2(K); BV = min(triton.next_power_of_2(V), 32)
++        rr = self.replays[0]
++        _commit_gdn_state_kernel[(triton.cdiv(V, BV), batch, num_layers * HV)](
++            ref, self.state_base_addrs, self.state_block_strides, rr, self.replay_base_addrs,
++            self.replay_block_strides, state_indices, self.commit_lens, self.final_state_indices,
++            self.boundary_state_indices, self.boundary_recovery_lens, NULL_BLOCK_ID,
++            ref.stride(1), ref.stride(2), ref.stride(3), rr.stride(1), rr.stride(2), rr.stride(3),
++            state_indices.stride(0), K=K, V=V, BK=BK, BV=BV, NUM_HEADS=HV,
++            ALIGN_MODE=block_table is not None, num_warps=4, num_stages=2)
++
++
++__all__ = ["GDNRecoverSSMCommitContext", "gdn_recoverssm_verify"]
+diff -ruN a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py	2026-09-23 16:45:29.000000000 +0200
+@@ -487,6 +487,23 @@
+         start_idx = self.shard_indices.org_vocab_start_index
+         shard_size = self.shard_indices.org_vocab_end_index - start_idx
+ 
++        # LMHEADSCALE (jschmied 2026-09-03): block scales of a block-quantized
++        # head ([vocab/bn, 1, hidden/bk, 1], KFp8PbWo) shard along the vocab
++        # dim in units of the block size, not the vocab.
++        if param.data.ndim == 4 and loaded_weight.ndim == 4:
++            rows = loaded_weight.shape[output_dim]
++            block = self.org_vocab_size // rows
++            assert block * rows == self.org_vocab_size, (
++                f"block scale rows {rows} do not tile vocab {self.org_vocab_size}"
++            )
++            assert start_idx % block == 0 and shard_size % block == 0
++            loaded_weight = loaded_weight.narrow(
++                output_dim, start_idx // block, shard_size // block
++            )
++            param[: loaded_weight.shape[0]].data.copy_(loaded_weight)
++            param[loaded_weight.shape[0] :].data.fill_(0)
++            return
++
+         # If param packed on the same dim we are sharding on, then
+         # need to adjust offsets of loaded weight by pack_factor.
+         if packed_dim is not None and packed_dim == output_dim:
+diff -ruN a/vllm/model_executor/model_loader/weight_utils.py b/vllm/model_executor/model_loader/weight_utils.py
+--- a/vllm/model_executor/model_loader/weight_utils.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/model_executor/model_loader/weight_utils.py	2026-09-25 08:31:28.000000000 +0200
+@@ -868,6 +868,30 @@
+     threading.Thread(target=_run_prefetch, daemon=True).start()
+ 
+ 
++# ---- FNDROPCACHE (jschmied 2026-09-25, local): FN_LOAD_DROPCACHE=1 drops each loaded shard's clean pages from the
++# page cache once its tensors are consumed. The weights live in device memory after loading; their page-cache copies
++# only evict the checkpoint-mapped PLE table (47.7 GiB, read in place). PLE shards are never dropped. ----
++_FN_DROPCACHE = os.environ.get("FN_LOAD_DROPCACHE", "") == "1"
++_FN_DROPPED = [0, 0]
++
++
++def _fn_drop_page_cache(st_file: str) -> None:
++    if not _FN_DROPCACHE or "plefp8" in os.path.basename(st_file):
++        return
++    try:
++        fd = os.open(st_file, os.O_RDONLY)
++        try:
++            os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
++        finally:
++            os.close(fd)
++        _FN_DROPPED[0] += 1
++        _FN_DROPPED[1] += os.path.getsize(st_file)
++        if _FN_DROPPED[0] in (1, 50, 100, 150, 196):
++            logger.warning("FNDROPCACHE dropped %d shards, %.1f GiB", _FN_DROPPED[0], _FN_DROPPED[1] / 2**30)
++    except OSError as e:
++        logger.warning("FNDROPCACHE failed on %s: %s", st_file, e)
++
++
+ def safetensors_weights_iterator(
+     hf_weights_files: list[str],
+     use_tqdm_on_load: bool,
+@@ -1003,6 +1027,7 @@
+                         continue
+                     param = f.get_tensor(name)
+                     yield name, param
++            _fn_drop_page_cache(st_file)
+ 
+ 
+ def multi_thread_safetensors_weights_iterator(
+diff -ruN a/vllm/models/qwen4_exp/nvidia/fn_nvfp4_head.py b/vllm/models/qwen4_exp/nvidia/fn_nvfp4_head.py
+--- a/vllm/models/qwen4_exp/nvidia/fn_nvfp4_head.py	1970-01-01 01:00:00.000000000 +0100
++++ b/vllm/models/qwen4_exp/nvidia/fn_nvfp4_head.py	2026-09-24 17:23:09.000000000 +0200
+@@ -0,0 +1,108 @@
++# SPDX-License-Identifier: Apache-2.0
++"""NVFP4 draft-head slice for Qwen4Exp MTP (jschmied 2026-09-24, local experiment, not upstream).
++
++The drafter's greedy head reads the 32k-row draft-vocab slice every draft step. As BF16 that is 160 MiB; as NVFP4
++(E2M1 values, one E4M3 scale per 16 values along K, one FP32 global scale) it is 40 + 5 MiB. The slice only picks
++DRAFT tokens, which the target verifies, so quantization can cost acceptance but never changes the output.
++
++Layout (linear, not the swizzled CUTLASS layout): q uint8 [N, K/2] with element 2j in the low nibble and 2j+1 in the
++high nibble; s float8_e4m3fn [N, K/16]; g a python float. value = e2m1(q) * s * g.
++"""
++import torch
++
++from vllm.triton_utils import tl, triton
++
++_E2M1_MAG = (0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0)
++_E2M1_MID = (0.25, 0.75, 1.25, 1.75, 2.5, 3.5, 5.0)
++
++
++def quantize_nvfp4_rows(w: torch.Tensor):
++    """w: float32 [N, K], K % 16 == 0. Plain per-16 max scaling. Returns (q uint8 [N, K/2], s fp8 [N, K/16], g)."""
++    N, K = w.shape
++    assert K % 32 == 0
++    g = float(w.abs().amax()) / (448.0 * 6.0)
++    if g == 0.0:
++        g = 1.0
++    grp = w.view(N, K // 16, 16)
++    amax = grp.abs().amax(-1)                                         # [N, K/16]
++    s = (amax / 6.0 / g).clamp(max=448.0).to(torch.float8_e4m3fn)
++    sf = s.to(torch.float32) * g                                      # effective group scale
++    x = torch.where(sf[..., None] > 0, grp / sf[..., None].clamp(min=1e-30), torch.zeros_like(grp))
++    mag = x.abs().clamp(max=6.0)
++    code = torch.bucketize(mag, torch.tensor(_E2M1_MID, device=w.device, dtype=mag.dtype))  # 0..7
++    nib = (code | ((x < 0).to(code.dtype) << 3)).to(torch.uint8).view(N, K)
++    q = (nib[:, 0::2] | (nib[:, 1::2] << 4)).contiguous()
++    return q, s.contiguous(), g
++
++
++def dequantize_nvfp4_rows(q: torch.Tensor, s: torch.Tensor, g: float) -> torch.Tensor:
++    """Reference dequant to float32 [N, K]."""
++    N = q.shape[0]
++    lo, hi = q & 0xF, q >> 4
++    nib = torch.stack((lo, hi), dim=-1).view(N, -1).to(torch.int64)
++    table = torch.tensor(_E2M1_MAG, device=q.device, dtype=torch.float32)
++    val = table[nib & 7] * torch.where((nib >> 3) == 1, -1.0, 1.0)
++    K = val.shape[1]
++    return (val.view(N, K // 16, 16) * s.to(torch.float32)[..., None] * g).view(N, K)
++
++
++@triton.jit
++def _nvfp4_rows_gemv_kernel(x_ptr, q_ptr, s_ptr, out_ptr, g, M, N, K,
++                            sxm, sqn, ssn, som,
++                            BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr, BLOCK_K: tl.constexpr):
++    pid_n = tl.program_id(0)
++    pid_m = tl.program_id(1)
++    offs_n = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)
++    offs_m = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)
++    nmask = offs_n < N
++    mmask = offs_m < M
++    acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
++    for k0 in range(0, K, BLOCK_K):
++        offs_b = k0 // 2 + tl.arange(0, BLOCK_K // 2)
++        b = tl.load(q_ptr + offs_n[:, None] * sqn + offs_b[None, :], mask=nmask[:, None], other=0)
++        lo = b & 0xF
++        hi = (b >> 4) & 0xF
++        nib = tl.reshape(tl.join(lo, hi), (BLOCK_N, BLOCK_K))
++        e = (nib >> 1) & 3
++        m = (nib & 1).to(tl.float32)
++        mag = tl.where(e == 0, m * 0.5, (1.0 + m * 0.5) * tl.exp2((e - 1).to(tl.float32)))
++        val = tl.where(((nib >> 3) & 1) == 1, -mag, mag)
++        offs_gk = k0 // 16 + tl.arange(0, BLOCK_K // 16)
++        sc = tl.load(s_ptr + offs_n[:, None] * ssn + offs_gk[None, :], mask=nmask[:, None], other=0.0)
++        sc = sc.to(tl.float32)
++        # e2m1 (<=2 mantissa bits) x e4m3 (3 mantissa bits) is exact in bf16 (7), so this cast loses nothing
++        w = tl.reshape(tl.reshape(val, (BLOCK_N, BLOCK_K // 16, 16)) * sc[:, :, None], (BLOCK_N, BLOCK_K))
++        w = w.to(tl.bfloat16)
++        offs_k = k0 + tl.arange(0, BLOCK_K)
++        x = tl.load(x_ptr + offs_m[:, None] * sxm + offs_k[None, :], mask=mmask[:, None], other=0.0)
++        acc += tl.dot(x.to(tl.bfloat16), tl.trans(w))
++    acc = acc * g
++    tl.store(out_ptr + offs_m[:, None] * som + offs_n[None, :], acc, mask=mmask[:, None] & nmask[None, :])
++
++
++_CFG = None
++
++
++def _cfg():
++    global _CFG
++    if _CFG is None:
++        import os
++        bn, nw = (os.environ.get("FN_NVFP4_CFG", "64,4").split(",") + ["4"])[:2]
++        _CFG = (int(bn), int(nw))
++    return _CFG
++
++
++def nvfp4_rows_gemv(x: torch.Tensor, q: torch.Tensor, s: torch.Tensor, g: float,
++                    block_n: int | None = None, block_k: int = 128, num_warps: int | None = None) -> torch.Tensor:
++    """x bf16 [M, K] -> float32 logits [M, N]. Tile config from FN_NVFP4_CFG='block_n,num_warps' (default 64,4)."""
++    if block_n is None or num_warps is None:
++        block_n, num_warps = _cfg()
++    x = x.contiguous()
++    M, K = x.shape
++    N = q.shape[0]
++    out = torch.empty((M, N), dtype=torch.float32, device=x.device)
++    grid = (triton.cdiv(N, block_n), triton.cdiv(M, 16))
++    _nvfp4_rows_gemv_kernel[grid](x, q, s, out, g, M, N, K,
++                                  x.stride(0), q.stride(0), s.stride(0), out.stride(0),
++                                  BLOCK_M=16, BLOCK_N=block_n, BLOCK_K=block_k, num_warps=num_warps)
++    return out
+diff -ruN a/vllm/models/qwen4_exp/nvidia/model.py b/vllm/models/qwen4_exp/nvidia/model.py
+--- a/vllm/models/qwen4_exp/nvidia/model.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/models/qwen4_exp/nvidia/model.py	2026-09-26 09:02:43.000000000 +0200
+@@ -678,6 +678,7 @@
+         self.lm_head = ParallelLMHead(
+             config.vocab_size,
+             config.hidden_size,
++            quant_config=vllm_config.quant_config,  # LMHEADQ (jschmied): FP8 lm_head checkpoints
+             prefix=maybe_prefix(prefix, "lm_head"),
+         )
+         self.logits_processor = LogitsProcessor(config.vocab_size)
+@@ -750,11 +751,14 @@
+     def get_gdn_mamba_state_dtype_from_config(
+         cls, vllm_config: VllmConfig
+     ) -> tuple[torch.dtype, torch.dtype]:
+-        return MambaStateDtypeCalculator.gated_delta_net_state_dtype(
++        dtypes = MambaStateDtypeCalculator.gated_delta_net_state_dtype(
+             vllm_config.model_config.dtype,
+             vllm_config.cache_config.mamba_cache_dtype,
+             vllm_config.cache_config.mamba_ssm_cache_dtype,
+         )
++        if vllm_config.cache_config.use_kda_recoverssm:  # FNRSSM
++            dtypes = (*dtypes, torch.float32)
++        return dtypes
+ 
+     @classmethod
+     def get_gdn_mamba_state_shape_from_config(
+@@ -768,7 +772,7 @@
+             if vllm_config.speculative_config
+             else 0
+         )
+-        return MambaStateShapeCalculator.gated_delta_net_state_shape(
++        shapes = MambaStateShapeCalculator.gated_delta_net_state_shape(
+             tp_size,
+             hf_config.linear_num_key_heads,
+             hf_config.linear_num_value_heads,
+@@ -777,6 +781,10 @@
+             hf_config.linear_conv_kernel_dim,
+             num_spec,
+         )
++        if vllm_config.cache_config.use_kda_recoverssm and num_spec > 0:  # FNRSSM
++            shapes = (*shapes, (hf_config.linear_num_value_heads // tp_size, num_spec + 1,
++                                hf_config.linear_value_head_dim + hf_config.linear_key_head_dim + 1))
++        return shapes
+ 
+     @classmethod
+     def get_mamba_state_dtype_from_config(
+@@ -1054,6 +1062,17 @@
+             self,
+             ignore_unexpected_suffixes=_QWEN4_EXP_IGNORED_MISSING_SUFFIXES.copy(),
+         )
++        # ---- SCALEINV (jschmied 2026-09-03): ModelOpt FP8_PB_WO exports name the block
++        # scale `weight_scale_inv` (rank-2 [N/128, K/128]); vLLM expects `weight_scale`
++        # shaped [ob, 1, ib, 1]. Same quantity, "_inv" is a naming legacy (verified).
++        def _scaleinv(ws):
++            for name, w in ws:
++                if name.endswith("weight_scale_inv") and w.dim() == 2:
++                    yield name[: -len("_inv")], w.reshape(w.shape[0], 1, w.shape[1], 1)
++                else:
++                    yield name, w
++        weights = _scaleinv(weights)
++        # ---- end SCALEINV ----
+         return loader.load_weights(weights, mapper=mapper)
+ 
+     @classmethod
+diff -ruN a/vllm/models/qwen4_exp/nvidia/model_state.py b/vllm/models/qwen4_exp/nvidia/model_state.py
+--- a/vllm/models/qwen4_exp/nvidia/model_state.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/models/qwen4_exp/nvidia/model_state.py	2026-09-23 21:41:52.000000000 +0200
+@@ -13,6 +13,12 @@
+ from vllm.v1.worker.gpu.model_states.mamba_hybrid import MambaHybridModelState
+ from vllm.v1.worker.gpu.states import RequestState
+ 
++from .ngram_embedding import (
++    Qwen4ExpNGramEmbedding,
++    Qwen4ExpPLEPageableHostEmbedding,
++)
++from .ple_pageable import PagePrefetcher, PrefetchSource
++
+ 
+ class Qwen4ExpModelState(MambaHybridModelState):
+     """Add rollback-safe PLE n-gram context to the model inputs."""
+@@ -58,6 +64,13 @@
+             dtype=torch.int64,
+             device=self.device,
+         )
++        engram_config = vllm_config.engram_config
++        # Only checkpoint-mapped PLE tables are prefetched on the host.
++        self._checkpoint_mapped = bool(
++            engram_config is not None and engram_config.checkpoint_mapped
++        )
++        self._page_prefetcher: PagePrefetcher | None = None
++        self._page_prefetcher_resolved = False
+         self.ple_query_start_loc = torch.zeros(
+             self.max_num_reqs + 1,
+             dtype=torch.int32,
+@@ -106,12 +119,59 @@
+         query_start_loc[: num_reqs_padded + 1].copy_(input_batch.query_start_loc)
+         # Represent unused capacity as trailing zero-length requests.
+         query_start_loc[num_reqs_padded + 1 :].copy_(input_batch.query_start_loc[-1])
++        ngram_context = self._prepare_ngram_context(input_batch, req_states)
+         model_inputs.update(
+             query_start_loc=query_start_loc,
+-            ngram_context=self._prepare_ngram_context(input_batch, req_states),
++            ngram_context=ngram_context,
+         )
++        prefetcher = self._get_page_prefetcher()
++        if prefetcher is not None:
++            prefetcher.prepare(
++                input_batch.input_ids,
++                query_start_loc,
++                ngram_context,
++                num_reqs_padded,
++                input_batch.input_ids.shape[0],
++            )
+         return model_inputs
+ 
++    def _get_page_prefetcher(self) -> PagePrefetcher | None:
++        """Fault in checkpoint-mapped PLE rows before the step reads them."""
++        if not getattr(self, "_checkpoint_mapped", False):
++            return None
++        if self._page_prefetcher_resolved:
++            return self._page_prefetcher
++        sources = []
++        for module in self.model.modules():
++            if not isinstance(module, Qwen4ExpNGramEmbedding):
++                continue
++            embedding = module.ngram_embedding
++            if not isinstance(embedding, Qwen4ExpPLEPageableHostEmbedding):
++                continue
++            sources.append(
++                PrefetchSource(
++                    embedding.current_table,
++                    (
++                        embedding.shard_indices.org_vocab_start_index,
++                        embedding.shard_indices.org_vocab_end_index,
++                    ),
++                    module.cpu_ngram_ids_fn,
++                )
++            )
++        self._page_prefetcher_resolved = True
++        self._page_prefetcher = (
++            PagePrefetcher(
++                sources,
++                self.device,
++                self.max_num_tokens,
++                self.max_num_reqs,
++                self.ngram_context_len,
++            )
++            if sources
++            else None
++        )
++        return self._page_prefetcher
++
+     def prepare_dummy_inputs(
+         self,
+         num_reqs: int,
+diff -ruN a/vllm/models/qwen4_exp/nvidia/mtp.py b/vllm/models/qwen4_exp/nvidia/mtp.py
+--- a/vllm/models/qwen4_exp/nvidia/mtp.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/models/qwen4_exp/nvidia/mtp.py	2026-09-24 17:23:09.000000000 +0200
+@@ -59,6 +59,60 @@
+ )
+ 
+ 
++
++import os as _fn_os
++from vllm.logger import init_logger as _fn_init_logger
++_fn_logger = _fn_init_logger(__name__)
++
++
++def _fn_attach_draft_vocab(model) -> None:
++    """Slice the drafter's FP8_PB_WO lm_head to the ids in FN_DRAFT_VOCAB (one per line) as an exact BF16 dequant.
++    The full head is untouched; only get_top_tokens uses the slice."""
++    path = _fn_os.environ.get("FN_DRAFT_VOCAB", "").strip()
++    if not path:
++        return
++    head = model.lm_head
++    w = getattr(head, "weight", None); s = getattr(head, "weight_scale", None)
++    if w is None or s is None or w.dim() != 2 or s.dim() != 2 or w.dtype != torch.float8_e4m3fn:
++        _fn_logger.warning("FNDV: lm_head is not a 2-D FP8 block-scaled head; skipping.")
++        return
++    if getattr(head, "tp_size", 1) != 1:
++        _fn_logger.warning("FNDV: TP>1 unsupported; skipping."); return
++    ids = sorted({int(x) for x in open(path).read().split() if x.strip()})
++    N, K = w.shape; ids = [i for i in ids if 0 <= i < N]
++    if not ids or len(ids) >= N:
++        _fn_logger.warning("FNDV: %d usable ids against %d rows; skipping.", len(ids), N); return
++    bs = getattr(head, "weight_block_size", [128, 128]); bn, bk = int(bs[0]), int(bs[1])
++    assert K % bk == 0 and s.shape[0] == (N + bn - 1) // bn and s.shape[1] == K // bk, (bs, tuple(s.shape), (N, K))
++    index = torch.tensor(ids, dtype=torch.long, device=w.device)
++    with torch.no_grad():
++        rows = w.index_select(0, index).to(torch.float32)
++        srows = s.index_select(0, index // bn).to(torch.float32)
++        wf = rows * srows.repeat_interleave(bk, dim=1)  # FNNVFP4
++        deq = wf.to(torch.bfloat16).contiguous()
++    # ---- FNNVFP4 (jschmied 2026-09-24): FN_DRAFT_HEAD_NVFP4=1 keeps the slice as NVFP4, not BF16 ----
++    if _fn_os.environ.get("FN_DRAFT_HEAD_NVFP4", "") == "1":
++        from vllm.models.qwen4_exp.nvidia.fn_nvfp4_head import quantize_nvfp4_rows
++        with torch.no_grad():
++            q4, s4, g4 = quantize_nvfp4_rows(wf)
++        del wf, deq
++        model.register_buffer("_fn_draft_q", q4, persistent=False)
++        model.register_buffer("_fn_draft_s", s4, persistent=False)
++        model._fn_draft_g = g4
++        model.register_buffer("_fn_draft_ids", index.to(torch.int64), persistent=False)
++        _mib = lambda t: t.numel() * t.element_size() / 2**20
++        _fn_logger.info("FNDV draft vocab: %d of %d rows (%.1f%%); draft head %.0f -> %.0f MiB per draft step "
++                        "(NVFP4 slice, FNNVFP4)", len(ids), N, 100.0 * len(ids) / N, _mib(w) + _mib(s),
++                        _mib(q4) + _mib(s4))
++        return
++    # ---- end FNNVFP4 ----
++    model.register_buffer("_fn_draft_weight", deq, persistent=False)
++    model.register_buffer("_fn_draft_ids", index.to(torch.int64), persistent=False)
++    mib = lambda t: t.numel() * t.element_size() / 2**20
++    _fn_logger.info("FNDV draft vocab: %d of %d rows (%.1f%%); draft head %.0f -> %.0f MiB per draft step (BF16 slice of the FP8 head)",
++                    len(ids), N, 100.0 * len(ids) / N, mib(w) + mib(s), mib(deq))
++
++
+ def _remap_ignored_layers(
+     ignored_layers: list[str],
+     mtp_start_layer_idx: int,
+@@ -398,6 +452,7 @@
+                 self.lm_head = ParallelLMHead(
+                     config.vocab_size,
+                     config.hidden_size,
++                    quant_config=vllm_config.quant_config,  # LMHEADQ-MTP (jschmied): FP8 lm_head checkpoints
+                     prefix=maybe_prefix(prefix, "lm_head"),
+                 )
+         else:
+@@ -436,6 +491,24 @@
+     ) -> torch.Tensor | None:
+         return self.logits_processor(self.lm_head, hidden_states)
+ 
++    def get_top_tokens(self, hidden_states: torch.Tensor) -> torch.Tensor:
++        """Greedy draft ids over the FN_DRAFT_VOCAB slice when attached (a dropped row can only cost a rejected draft,
++        never a wrong output), else the full head via the local-argmax path. Logit scale 1, no soft cap: argmax is exact."""
++        _q4 = getattr(self, "_fn_draft_q", None)  # FNNVFP4
++        if _q4 is not None:  # FNNVFP4
++            from vllm.models.qwen4_exp.nvidia.fn_nvfp4_head import nvfp4_rows_gemv  # FNNVFP4
++            _lg = nvfp4_rows_gemv(hidden_states.to(torch.bfloat16), _q4, self._fn_draft_s, self._fn_draft_g)  # FNNVFP4
++            return self._fn_draft_ids[_lg.argmax(dim=-1)]  # FNNVFP4
++        w = getattr(self, "_fn_draft_weight", None)
++        if w is None:
++            return self.logits_processor.get_top_tokens(self.lm_head, hidden_states)
++        logits = torch.nn.functional.linear(hidden_states.to(w.dtype), w)
++        return self._fn_draft_ids[logits.argmax(dim=-1)]
++
++    def _fn_attach_draft_vocab(self) -> None:
++        _fn_attach_draft_vocab(self)
++
++
+     def load_weights(self, weights: Iterable[tuple[str, torch.Tensor]]) -> set[str]:
+         def remap_weight_names():
+             for name, weight in weights:
+@@ -450,7 +523,16 @@
+             self,
+             ignore_unexpected_suffixes=_QWEN4_EXP_IGNORED_MISSING_SUFFIXES.copy(),
+         )
+-        return loader.load_weights(remap_weight_names(), mapper=mapper)
++        # ---- SCALEINV-MTP (jschmied 2026-09-04): same rename/reshape as the body loader for
++        # FP8_PB_WO `weight_scale_inv` (rank-2 [N/128, K/128] -> `weight_scale` [ob, 1, ib, 1]).
++        def _scaleinv(ws):
++            for name, w in ws:
++                if name.endswith("weight_scale_inv") and w.dim() == 2:
++                    yield name[: -len("_inv")], w.reshape(w.shape[0], 1, w.shape[1], 1)
++                else:
++                    yield name, w
++        return loader.load_weights(_scaleinv(remap_weight_names()), mapper=mapper)
++        # ---- end SCALEINV-MTP ----
+ 
+ 
+ __all__ = ["Qwen4ExpMTP", "Qwen4ExpMultiTokenPredictor"]
+diff -ruN a/vllm/models/qwen4_exp/nvidia/ngram_embedding.py b/vllm/models/qwen4_exp/nvidia/ngram_embedding.py
+--- a/vllm/models/qwen4_exp/nvidia/ngram_embedding.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/models/qwen4_exp/nvidia/ngram_embedding.py	2026-09-24 19:49:39.000000000 +0200
+@@ -1,11 +1,12 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+-"""Qwen4Exp n-gram embeddings with device and pinned-host storage."""
++"""Qwen4Exp n-gram embeddings with device, pinned-host and checkpoint-mapped storage."""
+ 
+ from abc import ABC, abstractmethod
+ from collections.abc import Iterable
+ from typing import ClassVar
+ 
++import regex as re
+ import torch
+ import torch.nn.functional as F
+ from torch import nn
+@@ -45,6 +46,12 @@
+ 
+ from ..common.ple import PLEVocabParallelEmbedding
+ from .ops.ple import ple_ngram_ids
++from .ple_pageable import (
++    MappedTable,
++    discover_table_layout,
++    require_pageable_access,
++    verify_shard_bytes,
++)
+ 
+ logger = init_logger(__name__)
+ 
+@@ -218,6 +225,12 @@
+     def embedding(self, layer: nn.Module, input_: torch.Tensor) -> torch.Tensor:
+         return F.embedding(input_, layer.weight)
+ 
++    def process_weights_after_loading(self, layer: nn.Module) -> None:
++        """Let storage that is bound after loading (checkpoint-mapped) attach."""
++        bind = getattr(layer, "bind_storage_after_loading", None)
++        if bind is not None:
++            bind()
++
+     @abstractmethod
+     def dequantize(
+         self,
+@@ -307,6 +320,7 @@
+         sentinel = torch.finfo(torch.float32).min
+         if torch.any(layer.weight_scale == sentinel):
+             raise ValueError("FP8 PLE checkpoint is missing its global scale")
++        super().process_weights_after_loading(layer)
+ 
+     def dequantize(
+         self,
+@@ -512,7 +526,7 @@
+         output: torch.Tensor,
+     ) -> None:
+         """Join the side stream, reduce ETP shards, and select local rows."""
+-        torch.cuda.current_stream().wait_stream(self._prefetch_stream)
++        self._join_prefetch_stream()
+         slot_size, slot_offset = self._get_dp_gather_slot(output.shape[0])
+         active_output = prefetch_output[: slot_size * self.etp_data_parallel_size]
+         embeddings = self._reduce_etp_embeddings(active_output)
+@@ -523,6 +537,9 @@
+         )
+         output.copy_(embeddings.flatten(-2))
+ 
++    def _join_prefetch_stream(self) -> None:
++        torch.cuda.current_stream().wait_stream(self._prefetch_stream)
++
+     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+         """Finish the pinned lookup into graph-owned output storage."""
+         output = self._prefetch_buffer.new_empty(
+@@ -532,6 +549,252 @@
+         return output
+ 
+ 
++class Qwen4ExpPLEPageableHostEmbedding(Qwen4ExpPLEPinnedHostEmbedding):
++    """PLE table read in place from the checkpoint's safetensors files.
++
++    For GPUs that dereference pageable host memory through the host page tables
++    (e.g. unified-memory GB10). There is no table-sized device or pinned
++    allocation and no resident duplicate of the table: its rows stay in the page
++    cache as clean, file-backed pages that the kernel can drop and re-read, shared
++    between processes. The prefetch buffer, ETP reduction and finalize path are
++    inherited from the pinned-host backend; the lookup itself runs on the current
++    stream (not the pinned backend's side stream) and gathers from the mapping.
++    """
++
++    def __init__(
++        self,
++        num_embeddings: int,
++        embedding_dim: int,
++        *,
++        params_dtype: torch.dtype,
++        padding_size: int,
++        prefix: str,
++        embedding_method: Qwen4ExpPLEEmbeddingMethod,
++        num_ngram_heads: int = 1,
++        max_total_tokens: int = 0,
++        data_parallel_rank: int = 0,
++    ) -> None:
++        device = torch.device("cuda", torch.accelerator.current_device_index())
++        require_pageable_access(device.index)
++        if not torch.cuda.get_device_properties(device).is_integrated:
++            logger.warning_once(
++                "Engram checkpoint_mapped has been validated only on integrated "
++                "unified-memory GPUs (DGX Spark / GB10). This device also reads "
++                "pageable host memory through the host page tables (e.g. Grace "
++                "Hopper / Grace Blackwell over NVLink-C2C), but performance and "
++                "correctness there are untested."
++            )
++        # Skip the pinned-host constructor: there is no host tensor to view.
++        Qwen4ExpPLEEmbedding.__init__(
++            self,
++            num_embeddings,
++            embedding_dim,
++            params_dtype=params_dtype,
++            padding_size=padding_size,
++            prefix=prefix,
++            embedding_method=embedding_method,
++            num_ngram_heads=num_ngram_heads,
++            max_total_tokens=max_total_tokens,
++            data_parallel_rank=data_parallel_rank,
++        )
++        layer_match = re.search(r"layers\.(\d+)\.", prefix)
++        if layer_match is None:
++            raise ValueError(f"Cannot derive the decoder layer index from {prefix}")
++        self.layer_index = int(layer_match.group(1))
++        vllm_config = get_current_vllm_config()
++        self._model_config = vllm_config.model_config
++        self._load_config = vllm_config.load_config
++        self._load_format = str(vllm_config.load_config.load_format)
++        self.table: MappedTable | None = None
++        self._rebind_pending = False
++        self._pending_table: MappedTable | None = None
++        self._reload_error: Exception | None = None
++        self._prefetch_stream = torch.cuda.Stream(device=device)
++        self._prefetch_buffer = torch.empty(
++            max_total_tokens * self.etp_data_parallel_size,
++            num_ngram_heads,
++            self.embedding_dim,
++            dtype=self.weight.dtype,
++            device=device,
++        )
++        self._output_dim = num_ngram_heads * self.embedding_dim
++
++    def allocate_embedding_weight(
++        self,
++        num_embeddings: int,
++        embedding_dim: int,
++        dtype: torch.dtype,
++    ) -> torch.Tensor:
++        """No storage: rows are read from the mapped checkpoint files."""
++        del num_embeddings
++        return torch.empty(0, embedding_dim, dtype=dtype, device="cpu")
++
++    def current_table(self) -> MappedTable | None:
++        """The mapping in use now (rebuilt when a reload remaps the files)."""
++        return self.table
++
++    def record_incoming_shard(
++        self, checkpoint_start: int, loaded_weight: torch.Tensor
++    ) -> None:
++        """Account for a shard delivered by a (re)load.
++
++        On the first load the loader streams the very files that get mapped, so
++        nothing is compared. On a reload (a table is already bound), the files
++        the loader now points at are mapped and every incoming shard is compared
++        with them in full: a reload from disk (``weights_path``) streams those
++        same files and matches, while PLE weights delivered from memory (e.g.
++        weight sync) cannot be served from a file mapping and are rejected.
++        """
++        if self._reload_error is not None:
++            # A rejected load raised out of load_weights; a shard arriving now
++            # starts a new load attempt, verified from scratch.
++            self._reload_error = None
++            self._pending_table = None
++        self._rebind_pending = True
++        if self.table is None:
++            return
++        try:
++            if self._pending_table is None:
++                self._pending_table = self._map_checkpoint_files()
++            verify_shard_bytes(self._pending_table, checkpoint_start, loaded_weight)
++        except Exception as e:
++            self._reload_error = e
++            raise
++
++    def bind_storage_after_loading(self) -> None:
++        """(Re)map this layer's shards once the checkpoint is on local disk."""
++        if self.table is not None and not self._rebind_pending:
++            return
++        self._bind()
++
++    def _map_checkpoint_files(self) -> MappedTable:
++        layout = discover_table_layout(
++            resolve_checkpoint_files(self._model_config, self._load_config),
++            self.layer_index,
++            self.org_vocab_size,
++            self.embedding_dim,
++            self.weight.dtype,
++            int(getattr(self._model_config.hf_text_config, "split_ngram_parts", 512)),
++        )
++        return MappedTable(layout, self._prefetch_buffer.device)
++
++    def _bind(self) -> None:
++        if self._reload_error is not None:
++            # A rejected reload stays rejected until a load succeeds; never fall
++            # back to the previous mapping.
++            raise RuntimeError(
++                "The last weight load was rejected by checkpoint_mapped PLE storage"
++            ) from self._reload_error
++        if self._load_format == "dummy":
++            table = MappedTable.zeros(
++                self.org_vocab_size,
++                self.embedding_dim * self.weight.dtype.itemsize,
++                self._prefetch_buffer.device,
++            )
++        else:
++            table = self._pending_table or self._map_checkpoint_files()
++        # Commit only after everything above succeeded.
++        self.table = table
++        self._pending_table = None
++        self._rebind_pending = False
++        if table.layout is not None:
++            logger.info(
++                "Mapped PLE table of layer %d in place: %d rows x %d B from %d "
++                "files; no table-sized device or pinned allocation",
++                self.layer_index,
++                table.layout.num_rows,
++                table.layout.row_bytes,
++                len({shard.path for shard in table.layout.shards}),
++            )
++
++    def _lookup_on_current_stream(self, ngram_ids: torch.Tensor) -> None:
++        if self._rebind_pending or self._reload_error is not None:
++            # A reload delivered shards but its processing did not rebind (a
++            # layer without loadable elements is only restored): rebind now,
++            # or raise if that reload was rejected.
++            self._bind()
++        slot_size, _ = self._get_dp_gather_slot(ngram_ids.shape[0])
++        gathered_ids = self._gather_dp_ids(ngram_ids, slot_size)
++        self._lookup(
++            gathered_ids, output=self._prefetch_buffer[: gathered_ids.shape[0]]
++        )
++
++    @eager_break_during_capture
++    def start_prefetch(
++        self,
++        hidden_states: torch.Tensor,
++        ngram_ids: torch.Tensor,
++    ) -> None:
++        """Look up on the current stream, not the pinned backend's side stream.
++
++        With the side-stream lookup, greedy outputs on GB10 were not reproducible
++        within one server start (identical prompts matched in 2 of 8, logprobs
++        differed by up to 1.4); on the current stream they matched in 8 of 8 with
++        zero logprob difference. The CPU page prefetch already runs ahead of the
++        step, so the side stream buys no overlap worth keeping here.
++        """
++        self._lookup_on_current_stream(ngram_ids)
++
++    def _join_prefetch_stream(self) -> None:
++        """Nothing to join: start_prefetch ran the lookup on the current stream.
++
++        Joining the side stream anyway fails a FULL cudagraph capture, because
++        that stream is never part of the capture
++        (cudaErrorStreamCaptureIsolation).
++        """
++
++    def _lookup(
++        self,
++        input_ids: torch.Tensor,
++        output: torch.Tensor | None = None,
++    ) -> torch.Tensor:
++        """Gather this rank's rows from the mapped files; zeros elsewhere."""
++        if self.table is None:
++            raise RuntimeError("PLE checkpoint mapping was not bound after loading")
++        expected_shape = (*input_ids.shape, self.embedding_dim)
++        if output is None:
++            output = torch.empty(
++                expected_shape, dtype=self.weight.dtype, device=input_ids.device
++            )
++        elif (
++            tuple(output.shape) != expected_shape
++            or output.dtype != self.weight.dtype
++            or output.device != input_ids.device
++        ):
++            raise ValueError(
++                "PLE prefetch output must match the input shape, weight dtype, "
++                "and input device"
++            )
++        self.table.gather_into(
++            input_ids.reshape(-1).long(),
++            output.view(torch.uint8).reshape(-1, self.table.row_bytes),
++            self.shard_indices.org_vocab_start_index,
++            self.shard_indices.org_vocab_end_index,
++        )
++        return output
++
++
++def resolve_checkpoint_files(model_config, load_config) -> list[str]:
++    """The safetensors files the loader read, resolved exactly as it resolves them.
++
++    Reuses the default loader's preparation so ``--download-dir``, subfolders
++    and the ``model.safetensors.index.json`` filter all apply. The weights are
++    already local by the time the storage is bound, so nothing is downloaded.
++    """
++    from vllm.model_executor.model_loader.default_loader import DefaultModelLoader
++
++    _, files, use_safetensors = DefaultModelLoader(load_config)._prepare_weights(
++        model_config.model_weights or model_config.model,
++        None,
++        model_config.revision,
++        fall_back_to_pt=False,
++        allow_patterns_overrides=None,
++    )
++    if not use_safetensors:
++        raise ValueError("Engram checkpoint_mapped requires a safetensors checkpoint")
++    return files
++
++
+ class Qwen4ExpNGramEmbedding(nn.Module):
+     _MASK64 = (1 << 64) - 1
+     _SPLITMIX_GAMMA = 0x9E3779B97F4A7C15
+@@ -700,11 +963,13 @@
+         if params_dtype is None:
+             params_dtype = torch.get_default_dtype()
+         engram_config = get_current_vllm_config().engram_config
+-        embedding_cls = (
+-            Qwen4ExpPLEPinnedHostEmbedding
+-            if engram_config is not None and engram_config.cpu_offload
+-            else Qwen4ExpPLEDeviceEmbedding
+-        )
++        embedding_cls: type[Qwen4ExpPLEEmbedding]
++        if engram_config is not None and engram_config.checkpoint_mapped:
++            embedding_cls = Qwen4ExpPLEPageableHostEmbedding
++        elif engram_config is not None and engram_config.cpu_offload:
++            embedding_cls = Qwen4ExpPLEPinnedHostEmbedding
++        else:
++            embedding_cls = Qwen4ExpPLEDeviceEmbedding
+         self.ngram_embedding = embedding_cls(
+             padded_vocab_size,
+             self.head_dim,
+@@ -849,6 +1114,13 @@
+         ngram_ids = self.compute_ngram_ids(input_ids, query_start_loc, ngram_context)
+         return self.ngram_embedding(ngram_ids).flatten(-2)
+ 
++    def cpu_ngram_ids_fn(self):
++        """A CPU-only ``compute_ngram_ids`` for host-side page prefetching."""
++        cpu = copy_module_for_cpu_ids(self)
++        return lambda ids, qsl, ctx: Qwen4ExpNGramEmbedding.compute_ngram_ids(
++            cpu, ids, qsl, ctx
++        )
++
+     def start_prefetch(
+         self,
+         hidden_states: torch.Tensor,
+@@ -919,6 +1191,12 @@
+                         f"expected {expected_shape}, got "
+                         f"{tuple(loaded_weight.shape)}"
+                     )
++                if isinstance(embedding, Qwen4ExpPLEPageableHostEmbedding):
++                    # Rows are read in place from the checkpoint files; sample
++                    # this shard so the mapping can be checked against it.
++                    embedding.record_incoming_shard(checkpoint_start, loaded_weight)
++                    loaded.add("ngram_embedding.weight")
++                    continue
+                 embedding.weight.weight_loader(
+                     embedding.weight,
+                     loaded_weight,
+@@ -933,6 +1211,23 @@
+         return loaded
+ 
+ 
++def copy_module_for_cpu_ids(module: "Qwen4ExpNGramEmbedding"):
++    """An object with CPU copies of the hash buffers ``compute_ngram_ids`` reads."""
++    from types import SimpleNamespace
++
++    return SimpleNamespace(
++        layer_multipliers=module.layer_multipliers.cpu(),
++        ngram_heads_vocab_sizes=module.ngram_heads_vocab_sizes.cpu(),
++        ngram_heads_offsets=module.ngram_heads_offsets.cpu(),
++        eos_token_id=module.eos_token_id,
++        ngram_size=module.ngram_size,
++        heads_per_ngram=module.heads_per_ngram,
++        _shift_precompute=Qwen4ExpNGramEmbedding._shift_precompute,
++        _shift_apply=Qwen4ExpNGramEmbedding._shift_apply,
++    )
++
++
+ __all__ = [
+     "Qwen4ExpNGramEmbedding",
++    "Qwen4ExpPLEPageableHostEmbedding",
+ ]
+diff -ruN a/vllm/models/qwen4_exp/nvidia/ops/qsa_indexer.py b/vllm/models/qwen4_exp/nvidia/ops/qsa_indexer.py
+--- a/vllm/models/qwen4_exp/nvidia/ops/qsa_indexer.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/models/qwen4_exp/nvidia/ops/qsa_indexer.py	2026-09-24 08:59:16.000000000 +0200
+@@ -484,11 +484,21 @@
+         and current_platform.has_device_capability(90)
+         and not current_platform.is_device_capability_family(120)
+     )
+-    topk_op = (
+-        torch.ops._C.cooperative_topk
+-        if use_cooperative_topk
+-        else torch.ops._C.persistent_topk
+-    )
++    # ---- QSADET (jschmied 2026-09-06, main port) ----
++    import os as _os
++    if _os.environ.get("VLLM_QSA_DET_TOPK"):
++        if not getattr(_topk, "_qsadet_loaded", False):
++            _lib = _os.environ.get("VLLM_QSA_DET_LIB", "/opt/llm/kernel-det/_C_det.so")
++            torch.ops.load_library(_lib)
++            _topk._qsadet_loaded = True
++            print(f"QSADET active: {_lib}", flush=True)
++        topk_op = torch.ops._C_det.persistent_topk
++    else:
++        topk_op = (
++            torch.ops._C.cooperative_topk
++            if use_cooperative_topk
++            else torch.ops._C.persistent_topk
++        )
+     topk_op(
+         logits,
+         visible_blocks,
+diff -ruN a/vllm/models/qwen4_exp/nvidia/ple_layer.py b/vllm/models/qwen4_exp/nvidia/ple_layer.py
+--- a/vllm/models/qwen4_exp/nvidia/ple_layer.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/models/qwen4_exp/nvidia/ple_layer.py	2026-09-26 09:02:44.000000000 +0200
+@@ -175,6 +175,9 @@
+         return True
+ 
+     def get_attn_backend(self) -> type[PleShortConvAttentionBackend]:
++        if getattr(self.cache_config, "use_kda_recoverssm", False) and self.num_spec_tokens > 0:
++            from vllm.v1.attention.backends.ple_recoverssm import PleRecoverSSMAttentionBackend
++            return PleRecoverSSMAttentionBackend  # FNRSSM2
+         return PleShortConvAttentionBackend
+ 
+     def get_state_dtype(self) -> tuple[torch.dtype, ...]:
+diff -ruN a/vllm/models/qwen4_exp/nvidia/ple_pageable.py b/vllm/models/qwen4_exp/nvidia/ple_pageable.py
+--- a/vllm/models/qwen4_exp/nvidia/ple_pageable.py	1970-01-01 01:00:00.000000000 +0100
++++ b/vllm/models/qwen4_exp/nvidia/ple_pageable.py	2026-09-25 14:12:33.000000000 +0200
+@@ -0,0 +1,631 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Read the Qwen4Exp PLE n-gram table in place from the checkpoint files.
++
++On GPUs that dereference pageable host memory through the host page tables
++(``CU_DEVICE_ATTRIBUTE_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES``, e.g. the
++unified-memory GB10), a kernel can read a read-only ``mmap`` of the checkpoint's
++safetensors files directly. There is then no table-sized device or pinned
++allocation, no resident duplicate of the table and no CPU-gather/host-to-device
++staging path: its pages live in the page cache as clean, file-backed pages that
++the kernel can drop and re-read, shared by every process mapping the same files.
++
++GPU faults on non-resident file pages are serviced one page at a time, so the
++rows a step needs are faulted in ahead of the lookup by CPU threads
++(:class:`PagePrefetcher`). The prefetch is only a hint: the lookup is correct
++whether or not it has finished.
++"""
++
++import ctypes
++import json
++import mmap
++import os
++import queue
++import struct
++import threading
++import time
++from collections.abc import Callable
++from concurrent.futures import ThreadPoolExecutor
++from dataclasses import dataclass
++
++import numpy as np
++import regex as re
++import torch
++
++from vllm.logger import init_logger
++from vllm.triton_utils import tl, triton
++
++logger = init_logger(__name__)
++
++# ---- FNPFTIME (jschmied 2026-09-25, local): FN_PFTIME=1 times the page prefetch against the GPU gather ----
++_PFTIME = os.environ.get("FN_PFTIME", "") == "1"
++_SYNCMODE = os.environ.get("FN_PLE_SYNCTOUCH", "")          # "1": always wait; "auto": wait only while pages fault
++_SYNCTOUCH = _SYNCMODE in ("1", "auto")                      # FNSYNCTOUCH: the gather waits for this step's touch
++_SYNC_AUTO = _SYNCMODE == "auto"
++_SYNC_THRESHOLD = float(os.environ.get("FN_PLE_SYNC_FAULTS", "12"))   # measured faults/step; unwaited steps undercount ~2x (GPU takes half)
++_PF_FAULT_EMA = [1000.0]                                     # start cold: wait until the fault rate is known to be low
++_PF_TRACK = _PFTIME or _SYNCTOUCH
++_PF_DONE: dict[int, threading.Event] = {}        # step -> set when the CPU touch of that step's rows finished
++_PF_WAIT_MS: list = []                           # main-thread wait per step (ms)
++_POP_LIBC = ctypes.CDLL(None, use_errno=True)
++_POP_LIBC.madvise.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
++_MADV_POPULATE_READ = 22
++_POP_C = None
++if _SYNCTOUCH:
++    try:   # GIL-free helper: one call populates the whole page list from its own pthreads
++        _POP_C = ctypes.CDLL(os.environ.get("FN_POPULATE_LIB", "/opt/llm/runners/plecold/libfnpopulate.so"))
++        _POP_C.fn_populate.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
++    except OSError as _e:
++        logger.warning("FNSYNCTOUCH: C populate helper unavailable (%s); using the Python pool", _e)
++
++
++def _populate_pages(pages: np.ndarray) -> int:
++    """Read + map each page with one madvise per page (ctypes releases the GIL: real parallel faults)."""
++    for p in pages:
++        _POP_LIBC.madvise(ctypes.c_void_p(int(p)), 4096, _MADV_POPULATE_READ)
++    return len(pages)
++_PF_STEP = [0]                                   # step id of the latest prepare()
++_PF_GATHER: dict[int, list] = {}                 # step -> [(ev_start, ev_end, rows), ...]
++_PF_STATS: list = []                             # per step: dict
++
++
++def _pf_majflt() -> int:
++    return int(open("/proc/self/stat").read().rsplit(")", 1)[1].split()[9])
++
++
++def _pf_report() -> None:
++    import statistics as _st
++    rows = _PF_STATS[:]; _PF_STATS.clear()
++    def q(key, p):
++        v = sorted(r[key] for r in rows if r.get(key) is not None)
++        return round(v[min(len(v) - 1, int(p * len(v)))], 3) if v else None
++    lost = sum(1 for r in rows if r["lost"]) / max(1, len(rows))
++    logger.warning(
++        "FNPFTIME steps=%d prefetch_ms(prep->done) p50=%s p90=%s | inputs_ms(prep->ready) p50=%s | "
++        "touch_ms p50=%s p90=%s | gather_gpu_us p50=%s p90=%s max=%s | gpu_started_before_touch_done=%.2f | "
++        "majflt_during_touch p50=%s p90=%s | lookup_wait_ms p50=%s p90=%s | fault_ema=%.1f",
++        len(rows), q("prefetch_ms", .5), q("prefetch_ms", .9), q("inputs_ms", .5), q("touch_ms", .5),
++        q("touch_ms", .9), q("gather_us", .5), q("gather_us", .9), q("gather_us", 1.0), lost,
++        q("majflt", .5), q("majflt", .9), q("wait_ms", .5), q("wait_ms", .9), _PF_FAULT_EMA[0])
++
++_PAGE = 4096
++_MADV_RANDOM = 1
++_CU_PAGEABLE_MEMORY_ACCESS = 88
++_CU_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES = 100
++_SAFETENSORS_DTYPES = {
++    "F8_E4M3": torch.float8_e4m3fn,
++    "BF16": torch.bfloat16,
++    "F16": torch.float16,
++    "F32": torch.float32,
++}
++_SHARD_RE = re.compile(
++    r"layers\.(\d+)\.ple\.ple_embedding\.ngram_embedding\.shard_(\d+)\.weight$"
++)
++
++
++def require_pageable_access(device_index: int) -> None:
++    """Raise unless the GPU reads pageable host memory via host page tables.
++
++    Being an integrated GPU is not sufficient, and an attribute that cannot be
++    queried is treated as unsupported.
++    """
++    try:
++        cuda = ctypes.CDLL("libcuda.so.1")
++    except OSError as e:
++        raise RuntimeError("Cannot load the CUDA driver to query the GPU") from e
++    device = ctypes.c_int()
++    if cuda.cuInit(0) != 0 or cuda.cuDeviceGet(ctypes.byref(device), device_index):
++        raise RuntimeError("Cannot query the CUDA driver for the device")
++    for name, attribute in (
++        ("PAGEABLE_MEMORY_ACCESS", _CU_PAGEABLE_MEMORY_ACCESS),
++        (
++            "PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES",
++            _CU_PAGEABLE_MEMORY_ACCESS_USES_HOST_PAGE_TABLES,
++        ),
++    ):
++        value = ctypes.c_int(0)
++        rc = cuda.cuDeviceGetAttribute(ctypes.byref(value), attribute, device)
++        if rc != 0 or value.value != 1:
++            raise RuntimeError(
++                "Engram checkpoint_mapped requires a GPU that reads pageable host "
++                f"memory through the host page tables; device {device_index} "
++                f"reports CU_DEVICE_ATTRIBUTE_{name}={value.value} (rc={rc})"
++            )
++
++
++@dataclass(frozen=True)
++class ShardLocation:
++    path: str
++    offset: int
++    rows: int
++
++
++@dataclass(frozen=True)
++class TableLayout:
++    """Where every checkpoint shard of one layer's table lives."""
++
++    num_rows: int
++    row_bytes: int
++    rows_per_shard: int
++    shards: tuple[ShardLocation, ...]
++
++
++def discover_table_layout(
++    files: list[str],
++    layer_index: int,
++    num_rows: int,
++    embedding_dim: int,
++    dtype: torch.dtype,
++    split_parts: int,
++) -> TableLayout:
++    """Locate and validate one layer's PLE shards among the loader's files.
++
++    Mirrors ``Qwen4ExpNGramEmbedding.load_weights``: shard ``i`` holds rows
++    ``[i * S, min((i + 1) * S, num_rows))`` with ``S = ceil(num_rows /
++    split_parts)``. Every shard that owns rows must exist exactly once, with
++    exactly that shape and ``dtype``; nothing is truncated or padded.
++    """
++    found: dict[int, tuple[str, int, list[int], str]] = {}
++    if not files:
++        raise FileNotFoundError("No safetensors files to map the PLE table from")
++    # ``files`` is the loader's list: already filtered by the safetensors index,
++    # so files the index excludes are never considered.
++    for path in sorted(files):
++        with open(path, "rb") as f:
++            header_len = struct.unpack("<Q", f.read(8))[0]
++            header = json.loads(f.read(header_len))
++        for name, meta in header.items():
++            match = _SHARD_RE.search(name)
++            if match is None or int(match.group(1)) != layer_index:
++                continue
++            shard = int(match.group(2))
++            if shard in found:
++                raise ValueError(
++                    f"PLE shard {shard} of layer {layer_index} appears twice "
++                    f"({found[shard][0]} and {path})"
++                )
++            found[shard] = (
++                path,
++                8 + header_len + meta["data_offsets"][0],
++                meta["shape"],
++                meta["dtype"],
++            )
++
++    rows_per_shard = (num_rows + split_parts - 1) // split_parts
++    needed = [i for i in range(split_parts) if i * rows_per_shard < num_rows]
++    missing = [i for i in needed if i not in found]
++    unexpected = sorted(set(found) - set(needed))
++    if missing or unexpected:
++        raise ValueError(
++            f"PLE shards of layer {layer_index} do not cover "
++            f"{num_rows} rows in {split_parts} parts: missing {missing[:8]}, "
++            f"unexpected {unexpected[:8]}"
++        )
++    shards = []
++    for i in needed:
++        path, offset, shape, st_dtype = found[i]
++        want = [min(rows_per_shard, num_rows - i * rows_per_shard), embedding_dim]
++        if list(shape) != want:
++            raise ValueError(f"PLE shard {i} has shape {shape}, expected {want}")
++        if _SAFETENSORS_DTYPES.get(st_dtype) != dtype:
++            raise ValueError(
++                f"PLE shard {i} is stored as {st_dtype}, but the embedding uses "
++                f"{dtype}; checkpoint_mapped cannot convert rows"
++            )
++        shards.append(ShardLocation(path, offset, want[0]))
++    return TableLayout(
++        num_rows=num_rows,
++        row_bytes=embedding_dim * dtype.itemsize,
++        rows_per_shard=rows_per_shard,
++        shards=tuple(shards),
++    )
++
++
++@triton.jit
++def _gather_mapped_rows_kernel(
++    ids_ptr,
++    shard_base_ptr,
++    out_ptr,
++    rows_per_shard,
++    vocab_start,
++    vocab_end,
++    ROW_BYTES: tl.constexpr,
++    BLOCK: tl.constexpr,
++):
++    """Copy owned rows byte-wise from mapped shards; write zeros otherwise."""
++    pid = tl.program_id(0)
++    row = tl.load(ids_ptr + pid).to(tl.int64)
++    owned = (row >= vocab_start) & (row < vocab_end)
++    row = tl.where(owned, row, 0)
++    shard = row // rows_per_shard
++    local = row - shard * rows_per_shard
++    base = tl.load(shard_base_ptr + shard).to(tl.pointer_type(tl.uint8))
++    offsets = tl.arange(0, BLOCK)
++    in_row = offsets < ROW_BYTES
++    values = tl.load(base + local * ROW_BYTES + offsets, mask=in_row & owned, other=0)
++    # The store is unmasked by ownership so rows this rank does not own are zero,
++    # never allocator residue or a previous graph replay's bytes.
++    tl.store(out_ptr + pid.to(tl.int64) * ROW_BYTES + offsets, values, mask=in_row)
++
++
++def verify_shard_bytes(
++    table: "MappedTable",
++    checkpoint_start: int,
++    shard: torch.Tensor,
++    chunk_rows: int = 65536,
++) -> None:
++    """Raise unless an incoming checkpoint shard equals the mapped rows exactly.
++
++    Compares every byte, chunk by chunk, without copying the mapping. The
++    mapping serves rows from the checkpoint files; weights that differ from
++    those files (e.g. delivered from memory by a weight sync) cannot be served
++    and must not be silently ignored.
++    """
++    if shard.numel() == 0:
++        return
++    index, offset = divmod(checkpoint_start, table.rows_per_shard)
++    view = table.views[index] if index < len(table.views) else None
++    rows = shard.shape[0]
++    if view is None or offset != 0 or view.shape[0] != rows:
++        raise ValueError(
++            f"Incoming PLE shard at row {checkpoint_start} ({rows} rows) does not "
++            "line up with the mapped checkpoint shards"
++        )
++    raw = shard.detach().contiguous().view(torch.uint8).reshape(rows, -1)
++    for start in range(0, rows, chunk_rows):
++        end = min(rows, start + chunk_rows)
++        incoming = raw[start:end].cpu().numpy()
++        if not np.array_equal(view[start:end], incoming):
++            bad = start + int(np.flatnonzero((view[start:end] != incoming).any(1))[0])
++            raise ValueError(
++                f"PLE row {checkpoint_start + bad} received from the weights source "
++                "differs from the mapped checkpoint files. checkpoint_mapped serves "
++                "the table from disk and cannot load it from in-memory weights; "
++                "reload from a checkpoint on disk (weights_path) or disable "
++                "checkpoint_mapped."
++            )
++
++
++class MappedTable:
++    """Read-only mappings of a layer's shards plus the GPU and CPU accessors."""
++
++    def __init__(self, layout: TableLayout, device: torch.device) -> None:
++        self.layout: TableLayout | None = layout
++        self.row_bytes = layout.row_bytes
++        self.rows_per_shard = layout.rows_per_shard
++        self.num_rows = layout.num_rows
++        self._maps: dict[str, tuple[mmap.mmap, np.ndarray]] = {}
++        libc = ctypes.CDLL(None, use_errno=True)
++        for path in sorted({s.path for s in layout.shards}):
++            fd = os.open(path, os.O_RDONLY)
++            try:
++                size = os.fstat(fd).st_size
++                mapping = mmap.mmap(fd, size, mmap.MAP_SHARED, mmap.PROT_READ)
++            finally:
++                os.close(fd)
++            array = np.frombuffer(mapping, dtype=np.uint8)
++            address = array.__array_interface__["data"][0]
++            # Rows are read at random; readahead would only evict useful pages.
++            if os.environ.get("FN_PLE_POPULATE", "") == "1":
++                # FNPOPULATE (jschmied 2026-09-25, local): read the shard into the page cache with readahead,
++                # then populate this process's page tables, so GPU lookups never take a first-touch fault.
++                _t0 = time.perf_counter()
++                libc.madvise(ctypes.c_void_p(address), ctypes.c_size_t(size), 3)   # MADV_WILLNEED
++                _rc = libc.madvise(ctypes.c_void_p(address), ctypes.c_size_t(size), 22)  # MADV_POPULATE_READ
++                logger.warning("FNPOPULATE %s: %.2f GiB populated in %.1f s (rc %d)", os.path.basename(path),
++                               size / 2**30, time.perf_counter() - _t0, _rc)
++            libc.madvise(ctypes.c_void_p(address), ctypes.c_size_t(size), _MADV_RANDOM)
++            self._maps[path] = (mapping, array)
++        self.views = [
++            self._maps[s.path][1][
++                s.offset : s.offset + s.rows * self.row_bytes
++            ].reshape(s.rows, self.row_bytes)
++            for s in layout.shards
++        ]
++        bases = [v.__array_interface__["data"][0] for v in self.views]
++        self.shard_base = torch.tensor(bases, dtype=torch.int64, device=device)
++        self._block = triton.next_power_of_2(self.row_bytes)
++
++    @classmethod
++    def zeros(
++        cls, num_rows: int, row_bytes: int, device: torch.device
++    ) -> "MappedTable":
++        """An anonymous, never-written mapping: every row reads as zero.
++
++        Used when no checkpoint is loaded (``--load-format dummy``); the zero
++        page backs every read, so no memory is committed.
++        """
++        self = cls.__new__(cls)
++        self.row_bytes = row_bytes
++        self.rows_per_shard = max(num_rows, 1)
++        self.num_rows = num_rows
++        # Private and anonymous: every read is served by the shared zero page, so
++        # touching the table commits no memory (a MAP_SHARED anonymous mapping
++        # would allocate shmem pages on read).
++        mapping = mmap.mmap(
++            -1,
++            max(num_rows * row_bytes, _PAGE),
++            flags=mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS,
++            prot=mmap.PROT_READ,
++        )
++        array = np.frombuffer(mapping, dtype=np.uint8)
++        self._maps = {"<zeros>": (mapping, array)}
++        self.views = [array[: num_rows * row_bytes].reshape(num_rows, row_bytes)]
++        self.layout = None
++        self.shard_base = torch.tensor(
++            [array.__array_interface__["data"][0]], dtype=torch.int64, device=device
++        )
++        self._block = triton.next_power_of_2(row_bytes)
++        return self
++
++    def gather_into(
++        self,
++        ids: torch.Tensor,
++        out: torch.Tensor,
++        vocab_start: int,
++        vocab_end: int,
++    ) -> None:
++        """Write rows ``ids`` into ``out`` (``[len(ids), row_bytes]`` uint8)."""
++        if ids.numel() == 0:
++            return
++        if (_SYNCTOUCH and not torch.cuda.is_current_stream_capturing()
++                and (not _SYNC_AUTO or _PF_FAULT_EMA[0] >= _SYNC_THRESHOLD)):
++            ev_done = _PF_DONE.get(_PF_STEP[0])
++            if ev_done is not None and not ev_done.is_set():
++                _t = time.perf_counter()
++                ev_done.wait(0.05)                   # releases the GIL; never blocks the lookup longer than 50 ms
++                if _PFTIME:
++                    _PF_WAIT_MS.append((time.perf_counter() - _t) * 1000)
++            elif _PFTIME:
++                _PF_WAIT_MS.append(0.0)
++        _pf_evs = None
++        if _PFTIME and not torch.cuda.is_current_stream_capturing():
++            _pf_evs = (torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True))
++            _pf_evs[0].record()
++        _gather_mapped_rows_kernel[(ids.numel(),)](
++            ids,
++            self.shard_base,
++            out,
++            self.rows_per_shard,
++            vocab_start,
++            min(vocab_end, self.num_rows),
++            ROW_BYTES=self.row_bytes,
++            BLOCK=self._block,
++        )
++        if _pf_evs is not None:
++            _pf_evs[1].record()
++            _PF_GATHER.setdefault(_PF_STEP[0], []).append((_pf_evs[0], _pf_evs[1], ids.numel()))
++
++    def touch(self, rows: np.ndarray, pool: ThreadPoolExecutor | None) -> None:
++        """Fault in both ends of every row (a row may straddle a page)."""
++        rows = np.sort(rows)
++        shard = rows // self.rows_per_shard
++        local = rows - shard * self.rows_per_shard
++        last = self.row_bytes - 1
++
++        def groups(index: np.ndarray) -> list[tuple[np.ndarray, np.ndarray]]:
++            s = shard[index]
++            cuts = np.flatnonzero(np.diff(s)) + 1
++            return [
++                (self.views[int(group[0])], rows_in_shard)
++                for group, rows_in_shard in zip(
++                    np.split(s, cuts), np.split(local[index], cuts)
++                )
++                if group.size
++            ]
++
++        # Index the per-shard 2-D views: fancy-indexing the flat byte arrays is
++        # ~12x slower cold with identical tasks.
++        def fault(task: tuple[np.ndarray, np.ndarray]) -> int:
++            view, index = task
++            return int(view[index, 0].sum()) + int(view[index, last].sum())
++
++        if _SYNCTOUCH and pool is not None:
++            # FNSYNCTOUCH: decode steps have far fewer than 4096 rows, which the stock path touches serially in
++            # one thread (~5 ms for ~56 cold pages). Populate the pages in parallel instead (SSD-IOPS bound).
++            spans = []
++            for view, index in groups(np.arange(rows.size)):
++                start = view.__array_interface__["data"][0] + index.astype(np.int64) * self.row_bytes
++                spans.append(start & ~4095)
++                spans.append((start + (self.row_bytes - 1)) & ~4095)
++            if spans:
++                pages = np.unique(np.concatenate(spans)).astype(np.uint64)
++                if _POP_C is not None:
++                    _POP_C.fn_populate(pages.ctypes.data, int(pages.size), 16)
++                else:
++                    list(pool.map(_populate_pages, np.array_split(pages, min(32, pages.size))))
++            return
++        if pool is None or rows.size <= 4096:
++            for task in groups(np.arange(rows.size)):
++                fault(task)
++            return
++        tasks = []
++        for chunk in np.array_split(np.arange(rows.size), 64):
++            if chunk.size:
++                tasks.extend(groups(chunk))
++        list(pool.map(fault, tasks))
++
++
++class PagePrefetcher:
++    """Fault in each step's PLE rows from CPU threads before the GPU reads them.
++
++    ``prepare`` copies the step's inputs to pinned staging buffers on the current
++    stream and returns; a worker thread waits for the copy, computes the n-gram
++    ids on the CPU, and touches the rows this rank owns. Each source's table is
++    re-read on every step, so a remap (weight reload) takes effect here too.
++    """
++
++    SLOTS = 4
++    THREADS = 64
++
++    def __init__(
++        self,
++        sources: list["PrefetchSource"],
++        device: torch.device,
++        max_num_tokens: int,
++        max_num_reqs: int,
++        ngram_context_len: int,
++    ) -> None:
++        self.sources = sources
++        if device.index is None:  # e.g. torch.device("cuda"): pin to the current GPU
++            device = torch.device(device.type, torch.accelerator.current_device_index())
++        self.device = device
++        self.capacity = (max_num_tokens, max_num_reqs, ngram_context_len)
++        # Pinned staging slots at full capacity (allocated on the first step,
++        # with the dtypes of the model state's buffers): the per-step input_ids
++        # view changes size between steps.
++        self.slots: list[tuple[torch.Tensor, ...]] = []
++        self.free: queue.Queue[int] = queue.Queue()
++        for i in range(self.SLOTS):
++            self.free.put(i)
++        self.work: queue.Queue = queue.Queue()
++        self.pool = ThreadPoolExecutor(self.THREADS, thread_name_prefix="ple-touch")
++        self.skipped = 0
++        threading.Thread(target=self._loop, name="ple-prefetch", daemon=True).start()
++        self._pf_pending: list = []
++        if _PFTIME:
++            logger.warning("FNPFTIME armed: prefetch timing on, %d touch threads", self.THREADS)
++        if _SYNCTOUCH:
++            logger.warning("FNSYNCTOUCH armed: the PLE gather waits (<= 50 ms) for the step's CPU page touch; C helper %s; mode %s, threshold %.0f faults/step", _POP_C is not None, _SYNCMODE, _SYNC_THRESHOLD)
++
++    def prepare(
++        self,
++        input_ids: torch.Tensor,
++        query_start_loc: torch.Tensor,
++        ngram_context: torch.Tensor,
++        num_reqs: int,
++        num_tokens: int,
++    ) -> None:
++        max_tokens, max_reqs, ctx_len = self.capacity
++        if (
++            num_tokens > max_tokens
++            or num_reqs > max_reqs
++            or ngram_context.shape[1] > ctx_len
++        ):
++            logger.warning_once(
++                "PLE page prefetch skipped a step larger than its staging "
++                "capacity; lookups are unaffected"
++            )
++            return
++        if not self.slots:
++            self.slots = [
++                (
++                    torch.empty(max_tokens, dtype=input_ids.dtype).pin_memory(),
++                    torch.empty(max_reqs + 1, dtype=query_start_loc.dtype).pin_memory(),
++                    torch.empty(
++                        max_reqs, ctx_len, dtype=ngram_context.dtype
++                    ).pin_memory(),
++                )
++                for _ in range(self.SLOTS)
++            ]
++        try:
++            slot = self.free.get_nowait()
++        except queue.Empty:
++            self.skipped += 1  # a hint only: the lookup stays correct
++            return
++        ids, qsl, ctx = self.slots[slot]
++        ids[:num_tokens].copy_(input_ids[:num_tokens], non_blocking=True)
++        qsl[: num_reqs + 1].copy_(query_start_loc[: num_reqs + 1], non_blocking=True)
++        ctx[:num_reqs, : ngram_context.shape[1]].copy_(
++            ngram_context[:num_reqs], non_blocking=True
++        )
++        event = torch.cuda.Event()
++        event.record(torch.cuda.current_stream(self.device))
++        if _PF_TRACK:
++            _PF_STEP[0] += 1
++            _PF_DONE[_PF_STEP[0]] = threading.Event()
++            self.work.put((slot, event, num_reqs, num_tokens, ngram_context.shape[1], _PF_STEP[0], time.perf_counter()))
++            return
++        self.work.put((slot, event, num_reqs, num_tokens, ngram_context.shape[1]))
++
++    def _loop(self) -> None:
++        try:
++            self._serve()
++        except Exception:
++            # Never die silently: without the prefetch, cold rows fault one page
++            # at a time on the GPU (correct, but slow).
++            logger.exception("PLE page prefetch thread stopped")
++
++    def _serve(self) -> None:
++        torch.accelerator.set_device_index(self.device.index)
++        while True:
++            item = self.work.get()
++            slot, event, num_reqs, num_tokens, ctx_len = item[:5]
++            step, t_prep = (item[5], item[6]) if len(item) > 5 else (None, None)
++            try:
++                event.synchronize()
++                t_ready = time.perf_counter()
++                ids, qsl, ctx = self.slots[slot]
++                ids = ids[:num_tokens].clone()
++                qsl = qsl[: num_reqs + 1].clone()
++                ctx = ctx[:num_reqs, :ctx_len].clone()
++            finally:
++                self.free.put(slot)
++            f0 = _pf_majflt() if (step is not None or _SYNC_AUTO) else 0
++            try:
++                for source in self.sources:
++                    source.touch(ids, qsl, ctx, self.pool)
++            except Exception:
++                logger.exception("PLE page prefetch failed; lookups are unaffected")
++            if _SYNC_AUTO:
++                _PF_FAULT_EMA[0] = 0.8 * min(_PF_FAULT_EMA[0], 200.0) + 0.2 * (_pf_majflt() - f0)
++            if step is not None:
++                t_done = time.perf_counter()
++                lost = any(e0.query() for e0, _, _ in _PF_GATHER.get(step, []))   # GPU already started the gather
++                ev_done = _PF_DONE.get(step)
++                if ev_done is not None:
++                    ev_done.set()                                                 # release a waiting lookup first
++                for k in [k for k in _PF_DONE if k < step - 8]:
++                    _PF_DONE.pop(k, None)
++                if _PFTIME:
++                    try:
++                        # the gather of `step` may not be launched yet (SYNCTOUCH): account the previous step here
++                        self._pf_pending.append({"step": step, "prefetch_ms": (t_done - t_prep) * 1000,
++                                                 "inputs_ms": (t_ready - t_prep) * 1000, "touch_ms": (t_done - t_ready) * 1000,
++                                                 "lost": lost, "majflt": _pf_majflt() - f0})
++                        while len(self._pf_pending) > 1:
++                            r = self._pf_pending.pop(0)
++                            evs = _PF_GATHER.pop(r["step"], [])
++                            gus = None
++                            if evs:
++                                for _, e1, _ in evs:
++                                    e1.synchronize()
++                                gus = sum(e0.elapsed_time(e1) for e0, e1, _ in evs) * 1000
++                            r["gather_us"] = gus
++                            r["wait_ms"] = _PF_WAIT_MS.pop(0) if _PF_WAIT_MS else None
++                            _PF_STATS.append(r)
++                        for k in [k for k in _PF_GATHER if k < step - 8]:
++                            _PF_GATHER.pop(k, None)
++                        if len(_PF_STATS) >= 100:
++                            _pf_report()
++                    except Exception:
++                        logger.exception("FNPFTIME accounting failed")
++
++
++class PrefetchSource:
++    """One mapped embedding and a CPU hash of its ids, refreshed on remap."""
++
++    def __init__(
++        self,
++        get_table: Callable[[], "MappedTable | None"],
++        vocab_range: tuple[int, int],
++        make_cpu_ids: Callable[[], Callable[..., torch.Tensor]],
++    ) -> None:
++        self.get_table = get_table
++        self.vocab_range = vocab_range
++        self.make_cpu_ids = make_cpu_ids
++        self._table: MappedTable | None = None
++        self._cpu_ids: Callable[..., torch.Tensor] | None = None
++
++    def touch(self, ids, qsl, ctx, pool: ThreadPoolExecutor) -> None:
++        table = self.get_table()
++        if table is None:
++            return
++        if table is not self._table or self._cpu_ids is None:
++            # First step, or the mapping was rebuilt: refresh the CPU hash buffers.
++            self._cpu_ids = self.make_cpu_ids()
++            self._table = table
++        rows = self._cpu_ids(ids, qsl, ctx).reshape(-1).numpy()
++        start, end = self.vocab_range
++        rows = rows[(rows >= start) & (rows < min(end, table.num_rows))]
++        table.touch(rows, pool)
+diff -ruN a/vllm/third_party/flash_linear_attention/ops/fused_sigmoid_gating.py b/vllm/third_party/flash_linear_attention/ops/fused_sigmoid_gating.py
+--- a/vllm/third_party/flash_linear_attention/ops/fused_sigmoid_gating.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/third_party/flash_linear_attention/ops/fused_sigmoid_gating.py	2026-09-25 18:17:49.000000000 +0200
+@@ -12,6 +12,15 @@
+ from vllm.triton_utils import tl, triton
+ 
+ 
++# ---- FNGDNCS (jschmied 2026-09-25, local): FN_GDN_STORE_CS=1 marks the spec-decode state-snapshot stores as streaming
++# (.cs), so the 12 MiB/layer of snapshots drain during this kernel instead of sitting dirty in L2 and slowing the next
++# weight reads (speed-of-light 4o). Values are unchanged. ----
++import os as _fn_os
++_FN_GDN_STORE_CS = _fn_os.environ.get("FN_GDN_STORE_CS", "") == "1"
++if _FN_GDN_STORE_CS:
++    from vllm.logger import init_logger as _fn_il
++    _fn_il(__name__).warning("FNGDNCS active: streaming stores for GDN state snapshots")
++
+ @triton.heuristics(
+     {
+         "USE_INITIAL_STATE": lambda args: args["h0"] is not None,
+@@ -58,6 +67,7 @@
+     IS_CONTINUOUS_BATCHING: tl.constexpr,
+     IS_SPEC_DECODING: tl.constexpr,
+     IS_KDA: tl.constexpr,
++    STORE_CS: tl.constexpr = False,  # FNGDNCS (local): streaming stores for the per-token state snapshots
+ ):
+     i_k, i_v, i_nh = tl.program_id(0), tl.program_id(1), tl.program_id(2)
+     i_n, i_hv = i_nh // HV, i_nh % HV
+@@ -163,7 +173,10 @@
+             if final_state_idx > 0:
+                 p_ht = ht + final_state_idx * stride_final_state_token
+                 p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+-                tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
++                if STORE_CS:
++                    tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h, cache_modifier=".cs")
++                else:
++                    tl.store(p_ht, b_h.to(p_ht.dtype.element_ty), mask=mask_h)
+         else:
+             p_ht = ht + (bos + i_t) * stride_final_state_token
+             p_ht = p_ht + i_hv * V * K + o_v[:, None] * K + o_k[None, :]
+@@ -272,6 +285,7 @@
+         INPLACE_FINAL_STATE=inplace_final_state,
+         USE_QK_L2NORM_IN_KERNEL=use_qk_l2norm_in_kernel,
+         IS_KDA=is_kda,
++        STORE_CS=_FN_GDN_STORE_CS,
+         num_warps=num_warps,
+         num_stages=num_stages,
+     )
+diff -ruN a/vllm/v1/attention/backends/gdn_recoverssm.py b/vllm/v1/attention/backends/gdn_recoverssm.py
+--- a/vllm/v1/attention/backends/gdn_recoverssm.py	1970-01-01 01:00:00.000000000 +0100
++++ b/vllm/v1/attention/backends/gdn_recoverssm.py	2026-09-26 09:02:43.000000000 +0200
+@@ -0,0 +1,129 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""GDN attention metadata for RecoverSSM speculative decode (Qwen-style Gated DeltaNet).
++
++Wraps the generic GDN builder: every active decode row runs through the spec path (a draft-less step is a
++T=1 window), the spec state indices keep only the checkpoint column, num_accepted_tokens is always 1 (the
++checkpoint and the compacted conv window already hold the accepted state), and the metadata carries what the
++post-sampling commit needs. Mirrors the Kimi-K3 KDA builder's RecoverSSM handling.
++"""
++from dataclasses import dataclass, field, fields
++from typing import Any
++
++import torch
++
++from vllm.logger import init_logger
++from vllm.v1.attention.backends.gdn_attn import (
++    GDNAttentionBackend,
++    GDNAttentionMetadata,
++    GDNAttentionMetadataBuilder,
++)
++from vllm.v1.attention.backends.recoverssm_metadata import (
++    RecoverSSMMetadata,
++    RecoverSSMPostprocessMetadata,
++)
++
++logger = init_logger(__name__)
++
++
++@dataclass
++class GDNRecoverSSMCommitMetadata:
++    state_indices: torch.Tensor          # [num_spec_decodes, 1]
++    query_start_loc: torch.Tensor        # [num_spec_decodes + 1]
++    request_indices: torch.Tensor | None  # batch rows of the spec requests (None: rows 0..n-1)
++    block_table: torch.Tensor | None     # align mode
++    num_computed_tokens: torch.Tensor | None
++    block_size: int | None
++
++
++@dataclass
++class GDNRecoverSSMMetadata(GDNAttentionMetadata, RecoverSSMMetadata):
++    recoverssm_commit: GDNRecoverSSMCommitMetadata | None = None
++    recoverssm_context: Any = field(default=None, repr=False, compare=False)
++
++    def commit_recoverssm_state(self, num_accepted_tokens: torch.Tensor) -> RecoverSSMPostprocessMetadata | None:
++        c = self.recoverssm_commit
++        if c is None:
++            return None
++        n = self.num_spec_decodes
++        self.recoverssm_context.commit(
++            num_accepted_tokens, c.state_indices[:n, 0], c.query_start_loc[: n + 1],
++            request_indices=c.request_indices, block_table=c.block_table,
++            num_computed_tokens=c.num_computed_tokens, mamba_block_size=c.block_size)
++        if c.block_table is None:
++            return None
++        return RecoverSSMPostprocessMetadata(
++            num_spec_decodes=n, request_indices=c.request_indices, block_table=c.block_table,
++            num_computed_tokens=c.num_computed_tokens, block_size=c.block_size)
++
++
++class GDNRecoverSSMMetadataBuilder(GDNAttentionMetadataBuilder):
++    def __init__(self, kv_cache_spec, layer_names, vllm_config, device) -> None:
++        super().__init__(kv_cache_spec, layer_names, vllm_config, device)
++        if self.use_full_cuda_graph:
++            raise ValueError("GDN RecoverSSM supports PIECEWISE CUDA graphs only (no FULL decode graphs yet)")
++        max_reqs = vllm_config.scheduler_config.max_num_seqs
++        self._ones = torch.ones(max_reqs, dtype=torch.int32, device=device)
++        self._context = None
++        self._logged = False
++
++    def _get_context(self):
++        if self._context is None:
++            from vllm.model_executor.layers.mamba.gdn.recoverssm_gdn import GDNRecoverSSMCommitContext
++            fc = self.vllm_config.compilation_config.static_forward_context
++            layers = [fc[name] for name in self.layer_names]
++            self._context = GDNRecoverSSMCommitContext.create(
++                layers, spec_query_len=1 + self.num_spec,
++                max_num_reqs=self.vllm_config.scheduler_config.max_num_seqs)
++            logger.warning("GDN RecoverSSM commit context: %d layers, spec_query_len %d",
++                           len(layers), 1 + self.num_spec)
++        return self._context
++
++    def build(self, common_prefix_len, common_attn_metadata, num_accepted_tokens=None,
++              num_decode_draft_tokens_cpu=None, fast_build=False):  # type: ignore[override]
++        m = common_attn_metadata
++        spec_mask_cpu = None
++        if self.use_spec_decode and num_decode_draft_tokens_cpu is not None:
++            assert m.is_prefilling is not None and m.is_prefilling.device.type == "cpu"
++            active_decode = (~m.is_prefilling) & (m.query_start_loc_cpu.diff() > 0)
++            spec_mask_cpu = (num_decode_draft_tokens_cpu >= 0) | active_decode
++            # Positive counts only defeat the base builder's "no drafts -> regular decode" shortcut:
++            # RecoverSSM keeps every post-prefill row on the spec path (extended conv window).
++            num_decode_draft_tokens_cpu = torch.where(
++                spec_mask_cpu, torch.ones_like(num_decode_draft_tokens_cpu),
++                torch.full_like(num_decode_draft_tokens_cpu, -1))
++        meta = super().build(common_prefix_len, m, num_accepted_tokens=num_accepted_tokens,
++                             num_decode_draft_tokens_cpu=num_decode_draft_tokens_cpu, fast_build=fast_build)
++        base = {f.name: getattr(meta, f.name) for f in fields(meta)}
++        commit = None
++        if meta.num_spec_decodes > 0:
++            n = meta.num_spec_decodes
++            base["spec_state_indices_tensor"] = meta.spec_state_indices_tensor[:, :1]
++            base["num_accepted_tokens"] = self._ones[:n]
++            rows = spec_mask_cpu.nonzero().flatten()
++            contiguous = bool(rows.numel() == n and (n == 0 or int(rows[-1]) == n - 1))
++            request_indices = None if contiguous else rows.to(torch.int32).to(m.query_start_loc.device,
++                                                                                non_blocking=True)
++            align = self.vllm_config.cache_config.mamba_cache_mode == "align"
++            commit = GDNRecoverSSMCommitMetadata(
++                state_indices=base["spec_state_indices_tensor"],
++                query_start_loc=meta.spec_query_start_loc,
++                request_indices=request_indices,
++                block_table=m.block_table_tensor if align else None,
++                num_computed_tokens=m.compute_num_computed_tokens() if align else None,
++                block_size=self.kv_cache_spec.block_size if align else None)
++            if not self._logged:
++                self._logged = True
++                logger.warning("GDN RecoverSSM path taken: %d spec rows, align=%s", n, align)
++        return GDNRecoverSSMMetadata(**base, recoverssm_commit=commit,
++                                     recoverssm_context=self._get_context() if commit is not None else None)
++
++
++class GDNRecoverSSMAttentionBackend(GDNAttentionBackend):
++    @staticmethod
++    def get_name() -> str:
++        return "GDN_RECOVERSSM"
++
++    @staticmethod
++    def get_builder_cls() -> type[GDNRecoverSSMMetadataBuilder]:
++        return GDNRecoverSSMMetadataBuilder
+diff -ruN a/vllm/v1/attention/backends/ple_recoverssm.py b/vllm/v1/attention/backends/ple_recoverssm.py
+--- a/vllm/v1/attention/backends/ple_recoverssm.py	1970-01-01 01:00:00.000000000 +0100
++++ b/vllm/v1/attention/backends/ple_recoverssm.py	2026-09-26 09:02:44.000000000 +0200
+@@ -0,0 +1,156 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""RecoverSSM protocol for the Qwen4Exp PLE short-conv layer (FNRSSM phase 2, jschmied 2026-09-25, local).
++
++When the GDN layers run RecoverSSM, the runner resets the shared num_accepted_tokens to 1 after each commit (align
++mode). The PLE dilated short conv keeps an extended window in one state block and reads it at num_accepted - 1, so
++it must follow the same protocol: every active decode row takes the spec path, the conv reads at offset 0, and after
++sampling the accepted window is compacted to the front (generic Kimi-K3 compaction kernel; in align mode it also
++writes the block-boundary window).
++"""
++from dataclasses import dataclass, field, fields
++from typing import Any
++
++import torch
++
++from vllm.logger import init_logger
++from vllm.triton_utils import triton
++from vllm.v1.attention.backends.recoverssm_metadata import RecoverSSMMetadata, RecoverSSMPostprocessMetadata
++from vllm.v1.attention.backends.short_conv_attn import (
++    PleShortConvAttentionBackend,
++    PleShortConvAttentionMetadata,
++    PleShortConvAttentionMetadataBuilder,
++)
++from vllm.v1.attention.backends.utils import NULL_BLOCK_ID
++
++logger = init_logger(__name__)
++
++
++class _PleConvCommit:
++    def __init__(self, conv_states, spec_query_len: int, max_num_reqs: int):
++        from vllm.model_executor.layers.mamba.mamba_utils import is_conv_state_dim_first
++        if not is_conv_state_dim_first():
++            conv_states = [s.transpose(-1, -2) for s in conv_states]   # -> [blocks, C, W]
++        self.conv_states = list(conv_states)
++        ref = self.conv_states[0]
++        dev = ref.device
++        self.conv_dim, conv_len = ref.shape[1], ref.shape[2]
++        self.hist = conv_len - spec_query_len + 1
++        assert self.hist > 0
++        self.spec_query_len = spec_query_len
++        t = lambda xs: torch.tensor(xs, dtype=torch.int64, device=dev)
++        self.base = t([s.data_ptr() for s in self.conv_states])
++        self.bstride = t([s.stride(0) for s in self.conv_states])
++        self.dstride = t([s.stride(1) for s in self.conv_states])
++        self.tstride = t([s.stride(2) for s in self.conv_states])
++        z = lambda: torch.empty(max_num_reqs, dtype=torch.int32, device=dev)
++        self.commit_lens, self.final_idx, self.bnd_idx, self.bnd_len = z(), z(), z(), z()
++
++    def commit(self, num_accepted_tokens, state_indices, query_start_loc, request_indices=None,
++               block_table=None, num_computed_tokens=None, mamba_block_size=None):
++        from vllm.models.kimi_k3.nvidia.ops.recoverssm import _compact_conv_state_kernel, _prepare_commit_plan_kernel
++        batch = state_indices.shape[0]
++        if batch == 0:
++            return
++        bt = (0, 0) if block_table is None else block_table.stride()
++        _prepare_commit_plan_kernel[(batch,)](
++            num_accepted_tokens, request_indices, state_indices, query_start_loc, block_table, num_computed_tokens,
++            self.commit_lens, self.final_idx, self.bnd_idx, self.bnd_len, NULL_BLOCK_ID, mamba_block_size or 1,
++            block_table.shape[1] if block_table is not None else 1, num_accepted_tokens.stride(0),
++            request_indices.stride(0) if request_indices is not None else 0, state_indices.stride(0),
++            query_start_loc.stride(0), bt[0], bt[1],
++            0 if num_computed_tokens is None else num_computed_tokens.stride(0),
++            SPEC_QUERY_LEN=self.spec_query_len, num_warps=1)
++        _compact_conv_state_kernel[(triton.cdiv(self.conv_dim, 256), batch, len(self.conv_states))](
++            self.conv_states[0], self.base, self.bstride, self.dstride, self.tstride, state_indices,
++            self.commit_lens, self.final_idx, self.bnd_idx, self.bnd_len, NULL_BLOCK_ID, self.conv_dim, self.hist,
++            state_indices.stride(0), BLOCK_D=256, BLOCK_HISTORY=triton.next_power_of_2(self.hist),
++            ALIGN_MODE=block_table is not None, num_warps=4)
++
++
++@dataclass
++class PleRecoverSSMCommitMetadata:
++    state_indices: torch.Tensor     # [n]
++    query_start_loc: torch.Tensor   # [n + 1]
++    request_indices: torch.Tensor | None
++    block_table: torch.Tensor | None
++    num_computed_tokens: torch.Tensor | None
++    block_size: int | None
++
++
++@dataclass
++class PleRecoverSSMMetadata(PleShortConvAttentionMetadata, RecoverSSMMetadata):
++    recoverssm_commit: PleRecoverSSMCommitMetadata | None = None
++    recoverssm_context: Any = field(default=None, repr=False, compare=False)
++
++    def commit_recoverssm_state(self, num_accepted_tokens):
++        c = self.recoverssm_commit
++        if c is None:
++            return None
++        n = self.num_spec_decodes
++        self.recoverssm_context.commit(num_accepted_tokens, c.state_indices[:n], c.query_start_loc[: n + 1],
++                                       request_indices=c.request_indices, block_table=c.block_table,
++                                       num_computed_tokens=c.num_computed_tokens, mamba_block_size=c.block_size)
++        if c.block_table is None:
++            return None
++        return RecoverSSMPostprocessMetadata(num_spec_decodes=n, request_indices=c.request_indices,
++                                             block_table=c.block_table, num_computed_tokens=c.num_computed_tokens,
++                                             block_size=c.block_size)
++
++
++class PleRecoverSSMMetadataBuilder(PleShortConvAttentionMetadataBuilder):
++    def __init__(self, kv_cache_spec, layer_names, vllm_config, device) -> None:
++        super().__init__(kv_cache_spec, layer_names, vllm_config, device)
++        self._ones = torch.ones(vllm_config.scheduler_config.max_num_seqs, dtype=torch.int32, device=device)
++        self._ctx = None
++        self._logged = False
++
++    def _get_ctx(self):
++        if self._ctx is None:
++            fc = self.vllm_config.compilation_config.static_forward_context
++            convs = [fc[name].kv_cache[0] for name in self.layer_names]
++            self._ctx = _PleConvCommit(convs, 1 + self.num_spec, self.vllm_config.scheduler_config.max_num_seqs)
++            logger.warning("FNRSSM PLE commit context: %d layers, history %d", len(convs), self._ctx.hist)
++        return self._ctx
++
++    def build(self, common_prefix_len, common_attn_metadata, fast_build=False, *, num_accepted_tokens=None,
++              num_decode_draft_tokens_cpu=None, **kwargs):  # type: ignore[override]
++        m = common_attn_metadata
++        spec_mask_cpu = None
++        if self.use_spec_decode and num_decode_draft_tokens_cpu is not None:
++            assert m.is_prefilling is not None and m.is_prefilling.device.type == "cpu"
++            active_decode = (~m.is_prefilling[: m.num_reqs]) & (m.query_start_loc_cpu.diff() > 0)
++            spec_mask_cpu = (num_decode_draft_tokens_cpu[: m.num_reqs] >= 0) | active_decode
++            drafts = torch.full_like(num_decode_draft_tokens_cpu, -1)
++            drafts[: m.num_reqs] = torch.where(spec_mask_cpu, 1, -1).to(drafts.dtype)
++            num_decode_draft_tokens_cpu = drafts
++        meta = super().build(common_prefix_len, m, fast_build, num_accepted_tokens=num_accepted_tokens,
++                             num_decode_draft_tokens_cpu=num_decode_draft_tokens_cpu, **kwargs)
++        if not isinstance(meta, PleShortConvAttentionMetadata) or meta.num_spec_decodes == 0:
++            return meta
++        base = {f.name: getattr(meta, f.name) for f in fields(meta)}
++        n = meta.num_spec_decodes
++        base["num_accepted_tokens"] = self._ones[:n]
++        rows = spec_mask_cpu.nonzero().flatten()
++        contiguous = bool(rows.numel() == n and int(rows[-1]) == n - 1)
++        req_idx = None if contiguous else rows.to(torch.int32).to(m.query_start_loc.device, non_blocking=True)
++        align = self.vllm_config.cache_config.mamba_cache_mode == "align"
++        commit = PleRecoverSSMCommitMetadata(
++            state_indices=meta.spec_state_indices_tensor, query_start_loc=meta.spec_query_start_loc,
++            request_indices=req_idx, block_table=m.block_table_tensor if align else None,
++            num_computed_tokens=m.compute_num_computed_tokens() if align else None,
++            block_size=self.kv_cache_spec.block_size if align else None)
++        if not self._logged:
++            self._logged = True
++            logger.warning("FNRSSM PLE RecoverSSM path taken: %d spec rows, align=%s", n, align)
++        return PleRecoverSSMMetadata(**base, recoverssm_commit=commit, recoverssm_context=self._get_ctx())
++
++
++class PleRecoverSSMAttentionBackend(PleShortConvAttentionBackend):
++    @staticmethod
++    def get_name() -> str:
++        return "PLE_SHORT_CONV_RECOVERSSM"
++
++    @staticmethod
++    def get_builder_cls() -> type[PleRecoverSSMMetadataBuilder]:
++        return PleRecoverSSMMetadataBuilder
+diff -ruN a/vllm/v1/spec_decode/llm_base_proposer.py b/vllm/v1/spec_decode/llm_base_proposer.py
+--- a/vllm/v1/spec_decode/llm_base_proposer.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/v1/spec_decode/llm_base_proposer.py	2026-09-23 16:45:29.000000000 +0200
+@@ -1613,6 +1613,9 @@
+                 "Using local argmax reduction for draft token generation "
+                 "(communication: O(2*tp_size) vs O(vocab_size))."
+             )
++            _fn_attach = getattr(self.model, "_fn_attach_draft_vocab", None)
++            if _fn_attach is not None:
++                _fn_attach()
+ 
+     @torch.inference_mode()
+     def dummy_run(
+diff -ruN a/vllm/v1/worker/gpu/spec_decode/speculator.py b/vllm/v1/worker/gpu/spec_decode/speculator.py
+--- a/vllm/v1/worker/gpu/spec_decode/speculator.py	2026-09-22 17:17:34.000000000 +0200
++++ b/vllm/v1/worker/gpu/spec_decode/speculator.py	2026-09-23 16:45:29.000000000 +0200
+@@ -385,6 +385,9 @@
+                 "use_local_argmax_reduction is not compatible with "
+                 "draft_sample_method='probabilistic'."
+             )
++        _fn_attach = getattr(self.model, "_fn_attach_draft_vocab", None)
++        if _fn_attach is not None:
++            _fn_attach()
+         if not hasattr(self.model, "get_top_tokens"):
+             raise ValueError(
+                 "use_local_argmax_reduction is enabled but draft model "
