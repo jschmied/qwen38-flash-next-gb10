@@ -1379,3 +1379,8 @@ wait on one ~100 GB pull, and they share one serve.
   GDN as the fix for their ~36k-tokens-per-seat recurrent-state cost at K=5. It gives our §4t/§4u numbers and notes the
   requirements (V2 runner, PIECEWISE) and the summation-order-size output difference; links pinned at 2e1f7a1.
   Draft `issue-bilikaz-recoverssm.md`. <https://github.com/bilikaz/qwen38-flash-next-recipe/issues/1>
+- **2026-09-26 — jschmied/vllm #1, temporary fork-internal draft PR** (the user's ask "can you create a temporary PR for
+  review?"): `review/gdn-recoverssm` (98391fcbbe) against `review/gdn-recoverssm-base` (= nightly 1ea7c63f4): the GDN
+  RecoverSSM port as source edits, hardened after review round 1 (boundary checks at KDA parity), plus the
+  `tests/kernels/mamba/test_recoverssm_gdn.py` file (14 passed on GB10). Not upstream.
+  <https://github.com/jschmied/vllm/pull/1>
