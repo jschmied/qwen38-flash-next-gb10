@@ -1369,3 +1369,9 @@ wait on one ~100 GB pull, and they share one serve.
   −2.91 ms/step on 12/12 paired requests, warm +0.22 / +0.04, hashes identical in 48/48. Unit tests on the
   branch base: 30 passed. Draft `ple-cold-fill-pr.md` (the old `ple-cold-wait-followup-pr.md` is superseded).
   <https://github.com/vllm-project/vllm/pull/58835>
+- **2026-09-26 — vLLM PR #56466 comment (cc #49887)** — the GDN RecoverSSM port as a data point for GDN spec decode
+  with prefix caching (the user's go, "post comment and show url"). Speed-of-light §4t/§4u numbers: c=1 −2.4…−4.0 %,
+  c=4 −5.2 % per cycle, agent loop −16 %/turn, KV +37 %, hit rate 77.4 → 82.1 %; divergence at reduction-order size;
+  out_proj 101 → 74 µs (dirty-L2 write-back gone). Asks whether a RecoverSSM-based GDN PR is wanted. Links pinned
+  at 6abd499. Draft `comment-56466-recoverssm-gdn.md`.
+  <https://github.com/vllm-project/vllm/pull/56466#issuecomment-5845393579>
