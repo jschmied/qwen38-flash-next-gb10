@@ -976,3 +976,54 @@ timed in 5 s windows. 2 starts. Data: `data/compact/`, tools `tools/compact/`.
   their memory edge.
 - **Not measured:** prod's default KV (~33 GiB, closer to their edge) under sustained load. If prod ever runs that
   close to the edge, re-test there before dismissing it. Not a change for prod now.
+
+### 5f. Semantic work audit: is each kernel family doing only the work the model needs? (read-only, 5 parallel audits)
+
+The user's question: GEMMs at their byte floor can still be doing avoidable work, such as padded tiles, weights read
+for idle experts, logits nobody reads, or copies that only change layout. Five read-only audits used the §4u node
+trace (`rssm.sqlite`, 48 verify cycles, 54.23 ms), the installed code and the notes. Scripts are in
+`tools/audit0926/`. Proof types: **A** trace-measured, **B** code + byte arithmetic, **C** estimate that needs a
+counterfactual run.
+
+**Load-bearing table, kernel families > 0.2 ms/step**
+
+| family | ms/step | verdict | avoidable | proof |
+|---|---|---|---|---|
+| routed MoE GEMM1+GEMM2 (NVFP4 grouped) | 17.5 | required. Tile padding (851/1,702 physical rows vs 40 useful pairs) costs FLOPs, not time: each active expert's weights stream once. Zero-row experts get a 0-size problem (`cutlass_fused_moe_kernels.cuh:1392-1405`), so no weights are read; 40 reads/call would need 318 GB/s | ~3–5 % | A+B |
+| MoE block total (router → finalize) | ~21.7 | 1.09× byte floor (425 vs 391 µs/call) → ceiling ~1.7 ms/step | ≤ 1.7 ms | A+B |
+| shared expert (BF16, 4 kernels) | 4.49 | required and **hidden**: side stream, 57 of its 69 µs GEMM time falls inside the router+prologue window. Joining the grouped GEMM would need NVFP4 shared weights and expert 513 / top-11; ≈ −0.5 ms at best | ~0 critical-path | B |
+| BF16 8x10 "slow site" (§4a/4l) | 2.25 | **solved:** it is the shared expert's gate_up, contending with the concurrent router GEMM for DRAM (201 GB/s combined, the standalone rate). Off the critical path | 0 | B |
+| HC mixers down/up (BF16, 106 sites) | 6.96 + glue 0.8 | required. No static linear→linear chain (rrms, silu, σ between every pair), so nothing folds offline. Tail fusion (reduce+silu prologue, σ+gate_mix epilogue) saves launches only; 12 zero pad rows in W_down ≈ 0.12 ms | ~0.5–0.6 ms | B |
+| FP8 dense (qkvz, out/o_proj) | ~10.2 | required (at floor, §2) | ~0 | A |
+| lm_head (FP8, 248k rows) | 2.68 | weight read required. Post-GEMM logit work is only 53 µs/step (greedy); a fused argmax epilogue would save ≤ 35 µs; top-20 for sampled is exact in distribution but not bit-identical | ≤ 0.07 % greedy, ≤ 0.3 % sampled (unmeasured) | A+B |
+| MTP drafter (3 steps) | 5.07 | load-bearing at c=1. The third draft pays 14.3 ms per accepted token vs a 22.0 average. **But** its BF16 dense qkv/o/input projections (~2 ms/cycle) are not load-bearing at BF16 | ~1.4 ms (NVFP4) | A+B |
+| extra verify rows (MoE) | ~3.3/row | **new:** verify does *not* grow little with M. Each extra row adds ~4.9 distinct experts × 48 layers, about 2× a draft step. Two-thirds of a draft position's marginal cost sits here | — | A+B |
+| GDN eager glue (q/k/v copies, CatArray, out memcpy) | 0.74 incl. gaps | **excessive:** the verify wrapper accepts strided views and has `out=`, which `_forward_core` does not use | ~95 % | B |
+| GDN graph glue (b/a/z `.contiguous()`, `zeros`) | 0.25 | excessive / wasted at uniform M=4 | ~80 % | B |
+| finalizeMoeRouting (4 CTAs) + shared add | 0.50 | required math, under-parallel (one CTA per token) | ~70 % | C |
+| target input prep (103 eager ops) | 0.46 | bookkeeping (`mamba_get_block_table_tensor` pattern ×4 groups) | ~65 % | A/B |
+| drafter steps 2–3 ungraphed | 0.30 | launch overhead (PIECEWISE forces NONE for draft decodes) | ~80 % | A |
+| FP8 act-quant ×96 | 0.23 | bookkeeping, fusable into the producers' epilogues | ~100 % | B |
+| QSA (15 calls, eager) | 0.58 + 0.39 gaps | required math. At short context, 89–97 % of 64 split-K CTAs are empty but each still writes 6 MiB of fp32 partials per layer; at 32k the 4 verify rows gather ~70 % duplicate tokens | 20 % short / ~70 % of gather at 32k | C |
+| RecoverSSM commit | 1.11 | required, at DRAM floor (§4u) | ~0 | A |
+
+**Answers to the seven questions:** (1) padding is FLOPs, not time; (2) no weights are read for zero-row experts
+(code + traffic proof); (3) HC has no foldable chain, only launch fusion (~0.9 %); (4) the shared expert is already
+free on the critical path, so merging it is ≈ −0.5 ms at best, at quality risk; (5) k=3 is right at c=1, k=2 is
+marginally better at c=4 (−1.4 % ± 2, untested), and the cheap lever is the drafter's BF16 dense layers; (6) the
+logits are not the lm_head cost, the weights are; (7) QSA wastes CTAs and partial traffic at short context and
+duplicate gathers at 32k, both small at our probe lengths.
+
+**Summary:** no big hidden waste. The big families do required work at their floors. Removable work adds up to
+about 4–5 ms/step of small items, and the gap share may not transfer 1:1 (finding 237: FULL graphs gained only
+−0.7 %).
+
+**Queued counterfactuals, cheapest first** (hypothesis written per run):
+1. **GDN views + `out=`** (Python only, same kernel on the same values): −0.3…−0.8 ms/cycle, hashes must stay
+   identical. This also tests how much of the eager-gap time really goes away.
+2. **MTP layer dense → NVFP4** (reuse `_nvfp4_rows_gemv_kernel`, finding 234 recipe): −2.6 % c=1 predicted.
+   Compare per-cycle time, since RecoverSSM text moves with acceptance (§5b).
+3. **n=2 vs n=3 at c=4** on the current stack (predicted −1.4 % ± 2 in favour of n=2).
+4. HC tail fusion on FNBF16SK (−0.5 ms), dropping the HC pad rows (−0.12 ms), 2-D finalize / fused-finalize
+   tactic (−0.3…0.45 ms, determinism gate), and `in_proj_ba` 8x1 re-test (7.8× its floor; the FNBF16SK null predates
+   RecoverSSM).
