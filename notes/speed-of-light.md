@@ -875,3 +875,29 @@ Data: `data/rssm/rssmdefer*`.
   §4t hashes in both passes (99.31 tok/s). There was no preemption, no error, and the same 82.1 % hit rate. This
   reads as batch-composition drift at c=4 (greedy is not batch-invariant under concurrency), not corruption; the
   counterfactual is the clean start 1 on identical code.
+
+### 5b. Dynamic draft stop on the NVFP4 draft head (FNDYN2): rejected — +5…6 % slower at c=1
+`fndyn2`: FNDYN (finding 235: stop drafting once every request's running confidence product < 0.3), with the
+confidence now also computed on the FNNVFP4 head's float32 logits (`tools/dyndraft/fndyn2_patch.py`). Clone venv,
+prod-like (RecoverSSM, NVFP4 head, 32k vocab, MTP n=3), KV 4 GiB, `comboprobe2`, 2 starts. Data: `data/dyn2/`.
+
+| | base | FNDYN2, thr 0.3 |
+|---|---|---|
+| c=1 ms/tok | 21.474–21.549 | **22.599–22.851** |
+| c=4 tok/s | 99.83–99.96 | 96.13–96.60 |
+| agent loop s/turn | 1.10–1.11 | 1.12 |
+| early stops | — | 13.6 % of cycles (stop before step 1: 3 %, before step 2: 10 %) |
+
+- **Outside the hypothesis on both counts:**
+  - Speed: expected −0.5…−1.5 % at c=1, got **+5…6 %**. The stop check costs one host sync per draft step, and with
+    the NVFP4 head a draft step is now cheaper than that sync. On the BF16 head (finding 235) the balance was the
+    other way, −1.7 %.
+  - Correctness: expected hash-identical, but **c=1 text differs from base**. It is reproducible within the arm;
+    first divergence at a median of 186 tokens, |Δlogprob| 0.002 before it. c=4 hashes were identical (the stop
+    rarely fires there).
+- **Why the text moves (a RecoverSSM property, not an FNDYN bug):** the committed state depends on how accepted tokens
+  are grouped into commits (fp32 rounding of the replay). A different acceptance pattern (repeated-token drafts get
+  rejected) gives a slightly different state, and greedy text diverges late. Native spec decode stores a state per
+  position and does not have this property. Size: smaller than a reduction-order change (median 186 vs 26–31
+  tokens).
+- **Verdict:** rejected; FNDYN stays out of prod. The patch stays in `tools/dyndraft/` (env-gated, off).
