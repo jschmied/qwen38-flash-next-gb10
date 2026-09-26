@@ -1384,3 +1384,12 @@ wait on one ~100 GB pull, and they share one serve.
   RecoverSSM port as source edits, hardened after review round 1 (boundary checks at KDA parity), plus the
   `tests/kernels/mamba/test_recoverssm_gdn.py` file (14 passed on GB10). Not upstream.
   <https://github.com/jschmied/vllm/pull/1>
+- **2026-09-26 — MiaAI-Lab single-Spark #19 comment** (the user's go, "post to mia and bilikaz"): pays the two
+  09-09 debts:
+  - vllm#55533 did not reproduce (finding 155);
+  - the capture-width re-run is ≤ 2 % (§5d).
+
+  Adds, for their v0.30 mapped-PLE lane, #58835 readahead (−2.35/−2.91 ms/step cold), the NVFP4 draft-head slice
+  (finding 234) and RecoverSSM (links to bilikaz#1 / vllm#56466), and agrees with Nipale-ai's code-vs-prose split.
+  Links pinned at b2c0859. Draft `comment-miaai-19-owed-0926.md`.
+  <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/19#issuecomment-5846690586>
