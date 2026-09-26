@@ -936,3 +936,24 @@ GDN/PLE conv states already use accepted-suffix compaction (~50 µs/step, §4u).
 - (k=16 cases error by design: the op supports k ∈ {512, 1024, 2048}; prod uses 512.)
 
 **Verdict:** no transactional handling is needed in the QSA indexer; it is already correct under MTP.
+
+### 5d. CUDA-graph capture widths at concurrency: ≤ 2 % — decoding c ≥ 3 without graphs costs little here
+With MTP n=3 a decode row is 4 tokens, so the prod list `[1,2,4,8]` covers c ≤ 2 only; c ≥ 3 runs the target
+without graphs. (bilikaz's recipe captures multiples of K+1 up to seats×(K+1); MiaAI's kit covers every width.)
+`cgwidth`: `[1,2,4,8]` vs `[1,2,4,8,12,16,24,32,48,64]`, prod-like (RecoverSSM, NVFP4 head, 32k vocab), KV 4 GiB,
+`decprobe` (c=1, c=4, agent) + `tools/cg/concprobe.py` (c = 4/8/16, distinct prompts, 400 tokens), 2 starts.
+Data: `data/cg/`.
+
+| | `[1,2,4,8]` | `[…,64]` | comparable? |
+|---|---|---|---|
+| decprobe c=4 tok/s | 99.74 (start 1; start 0 drifted to other text: 89.57) | 101.85–101.98 | yes, identical hashes → **+2.1 %** |
+| concprobe c=4 / c=8 / c=16 tok/s | 87.7–88.7 / 127.2–128.7 / 161.1–167.1 | 88.7–89.0 / 128.7–131.4 / 165.0–166.0 | overlapping; texts differ at c=8/16 → null within noise |
+| c=1 ms/tok (accept len) | 21.49–21.53 (2.53) | 21.06–21.10 (2.586) | text differs; per cycle 54.4 vs 54.5 ms → equal |
+| graph memory | 0.31 GiB | 0.56–0.59 GiB | KV pool unchanged (103,953 tokens) |
+
+- **Outside the hypothesis** (+5…15 % at c=4): the step is GPU-bound at these widths, and async scheduling hides
+  the per-kernel launch cost of the graph-less forward.
+- **Prod:** +~2 % at c=4 for 0.28 GiB of graphs is cheap but small; it is the user's call. It does not matter for
+  single-stream agent work.
+- **Measurement lesson, again:** c=4 greedy text is not stable run to run (start 0 of the baseline drifted, like
+  §5a's). Concurrency numbers are compared only where the hashes match.
