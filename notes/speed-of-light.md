@@ -1165,3 +1165,32 @@ each list (the model's tokenizer; the three gdncs documents plus ~65k tokens of 
 - The lists share 31,686 ids; ours has 1,082 they lack, theirs 47,905 we lack.
 - A draft can only be lost to the slice on the 0.1–0.6 % of tokens outside it. Growing the head 2.4× costs time on every
   draft step (§4 finding 234: the slice size is the head's bytes), so this is a **null: keep 32k**.
+
+### 5l. MTP depth on code vs prose: K=5 −10 % on code (65.8 tok/s), +4…6 % on prose — the text decides K
+
+Question from comparing with bilikaz's recipe (K=5, 5.06 accepted per step on a code prompt). Our speed probes are
+prose ("Explain in about 500 words…"). New probe `tools/ksweep/codeprobe.py`: 4 code-writing prompts (Python, TypeScript,
+Rust, C++) and decprobe's 4 prose prompts, 700 tokens, thinking off; cells: code c=1 greedy, code c=1 sampled (the
+model's defaults 1.0/0.95/20, fixed seeds), prose c=1 greedy, code c=4 greedy. Each prompt is seen once per server, so
+the numbers include cold PLE pages (≈7 % above decprobe's warm second pass; compare across K only). Stack: RecoverSSM +
+align + prefix cache, FP8 GDN, capture sizes [1,2,4,5,6,8,10,12,16,20,24] in every arm; K=5 needs `--block-size 1728`
+(QSA ring capacity 12 must divide it; the auto size is 1696 here, so bilikaz's 1632 does not fit). 2 starts per K.
+Hypothesis: `tools/ksweep/HYPOTHESIS.md`. Data: `data/ksweep/`.
+
+| cell (ms/tok; c=4: tok/s) | K=3 | K=4 | K=5 |
+|---|---|---|---|
+| code c=1 greedy | 16.90 / 16.99 (acc 3.36) | 16.11 / 16.09 (3.81) | **15.18 / 15.21 (4.35)** |
+| code c=1 sampled | 17.87 / 18.00 (3.15) | 17.79 / 17.83 (3.42) | **17.15 / 16.90 (3.89)** |
+| prose c=1 greedy | **23.15 / 23.32 (2.53)** | 23.65 / 23.74 (2.67) | 24.46 / 23.98 (2.83) |
+| code c=4 | 133.4 / 131.3 | 132.8 / 141.8 | **145.4 / 148.3 (4.48)** |
+
+- **Code: K=5 wins** (−10.3 % vs K=3 greedy, −4.7 % sampled, +10 % at c=4), inside the hypothesis (5–12 %). The
+  step is ~66 ms at 4.35 tokens (bilikaz: ~69 ms at 5.06 with sampled drafts).
+- **Prose: K=3 wins**, K=5 is +3…6 % slower. Per-position acceptance on prose falls to 0.19 / 0.12 at positions 4/5.
+- **The greedy→sampled gap grows with K:** 0.21 / 0.39 / 0.46 accepted tokens per step at K=3/4/5. That is the headroom
+  probabilistic drafting (queued) would target.
+- Greedy c=1 hashes are identical across starts in every cell; c=4 hashes differ between starts at K=3/4 (the known c=4
+  run-to-run instability), so the c=4 row is indicative only.
+- **Consequence:** the best static K depends on the traffic. For code-heavy agent work K=5 (with block 1728) is the better
+  default; for chat/prose K=3. A per-request or adaptive depth (vLLM's `enable_adaptive_verification` is DSpark-only
+  today) would get both. Not a prod change without the user.
