@@ -1384,6 +1384,13 @@ wait on one ~100 GB pull, and they share one serve.
   RecoverSSM port as source edits, hardened after review round 1 (boundary checks at KDA parity), plus the
   `tests/kernels/mamba/test_recoverssm_gdn.py` file (14 passed on GB10). Not upstream.
   <https://github.com/jschmied/vllm/pull/1>
+- **2026-09-26 — jschmied/vllm #1, review round 2 pushed + comment** (fork-internal, our repo): 5e3301f/b928b7f/850ddd9
+  fix the six round-2 items (one shape/dtype/backend predicate, validation always runs, PLE commit hardening, shared
+  mixed-batch mapping helpers, align boundary + extreme-gate tests; 39 passed on GB10). Server validation `rssmr2d`
+  (data `notes/data/rssm/rssmr2d.*`): path lines present, c1/c4 hashes equal the round-1 reference, cache replay 8/8,
+  c1 21.56 ms/tok, c4 99.9 tok/s, 1.10 s/turn. Two earlier starts never activated the path: the helper insert had
+  stolen `@model_validator` from `validate_mamba_cached_kernel`. Body updated via gh api PATCH.
+  <https://github.com/jschmied/vllm/pull/1#issuecomment-5847741913>
 - **2026-09-26 — MiaAI-Lab single-Spark #19 comment** (the user's go, "post to mia and bilikaz"): pays the two
   09-09 debts:
   - vllm#55533 did not reproduce (finding 155);
