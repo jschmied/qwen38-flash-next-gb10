@@ -1,4 +1,4 @@
-DRAFT — the user's go: "do pr asap" (2026-09-27). vllm-project/vllm new PR from jschmied:gdn-recoverssm (base main).
+POSTED 2026-09-27 as https://github.com/vllm-project/vllm/pull/58863 — the user's go: "do pr asap". vllm-project/vllm new PR from jschmied:gdn-recoverssm (base main).
 Post only after the rssmup server validation passes (flag path + FULL_AND_PIECEWISE fallback). Title:
 [Spec Decode][Qwen4Exp] RecoverSSM for Qwen GDN and the PLE short conv
 
@@ -18,7 +18,9 @@ Enabled like KDA's: `--use-replayssm` together with speculative decoding. Qwen4E
 MTP) declares `SupportsReplaySSM`; without spec decoding the flag is rejected on Qwen4Exp (there is no plain ReplaySSM
 path for its GDN/PLE layers). Requires the V2 model runner for align mode, the Triton mamba backend and PP=1 (the same
 checks as KDA). The RecoverSSM builders declare `AttentionCGSupport.NEVER`, so the default `FULL_AND_PIECEWISE` falls
-back to PIECEWISE with the usual warning; FULL graph support is a follow-up.
+back to PIECEWISE with the usual warning. That fallback needed one fix: with breakable CUDA graphs (auto-enabled on
+this setup; they split at attention with an empty `splitting_ops`, with or without torch.compile) it dropped to NONE
+(no CUDA graphs at all); it now resolves to PIECEWISE there. FULL graph support for RecoverSSM is a follow-up.
 
 Two commits:
 1. `[Mamba] Share RecoverSSM commit kernels and helpers across models`: the commit-plan and conv-compaction kernels
@@ -29,6 +31,8 @@ Two commits:
 2. `[Spec Decode][Qwen4Exp] RecoverSSM for Qwen GDN and the PLE short conv`: GDN verify/commit kernels
    (`mamba/gdn/recoverssm_gdn.py`), metadata builders (`gdn_recoverssm.py`, `ple_recoverssm.py`), the layer and model
    integration. The verify reads strided q/k/v views of the conv output and writes straight into the layer output.
+   The generic Mamba metadata builder no longer allocates the Mamba2 ReplaySSM ring-buffer workspaces when
+   `--use-replayssm` selects RecoverSSM (the PLE short conv uses that builder).
 
 Related: #49887 and #56466 (ReplaySSM for GDN) take the ring-buffer route; this PR reuses the merged RecoverSSM
 protocol instead (discussed in https://github.com/vllm-project/vllm/pull/56466#issuecomment-5845393579).
@@ -50,7 +54,7 @@ protocol instead (discussed in https://github.com/vllm-project/vllm/pull/56466#i
 
 ## Test Result
 
-Kernel/config tests: <N> passed on GB10 (sm_121). ruff, mypy (tools/pre_commit/mypy.py 3.12), typos: clean.
+Tests on GB10 (sm_121): GDN + PLE kernel tests 72 passed, config tests 18 passed. ruff, mypy (tools/pre_commit/mypy.py 3.12), typos: clean.
 
 Server, native GDN spec decode (align) vs RecoverSSM (align), 2 starts per arm
 ([data](https://github.com/jschmied/qwen38-flash-next-gb10/blob/55687ace78c09d05892bb0663b92838c06459166/notes/speed-of-light.md#L661-L695)):
@@ -71,7 +75,9 @@ Server, native GDN spec decode (align) vs RecoverSSM (align), 2 starts per arm
 - Output: cache-hit replay reproduces the first pass 8/8 in every run. Text differs from the native path at the size of a
   reduction-order change (first greedy divergence at a median of 26 tokens, vs 31 for a pure reduction-order change),
   because the recurrent state is now accumulated per commit instead of per token.
-- This PR's final shape (flag path, PIECEWISE fallback) on the same box: <rssmup result>.
+- This PR's final shape on the same box (one start each): `--use-replayssm` with explicit PIECEWISE: c=1 21.22 ms/tok,
+  output hashes and cache-hit replay identical to the validated reference; default `FULL_AND_PIECEWISE`: resolves to
+  PIECEWISE, c=1 21.31 ms/tok, c=1 and c=4 hashes identical to the reference, cache-hit replay 8/8.
 
 <details><summary>Essential Elements of an Effective PR Description Checklist</summary>
 

@@ -1,0 +1,9 @@
+== armrun rssmup: 2 arms x 1 start(s), port 8092 ==
+-- rssmup-flag0  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --kv-cache-memory-bytes 4294967296 --use-replayssm'}
+Running as unit: fx-armrun-rssmup.service; invocation ID: 515940eb827a45a198ac5aa9636a6b97
+   void checks passed (10 required, 6 forbidden)
+   {"c1": {"gen_tokens": 2688.0, "accept_rate": 50.99, "accept_len": 2.53, "shas": ["2f3574ed42d8d759", "e0d6f4c2c0331e3d", "ecf5de063dd96eb7", "6d7036dc59daf3c4"], "decode_ms_per_tok": 21.217}, "c4": {"gen_tokens": 2567.0, "accept_rate": 48.18, "accept_len": 2.445, "shas": ["515612c27f788180", "db1ed407e3706097", "db43b1a45a083ed1", "fa742f5de0d35e25"], "agg_tok_s": 91.53, "wall_s": 28.046}, "agent": {"total_s": 8.7, "s_per_turn": 1.09, "tokens": 224, "ms_per_tok": 39.03}, "fallback_line": true, "c1_ms_tok": 21.217, "c4_tok_s": 91.53, "c1_acc_len": 2.53, "s_turn": 1.09, "pass1": {"c1": {"shas": ["2f3574ed42d8d759", "e0d6f4c2c0331e3d", "ecf5de063dd96eb7", "6d7036dc59daf3c4"], "ms": 22.856}, "c4": {"shas": ["a53cf80997e2fb24", "718236660641f852", "a780056b3536f9ed", "44e0738b3f791fba"], "ms": 93.13}}, "cache_replay_match": {"c1": [true, true, true, true], "c4": [false, false, false, false]}, "div": {"prompts": 8, "tokens": 3069, "file": "div-rssmup-flag0.json"}}
+-- rssmup-fallback0  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --kv-cache-memory-bytes 4294967296 --use-replayssm', 'FN_CG_MODE': 'FULL_AND_PIECEWISE'}
+Running as unit: fx-armrun-rssmup.service; invocation ID: 4d7f4724497b4b3d9127a8978ca079ae
+!! VOID rssmup-fallback0: log missing required 'setting cudagraph_mode=PIECEWISE'
+== VOID ==

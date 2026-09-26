@@ -1400,6 +1400,15 @@ wait on one ~100 GB pull, and they share one serve.
 - **2026-09-26 — jschmied/vllm #1, views follow-up be00ee7 + comment** (fork-internal): the §5g FNQKVVIEW change as an
   ungated branch commit plus a test (42 GDN tests pass). Server `rssmr3b` (data `notes/data/rssm/rssmr3b.*`): c1
   21.32 ms/tok, c4 100.5 tok/s, hashes + replay = reference. <https://github.com/jschmied/vllm/pull/1#issuecomment-5848598261>
+- **2026-09-27 — vllm-project/vllm #58863, new PR** (the user's go: "do pr asap"): "[Spec Decode][Qwen4Exp] RecoverSSM for
+  Qwen GDN and the PLE short conv", branch jschmied:gdn-recoverssm on main 77871126f9, commits a80e41d (shared RecoverSSM
+  kernels/helpers + use_kda_recoverssm -> use_recoverssm) and 03cae78 (Qwen4Exp GDN + PLE RecoverSSM, --use-replayssm
+  activation, NEVER cudagraph support with a PIECEWISE fallback that now also covers breakable CUDA graphs, Mamba builder
+  guard). Validation on GB10 with the review-side equivalent (review/gdn-recoverssm-upshape): 72 kernel + 18 config tests,
+  server flag arm (c1 hashes/replay = reference, 21.22 ms/tok) and FULL_AND_PIECEWISE fallback arm (PIECEWISE, c1+c4
+  hashes = reference, replay 8/8, 21.31 ms/tok); data results/rssmup*, rssmupfb2*. Validation found and fixed two real
+  bugs first (Mamba builder ReplaySSM workspaces; fallback to NONE under breakable graphs). One-line AI note (user).
+  Draft `pr-gdn-recoverssm.md`. <https://github.com/vllm-project/vllm/pull/58863>
 - **2026-09-26 — MiaAI-Lab single-Spark #19 comment** (the user's go, "post to mia and bilikaz"): pays the two
   09-09 debts:
   - vllm#55533 did not reproduce (finding 155);
