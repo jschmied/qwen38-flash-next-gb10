@@ -1391,6 +1391,12 @@ wait on one ~100 GB pull, and they share one serve.
   c1 21.56 ms/tok, c4 99.9 tok/s, 1.10 s/turn. Two earlier starts never activated the path: the helper insert had
   stolen `@model_validator` from `validate_mamba_cached_kernel`. Body updated via gh api PATCH.
   <https://github.com/jschmied/vllm/pull/1#issuecomment-5847741913>
+- **2026-09-26 — jschmied/vllm #1, review round 3 pushed + comment** (fork-internal): cf7a1e0 moves the commit-plan and
+  conv-compaction kernels out of `models/kimi_k3` into `mamba/ops/recoverssm_common.py` (plus `recoverssm_require`,
+  `uses_recoverssm`), adds the PLE-vs-stock-decode reference test and the config regression test (63 passed; the
+  config test fails 11/13 with the round-2 decorator bug restored). Server validation `rssmr3a` (data
+  `notes/data/rssm/rssmr3a.*`): path lines, c1/c4 hashes = reference, replay 8/8, c1 21.53 ms/tok. Mentions the
+  FNQKVVIEW follow-up (§5g). <https://github.com/jschmied/vllm/pull/1#issuecomment-5848467487>
 - **2026-09-26 — MiaAI-Lab single-Spark #19 comment** (the user's go, "post to mia and bilikaz"): pays the two
   09-09 debts:
   - vllm#55533 did not reproduce (finding 155);
