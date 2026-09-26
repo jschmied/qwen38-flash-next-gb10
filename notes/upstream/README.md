@@ -1393,3 +1393,8 @@ wait on one ~100 GB pull, and they share one serve.
   (finding 234) and RecoverSSM (links to bilikaz#1 / vllm#56466), and agrees with Nipale-ai's code-vs-prose split.
   Links pinned at b2c0859. Draft `comment-miaai-19-owed-0926.md`.
   <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/19#issuecomment-5846690586>
+- **2026-09-26 — MiaAI #19 comment EDITED + new issue #78** (the user: "the comment on mia mixes topics, edit it:
+  answer stays, other stuff goes to new issue"). The #19 comment now carries only the two owed answers (#55533,
+  capture widths) plus a pointer. The readahead fix, the NVFP4 draft head and RecoverSSM moved to #78, which uses
+  their Improvement template. Drafts `comment-miaai-19-owed-0926.md` (live text) and `issue-miaai-v030-lane-ideas.md`.
+  <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/78>
