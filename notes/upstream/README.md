@@ -1375,3 +1375,7 @@ wait on one ~100 GB pull, and they share one serve.
   out_proj 101 → 74 µs (dirty-L2 write-back gone). Asks whether a RecoverSSM-based GDN PR is wanted. Links pinned
   at 6abd499. Draft `comment-56466-recoverssm-gdn.md`.
   <https://github.com/vllm-project/vllm/pull/56466#issuecomment-5845393579>
+- **2026-09-26 — bilikaz/qwen38-flash-next-recipe #1, new issue** (the user's go, "post to mia and bilikaz"): RecoverSSM for
+  GDN as the fix for their ~36k-tokens-per-seat recurrent-state cost at K=5. It gives our §4t/§4u numbers and notes the
+  requirements (V2 runner, PIECEWISE) and the summation-order-size output difference; links pinned at 2e1f7a1.
+  Draft `issue-bilikaz-recoverssm.md`. <https://github.com/bilikaz/qwen38-flash-next-recipe/issues/1>
