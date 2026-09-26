@@ -760,3 +760,14 @@ state path then sits at its floor, one read plus one write.
 **Decision:** not built tonight; it is ~0.9 % against that risk and needs the user's priority call. If built: mode
 `none` first, to measure the real gain; align only if it holds; the kernel test extended to replay-across-steps
 and flush; the server A/B with `comboprobe2` plus an agent-loop hash check.
+
+**PROD 2026-09-26 (the user's go, "yes 1..3"):** RecoverSSM is installed into the prod venv `vllm-venv-main1ea7` with
+the four patch scripts; backups are `*.orig-rssmprod`. It is enabled by drop-in `35-recoverssm.conf`
+(`FN_GDN_RECOVERSSM=1`).
+- **Validation `rssmprod`** on the prod venv, 1 start per arm, same probe as §4t:
+  - flag off reproduces the stock hashes (`c0c061e6…`, 21.93 ms/tok);
+  - flag on reproduces the clone's hashes (`2f3574ed…`, 21.57 ms/tok, c=4 99.6 tok/s, agent 1.11 s/turn);
+  - the installed files are byte-identical to the tested clone's, minus the clone-only debug line.
+- The service stays stopped until the user asks for it up (it was down by the user's order).
+- **Revert:** `rm /etc/systemd/system/vllm-flashnext.service.d/35-recoverssm.conf && systemctl daemon-reload`. With
+  the flag unset the venv runs stock code, as shown above.

@@ -1,0 +1,4 @@
+# 2026-09-26: GDN RecoverSSM (speed-of-light 4s-4u, validated on this venv in rssmprod). Revert: rm this file + daemon-reload.
+# Venv patches: vllm-venv-main1ea7, backups *.orig-rssmprod; code in qwen38-flash-next-gb10/tools/rssm.
+[Service]
+Environment=FN_GDN_RECOVERSSM=1
