@@ -1057,3 +1057,28 @@ writes in place: 180 launches/step and ~12 MiB/step of copies gone, same kernel 
   rule; the matched cells give +0.5…+0.8 %.
 - Next: fold it into the RecoverSSM review branch (it belongs to the verify path) and into the prod candidate.
   The graph-side b/a/z copies and `zeros` (§5f item 6, ~0.25 ms) are the natural follow-up.
+
+### 5h. A2 — MTP drafter dense layers to NVFP4: rejected, acceptance drops more than the step saves
+
+§5f's second counterfactual. The drafter's fc_embedding, fc_hidden, self_attn.qkv_proj and self_attn.o_proj are BF16
+(~125 MB read per draft step). Patch `tools/mtpd4/` (`FN_MTP_DENSE_NVFP4=1`, clone venv): NVFP4 copies in the
+draft-head layout through the draft head's rows GEMV as a custom op (`fn_nvfp4_linear`). Microbench (L2 flushed,
+graph replay): 709 → 231 µs per single-row draft step, 565 → 223 µs at M=4, i.e. ~−1.3 ms per verify cycle; weight
+error ~9.5 % relative (random-weight proxy). Hypothesis (written before): −0.9…−1.4 ms/cycle, accept_len within
+−0.05…+0.03; H0 if accept_len drops > 0.08. Run `mtpd4a`, both arms `VLLM_DISABLE_COMPILE_CACHE=1`; stopped after one
+start per arm (below). Data: `data/mtpd4/`.
+
+| | NVFP4 dense | base |
+|---|---|---|
+| c=1 ms/tok | 21.725 | 21.237 |
+| c=1 accept_len | 2.443 | 2.53 |
+| c=1 per cycle | 53.07 ms | 53.73 ms |
+| c=4 tok/s (accept) | 97.66 (2.413) | 100.39 (2.49) |
+| agent s/turn | 1.09 | 1.10 |
+
+- **H0:** the cycle got 0.66 ms cheaper (a bit under the predicted −0.9), but acceptance fell 0.087, so every token
+  costs **+2.3 %** at c=1 and c=4 loses 2.7 %. Unlike the experts (finding 198) and the sliced head (finding 234), the
+  drafter's attention/input projections do not tolerate NVFP4 with plain per-16 max scaling.
+- One start per arm only: the acceptance drop is 0.087 on the same prompts where base reproduces 2.53 in every run
+  today (rssmr2d, qkvview1, rssmr3a/b), so a second start would not change the verdict. Stopped early to run the FP8
+  variant (user: "fp8 drafter then instead of fp16"), §5i.

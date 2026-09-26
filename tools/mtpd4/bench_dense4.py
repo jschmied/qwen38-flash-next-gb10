@@ -33,3 +33,21 @@ for name, (N, K) in SHAPES.items():
         print(f"{name:13s} M={M} bf16 {tb:7.1f} us  nvfp4 {tq:7.1f} us  ({tq/tb:.2f}x)  kernel-rel-err {kerr:.1e}  quant-rel-err {qerr:.3f}", flush=True)
 for M in (1, 4):
     print(f"TOTAL M={M}: bf16 {tot[M][0]:.0f} us -> nvfp4 {tot[M][1]:.0f} us, saves {tot[M][0]-tot[M][1]:.0f} us per draft step")
+
+# FP8 per-row variant
+from importlib import util
+spec = util.spec_from_file_location("fnd", __file__.replace("bench_dense4.py", "fn_nvfp4_dense.py"))
+fnd = util.module_from_spec(spec); spec.loader.exec_module(fnd)
+tot8 = {1: [0, 0], 4: [0, 0]}
+for name, (N, K) in SHAPES.items():
+    w = (torch.randn(N, K, device=dev) * 0.02).to(torch.bfloat16)
+    w8, s8 = fnd.quantize_fp8_rows(w.float())
+    for M in (1, 4):
+        x = torch.randn(M, K, device=dev).to(torch.bfloat16)
+        ref = F.linear(x.float(), w8.float() * s8[:, None]); got = fnd.fp8_rows_gemv(x, w8, s8)
+        kerr = ((got - ref).norm() / ref.norm()).item(); qerr = ((got - F.linear(x.float(), w.float())).norm() / ref.norm()).item()
+        tb = timeit(lambda: F.linear(x, w)); tq = timeit(lambda: fnd.fp8_rows_gemv(x, w8, s8))
+        tot8[M][0] += tb; tot8[M][1] += tq
+        print(f"FP8 {name:13s} M={M} bf16 {tb:7.1f} us  fp8 {tq:7.1f} us  ({tq/tb:.2f}x)  kernel-rel-err {kerr:.1e}  quant-rel-err {qerr:.3f}", flush=True)
+for M in (1, 4):
+    print(f"FP8 TOTAL M={M}: bf16 {tot8[M][0]:.0f} us -> fp8 {tot8[M][1]:.0f} us, saves {tot8[M][0]-tot8[M][1]:.0f} us per draft step")
