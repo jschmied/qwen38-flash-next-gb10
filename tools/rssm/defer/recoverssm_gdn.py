@@ -28,6 +28,11 @@ import torch
 from vllm.triton_utils import tl, triton
 from vllm.v1.attention.backends.utils import NULL_BLOCK_ID
 
+
+def _require(cond: bool, msg: str) -> None:  # FNRSSMGUARD: boundary checks as in the KDA RecoverSSM ops
+    if not cond:
+        raise ValueError(f"GDN RecoverSSM: {msg}")
+
 DEFERRED = os.environ.get("FN_GDN_RECOVERSSM_DEFER", "") == "1"
 _BV = 32  # value tile of the verify and commit kernels; the deferred record keeps k/g once per value tile
 
@@ -135,22 +140,43 @@ def gdn_recoverssm_verify(
     q, k: [1, T, H, K]; v: [1, T, HV, V]; a, b: [T, HV] (or [1, T, HV]); checkpoint_state: [blocks, HV, V, K];
     replay_cache: [blocks, HV, spec_query_len, replay_record_dim(K, V)] fp32; pending: [blocks] int32 accepted
     counts not yet folded into the checkpoint (deferred commit), or None. Returns out [1, T, HV, V]."""
+    _require(q.ndim == 4 and q.shape[0] == 1, "q must have shape [1, tokens, heads, dim]")  # FNRSSMGUARD
     _, total, H, K = q.shape
+    _require(k.shape == q.shape, "q and k shapes differ")
+    _require(v.ndim == 4 and tuple(v.shape[:2]) == (1, total), "v must have shape [1, tokens, value heads, dim]")
     HV, V = v.shape[-2], v.shape[-1]
+    _require(H > 0 and HV >= H and HV % H == 0, "value heads must be a positive multiple of the q/k heads")
+    _require(a.numel() == total * HV and b.numel() == total * HV, "gate or beta shape is incompatible")
     a2 = a.reshape(total, HV); b2 = b.reshape(total, HV)
+    _require(a2.stride(1) == 1 and b2.stride(1) == 1, "gate and beta heads must be contiguous")
+    _require(tuple(A_log.shape) == (HV,) and tuple(dt_bias.shape) == (HV,), "A_log or dt_bias shape is incompatible")
+    _require(all(t_.stride(-1) == 1 and t_.stride(-2) == K for t_ in (q, k)), "q and k heads must be contiguous")
+    _require(v.stride(-1) == 1 and v.stride(-2) == V, "v heads must be contiguous")
+    _require(checkpoint_state.ndim == 4, "checkpoint must be four-dimensional")
     nb = checkpoint_state.shape[0]
-    assert checkpoint_state.shape[1:] == (HV, V, K), "GDN RecoverSSM checkpoint shape"
+    _require(tuple(checkpoint_state.shape[1:]) == (HV, V, K), "checkpoint shape is incompatible")
     deferred = pending is not None
-    assert replay_cache.shape == (nb, HV, spec_query_len, replay_record_dim(K, V, deferred))
-    assert replay_cache.dtype == torch.float32
-    assert HV % H == 0
-    for t_ in (q, k):
-        assert t_.stride(-1) == 1 and t_.stride(-2) == K
-    assert v.stride(-1) == 1 and v.stride(-2) == V
+    _rec = (nb, HV, spec_query_len, replay_record_dim(K, V, deferred))
+    _require(tuple(replay_cache.shape) == _rec, f"replay buffer needs shape {_rec}")
+    _require(replay_cache.dtype == torch.float32, "replay buffer must use float32")
+    _require(not deferred or (tuple(pending.shape) == (nb,) and pending.dtype == torch.int32),
+             "pending counters need shape [blocks] and int32")
+    _require(state_indices.ndim == 1, "state indices must be one-dimensional")
+    _require(query_start_loc.ndim == 1 and query_start_loc.shape[0] == state_indices.shape[0] + 1,
+             "query metadata is incompatible")
+    _require(total <= state_indices.shape[0] * spec_query_len,
+             "speculative decode input exceeds its activation capacity")
+    _dev = q.device
+    _require(all(t_.device == _dev for t_ in (k, v, a, b, A_log, dt_bias, checkpoint_state, replay_cache,
+                                              query_start_loc, state_indices)
+                 if t_ is not None) and (out is None or out.device == _dev) and (pending is None or pending.device == _dev),
+             "inputs must be on the same device")
     if scale is None:
         scale = K ** -0.5
     if out is None:
         out = torch.empty(1, total, HV, V, dtype=v.dtype, device=v.device)
+    _require(tuple(out.shape) == (1, total, HV, V) and out.stride()[2:] == (V, 1),
+             "output shape or layout is incompatible")  # FNRSSMGUARD
     batch = state_indices.shape[0]
     if total == 0 or batch == 0:
         return out
@@ -286,19 +312,30 @@ class GDNRecoverSSMCommitContext:
     def from_tensors(cls, conv_states: Sequence[torch.Tensor], checkpoints: Sequence[torch.Tensor],
                      replays: Sequence[torch.Tensor], *, spec_query_len: int, max_num_reqs: int,
                      conv_dim_first: bool = True) -> "GDNRecoverSSMCommitContext":
+        _require(len(checkpoints) > 0, "commit requires at least one layer")  # FNRSSMGUARD
+        _require(len(conv_states) == len(checkpoints) == len(replays), "conv, state and replay lists differ")
         if not conv_dim_first:
             conv_states = [s.transpose(-1, -2) for s in conv_states]
         ref = checkpoints[0]
+        _require(ref.ndim == 4, "checkpoint must be four-dimensional")
         nb, HV, V, K = ref.shape
+        _dev = ref.device
         for s in checkpoints:
-            assert s.shape == ref.shape and s.dtype == ref.dtype and s.stride()[1:] == ref.stride()[1:]
+            _require(s.shape == ref.shape and s.dtype == ref.dtype and s.stride()[1:] == ref.stride()[1:]
+                     and s.device == _dev, "layers need matching checkpoints")
+        _rec = (nb, HV, spec_query_len, replay_record_dim(K, V))
         for r in replays:
-            assert r.shape == (nb, HV, spec_query_len, replay_record_dim(K, V)) and r.dtype == torch.float32
-            assert r.stride()[1:] == replays[0].stride()[1:]
+            _require(tuple(r.shape) == _rec and r.dtype == torch.float32 and r.stride()[1:] == replays[0].stride()[1:]
+                     and r.device == _dev, f"layers need matching float32 replay buffers of shape {_rec}")
         conv_ref = conv_states[0]
+        _require(conv_ref.ndim == 3 and conv_ref.shape[0] == nb,
+                 "conv state must be [blocks, dim, window] with the checkpoint's block count")
+        for c in conv_states:
+            _require(c.shape == conv_ref.shape and c.dtype == conv_ref.dtype and c.stride()[1:] == conv_ref.stride()[1:]
+                     and c.device == _dev, "layers need matching conv states")
         conv_dim, conv_len = conv_ref.shape[1:]
         hist = conv_len - spec_query_len + 1
-        assert hist > 0, "GDN RecoverSSM conv state is shorter than its window"
+        _require(hist > 0, "conv state is shorter than its window")
         dev = ref.device
         addr = lambda ts: torch.tensor([t.data_ptr() for t in ts], dtype=torch.int64, device=dev)
         bstr = lambda ts: torch.tensor([t.stride(0) for t in ts], dtype=torch.int64, device=dev)
@@ -335,9 +372,22 @@ class GDNRecoverSSMCommitContext:
         batch = state_indices.shape[0]
         if batch == 0:
             return
-        assert batch <= self.commit_lens.shape[0]
-        if mamba_block_size is not None:
-            assert mamba_block_size >= self.spec_query_len
+        _require(state_indices.ndim == 1, "state indices must be one-dimensional")  # FNRSSMGUARD
+        _require(batch <= self.commit_lens.shape[0], "commit batch exceeds its plan capacity")
+        _require(query_start_loc.ndim == 1 and query_start_loc.shape[0] == batch + 1, "commit metadata is incompatible")
+        _require(request_indices is None or request_indices.shape[0] >= batch, "request mapping is too short")
+        _require(num_accepted_tokens.ndim == 1
+                 and (request_indices is not None or num_accepted_tokens.shape[0] >= batch),
+                 "accepted-token counts are too short")
+        _align = (block_table, num_computed_tokens, mamba_block_size)
+        _require(all(x is None for x in _align) or all(x is not None for x in _align), "align metadata is incomplete")
+        _require(mamba_block_size is None or mamba_block_size >= self.spec_query_len,
+                 "align block size must cover one speculative window")
+        _require(block_table is None or block_table.ndim == 2, "block table must be two-dimensional")
+        _dev = self.checkpoints[0].device
+        _require(all(t_ is None or t_.device == _dev for t_ in (num_accepted_tokens, state_indices, query_start_loc,
+                                                                request_indices, block_table, num_computed_tokens)),
+                 "commit inputs must be on the same device")
         bt_stride = (0, 0) if block_table is None else block_table.stride()
         _prepare_commit_plan_kernel[(batch,)](
             num_accepted_tokens, request_indices, state_indices, query_start_loc, block_table, num_computed_tokens,
