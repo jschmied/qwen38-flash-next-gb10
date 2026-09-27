@@ -9,3 +9,9 @@ must hit 0); greedy 24 tokens, compared.
 H0 (RecoverSSM commits accepted tokens only -> no contamination): divergent(spec) <= divergent(nospec) + 2.
 H1 (contamination): divergent(spec) clearly above nospec (>= +4 of 16), first divergence at token 0-2.
 Void: B_hit_all false or R_miss_all false (then the probe did not test what it claims).
+
+AMENDED 2026-09-27 ~21:00 (decblk v1 VOID by its own rule: B had 0 prefix hits in all 16 seeds; the engine reported a 0.0 %
+hit rate for the whole run on /v1/completions with token-id prompts, cause not found). v2 = decblk2.py on the chat endpoint
+with continue_final_message (both requests render the assistant turn through the same template path) and a diag block
+that records whether chat and completions hit the cache at all. Same hypotheses and void rule (B must hit past the first
+request's prompt, R must miss).
