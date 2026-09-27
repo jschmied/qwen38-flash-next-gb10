@@ -32,7 +32,8 @@ Spec (JSON):
   ]
 }
 
-An arm's `env` is merged over the spec `env`. `env_unset` removes keys, for a control that must take
+An arm's optional `venv` replaces the spec `venv` for that arm (server, log check and source toggles);
+setting FN_VENV in an arm's `env` instead would fail the log check. An arm's `env` is merged over the spec `env`. `env_unset` removes keys, for a control that must take
 the *default* branch rather than an explicitly-set one. `probe_cmd` must print ONE json object on
 stdout; `{"wrong": [...], "n": 12}` enables the `expect_wrong` control check, anything else is just
 recorded.
@@ -180,7 +181,7 @@ def main() -> int:
         # Caught 2026-09-12 (marker count 2 after a dry check). Leave it pristine and say so.
         for arm in spec["arms"]:
             if "source_toggle" in arm:
-                st = toggle(venv, arm["source_toggle"], False)
+                st = toggle(arm.get("venv", venv), arm["source_toggle"], False)
                 log(f"   source restored to OFF (marker present: {st})")
         log(f"== armrun {name}: spec valid ({len(spec['arms'])} arms). Nothing started. ==")
         globals()["_SENT"] = True      # a dry check is not a completed job
@@ -194,19 +195,20 @@ def main() -> int:
         for i in range(starts):
             for arm in spec["arms"]:
                 tag = f"{name}-{arm['name']}{i}"
+                avenv = arm.get("venv", venv)
                 env = dict(spec.get("env", {})); env.update(arm.get("env", {}))
                 for k in arm.get("env_unset", []): env.pop(k, None)
                 st = arm.get("source_toggle")
                 if st:
-                    got = toggle(venv, st, bool(st.get("on", True)))
+                    got = toggle(avenv, st, bool(st.get("on", True)))
                     if got != bool(st.get("on", True)):
                         log(f"!! VOID {tag}: toggle state {got}, wanted {st.get('on', True)}"); return 2
                 log(f"-- {tag}  env={ {k: v for k, v in arm.get('env', {}).items()} or '(spec default)'}")
-                lg, text = start(unit, venv, model, env, tag)
+                lg, text = start(unit, avenv, model, env, tag)
                 if not lg:
                     log(f"!! VOID {tag}: server never reached startup (log {lg or '/opt/llm/armrun-'+tag+'.log'})")
                     return 2
-                fails = check_log(arm, venv, text)
+                fails = check_log(arm, avenv, text)
                 if fails:
                     for f in fails: log(f"!! VOID {tag}: {f}")
                     return 2
@@ -233,7 +235,7 @@ def main() -> int:
         sh("systemctl", "stop", unit)
         for arm in spec["arms"]:                       # restore declared source state
             if "source_toggle" in arm:
-                st = arm["source_toggle"]; toggle(venv, st, bool(st.get("restore", st.get("on", True))))
+                st = arm["source_toggle"]; toggle(arm.get("venv", venv), st, bool(st.get("restore", st.get("on", True))))
         fh.close()
 
     log("\n== RESULT ==")

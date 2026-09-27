@@ -1,0 +1,9 @@
+== armrun nightly219: 2 arms x 2 start(s), port 8092 ==
+-- nightly219-main1ea70  env=(spec default)
+Running as unit: fx-armrun-nightly219.service; invocation ID: 94f5b83df8eb40bebc0bdb694ee099a0
+   void checks passed (11 required, 5 forbidden)
+   {"code_c1": {"gen_tokens": 2800.0, "accept_len": 4.27, "per_pos": [0.884, 0.756, 0.636, 0.544, 0.45], "shas": ["734976c77bc85e61", "ab310a4f0bd14326", "4c21c4863193d848", "d5567b2ddfef51c7"], "decode_ms_per_tok": 15.51}, "code_c1_sampled": {"gen_tokens": 2800.0, "accept_len": 4.124, "per_pos": [0.851, 0.728, 0.607, 0.51, 0.426], "shas": ["cb354bf14dde8545", "c3d5bf7c0f41ce4f", "d4a806c2193f0e00", "88887c1f78b70b04"], "decode_ms_per_tok": 16.155}, "prose_c1": {"gen_tokens": 2740.0, "accept_len": 2.768, "per_pos": [0.695, 0.46, 0.302, 0.189, 0.123], "shas": ["981f3edbd0bf3061", "633b69ec7eb4e9d1", "134394032efc0020", "7426dfffe6ad0e8e"], "decode_ms_per_tok": 24.72}, "code_c4": {"gen_tokens": 2800.0, "accept_len": 4.452, "per_pos": [0.9, 0.77, 0.697, 0.6, 0.486], "shas": ["bf6ced7dafe5b7e3", "43403a744e5e4c61", "2650618163e0ce43", "0e3604772258cfb0"], "agg_tok_s": 142.8}, "code_ms_tok": 15.51, "prose_ms_tok": 24.72, "ttft": {"8k": {"median_s": 2.772, "all": [2.929, 2.772, 2.77]}, "30k": {"median_s": 10.344, "all": [10.346, 10.319, 10.344]}}, "replay": {"cold_s": 4.835, "warm_s": 2.284, "equal": true}}
+-- nightly219-nightly0  env={'FN_VENV': '/opt/llm/runtime/vllm-venv-nightly219'}
+Running as unit: fx-armrun-nightly219.service; invocation ID: a8463c13c0d144139319057f95089713
+!! VOID nightly219-nightly0: log does not name the venv vllm-venv-main1ea7
+== VOID ==
