@@ -1,0 +1,338 @@
+diff --git a/vllm/model_executor/layers/fused_moe/routed_experts.py b/vllm/model_executor/layers/fused_moe/routed_experts.py
+index 1d411ecc72cf..3e97a20d2ee1 100644
+--- a/vllm/model_executor/layers/fused_moe/routed_experts.py
++++ b/vllm/model_executor/layers/fused_moe/routed_experts.py
+@@ -27,6 +27,7 @@
+     QuantizationConfig,
+     resolve_quant_method,
+ )
++from vllm.model_executor.utils import copy_weight_
+ from vllm.utils.math_utils import cdiv
+ 
+ if TYPE_CHECKING:
+@@ -346,7 +347,7 @@ def _load_combined_w13_weight_scale(
+         loaded_weight = loaded_weight.narrow(
+             shard_dim, shard_size * tp_rank, shard_size
+         )
+-        param.copy_(loaded_weight)
++        copy_weight_(param, loaded_weight)
+ 
+     def _load_model_weight_or_group_weight_scale(
+         self,
+@@ -428,7 +429,7 @@ def _load_per_channel_weight_scale(
+                 hidden_dim=hidden_dim,
+                 shard_dim=shard_dim,
+             )
+-            expert_data.copy_(loaded_weight)
++            copy_weight_(expert_data, loaded_weight)
+         elif shard_id in ("w1", "w3"):
+             self._load_w13(
+                 shard_id=shard_id,
+@@ -555,7 +556,7 @@ def _load_w13(
+             hidden_dim=hidden_dim,
+             shard_dim=shard_dim,
+         )
+-        expert_data.copy_(loaded_weight)
++        copy_weight_(expert_data, loaded_weight)
+ 
+     def _load_w2(
+         self,
+@@ -604,9 +605,9 @@ def _load_w2(
+                 expert_data.chunk(num_chunks, dim=0),
+                 loaded_weight.chunk(num_chunks, dim=0),
+             ):
+-                dst.copy_(src)
++                copy_weight_(dst, src)
+             return
+-        expert_data.copy_(loaded_weight)
++        copy_weight_(expert_data, loaded_weight)
+ 
+     def _load_single_value(
+         self, param: torch.nn.Parameter, loaded_weight: torch.Tensor, expert_id: int
+@@ -654,11 +655,11 @@ def weight_loader(
+             # (FIXME) for gpt-oss all experts are combined
+             if "bias" in weight_name:
+                 dim1 = loaded_weight.shape[1]
+-                param.data[:, :dim1].copy_(loaded_weight)
++                copy_weight_(param.data[:, :dim1], loaded_weight)
+             else:
+                 dim1 = loaded_weight.shape[1]
+                 dim2 = loaded_weight.shape[2]
+-                param.data[:, :dim1, :dim2].copy_(loaded_weight)
++                copy_weight_(param.data[:, :dim1, :dim2], loaded_weight)
+             return True if return_success else None
+ 
+         quant_method_name = self.quant_method.__class__.__name__
+@@ -718,7 +719,7 @@ def weight_loader(
+                     loaded_weight,
+                     hidden_dim=0,
+                 )
+-                expert_data.copy_(loaded_weight)
++                copy_weight_(expert_data, loaded_weight)
+             else:
+                 self._load_w13(
+                     shard_id=shard_id,
+diff --git a/vllm/model_executor/layers/linear.py b/vllm/model_executor/layers/linear.py
+index 65cda325a221..3cfc2c096af9 100644
+--- a/vllm/model_executor/layers/linear.py
++++ b/vllm/model_executor/layers/linear.py
+@@ -41,7 +41,7 @@
+     PerTensorScaleParameter,
+     RowvLLMParameter,
+ )
+-from vllm.model_executor.utils import set_weight_attrs
++from vllm.model_executor.utils import copy_weight_, set_weight_attrs
+ from vllm.platforms import current_platform
+ 
+ logger = init_logger(__name__)
+@@ -406,7 +406,7 @@ def weight_loader(self, param: Parameter, loaded_weight: torch.Tensor):
+             f"Tried to load weights of size {loaded_weight.size()}"
+             f"to a parameter of size {param.size()}"
+         )
+-        param.data.copy_(loaded_weight)
++        copy_weight_(param.data, loaded_weight)
+ 
+     def forward(
+         self,
+@@ -590,7 +590,7 @@ def weight_loader(self, param: Parameter, loaded_weight: torch.Tensor):
+             loaded_weight = loaded_weight.reshape(1)
+ 
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+     def weight_loader_v2(self, param: BasevLLMParameter, loaded_weight: torch.Tensor):
+         # Special case for loading scales off disk, which often do not
+@@ -779,7 +779,7 @@ def weight_loader(
+                     )
+ 
+                 assert param_data.shape == loaded_weight.shape
+-                param_data.copy_(loaded_weight)
++                copy_weight_(param_data, loaded_weight)
+                 return
+ 
+             output_sizes = (
+@@ -864,7 +864,7 @@ def weight_loader(
+                 )
+ 
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+     def _load_fused_module_from_checkpoint(
+         self,
+@@ -1219,7 +1219,7 @@ def weight_loader(
+                     )
+ 
+                 assert param_data.shape == loaded_weight.shape
+-                param_data.copy_(loaded_weight)
++                copy_weight_(param_data, loaded_weight)
+                 return
+             shard_offsets = [
+                 # (shard_id, shard_offset, shard_size)
+@@ -1321,7 +1321,7 @@ def weight_loader(
+                 )
+ 
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+     def load_weights(
+         self, weights: Iterable[tuple[str, torch.Tensor]]
+@@ -1529,7 +1529,7 @@ def weight_loader(
+             output_dim, shard_rank * shard_size, shard_size
+         )
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+ 
+ class KimiK3MergedQKVGateLinear(MergedColumnParallelLinear):
+@@ -1748,7 +1748,7 @@ def weight_loader(self, param: Parameter, loaded_weight: torch.Tensor):
+             loaded_weight = loaded_weight.reshape(1)
+ 
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+     def weight_loader_v2(self, param: BasevLLMParameter, loaded_weight: torch.Tensor):
+         # Special case for loading scales off disk, which often do not
+diff --git a/vllm/model_executor/layers/vocab_parallel_embedding.py b/vllm/model_executor/layers/vocab_parallel_embedding.py
+index be20c412438c..3062c3dfc3a8 100644
+--- a/vllm/model_executor/layers/vocab_parallel_embedding.py
++++ b/vllm/model_executor/layers/vocab_parallel_embedding.py
+@@ -29,7 +29,7 @@
+ )
+ from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
+ from vllm.model_executor.parameter import BasevLLMParameter
+-from vllm.model_executor.utils import set_weight_attrs
++from vllm.model_executor.utils import copy_weight_, set_weight_attrs
+ from vllm.platforms import current_platform
+ 
+ DEFAULT_VOCAB_PADDING_SIZE = 64
+@@ -487,7 +487,7 @@ def weight_loader(self, param: Parameter, loaded_weight: torch.Tensor):
+             ):
+                 loaded_weight = loaded_weight.reshape(1)
+             assert param.data.shape == loaded_weight.shape
+-            param.data.copy_(loaded_weight)
++            copy_weight_(param.data, loaded_weight)
+             return
+ 
+         # Shard indexes for loading the weight
+@@ -512,7 +512,7 @@ def weight_loader(self, param: Parameter, loaded_weight: torch.Tensor):
+ 
+         # Copy the data. Select chunk corresponding to current shard.
+         loaded_weight = loaded_weight.narrow(output_dim, start_idx, shard_size)
+-        param[: loaded_weight.shape[0]].data.copy_(loaded_weight)
++        copy_weight_(param[: loaded_weight.shape[0]].data, loaded_weight)
+         param[loaded_weight.shape[0] :].data.fill_(0)
+ 
+     def forward(self, input_):
+diff --git a/vllm/model_executor/model_loader/weight_utils.py b/vllm/model_executor/model_loader/weight_utils.py
+index 12d557fa1ca2..a5d4ce9a45bc 100644
+--- a/vllm/model_executor/model_loader/weight_utils.py
++++ b/vllm/model_executor/model_loader/weight_utils.py
+@@ -42,6 +42,7 @@
+ from vllm.model_executor.model_loader.ep_weight_filter import (
+     should_skip_weight,
+ )
++from vllm.model_executor.utils import copy_weight_
+ from vllm.platforms import current_platform
+ from vllm.tracing import instrument
+ from vllm.transformers_utils.repo_utils import hf_api, hf_fs
+@@ -1416,14 +1417,14 @@ def default_weight_loader(param: torch.Tensor, loaded_weight: torch.Tensor) -> N
+             # Sometimes scalar values aren't considered tensors with shapes
+             # so if both param and loaded_weight are a scalar,
+             # reshape to match before copying
+-            param.data.copy_(loaded_weight.view(param.shape))
++            copy_weight_(param.data, loaded_weight.view(param.shape))
+         else:
+             assert param.size() == loaded_weight.size(), (
+                 f"Attempted to load weight ({loaded_weight.size()}) "
+                 f"into parameter ({param.size()})"
+             )
+ 
+-            param.data.copy_(loaded_weight)
++            copy_weight_(param.data, loaded_weight)
+     except Exception:
+         # NOTE: This exception is added for the purpose of setting breakpoint to
+         # debug weight loading issues.
+diff --git a/vllm/model_executor/parameter.py b/vllm/model_executor/parameter.py
+index de1cc7d21888..45ee1f3bc1ae 100644
+--- a/vllm/model_executor/parameter.py
++++ b/vllm/model_executor/parameter.py
+@@ -14,6 +14,7 @@
+     get_tensor_model_parallel_world_size,
+ )
+ from vllm.logger import init_logger
++from vllm.model_executor.utils import copy_weight_
+ 
+ __all__ = [
+     "BasevLLMParameter",
+@@ -92,7 +93,7 @@ def _assert_and_load(self, loaded_weight: torch.Tensor):
+         assert self.data.shape == loaded_weight.shape or self._is_1d_and_scalar(
+             loaded_weight
+         )
+-        self.data.copy_(loaded_weight)
++        copy_weight_(self.data, loaded_weight)
+ 
+     def load_column_parallel_weight(self, loaded_weight: torch.Tensor):
+         self._assert_and_load(loaded_weight)
+@@ -148,7 +149,7 @@ def load_column_parallel_weight(self, loaded_weight: torch.Tensor):
+             self.output_dim, self.tp_rank * shard_size, shard_size
+         )
+         assert self.data.shape == loaded_weight.shape
+-        self.data.copy_(loaded_weight)
++        copy_weight_(self.data, loaded_weight)
+ 
+     def load_merged_column_weight(self, loaded_weight: torch.Tensor, **kwargs):
+         shard_offset: int = kwargs["shard_offset"]
+@@ -170,7 +171,7 @@ def load_merged_column_weight(self, loaded_weight: torch.Tensor, **kwargs):
+             self.output_dim, self.tp_rank * shard_size, shard_size
+         )
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+     def load_qkv_weight(self, loaded_weight: torch.Tensor, **kwargs):
+         shard_offset: int = kwargs["shard_offset"]
+@@ -195,7 +196,7 @@ def load_qkv_weight(self, loaded_weight: torch.Tensor, **kwargs):
+         )
+ 
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+ 
+ class RowvLLMParameter(BasevLLMParameter):
+@@ -223,7 +224,7 @@ def load_row_parallel_weight(self, loaded_weight: torch.Tensor):
+             loaded_weight = loaded_weight.reshape(1)
+ 
+         assert self.data.shape == loaded_weight.shape
+-        self.data.copy_(loaded_weight)
++        copy_weight_(self.data, loaded_weight)
+ 
+ 
+ class ModelWeightParameter(_ColumnvLLMParameter, RowvLLMParameter):
+@@ -297,7 +298,7 @@ def _load_into_shard_id(
+ 
+         param_data = param_data[shard_id]
+         assert param_data.shape == loaded_weight.shape
+-        param_data.copy_(loaded_weight)
++        copy_weight_(param_data, loaded_weight)
+ 
+ 
+ class PackedColumnParameter(_ColumnvLLMParameter):
+diff --git a/vllm/model_executor/utils.py b/vllm/model_executor/utils.py
+index a31979498890..6a9788db1c6f 100644
+--- a/vllm/model_executor/utils.py
++++ b/vllm/model_executor/utils.py
+@@ -3,12 +3,15 @@
+ """Utils for model executor."""
+ 
+ import copy
++import functools
++import mmap
+ from contextlib import contextmanager
+ from contextvars import ContextVar
+ from typing import Any
+ 
+ import torch
+ 
++from vllm.platforms import current_platform
+ from vllm.utils.torch_utils import is_torch_equal_or_newer
+ 
+ _weights_pre_processed: ContextVar[bool] = ContextVar(
+@@ -68,6 +71,32 @@ def set_weight_attrs(
+         setattr(weight, key, value)
+ 
+ 
++@functools.cache
++def _is_integrated_gpu(device: torch.device) -> bool:
++    return device.type == "cuda" and current_platform.is_integrated_gpu(device.index)
++
++
++def copy_weight_(dst: torch.Tensor, src: torch.Tensor) -> torch.Tensor:
++    """`dst.copy_(src)` for weight loaders.
++
++    On integrated GPUs, a host-to-device copy straight from a safetensors mmap
++    takes its page faults inside the driver copy, which is several times slower
++    than faulting them on the CPU, so touch one byte per page of `src` first.
++    PyTorch already stages non-contiguous and dtype-converting copies through
++    a CPU temporary.
++    """
++    if (
++        src.device.type == "cpu"
++        and src.dtype == dst.dtype
++        and src.is_contiguous()
++        and _is_integrated_gpu(dst.device)
++    ):
++        flat = src.reshape(-1).view(torch.uint8)
++        flat[:: mmap.PAGESIZE].sum()
++        flat[-1:].sum()
++    return dst.copy_(src)
++
++
+ def replace_parameter(
+     layer: torch.nn.Module,
+     param_name: str,

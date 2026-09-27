@@ -1,0 +1,4 @@
+#!/bin/bash
+# Load-time A/B launcher: every start loads from a cold page cache, then the prod launcher.
+sync; echo 3 > /proc/sys/vm/drop_caches
+exec /opt/llm/serve-flashnext.sh
