@@ -17,7 +17,8 @@ head. One kernel fix of ours is merged into vLLM ([#55180](https://github.com/vl
 five more are open there.
 
 > **Config change 2026-09-27:** K 3 → 5 (needs `--block-size 1728`), probabilistic drafting, and the PR form of
-> RecoverSSM replace the 09-26 config. It is installed; the server validation of the exact prod config is queued.
+> RecoverSSM replace the 09-26 config. It is installed and validated on a server with the exact prod launcher and drop-ins
+> (every path line present; code 15.37 ms/tok, prose 24.72, 4 streams 134.9 tok/s; [data](notes/data/prodval/)).
 > K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
 > Forwarding to nightly `a9eafde59` (266 commits newer): all 36 overlay files apply (2 conflicts, resolved by our
 > rebased #58439 branch); the server validation is queued.
@@ -33,7 +34,7 @@ five more are open there.
 | KV capacity in 4 GiB | **103,953 tokens** with RecoverSSM (75,678 without) | [speed of light §4t](notes/speed-of-light.md) |
 | distance to the byte floor | 54.2 ms per verify cycle vs a **45.2 ms** floor at 220 GB/s (1.20×) | [speed of light, steps 1–4u](notes/speed-of-light.md) |
 | first minutes after a start | ~59 ms/step while the PLE table pages in, 54.7 warm; [vllm#58835](https://github.com/vllm-project/vllm/pull/58835) takes 2.35–2.91 ms/step off the cold window | [speed of light §4e, §4z](notes/speed-of-light.md) |
-| TTFT, 7.5k / 29k tokens | 2.6 s / 10.1 s — **previous stack** (dev524 + PLE offload), not re-measured on this one | [prefill findings 117–118](notes/prefill-investigation.md) |
+| TTFT, ~7.5k / ~29k tokens, cold (unique prompt) | **2.75 s / 10.26 s** on this stack (one start, KV 4 GiB); 2.6 / 10.1 on the previous stack | `tools/evalq/` (eval run 2026-09-27), [prefill findings 117–118](notes/prefill-investigation.md) |
 | decode, 16 / 32 streams | ~100 / 110 tok/s aggregate — **previous stack**, not re-measured | [load and waits](notes/load-and-waits.md) |
 | greedy determinism | sequential greedy output is reproducible across server restarts: identical hashes in every start of every A/B on this stack. Carried as overlays: deterministic `persistent_topk` ([vllm#55122](https://github.com/vllm-project/vllm/pull/55122), open) and the bit-stable MoE finalize. RecoverSSM changes the text relative to the native GDN path by the size of a summation-order change (first divergence at a median of 26 tokens), and is itself reproducible. Still not batch-invariant under concurrency | [determinism investigation](notes/determinism-investigation.md), [speed of light §4s](notes/speed-of-light.md) |
 

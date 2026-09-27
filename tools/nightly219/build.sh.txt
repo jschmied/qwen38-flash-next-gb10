@@ -1,0 +1,33 @@
+set -euo pipefail
+R=/opt/llm/runners/nightly219; S=/opt/llm/runtime/vllm-venv-main1ea7; V=/opt/llm/runtime/vllm-venv-nightly219
+echo "== $(date) start"
+[ -e $V ] && { echo "exists: $V"; exit 1; }
+cp -a $S $V
+# shebang trap: cp -a keeps the ORIGINAL interpreter path
+grep -rlI "^#!$S/bin/python" $V/bin | xargs -r sed -i "1s|^#!$S/bin/python|#!$V/bin/python|"
+sed -i "s|$S|$V|g" $V/bin/activate $V/bin/activate.csh $V/bin/activate.fish 2>/dev/null || true
+head -1 $V/bin/pip
+P=$V/bin/python
+cat > $R/constraints.txt <<C
+torch==2.13.0+cu130
+torchaudio==2.11.0+cu130
+torchvision==0.28.0+cu130
+triton==3.7.1
+C
+$P -m pip install --no-deps $R/vllm-0.30.1rc1.dev219+ga9eafde59-cp38-abi3-manylinux_2_28_aarch64.whl
+$P -m pip install -c $R/constraints.txt --extra-index-url https://download.pytorch.org/whl/cu130 \
+  --extra-index-url https://flashinfer.ai/whl/cu130 \
+  "huggingface_hub>=1.31.0" "protobuf==7.36.1" "xgrammar==0.2.7" "instanttensor>=0.1.9" \
+  "flashinfer-python==0.7.0" "flashinfer-cubin==0.7.0" "flashinfer-jit-cache==0.7.0+cu130" \
+  "nvidia-cutlass-dsl[cu13]==4.7.1" "quack-kernels==0.6.5" "humming-kernels[cu13]==0.1.16"
+$P -m pip install --no-deps -c $R/constraints.txt --extra-index-url https://download.pytorch.org/whl/cu130 "torchcodec>=0.14" || echo "torchcodec skipped"
+PK=$($P -c "import vllm,os;print(os.path.dirname(vllm.__file__))")
+echo "pkg $PK"
+while read f; do mkdir -p $PK/$(dirname ${f#vllm/}); cp $R/overlay/$f $PK/${f#vllm/}; done < $R/overlay/files.txt
+find $PK -name __pycache__ -prune -exec rm -rf {} +
+while read f; do $P -m py_compile $PK/${f#vllm/}; done < $R/overlay/files.txt
+$P -m pip list 2>/dev/null | grep -iE "^(vllm|torch|triton|flashinfer|humming|nvidia-cutlass-dsl|quack|transformers|xgrammar) "
+$P -m pip check || true
+for m in FNDRAFTPROB FNNVFP4 QSADET LMHEADSCALE use_recoverssm; do echo "$m $(grep -rl $m $PK --include=*.py | wc -l)"; done
+$P -c "import vllm; from vllm.config import VllmConfig; import vllm.v1.attention.backends.gdn_recoverssm, vllm.models.qwen4_exp.nvidia.model; print('import ok', vllm.__version__)"
+echo "== $(date) DONE"

@@ -241,6 +241,7 @@ Then speed. Expected, KV 4 GiB, the code probe (`tools/ksweep/codeprobe.py`: 4 c
 | code, single stream, sampled (1.0 / 0.95 / 20) | 16.0 ms/tok = 62.4 tok/s, 4.17 accepted |
 | prose, single stream, greedy | 24.3 ms/tok = 41.1 tok/s |
 | code, 4 streams | 135–138 tok/s aggregate (c=4 text is not reproducible between starts) |
+| TTFT, ~7.5k / ~29k-token cold prompt | 2.75 s / 10.26 s (`tools/evalq/evalprobe.py`, a unique prefix per request so the prefix cache cannot serve it) |
 
 The 09-26 config (K=3, greedy drafts) measured 46.5 tok/s on a warm prose pass, ~100 tok/s at 4 streams and
 1.10 s per agent turn ([§4t](notes/speed-of-light.md)); those three have not been re-measured at K=5.

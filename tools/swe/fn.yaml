@@ -1,0 +1,15 @@
+# Flash-Next quality benchmark (2026-09-27). Layer after swebench.yaml. Same for every arm; only the server differs.
+environment:
+  container_timeout: "8h"
+  pull_timeout: 900
+model:
+  model_kwargs:
+    temperature: 1.0
+    top_p: 0.95
+    top_k: 20
+    drop_params: true
+    timeout: 2400
+    max_tokens: 16000
+    extra_body:
+      chat_template_kwargs:
+        reasoning_effort: medium
