@@ -1215,3 +1215,30 @@ Hypothesis (`tools/f1/HYPOTHESIS.md`): −0.3…−0.6 % at K=3, −0.5…−1.0
   cost the audit's gap count suggested (host launch is hidden by async scheduling; the drafter's compiled region per
   step is small). Not carried; the patch stays env-gated in the clone venv. F4 (FULL graphs) would still graph these
   steps as a side effect, but this result lowers its expected value.
+
+### 5n. Probabilistic drafting over the 32k NVFP4 draft slice: −5.5 % on sampled code at K=5, exact, free on greedy
+
+Queued at the user's request ("put probabilistic draft sampling for our head into queue"), sized by §5l's
+greedy→sampled acceptance gap (0.21 @K3, 0.46 @K5). vLLM's `draft_sample_method='probabilistic'` samples each draft
+from q = softmax(draft logits / T) and runs the exact ratio test with the same q. Our drafter used local argmax over a
+32k NVFP4 slice of the head, which vLLM refuses together with probabilistic drafting. Patch `tools/dprob/patch_dprob.py`
+(`FN_DRAFT_PROB=1`): in probabilistic mode `Qwen4ExpMTP.compute_logits` returns the slice logits scattered into a
+persistent full-vocab buffer filled with −inf once (DSpark's reduced-vocab mechanism), so q = 0 outside the slice and
+the test stays exact. Launcher copy with a `draft_sample_method` knob (`tools/dprob/serve-dprob.launcher.diff`; prod's
+launcher untouched). Run `dprob`: codeprobe (§5l), K=3 and K=5 (block 1728), greedy drafts (local argmax, base) vs
+probabilistic, 2 starts. Hypothesis `tools/dprob/HYPOTHESIS.md`. Data `data/dprob/`.
+
+| | K=3 greedy drafts | K=3 probabilistic | K=5 greedy drafts | K=5 probabilistic |
+|---|---|---|---|---|
+| code sampled, ms/tok | 18.01 / 17.98 | 17.87 / 17.98 | 16.89 / 17.04 | **16.07 / 15.92** |
+| code sampled, accept_len | 3.152 | 3.186 | 3.894 | **4.171** |
+| code greedy, ms/tok (hash) | 16.96 / 16.99 (e10d01) | 16.86 / 17.06 (e10d01) | 15.02 / 15.33 (a42638) | 15.28 / 15.08 (a42638) |
+| prose greedy, ms/tok | 23.22 / 23.36 | 23.29 / 23.26 | 24.31 / 24.48 | 24.57 / 24.15 |
+
+- **Exact and free on greedy traffic:** at temperature 0 the drafts are the slice argmax either way, so every greedy
+  cell has identical hashes and speed (the extra full-vocab sampling/cache work per draft step does not show).
+- **K=5 sampled code: +0.28 accepted per step, −5.5 % ms/tok** (top of the hypothesis range, −2…−5 %). Sampled
+  outputs are reproducible across starts (fixed seeds). It recovers 60 % of §5l's greedy→sampled gap at K=5.
+- **K=3: +0.03 accepted, null speed** — the gap to recover is small at K=3, as §5l predicted.
+- **Best static config for sampled code traffic:** K=5 + probabilistic: 15.9–16.1 ms/tok (~62.5 tok/s), vs 18.0 at
+  today's K=3 greedy drafts (−11.5 %). On prose K=3 stays better (§5l). Not a prod change without the user.
