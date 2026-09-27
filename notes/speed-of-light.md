@@ -1242,3 +1242,26 @@ probabilistic, 2 starts. Hypothesis `tools/dprob/HYPOTHESIS.md`. Data `data/dpro
 - **K=3: +0.03 accepted, null speed** — the gap to recover is small at K=3, as §5l predicted.
 - **Best static config for sampled code traffic:** K=5 + probabilistic: 15.9–16.1 ms/tok (~62.5 tok/s), vs 18.0 at
   today's K=3 greedy drafts (−11.5 %). On prose K=3 stays better (§5l). Not a prod change without the user.
+
+### 5o. Stacked: K=5 + probabilistic drafting (exact) −10 % code; + NVFP4 GDN −17 % code (71 tok/s greedy, 68 sampled)
+
+The morning decision table. Three configs on the same PR-equivalent stack (RecoverSSM + align + prefix cache,
+`--use-replayssm`), codeprobe (§5l; first-pass numbers incl. cold PLE pages, compare within the table), 2 starts.
+Hypothesis `tools/stack/HYPOTHESIS.md`. Data `data/stack/`.
+
+| ms/tok (tok/s) | today: K=3, greedy drafts, FP8 GDN | K=5 + probabilistic, FP8 GDN (exact) | + NVFP4 GDN (quality trade §5j) |
+|---|---|---|---|
+| code greedy | 16.94 / 16.99 (59.0) | 15.25 / 15.18 (65.7), **−10.2 %** | 14.02 / 14.03 (**71.3**), **−17.3 %** |
+| code sampled (1.0/0.95/20) | 17.86 / 17.93 (56.0) | 16.07 / 15.96 (62.4), **−10.5 %** | 14.75 / 14.74 (**67.8**), **−17.6 %** |
+| prose greedy | 23.25 / 23.17 (43.1) | 24.43 / 24.18 (41.1), +4.8 % | 23.45 / 23.60 (42.5), +1.4 % |
+| code accept_len (greedy / sampled) | 3.36 / 3.15 | 4.35 / 4.17 | 4.42 / 4.26 |
+| code c=4 tok/s | 133.9 / 130.9 | 138.3 / 135.0 | 136.7 / 124.5 (c=4 text drifted in start 2) |
+
+- The levers stack roughly multiplicatively, slightly better than predicted on code (−17 % vs −15 %) and slightly
+  worse on prose (+1.4 % vs −1 %). NVFP4 GDN does not lower K=5 acceptance on code; it moves it up a little.
+- Greedy outputs of the middle column are identical to K=5 greedy drafts (§5n) and, being exact spec decoding, to the
+  target model's own output; the right column changes the target (NLL +0.40 % vs BF16, +0.58 % vs FP8).
+- Prose still prefers K=3 (§5l). A per-request or adaptive depth would remove that trade-off.
+- **Decisions for the user (none taken):** prod K (3 → 5, needs `--block-size 1728`), probabilistic drafting (code
+  patch `tools/dprob/`, env-gated), NVFP4 GDN (checkpoint `mtpfp4-gdn4`, quality trade), and updating the prod venv
+  from the env-gated RecoverSSM to the PR code (`--use-replayssm`).
