@@ -1,0 +1,1 @@
+FNAVPW adaptive verification: draft curve [(1, 8.072175979614258)]; verify curve [(1, 28.1), (2, 31.4), (3, 34.7), (4, 38.0), (5, 41.3), (6, 44.6)]

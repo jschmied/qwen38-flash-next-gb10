@@ -1265,3 +1265,30 @@ Hypothesis `tools/stack/HYPOTHESIS.md`. Data `data/stack/`.
 - **Decisions for the user (none taken):** prod K (3 → 5, needs `--block-size 1728`), probabilistic drafting (code
   patch `tools/dprob/`, env-gated), NVFP4 GDN (checkpoint `mtpfp4-gdn4`, quality trade), and updating the prod venv
   from the env-gated RecoverSSM to the PR code (`--use-replayssm`).
+
+### 5p. Adaptive verification at c=1 (vLLM's AdaptiveVerificationManager on MTP + RecoverSSM): rejected — trims, but slower on prose
+
+Question from §5l: can a per-step verify budget give K=5 on code and K≈3 on prose? `tools/avpw/` enables vLLM's
+adaptive verification (DSpark-only upstream) under PIECEWISE (`FN_AV_PW`, c=1 only: the QSA builder mis-indexes ragged
+verify rows at c>1). Two findings before the run: tail capture sizes above K+1 overflow the RecoverSSM window (v1 crash;
+v2 profiles capture sizes only), and the **profiled verify curve is flat for an MoE** (dummy tokens route every row to the
+same experts, ~26 ms for 1..6 rows), so v2 never trimmed. v3 injects a measured-shape curve
+`FN_AV_VERIFY_CURVE` = 28.1 + 3.3·(n−1) ms. codeprobe_c1, 2 starts, KV 4 GiB. Hypothesis `tools/avpw/HYPOTHESIS.md`.
+Data `data/avpw3/`.
+
+| ms/tok (accept_len) | k3 (fixed) | k5 (fixed) | k5av (adaptive) |
+|---|---|---|---|
+| code greedy | 16.84 / 17.02 (3.36) | **15.13 / 15.19** (4.35) | 15.24 / 15.15 (4.30) |
+| code sampled | 17.94 / 18.07 (3.15) | 17.03 / 16.91 (3.89) | 16.85 / 17.18 (3.92 / 3.73) |
+| prose greedy | **23.30 / 23.49** (2.53) | 24.18 / 24.23 (2.83) | 25.03 / 24.91 (2.48 / 2.46) |
+
+- **Outside H1 on prose** (expected within +0…+3 % of k3): k5av is +7 % vs k3 and **+3 % vs fixed K=5**. The trim is
+  real (prose accept_len 2.83 → 2.47), but all 5 draft steps still run, the cut verify rows cost less than the tokens
+  they would have accepted, and the per-step budget adds a host sync. Code: null vs fixed K=5 (within ±1 %).
+- Output: k5 hashes reproduce across starts and equal the stack's K=5 run (§5o: code a426386d…, prose f64e554b…);
+  k5av code differs from k5 (commit grouping, §5b) and its prose differs between starts (the budget depends on
+  confidences that ride the drift).
+- **Verdict:** adaptive verification does not pay at c=1 on this stack; K stays a static choice (§5l). What could still
+  win is cutting *draft* steps, not verify rows — TensorFold's confidence-stopped chain — but §5b shows a per-step host
+  sync costs more than an NVFP4 draft step, so any stop rule must decide on the GPU. Not pursued without an offline
+  replay that predicts a gain first.
