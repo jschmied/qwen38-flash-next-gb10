@@ -35,6 +35,13 @@ EDITS = [
   f'''            (s.num_reqs, s.drafter_ms) for s in samples if s.full_cudagraph or {E}  # FNAVPW
         )'''),
  ("v1/worker/gpu/spec_decode/adaptive_verification.py",
+  '''            tail_sizes -= set(capture_sizes)
+''',
+  f'''            tail_sizes -= set(capture_sizes)
+        if {E}:  # FNAVPW: c=1 decode budgets never exceed the capture sizes (K+1); larger dummy batches would
+            tail_sizes = set()  # FNAVPW  exceed the per-request verify window of the RecoverSSM builders
+'''),
+ ("v1/worker/gpu/spec_decode/adaptive_verification.py",
   '''        verify_curve = median_curve(
             (s.num_target_tokens, s.forward_ms) for s in samples
         )
