@@ -1423,3 +1423,8 @@ wait on one ~100 GB pull, and they share one serve.
   capture widths) plus a pointer. The readahead fix, the NVFP4 draft head and RecoverSSM moved to #78, which uses
   their Improvement template. Drafts `comment-miaai-19-owed-0926.md` (live text) and `issue-miaai-v030-lane-ideas.md`.
   <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/78>
+- **2026-09-27 ~11:40 — vllm#58863, commit pushed (user: "fix off by one of course").** `5567cc1b25` on top of the
+  branch's main merge `ed2a9665ea`: RecoverSSM align keeps a state whose accepted window ends exactly on a block
+  boundary in the block of its last token (commit plan + postprocess; was the next, possibly unallocated column).
+  Fix and test from local-inference-lab/vllm `a02f585d` (Martin Vit), credited as co-author; our GDN/PLE align tests
+  now expect the same convention; 82 kernel tests green on GB10, ruff/format/typos/mypy clean. No PR comment yet.
