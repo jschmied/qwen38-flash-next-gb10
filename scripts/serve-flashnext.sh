@@ -78,6 +78,7 @@ if [ -n "${FN_SPEC_METHOD:-}" ]; then
   [ -n "${FN_LOOKUP_MIN:-}" ] && X="${X},\"prompt_lookup_min\":${FN_LOOKUP_MIN}"
   [ "${FN_SPEC_NODROP:-0}" = 1 ] && X="${X},\"disable_eagle_block_drop\":true"
   [ "${FN_SPEC_LOCALARGMAX:-0}" = 1 ] && X="${X},\"use_local_argmax_reduction\":true"   # drafter argmax via model.get_top_tokens (reduced draft vocab hook)   # #53388: keep the trailing prefix-cache block
+  [ "${FN_SPEC_DRAFTPROB:-0}" = 1 ] && X="${X},\"draft_sample_method\":\"probabilistic\""   # 2026-09-27 probabilistic MTP drafting (user go)
   SPEC="--speculative-config {\"method\":\"${FN_SPEC_METHOD}\",\"num_speculative_tokens\":${FN_SPEC_N:-5}${X}${SPEC_MOE}}"
 fi
 [ "${FN_MTP:-0}" != "0" ] && SPEC="--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":${FN_MTP}${SPEC_MOE}}"

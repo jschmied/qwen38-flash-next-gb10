@@ -3,8 +3,14 @@
 A working server, start to finish. The [README](README.md) says *what we measured*; this says
 *what to type*. Most pins below are load-bearing and have a documented failure mode.
 
-**Target** (the prod configuration, 2026-09-26): **46.5 tok/s** single-stream, ~**100 tok/s** aggregate
-at 4 streams, 1.10 s per agent turn, 32K context, tool calling, on one GB10 with 128 GB unified memory.
+**Target** (the prod configuration, 2026-09-27): single stream **65.7 tok/s** on code (greedy; 62.4 sampled)
+and 41.1 on prose, 32K context, tool calling, on one GB10 with 128 GB unified memory. These are first-pass
+numbers from the code probe ([§5o](notes/speed-of-light.md)), cold PLE pages included.
+
+> **Changed on 2026-09-27:** MTP K 3 → 5 (with `--block-size 1728`), probabilistic drafting over the 32k NVFP4
+> draft slice, and RecoverSSM in the form submitted upstream ([vllm#58863](https://github.com/vllm-project/vllm/pull/58863)),
+> switched on by `--use-replayssm` instead of `FN_GDN_RECOVERSSM=1`. K=5 suits code; for prose-heavy traffic keep
+> K=3 (prose is 5 % faster there, [§5l](notes/speed-of-light.md)). The 09-26 config is this file's previous commit.
 
 **Time:** ~5 h, almost all of it downloading. Budget ~3 h for the weights alone.
 
@@ -87,7 +93,8 @@ Build 1–3 as a **hardlink overlay**, not a copy: only the changed tensors are 
 > **Current `main` cannot load these derived checkpoints.** Its new `MergedColumnParallelLinear.load_weights`
 > falls back to the module itself for keys it does not know, and fails with
 > `'MergedColumnParallelLinear' object has no attribute 'data'` (seen on `378504a54`, 2026-09-26).
-> Stay on `1ea7c63f4` until that is resolved.
+> Stay on `1ea7c63f4` until that is resolved. A server test of nightly `a9eafde59` with the forwarded overlay
+> (all 36 files apply) is queued; this note will say whether it loads.
 
 ## 3. The venv: nightly wheel + one overlay
 
@@ -114,17 +121,19 @@ find $SP/vllm -name __pycache__ -prune -exec rm -rf {} +
 ```
 
 [`tools/main/main1ea7-prod-overlay.diff`](tools/main/main1ea7-prod-overlay.diff) is the exact
-difference between prod's venv and the pristine wheel: 17 modified files and 6 new ones. Everything
-that is not always-on is gated by an environment variable:
+difference between prod's venv and the pristine wheel: 28 modified files and 8 new ones (regenerated
+2026-09-27; applied to the pristine `1ea7c63f4` tree it reproduces prod's files byte for byte). Everything
+that is not always-on is gated by a flag or an environment variable:
 
 | part | files | switch | prod |
 |---|---|---|---|
 | checkpoint-mapped PLE ([#58439](https://github.com/vllm-project/vllm/pull/58439)) | `config/engram.py`, `qwen4_exp/nvidia/{model_state,ngram_embedding}.py`, `ple_pageable.py` (new) | `--engram-config {"checkpoint_mapped":true}` | on |
-| RecoverSSM for GDN ([tools/rssm](tools/rssm/README.md)) | `config/vllm.py`, `mamba/abstract.py`, `qwen_gdn_linear_attn.py`, `qwen4_exp/nvidia/{model,ple_layer}.py`, `recoverssm_gdn.py`, `gdn_recoverssm.py`, `ple_recoverssm.py` (new) | `FN_GDN_RECOVERSSM=1` | on |
+| RecoverSSM for GDN and the PLE conv ([vllm#58863](https://github.com/vllm-project/vllm/pull/58863)) | `config/{cache,compilation,vllm}.py`, `mamba/abstract.py`, `qwen_gdn_linear_attn.py`, `interfaces.py`, `mamba_attn.py`, `cudagraph_utils.py`, `mamba_hybrid.py`, `qwen4_exp/nvidia/{model,ple_layer}.py`, the shared Kimi-K3 commit kernels (`kimi_k3/…`, `mamba/ops/recoverssm.py`, `recoverssm_utils.py`, `recoverssm_metadata.py`), and new `recoverssm_gdn.py`, `gdn_recoverssm.py`, `ple_recoverssm.py` | `--use-replayssm` with speculative decoding | on |
+| probabilistic drafting over the draft slice | `qwen4_exp/nvidia/mtp.py` (`compute_logits` scatters the 32k slice into a −inf full-vocabulary buffer) | `FN_DRAFT_PROB=1` + `FN_SPEC_DRAFTPROB=1` (the launcher adds `draft_sample_method: probabilistic`) | on |
 | deterministic QSA top-k | `qwen4_exp/nvidia/ops/qsa_indexer.py` + `_C_det.so` ([patches/kernel-det](patches/kernel-det/README.md), `build_det.py`) | `VLLM_QSA_DET_TOPK=1`, `VLLM_QSA_DET_LIB=<path>/_C_det.so` | on |
 | bit-stable MoE finalize | `fused_moe/experts/flashinfer_cutlass_moe.py` | `VLLM_MOE_DET_FINALIZE=1` | on |
 | FP8 `lm_head` loading (target and MTP), scale naming | `vocab_parallel_embedding.py`, `weight_utils.py`, `qwen4_exp/nvidia/{model,mtp}.py` | always | on |
-| 32k draft vocabulary | `v1/worker/gpu/spec_decode/speculator.py`, `v1/spec_decode/llm_base_proposer.py` | `FN_DRAFT_VOCAB=<file>` + `use_local_argmax_reduction` | on |
+| 32k draft vocabulary | `v1/worker/gpu/spec_decode/speculator.py`, `v1/spec_decode/llm_base_proposer.py` | `FN_DRAFT_VOCAB=<file>`; `use_local_argmax_reduction` (`FN_SPEC_LOCALARGMAX=1`) only with greedy drafts | on |
 | NVFP4 draft-head slice | `qwen4_exp/nvidia/mtp.py`, `fn_nvfp4_head.py` (new) | `FN_DRAFT_HEAD_NVFP4=1`, `FN_NVFP4_CFG=64,4` | on |
 | experiments, all measured null or not promoted | `linear.py` + `fn_bf16sk.py`, `ple_pageable.py` extras, `weight_utils.py`, `fused_sigmoid_gating.py` | `FN_BF16SK`, `FN_PLE_SYNCTOUCH`, `FN_PLE_POPULATE`, `FN_PFTIME`, `FN_LOAD_DROPCACHE`, `FN_GDN_STORE_CS` | off |
 
@@ -138,7 +147,8 @@ LC_ALL=C diff -rq --exclude=__pycache__ --exclude='*.orig*' --exclude='*.pre*' <
 ## 4. Serve
 
 [`scripts/serve-flashnext.sh`](scripts/serve-flashnext.sh) is the launcher prod runs. Prod sets these
-through a systemd unit with drop-ins:
+through a systemd unit with drop-ins ([`tools/main/dropins/`](tools/main/dropins/), later files override
+earlier ones); the effective environment is:
 
 ```ini
 Environment=FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7
@@ -146,15 +156,17 @@ Environment=FN_MODEL=/opt/llm/models/qwen38-flash-next-mtpfp4
 Environment=FN_MAXLEN=32768
 Environment=FN_SEQS=16
 Environment=FN_SPEC_METHOD=mtp
-Environment=FN_SPEC_N=3
+Environment=FN_SPEC_N=5
 Environment=FN_SPEC_NODROP=1
-Environment=FN_SPEC_LOCALARGMAX=1
+Environment=FN_SPEC_LOCALARGMAX=0
 Environment=FN_DRAFT_VOCAB=<repo>/tools/draft_vocab/draft_vocab_32768.txt
 Environment=FN_PLE_OFFLOAD=0
-Environment="FN_EXTRA=--engram-config {\"checkpoint_mapped\":true}"
+Environment="FN_EXTRA=--engram-config {\"checkpoint_mapped\":true} --use-replayssm --block-size 1728"
 Environment=FN_DRAFT_HEAD_NVFP4=1
 Environment=FN_NVFP4_CFG=64,4
-Environment=FN_GDN_RECOVERSSM=1
+Environment=FN_DRAFT_PROB=1
+Environment=FN_SPEC_DRAFTPROB=1
+Environment=FN_CG_SIZES=[1,2,4,6,8,12,16,18,24,30,36,48,60,72,96]
 ```
 
 The flags that are not obvious:
@@ -162,8 +174,11 @@ The flags that are not obvious:
 | setting | why |
 |---|---|
 | `--engram-config {"checkpoint_mapped":true}`, `FN_PLE_OFFLOAD=0` | reads the 47.7 GiB n-gram table in place from the checkpoint's page cache: no table-sized allocation, nothing pinned, no offload worker |
-| `--speculative-config` MTP, `num_speculative_tokens` 3, `disable_eagle_block_drop` | the agent loop is −19 % with MTP in this shape; without the block-drop flag, speculation costs a whole prefix block per turn. `k=5` hard-fails (QSA ring capacity; [vllm#54912](https://github.com/vllm-project/vllm/pull/54912)) |
-| `FN_GDN_RECOVERSSM=1` | GDN verify from one checkpoint with a per-token replay record, committed once after sampling: −2.4…−4.0 % per cycle at c=1, −5.2 % at c=4, −16 % per agent turn, +37 % KV. PIECEWISE CUDA graphs only (the launcher's default), V2 model runner |
+| `--speculative-config` MTP, `num_speculative_tokens` 5, `disable_eagle_block_drop` | the agent loop is −19 % with MTP in this shape; without the block-drop flag, speculation costs a whole prefix block per turn. K=5 is −10 % on code and +5 % on prose against K=3 ([§5l](notes/speed-of-light.md)) |
+| `--block-size 1728` | K=5 needs it: the QSA raw-key ring capacity (12 here) must divide the block size, and the auto size (1696) does not; without it K=5 hard-fails at start ([vllm#54912](https://github.com/vllm-project/vllm/pull/54912)) |
+| `--use-replayssm` | with speculative decoding, selects RecoverSSM for Qwen4Exp: GDN verify from one checkpoint with a per-token replay record, committed once after sampling; −2.4…−4.0 % per cycle at c=1, −5.2 % at c=4, −16 % per agent turn, +37 % KV. The backends declare no full-graph support, so `FULL_AND_PIECEWISE` resolves to PIECEWISE (the launcher's default anyway). V2 model runner, Triton mamba backend, PP=1 |
+| `FN_DRAFT_PROB=1`, `FN_SPEC_DRAFTPROB=1`, `FN_SPEC_LOCALARGMAX=0` | drafts are sampled (`draft_sample_method: probabilistic`) and accepted by rejection sampling: −5.5 % on sampled code at K=5, greedy unchanged, exact. The local-argmax shortcut must be off, because the sampler needs the drafter's logits ([§5n](notes/speed-of-light.md)) |
+| `FN_CG_SIZES` | CUDA-graph capture sizes on multiples of K+1 = 6 so verify batches at 1–16 streams land on a captured size |
 | `VLLM_USE_DEEP_GEMM=0` | DeepGEMM gates on capability *family* 120, which sm_121 satisfies, then faults with `unspecified launch failure` (vllm#54125) |
 | `VLLM_GDN_DECODE_KERNEL=triton` | the default CUDA kernel deterministically hangs the engine at c≈32 with FP8 GDN projections. No error; requests just stall |
 | `CUTE_DSL_ARCH=sm_121a` | required for the FlashInfer CuteDSL path |
@@ -201,10 +216,14 @@ Mapped PLE table of layer 1 in place: 320001536 rows x 160 B from 10 files; no t
 FNDV draft vocab: 32768 of 248320 rows (13.2%); draft head 606 -> 45 MiB per draft step (NVFP4 slice, FNNVFP4)
 Using FlashInfer GDN prefill kernel (requested=auto, head_k_dim=128).
 Mamba cache mode is set to 'align' for Qwen4ExpForConditionalGeneration by default when prefix caching is enabled
-FNRSSM: GDN RecoverSSM speculative verify active (spec_query_len 4)
+GDN RecoverSSM speculative verify active (spec_query_len 6)
 GDN RecoverSSM path taken: <n> spec rows, align=True
-FNRSSM PLE RecoverSSM path taken: <n> spec rows, align=True
+PLE RecoverSSM path taken: <n> spec rows, align=True
+FNDRAFTPROB path taken: probabilistic drafting over a 32768-id slice of 248320
 ```
+
+and the engine config line must show `num_spec_tokens=5` and the capture-size list; it must **not** contain
+`Using local argmax reduction` (that would mean greedy drafts).
 
 For the deterministic top-k, check the process, not the log: `grep -c _C_det.so /proc/<VLLM::Worker pid>/maps`
 must be > 0.
@@ -213,13 +232,18 @@ must be > 0.
 > outputs "identical" when every one was the empty string: the model was still inside `<think>` and
 > the budget ran out. Print character counts and refuse the verdict when the cell is empty.
 
-Then speed. Expected, warm, KV 4 GiB, short prompts ([speed of light §4t](notes/speed-of-light.md)):
+Then speed. Expected, KV 4 GiB, the code probe (`tools/ksweep/codeprobe.py`: 4 code and 4 prose prompts,
+700 tokens, thinking off, first pass; [speed of light §5o](notes/speed-of-light.md)):
 
 | | |
 |---|---|
-| single stream | **21.49 ms/tok = 46.5 tok/s**, 2.53 tokens accepted per verify cycle |
-| 4 streams | 99.7–100.0 tok/s aggregate |
-| agent loop, 8 dependent turns | 1.10 s/turn |
+| code, single stream, greedy | **15.2 ms/tok = 65.7 tok/s**, 4.35 tokens accepted per verify cycle |
+| code, single stream, sampled (1.0 / 0.95 / 20) | 16.0 ms/tok = 62.4 tok/s, 4.17 accepted |
+| prose, single stream, greedy | 24.3 ms/tok = 41.1 tok/s |
+| code, 4 streams | 135–138 tok/s aggregate (c=4 text is not reproducible between starts) |
+
+The 09-26 config (K=3, greedy drafts) measured 46.5 tok/s on a warm prose pass, ~100 tok/s at 4 streams and
+1.10 s per agent turn ([§4t](notes/speed-of-light.md)); those three have not been re-measured at K=5.
 
 Measure with at least two server starts per arm and a warm pass: the first ~minute after a start is
 the PLE cold window, and it moves the number by ~11 %.

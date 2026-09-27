@@ -8,16 +8,26 @@ with its data file, the failures by symptom, and the claims of our own we had to
 insights, what transferred from the field and what did not, and which of our own conclusions had to be
 thrown away. It is synthesis — every number in it points back to the note that carries the data.
 
-**Status (2026-09-26): working, fast, usable** — tool calls, vision, 32K served context (262K-capable).
+**Status (2026-09-27): working, fast, usable** — tool calls, vision, 32K served context (262K-capable).
 The stack is vLLM `main` (nightly `1ea7c63f4`) with the PLE table read in place from the checkpoint
 ([vllm#58439](https://github.com/vllm-project/vllm/pull/58439), ours) instead of the old PLE-offload
-worker, MTP n=3 with an NVFP4 drafter, and **RecoverSSM for the GDN layers** (our port, promoted
-2026-09-26). One kernel fix of ours is merged into vLLM ([#55180](https://github.com/vllm-project/vllm/pull/55180));
-four more are open there.
+worker, **RecoverSSM for the GDN layers** as submitted upstream ([vllm#58863](https://github.com/vllm-project/vllm/pull/58863),
+ours, enabled by `--use-replayssm`), and **MTP K=5 with probabilistic drafting** over a 32k-token NVFP4 draft
+head. One kernel fix of ours is merged into vLLM ([#55180](https://github.com/vllm-project/vllm/pull/55180));
+five more are open there.
+
+> **Config change 2026-09-27:** K 3 → 5 (needs `--block-size 1728`), probabilistic drafting, and the PR form of
+> RecoverSSM replace the 09-26 config. It is installed; the server validation of the exact prod config is queued.
+> K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
+> Forwarding to nightly `a9eafde59` (266 commits newer): all 36 overlay files apply (2 conflicts, resolved by our
+> rebased #58439 branch); the server validation is queued.
 
 | what | number | where it comes from |
 | --- | --- | --- |
-| decode, single stream | **46.5 tok/s** (21.49 ms/tok; 2.53 tokens accepted per verify cycle) — was 17.1 on the published checkpoint | [speed of light §4t](notes/speed-of-light.md), [fp8 checkpoint](notes/fp8-mixed-checkpoint.md), [lm_head](notes/quantizing-lm-head.md), [speculation](notes/speculation-on-flash-next.md) |
+| decode, single stream, **code** (4 prompts, 700 tokens, first pass) | **65.7 tok/s** greedy (4.35 accepted per verify cycle), **62.4** sampled — 59.0 / 56.0 with the 09-26 config | [speed of light §5l, §5n, §5o](notes/speed-of-light.md) |
+| decode, single stream, **prose** (same probe) | 41.1 tok/s greedy — 43.1 with the 09-26 config (K=3 is better on prose) | [speed of light §5o](notes/speed-of-light.md) |
+| decode, single stream, 09-26 config (warm second pass, prose) | 46.5 tok/s (21.49 ms/tok; 2.53 accepted per cycle) — was 17.1 on the published checkpoint | [speed of light §4t](notes/speed-of-light.md), [fp8 checkpoint](notes/fp8-mixed-checkpoint.md), [lm_head](notes/quantizing-lm-head.md), [speculation](notes/speculation-on-flash-next.md) |
+| option, not adopted: GDN projections as NVFP4 W4A16 | code 71.3 tok/s greedy / 67.8 sampled on top of the above, at +0.4 % NLL vs BF16. A GSM8K + HumanEval comparison is queued before the decision | [speed of light §5j, §5o](notes/speed-of-light.md) |
 | decode, 4 streams | **~100 tok/s** aggregate (99.7–100.0) | [speed of light §4t](notes/speed-of-light.md) |
 | agent loop (8 dependent turns, prefix cache + MTP) | **1.10 s/turn**, 1.31 without RecoverSSM | [speed of light §4t](notes/speed-of-light.md) |
 | KV capacity in 4 GiB | **103,953 tokens** with RecoverSSM (75,678 without) | [speed of light §4t](notes/speed-of-light.md) |
@@ -27,8 +37,10 @@ four more are open there.
 | decode, 16 / 32 streams | ~100 / 110 tok/s aggregate — **previous stack**, not re-measured | [load and waits](notes/load-and-waits.md) |
 | greedy determinism | sequential greedy output is reproducible across server restarts: identical hashes in every start of every A/B on this stack. Carried as overlays: deterministic `persistent_topk` ([vllm#55122](https://github.com/vllm-project/vllm/pull/55122), open) and the bit-stable MoE finalize. RecoverSSM changes the text relative to the native GDN path by the size of a summation-order change (first divergence at a median of 26 tokens), and is itself reproducible. Still not batch-invariant under concurrency | [determinism investigation](notes/determinism-investigation.md), [speed of light §4s](notes/speed-of-light.md) |
 
-The single-stream, 4-stream and agent-loop rows are one configuration (prod, measured with KV fixed at
-4 GiB so the PLE table stays resident; 2 server starts per arm, ranges not means). The rows marked
+The code and prose rows use the code probe of §5l: each prompt is seen once per server, so they include the cold
+PLE pages (≈7 % above a warm second pass); compare them with each other, not with the 46.5 row. The 4-stream,
+agent-loop and KV rows are the 09-26 configuration and have not been re-measured at K=5. All rows are measured with
+KV fixed at 4 GiB so the PLE table stays resident; 2 server starts per arm, ranges not means. The rows marked
 *previous stack* are a different configuration and are not comparable. Decode noise start-to-start is
 ~2 % once the cold window is excluded; prefill is far noisier ([method](notes/method.md)).
 
@@ -37,7 +49,7 @@ The single-stream, 4-stream and agent-loop rows are one configuration (prod, mea
 - **[REPRODUCE.md](REPRODUCE.md)** — weights, the venv overlay, serve config, and what to check before
   you trust a number. Start here to get it *running*.
 - **[Speed of light](notes/speed-of-light.md)** — how far decode is from the byte floor, where the rest
-  goes, and every lever tried against it (sections 1–4z, newest last).
+  goes, and every lever tried against it (sections 1–5o, newest last).
 - **[Failure modes](notes/failure-modes.md)** — every failure hit here, by what you *observe*. Four
   different causes produce "it loads but the output is wrong".
 - **[Closed levers](notes/closed-levers.md)** — what looked like a lever and measured null, with the
@@ -51,12 +63,13 @@ The single-stream, 4-stream and agent-loop rows are one configuration (prod, mea
 | | what | state |
 | --- | --- | --- |
 | [vllm#58439](https://github.com/vllm-project/vllm/pull/58439) | **checkpoint-mapped PLE**: the 47.7 GiB n-gram table is read in place from the safetensors files through a read-only `mmap` (GPUs that read pageable host memory through the host page tables). No table-sized pinned or device allocation; swap use fell from ~50 GiB to 5–6 GiB. Validated on a second Spark by hclsys | ours, open, mergeable, awaiting review |
+| [vllm#58863](https://github.com/vllm-project/vllm/pull/58863) | **RecoverSSM for Qwen GDN and the PLE short conv**: verify from a read-only checkpoint with a per-token replay record, commit once after sampling; no per-draft Mamba blocks. Shares Kimi-K3's commit kernels; also fixes the FULL_AND_PIECEWISE fallback dropping to no CUDA graphs under breakable graphs. c=4 −5.2 % per cycle, agent turn −16 %, +37 % KV | ours, opened 2026-09-27 |
 | [vllm#58835](https://github.com/vllm-project/vllm/pull/58835) | follow-up to #58439: a decode step's cold PLE pages are read with readahead (`MADV_WILLNEED` + `MADV_POPULATE_READ`) instead of a serial touch; cold decode −2.35 / −2.91 ms/step, warm unchanged, outputs identical | ours, opened 2026-09-26 |
 | [vllm#56466](https://github.com/vllm-project/vllm/pull/56466#issuecomment-5845393579) | GDN spec decode + prefix caching (ReplaySSM, WIP): **our RecoverSSM-for-GDN numbers posted as a data point**, asking whether a RecoverSSM-based GDN PR is wanted | comment 2026-09-26 |
 | [vllm#55180](https://github.com/vllm-project/vllm/pull/55180) | blockwise-FP8 GEMM on GB10: CTA swizzle restores 150–168 TF at every M (stock collapses to 52) | ours, **merged 2026-09-07** |
 | [vllm#55375](https://github.com/vllm-project/vllm/pull/55375) | **MTP output corruption, root-caused here** (findings 126–131): strided PLE conv-state indices. The fix is peakcrosser7's (our duplicate #55467 closed); our evidence and test are on it | **merged 2026-09-05** |
 | [vllm#55122](https://github.com/vllm-project/vllm/pull/55122) | deterministic `persistent_topk` (index-ranked ties): greedy prefill reproducible at no end-to-end cost; shipped by blazux as their patch 8 | ours, open |
-| [vllm#54912](https://github.com/vllm-project/vllm/pull/54912) | widen the QSA raw-key ring instead of asserting divisibility (`k=5` MTP hard-fails today) | ours, open |
+| [vllm#54912](https://github.com/vllm-project/vllm/pull/54912) | widen the QSA raw-key ring instead of asserting divisibility (`k=5` MTP hard-fails at the auto block size; `--block-size 1728` is the workaround prod uses) | ours, open |
 | [vllm#55872](https://github.com/vllm-project/vllm/pull/55872) | LopezCastroRoberto's opt-in deterministic FlashInfer top-k: does not start on sm_121 (tested at their request) | theirs; GB10 result reported |
 | [vllm#54521](https://github.com/vllm-project/vllm/issues/54521), [#54928](https://github.com/vllm-project/vllm/issues/54928), [RFC #55394](https://github.com/vllm-project/vllm/issues/55394) | greedy non-determinism evidence; the tile-union QSA prefill RFC | open |
 | [vllm#55430](https://github.com/vllm-project/vllm/pull/55430), [#55661](https://github.com/vllm-project/vllm/pull/55661), [#53899](https://github.com/vllm-project/vllm/pull/53899) | tile-union QSA kernel (withdrawn: maintainer wanted > 3 %), the swizzle activation gate, the PLE-offload branch our old stack used | closed |
@@ -67,6 +80,10 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
 
 ## What we found, in one line each
 
+- **The text decides the draft depth**: K=5 is −10 % on code (4.35 tokens per cycle) and +5 % on prose;
+  probabilistic drafting over the 32k NVFP4 draft slice adds −5.5 % on sampled code and is exact (the slice's
+  logits are scattered into a −inf full-vocabulary buffer, so tokens outside it have q = 0):
+  [§5l, §5n, §5o](notes/speed-of-light.md).
 - **The GDN spec-decode kernel's state snapshots were the decode slow spots**: 12 MiB of fp32 state
   written per layer per step sits dirty in the 24 MiB L2, and the next GEMMs pay the write-back
   (`out_proj` 101 → 71 µs clean). RecoverSSM removes them, and in align mode frees 37 % of KV:
@@ -97,11 +114,13 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
     REPRODUCE.md                  the recipe, start to finish
     scripts/serve-flashnext.sh    serve config (identical to the one prod runs)
     tools/main/main1ea7-prod-overlay.diff   the whole prod venv overlay against the pristine nightly
+    tools/main/dropins/           the systemd drop-ins prod runs (env for the launcher)
     tools/rssm/                   RecoverSSM for GDN: kernels, backends, patch scripts, tests (defer/: next step)
+    tools/ksweep/, tools/dprob/, tools/stack/   MTP depth on code vs prose, probabilistic drafting, the stacked A/B
     tools/plecold/                PLE cold-window instruments and the readahead fill
     tools/prof/                   nsys / torch-profile analysis (nsyscmp.py compares two traces)
     tools/armrun.py               the A/B runner every server number comes from
-    notes/speed-of-light.md       decode vs the byte floor, sections 1–4z
+    notes/speed-of-light.md       decode vs the byte floor, sections 1–5o
     notes/prefill-investigation.md   numbered findings (prefill, kernels, cache, the mapped PLE)
     notes/determinism-investigation.md   greedy reproducibility; starts with an "answers by question" index
     notes/upstream/               drafts of every post and the posting log
