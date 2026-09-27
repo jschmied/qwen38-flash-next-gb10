@@ -122,7 +122,7 @@ find $SP/vllm -name __pycache__ -prune -exec rm -rf {} +
 
 [`tools/main/main1ea7-prod-overlay.diff`](tools/main/main1ea7-prod-overlay.diff) is the exact
 difference between prod's venv and the pristine wheel: 28 modified files and 8 new ones (regenerated
-2026-09-27; applied to the pristine `1ea7c63f4` tree it reproduces prod's files byte for byte). Everything
+2026-09-27 after the RecoverSSM align boundary fix went in; applied to the pristine `1ea7c63f4` tree it reproduces prod's files byte for byte). Everything
 that is not always-on is gated by a flag or an environment variable:
 
 | part | files | switch | prod |

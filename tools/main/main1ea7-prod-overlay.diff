@@ -2550,7 +2550,7 @@
 +__all__ = ["GDNRecoverSSMCommitContext", "gdn_recoverssm_verify"]
 --- /dev/null
 +++ b/vllm/model_executor/layers/mamba/ops/recoverssm.py
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,200 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""Model-independent RecoverSSM Triton kernels shared by every recurrent-state
@@ -2631,8 +2631,12 @@
 +            tl.int32
 +        )
 +        final_num_computed = num_computed + commit_len
++        # The committed state belongs to the block holding the last committed
++        # token. A window ending exactly on a boundary stays in that block; the
++        # next block may still be unallocated.
 +        final_state_col = tl.minimum(
-+            final_num_computed // mamba_block_size, block_table_width - 1
++            tl.maximum(final_num_computed - 1, 0) // mamba_block_size,
++            block_table_width - 1,
 +        )
 +        final_state_idx = tl.load(
 +            block_table_ptr
