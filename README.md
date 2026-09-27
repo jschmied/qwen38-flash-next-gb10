@@ -32,7 +32,7 @@ five more are open there.
 | decode, 4 streams | **~100 tok/s** aggregate (99.7–100.0) | [speed of light §4t](notes/speed-of-light.md) |
 | agent loop (8 dependent turns, prefix cache + MTP) | **1.10 s/turn**, 1.31 without RecoverSSM | [speed of light §4t](notes/speed-of-light.md) |
 | KV capacity in 4 GiB | **103,953 tokens** with RecoverSSM (75,678 without) | [speed of light §4t](notes/speed-of-light.md) |
-| distance to the byte floor | 54.2 ms per verify cycle vs a **45.2 ms** floor at 220 GB/s (1.20×) | [speed of light, steps 1–4u](notes/speed-of-light.md) |
+| distance to the byte floor | K=5 (prod): 66.1 ms per verify cycle on code vs a **~53–54 ms** floor at 220 GB/s (1.21–1.25×, estimate: the 6-row expert union is interpolated, not captured; floor ≈ 80 tok/s on code). K=3 (09-26): 54.2 vs 45.2 ms (1.20×, measured routing) | [speed of light §2a, §5q](notes/speed-of-light.md) |
 | first minutes after a start | ~59 ms/step while the PLE table pages in, 54.7 warm; [vllm#58835](https://github.com/vllm-project/vllm/pull/58835) takes 2.35–2.91 ms/step off the cold window | [speed of light §4e, §4z](notes/speed-of-light.md) |
 | TTFT, ~7.5k / ~29k tokens, cold (unique prompt) | **2.75 s / 10.26 s** on this stack (one start, KV 4 GiB); 2.6 / 10.1 on the previous stack | `tools/evalq/` (eval run 2026-09-27), [prefill findings 117–118](notes/prefill-investigation.md) |
 | decode, 16 / 32 streams | ~100 / 110 tok/s aggregate — **previous stack**, not re-measured | [load and waits](notes/load-and-waits.md) |
@@ -50,7 +50,7 @@ KV fixed at 4 GiB so the PLE table stays resident; 2 server starts per arm, rang
 - **[REPRODUCE.md](REPRODUCE.md)** — weights, the venv overlay, serve config, and what to check before
   you trust a number. Start here to get it *running*.
 - **[Speed of light](notes/speed-of-light.md)** — how far decode is from the byte floor, where the rest
-  goes, and every lever tried against it (sections 1–5p, newest last).
+  goes, and every lever tried against it (sections 1–5q, newest last).
 - **[Failure modes](notes/failure-modes.md)** — every failure hit here, by what you *observe*. Four
   different causes produce "it loads but the output is wrong".
 - **[Closed levers](notes/closed-levers.md)** — what looked like a lever and measured null, with the
@@ -121,7 +121,7 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
     tools/plecold/                PLE cold-window instruments and the readahead fill
     tools/prof/                   nsys / torch-profile analysis (nsyscmp.py compares two traces)
     tools/armrun.py               the A/B runner every server number comes from
-    notes/speed-of-light.md       decode vs the byte floor, sections 1–5p
+    notes/speed-of-light.md       decode vs the byte floor, sections 1–5q
     notes/prefill-investigation.md   numbered findings (prefill, kernels, cache, the mapped PLE)
     notes/determinism-investigation.md   greedy reproducibility; starts with an "answers by question" index
     notes/upstream/               drafts of every post and the posting log

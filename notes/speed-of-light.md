@@ -1292,3 +1292,23 @@ Data `data/avpw3/`.
   win is cutting *draft* steps, not verify rows — TensorFold's confidence-stopped chain — but §5b shows a per-step host
   sync costs more than an NVFP4 draft step, so any stop rule must decide on the GPU. Not pursued without an offline
   replay that predicts a gain first.
+
+### 5q. The byte floor at K=5 (estimate): ~53–54 ms per verify cycle; code measures 1.21–1.25×, prose 1.26–1.29×
+
+The 45.2 ms floor (step 2a) is for K=3: a 4-row verify with 26.6 distinct experts per layer. At K=5 the verify has 6 rows
+and the drafter runs 5 steps. Scaled from step 2a's measured parts (no new capture):
+- **Distinct experts at 6 rows: ~37.2 per layer**, interpolated on the measured sub-linear curve (4 → 26.6, 8 → 47.3;
+  exponent 0.83). Not measured: a capture at K=5 would replace this number. Target experts 16.1 → **22.5 ms**.
+- **Drafter 3.8 → 5.0–6.5 ms** (5 single-row steps instead of 3 plus a 6-row absorb; the NVFP4 slice head is smaller than
+  the head step 2a measured, so the low end is plausible).
+- Unchanged: target dense 21.3, lm_head 2.9, GDN state 1.0, QSA 0.2.
+
+| | floor per cycle | measured per cycle (§5o, K=5) | ratio | floor per token |
+|---|---|---|---|---|
+| code (4.35 accepted) | 52.9–54.4 ms | 15.2 × 4.35 = 66.1 ms | **1.21–1.25×** | 12.2–12.5 ms (80–82 tok/s) |
+| prose (2.83 accepted) | 52.9–54.4 ms | 24.2 × 2.83 = 68.5 ms | 1.26–1.29× | 18.7–19.2 ms |
+
+- The ratio is about where K=3 was (1.20×, §4t): deeper drafting added bytes and time in proportion. The per-token floor
+  moves with acceptance, so on code the model could reach ~80 tok/s single-stream at the byte floor; we measure 65.7.
+- Caveat: the measured cycle includes the cold PLE pages of a first-pass probe (≈7 %, §5l), so the warm ratio is lower,
+  roughly 1.15–1.2×.
