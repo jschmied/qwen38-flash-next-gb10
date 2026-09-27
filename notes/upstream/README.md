@@ -1428,3 +1428,7 @@ wait on one ~100 GB pull, and they share one serve.
   boundary in the block of its last token (commit plan + postprocess; was the next, possibly unallocated column).
   Fix and test from local-inference-lab/vllm `a02f585d` (Martin Vit), credited as co-author; our GDN/PLE align tests
   now expect the same convention; 82 kernel tests green on GB10, ruff/format/typos/mypy clean. No PR comment yet.
+- **2026-09-27 ~11:50 — pocharlies-org/k8s-gitops-pocharlies PR #391, comment (user's go: "ask").** Asked why phase 3b
+  (#58439 + be7a84fe, TP=2 over two nodes) was rolled back: first error, vLLM base, whether both ranks mapped the table
+  and the page cache was dropped. Mentioned the unified-memory page-cache vs free-memory-gate effect without claiming
+  it. Draft `comment-pocharlies-391.md`. <https://github.com/pocharlies-org/k8s-gitops-pocharlies/pull/391#issuecomment-5854555924>
