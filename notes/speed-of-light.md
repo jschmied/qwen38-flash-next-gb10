@@ -1194,3 +1194,24 @@ Hypothesis: `tools/ksweep/HYPOTHESIS.md`. Data: `data/ksweep/`.
 - **Consequence:** the best static K depends on the traffic. For code-heavy agent work K=5 (with block 1728) is the better
   default; for chat/prose K=3. A per-request or adaptive depth (vLLM's `enable_adaptive_verification` is DSpark-only
   today) would get both. Not a prod change without the user.
+
+### 5m. F1 — PIECEWISE graphs for MTP draft steps 2..K: null (−1.6 % prose at K=3 only), not carried
+
+First item of the fusion plan (user: "sounds like a plan"). Under PIECEWISE, vLLM runs draft decode steps 2..K without
+graphs ("PIECEWISE cudagraphs are not supported for draft decodes" → NONE). `tools/f1/patch_draftpw.py`
+(`FN_DRAFT_PW=1`) keeps PIECEWISE for them; the draft-step function already takes any runtime mode. Run `f1dpw`, the
+code/prose probe of §5l, K=3 and K=5 (block 1728), 2 starts per arm, stack = the PR-equivalent code (`--use-replayssm`).
+Hypothesis (`tools/f1/HYPOTHESIS.md`): −0.3…−0.6 % at K=3, −0.5…−1.0 % at K=5, hashes identical. Data: `data/f1/`.
+
+| ms/tok | K=3 base | K=3 graphed | K=5 base | K=5 graphed |
+|---|---|---|---|---|
+| code greedy | 16.95 / 16.74 | 16.84 / 16.83 | 15.20 / 15.06 | 15.26 / 15.30 |
+| code sampled | 18.00 / 18.10 | 17.92 / 17.87 | 16.95 / 16.91 | 17.10 / 16.95 |
+| prose greedy | 23.54 / 23.42 | **23.08 / 23.10** | 25.28 / 24.28 | 24.52 / 24.43 |
+
+- Output hashes are identical between arms in every c=1 cell, so the patch is exact.
+- Only K=3 prose separates (−1.6 %); code overlaps; at K=5 the graphed arm is if anything slower on code (+0.9 %).
+  The hypothesis expected the K=5 gain to be the larger one — it is not there. So the eager draft steps are not the
+  cost the audit's gap count suggested (host launch is hidden by async scheduling; the drafter's compiled region per
+  step is small). Not carried; the patch stays env-gated in the clone venv. F4 (FULL graphs) would still graph these
+  steps as a side effect, but this result lowers its expected value.
