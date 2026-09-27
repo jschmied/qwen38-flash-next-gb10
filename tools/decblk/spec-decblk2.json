@@ -44,12 +44,12 @@
     "GDN RecoverSSM speculative verify active",
     "GDN RecoverSSM path taken",
     "PLE RecoverSSM path taken",
-    "align=True",
     "enable_prefix_caching=True",
     "num_spec_tokens=5)",
     "FNDRAFTPROB path taken",
     "cudagraph_capture_sizes': [1, 2, 4, 6, 8, 12, 16, 18, 24, 30, 36, 48, 60, 72, 96]",
-    "version 0.29.1rc1.dev533+g1ea7c63f4"
+    "version 0.29.1rc1.dev533+g1ea7c63f4",
+    "Mamba cache mode is set to 'align'"
    ],
    "log_must_not_contain": [
     "Using local argmax reduction",
@@ -83,10 +83,10 @@
    ],
    "log_must_contain": [
     "Mapped PLE table",
-    "align=True",
     "enable_prefix_caching=True",
     "cudagraph_capture_sizes': [1, 2, 4, 6, 8, 12, 16, 18, 24, 30, 36, 48, 60, 72, 96]",
-    "version 0.29.1rc1.dev533+g1ea7c63f4"
+    "version 0.29.1rc1.dev533+g1ea7c63f4",
+    "Mamba cache mode is set to 'align'"
    ],
    "log_must_not_contain": [
     "Using local argmax reduction",
