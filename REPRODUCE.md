@@ -93,8 +93,8 @@ Build 1–3 as a **hardlink overlay**, not a copy: only the changed tensors are 
 > **Current `main` cannot load these derived checkpoints.** Its new `MergedColumnParallelLinear.load_weights`
 > falls back to the module itself for keys it does not know, and fails with
 > `'MergedColumnParallelLinear' object has no attribute 'data'` (seen on `378504a54`, 2026-09-26).
-> Stay on `1ea7c63f4` until that is resolved. A server test of nightly `a9eafde59` with the forwarded overlay
-> (all 36 files apply) is queued; this note will say whether it loads.
+> Stay on `1ea7c63f4` until that is resolved. Nightly `a9eafde59` with the forwarded overlay
+> (`tools/nightly219/`) loads them and matches prod bit for bit at c=1, but is 4.5 % slower at c=4 (§5s).
 
 ## 3. The venv: nightly wheel + one overlay
 

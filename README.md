@@ -20,8 +20,8 @@ five more are open there.
 > RecoverSSM replace the 09-26 config. It is installed and validated on a server with the exact prod launcher and drop-ins
 > (every path line present; code 15.37 ms/tok, prose 24.72, 4 streams 134.9 tok/s; [data](notes/data/prodval/)).
 > K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
-> Forwarding to nightly `a9eafde59` (266 commits newer): all 36 overlay files apply (2 conflicts, resolved by our
-> rebased #58439 branch); the server validation is queued.
+> Forwarded to nightly `a9eafde59` (266 commits newer; [§5s](notes/speed-of-light.md)): the overlay applies and c=1 output is
+> bit-identical to prod, but c=4 is 4.5 % slower and not reproducible, so prod stays on `1ea7c63f4` for now.
 
 | what | number | where it comes from |
 | --- | --- | --- |
@@ -50,7 +50,7 @@ KV fixed at 4 GiB so the PLE table stays resident; 2 server starts per arm, rang
 - **[REPRODUCE.md](REPRODUCE.md)** — weights, the venv overlay, serve config, and what to check before
   you trust a number. Start here to get it *running*.
 - **[Speed of light](notes/speed-of-light.md)** — how far decode is from the byte floor, where the rest
-  goes, and every lever tried against it (sections 1–5r, newest last).
+  goes, and every lever tried against it (sections 1–5s, newest last).
 - **[Failure modes](notes/failure-modes.md)** — every failure hit here, by what you *observe*. Four
   different causes produce "it loads but the output is wrong".
 - **[Closed levers](notes/closed-levers.md)** — what looked like a lever and measured null, with the
@@ -121,7 +121,7 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
     tools/plecold/                PLE cold-window instruments and the readahead fill
     tools/prof/                   nsys / torch-profile analysis (nsyscmp.py compares two traces)
     tools/armrun.py               the A/B runner every server number comes from
-    notes/speed-of-light.md       decode vs the byte floor, sections 1–5r
+    notes/speed-of-light.md       decode vs the byte floor, sections 1–5s
     notes/prefill-investigation.md   numbered findings (prefill, kernels, cache, the mapped PLE)
     notes/determinism-investigation.md   greedy reproducibility; starts with an "answers by question" index
     notes/upstream/               drafts of every post and the posting log

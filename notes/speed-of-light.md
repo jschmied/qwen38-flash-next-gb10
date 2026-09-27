@@ -1343,3 +1343,32 @@ HumanEval (164, pass@1, scored offline). TTFT at ~7.5k / ~29k tokens with a uniq
   prod's default KV (626k tokens) does not have this limit.
 - **Verdict so far:** both cuts pass the screen. For agent work (TTFT-bound) NVFP4 GDN trades −7 % decode for +6 % TTFT,
   which is roughly a wash; the bf16 state is free on this screen and must prove itself on long context.
+
+### 5s. Forward to nightly `a9eafde59` (266 commits): bit-identical at c=1, but −4.5 % and non-reproducible at c=4
+
+User: "forward prod to nightly and check if patches apply". The prod overlay (36 files) forwarded onto nightly
+`0.30.1rc1.dev219+ga9eafde59` (2 conflicts, resolved from our rebased #58439 branch; `tools/nightly219/`), in a clone
+venv with its pins (FlashInfer 0.7.0 — `flashinfer-cubin` 0.7.0 is not published, dropped; cutlass-dsl 4.7.1; humming
+0.1.16; torch 2.13.0+cu130 kept). Exact prod config, KV 4 GiB, 2 starts per arm, `nvprobe.py` (codeprobe + TTFT +
+cache-hit replay). The first run voided on an armrun limitation (an arm's `FN_VENV` fails the log's venv check);
+armrun now takes a per-arm `venv`. Data `data/nightly219/`.
+
+| | prod venv 1ea7c63f4 (s1 / s2) | nightly a9eafde59 (s1 / s2) |
+|---|---|---|
+| greedy hashes c=1 (code / sampled / prose) | 734976c7 / cb354bf1 / 981f3edb, both starts | **identical**, both starts |
+| code c=1 ms/tok (accept) | 15.43 / 15.54 (4.27) | 15.49 / 15.45 (4.27) |
+| code sampled c=1 | 16.10 / 16.08 | 16.29 / 16.25 (+1.1 %) |
+| prose c=1 | 24.60 / 24.71 | 24.85 / 24.79 (+0.6 %) |
+| **code c=4 tok/s (accept)** | **145.7 / 145.7 (4.48), hash 9549b531 both** | **139.7 / 138.7 (4.40 / 4.30), hash differs per start** |
+| TTFT 8k / 30k s | 2.77 / 10.30, 2.79 / 10.38 | 2.76 / 10.29, 2.78 / 10.29 |
+| cache-hit replay | equal (4.6 → 2.0 s) | equal (5.1 → 2.4 s) |
+
+- **c=1:** the nightly produces prod's exact bits; speed within ±1 %. The derived checkpoints load (the
+  `MergedColumnParallelLinear` failure seen on 378504a54 is gone at a9eafde59).
+- **c=4: a real regression**, −4.5 % in both starts (gap 6 tok/s against a within-arm spread of 0–1) with lower
+  acceptance, and the c=4 text is no longer reproducible across starts (prod's is). Candidates from the forward's risk
+  list: #58434 (padded prompt tails counted as spec rows), #58275 (mixed FULL-graph capture), #49371 (Mamba prefill
+  state saves). Not bisected. The nightly is not a promotion candidate until c=4 is understood.
+- **Prod hash question (open since prodval):** prod's hashes differ from the §5o stack run; prodval ran with the default
+  KV (626k tokens) and these arms with 4 GiB, and both give 734976c7 — KV size is not the cause. What remains is the
+  capture-size list (prod up to 96, §5o up to 24: short prompts run padded inside a graph).
