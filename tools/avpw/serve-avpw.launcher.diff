@@ -1,0 +1,3 @@
+83a84,85
+>   [ "${FN_SPEC_DRAFTPROB:-0}" = 1 ] && X="${X},\"draft_sample_method\":\"probabilistic\""   # FNDRAFTPROB experiment launcher only
+>   [ "${FN_SPEC_AV:-0}" = 1 ] && X="${X},\"enable_adaptive_verification\":true"   # FNAVPW experiment launcher only
