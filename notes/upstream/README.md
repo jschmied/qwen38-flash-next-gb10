@@ -1432,3 +1432,8 @@ wait on one ~100 GB pull, and they share one serve.
   (#58439 + be7a84fe, TP=2 over two nodes) was rolled back: first error, vLLM base, whether both ranks mapped the table
   and the page cache was dropped. Mentioned the unified-memory page-cache vs free-memory-gate effect without claiming
   it. Draft `comment-pocharlies-391.md`. <https://github.com/pocharlies-org/k8s-gitops-pocharlies/pull/391#issuecomment-5854555924>
+- **2026-09-27 ~19:00 — vllm#53912, comment (user's go: "ok").** Reply to ming616's cross-request content report
+  (GLM-5.3, MTP-3, align, prefix cache): the RecoverSSM align boundary off-by-one (commit plan + postprocess pick the
+  next, possibly unallocated column when accepted tokens end on a boundary) as a concrete mechanism for reading another
+  request's stale state; fix links (local-inference-lab a02f585d, #58863 5567cc1b25); asked whether their fork runs
+  `--use-replayssm`. Draft `comment-53912-boundary-pointer.md`. <https://github.com/vllm-project/vllm/issues/53912#issuecomment-5857513023>
