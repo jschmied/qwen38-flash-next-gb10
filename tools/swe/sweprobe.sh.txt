@@ -5,4 +5,4 @@ ssh $K -N -o ExitOnForwardFailure=yes -R 18092:127.0.0.1:8092 root@10.0.0.8 & TP
 trap 'kill $TP 2>/dev/null' EXIT
 sleep 5
 ssh -n $K root@10.0.0.8 "curl -sf http://127.0.0.1:18092/v1/models >/dev/null" || { echo '{"error":"tunnel"}'; exit 0; }
-ssh -n $K root@10.0.0.8 "bash /root/fn-swe/run.sh $1 $2" | tail -1
+if [ "$2" = all ]; then ssh -n $K root@10.0.0.8 "bash /root/fn-swe/run-all.sh $1" | tail -1; else ssh -n $K root@10.0.0.8 "bash /root/fn-swe/run.sh $1 $2" | tail -1; fi

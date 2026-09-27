@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# x86 side: both fixed slices for one arm; prints one combined JSON line. argv: <arm>
+ARM=$1
+P=$(bash /root/fn-swe/run.sh $ARM python | tail -1)
+J=$(bash /root/fn-swe/run.sh $ARM javajs | tail -1)
+python3 -c "import json,sys; p=json.loads(sys.argv[1]); j=json.loads(sys.argv[2]); print(json.dumps({'python':p,'javajs':j,'resolved_total':(p.get('resolved') or 0)+(j.get('resolved') or 0),'instances_total':p['instances']+j['instances']}))" "$P" "$J"

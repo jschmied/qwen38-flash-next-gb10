@@ -1,0 +1,10 @@
+== armrun swesmoke: 1 arms x 1 start(s), port 8092 ==
+-- swesmoke-base0  env=(spec default)
+Running as unit: fx-armrun-swesmoke.service; invocation ID: ba609725b5c642b0afd91a6308606fec
+   void checks passed (11 required, 8 forbidden)
+   {"instances": 2, "preds": 2, "empty_patches": 1, "resolved": 1, "gen_s": 183, "eval_s": 47}
+
+== RESULT ==
+  base         instances 2  preds 2  empty_patches 1  resolved 1  gen_s 183  eval_s 47  start 0
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
