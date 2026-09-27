@@ -1372,3 +1372,32 @@ armrun now takes a per-arm `venv`. Data `data/nightly219/`.
 - **Prod hash question (open since prodval):** prod's hashes differ from the §5o stack run; prodval ran with the default
   KV (626k tokens) and these arms with 4 GiB, and both give 734976c7 — KV size is not the cause. What remains is the
   capture-size list (prod up to 96, §5o up to 24: short prompts run padded inside a graph).
+
+### 5t. Warm agent turns: `--prefix-match-unit 64` cuts recompute −74 % and turn TTFT −35 %, on prod's own venv (vllm#54458 follow-up)
+
+User: "issue 54458 sounds like worth to fix". Scoping (`tools/i54458/design-memo.md`): vLLM main already saves the GDN state
+at the exact end of a prompt when the prefix-match unit (default = the 1728-token block) is smaller than the Mamba block,
+so the next turn resumes there instead of at the last block boundary. The memo also claimed our prod base lacked a needed
+fix (#58368); the control arm below refutes that. Arms (prod config, K=5, KV 4 GiB, 2 starts each): `nvdef` nightly
+a9eafde59 default unit, `nvu64` nightly + `--prefix-match-unit 64`, `m1u64` prod venv 1ea7c63f4 (no #58368) + unit 64.
+Probe `tools/i54458/turnreplay.py`: (B) two held-out SWE-bench trajectories replayed as a growing prompt, 46 warm turns
+(the agent-loop case); (A) a 20k cached prefix + N fresh tokens inserted *before* the prompt's last line. Hypothesis
+`tools/i54458/HYPOTHESIS.md`. Data `data/pmu/`.
+
+| | nvdef (s1 / s2) | nvu64 (s1 / s2) | m1u64, control (s1 / s2) |
+|---|---|---|---|
+| B: recomputed tokens per turn, median (sum) | 2,025 (98,813) both | **518.5 (31,741)** both | **518.5 (31,741)** both |
+| B: turn TTFT median / mean s | 0.874 / 0.945, 0.872 / 0.951 | **0.567 / 0.630, 0.568 / 0.630** | 0.573 / 0.634, 0.585 / 0.639 |
+| A: N=16 / 256 / 1024 TTFT s | 1.07 / 1.24 / 1.93 | 1.20 / 1.37 / 2.02 | 1.21 / 1.40 / 2.05 |
+| final greedy hash | a70f8e4e both | 50fdcf07 both | 50fdcf07 both |
+
+- **B (append-only turns): recompute −74 %, TTFT −35 % median / −33 % mean**, at the top of H (−65…−90 %, −20…−35 %),
+  identical across starts. New tokens per turn median 345; the default resumed ~1,700 tokens further back.
+- **A (text inserted before the prompt's end):** no gain (the prompt-end state does not match a prompt that diverges
+  earlier) and **+0.1 s** per request: the cost of stopping prefill at the prompt end to save the state.
+- **The control has the full gain**, so #58368 is not the mechanism on our stack — out of range per the hypothesis ("a gain
+  on m1u64 → #58368 is not the mechanism"). The flag alone does it; the memo's claim was wrong.
+- Output differs from the default arm (a70f8e4e vs 50fdcf07): resuming at a different point changes chunking, i.e. the
+  reduction order; the flag arms agree with each other and across starts.
+- **Prod candidate:** `--prefix-match-unit 64` in `FN_EXTRA` — agent turns −35 %, edit-in-the-middle prompts +0.1 s.
+  The user's call.

@@ -1,0 +1,32 @@
+== armrun pmu: 3 arms x 2 start(s), port 8092 ==
+-- pmu-nvdef0  env=(spec default)
+Running as unit: fx-armrun-pmu.service; invocation ID: dbc40c692f2440c5bba642438b1ec296
+   void checks passed (11 required, 6 forbidden)
+   {"A": {"16": {"ttft_median_s": 1.072, "recomputed_median": 2848.0}, "256": {"ttft_median_s": 1.239, "recomputed_median": 3367.0}, "1024": {"ttft_median_s": 1.929, "recomputed_median": 5028.0}}, "B": {"turns": 46, "ttft_median_s": 0.874, "ttft_mean_s": 0.945, "new_median": 345.0, "recomputed_median": 2025.0, "recomputed_sum": 98813.0, "new_sum": 19704}, "final_greedy_sha": "a70f8e4e25fa87de"}
+-- pmu-nvu640  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --prefix-match-unit 64'}
+Running as unit: fx-armrun-pmu.service; invocation ID: be43f6f7763441608fbf3da0c7879b07
+   void checks passed (12 required, 5 forbidden)
+   {"A": {"16": {"ttft_median_s": 1.196, "recomputed_median": 2848.0}, "256": {"ttft_median_s": 1.371, "recomputed_median": 3367.0}, "1024": {"ttft_median_s": 2.017, "recomputed_median": 5028.0}}, "B": {"turns": 46, "ttft_median_s": 0.567, "ttft_mean_s": 0.63, "new_median": 345.0, "recomputed_median": 518.5, "recomputed_sum": 31741.0, "new_sum": 19704}, "final_greedy_sha": "50fdcf0780e3e257"}
+-- pmu-m1u640  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --prefix-match-unit 64'}
+Running as unit: fx-armrun-pmu.service; invocation ID: 78e297ed0d084acf807322b714c4a033
+   void checks passed (12 required, 5 forbidden)
+   {"A": {"16": {"ttft_median_s": 1.214, "recomputed_median": 2848.0}, "256": {"ttft_median_s": 1.394, "recomputed_median": 3367.0}, "1024": {"ttft_median_s": 2.044, "recomputed_median": 5028.0}}, "B": {"turns": 46, "ttft_median_s": 0.573, "ttft_mean_s": 0.634, "new_median": 345.0, "recomputed_median": 518.5, "recomputed_sum": 31741.0, "new_sum": 19704}, "final_greedy_sha": "50fdcf0780e3e257"}
+-- pmu-nvdef1  env=(spec default)
+Running as unit: fx-armrun-pmu.service; invocation ID: 3843a6c9323c45f98f30611bdec51d13
+   void checks passed (11 required, 6 forbidden)
+   {"A": {"16": {"ttft_median_s": 1.086, "recomputed_median": 2848.0}, "256": {"ttft_median_s": 1.246, "recomputed_median": 3367.0}, "1024": {"ttft_median_s": 1.927, "recomputed_median": 5028.0}}, "B": {"turns": 46, "ttft_median_s": 0.872, "ttft_mean_s": 0.951, "new_median": 345.0, "recomputed_median": 2025.0, "recomputed_sum": 98813.0, "new_sum": 19704}, "final_greedy_sha": "a70f8e4e25fa87de"}
+-- pmu-nvu641  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --prefix-match-unit 64'}
+Running as unit: fx-armrun-pmu.service; invocation ID: 0e31d8eb88cc436abd62ac6c9a4ac215
+   void checks passed (12 required, 5 forbidden)
+   {"A": {"16": {"ttft_median_s": 1.195, "recomputed_median": 2848.0}, "256": {"ttft_median_s": 1.37, "recomputed_median": 3367.0}, "1024": {"ttft_median_s": 2.013, "recomputed_median": 5028.0}}, "B": {"turns": 46, "ttft_median_s": 0.568, "ttft_mean_s": 0.63, "new_median": 345.0, "recomputed_median": 518.5, "recomputed_sum": 31741.0, "new_sum": 19704}, "final_greedy_sha": "50fdcf0780e3e257"}
+-- pmu-m1u641  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --prefix-match-unit 64'}
+Running as unit: fx-armrun-pmu.service; invocation ID: 4ab079e5ea434b5e85ff0c3ba728e988
+   void checks passed (12 required, 5 forbidden)
+   {"A": {"16": {"ttft_median_s": 1.203, "recomputed_median": 2848.0}, "256": {"ttft_median_s": 1.399, "recomputed_median": 3367.0}, "1024": {"ttft_median_s": 2.054, "recomputed_median": 5028.0}}, "B": {"turns": 46, "ttft_median_s": 0.585, "ttft_mean_s": 0.639, "new_median": 345.0, "recomputed_median": 518.5, "recomputed_sum": 31741.0, "new_sum": 19704}, "final_greedy_sha": "50fdcf0780e3e257"}
+
+== RESULT ==
+  nvdef        start 0–1
+  nvu64        start 0–1
+  m1u64        start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
