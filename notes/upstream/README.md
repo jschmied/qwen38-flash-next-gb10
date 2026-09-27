@@ -1437,3 +1437,9 @@ wait on one ~100 GB pull, and they share one serve.
   next, possibly unallocated column when accepted tokens end on a boundary) as a concrete mechanism for reading another
   request's stale state; fix links (local-inference-lab a02f585d, #58863 5567cc1b25); asked whether their fork runs
   `--use-replayssm`. Draft `comment-53912-boundary-pointer.md`. <https://github.com/vllm-project/vllm/issues/53912#issuecomment-5857513023>
+- **2026-09-27 ~20:40 — vllm#58578, comment (user's go: "post").** Second data point for FR-Spec on MTP: our 32k draft
+  slice +6.4 % c=1 (finding 135), NVFP4 slice −3.4 % (finding 234), exact probabilistic drafting over a slice (§5n),
+  coverage vs TensorFold's list (§5k). Draft `comment-58578-draft-vocab.md`. <https://github.com/vllm-project/vllm/issues/58578#issuecomment-5858469487>
+- **2026-09-27 ~20:40 — vllm#58785, comment (user's go: "post").** Cross-link to #55122 (same kernel; rescanning radix
+  select has no capped buffer, so no overflow; not yet run against their new test; the PRs conflict). Draft
+  `comment-58785-topk-crosslink.md`. <https://github.com/vllm-project/vllm/pull/58785#issuecomment-5858469619>
