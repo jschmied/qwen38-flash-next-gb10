@@ -161,7 +161,7 @@ Environment=FN_SPEC_NODROP=1
 Environment=FN_SPEC_LOCALARGMAX=0
 Environment=FN_DRAFT_VOCAB=<repo>/tools/draft_vocab/draft_vocab_32768.txt
 Environment=FN_PLE_OFFLOAD=0
-Environment="FN_EXTRA=--engram-config {\"checkpoint_mapped\":true} --use-replayssm --block-size 1728"
+Environment="FN_EXTRA=--engram-config {\"checkpoint_mapped\":true} --use-replayssm --block-size 1728 --prefix-match-unit 64"
 Environment=FN_DRAFT_HEAD_NVFP4=1
 Environment=FN_NVFP4_CFG=64,4
 Environment=FN_DRAFT_PROB=1
@@ -175,6 +175,7 @@ The flags that are not obvious:
 |---|---|
 | `--engram-config {"checkpoint_mapped":true}`, `FN_PLE_OFFLOAD=0` | reads the 47.7 GiB n-gram table in place from the checkpoint's page cache: no table-sized allocation, nothing pinned, no offload worker |
 | `--speculative-config` MTP, `num_speculative_tokens` 5, `disable_eagle_block_drop` | the agent loop is −19 % with MTP in this shape; without the block-drop flag, speculation costs a whole prefix block per turn. K=5 is −10 % on code and +5 % on prose against K=3 ([§5l](notes/speed-of-light.md)) |
+| `--prefix-match-unit 64` | saves the recurrent state at the exact end of each prompt, so the next agent turn resumes there instead of at the last 1728-token block: warm-turn recompute −74 %, turn TTFT −35 % (0.87 → 0.57 s); a prompt edited before its old end pays +0.1 s ([§5t](notes/speed-of-light.md)) |
 | `--block-size 1728` | K=5 needs it: the QSA raw-key ring capacity (12 here) must divide the block size, and the auto size (1696) does not; without it K=5 hard-fails at start ([vllm#54912](https://github.com/vllm-project/vllm/pull/54912)) |
 | `--use-replayssm` | with speculative decoding, selects RecoverSSM for Qwen4Exp: GDN verify from one checkpoint with a per-token replay record, committed once after sampling; −2.4…−4.0 % per cycle at c=1, −5.2 % at c=4, −16 % per agent turn, +37 % KV. The backends declare no full-graph support, so `FULL_AND_PIECEWISE` resolves to PIECEWISE (the launcher's default anyway). V2 model runner, Triton mamba backend, PP=1 |
 | `FN_DRAFT_PROB=1`, `FN_SPEC_DRAFTPROB=1`, `FN_SPEC_LOCALARGMAX=0` | drafts are sampled (`draft_sample_method: probabilistic`) and accepted by rejection sampling: −5.5 % on sampled code at K=5, greedy unchanged, exact. The local-argmax shortcut must be off, because the sampler needs the drafter's logits ([§5n](notes/speed-of-light.md)) |
