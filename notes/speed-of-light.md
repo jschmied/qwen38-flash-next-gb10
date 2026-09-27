@@ -1312,3 +1312,34 @@ and the drafter runs 5 steps. Scaled from step 2a's measured parts (no new captu
   moves with acceptance, so on code the model could reach ~80 tok/s single-stream at the byte floor; we measure 65.7.
 - Caveat: the measured cycle includes the cold PLE pages of a first-pass probe (≈7 %, §5l), so the warm ratio is lower,
   roughly 1.15–1.2×.
+
+### 5r. Quality screen for the two precision cuts: NVFP4 GDN and a bf16 SSM state show no loss on GSM8K / HumanEval; NVFP4 GDN costs +6 % TTFT
+
+User rule (2026-09-27): no *noticeable* quality loss; the precision cuts need real benchmarks, and the smaller trade wins
+because they may multiply. Four arms on the exact prod config (K=5, probabilistic drafting, RecoverSSM, block 1728 in
+every arm), KV 4 GiB, 2 starts each: `fp8gdn` (prod), `nvfp4gdn` (GDN projections NVFP4 W4A16, §5j), `bf16ssm`
+(`--mamba-ssm-cache-dtype bfloat16`), `both`. Thinking off, greedy, 16 requests at a time: GSM8K test (1,319) and
+HumanEval (164, pass@1, scored offline). TTFT at ~7.5k / ~29k tokens with a unique prefix per request. Tools
+`tools/evalq/` (hypothesis amended before any run), data `data/evalq/`.
+
+| arm (start 1 / start 2) | GSM8K % | HumanEval /164 | TTFT 8k s | TTFT 30k s |
+|---|---|---|---|---|
+| fp8gdn (prod) | 95.91 / 96.44 | 159 / 158 | 2.75 / 2.79 | 10.26 / 10.35 |
+| nvfp4gdn | 96.13 / 96.06 | 157 / 158 | **2.93 / 2.94** | **10.93 / 10.95** |
+| bf16ssm | 96.21 / 96.21 | 159 / 158 | 2.78 / 2.77 | 10.25 / 10.33 |
+| both | 96.44 / 96.21 | 158 / 158 | 2.93 / 2.92 | 10.95 / 10.91 |
+
+- **Noise floor:** the two prod starts differ on 19 GSM8K questions (Δ +0.53 pp, p = 0.17): c=16 greedy is not
+  batch-invariant. Every cut-vs-prod pair differs on 16–33 questions with Δ between −0.38 and +0.53 pp (McNemar
+  p ≥ 0.25). No cut, and not the combination, is distinguishable from prod; nothing compounds at this resolution.
+- **The screen is ceiling-limited** (96 %): it rules out a large loss, not a small one. The bf16 state's risk is error
+  accumulated over long sequences, which ≤1k-token prompts cannot show. The decision needs the agentic benchmark
+  (SWE-bench slices, `tools/swe/`, smoke run queued).
+- **Speed:** NVFP4 GDN costs **+6.2…6.6 % TTFT** at both lengths, reproduced, against a ±1 % floor: Marlin W4A16 runs
+  the GDN projections as BF16 math after dequantisation where prod runs FP8×FP8 (prefill is compute-bound; decode is
+  bandwidth-bound, hence −7 % there, §5j). The bf16 state costs nothing in TTFT.
+- The bf16 arms finished GSM8K in ~2,020 s vs ~2,950 s: at a fixed 4 GiB KV the halved Mamba page holds 105,325 instead
+  of 77,608 tokens, so more of the 16 requests fit at once. A capacity effect of the test's small KV, not decode speed;
+  prod's default KV (626k tokens) does not have this limit.
+- **Verdict so far:** both cuts pass the screen. For agent work (TTFT-bound) NVFP4 GDN trades −7 % decode for +6 % TTFT,
+  which is roughly a wash; the bf16 state is free on this screen and must prove itself on long context.

@@ -28,7 +28,7 @@ five more are open there.
 | decode, single stream, **code** (4 prompts, 700 tokens, first pass) | **65.7 tok/s** greedy (4.35 accepted per verify cycle), **62.4** sampled — 59.0 / 56.0 with the 09-26 config | [speed of light §5l, §5n, §5o](notes/speed-of-light.md) |
 | decode, single stream, **prose** (same probe) | 41.1 tok/s greedy — 43.1 with the 09-26 config (K=3 is better on prose) | [speed of light §5o](notes/speed-of-light.md) |
 | decode, single stream, 09-26 config (warm second pass, prose) | 46.5 tok/s (21.49 ms/tok; 2.53 accepted per cycle) — was 17.1 on the published checkpoint | [speed of light §4t](notes/speed-of-light.md), [fp8 checkpoint](notes/fp8-mixed-checkpoint.md), [lm_head](notes/quantizing-lm-head.md), [speculation](notes/speculation-on-flash-next.md) |
-| option, not adopted: GDN projections as NVFP4 W4A16 | code 71.3 tok/s greedy / 67.8 sampled on top of the above, at +0.4 % NLL vs BF16. A GSM8K + HumanEval comparison is queued before the decision | [speed of light §5j, §5o](notes/speed-of-light.md) |
+| options, not adopted: GDN projections as NVFP4 W4A16; bf16 SSM state | NVFP4 GDN: code 71.3 tok/s greedy (−7 % decode) but **+6 % TTFT**. Both pass a GSM8K + HumanEval screen (2 starts, within the ±0.5 pp run-to-run floor); SWE-bench decides | [speed of light §5j, §5o, §5r](notes/speed-of-light.md) |
 | decode, 4 streams | **~100 tok/s** aggregate (99.7–100.0) | [speed of light §4t](notes/speed-of-light.md) |
 | agent loop (8 dependent turns, prefix cache + MTP) | **1.10 s/turn**, 1.31 without RecoverSSM | [speed of light §4t](notes/speed-of-light.md) |
 | KV capacity in 4 GiB | **103,953 tokens** with RecoverSSM (75,678 without) | [speed of light §4t](notes/speed-of-light.md) |
@@ -50,7 +50,7 @@ KV fixed at 4 GiB so the PLE table stays resident; 2 server starts per arm, rang
 - **[REPRODUCE.md](REPRODUCE.md)** — weights, the venv overlay, serve config, and what to check before
   you trust a number. Start here to get it *running*.
 - **[Speed of light](notes/speed-of-light.md)** — how far decode is from the byte floor, where the rest
-  goes, and every lever tried against it (sections 1–5q, newest last).
+  goes, and every lever tried against it (sections 1–5r, newest last).
 - **[Failure modes](notes/failure-modes.md)** — every failure hit here, by what you *observe*. Four
   different causes produce "it loads but the output is wrong".
 - **[Closed levers](notes/closed-levers.md)** — what looked like a lever and measured null, with the
@@ -121,7 +121,7 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
     tools/plecold/                PLE cold-window instruments and the readahead fill
     tools/prof/                   nsys / torch-profile analysis (nsyscmp.py compares two traces)
     tools/armrun.py               the A/B runner every server number comes from
-    notes/speed-of-light.md       decode vs the byte floor, sections 1–5q
+    notes/speed-of-light.md       decode vs the byte floor, sections 1–5r
     notes/prefill-investigation.md   numbered findings (prefill, kernels, cache, the mapped PLE)
     notes/determinism-investigation.md   greedy reproducibility; starts with an "answers by question" index
     notes/upstream/               drafts of every post and the posting log

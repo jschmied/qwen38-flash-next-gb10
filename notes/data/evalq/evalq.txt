@@ -1,0 +1,41 @@
+== armrun evalq: 4 arms x 2 start(s), port 8092 ==
+-- evalq-fp8gdn0  env=(spec default)
+Running as unit: fx-armrun-evalq.service; invocation ID: a8acc31e5ca947f591d31d03e23e5e81
+   void checks passed (11 required, 8 forbidden)
+   {"ttft": {"8k": {"median_s": 2.746, "all": [2.958, 2.74, 2.746]}, "30k": {"median_s": 10.263, "all": [10.263, 10.223, 10.287]}}, "gsm8k": {"n": 1319, "acc": 0.9591, "correct": 1265, "truncated": 22, "gen_tokens": 469553, "s": 2958.2}, "humaneval": {"n": 164, "truncated": 3, "gen_tokens": 39975, "s": 221.8, "file": "/opt/llm/runners/results/evalq-evalq-fp8gdn0.jsonl"}, "total_s": 3219.2}
+-- evalq-nvfp4gdn0  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdn4'}
+Running as unit: fx-armrun-evalq.service; invocation ID: 63417e72d573483ea67f57567e62dbaf
+   void checks passed (12 required, 6 forbidden)
+   {"ttft": {"8k": {"median_s": 2.925, "all": [3.217, 2.922, 2.925]}, "30k": {"median_s": 10.928, "all": [10.928, 10.91, 10.942]}}, "gsm8k": {"n": 1319, "acc": 0.9613, "correct": 1268, "truncated": 23, "gen_tokens": 473589, "s": 2932.2}, "humaneval": {"n": 164, "truncated": 3, "gen_tokens": 39979, "s": 223.8, "file": "/opt/llm/runners/results/evalq-evalq-nvfp4gdn0.jsonl"}, "total_s": 3197.9}
+-- evalq-bf16ssm0  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --mamba-ssm-cache-dtype bfloat16'}
+Running as unit: fx-armrun-evalq.service; invocation ID: d8f46dbcfd8e449b85ea04448c4ec89c
+   void checks passed (12 required, 7 forbidden)
+   {"ttft": {"8k": {"median_s": 2.781, "all": [2.95, 2.781, 2.757]}, "30k": {"median_s": 10.253, "all": [10.274, 10.237, 10.253]}}, "gsm8k": {"n": 1319, "acc": 0.9621, "correct": 1269, "truncated": 19, "gen_tokens": 470820, "s": 2014.6}, "humaneval": {"n": 164, "truncated": 1, "gen_tokens": 39175, "s": 151.7, "file": "/opt/llm/runners/results/evalq-evalq-bf16ssm0.jsonl"}, "total_s": 2205.6}
+-- evalq-both0  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdn4', 'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --mamba-ssm-cache-dtype bfloat16'}
+Running as unit: fx-armrun-evalq.service; invocation ID: 5e24c2aa81344ca1aaadf946419a16f6
+   void checks passed (13 required, 5 forbidden)
+   {"ttft": {"8k": {"median_s": 2.929, "all": [3.265, 2.921, 2.929]}, "30k": {"median_s": 10.949, "all": [10.947, 10.949, 10.99]}}, "gsm8k": {"n": 1319, "acc": 0.9644, "correct": 1272, "truncated": 16, "gen_tokens": 473685, "s": 2067.1}, "humaneval": {"n": 164, "truncated": 2, "gen_tokens": 39102, "s": 157.3, "file": "/opt/llm/runners/results/evalq-evalq-both0.jsonl"}, "total_s": 2266.4}
+-- evalq-fp8gdn1  env=(spec default)
+Running as unit: fx-armrun-evalq.service; invocation ID: e207806cd17e4205bbec4e6b35bfb85d
+   void checks passed (11 required, 8 forbidden)
+   {"ttft": {"8k": {"median_s": 2.785, "all": [2.88, 2.771, 2.785]}, "30k": {"median_s": 10.346, "all": [10.379, 10.318, 10.346]}}, "gsm8k": {"n": 1319, "acc": 0.9644, "correct": 1272, "truncated": 18, "gen_tokens": 470217, "s": 2949.9}, "humaneval": {"n": 164, "truncated": 2, "gen_tokens": 39089, "s": 217.8, "file": "/opt/llm/runners/results/evalq-evalq-fp8gdn1.jsonl"}, "total_s": 3207.2}
+-- evalq-nvfp4gdn1  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdn4'}
+Running as unit: fx-armrun-evalq.service; invocation ID: abb19a958cf049da86f34a60abc76c2a
+   void checks passed (12 required, 6 forbidden)
+   {"ttft": {"8k": {"median_s": 2.941, "all": [3.14, 2.925, 2.941]}, "30k": {"median_s": 10.947, "all": [10.967, 10.915, 10.947]}}, "gsm8k": {"n": 1319, "acc": 0.9606, "correct": 1267, "truncated": 24, "gen_tokens": 471634, "s": 2918.3}, "humaneval": {"n": 164, "truncated": 2, "gen_tokens": 39163, "s": 215.1, "file": "/opt/llm/runners/results/evalq-evalq-nvfp4gdn1.jsonl"}, "total_s": 3175.3}
+-- evalq-bf16ssm1  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --mamba-ssm-cache-dtype bfloat16'}
+Running as unit: fx-armrun-evalq.service; invocation ID: 8b98dcb78776415d85c7d608d2a5081e
+   void checks passed (12 required, 7 forbidden)
+   {"ttft": {"8k": {"median_s": 2.771, "all": [2.987, 2.755, 2.771]}, "30k": {"median_s": 10.333, "all": [10.385, 10.333, 10.33]}}, "gsm8k": {"n": 1319, "acc": 0.9621, "correct": 1269, "truncated": 21, "gen_tokens": 470580, "s": 2034.0}, "humaneval": {"n": 164, "truncated": 3, "gen_tokens": 40988, "s": 163.2, "file": "/opt/llm/runners/results/evalq-evalq-bf16ssm1.jsonl"}, "total_s": 2236.8}
+-- evalq-both1  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdn4', 'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --kv-cache-memory-bytes 4294967296 --mamba-ssm-cache-dtype bfloat16'}
+Running as unit: fx-armrun-evalq.service; invocation ID: 225c0243e7e14d6c826e29a9dbc9a00b
+   void checks passed (13 required, 5 forbidden)
+   {"ttft": {"8k": {"median_s": 2.92, "all": [3.106, 2.915, 2.92]}, "30k": {"median_s": 10.912, "all": [10.912, 10.882, 10.923]}}, "gsm8k": {"n": 1319, "acc": 0.9621, "correct": 1269, "truncated": 20, "gen_tokens": 475494, "s": 2070.8}, "humaneval": {"n": 164, "truncated": 4, "gen_tokens": 40337, "s": 164.4, "file": "/opt/llm/runners/results/evalq-evalq-both1.jsonl"}, "total_s": 2276.9}
+
+== RESULT ==
+  fp8gdn       total_s 3207.2–3219.2  start 0–1
+  nvfp4gdn     total_s 3175.3–3197.9  start 0–1
+  bf16ssm      total_s 2205.6–2236.8  start 0–1
+  both         total_s 2266.4–2276.9  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
