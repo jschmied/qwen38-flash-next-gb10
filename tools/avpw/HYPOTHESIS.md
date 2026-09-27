@@ -12,3 +12,10 @@ H1 code greedy: k5av within 0 ... +2 % of k5 (small trims + AV overhead: one hos
 Output: greedy text may differ from fixed K=5 where verify shapes differ (RecoverSSM commit grouping, 5b) -> report
    agreement; timing is the metric.
 H0: no prose recovery (budget stays ~5) or code loses > 3 % -> not worth pursuing without FULL graphs / c>1 QSA fix.
+
+ADDENDUM v3 (2026-09-27 ~08:10, before the run). Run v2 start 1: drafts_per_step = 5.0 in every cell, hashes = fixed K=5:
+AV never trims because the profiled verify curve is FLAT (~26 ms for 1..6 tokens) -- dummy tokens route every row to the
+same experts, so the ~3.3 ms/row expert-union cost is invisible. v3 injects a measured-shape curve
+FN_AV_VERIFY_CURVE = 28.1 + 3.3 (n-1) ms (anchored at the ~38 ms target verify for 4 rows, audit 5f/MTP).
+H1 v3: prose drafts_per_step 2.5-4, prose ms/tok within +0...+3 % of fixed K=3; code drafts_per_step 4-5,
+    code ms/tok within +2 % of fixed K=5. H0: no gain -> the budget model's value at c=1 is small; drop.

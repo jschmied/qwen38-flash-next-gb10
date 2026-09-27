@@ -50,6 +50,9 @@ EDITS = [
             (s.num_target_tokens, s.forward_ms) for s in samples
         )
         if {E}:  # FNAVPW
+            _fc = __import__("os").environ.get("FN_AV_VERIFY_CURVE", "")  # FNAVPW "n:ms,n:ms,..." measured
+            if _fc:  # FNAVPW: dummy-token profiling routes every row to the same experts, so it misses the
+                verify_curve = [(int(a), float(b)) for a, b in (x.split(":") for x in _fc.split(","))]  # FNAVPW
             logger.warning("FNAVPW adaptive verification: draft curve %s; verify curve %s",  # FNAVPW
                            draft_curve, verify_curve)  # FNAVPW
 '''),
