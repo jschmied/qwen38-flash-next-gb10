@@ -3,9 +3,9 @@
 A working server, start to finish. The [README](README.md) says *what we measured*; this says
 *what to type*. Most pins below are load-bearing and have a documented failure mode.
 
-**Target** (the prod configuration, 2026-09-27): single stream **65.7 tok/s** on code (greedy; 62.4 sampled)
-and 41.1 on prose, 32K context, tool calling, on one GB10 with 128 GB unified memory. These are first-pass
-numbers from the code probe ([§5o](notes/speed-of-light.md)), cold PLE pages included.
+**Target** (the prod configuration, 2026-09-28): single stream **68.1–68.4 tok/s** on code (greedy; 58.8–61.4 sampled)
+and 42.2–42.4 on prose, TTFT 2.71 s at ~7.5k tokens, 32K context, tool calling, on one GB10 with 128 GB unified memory. These are first-pass
+numbers from the code probe ([§5ad](notes/speed-of-light.md)), cold PLE pages included.
 
 > **Changed on 2026-09-27:** MTP K 3 → 5 (with `--block-size 1728`), probabilistic drafting over the 32k NVFP4
 > draft slice, and RecoverSSM in the form submitted upstream ([vllm#58863](https://github.com/vllm-project/vllm/pull/58863)),
@@ -244,19 +244,22 @@ must be > 0.
 > outputs "identical" when every one was the empty string: the model was still inside `<think>` and
 > the budget ran out. Print character counts and refuse the verdict when the cell is empty.
 
-Then speed. Expected, KV 4 GiB, the code probe (`tools/ksweep/codeprobe.py`: 4 code and 4 prose prompts,
-700 tokens, thinking off, first pass; [speed of light §5o](notes/speed-of-light.md)):
+Then speed. Expected on the 09-28 prod config, KV 4 GiB, 2 starts ([speed of light §5ad](notes/speed-of-light.md)); the
+code probe is `tools/ksweep/codeprobe.py` (4 code and 4 prose prompts, 700 tokens, thinking off, first pass):
 
 | | |
 |---|---|
-| code, single stream, greedy | **15.2 ms/tok = 65.7 tok/s**, 4.35 tokens accepted per verify cycle |
-| code, single stream, sampled (1.0 / 0.95 / 20) | 16.0 ms/tok = 62.4 tok/s, 4.17 accepted |
-| prose, single stream, greedy | 24.3 ms/tok = 41.1 tok/s |
-| code, 4 streams | 135–138 tok/s aggregate (c=4 text is not reproducible between starts) |
-| TTFT, ~7.5k / ~29k-token cold prompt | 2.75 s / 10.26 s (`tools/evalq/evalprobe.py`, a unique prefix per request so the prefix cache cannot serve it) |
+| code, single stream, greedy | **14.63–14.68 ms/tok = 68.1–68.4 tok/s**, 4.37 tokens accepted per verify cycle |
+| code, single stream, sampled (1.0 / 0.95 / 20) | 16.3–17.0 ms/tok = 58.8–61.4 tok/s |
+| prose, single stream, greedy | 23.57–23.68 ms/tok = 42.2–42.4 tok/s |
+| code, 4 streams | 144.3–144.7 tok/s aggregate (c=4 text is not reproducible between starts) |
+| prose, 8 / 16 streams | 122–123 / 162–165 tok/s aggregate (`/opt/llm/runners/cg/concprobe.py`) |
+| TTFT, ~7.5k / ~29k-token cold prompt | 2.71–2.72 s / 9.69–9.73 s (nvprobe, a unique prefix per request so the prefix cache cannot serve it) |
+| agent loop, 8 dependent turns (`agentloop2.py`) | 1.25 s/turn |
+| warm agent turns, 46 replayed SWE-bench turns (`tools/i54458/turnreplay.py`) | 0.563–0.567 s median |
 
 The 09-26 config (K=3, greedy drafts) measured 46.5 tok/s on a warm prose pass, ~100 tok/s at 4 streams and
-1.10 s per agent turn ([§4t](notes/speed-of-light.md)); those three have not been re-measured at K=5.
+1.10 s per agent turn ([§4t](notes/speed-of-light.md)); K=5 is slower on that short prose-like agent loop (§5l, §5ad).
 
 Measure with at least two server starts per arm and a warm pass: the first ~minute after a start is
 the PLE cold window, and it moves the number by ~11 %.
