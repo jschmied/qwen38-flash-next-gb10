@@ -1,0 +1,134 @@
+{
+ "cell": "code",
+ "steps": 655,
+ "K": 5,
+ "tokens_per_step": 4.278,
+ "per_pos_accept": [
+  0.885,
+  0.757,
+  0.638,
+  0.545,
+  0.452
+ ],
+ "break_rate": 0.548,
+ "top2_rescue_at_break": 0.446,
+ "branch_pos1": {
+  "extra_tokens_per_step": 0.05,
+  "speedup_pct": -3.64
+ },
+ "branch_min_margin": {
+  "extra_tokens_per_step": 0.127,
+  "speedup_pct": -1.94
+ },
+ "conditional_min_margin": {
+  "0.1": {
+   "branch_frac": 0.133,
+   "extra_tokens_per_step": 0.026,
+   "speedup_pct": -0.06
+  },
+  "0.2": {
+   "branch_frac": 0.235,
+   "extra_tokens_per_step": 0.038,
+   "speedup_pct": -0.28
+  },
+  "0.3": {
+   "branch_frac": 0.307,
+   "extra_tokens_per_step": 0.055,
+   "speedup_pct": -0.25
+  },
+  "0.5": {
+   "branch_frac": 0.438,
+   "extra_tokens_per_step": 0.079,
+   "speedup_pct": -0.33
+  }
+ },
+ "confidence_stop": {
+  "0.1": {
+   "mean_drafts": 5.0,
+   "speedup_pct": 0.0
+  },
+  "0.2": {
+   "mean_drafts": 4.98,
+   "speedup_pct": 0.17
+  },
+  "0.3": {
+   "mean_drafts": 4.89,
+   "speedup_pct": 0.61
+  },
+  "0.4": {
+   "mean_drafts": 4.75,
+   "speedup_pct": 1.53
+  },
+  "0.5": {
+   "mean_drafts": 4.53,
+   "speedup_pct": 2.32
+  }
+ }
+}
+{
+ "cell": "prose",
+ "steps": 992,
+ "K": 5,
+ "tokens_per_step": 2.766,
+ "per_pos_accept": [
+  0.696,
+  0.461,
+  0.302,
+  0.186,
+  0.121
+ ],
+ "break_rate": 0.879,
+ "top2_rescue_at_break": 0.369,
+ "branch_pos1": {
+  "extra_tokens_per_step": 0.134,
+  "speedup_pct": -0.15
+ },
+ "branch_min_margin": {
+  "extra_tokens_per_step": 0.116,
+  "speedup_pct": -0.77
+ },
+ "conditional_min_margin": {
+  "0.1": {
+   "branch_frac": 0.382,
+   "extra_tokens_per_step": 0.047,
+   "speedup_pct": -0.19
+  },
+  "0.2": {
+   "branch_frac": 0.6,
+   "extra_tokens_per_step": 0.07,
+   "speedup_pct": -0.47
+  },
+  "0.3": {
+   "branch_frac": 0.721,
+   "extra_tokens_per_step": 0.084,
+   "speedup_pct": -0.56
+  },
+  "0.5": {
+   "branch_frac": 0.856,
+   "extra_tokens_per_step": 0.104,
+   "speedup_pct": -0.5
+  }
+ },
+ "confidence_stop": {
+  "0.1": {
+   "mean_drafts": 4.99,
+   "speedup_pct": 0.05
+  },
+  "0.2": {
+   "mean_drafts": 4.88,
+   "speedup_pct": 0.78
+  },
+  "0.3": {
+   "mean_drafts": 4.56,
+   "speedup_pct": 2.89
+  },
+  "0.4": {
+   "mean_drafts": 4.08,
+   "speedup_pct": 5.23
+  },
+  "0.5": {
+   "mean_drafts": 3.55,
+   "speedup_pct": 6.99
+  }
+ }
+}

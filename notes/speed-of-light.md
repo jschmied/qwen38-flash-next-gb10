@@ -1429,3 +1429,33 @@ exit statuses).
   (§5r) could not show on its own. The choice between them is therefore a speed choice: NVFP4 GDN −7 % decode but +6 %
   TTFT (§5j, §5r); bf16 SSM state no TTFT cost, halves the Mamba state (more KV, smaller align blocks possible). The
   user's call. Not measured: long single-context (> 64k) work, and whether the two cuts compound on this benchmark.
+
+### 5v. Offline replay of logged drafts: two-candidate branching does not pay; a confidence stop would (+3…4 % code, +7 % prose) — but only if drafting actually stops early
+
+User: "is it possible to verify two possible draft token on position n", "maybe if we have two draft token with similar
+probability?", "ok". One logging run (clone venv, exact prod config K=5 + probabilistic drafting, greedy c=1, codeprobe's
+4 code + 4 prose prompts × 700 tokens): per verify step the drafter's top-2 ids and probabilities, the fed tokens and the
+target's token per position (`tools/draftlog/`, 1,647 steps). Replay with a cost model from our measurements: step =
+43 ms + K × (1.3 ms draft step + 3.3 ms verify row). Data `data/draftlog/`.
+
+| | code | prose |
+|---|---|---|
+| tokens per step (logged) | 4.28 | 2.77 |
+| per-position acceptance | .89 .76 .64 .55 .45 | .70 .46 .30 .19 .12 |
+| chain breaks per step | 55 % | 88 % |
+| drafter's 2nd choice = target at the break | 45 % | 37 % |
+| branch (1 extra row) at position 1 | −3.6 % | −0.2 % |
+| branch at the lowest-margin position | −1.9 % | −0.8 % |
+| branch only when margin < 0.1 … 0.5 (variable shapes) | −0.1 … −0.3 % | −0.2 … −0.6 % |
+| confidence stop, drafting stops at p₁ < τ, τ = 0.6 / 0.7 | **+3.3 / +4.1 %** | **+6.9 / +7.5 %** |
+| same, but all 5 draft steps run and only verify rows are cut | +1.7 / +1.8 % (best +1.8) | +2.1 / +1.5 % (best +3.7 at τ 0.5) |
+
+- **Branching: rejected.** A rescued break gains exactly one token (the chain already emits the target's token there), and
+  the second choice is right only 37–45 % of the time, below the ~50 % break-even of a 3.3 ms row. The user's
+  similar-probability variant is the least bad (≈ 0), not positive.
+- **Confidence stop: worth it only with a real early exit.** Most of its gain is the skipped *draft steps*; cutting only
+  verify rows (what adaptive verification did, §5p) leaves +1.8 % code / +3.7 % prose. §5b's version stopped drafting
+  with a host sync per draft step and lost 5–6 % to the syncs. So the lever is a draft loop that exits on the GPU (e.g. a
+  CUDA-graph conditional node around the draft steps), not another host-side rule. Prose at K=5 + stop would also
+  recover the K=3-vs-K=5 prose gap (§5l).
+- Caveats: greedy only (sampled drafts differ), c=1, the cost model is ours, not measured per variant; one run.
