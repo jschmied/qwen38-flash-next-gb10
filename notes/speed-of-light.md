@@ -1669,7 +1669,8 @@ Hypothesis `tools/ledger/HYPOTHESIS.md`; script `tools/ledger/ledger_prefill.py`
 
 1. **Hyper-connections, ~7 % of TTFT (≈ 0.2 s of 2.7 s at 7.5k).** Each HC block per chunk moves 531 MB: `combine_norm`
    writes a normalized copy `xn` (71 MB) that the down-projection and `gate_mix` each read back, and the up-projection
-   writes `gate` (71 MB) that `gate_mix` reads back. Fused design, same math, bit-identical by construction:
+   writes `gate` (71 MB) that `gate_mix` reads back. Fused design, same math (bit-identical for the combine/norm part; the up GEMM moves from cuBLAS to our own kernel, so
+   `gate` changes at accumulation-order level, like any kernel swap: drift-sized, checked against an fp32 reference):
    `combine_norm` writes only the residual plus one rrms per (row, stream); the down GEMM normalizes on its A-load;
    `gate_mix` moves into the up GEMM's epilogue (reorder W_up's output columns offline so the 4 streams of one index
    sit in one tile, round the gate to bf16 before the sigmoid as today). 531 → 318 MB per block: **−0.93 ms per block
@@ -1692,5 +1693,22 @@ TTFT-bound.
   were built, ~11 % without the determinism trade). HC is larger than predicted (7 % vs 3–6 %), the MoE chain smaller
   (4 % vs 5–9 %). Decode < 1 % as predicted.
 - **Next (proposed):** item 1, standalone first. A Triton up-GEMM with the gate-mix epilogue plus the trimmed
-  `combine_norm`, checked bit-exact against today's three kernels at M = 3,456 and M = 6, timed standalone; a server A/B
+  `combine_norm`: `combine_norm` outputs bit-exact, block input within today's own rounding error of an fp32 reference, at M = 3,456 and M = 6, timed standalone; a server A/B
   on TTFT only if the standalone saves ≥ 0.6 ms per block.
+
+**§5aa addendum — HC fusion standalone (`tools/hcfuse/hcfuse.py`, hypothesis there): −0.92 ms per block at prefill, bit-identical.**
+One hyper-connection block with injection, random bf16 data at the model's shapes, median of 30, 4 tile configs:
+
+| | today (combine_norm → cuBLAS down → silu → cuBLAS up → gate_mix) | fused (K1 residual + rrms → K2 down, normalize on load → silu → K3 up + gate-mix epilogue) |
+|---|---|---|
+| M = 3,456 (prefill chunk) | 2.706 ms | **1.788 ms** (best of 4 configs; others 1.84–2.06) = **−0.92 ms, −34 %** |
+| M = 6 (decode) | 0.062 ms | 0.113–0.302 ms (slower) |
+| residual, `xn` | | bit-exact at both sizes |
+| block input vs today | | **identical at M = 3,456** (max diff 0.0); 1 bf16 ulp at M = 6 |
+| block input vs fp32 reference (max / mean) | 0.0101 / 5.46e-4 | 0.0101 / 5.46e-4 (same) |
+
+- In the hypothesis range (−0.6…−1.2 ms per block), and ahead of it on numerics (bit-identical at prefill).
+- **Dispatch by size:** fused only for prefill chunks (slower at decode). The size branch must live inside a custom op,
+  not in traced Python (memory `vllm-compile-freezes-branches`).
+- Projected at the server: −0.92 ms × ~196 blocks + the tail ≈ **−0.19 s per 7.5k prefill (≈ −6.7 % TTFT)**. Next:
+  an env-gated overlay on the clone venv and a TTFT A/B with decode hashes as the control.
