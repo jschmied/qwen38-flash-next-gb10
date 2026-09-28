@@ -1458,3 +1458,7 @@ wait on one ~100 GB pull, and they share one serve.
   notes. Draft `issue-blazux-recoverssm.md`. <https://github.com/blazux/qwen3.8-Flash-DGX/issues/45>
   (The user's "issue on blazux for missing credit" was NOT filed: their README already credits #55122 / PR #10 / our
   write-up; told the user.)
+- **2026-09-28 — vllm#58868, comment (user's go: "yes, promote and post").** Our GB10 TP1 cold-start A/B of Willian-Zhang's
+  mmap page-fault fix: main weights 505–534 → 65–66 s, model loading 575–599 → 111–121 s, identical greedy hash in all four
+  starts; `read_ahead_kb` 128 (the row he could not test at TP4); PR head `857f70df` applied to all 26 sites. Draft
+  `pr58868-gb10-tp1.md`. <https://github.com/vllm-project/vllm/pull/58868#issuecomment-5865989952>

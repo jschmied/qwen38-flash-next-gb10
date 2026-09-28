@@ -121,8 +121,10 @@ find $SP/vllm -name __pycache__ -prune -exec rm -rf {} +
 ```
 
 [`tools/main/main1ea7-prod-overlay.diff`](tools/main/main1ea7-prod-overlay.diff) is the exact
-difference between prod's venv and the pristine wheel: 28 modified files and 8 new ones (regenerated
-2026-09-27 after the RecoverSSM align boundary fix went in; applied to the pristine `1ea7c63f4` tree it reproduces prod's files byte for byte). Everything
+difference between prod's venv and the pristine wheel: 35 modified files and 8 new ones (regenerated
+2026-09-28 after the fast-loading set and the tool-call parser guards went in; applied to the pristine `1ea7c63f4` tree
+it reproduces every `.py` file of prod's `vllm` package byte for byte, checked over the whole tree rather than a file list,
+which is how the 09-27 version was found to miss the tool guards and the postprocess half of the boundary fix). Everything
 that is not always-on is gated by a flag or an environment variable:
 
 | part | files | switch | prod |
@@ -135,6 +137,8 @@ that is not always-on is gated by a flag or an environment variable:
 | FP8 `lm_head` loading (target and MTP), scale naming | `vocab_parallel_embedding.py`, `weight_utils.py`, `qwen4_exp/nvidia/{model,mtp}.py` | always | on |
 | 32k draft vocabulary | `v1/worker/gpu/spec_decode/speculator.py`, `v1/spec_decode/llm_base_proposer.py` | `FN_DRAFT_VOCAB=<file>`; `use_local_argmax_reduction` (`FN_SPEC_LOCALARGMAX=1`) only with greedy drafts | on |
 | NVFP4 draft-head slice | `qwen4_exp/nvidia/mtp.py`, `fn_nvfp4_head.py` (new) | `FN_DRAFT_HEAD_NVFP4=1`, `FN_NVFP4_CFG=64,4` | on |
+| fast weight loading: [vllm#58868](https://github.com/vllm-project/vllm/pull/58868) (touch mmap pages before the H2D copy) + blazux patch 16 (FusedMoE expert name index) + patch 18 (MTP name prefilter, ported to 1ea7) | `utils.py`, `parameter.py`, `linear.py`, `vocab_parallel_embedding.py`, `fused_moe/routed_experts.py`, `weight_utils.py`, `qwen4_exp/nvidia/mtp.py` ([`tools/fastload/`](tools/fastload/)) | always (integrated GPU); `VLLM_MTP_NAME_PREFILTER=0` disables the prefilter | on — log line `qwen38 MTP name prefilter: N tensors kept, M skipped` |
+| blazux's tool-call parser guards (patches 12 + 13) | `parser/qwen3.py`, `parser/nemotron_v3.py`, `parser/engine/{parser_engine_config,streaming_parser_engine}.py` ([`tools/toolguard/`](tools/toolguard/)) | always | on |
 | experiments, all measured null or not promoted | `linear.py` + `fn_bf16sk.py`, `ple_pageable.py` extras, `weight_utils.py`, `fused_sigmoid_gating.py` | `FN_BF16SK`, `FN_PLE_SYNCTOUCH`, `FN_PLE_POPULATE`, `FN_PFTIME`, `FN_LOAD_DROPCACHE`, `FN_GDN_STORE_CS` | off |
 
 **Any `pip install` of vLLM into this venv silently reverts the whole overlay.** To see what is actually
