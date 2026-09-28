@@ -1862,3 +1862,29 @@ Hypothesis `tools/prodval3/HYPOTHESIS.md`; data `data/prodval3/`.
 - All inside the hypothesis ranges. One start per config, so a validation, not an A/B; the A/Bs are §5z and §5aa.
 - **New cost:** full CUDA graphs take memory, so the default KV pool shrinks 5.9 % (still ~790k tokens, far above
   what 16 streams at 32k use).
+
+### 5ad. README re-measure on the full 09-28 prod config (bf16 state, pmu 64, fast loading, tool guards, HC fusion, F4)
+
+User: "check if values in our README still apply after all patches, if needed remeasure". Prod's venv, launcher and
+drop-ins, KV 4 GiB, 2 starts; one server per start runs nvprobe → concprobe → agentloop2 → turnreplay
+(`tools/readme0928/`, hypothesis with per-row ranges written first). Data `data/readme0928/`.
+
+| row | before (README) | 09-28 prod config, s1 / s2 | vs hypothesis |
+|---|---|---|---|
+| code c=1 greedy | 65.7 tok/s (09-27) | 14.675 / 14.627 ms/tok = **68.1 / 68.4 tok/s** (accept 4.37) | in |
+| code c=1 sampled | 62.4 tok/s | 16.993 / 16.295 ms/tok = 58.8 / 61.4 tok/s | s1 out (slower) |
+| prose c=1 greedy | 41.1 tok/s | 23.678 / 23.573 ms/tok = **42.2 / 42.4 tok/s** (accept 2.86) | in |
+| code c=4 | 135.0–138.3 tok/s | **144.67 / 144.31 tok/s** | in |
+| TTFT 8k / 30k (cold, nonce) | 2.77–2.78 / 10.25–10.33 s | **2.711, 9.694 / 2.722, 9.733 s** | in (8k at the edge) |
+| 8k replay, first / cache hit | — | 4.166, 1.520 / 4.202, 1.516 s | — |
+| agent loop (8 dependent turns) | 1.10 s/turn (09-26, K=3) | **1.25 / 1.25 s/turn** (46.4 / 46.6 ms/tok, accept 2.91) | **out (slower)** |
+| warm turns, 46 SWE replays, median / mean | 0.57 s | **0.567, 0.615 / 0.563, 0.613 s** | in |
+| 20k cached + 16 / 256 / 1,024 new | — | 0.678, 0.859, 1.468 / 0.673, 0.850, 1.456 s | — |
+| prose c=4 / 8 / 16 aggregate | "~100 / 110 at 16 / 32" (old stack) | 83.6, 123.1, **161.9** / 80.8, 122.2, **165.0** tok/s | c=16 **out (below 180–260)** |
+| KV in 4 GiB | 105,325 tokens | 105,325 tokens | confirmed |
+
+- **Agent loop slower than the old row:** that row was K=3 (09-26). The loop's turns are short prose-like answers
+  (accept 2.91), where K=5 is known to be ~5 % worse than K=3 (§5l); K=5 was chosen for code. Not attributed further.
+- **c=16:** 162–165 tok/s, well above the old stack's ~100 but below my guess. c=32 cannot be measured on this config
+  (`--max-num-seqs 16`).
+- Greedy code hash d102a738 and the turn replay's final hash a70f8e4e reproduce the earlier runs of this config.

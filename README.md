@@ -29,33 +29,32 @@ five more are open there.
 > TTFT −5.5…−7.9 % at 8k / −6.2…−7.8 % at 30k, decode c=1 −1…−2 % on the clone venv ([§5aa](notes/speed-of-light.md),
 > [§5z](notes/speed-of-light.md)). **Validated on the prod venv** (prodval3, [§5ac](notes/speed-of-light.md)): every path line present,
 > TTFT 2.73 / 9.75 s at 8k / 30k (−5.4 / −6.2 % vs the morning config), code 14.60 ms/tok, outputs unchanged; GSM8K/HumanEval
-> screen unchanged (McNemar p ≥ 0.25). The default KV pool shrinks 5.9 % (full-graph memory). Full README re-measure queued.
+> screen unchanged (McNemar p ≥ 0.25). The default KV pool shrinks 5.9 % (full-graph memory). All headline rows re-measured on this config ([§5ad](notes/speed-of-light.md)).
 > K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
 > Forwarded to nightly `a9eafde59` (266 commits newer; [§5s](notes/speed-of-light.md)): the overlay applies and c=1 output is
 > bit-identical to prod, but c=4 is 4.5 % slower and not reproducible, so prod stays on `1ea7c63f4` for now.
 
 | what | number | where it comes from |
 | --- | --- | --- |
-| decode, single stream, **code** (4 prompts, 700 tokens, first pass) | **65.7 tok/s** greedy (4.35 accepted per verify cycle), **62.4** sampled (09-27 config, fp32 SSM state) — 59.0 / 56.0 with the 09-26 config; the 09-28 config (bf16 state) validated at 67.8 greedy on one start, default KV (§5y) | [speed of light §5l, §5n, §5o](notes/speed-of-light.md) |
-| decode, single stream, **prose** (same probe) | 41.1 tok/s greedy — 43.1 with the 09-26 config (K=3 is better on prose) | [speed of light §5o](notes/speed-of-light.md) |
+| decode, single stream, **code** (4 prompts, 700 tokens, first pass) | **68.1–68.4 tok/s** greedy (14.63–14.68 ms/tok, 4.37 accepted per verify cycle), **58.8–61.4** sampled — 65.7 / 62.4 on 09-27, 59.0 / 56.0 on 09-26 | [speed of light §5ad](notes/speed-of-light.md), [§5l, §5n, §5o](notes/speed-of-light.md) |
+| decode, single stream, **prose** (same probe) | **42.2–42.4 tok/s** greedy — 41.1 on 09-27, 43.1 on 09-26 (K=3 is better on prose) | [speed of light §5ad, §5o](notes/speed-of-light.md) |
 | decode, single stream, 09-26 config (warm second pass, prose) | 46.5 tok/s (21.49 ms/tok; 2.53 accepted per cycle) — was 17.1 on the published checkpoint | [speed of light §4t](notes/speed-of-light.md), [fp8 checkpoint](notes/fp8-mixed-checkpoint.md), [lm_head](notes/quantizing-lm-head.md), [speculation](notes/speculation-on-flash-next.md) |
 | precision options: bf16 SSM state (**adopted** 2026-09-28); GDN projections as NVFP4 W4A16 (not adopted) | NVFP4 GDN: code 71.3 tok/s greedy (−7 % decode) but **+6 % TTFT**. Both pass a GSM8K + HumanEval screen and **SWE-bench** (58 instances × 2 runs: prod 48/52, NVFP4 GDN 51/50, bf16 state 50/51 — all inside prod's own spread); the bf16 state is in the prod config since 2026-09-28 | [speed of light §5j, §5o, §5r, §5u](notes/speed-of-light.md) |
 | **in prod since 2026-09-28:** fused hyper-connection kernels (`FN_HCFUSE=1`) | **TTFT −5.5…−7.9 % at 8k, −6.2…−7.8 % at 30k**; warm agent turns ~−1 %; decode unchanged; deterministic 1-ulp drift, GSM8K/HumanEval screen unchanged (McNemar p ≥ 0.25; 2 starts per arm). The byte ledger found the HC normalized copy and gate round-tripping DRAM at prefill | [speed of light §5aa](notes/speed-of-light.md) |
 | **in prod since 2026-09-28:** full CUDA graphs for the RecoverSSM verify path (F4) | code c=1 **−1.1…−2.1 %**, cache-hit replay and TTFT −1…−2.5 %, prose and 4 streams null; outputs identical at c=1 (2 starts per arm; a first "8k regression" was a probe artefact, withdrawn) | [speed of light §5z](notes/speed-of-light.md) |
-| decode, 4 streams | **code, K=5: 135.0–138.3 tok/s** aggregate (09-27 config, 2 starts); 144.8 in the 09-28 validation (one start, default KV). The 09-26 config on the decode probe: ~100 (99.7–100.0) | [speed of light §5o, §5y, §4t](notes/speed-of-light.md) |
-| agent loop (8 dependent turns, prefix cache + MTP) | **1.10 s/turn**, 1.31 without RecoverSSM | [speed of light §4t](notes/speed-of-light.md) |
-| warm agent turns (46 replayed SWE-bench turns) | 0.87 s median; **0.57 s with `--prefix-match-unit 64`** (recompute −74 %), in the prod config since 2026-09-27 | [speed of light §5t](notes/speed-of-light.md) |
-| KV capacity in 4 GiB | **105,325 tokens** in the prod config (K=5, block 1728, bf16 SSM state); 77,608 with the fp32 state. 09-26 config (K=3): 103,953 with RecoverSSM, 75,678 without. At prod's default size: 840,265 | server logs of §5r, §5w, §5y; [speed of light §4t](notes/speed-of-light.md) |
+| decode, 4 streams | **code, K=5: 144.3–144.7 tok/s** aggregate; prose 80.8–83.6. The 09-26 config on the decode probe: ~100 | [speed of light §5ad, §4t](notes/speed-of-light.md) |
+| agent loop (8 dependent turns, prefix cache + MTP) | **1.25 s/turn** (K=5, short prose-like turns); 1.10 on the 09-26 K=3 config, 1.31 without RecoverSSM | [speed of light §5ad, §4t](notes/speed-of-light.md) |
+| warm agent turns (46 replayed SWE-bench turns) | **0.563–0.567 s median** with `--prefix-match-unit 64` (0.87 without it; recompute −74 %) | [speed of light §5ad, §5t](notes/speed-of-light.md) |
+| KV capacity in 4 GiB | **105,325 tokens** in the prod config (K=5, block 1728, bf16 SSM state; re-confirmed 09-28); 77,608 with the fp32 state. 09-26 config (K=3): 103,953 with RecoverSSM, 75,678 without. At prod's default size: 791,113 (840,265 before full CUDA graphs) | server logs of §5ad, §5ac; [speed of light §4t](notes/speed-of-light.md) |
 | distance to the byte floor | K=5, fp32 SSM state (09-27): 66.1 ms per verify cycle on code vs a **~53–54 ms** floor at 220 GB/s (1.21–1.25×, estimate: the 6-row expert union is interpolated, not captured; floor ≈ 80 tok/s on code). K=3 (09-26): 54.2 vs 45.2 ms (1.20×, measured routing) | [speed of light §2a, §5q](notes/speed-of-light.md) |
 | first minutes after a start | ~59 ms/step while the PLE table pages in, 54.7 warm (09-26 config); [vllm#58835](https://github.com/vllm-project/vllm/pull/58835) takes 2.35–2.91 ms/step off the cold window | [speed of light §4e, §4z](notes/speed-of-light.md) |
-| TTFT, ~7.5k / ~29k tokens, cold (unique prompt) | **2.77–2.78 s / 10.25–10.33 s** with the bf16 state (prod since 09-28), 2.75–2.79 / 10.26–10.35 with fp32 (2 starts each, KV 4 GiB); 2.6 / 10.1 on the previous stack | [speed of light §5r](notes/speed-of-light.md), [prefill findings 117–118](notes/prefill-investigation.md) |
+| TTFT, ~7.5k / ~29k tokens, cold (unique prompt) | **2.71–2.72 s / 9.69–9.73 s** on the 09-28 prod config (HC fusion); 2.77 / 10.25–10.33 with the bf16 state before it; 2.6 / 10.1 on the previous stack | [speed of light §5ad, §5aa, §5r](notes/speed-of-light.md), [prefill findings 117–118](notes/prefill-investigation.md) |
 | cold start, model loading (page cache dropped) | **56–57 s** with the fast-loading set (main weights 41.6–41.9 s, MTP drafter 3.5–3.75 s; 2 starts); 111–121 s with #58868 alone; **575–651 s stock** | [speed of light §5w](notes/speed-of-light.md) |
-| decode, 16 / 32 streams | ~100 / 110 tok/s aggregate — **previous stack**, not re-measured | [load and waits](notes/load-and-waits.md) |
+| decode, 8 / 16 streams (prose) | **122.2–123.1 / 161.9–165.0 tok/s** aggregate; 32 streams not served (`--max-num-seqs 16`). The previous stack did ~100 / 110 at 16 / 32 | [speed of light §5ad](notes/speed-of-light.md), [load and waits](notes/load-and-waits.md) |
 | greedy determinism | sequential greedy output is reproducible across server restarts: identical hashes in every start of every A/B on this stack. Carried as overlays: deterministic `persistent_topk` ([vllm#55122](https://github.com/vllm-project/vllm/pull/55122), open) and the bit-stable MoE finalize. RecoverSSM changes the text relative to the native GDN path by the size of a summation-order change (first divergence at a median of 26 tokens), and is itself reproducible. Still not batch-invariant under concurrency | [determinism investigation](notes/determinism-investigation.md), [speed of light §4s](notes/speed-of-light.md) |
 
 The code and prose rows use the code probe of §5l: each prompt is seen once per server, so they include the cold
-PLE pages (≈7 % above a warm second pass); compare them with each other, not with the 46.5 row. The agent-loop
-row is the 09-26 configuration and has not been re-measured at K=5. Unless a row says otherwise,
+PLE pages (≈7 % above a warm second pass); compare them with each other, not with the 46.5 row. All rows above were re-measured on the 09-28 prod config (§5ad) unless they name another config. Unless a row says otherwise,
 KV is fixed at 4 GiB so the PLE table stays resident, with 2 server starts per arm, ranges not means. The rows marked
 *previous stack* are a different configuration and are not comparable. Decode noise start-to-start is
 ~2 % once the cold window is excluded; prefill is far noisier ([method](notes/method.md)).
@@ -65,7 +64,7 @@ KV is fixed at 4 GiB so the PLE table stays resident, with 2 server starts per a
 - **[REPRODUCE.md](REPRODUCE.md)** — weights, the venv overlay, serve config, and what to check before
   you trust a number. Start here to get it *running*.
 - **[Speed of light](notes/speed-of-light.md)** — how far decode is from the byte floor, where the rest
-  goes, and every lever tried against it (sections 1–5ac, newest last).
+  goes, and every lever tried against it (sections 1–5ad, newest last).
 - **[Failure modes](notes/failure-modes.md)** — every failure hit here, by what you *observe*. Four
   different causes produce "it loads but the output is wrong".
 - **[Closed levers](notes/closed-levers.md)** — what looked like a lever and measured null, with the
@@ -144,7 +143,7 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
     tools/plecold/                PLE cold-window instruments and the readahead fill
     tools/prof/                   nsys / torch-profile analysis (nsyscmp.py compares two traces)
     tools/armrun.py               the A/B runner every server number comes from
-    notes/speed-of-light.md       decode vs the byte floor, sections 1–5ac
+    notes/speed-of-light.md       decode vs the byte floor, sections 1–5ad
     notes/prefill-investigation.md   numbered findings (prefill, kernels, cache, the mapped PLE)
     notes/determinism-investigation.md   greedy reproducibility; starts with an "answers by question" index
     notes/upstream/               drafts of every post and the posting log
