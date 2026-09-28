@@ -12,6 +12,9 @@ MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1
 (§5t), blazux's tool-call parser guards (`tools/toolguard/`, installed 09-28). Drop-ins in `tools/main/dropins/`.
 
 **Open, ranked:**
+0. **Weight loading — top priority (user 2026-09-28: "move loading speed on top since it speeds up everything").** #58868 A/B running (`tools/p58868/`); then hand-port blazux's loading patches 15–18 (pread for
+   small tensors, expert name index, chunked embedding copy, MTP prefilter) onto 1ea7 — their full set took the main
+   load 450–541 s → 35 s. Speeds every A/B start and prod restart.
 1. ~~**Decision (user): GDN precision cut.**~~ **DONE 2026-09-28: bf16 SSM state in prod (drop-in 50); validation queued (prodval2).** SWE-bench shows no loss from either (§5u). NVFP4 GDN: −7 % decode, +6 % TTFT;
    bf16 SSM state: no TTFT cost, half the Mamba state. Recommendation: bf16 SSM state for agent work.
 2. **GPU-side early exit for the MTP draft loop (confidence stop).** Offline replay (§5v): stop drafting before the
@@ -20,9 +23,6 @@ MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1
    per draft step lost 5–6 % (§5b). Design direction: a CUDA-graph conditional (while/if) node around the draft steps, or
    device-side predication, so no host sync; verify batch then varies 2..6 rows at c=1. Overlaps with item 4 (graph
    structure). Validate with a real A/B at τ 0.7 against fixed K=5, code + prose, 2 starts; greedy hashes must match.
-3. **Weight loading.** #58868 A/B running (`tools/p58868/`); then hand-port blazux's loading patches 15–18 (pread for
-   small tensors, expert name index, chunked embedding copy, MTP prefilter) onto 1ea7 — their full set took the main
-   load 450–541 s → 35 s. Speeds every A/B start and prod restart.
 4. **F4: full CUDA graphs for the RecoverSSM verify path** (analysis in the lightspeed agenda; est. −1…−2 ms/step;
    also a follow-up PR to #58863).
 5. **Nightly forward:** bisect the c=4 −4.5 % / non-reproducible regression on `a9eafde59` (§5s; candidates #58434,
