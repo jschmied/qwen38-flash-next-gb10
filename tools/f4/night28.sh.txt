@@ -1,0 +1,24 @@
+# F4 (full CUDA graphs, RecoverSSM verify): after night27. Tests, then the FULL_AND_PIECEWISE vs PIECEWISE A/B.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results; F=/opt/llm/runners/f4
+V=/opt/llm/runtime/vllm-venv-rssm; SP=$V/lib/python3.12/site-packages
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night27[.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "F4 prod running - skip"; exit 1; }
+for f in gdn_recoverssm.py ple_recoverssm.py; do
+  t=$SP/vllm/v1/attention/backends/$f
+  [ -e $t.orig-f4 ] || cp -p $t $t.orig-f4
+  cp $F/vllm-files/$f $t
+  $V/bin/python -m py_compile $t || { log "F4 compile FAILED $f"; exit 3; }
+done
+n=$(grep -c "AttentionCGSupport.UNIFORM_BATCH" $SP/vllm/v1/attention/backends/gdn_recoverssm.py $SP/vllm/v1/attention/backends/ple_recoverssm.py | awk -F: '{s+=$2} END {print s}')
+[ "$n" = 2 ] || { log "F4 install check FAILED (UNIFORM_BATCH count $n)"; exit 3; }
+find $SP/vllm/v1/attention -name __pycache__ -prune -exec rm -rf {} +
+VLLM_PKG=$SP/vllm/model_executor/model_loader/weight_utils.py $V/bin/python /opt/llm/runners/fastload/toggle_fastload.py >> $RES/f4-install.log 2>&1
+log "F0 F4 installed on rssm (+fastload)"
+( cd $F/tests && PYTHONPATH=$F/shadow timeout 1800 $V/bin/python -m pytest -q -p no:cacheprovider \
+    test_recoverssm_gdn.py test_recoverssm_ple.py test_recoverssm_config.py > $RES/f4-pytest.log 2>&1 ); rc=$?
+log "F1 f4 tests rc=$rc $(grep -E 'passed|failed' $RES/f4-pytest.log | tail -1)"
+[ $rc = 0 ] || { log "== NIGHT28 STOPPED (tests) =="; exit 4; }
+idle; python3 /opt/llm/runners/armrun.py $F/spec-f4.json --out $RES/f4.jsonl > $RES/f4.txt 2>&1; log "F2 f4 A/B rc=$?"
+log "== NIGHT28 DONE =="
