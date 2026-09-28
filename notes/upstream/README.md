@@ -1450,3 +1450,4 @@ wait on one ~100 GB pull, and they share one serve.
   replication himself (8 agent sessions 62.5 → 93.1 tok/s; cold 50K prefill +66 %), so no cross-link; instead a thanks,
   a note that the description undersells the non-cold-window case, and our wait-vs-no-wait result (§4x) with a
   question whether his 250 ms bound fired under load. Draft `comment-58835-reply-antonio.md`. <https://github.com/vllm-project/vllm/pull/58835#issuecomment-5864205041>
+  PR body updated the same day: added the non-cold-window paragraph citing his comment.
