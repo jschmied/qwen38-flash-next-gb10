@@ -16,7 +16,7 @@ n=$(grep -c "AttentionCGSupport.UNIFORM_BATCH" $SP/vllm/v1/attention/backends/gd
 find $SP/vllm/v1/attention -name __pycache__ -prune -exec rm -rf {} +
 VLLM_PKG=$SP/vllm/model_executor/model_loader/weight_utils.py $V/bin/python /opt/llm/runners/fastload/toggle_fastload.py >> $RES/f4-install.log 2>&1
 log "F0 F4 installed on rssm (+fastload)"
-( cd $F/tests && PYTHONPATH=$F/shadow timeout 1800 $V/bin/python -m pytest -q -p no:cacheprovider \
+( cd $F/tests && PYTHONSAFEPATH=1 timeout 1800 $V/bin/python -m pytest -q -p no:cacheprovider \
     test_recoverssm_gdn.py test_recoverssm_ple.py test_recoverssm_config.py > $RES/f4-pytest.log 2>&1 ); rc=$?
 log "F1 f4 tests rc=$rc $(grep -E 'passed|failed' $RES/f4-pytest.log | tail -1)"
 [ $rc = 0 ] || { log "== NIGHT28 STOPPED (tests) =="; exit 4; }

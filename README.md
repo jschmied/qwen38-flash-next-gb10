@@ -22,6 +22,9 @@ five more are open there.
 > **2026-09-28, loading:** the fast-loading set is in prod's venv: [vllm#58868](https://github.com/vllm-project/vllm/pull/58868)
 > plus blazux's expert name index and MTP name prefilter (ported). A cold start's model loading drops from ~11 min to under
 > 1 min (605–651 → 56–57 s over 2 starts per arm, identical greedy hash; [§5w](notes/speed-of-light.md)). Loading only; a start with prod's exact config and venv is ready in **2 min 39 s** (was ~12 min).
+> The whole 09-28 config (bf16 SSM state, `--prefix-match-unit 64`, fast loading, tool guards) is validated on one start:
+> every path line present, code 14.74 ms/tok, prose 23.66, 4 streams 144.8 tok/s, cache replay equal
+> ([§5y](notes/speed-of-light.md), [data](notes/data/prodval2/)).
 > K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
 > Forwarded to nightly `a9eafde59` (266 commits newer; [§5s](notes/speed-of-light.md)): the overlay applies and c=1 output is
 > bit-identical to prod, but c=4 is 4.5 % slower and not reproducible, so prod stays on `1ea7c63f4` for now.
