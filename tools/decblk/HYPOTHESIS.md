@@ -37,3 +37,11 @@ The 3456 boundary lies inside the generated tokens, and v2/v3 rebuild the follow
 text, so a mismatch there is not excluded. decblk4 = v1's exact token-id method (/v1/completions, return_token_ids,
 follow-up = prompt ids + first 480 generated ids) with a 380-number prompt, interval 3456. If B still stops below 3456
 with exact ids, decode-crossed boundaries are not retained even with the interval set: record that as the answer.
+
+RESULT decblk4 (2026-09-28 11:55): valid. Exact token ids -> B hit 3456 in 16/16 seeds (past the 3047-token prompt,
+i.e. a decode-written boundary state was served), R missed in all. Divergent: spec 4/16 (first at 19, 6, 8, 22), nospec
+2/16 (7, 7). H0 holds (4 <= 2 + 2); H1 (>= +4 and first divergence at 0-2) not met: late, drift-sized divergence.
+DECBLK5 (prod's default retention interval 0, spec arm only, same probe, 1 start). Code-reading prediction: the
+decode-crossed 3456 boundary is not retained at interval 0, so B stops at a prompt-internal boundary (1728 or 0) in
+16/16. Out of range: B hits 3456 -> the code reading was wrong and prod does serve decode-written states (then the
+decblk4 H0 result is the relevant one for prod).

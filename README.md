@@ -107,7 +107,8 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
   an expert name index and an MTP name prefilter take model loading from ~11 min to under 1 (identical output):
   [§5w](notes/speed-of-light.md).
 - **The Mamba prefix cache is sparse by design**: states are kept only at prompt ends and shared-prefix junctions, so
-  a prompt's first repeat misses and, by the code, a decode-written state is never served (vllm#53912; measurement queued):
+  a prompt's first repeat misses and at the default a decode-written state is not kept (by the code; measured with the interval set, a served
+  decode-written state did not contaminate the output, vllm#53912):
   [§5x](notes/speed-of-light.md).
 - **"Restart drift" was the cold window**, not noise: measure warm, with KV sized so the table stays
   resident: [§4c, §4k](notes/speed-of-light.md).

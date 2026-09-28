@@ -1530,14 +1530,29 @@ boundary), never 3,456, R missed in all. The 3,456 boundary lies inside the gene
 follow-up by re-tokenizing the generated text, so a token mismatch there is not excluded. decblk4 (v1's exact token-id
 method, same long prompt and interval) is queued as `night33`. Data `data/decblk3b/`.
 
+**decblk4 (same day): valid, and no contamination.** v1's exact token-id method, prompt 3,047 tokens, follow-up 3,527,
+`--prefix-cache-retention-interval 3456`, 16 seeds per arm. B hit **3,456 tokens in 16/16** in both arms, past the prompt:
+a recurrent state written during (speculative) decode was served. R missed in all. So the v2/v3 voids were the
+re-tokenized follow-up.
+
+| arm | B hits | divergent / 16 | first divergence (token) |
+|---|---|---|---|
+| spec (MTP K=5 + RecoverSSM + nodrop) | 3,456 × 16 | 4 | 19, 6, 8, 22 |
+| nospec (native align) | 3,456 × 16 | 2 | 7, 7 |
+
+- **H0 holds** (spec ≤ nospec + 2: 4 ≤ 4); H1 (≥ +4 and divergence at tokens 0–2) is not met. The divergence is late
+  and present without speculation too: cached-vs-recomputed numeric drift, not #53912's poisoned state.
+- Prod runs retention interval 0, which this did not test; decblk5 (interval 0, spec arm) is queued as `night35`.
+  Data `data/decblk4/`.
+
 From the code (`v1/core/single_type_kv_cache_manager.py`, reachable-boundary mask; `config/cache.py`): align-mode
 Mamba retains recurrent-state snapshots **sparsely**. `--prefix-cache-retention-interval` defaults to **0 = "only
 semantic checkpoints"**: the latest replay boundary (prompt end) and shared-prefix junctions. A block boundary crossed
 during decode is not retained, so there is nothing to hit, with or without speculation. The same rule explains the old
 "hits only from the second repetition" observation: the first repeat creates the shared-prefix junction, the second reads it.
 
-- **For prod (interval unset), by the code: #53912's path is not reachable**; a served recurrent state is a prompt-end or
-  shared-prefix checkpoint. Not yet shown by a measurement (decblk3b).
+- **For prod (interval unset), by the code: a decode-written state is not retained**, so #53912's path would not be
+  reached; decblk5 measures this. Where it is reached (interval 3,456, decblk4), it did not contaminate.
 - det-236 (09-24, "15 reads into decode-written blocks, 0 divergent") ran on the older stack; whether its reads really
   hit decode-written states was not re-checked against this mechanism, so it no longer counts as evidence either way.
 

@@ -1,0 +1,8 @@
+# decblk5 (interval 0) after night34 (f4rep).
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night34[.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "D5 prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/decblk/spec-decblk5.json --out $RES/decblk5.jsonl > $RES/decblk5.txt 2>&1; log "D5 decblk5 rc=$?"
+log "== NIGHT35 DONE =="
