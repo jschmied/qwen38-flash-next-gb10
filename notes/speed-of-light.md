@@ -1991,3 +1991,20 @@ M = 3,456): K1 0.707 ms for 159 MB = **225 GB/s (DRAM-bound)**; K2 0.475 ms for 
 164 GB/s; silu 0.017 ms. K2 and K3 each do ~23 GFLOP (~50 TFLOPS effective), so they are bound by GEMM efficiency (tile,
 warps, stages), not DRAM: keeping their input in L2 cannot help, and the extra launches/partials cost more. The lever
 for item 1 is a tile/config sweep of K2 and K3 (≈1.05 ms of the op's 1.78 ms).
+
+**§5aa — FUSION-AGENDA item 1 closed: K2/K3 tile sweep (`tools/hcfuse/tune.py`) — no config breaks ~50 TFLOPS at the
+prefill chunk size.** 152 K2 configs (BM/BN/BK/warps/stages × split-K 1/2/4/8) and 66 K3 configs passed the checks
+(within 2 bf16 ulp of the current path, reproducible). Best vs current (ms):
+
+| M | K2 | K3 | K2 + K3 saved |
+|---|---|---|---|
+| 3,456 | 0.471 → 0.471 (current is best) | 0.554 → 0.514 (−7 %) | −0.04 |
+| 1,024 | 0.174 → 0.137 | 0.206 → 0.179 | −0.06 |
+| 512 | 0.082 → 0.079 | 0.097 → 0.066 | −0.03 |
+| 256 | 0.059 → 0.049 | 0.056 → 0.040 | −0.03 |
+| 128 | 0.040 → 0.034 | 0.035 → 0.027 | −0.01 |
+
+- Out of the hypothesis range (predicted −0.25…−0.45 ms at 3,456): the Triton GEMMs sit at their efficiency ceiling for
+  these shapes. Summed over a 7.5k prefill ≈ −11 ms (~0.4 % TTFT), per agent turn ≈ −3 ms (~0.5 %): below a 2-start A/B's
+  resolution, so not measured end-to-end and not proposed separately; the per-M table (`data/hcfuse/hctune.json`) can ride
+  along with any future HC-fusion update.

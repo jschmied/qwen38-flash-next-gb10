@@ -59,3 +59,11 @@ H: at M = 3456 the best S saves 0.3..0.6 ms of the fused op's 1.79 ms (DRAM byte
 (L2 residency vs launch count: 2 * M/S launches + reduces). Output within 1 bf16 ulp of the one-pass op (split-K
 reduction order may change), reproducible run to run. Out of range: no gain (L2 does not hold across launches, or
 launch overhead eats it).
+
+HCFUSE-TUNE (FUSION-AGENDA item 1, 2026-09-28 ~20:20). K2 (down GEMM, K=10240, N=336, split-K 1/2/4/8) and K3 (up GEMM
+K=320 over 4 streams x 2560 + gate mix) swept over tile configs (BM 32/64/128, BN 64/128 (K2) or 32/64/128 (K3),
+BK 64/128 (K2) or 32/64 (K3), warps 4/8, stages 2..4) at M = 3456, 1024, 512, 256, 128. Each config: output within
+2 bf16 ulp of today's path and reproducible, else discarded.
+H: the best configs reach >= 80 TFLOPS-equivalent (today's ~50): K2 + K3 at M = 3456 from 1.05 ms to 0.6..0.8 ms
+(-0.25..-0.45 ms per block, i.e. another -1.5..-3 % TTFT at 7.5k on top of the HC fusion). Smaller M: gains of the same
+relative size or none (latency-bound). Out of range: no config beats the current one by >= 10 % (then item 1 closes).
