@@ -128,7 +128,13 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
      quant is the general fix and the most work (12-min FlashInfer rebuilds, `tools/moe_swz.py` harness).
    **Step 1 CLOSED 2026-09-28 (§5aa):** the b12x gated kernel needs 128×128 MMA tiles, which b12x never picks for 512
    experts at ≤ 4,096-token chunks (it picks 32×128 / 64×128); b12x is also run-to-run nondeterministic (0.65 % rel L2).
-   Only the CUTLASS EVT route remains.
+   Only the CUTLASS EVT route remains. **Scoped 2026-09-28:** FlashInfer 0.6.18's TMA warp-specialized MoE declares
+   `EpilogueFusion::GATED_ACTIVATION` but throws "Unimplemented fusion" for it (moe_gemm_template_dispatch.h:882); the
+   only fused gated path is Ampere bf16/fp16 (`supportsFusedGatedActivation`), not FP4. No upstream SM120 implementation
+   (TRT-LLM's FC12 / FlashInfer's mega fused kernels are SM100/Rubin CuTe-DSL). Building it = a new SM120 EVT epilogue:
+   SwiGLU over interleaved gate/up N-tiles (reorder w13 rows offline) + NVFP4 output with per-16 block scales, JIT
+   generation in `jit/gemm/cutlass/generate_kernels.py`, 12-min rebuilds. Multi-day; prize ~4 % TTFT. Needs the user's
+   go before starting.
    **Order (original):** (1) clone venv: RETAINED_SLICES 4 → 5, compile check, then a one-layer b12x-gated vs cutlass standalone
    (correctness vs cutlass output, time at M = 3,456 × top-10) — cheapest, may simply not fit in shared memory;
    (2) only if (1) fails, the CUTLASS EVT route. Determinism: b12x's finalize path must be checked against our
