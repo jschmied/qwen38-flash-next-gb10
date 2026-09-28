@@ -1462,3 +1462,7 @@ wait on one ~100 GB pull, and they share one serve.
   mmap page-fault fix: main weights 505–534 → 65–66 s, model loading 575–599 → 111–121 s, identical greedy hash in all four
   starts; `read_ahead_kb` 128 (the row he could not test at TP4); PR head `857f70df` applied to all 26 sites. Draft
   `pr58868-gb10-tp1.md`. <https://github.com/vllm-project/vllm/pull/58868#issuecomment-5865989952>
+- **2026-09-28 — blazux #45, reply (user's go: "tell him we dont run his container so we cant send a pr").** blazux asked
+  for a PR (opt-in switch on their v0.30.0 Dockerfile, numbers on their default config, smoke test, unit test). Declined:
+  we don't run their container, so we can't build, test or measure on their stack; pointed to #58863 and our §4t–4u/§5l
+  numbers. Draft `comment-blazux-45-no-pr.md`. <https://github.com/blazux/qwen3.8-Flash-DGX/issues/45#issuecomment-5868669448>
