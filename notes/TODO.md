@@ -30,6 +30,25 @@ MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1
 6. **Contamination check v2** (`tools/decblk/decblk2.py`, queued): decode-written cache blocks under MTP + nodrop.
 7. F3 hyper-connection tail fusion (~0.5 ms/step); content-built draft vocabulary (TF2, low).
 
+**Taken from TensorFold** (ashhart/TensorFold, reviewed 09-26…09-28; their data is one stream, their own engine):
+- a. *Confidence-stopped draft chain* → item 2 (our replay: optimum τ 0.70, not their 0.3).
+- b. *Draft vocabulary built from content* (their 79.6k list; a 98k prefix list was 7.7–8.6 % slower for them) → item 7;
+  our 32k slice covers 0.1–0.6 pp less text than theirs (§5k), so the A/B is a frequency-built 32k list vs the slice.
+- c. *Hyper-connection read-out fused into the MoE GEMMs* (norm into the down projection, mix into the up projection;
+  their HC matrices run at 104–148 GB/s vs 200+ for big GEMMs) → F3 (item 7).
+- d. **Router logits in fp32** (new): they found bf16 router logits tie at the top-10 cut in ~1/3 of layers, and the
+  tie decides the expert. Our Qwen4Exp gate is a plain bf16 `ReplicatedLinear` (`qwen3_next.py:183`); vLLM's
+  `GateLinear` can output fp32. Cheap: measure the tie rate on real traffic, then an fp32-gate A/B (quality/determinism).
+- e. **Copy windows combined with MTP** (new): when the context holds the text being written (file edits), verify up
+  to 7 copied tokens instead of MTP drafts; entry needs 8 matching tokens (shorter matches cost them 5 % on fresh code).
+  Our memory `labd-lookup-drafting-lever` lists lookup drafting; theirs is the MTP-combined version. Offline first:
+  replay agent trajectories for the share of tokens a copy window would cover.
+- f. **Shared expert as the 11th slot of the grouped expert table** (new, low): one MoE launch instead of routed +
+  shared; no isolated number from them. Kernel work in the fused MoE path.
+- g. *Faster weight loading* (sequential reads instead of mmap faults) → item 3 (#58868 + blazux 16/18).
+- h. *Load-time exactness self-check* (2/3/4-row windows must equal 1-row steps, else drafting off) (new, low): a
+  guard for our determinism overlays; only if we promise bit-exact drafted output.
+
 **Rejected this round (with data):** adaptive verification (§5p), two-candidate branching incl. the
 similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled client either way).
 
