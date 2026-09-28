@@ -17,3 +17,7 @@ through _output_projection), where it is ~2x faster per call.
 H: TTFT 8k and 30k -0.7..-1.5 % (36 GDN layers x chunks x -0.39 ms); decode c=1 code/prose -0.5..-1.5 % (36 x ~-0.02 ms of
 a ~64 ms cycle); c=4 -0..-1.5 %; greedy hashes may differ (drift-level op). Out of range: any cell slower by > 1 %,
 or TTFT gain < 0.3 %.
+
+VOID run 1 (gdnnq, 21:20): the fused path never ran - gdn_output_fusable required fmt type "FormatScheme", but resolve()
+gives every FP8_PB_WO layer _Fp8PbWoPartialBlock (a pass-through when the width is block-aligned). Fixed: accept it when
+the layer has no _pbwo_logical_out. Relaunched as gdnnq2. The void rule (required log line) caught the silent fallback.

@@ -1,0 +1,8 @@
+# GDNNQ server A/B (fusion item 2) on the clone venv.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "G2 prod running - skip"; exit 1; }
+grep -q "FNGDNNQ" /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py || { log "G2 overlay missing - skip"; exit 3; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/gdnnq/spec-gdnnq2.json --out $RES/gdnnq2-ab.jsonl > $RES/gdnnq2-ab.txt 2>&1; log "G2 gdnnq A/B rc=$?"
+log "== NIGHT47 DONE =="

@@ -89,7 +89,10 @@ def gdn_output_fusable(attn) -> bool:
         qf = k.quant_fp8
         if not (qf.column_major_scales and not qf.use_ue8m0 and qf.group_size == 128):
             return False
-        if type(getattr(qm, "fmt", None)).__name__ != "FormatScheme":
+        # FP8_PB_WO layers carry the partial-block scheme; it passes through when the width is block-aligned.
+        if type(getattr(qm, "fmt", None)).__name__ not in ("FormatScheme", "_Fp8PbWoPartialBlock"):
+            return False
+        if getattr(op, "_pbwo_logical_out", None) is not None:
             return False
         return (n.group_size is None and n.norm_before_gate and getattr(n, "bias", None) is None
                 and attn.head_v_dim == 128 and op.bias is None and getattr(op, "tp_size", 1) == 1
