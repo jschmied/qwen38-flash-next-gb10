@@ -2052,6 +2052,19 @@ the eligibility check rejected the pass-through `_Fp8PbWoPartialBlock` scheme ev
 - **The drift reaches the greedy text** on the probes (the op is ≤ 1 ulp on ~3e-6 of values, §5af standalone): a quality
   screen (GSM8K/HumanEval, as for the HC fusion) comes before any prod proposal.
 
+**§5af quality screen (`evalgq`, §5r's GSM8K + HumanEval, greedy, 2 starts per arm, prod config + HC fusion + F4):
+no measurable change.** The drift changes the text, not the answers:
+
+| | gdnnq, s1 / s2 | base, s1 / s2 |
+|---|---|---|
+| GSM8K (1,319) | 96.21 / 95.83 % | 95.91 / 96.21 % |
+| HumanEval (164) | 95.12 / 96.34 % | 95.12 / 95.12 % |
+
+Every cross-arm McNemar p ≥ 0.33; the two base starts differ from each other (GSM8K 11 vs 15 discordant, Δ 0.30 pp) as
+much as gdnnq differs from base (Δ −0.30…+0.38 pp). Per the quality rule (numeric drift is fine, no noticeable task
+loss) GDNNQ is a **prod candidate: TTFT −1.8…−2.5 %, decode null, quality unchanged. Proposed, not installed** (the
+user's call). Data `data/gdnnq/evalgq-score.txt`, `evalgq.txt`.
+
 **FUSION-AGENDA item 4 closed (remaining FP8/FP4 activation quants into their producers): ~0.3 % TTFT, below resolution.**
 Activation quantization in the 7.5k prefill window (ledger trace, `data/ledger/`): `per_token_group_quant` on the GDN
 out_proj input 25.6 ms (0.96 %, **covered by item 2**), `cvt_fp16_to_fp4` on the MoE input 11.1 ms (0.41 %), the

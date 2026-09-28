@@ -1,0 +1,23 @@
+== armrun evalgq: 2 arms x 2 start(s), port 8092 ==
+-- evalgq-gdnnq20  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1', 'FN_GDNNQ': '1'}
+Running as unit: fx-armrun-evalgq.service; invocation ID: eddd24378c33421e8709762aac17dc5a
+   void checks passed (17 required, 5 forbidden)
+   {"ttft": {"8k": {"median_s": 2.636, "all": [2.835, 2.636, 2.631]}, "30k": {"median_s": 9.421, "all": [9.437, 9.414, 9.421]}}, "gsm8k": {"n": 1319, "acc": 0.9621, "correct": 1269, "truncated": 16, "gen_tokens": 468971, "s": 2319.1}, "humaneval": {"n": 164, "truncated": 3, "gen_tokens": 39036, "s": 254.4, "file": "/opt/llm/runners/results/evalq-evalgq-gdnnq20.jsonl"}, "total_s": 2609.9}
+-- evalgq-base0  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1'}
+Running as unit: fx-armrun-evalgq.service; invocation ID: 63d78ab3b7e14ee99fd5b3a5644b1ab0
+   void checks passed (16 required, 6 forbidden)
+   {"ttft": {"8k": {"median_s": 2.713, "all": [2.923, 2.705, 2.713]}, "30k": {"median_s": 9.851, "all": [9.724, 9.851, 11.758]}}, "gsm8k": {"n": 1319, "acc": 0.9591, "correct": 1265, "truncated": 21, "gen_tokens": 467975, "s": 2108.0}, "humaneval": {"n": 164, "truncated": 4, "gen_tokens": 40418, "s": 167.5, "file": "/opt/llm/runners/results/evalq-evalgq-base0.jsonl"}, "total_s": 2315.2}
+-- evalgq-gdnnq21  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1', 'FN_GDNNQ': '1'}
+Running as unit: fx-armrun-evalgq.service; invocation ID: a6377c6425134f198496df33cf6029ab
+   void checks passed (17 required, 5 forbidden)
+   {"ttft": {"8k": {"median_s": 2.642, "all": [2.877, 2.642, 2.639]}, "30k": {"median_s": 9.502, "all": [9.502, 9.502, 9.499]}}, "gsm8k": {"n": 1319, "acc": 0.9583, "correct": 1264, "truncated": 19, "gen_tokens": 468044, "s": 2064.8}, "humaneval": {"n": 164, "truncated": 3, "gen_tokens": 40063, "s": 163.4, "file": "/opt/llm/runners/results/evalq-evalgq-gdnnq21.jsonl"}, "total_s": 2264.9}
+-- evalgq-base1  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1'}
+Running as unit: fx-armrun-evalgq.service; invocation ID: efc01b04eb9d406695ff95b5e4bc7bde
+   void checks passed (16 required, 6 forbidden)
+   {"ttft": {"8k": {"median_s": 2.707, "all": [2.893, 2.707, 2.689]}, "30k": {"median_s": 9.687, "all": [9.687, 9.684, 9.687]}}, "gsm8k": {"n": 1319, "acc": 0.9621, "correct": 1269, "truncated": 18, "gen_tokens": 468483, "s": 2069.6}, "humaneval": {"n": 164, "truncated": 4, "gen_tokens": 40107, "s": 165.9, "file": "/opt/llm/runners/results/evalq-evalgq-base1.jsonl"}, "total_s": 2272.9}
+
+== RESULT ==
+  gdnnq2       total_s 2264.9–2609.9  start 0–1
+  base         total_s 2272.9–2315.2  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
