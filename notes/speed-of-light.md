@@ -1770,3 +1770,22 @@ below 128 tokens and splits 8 / 4 / 1 below 192 / 2,048 / above; its test (`data
 6…3,456 (bit-identical below 128, identical at 2,048 and 3,456, 1 ulp between). Better than the hypothesis (crossover
 128–256). An agent-turn A/B (§5t's turn replay) is queued; the 8k/30k TTFT cells above are unaffected (chunks ≥ 2,048
 run unsplit, as measured).
+
+**§5aa — HC fusion on agent turns (`hcturn`, §5t's turn replay, split-K op, 2 starts per arm): small.**
+
+| | hcfuse, s1 / s2 | base, s1 / s2 | Δ |
+|---|---|---|---|
+| A: 20k cached + 16 new tokens, TTFT | 0.655 / 0.670 s | 0.680 / 0.680 s | −1.5…−3.7 % |
+| A: + 256 new tokens | 0.839 / 0.851 s | 0.884 / 0.879 s | −3.2…−5.1 % |
+| A: + 1,024 new tokens | 1.448 / 1.464 s | 1.530 / 1.520 s | −3.7…−5.4 % |
+| B: 46 replayed SWE-bench turns, TTFT median / mean | 0.566, 0.619 / 0.568, 0.618 s | 0.572, 0.630 / 0.563, 0.623 s | **null** / −0.8…−1.9 % |
+| recomputed tokens (A cells; B median / sum) | 1,120 / 1,639 / 3,300; 482.5 / 28,989 | same | identical |
+| B final greedy hash | a70f8e4e (both starts) | cfb9b78f (both starts) | differs, stable within arm |
+
+- **Against the hypothesis:** A in range (−2…−6 %); **B below it** (predicted −2…−5 %). A median turn recomputes ~480
+  tokens: the fused path saves ~0.05 ms per HC block there (−15 % of ~0.33 ms), × 98 blocks ≈ 5 ms of a 0.57 s turn.
+  The turn is dominated by costs the HC blocks don't touch. The HC fusion is a **long-prefill** lever (cold 8k/30k
+  −6…−8 %, above), worth ~1 % on warm agent turns.
+- **Output:** the replay's final greedy text differs between arms and is reproducible within each: the op's 1-ulp
+  numerics flip a greedy token somewhere in 46 turns. Deterministic drift, the class the quality rule accepts; a quality
+  check (SWE-bench or the logprob screen) would come before any prod use.

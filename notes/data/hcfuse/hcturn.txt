@@ -1,0 +1,23 @@
+== armrun hcturn: 2 arms x 2 start(s), port 8092 ==
+-- hcturn-hcfuse0  env={'FN_CG_MODE': 'PIECEWISE', 'FN_HCFUSE': '1'}
+Running as unit: fx-armrun-hcturn.service; invocation ID: fd61feee47cf4399be6b6bd137d7b9fd
+   void checks passed (15 required, 6 forbidden)
+   {"A": {"16": {"ttft_median_s": 0.655, "recomputed_median": 1120.0}, "256": {"ttft_median_s": 0.839, "recomputed_median": 1639.0}, "1024": {"ttft_median_s": 1.448, "recomputed_median": 3300.0}}, "B": {"turns": 46, "ttft_median_s": 0.566, "ttft_mean_s": 0.619, "new_median": 345.0, "recomputed_median": 482.5, "recomputed_sum": 28989.0, "new_sum": 19704}, "final_greedy_sha": "a70f8e4e25fa87de"}
+-- hcturn-base0  env={'FN_CG_MODE': 'PIECEWISE'}
+Running as unit: fx-armrun-hcturn.service; invocation ID: 84e3fa27624b45ae9153ca722fdd2525
+   void checks passed (14 required, 7 forbidden)
+   {"A": {"16": {"ttft_median_s": 0.68, "recomputed_median": 1120.0}, "256": {"ttft_median_s": 0.884, "recomputed_median": 1639.0}, "1024": {"ttft_median_s": 1.53, "recomputed_median": 3300.0}}, "B": {"turns": 46, "ttft_median_s": 0.572, "ttft_mean_s": 0.63, "new_median": 345.0, "recomputed_median": 482.5, "recomputed_sum": 28989.0, "new_sum": 19704}, "final_greedy_sha": "cfb9b78f7f3efb19"}
+-- hcturn-hcfuse1  env={'FN_CG_MODE': 'PIECEWISE', 'FN_HCFUSE': '1'}
+Running as unit: fx-armrun-hcturn.service; invocation ID: 842a08a983eb4baa940e87d75d34e51e
+   void checks passed (15 required, 6 forbidden)
+   {"A": {"16": {"ttft_median_s": 0.67, "recomputed_median": 1120.0}, "256": {"ttft_median_s": 0.851, "recomputed_median": 1639.0}, "1024": {"ttft_median_s": 1.464, "recomputed_median": 3300.0}}, "B": {"turns": 46, "ttft_median_s": 0.568, "ttft_mean_s": 0.618, "new_median": 345.0, "recomputed_median": 482.5, "recomputed_sum": 28989.0, "new_sum": 19704}, "final_greedy_sha": "a70f8e4e25fa87de"}
+-- hcturn-base1  env={'FN_CG_MODE': 'PIECEWISE'}
+Running as unit: fx-armrun-hcturn.service; invocation ID: d0b60ad3878145ee86d5cf1cc2647b1f
+   void checks passed (14 required, 7 forbidden)
+   {"A": {"16": {"ttft_median_s": 0.68, "recomputed_median": 1120.0}, "256": {"ttft_median_s": 0.879, "recomputed_median": 1639.0}, "1024": {"ttft_median_s": 1.52, "recomputed_median": 3300.0}}, "B": {"turns": 46, "ttft_median_s": 0.563, "ttft_mean_s": 0.623, "new_median": 345.0, "recomputed_median": 482.5, "recomputed_sum": 28989.0, "new_sum": 19704}, "final_greedy_sha": "cfb9b78f7f3efb19"}
+
+== RESULT ==
+  hcfuse       start 0–1
+  base         start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==

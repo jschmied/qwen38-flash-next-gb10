@@ -11,8 +11,9 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1728`, `--prefix-match-unit 64`
 (§5t), blazux's tool-call parser guards (`tools/toolguard/`, installed 09-28). Drop-ins in `tools/main/dropins/`.
 
-**HC fusion (`FN_HCFUSE=1`) — DONE 2026-09-28, §5aa:** TTFT −5.5…−7.9 % (8k) / −6.2…−7.8 % (30k), decode null, outputs
-identical on the probes. **Awaiting the user: prod install? upstream PR?** Next byte items: MoE GEMM1 epilogue (~4 %),
+**HC fusion (`FN_HCFUSE=1`) — DONE 2026-09-28, §5aa:** TTFT −5.5…−7.9 % (8k) / −6.2…−7.8 % (30k), decode null; warm agent
+turns only ~−1 % (B null, A −2…−5 %); deterministic 1-ulp drift (replay output differs, reproducible). Needs a quality
+check before prod. **Awaiting the user: prod install? upstream PR?** Next byte items: MoE GEMM1 epilogue (~4 %),
 deterministic fused finalize (3–5 %).
 
 **F4 (full CUDA graphs, RecoverSSM verify) — DONE 2026-09-28, §5z:** short-context c=1 −1.1…−2.1 %, replay/TTFT −1…−2.5 %,
