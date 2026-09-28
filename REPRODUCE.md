@@ -43,7 +43,9 @@ cut-over, `~/.cache/flashinfer/0.6.18.post1/121a/` holds 0 modules and a full st
 0.6.13), `flashinfer-jit-cache` from `https://flashinfer.ai/whl/cu130/`. `jit/env.py` asserts
 cubin == python and aborts the import on a mismatch.
 
-> **Startup takes ~12 minutes.** Loading ~120 GB dominates. Don't mistake the wait for a hang.
+> **Startup takes ~2.5–3 minutes with the fast-loading set** (prod config 2 min 39 s: main weights 45 s, MTP drafter 3.3 s,
+> engine init 57 s; [§5w](notes/speed-of-light.md)). **Without it, ~12 minutes**: stock vLLM faults the 120 GB checkpoint's
+> mmap pages inside the driver copy (main weights 505–580 s cold). Don't mistake that wait for a hang.
 
 ---
 
@@ -181,6 +183,7 @@ The flags that are not obvious:
 | `--speculative-config` MTP, `num_speculative_tokens` 5, `disable_eagle_block_drop` | the agent loop is −19 % with MTP in this shape; without the block-drop flag, speculation costs a whole prefix block per turn. K=5 is −10 % on code and +5 % on prose against K=3 ([§5l](notes/speed-of-light.md)) |
 | `--mamba-ssm-cache-dtype bfloat16` | the recurrent state in bf16 instead of fp32: half the Mamba state, no TTFT cost, and no quality loss on SWE-bench (58 instances × 2 runs, [§5u](notes/speed-of-light.md)) or GSM8K/HumanEval ([§5r](notes/speed-of-light.md)) |
 | `--prefix-match-unit 64` | saves the recurrent state at the exact end of each prompt, so the next agent turn resumes there instead of at the last 1728-token block: warm-turn recompute −74 %, turn TTFT −35 % (0.87 → 0.57 s); a prompt edited before its old end pays +0.1 s ([§5t](notes/speed-of-light.md)) |
+| prefix cache (defaults) | align-mode Mamba keeps recurrent states only at semantic checkpoints (`--prefix-cache-retention-interval 0`): the end of a prompt and where requests share a prefix. So an identical prompt's **first** repeat does not hit, the second does, and a state written during decode is never served from the cache (which also keeps vllm#53912's contamination path out of this config; [§5x](notes/speed-of-light.md)) |
 | `--block-size 1728` | K=5 needs it: the QSA raw-key ring capacity (12 here) must divide the block size, and the auto size (1696) does not; without it K=5 hard-fails at start ([vllm#54912](https://github.com/vllm-project/vllm/pull/54912)) |
 | `--use-replayssm` | with speculative decoding, selects RecoverSSM for Qwen4Exp: GDN verify from one checkpoint with a per-token replay record, committed once after sampling; −2.4…−4.0 % per cycle at c=1, −5.2 % at c=4, −16 % per agent turn, +37 % KV. The backends declare no full-graph support, so `FULL_AND_PIECEWISE` resolves to PIECEWISE (the launcher's default anyway). V2 model runner, Triton mamba backend, PP=1 |
 | `FN_DRAFT_PROB=1`, `FN_SPEC_DRAFTPROB=1`, `FN_SPEC_LOCALARGMAX=0` | drafts are sampled (`draft_sample_method: probabilistic`) and accepted by rejection sampling: −5.5 % on sampled code at K=5, greedy unchanged, exact. The local-argmax shortcut must be off, because the sampler needs the drafter's logits ([§5n](notes/speed-of-light.md)) |

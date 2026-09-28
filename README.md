@@ -8,7 +8,7 @@ with its data file, the failures by symptom, and the claims of our own we had to
 insights, what transferred from the field and what did not, and which of our own conclusions had to be
 thrown away. It is synthesis — every number in it points back to the note that carries the data.
 
-**Status (2026-09-27): working, fast, usable** — tool calls, vision, 32K served context (262K-capable).
+**Status (2026-09-28): working, fast, usable** — tool calls, vision, 32K served context (262K-capable).
 The stack is vLLM `main` (nightly `1ea7c63f4`) with the PLE table read in place from the checkpoint
 ([vllm#58439](https://github.com/vllm-project/vllm/pull/58439), ours) instead of the old PLE-offload
 worker, **RecoverSSM for the GDN layers** as submitted upstream ([vllm#58863](https://github.com/vllm-project/vllm/pull/58863),
@@ -21,7 +21,7 @@ five more are open there.
 > (every path line present; code 15.37 ms/tok, prose 24.72, 4 streams 134.9 tok/s; [data](notes/data/prodval/)).
 > **2026-09-28, loading:** the fast-loading set is in prod's venv: [vllm#58868](https://github.com/vllm-project/vllm/pull/58868)
 > plus blazux's expert name index and MTP name prefilter (ported). A cold start's model loading drops from ~11 min to under
-> 1 min (605–651 → 56–57 s over 2 starts per arm, identical greedy hash; [§5w](notes/speed-of-light.md)). Loading only; validation start queued (prodval2).
+> 1 min (605–651 → 56–57 s over 2 starts per arm, identical greedy hash; [§5w](notes/speed-of-light.md)). Loading only; a start with prod's exact config and venv is ready in **2 min 39 s** (was ~12 min).
 > K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
 > Forwarded to nightly `a9eafde59` (266 commits newer; [§5s](notes/speed-of-light.md)): the overlay applies and c=1 output is
 > bit-identical to prod, but c=4 is 4.5 % slower and not reproducible, so prod stays on `1ea7c63f4` for now.
@@ -31,7 +31,7 @@ five more are open there.
 | decode, single stream, **code** (4 prompts, 700 tokens, first pass) | **65.7 tok/s** greedy (4.35 accepted per verify cycle), **62.4** sampled — 59.0 / 56.0 with the 09-26 config | [speed of light §5l, §5n, §5o](notes/speed-of-light.md) |
 | decode, single stream, **prose** (same probe) | 41.1 tok/s greedy — 43.1 with the 09-26 config (K=3 is better on prose) | [speed of light §5o](notes/speed-of-light.md) |
 | decode, single stream, 09-26 config (warm second pass, prose) | 46.5 tok/s (21.49 ms/tok; 2.53 accepted per cycle) — was 17.1 on the published checkpoint | [speed of light §4t](notes/speed-of-light.md), [fp8 checkpoint](notes/fp8-mixed-checkpoint.md), [lm_head](notes/quantizing-lm-head.md), [speculation](notes/speculation-on-flash-next.md) |
-| options, not adopted: GDN projections as NVFP4 W4A16; bf16 SSM state | NVFP4 GDN: code 71.3 tok/s greedy (−7 % decode) but **+6 % TTFT**. Both pass a GSM8K + HumanEval screen and **SWE-bench** (58 instances × 2 runs: prod 48/52, NVFP4 GDN 51/50, bf16 state 50/51 — all inside prod's own spread); the bf16 state is in the prod config since 2026-09-28 | [speed of light §5j, §5o, §5r, §5u](notes/speed-of-light.md) |
+| precision options: bf16 SSM state (**adopted** 2026-09-28); GDN projections as NVFP4 W4A16 (not adopted) | NVFP4 GDN: code 71.3 tok/s greedy (−7 % decode) but **+6 % TTFT**. Both pass a GSM8K + HumanEval screen and **SWE-bench** (58 instances × 2 runs: prod 48/52, NVFP4 GDN 51/50, bf16 state 50/51 — all inside prod's own spread); the bf16 state is in the prod config since 2026-09-28 | [speed of light §5j, §5o, §5r, §5u](notes/speed-of-light.md) |
 | decode, 4 streams | **~100 tok/s** aggregate (99.7–100.0) | [speed of light §4t](notes/speed-of-light.md) |
 | agent loop (8 dependent turns, prefix cache + MTP) | **1.10 s/turn**, 1.31 without RecoverSSM | [speed of light §4t](notes/speed-of-light.md) |
 | warm agent turns (46 replayed SWE-bench turns) | 0.87 s median; **0.57 s with `--prefix-match-unit 64`** (recompute −74 %), in the prod config since 2026-09-27 | [speed of light §5t](notes/speed-of-light.md) |
@@ -100,6 +100,12 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
 - **Mapping the PLE table beats offloading it**, but a fresh server starts with it paged out: the load
   evicts it, and each decode step then faults ~30 pages the GPU reads one at a time. Readahead fixes
   the cold window; waiting for the host does not help more: [§4e–4j, §4x–4z](notes/speed-of-light.md).
+- **Weight loading was page faults inside the driver copy**: touching the mmap'd pages on the CPU first (vllm#58868),
+  an expert name index and an MTP name prefilter take model loading from ~11 min to under 1 (identical output):
+  [§5w](notes/speed-of-light.md).
+- **The Mamba prefix cache is sparse by design**: states are kept only at prompt ends and shared-prefix junctions, so
+  a prompt's first repeat misses and a decode-written state is never served (vllm#53912's path is unreachable here):
+  [§5x](notes/speed-of-light.md).
 - **"Restart drift" was the cold window**, not noise: measure warm, with KV sized so the table stays
   resident: [§4c, §4k](notes/speed-of-light.md).
 - **Three checkpoint levers, one of them ours** (FP8 dense projections +39 %, FP8 `lm_head` +11 %
