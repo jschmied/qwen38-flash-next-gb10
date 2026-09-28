@@ -1715,3 +1715,28 @@ One hyper-connection block with injection, random bf16 data at the model's shape
   not in traced Python (memory `vllm-compile-freezes-branches`).
 - Projected at the server: −0.92 ms × ~196 blocks + the tail ≈ **−0.19 s per 7.5k prefill (≈ −6.7 % TTFT)**. Next:
   an env-gated overlay on the clone venv and a TTFT A/B with decode hashes as the control.
+
+**§5aa server A/B — HC fusion (`FN_HCFUSE=1`) on the prod config: TTFT −5.5…−7.9 %, decode unchanged, outputs identical.**
+Clone venv with the overlay (`tools/hcfuse/`: custom op, fused path at ≥ 512 tokens per batch, today's kernels below),
+PIECEWISE, K=5, probabilistic drafts, bf16 state, pmu 64, KV 4 GiB; 2 starts per arm, alternating; void rules on the
+op's log line (present / absent). Probe nvprobe (fixed replay prompt). Data `data/hcfuse/hcfuse-ab.*`.
+
+| | hcfuse, s1 / s2 | base, s1 / s2 | Δ (sign holds both rounds) |
+|---|---|---|---|
+| TTFT 8k, median of 3 | 2.735 / 2.760 s | 2.921 / 2.970 s | **−5.5…−7.9 %** |
+| TTFT 30k, median of 3 | 9.773 / 9.817 s | 10.465 / 10.595 s | **−6.2…−7.8 %** |
+| 8k replay, first send / cache hit | 4.245, 1.596 / 4.276, 1.598 s | 4.550, 1.655 / 4.477, 1.652 s | −4.5…−6.7 % / −3.3…−3.6 % |
+| code c=1 greedy / sampled, ms/tok | 14.825, 16.614 / 14.794, 16.733 | 14.863, 16.923 / 14.861, 16.764 | null |
+| prose c=1, ms/tok | 23.477 / 23.871 | 24.205 / 24.300 | −1.4…−3.4 % |
+| code c=4, tok/s | 145.4 / 141.96 | 144.4 / 143.58 | null |
+| greedy hashes (code, prose) | d102a738, 38c70791 | same | identical |
+
+- **In the hypothesis range** for both TTFT cells (−4…−8 % / −4…−9 %) and decode; the saving scales with prompt length,
+  as the byte model predicts (~0.19 s at 7.5k, ~0.7 s at 29k).
+- **Slightly beyond it, favourable:** the cache-hit replay (its uncached suffix is ~595 tokens, above the 512 threshold,
+  so it takes the fused path) and prose c=1 (−1.4…−3.4 %, sign holds; the probe's time includes a prompt prefill).
+  Not attributed further.
+- **Correctness:** no output change on the probes; the op is drift-level by its own test (1 bf16 ulp at some sizes).
+- **Status:** clone venv only. **Prod candidate (the user's call)** — the largest TTFT lever measured this week — and an
+  upstream candidate (the HC ops live in vLLM's `qwen4_exp`). Items 2–3 of the ranking (MoE epilogue, deterministic
+  fused finalize) stay open.
