@@ -1952,3 +1952,23 @@ here is a format conversion only. Tools `tools/ablit/`; data `data/ablit/`; prov
   carried-over tensors are what the original conversion would have produced from the abliterated BF16.
 - **Build:** hardlinks to `qwen38-flash-next-mtpfp4` except the 3 rewritten shards (~8 GB new); per-tensor diff against
   prod's checkpoint = exactly the 25 intended tensors (12 weights + 12 scales + 1 BF16). `SHA256SUMS` for every file.
+
+**§5ae serve test (`ablitval`, one start, prod venv + launcher + drop-ins, model swapped, KV 4 GiB): loads with every
+path line; kernels as fast as prod; acceptance lower.**
+
+| | abliterated (1 start) | prod, §5ad (2 starts) |
+|---|---|---|
+| code c=1 greedy, ms/tok (accept) | 15.635 (4.124) | 14.627–14.675 (4.365) |
+| prose c=1, ms/tok (accept) | 26.696 (2.525) | 23.573–23.678 (2.856) |
+| code c=1 sampled, ms/tok (accept) | 16.467 (3.922) | 16.295–16.993 (~3.94) |
+| code c=4, tok/s | 134.68 | 144.31–144.67 |
+| TTFT 8k / 30k, s | 2.698 / 9.673 | 2.711–2.722 / 9.694–9.733 |
+
+- **Per verify cycle the cost is unchanged** (code 15.635 × 4.124 = 64.5 ms vs 64.0; prose 67.4 ms in both), and prefill is
+  identical: the carried-over tensors run exactly like prod's. All of the decode loss is **fewer accepted draft tokens**:
+  −5.5 % on code, −11.6 % on prose — **out of the hypothesis range** (±3 %).
+- Two candidate causes, not separated (no counterfactual run): the outputs differ from prod's (different hashes), so
+  acceptance is measured on different text; and our MTP drafter predicts the original model while the target's
+  hidden states now come from 12 edited attention layers. dealignai report ~2.4 accepted per step with their own
+  (also edited) MTP head on SGLang. A same-text check (teacher-forced drafter agreement on fixed text, both targets)
+  would separate the two.

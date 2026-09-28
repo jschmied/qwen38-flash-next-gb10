@@ -1,0 +1,10 @@
+== armrun ablitval: 1 arms x 1 start(s), port 8092 ==
+-- ablitval-prod0  env=(spec default)
+Running as unit: fx-armrun-ablitval.service; invocation ID: fd6ec6802e474b459f051efbe4934b73
+   void checks passed (15 required, 5 forbidden)
+   {"code_c1": {"gen_tokens": 2800.0, "accept_len": 4.124, "per_pos": [0.885, 0.76, 0.622, 0.481, 0.375], "shas": ["5b2bd697779e2d0e", "f009d8cb100f00b0", "67c6b904bf123e52", "dab7febeacf14dd6"], "decode_ms_per_tok": 15.635}, "code_c1_sampled": {"gen_tokens": 2800.0, "accept_len": 3.922, "per_pos": [0.867, 0.698, 0.551, 0.455, 0.351], "shas": ["8f463dcb9b55aa34", "d8dc462f842e0757", "5f1006f5fd273ffa", "34f5d104affd391f"], "decode_ms_per_tok": 16.467}, "prose_c1": {"gen_tokens": 2585.0, "accept_len": 2.525, "per_pos": [0.663, 0.415, 0.235, 0.134, 0.079], "shas": ["bb7c015e6f164044", "fa84b4074d49ae80", "f10093da54df8595", "cddba96be60a0801"], "decode_ms_per_tok": 26.696}, "code_c4": {"gen_tokens": 2800.0, "accept_len": 4.084, "per_pos": [0.884, 0.732, 0.603, 0.489, 0.377], "shas": ["e9c63728dff46c1e", "15ec82daed9554c7", "84bfa61beec6e9a3", "8d24ee59d0155bdf"], "agg_tok_s": 134.68}, "code_ms_tok": 15.635, "prose_ms_tok": 26.696, "ttft": {"8k": {"median_s": 2.698, "all": [2.859, 2.698, 2.694]}, "30k": {"median_s": 9.673, "all": [9.704, 9.673, 9.668]}}, "replay": {"cold_s": 4.398, "warm_s": 1.701, "equal": true}}
+
+== RESULT ==
+  prod         code_ms_tok 15.635  prose_ms_tok 26.696  start 0
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
