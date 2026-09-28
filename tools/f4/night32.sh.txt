@@ -1,0 +1,9 @@
+# F4 decode-vs-context sweep after night31 (decblk3b).
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results; F=/opt/llm/runners/f4
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night3[01][.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "F3 prod running - skip"; exit 1; }
+grep -q "AttentionCGSupport.UNIFORM_BATCH" /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/vllm/v1/attention/backends/gdn_recoverssm.py || { log "F3 F4 not installed - skip"; exit 3; }
+python3 /opt/llm/runners/armrun.py $F/spec-f4ctx.json --out $RES/f4ctx.jsonl > $RES/f4ctx.txt 2>&1; log "F3 f4ctx rc=$?"
+log "== NIGHT32 DONE =="

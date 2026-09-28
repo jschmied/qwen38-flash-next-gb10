@@ -8,3 +8,12 @@ H: greedy hashes identical between arms (same kernels, only launch changes); c=1
 already graphs most of them); c=4 -0 ... -3 %; TTFT unchanged (+-2 %, prefill is PIECEWISE in both).
 Out of range: any hash difference (padding/state bug), a slowdown > 2 %, or a gain > 6 % (then check what else moved).
 Tests first: GDN/PLE/config RecoverSSM tests incl. the new padded-row test; a failure skips the A/B.
+
+F4CTX (2026-09-28 ~11:20, after §5z: short-context c=1 -1.1..-2.1 %, but an 8k-prompt request +13..29 % slower with full
+graphs). Same arms, 2 starts. Probe ctxprobe.py: decode ms/tok by streaming (prefill excluded) at ~1k / 8k / 16k / 28k
+tokens of context, 2 requests each, fixed prompts so hashes compare across arms.
+H (context-dependent cost under full graphs, e.g. attention/QSA launched for the capture shape, not the live context):
+full <= piecewise at 1k (-0..-3 %), full slower at 8k (+5..+30 %), gap growing with context (28k worse than 8k).
+H-alt (not decode): the §5z gap came from the request's prefill/scheduling (cold 8k also +7..13 %); then the streamed
+decode ms/tok shows no context-growing gap (within +-2 % at every size) and TTFT carries the difference.
+Hashes must match between arms at every size.
