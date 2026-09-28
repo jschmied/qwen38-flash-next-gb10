@@ -1,0 +1,4 @@
+{"weights_s": [504.91, 62.63], "model_loading_s": [575.345804], "greedy_sha": "350b6b16c9d8185e", "arm": "stock", "start": 0, "tag": "ld58868-stock0", "ts": "2026-09-28 09:24:48"}
+{"weights_s": [65.86, 41.42], "model_loading_s": [121.000815], "greedy_sha": "350b6b16c9d8185e", "arm": "pr58868", "start": 0, "tag": "ld58868-pr588680", "ts": "2026-09-28 09:28:43"}
+{"weights_s": [534.01, 54.39], "model_loading_s": [598.893512], "greedy_sha": "350b6b16c9d8185e", "arm": "stock", "start": 1, "tag": "ld58868-stock1", "ts": "2026-09-28 09:40:38"}
+{"weights_s": [64.86, 32.47], "model_loading_s": [111.393639], "greedy_sha": "350b6b16c9d8185e", "arm": "pr58868", "start": 1, "tag": "ld58868-pr588681", "ts": "2026-09-28 09:44:22"}

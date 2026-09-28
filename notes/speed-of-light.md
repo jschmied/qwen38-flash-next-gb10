@@ -1473,3 +1473,23 @@ target's token per position (`tools/draftlog/`, 1,647 steps). Replay with a cost
   confidence does not predict the next round's, so the whole gain needs the stop *inside* the round, i.e. without a
   host decision: CUDA-graph IF nodes around FULL-captured draft steps (torch 2.13 has `begin_capture_to_if_node`; no
   engine we found does this), or first an nsys check of whether the eager draft steps are launch- or GPU-bound.
+
+### 5w. Weight loading: vllm#58868 cuts the main load −87 % (505–534 s → 65–66 s), model loading 575–599 s → 111–121 s
+
+User: "move loading speed on top since it speeds up everything". [vllm#58868](https://github.com/vllm-project/vllm/pull/58868)
+(Willian-Zhang, open) touches one byte per page of an mmap'd checkpoint tensor on the CPU before the host-to-device copy
+on integrated GPUs; on GB10 the page faults otherwise happen inside the driver copy, several times slower. Its diff
+applies with offsets to our overlaid 1ea7 files (`tools/p58868/`). Clone venv, prod config, **every start from a cold
+page cache** (the launcher drops caches), 2 starts per arm, alternating. Hypothesis `tools/p58868/HYPOTHESIS.md`.
+Data `data/ld58868/`.
+
+| cold start | main weights | MTP drafter weights | model loading total | greedy sanity hash |
+|---|---|---|---|---|
+| stock, s1 / s2 | 504.9 / 534.0 s | 62.6 / 54.4 s | 575 / 599 s | 350b6b16 |
+| #58868, s1 / s2 | **65.9 / 64.9 s** | 41.4 / 32.5 s | **121 / 111 s** | 350b6b16 |
+
+- **Main load −87 %**, beyond the hypothesis (−30…−55 %), identical output: the same bytes are loaded.
+- The drafter still takes 32–41 s: it walks all ~300k checkpoint tensors to keep ~3k. blazux's patch 18 (MTP name
+  prefilter, ported to 1ea7 in `tools/fastload/`) targets exactly that; the fastload A/B (queued) measures #58868 +
+  their patches 16 and 18 together.
+- A prod start drops from ~12 min to ~4 min with this alone. Prod candidate (the user's call); it changes loading only.

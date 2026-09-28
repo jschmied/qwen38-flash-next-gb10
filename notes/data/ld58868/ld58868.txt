@@ -1,0 +1,24 @@
+== armrun ld58868: 2 arms x 2 start(s), port 8092 ==
+-- ld58868-stock0  env=(spec default)
+Running as unit: fx-armrun-ld58868.service; invocation ID: 9d8b6da7ab5e4bc9b2608843b066e2f7
+   void checks passed (11 required, 5 forbidden)
+   {"weights_s": [504.91, 62.63], "model_loading_s": [575.345804], "greedy_sha": "350b6b16c9d8185e"}
+-- ld58868-pr588680  env=(spec default)
+Running as unit: fx-armrun-ld58868.service; invocation ID: f69f2d1a62264b6eb232e2bdcf8b7382
+   void checks passed (11 required, 5 forbidden)
+   {"weights_s": [65.86, 41.42], "model_loading_s": [121.000815], "greedy_sha": "350b6b16c9d8185e"}
+-- ld58868-stock1  env=(spec default)
+Running as unit: fx-armrun-ld58868.service; invocation ID: d878fa33edf944bab17e902418cf8fd6
+   void checks passed (11 required, 5 forbidden)
+   {"weights_s": [534.01, 54.39], "model_loading_s": [598.893512], "greedy_sha": "350b6b16c9d8185e"}
+-- ld58868-pr588681  env=(spec default)
+Running as unit: fx-armrun-ld58868.service; invocation ID: 45d5e616578e42fe926abb0ebd0d6245
+   void checks passed (11 required, 5 forbidden)
+   {"weights_s": [64.86, 32.47], "model_loading_s": [111.393639], "greedy_sha": "350b6b16c9d8185e"}
+
+== RESULT ==
+  stock        start 0–1
+  pr58868      start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+already off
