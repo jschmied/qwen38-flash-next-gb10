@@ -17,7 +17,12 @@ from vllm.utils.torch_utils import direct_register_custom_op
 from .hc import _hc_combine_norm, _hc_gate_mix, _hc_silu
 
 logger = init_logger(__name__)
-_MIN_M = int(os.environ.get("FN_HCFUSE_MIN", "640"))  # crossover sweep 2026-09-28: fused wins from 640 on
+_MIN_M = int(os.environ.get("FN_HCFUSE_MIN", "128"))  # split-K sweep 2026-09-28: fused wins from 128 on
+
+
+def _split_for(M: int) -> int:
+    # Down-GEMM K split by batch size (sweep 2026-09-28): 8 below 192, 4 up to 2047, none above.
+    return 8 if M < 192 else (4 if M < 2048 else 1)
 _K2 = (64, 128, 64, 4, 3)
 _K3 = (64, 64, 64, 4, 2)
 
@@ -67,6 +72,37 @@ def _k2_down(out_ptr, rrms_ptr, w_ptr, wd_ptr, c_ptr, M, N, s_out, s_wd, s_c,
         b = tl.load(wd_ptr + rn[None, :] * s_wd + rk[:, None], mn[None, :], other=0.0)
         acc = tl.dot(y.to(tl.bfloat16), b, acc)
     tl.store(c_ptr + rm[:, None] * s_c + rn[None, :], acc.to(tl.bfloat16), mm[:, None] & mn[None, :])
+
+
+@triton.jit
+def _k2s_down(out_ptr, rrms_ptr, w_ptr, wd_ptr, p_ptr, M, N, s_out, s_wd,
+              KS: tl.constexpr, HC_DIM: tl.constexpr, HC: tl.constexpr,
+              BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
+    # One K slice of xn @ Wd^T (xn rebuilt on load); fp32 partial to p[slice, m, n].
+    pid = tl.program_id(0); sl = tl.program_id(1); num_n = tl.cdiv(N, BN)
+    pid_m = pid // num_n; pid_n = pid % num_n
+    rm = pid_m * BM + tl.arange(0, BM); rn = pid_n * BN + tl.arange(0, BN)
+    mm = rm < M; mn = rn < N
+    acc = tl.zeros([BM, BN], dtype=tl.float32)
+    for k0 in range(sl * KS, sl * KS + KS, BK):
+        rk = k0 + tl.arange(0, BK)
+        a = tl.load(out_ptr + rm[:, None] * s_out + rk[None, :], mm[:, None], other=0.0).to(tl.float32)
+        rr = tl.load(rrms_ptr + rm * HC + k0 // HC_DIM, mm, other=0.0)
+        w = tl.load(w_ptr + rk).to(tl.float32)
+        y = a * rr[:, None]
+        y += y * w[None, :]
+        b = tl.load(wd_ptr + rn[None, :] * s_wd + rk[:, None], mn[None, :], other=0.0)
+        acc = tl.dot(y.to(tl.bfloat16), b, acc)
+    tl.store(p_ptr + (sl * M + rm[:, None]) * N + rn[None, :], acc, mm[:, None] & mn[None, :])
+
+
+@triton.jit
+def _k2r_reduce(p_ptr, c_ptr, M, N, s_c, SPLIT: tl.constexpr, BLOCK: tl.constexpr):
+    row = tl.program_id(0); cols = tl.arange(0, BLOCK); m = cols < N
+    acc = tl.zeros([BLOCK], dtype=tl.float32)
+    for s in tl.static_range(SPLIT):  # fixed order: deterministic
+        acc += tl.load(p_ptr + (s * M + row) * N + cols, m, other=0.0)
+    tl.store(c_ptr + row * s_c + cols, acc.to(tl.bfloat16), m)
 
 
 @triton.jit
@@ -127,9 +163,18 @@ def _combine_mix(residual: torch.Tensor, block_output: torch.Tensor, injection_l
                                       eps, 512)
     d = torch.empty(M, ND, device=residual.device, dtype=residual.dtype)
     bm, bn, bk, nw, ns = _K2
-    _k2_down[(triton.cdiv(M, bm) * triton.cdiv(ND, bn),)](out, rrms, norm_weight, w_down, d, M, ND, out.stride(0),
-                                                          w_down.stride(0), d.stride(0), D, H, hc_count, bm, bn, bk,
-                                                          num_warps=nw, num_stages=ns)
+    split = _split_for(M)
+    if split == 1:
+        _k2_down[(triton.cdiv(M, bm) * triton.cdiv(ND, bn),)](out, rrms, norm_weight, w_down, d, M, ND, out.stride(0),
+                                                              w_down.stride(0), d.stride(0), D, H, hc_count, bm, bn,
+                                                              bk, num_warps=nw, num_stages=ns)
+    else:  # deterministic split-K: fp32 partials, fixed-order reduce
+        part = torch.empty(split, M, ND, device=residual.device, dtype=torch.float32)
+        _k2s_down[(triton.cdiv(M, bm) * triton.cdiv(ND, bn), split)](out, rrms, norm_weight, w_down, part, M, ND,
+                                                                     out.stride(0), w_down.stride(0), D // split, H,
+                                                                     hc_count, bm, bn, bk, num_warps=nw,
+                                                                     num_stages=ns)
+        _k2r_reduce[(M,)](part, d, M, ND, d.stride(0), split, 512)
     lora = _hc_silu(d[:, :lora_rank], hc_count)
     y = torch.empty(M, H, device=residual.device, dtype=residual.dtype)
     bm, bn, bk, nw, ns = _K3

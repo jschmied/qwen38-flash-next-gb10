@@ -1,0 +1,8 @@
+# HC fusion (split-K, min 128) agent-turn A/B.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "H2 prod running - skip"; exit 1; }
+grep -q "_split_for" /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/hc_fused.py || { log "H2 split-K op missing - skip"; exit 3; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/hcfuse/spec-hcturn.json --out $RES/hcturn.jsonl > $RES/hcturn.txt 2>&1; log "H2 hcturn A/B rc=$?"
+log "== NIGHT38 DONE =="

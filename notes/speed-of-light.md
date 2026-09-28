@@ -1755,3 +1755,18 @@ forced fused vs today's sequence, one block, median of 50:
   512–639 tokens (≤ 1.4 % of one block), so the A/B above stands.
 - **Follow-up:** split-K in the down GEMM would lower the floor and extend the win to agent-turn suffixes (a few hundred
   tokens with pmu 64), where most prefill in the agent loop happens.
+
+**§5aa — HC fusion split-K (`tools/hcfuse/splitk_hcfuse.py`): the fused path now wins from 128 tokens.** The down GEMM's K
+(10,240) split into 4 or 8 slices, fp32 partials reduced in a fixed order (deterministic, no atomics):
+
+| M | 64 | 128 | 192 | 256 | 384 | 512 | 640 | 1024 | 3,456 |
+|---|---|---|---|---|---|---|---|---|---|
+| today, ms | 0.066 | 0.105 | 0.156 | 0.203 | 0.284 | 0.350 | 0.421 | 0.724 | 2.663 |
+| best fused, ms (split) | 0.071 (8) | 0.082 (8) | 0.130 (4) | 0.159 (4) | 0.230 (4) | 0.297 (4) | 0.375 (8) | 0.548 (4) | 1.755 (1) |
+| Δ | +8 % | **−21 %** | −17 % | −22 % | −19 % | −15 % | −11 % | −24 % | −34 % |
+
+Every split reproduces bit-for-bit run to run; output within 1 bf16 ulp of today's. The op now runs today's kernels
+below 128 tokens and splits 8 / 4 / 1 below 192 / 2,048 / above; its test (`data/hcfuse/hcfuse-optest2.txt`) passes at
+6…3,456 (bit-identical below 128, identical at 2,048 and 3,456, 1 ulp between). Better than the hypothesis (crossover
+128–256). An agent-turn A/B (§5t's turn replay) is queued; the 8k/30k TTFT cells above are unaffected (chunks ≥ 2,048
+run unsplit, as measured).
