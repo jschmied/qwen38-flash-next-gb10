@@ -1888,3 +1888,28 @@ drop-ins, KV 4 GiB, 2 starts; one server per start runs nvprobe → concprobe �
 - **c=16:** 162–165 tok/s, well above the old stack's ~100 but below my guess. c=32 cannot be measured on this config
   (`--max-num-seqs 16`).
 - Greedy code hash d102a738 and the turn replay's final hash a70f8e4e reproduce the earlier runs of this config.
+
+**§5v addendum (2026-09-28, user: "check GPU-side early exit for drafting") — what an implementable early exit is worth.**
+Same logged drafts (`data/draftlog/`, 655 code / 992 prose verify steps), same cost model (base 43 ms, draft step 1.3 ms,
+verify row 3.3 ms). The in-round stop (+4.1 % code / +7.5 % prose) assumes a stopped position saves its draft step
+*and* its verify row, but the verify shape is chosen on the host before the drafts are known. Priced by design:
+
+| design | what a stopped position saves | code (best τ) | prose (best τ) |
+|---|---|---|---|
+| ceiling: in-round stop, draft step + verify row | 1.3 + 3.3 ms | +4.1 % (0.70) | +7.5 % (0.65) |
+| **IF nodes only** (drafts skipped on the GPU, verify keeps 1+K rows) | 1.3 ms | **+0.25 %** (0.4) | **+0.59 %** (0.3) |
+| IF nodes + one host sync before verify (verify shrinks to 1+d), sync 0.9 / 2.0 ms | 1.3 + 3.3 ms, −sync | +2.7 / +0.9 % (0.75) | +5.9 / +3.9 % (0.65) |
+| IF nodes + stopped verify rows marked padding (MoE skip, no sync), row residual 0.8 / 1.5 ms | 1.3 + (3.3 − residual) ms | +2.7 / +1.5 % | +5.0 / +3.6 % (0.45) |
+| lagged host decision (from last round's confidences) | — | negative | ≤ +1.9 % (earlier replay) |
+
+- **Prerequisite now met:** since F4 (§5z), prod's drafter captures FULL decode graphs, one per draft step (the log's
+  "Capturing decode CUDA graphs (FULL)"; the fused whole-loop graph is still unsupported by `QWEN4_EXP_EXP_QSA_STATE`).
+  So IF nodes (torch 2.13 `begin_capture_to_if_node`) can wrap each step's graph body.
+- **IF nodes alone are worthless** (+0.25 / +0.59 %): skipping draft steps loses the same tokens as the stop policy but
+  saves only the cheap part. The value needs the verify rows gone: one sync, or padding rows whose MoE is skipped.
+- **Realistic ceiling: +1.5…+2.7 % code, +3.6…+5.9 % prose decode**, for 150–250 LOC at medium-high risk (capture
+  constraints, forced rejection of stopped positions in the rejection sampler, AV plumbing). Agent turns are
+  TTFT-bound, so the agent-level effect is smaller still.
+- **Two unknowns decide it, both measurable cheaply before any build:** (1) the cost of one host sync per cycle on the
+  current FULL-graph stack (an env-gated no-op `synchronize()` before verify, A/B); (2) the residual cost of a verify
+  row marked padding (AV with a forced per-request budget).

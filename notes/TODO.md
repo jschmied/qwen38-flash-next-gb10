@@ -25,7 +25,10 @@ rest null, outputs identical. The first "8k regression" was nvprobe's random rep
    load 450–541 s → 35 s. Speeds every A/B start and prod restart.
 1. ~~**Decision (user): GDN precision cut.**~~ **DONE 2026-09-28: bf16 SSM state in prod (drop-in 50); validation queued (prodval2).** SWE-bench shows no loss from either (§5u). NVFP4 GDN: −7 % decode, +6 % TTFT;
    bf16 SSM state: no TTFT cost, half the Mamba state. Recommendation: bf16 SSM state for agent work.
-2. **GPU-side early exit for the MTP draft loop (confidence stop).** Offline replay (§5v): stop drafting before the
+2. **GPU-side early exit for the MTP draft loop (confidence stop). — PRICED 2026-09-28 (§5v addendum):** IF nodes alone
+   +0.25 / +0.59 % (worthless); with one sync or padded verify rows +1.5…+2.7 % code / +3.6…+5.9 % prose decode, 150–250 LOC,
+   medium-high risk. Prerequisite (FULL draft graphs) met since F4. Measure sync cost + padded-row residual before building.
+   Earlier text: Offline replay (§5v): stop drafting before the
    first draft with p₁ < **0.70** → **+4.1 % code, +7.5 % prose** predicted (flat optimum 0.60–0.75, robust to the cost
    model). Only pays if the draft steps are really skipped: cutting verify rows alone gives +1.8 / +4 %, and a host sync
    per draft step lost 5–6 % (§5b). Design direction: a CUDA-graph conditional (while/if) node around the draft steps, or
