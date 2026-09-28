@@ -1,0 +1,9 @@
+# HC fusion quality screen (evalq: GSM8K + HumanEval), then offline scoring as the unprivileged user.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "E1 prod running - skip"; exit 1; }
+grep -q "_split_for" /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/ops/hc_fused.py || { log "E1 op missing - skip"; exit 3; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/hcfuse/spec-evalhc.json --out $RES/evalhc.jsonl > $RES/evalhc.txt 2>&1; log "E1 evalhc rc=$?"
+runuser -u jschmied -- python3 /opt/llm/runners/evalq/evalscore.py $RES evalhc-hcfuse0 evalhc-base0 evalhc-hcfuse1 evalhc-base1 > $RES/evalhc-score.txt 2>&1; log "E1 score rc=$?"
+log "== NIGHT40 DONE =="

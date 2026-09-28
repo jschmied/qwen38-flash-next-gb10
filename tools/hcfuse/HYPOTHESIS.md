@@ -42,3 +42,11 @@ H: B turn TTFT median -2..-5 % (uncached suffixes of a few hundred tokens now ta
 HC block; HC is ~14 % of prefill kernel time); A cells with >= 128 fresh tokens -2..-6 %. Recompute counts identical
 between arms (same cache behaviour). Out of range: < 1 % (then short-suffix turns are dominated by something else)
 or any slower cell beyond the arms' spread.
+
+HCFUSE quality screen (2026-09-28 ~14:45, before any prod decision). The fused op is drift-level (1 bf16 ulp in the
+down GEMM output / block input at some sizes; one greedy token flipped in 46 replayed turns). Screen = §5r's evalq:
+GSM8K test (1,319) + HumanEval (164, scored offline, McNemar per pair), thinking off, greedy, c = 16, prod config on the
+clone venv (K=5, probabilistic drafts, bf16 state, pmu 64, KV 4 GiB); arms hcfuse vs base, 2 starts each.
+H: no measurable quality change: both scores inside the base arm's own start-to-start spread (§5r prod spread:
+GSM8K 95.91-96.44 %, HumanEval 158-159), McNemar p > 0.05 for every hcfuse-vs-base pair. Out of range: a gap larger
+than the base arm's own spread in the same direction in both starts -> SWE-bench before any prod use.
