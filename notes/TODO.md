@@ -101,7 +101,7 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
    - Depth alone loses: finding 155 measured k=4 at −3.4 %.
    - The depth band 5..8 needs the QSA-ring widening from our PR #54912. It is patched locally already (det-204).
    - The plumbing is issue #57608 (a host hook between proposal and verify).
-5b. **Intermediate-byte ledger (user 2026-09-28: "do we have fusable kernels where a fusion would lower bytes
+5b. **DONE 2026-09-28 (§5aa): prefill intermediates ~15–20 % of TTFT; #1 HC fusion ≈ −7 % TTFT (up-GEMM gate-mix epilogue + rrms-only combine_norm), #2 MoE GEMM1 epilogue ≈ 4 %, #3 fused finalize 3–5 % (determinism trade). Decode < 1 %.** Original item: Intermediate-byte ledger (user 2026-09-28: "do we have fusable kernels where a fusion would lower bytes
    read/written? I think we checked only for launch overhead").** §4m/§5f priced fusions by launches and gaps, and §5f by
    avoidable work; nobody has listed producer→consumer tensors that round-trip DRAM. GB10's ncu has no DRAM byte
    counters (finding 144), so compute bytes from shapes per kernel, and decide L2 vs DRAM by size against the 24 MiB L2.

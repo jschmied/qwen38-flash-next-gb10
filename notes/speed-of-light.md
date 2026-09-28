@@ -1644,3 +1644,53 @@ and hashes are identical between arms, and the output length alone moves the cac
 - **Revised F4 verdict:** short-context c=1 −1.1…−2.1 %, replay and TTFT −1…−2.5 %, everything else null, outputs
   identical at c=1. **A prod candidate (the user's call)** and an upstream follow-up to #58863. It also un-parks the
   GPU-side early exit, which needs the draft steps under full graphs. Data `data/f4/f4rep.*`.
+
+### 5aa. Byte ledger (TODO 5b): at prefill, ~15–20 % of TTFT is intermediates that round-trip DRAM; hyper-connections are the largest
+
+User: "do we have fusable kernels where a fusion would lower bytes read/written? I think we checked only for launch
+overhead". §4m and §5f priced fusions by launches and by avoidable work; this prices them by **bytes**. One nsys trace
+on the prod config (clone venv, PIECEWISE, K=5, bf16 state, KV 4 GiB): a 7,507-token prefill (chunks 3,456 + 3,456 +
+tail) and a 64-token decode window. GB10's ncu has no DRAM byte counters, so bytes come from the launch grids and the
+model's shapes (hidden 2,560 per stream × 4 hyper-connection streams = 10,240; MoE top-10 of 512, intermediate 640).
+Hypothesis `tools/ledger/HYPOTHESIS.md`; script `tools/ledger/ledger_prefill.py`; data `data/ledger/`.
+
+**The memory-bound families run at the DRAM limit**, so their time *is* their bytes (per 3,456-token chunk):
+
+| kernel (calls in the 2,676 ms prefill window) | bytes per call | median per call | rate | share of prefill |
+|---|---|---|---|---|
+| `_hc_combine_norm` (330): reads residual + block out, writes new residual **and** normalized `xn` | 230 MB | 0.98 ms | 234 GB/s | 7.9 % |
+| `_hc_gate_mix` (336): reads `xn` + `gate`, writes block input | 159 MB | 0.73 ms | 219 GB/s | 5.8 % |
+| `finalizeMoeRouting` (159): reads 10 expert rows per token, writes one | 195 MB | 0.87 ms | 224 GB/s | 3.5 % |
+| `doActivation` (159): GEMM1 out → SwiGLU | 132 MB | 0.49 ms | 270 GB/s | 2.0 % |
+| `expandInputRows`, `cvt_fp16_to_fp4`, prefix sums (MoE glue) | | | | 2.3 % |
+| `layer_norm_fwd`, `per_token_group_quant`, elementwise glue | | | | ~6 % |
+
+**Where fusion removes bytes (prefill, ranked):**
+
+1. **Hyper-connections, ~7 % of TTFT (≈ 0.2 s of 2.7 s at 7.5k).** Each HC block per chunk moves 531 MB: `combine_norm`
+   writes a normalized copy `xn` (71 MB) that the down-projection and `gate_mix` each read back, and the up-projection
+   writes `gate` (71 MB) that `gate_mix` reads back. Fused design, same math, bit-identical by construction:
+   `combine_norm` writes only the residual plus one rrms per (row, stream); the down GEMM normalizes on its A-load;
+   `gate_mix` moves into the up GEMM's epilogue (reorder W_up's output columns offline so the 4 streams of one index
+   sit in one tile, round the gate to bf16 before the sigmoid as today). 531 → 318 MB per block: **−0.93 ms per block
+   per 3.5k chunk, × 196 blocks + the tail ≈ −0.2 s per 7.5k prefill.** Kernel work: one Triton GEMM with a custom
+   epilogue (K = 320, small) and a trimmed `combine_norm`.
+2. **MoE GEMM1 → SwiGLU → fp4 in one epilogue, ~4 %** (finding 144's "1.1 ms per layer"): removes GEMM1's output round
+   trip and the bf16 activation (≈ 264 MB per layer-chunk). FlashInfer CUTLASS kernel work, the hardest item.
+3. **Fused finalize, ~3–5 %, but it is a determinism trade we chose.** Prod's `VLLM_MOE_DET_FINALIZE=1` (bit-stable
+   finalize overlay) sets `use_fused_finalize=False`, so GEMM2 writes all 10 expert rows per token (177 MB) and a
+   separate pass reads them back. The fused (atomic) finalize removes that, at the cost of run-to-run bit stability
+   (finding 145). A deterministic fused finalize (each token's 10 rows reduced in a fixed order inside the GEMM2
+   epilogue) would get both; not available today.
+4. **Expand-rows gather into GEMM1's A-load, ~1.5 %**; norm/quant into producers' epilogues, ~1–2 %.
+
+**Decode (6-row verify): no byte prize.** The same HC block moves 6 × 88 KB ≈ 0.5 MB, L2-resident; intermediates are
+< 1 % of a verify cycle's bytes (weights dominate), as §5f found. Byte fusion is a **TTFT** lever, and agent speed is
+TTFT-bound.
+
+- **Against the hypothesis:** total prefill prize in range (predicted 8–15 %; ranked items 1–4 sum to ~15–20 % if all
+  were built, ~11 % without the determinism trade). HC is larger than predicted (7 % vs 3–6 %), the MoE chain smaller
+  (4 % vs 5–9 %). Decode < 1 % as predicted.
+- **Next (proposed):** item 1, standalone first. A Triton up-GEMM with the gate-mix epilogue plus the trimmed
+  `combine_norm`, checked bit-exact against today's three kernels at M = 3,456 and M = 6, timed standalone; a server A/B
+  on TTFT only if the standalone saves ≥ 0.6 ms per block.

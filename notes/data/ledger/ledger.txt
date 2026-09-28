@@ -1,0 +1,14 @@
+== armrun ledger: 1 arms x 1 start(s), port 8092 ==
+-- ledger-prod0  env={'FN_CG_MODE': 'PIECEWISE'}
+Running as unit: fx-armrun-ledger.service; invocation ID: 4aee74c2204c4ccb8312046eda6ee41d
+   void checks passed (14 required, 6 forbidden)
+   {"warm_prefill": [2.965, {"prompt_tokens": 7507, "total_tokens": 7508, "completion_tokens": 1, "prompt_tokens_details": null, "completion_tokens_details": {"reasoning_tokens": 0}}], "warm_decode": [0.676, {"prompt_tokens": 27, "total_tokens": 59, "completion_tokens": 32, "prompt_tokens_details": null, "completion_tokens_details": {"reasoning_tokens": 0}}], "prefill": [2.812, {"prompt_tokens": 7508, "total_tokens": 7509, "completion_tokens": 1, "prompt_tokens_details": null, "completion_tokens_details": {"reasoning_tokens": 0}}], "decode": [0.952, {"prompt_tokens": 27, "total_tokens": 91, "completion_tokens": 64, "prompt_tokens_details": null, "completion_tokens_details": {"reasoning_tokens": 0}}], "stop": "RemoteDisconnected"}
+
+== RESULT ==
+  prod         start 0
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+insgesamt 5068
+drwxr-xr-x  2 llm  llm     4096 Sep 28 12:26 .
+drwxr-xr-x 11 root root    4096 Sep 28 12:23 ..
+-rw-rw-r--  1 root root 5178594 Sep 28 12:26 fn.nsys-rep
