@@ -17,3 +17,12 @@ full <= piecewise at 1k (-0..-3 %), full slower at 8k (+5..+30 %), gap growing w
 H-alt (not decode): the §5z gap came from the request's prefill/scheduling (cold 8k also +7..13 %); then the streamed
 decode ms/tok shows no context-growing gap (within +-2 % at every size) and TTFT carries the difference.
 Hashes must match between arms at every size.
+
+F4REP (2026-09-28 ~11:45, after f4ctx showed no decode-vs-context cost). The §5z gap was one request type: 8k prompt +
+96 tokens (no ignore_eos), run after the TTFT probes; +0.35..0.5 s in both full starts. Probe replayprobe.py, same arms,
+2 starts: 3 replay pairs (cold, cache-hit) on the fresh server (A), nvprobe's TTFT probes, 3 pairs again (B); streaming,
+tokens, finish reason, hash, cached tokens.
+H1 (output length): the arms emit different token counts/texts for this request -> times differ per token count only;
+per-token decode and TTFT equal. H2 (order/state): the gap appears only in B (after the 30k probes), not in A -> a state
+left by the long prefills under full graphs (graph pool / allocator / cache). H3 (real per-request cost under full
+graphs, e.g. first decode steps after a prefill): gap in A and B with equal tokens and hashes, +0.3..0.5 s per request.

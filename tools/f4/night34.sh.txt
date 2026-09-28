@@ -1,0 +1,8 @@
+# F4 replay probe after night33 (decblk4).
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results; F=/opt/llm/runners/f4
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night3[23][.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "F4r prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py $F/spec-f4rep.json --out $RES/f4rep.jsonl > $RES/f4rep.txt 2>&1; log "F4r f4rep rc=$?"
+log "== NIGHT34 DONE =="
