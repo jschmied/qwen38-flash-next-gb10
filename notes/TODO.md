@@ -115,7 +115,19 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
    6 MiB/layer, probably L2-resident) and **prefill** (M = thousands: SwiGLU + fp4 quant into MoE GEMM1's epilogue
    ≈ 1.1 of 13.5 ms/layer at 7.5k, item 6; FP8 act-quant ×96 re-reading bf16 activations; HC stream reads/writes).
    Prefill first: agent speed is TTFT-bound.
-6. **MoE epilogue fusion** (findings 144/145). This is the 36.4 % bucket at the DRAM floor: the biggest kernel prize
+6. **MoE epilogue fusion** (findings 144/145). **Scoped 2026-09-28 (plan, agenda item 5):** the prize is ~4 % of TTFT
+   (§5aa: GEMM1 output + bf16 activation round trips, ~264 MB per layer-chunk). Where a fused GLU exists today:
+   - FlashInfer 0.6.18's SM100 "mega" CuTe-DSL MoE (`moe_nvfp4_swapab`, `runner_fc12`): fused fc1/GLU/fc2, **SM100 only**.
+   - **b12x's gated-optimized kernel** (`fused_moe/cute_dsl/blackwell_sm12x/moe_dynamic_kernel.py`): runs on sm_12x but
+     is gated off for us by `_GATED_OPTIMIZED_RETAINED_SLICES = 4` (× 128 = max intermediate 512; ours is 640 = 5
+     slices). Every other bound fits (hidden 2,560 ≤ 16,384, top-10 ≤ 16, tile 128×128, sf_vec 16). Finding 192 saw b12x
+     run its *generic* kernel for exactly this reason.
+   - CUTLASS SM120 grouped GEMM (today's `device_kernel` + separate `doActivation`): an EVT epilogue for SwiGLU + fp4
+     quant is the general fix and the most work (12-min FlashInfer rebuilds, `tools/moe_swz.py` harness).
+   **Order:** (1) clone venv: RETAINED_SLICES 4 → 5, compile check, then a one-layer b12x-gated vs cutlass standalone
+   (correctness vs cutlass output, time at M = 3,456 × top-10) — cheapest, may simply not fit in shared memory;
+   (2) only if (1) fails, the CUTLASS EVT route. Determinism: b12x's finalize path must be checked against our
+   bit-stable-finalize requirement before any server arm. This is the 36.4 % bucket at the DRAM floor: the biggest kernel prize
    and the biggest effort.
 7. **65k vs 32k draft vocab.** One arm; cheap disconfirmation, and 32k is expected to hold.
 8. **Finish the MTP re-measurement** (`mtp-remeasure-plan.md`). The Quant Map page flags its depth curve as under
