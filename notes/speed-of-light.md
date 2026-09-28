@@ -2032,3 +2032,22 @@ Head dim = quant group = 128, so one Triton program row = one (token, head) = on
 - In the hypothesis range for time (−0.26…−0.41 ms per GDN layer-chunk), out of it for bit-identity. Projected: ~−31 ms per
   7.5k prefill (36 GDN layers × 3 chunks, ~1.1 % TTFT); ~−2.5 ms per agent turn. Next: env-gated overlay on the clone venv
   (custom op, calls the same CUTLASS GEMM with the fused A/scales), op test, TTFT A/B.
+
+**§5af server A/B (`gdnnq2`, clone venv, full prod config incl. HC fusion + F4, 2 starts per arm; run 1 `gdnnq` was void:
+the eligibility check rejected the pass-through `_Fp8PbWoPartialBlock` scheme every FP8_PB_WO layer carries).**
+
+| | gdnnq, s1 / s2 | base, s1 / s2 | Δ |
+|---|---|---|---|
+| TTFT 8k / 30k (median of 3) | 2.660, 9.489 / 2.656, 9.488 s | 2.709, 9.713 / 2.716, 9.735 s | **−1.8…−2.2 % / −2.3…−2.5 %** |
+| code c=1 greedy: ms/tok (accept) | 14.231, 14.266 (4.474) | 14.567, 14.734 (4.365) | per verify cycle 63.67 / 63.83 vs 63.58 / 64.31 ms: **null** |
+| code c=1 sampled: ms/tok (accept) | 14.282, 14.407 (4.436) | 16.414, 16.747 (3.941) | per cycle 63.35 / 63.91 vs 64.69 / 66.00: text-driven |
+| prose c=1: per cycle | 67.31 / 67.50 ms (2.884) | 66.51 / 69.79 (2.856) | null |
+| code c=4, tok/s | 138.9 / 142.54 | 141.3 / 139.13 | null |
+| greedy hashes (code / prose) | 71fc9ede / 3bab2af1 | d102a738 / 38c70791 | **differ** (drift changes the greedy text) |
+
+- **TTFT −1.8…−2.5 %**, above the hypothesis (−0.7…−1.5 %); prompts are identical and only the first token is timed.
+- **Decode:** per verify cycle unchanged (the predicted ~−1 % is inside noise). The ms/tok differences (code −2.3…−3.4 %,
+  sampled −13 %) come from *different outputs* being accepted differently (acceptance 4.47 vs 4.37, 4.44 vs 3.94), not
+  from kernel time — not claimed. The replay's cold/warm times differ for the same reason (different output text).
+- **The drift reaches the greedy text** on the probes (the op is ≤ 1 ulp on ~3e-6 of values, §5af standalone): a quality
+  screen (GSM8K/HumanEval, as for the HC fusion) comes before any prod proposal.
