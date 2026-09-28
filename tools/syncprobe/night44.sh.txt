@@ -1,0 +1,11 @@
+# Sync-cost probe for the early-exit decision (clone venv).
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results; V=/opt/llm/runtime/vllm-venv-rssm
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "S2 prod running - skip"; exit 1; }
+$V/bin/python /opt/llm/runners/syncprobe/patch_syncprobe.py $V/lib/python3.12/site-packages/vllm >> $RES/syncprobe2.txt 2>&1
+find $V/lib/python3.12/site-packages/vllm/v1/worker -name __pycache__ -prune -exec rm -rf {} +
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/syncprobe/spec-syncprobe2.json --out $RES/syncprobe2.jsonl >> $RES/syncprobe2.txt 2>&1; log "S2 syncprobe2 rc=$?"
+$V/bin/python /opt/llm/runners/syncprobe/patch_syncprobe.py $V/lib/python3.12/site-packages/vllm off >> $RES/syncprobe2.txt 2>&1
+find $V/lib/python3.12/site-packages/vllm/v1/worker -name __pycache__ -prune -exec rm -rf {} +
+log "== NIGHT44 DONE =="
