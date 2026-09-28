@@ -1,0 +1,7 @@
+# CPUSET A/B (X925 pinning) on prod's venv and flags.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "C1 prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/cpuset/spec-cpuset.json --out $RES/cpuset.jsonl > $RES/cpuset.txt 2>&1; log "C1 cpuset A/B rc=$?"
+log "== NIGHT39 DONE =="

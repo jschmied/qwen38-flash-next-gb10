@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# CPUSET arm: run the prod launcher pinned to the Cortex-X925 cores. The pinned shell prints its own allowed-CPU list
+# (from /proc, locale-independent) before exec: the void-rule witness.
+exec taskset -c 5-9,15-19 bash -c 'echo "CPUSET affinity $(grep Cpus_allowed_list /proc/self/status | tr -s "\t " " ")"; exec /opt/llm/serve-flashnext.sh'
