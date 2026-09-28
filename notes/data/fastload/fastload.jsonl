@@ -1,0 +1,4 @@
+{"weights_s": [579.8, 61.43], "model_loading_s": [650.852695], "greedy_sha": "350b6b16c9d8185e", "arm": "stock", "start": 0, "tag": "fastload-stock0", "ts": "2026-09-28 09:57:20"}
+{"weights_s": [41.6, 3.75], "model_loading_s": [56.705708], "greedy_sha": "350b6b16c9d8185e", "arm": "fastload", "start": 0, "tag": "fastload-fastload0", "ts": "2026-09-28 10:00:14"}
+{"weights_s": [537.13, 57.94], "model_loading_s": [605.4151], "greedy_sha": "350b6b16c9d8185e", "arm": "stock", "start": 1, "tag": "fastload-stock1", "ts": "2026-09-28 10:12:07"}
+{"weights_s": [41.89, 3.48], "model_loading_s": [56.003135], "greedy_sha": "350b6b16c9d8185e", "arm": "fastload", "start": 1, "tag": "fastload-fastload1", "ts": "2026-09-28 10:15:01"}

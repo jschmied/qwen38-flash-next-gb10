@@ -1,0 +1,24 @@
+== armrun fastload: 2 arms x 2 start(s), port 8092 ==
+-- fastload-stock0  env=(spec default)
+Running as unit: fx-armrun-fastload.service; invocation ID: 60cb53f807db4f2b8f98670950fad96f
+   void checks passed (11 required, 5 forbidden)
+   {"weights_s": [579.8, 61.43], "model_loading_s": [650.852695], "greedy_sha": "350b6b16c9d8185e"}
+-- fastload-fastload0  env=(spec default)
+Running as unit: fx-armrun-fastload.service; invocation ID: 4323f0bee0ff46c1bcc4d0758951e3b1
+   void checks passed (12 required, 5 forbidden)
+   {"weights_s": [41.6, 3.75], "model_loading_s": [56.705708], "greedy_sha": "350b6b16c9d8185e"}
+-- fastload-stock1  env=(spec default)
+Running as unit: fx-armrun-fastload.service; invocation ID: 2316d4cec5e4498f80d43e0e5fee4167
+   void checks passed (11 required, 5 forbidden)
+   {"weights_s": [537.13, 57.94], "model_loading_s": [605.4151], "greedy_sha": "350b6b16c9d8185e"}
+-- fastload-fastload1  env=(spec default)
+Running as unit: fx-armrun-fastload.service; invocation ID: d55321e3b0f84ce1810bff6b98a7d819
+   void checks passed (12 required, 5 forbidden)
+   {"weights_s": [41.89, 3.48], "model_loading_s": [56.003135], "greedy_sha": "350b6b16c9d8185e"}
+
+== RESULT ==
+  stock        start 0–1
+  fastload     start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
+already off

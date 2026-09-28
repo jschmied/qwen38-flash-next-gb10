@@ -12,7 +12,7 @@ MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1
 (§5t), blazux's tool-call parser guards (`tools/toolguard/`, installed 09-28). Drop-ins in `tools/main/dropins/`.
 
 **Open, ranked:**
-0. **Weight loading — top priority (user 2026-09-28: "move loading speed on top since it speeds up everything").** **#58868 measured (§5w): main load 505–534 s → 65–66 s, model loading ~10 → ~2 min, output identical.** **Fastload set (#58868 + blazux 16 + 18) IN PROD VENV 2026-09-28** (user: "yes, promote and post"; start 1: model loading 651 → 57 s, same hash; start 2 running; prodval2 checks the prefilter line); GB10 numbers posted on #58868. Remaining: hand-port blazux's loading patches 15–18 (pread for
+0. **Weight loading — top priority (user 2026-09-28: "move loading speed on top since it speeds up everything").** **#58868 measured (§5w): main load 505–534 s → 65–66 s, model loading ~10 → ~2 min, output identical.** **Fastload set (#58868 + blazux 16 + 18) IN PROD VENV 2026-09-28** (user: "yes, promote and post"; 2 starts: model loading 605–651 → 56–57 s, same hash (§5w addendum); prodval2 checks the prefilter line); GB10 numbers posted on #58868. Remaining: hand-port blazux's loading patches 15–18 (pread for
    small tensors, expert name index, chunked embedding copy, MTP prefilter) onto 1ea7 — their full set took the main
    load 450–541 s → 35 s. Speeds every A/B start and prod restart.
 1. ~~**Decision (user): GDN precision cut.**~~ **DONE 2026-09-28: bf16 SSM state in prod (drop-in 50); validation queued (prodval2).** SWE-bench shows no loss from either (§5u). NVFP4 GDN: −7 % decode, +6 % TTFT;

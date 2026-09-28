@@ -1493,3 +1493,21 @@ Data `data/ld58868/`.
   prefilter, ported to 1ea7 in `tools/fastload/`) targets exactly that; the fastload A/B (queued) measures #58868 +
   their patches 16 and 18 together.
 - A prod start drops from ~12 min to ~4 min with this alone. Prod candidate (the user's call); it changes loading only.
+
+**Addendum (2026-09-28): the fast-loading set, in prod since the same day.** #58868 + blazux patch 16 (FusedMoE expert
+name index) + patch 18 (MTP name prefilter, ported to 1ea7), `tools/fastload/`. Same method (clone venv, prod config,
+cold page cache, 2 starts per arm, alternating). Hypothesis `tools/fastload/HYPOTHESIS.md`. Data `data/fastload/`.
+
+| cold start | main weights | MTP drafter weights | model loading total | greedy sanity hash |
+|---|---|---|---|---|
+| stock, s1 / s2 | 579.8 / 537.1 s | 61.4 / 57.9 s | 651 / 605 s | 350b6b16 |
+| fastload, s1 / s2 | **41.6 / 41.9 s** | **3.75 / 3.48 s** | **56.7 / 56.0 s** | 350b6b16 |
+
+- **Model loading −91 %** (11 → 1 min), output identical. On top of #58868 alone (65–66 / 32–41 s above) the expert
+  name index takes the main load −36 % and the prefilter takes the drafter to 3.5–3.75 s.
+- Against the hypothesis: the main load (−92 %) is beyond its −40…−70 % range, because #58868 alone already exceeded
+  its own. The prefilter kept **6,176** tensors, not the ~3.1k predicted; the prediction's count was wrong, not the
+  filter (drafter load −94 %, same hash). Not checked which tensors make up the difference.
+- blazux's own full set (with patches 14/15/17, v0.30) reports main 35.5 s; the remaining ~6 s is what 15 (pread for
+  small tensors) and 17 (chunked embedding copy) could still take. Low priority now: loading is ~1 min of a start.
+- Installed in prod's venv 2026-09-28 (user: "yes, promote and post"); GB10 numbers for #58868 posted on the PR.
