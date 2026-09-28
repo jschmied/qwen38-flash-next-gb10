@@ -15,3 +15,13 @@ hit rate for the whole run on /v1/completions with token-id prompts, cause not f
 with continue_final_message (both requests render the assistant turn through the same template path) and a diag block
 that records whether chat and completions hit the cache at all. Same hypotheses and void rule (B must hit past the first
 request's prompt, R must miss).
+
+AMENDED 2026-09-28 (decblk2 spec arm VOID by the same rule: 0 hits past the prompt in 16/16 seeds, while the diag's
+identical repeat hits 3456 tokens; the nospec arm was still running when this was written - the mechanism below
+predicts 0 there too). Cause found in the code, not guessed: align-mode Mamba keeps recurrent-state
+snapshots sparsely - `prefix_cache_retention_interval` defaults to 0 = "only semantic checkpoints" (the latest replay
+boundary and shared-prefix junctions; single_type_kv_cache_manager.py reachable-boundary mask). A block boundary crossed
+during decode is not retained, so there is nothing for B to hit, with or without speculation. Consequence for prod
+(interval unset): a decode-written recurrent state is never served from the prefix cache, so #53912's path is not
+reachable in our config. v3 = decblk3: same probe, both arms with `--prefix-cache-retention-interval 1728` (every block
+retained), to test the path for configs that do set it. Same H0/H1 and void rule.

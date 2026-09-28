@@ -1,0 +1,8 @@
+# decblk3 (#53912 path with every block retained): after night28.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night2[78][.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "D3 prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/decblk/spec-decblk3.json --out $RES/decblk3.jsonl > $RES/decblk3.txt 2>&1; log "D3 decblk3 rc=$?"
+log "== NIGHT29 DONE =="

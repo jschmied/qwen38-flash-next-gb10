@@ -1511,3 +1511,23 @@ cold page cache, 2 starts per arm, alternating). Hypothesis `tools/fastload/HYPO
 - blazux's own full set (with patches 14/15/17, v0.30) reports main 35.5 s; the remaining ~6 s is what 15 (pread for
   small tensors) and 17 (chunked embedding copy) could still take. Low priority now: loading is ~1 min of a start.
 - Installed in prod's venv 2026-09-28 (user: "yes, promote and post"); GB10 numbers for #58868 posted on the PR.
+
+### 5x. vllm#53912 on our stack: a decode-written recurrent state is never served from the prefix cache (probe void, mechanism found)
+
+The contamination check (decode-written Mamba blocks read back through the prefix cache; `tools/decblk/`, hypothesis
+there) came back **void by its own rule twice**: v1 on token-id prompts, then v2 (chat endpoint, `continue_final_message`)
+in both arms. The follow-up never hit past the first request's prompt (0 of 16 seeds, spec and nospec), while the
+probe's own diagnostic shows the cache working (an identical prompt's first repeat hits 0, its second hits 3,456
+tokens). Data `data/decblk2/`.
+
+Cause, from the code (`v1/core/single_type_kv_cache_manager.py`, reachable-boundary mask; `config/cache.py`): align-mode
+Mamba retains recurrent-state snapshots **sparsely**. `--prefix-cache-retention-interval` defaults to **0 = "only
+semantic checkpoints"**: the latest replay boundary (prompt end) and shared-prefix junctions. A block boundary crossed
+during decode is not retained, so there is nothing to hit, with or without speculation. The same rule explains the old
+"hits only from the second repetition" observation: the first repeat creates the shared-prefix junction, the second reads it.
+
+- **For prod (interval unset): #53912's path is not reachable**; every served recurrent state was written by a prefill.
+- decblk3 (queued, `night29`) re-runs the probe with `--prefix-cache-retention-interval 1728` (every block retained) to
+  test the path for configs that set it.
+- det-236 (09-24, "15 reads into decode-written blocks, 0 divergent") ran on the older stack; whether its reads really
+  hit decode-written states was not re-checked against this mechanism, so it no longer counts as evidence either way.
