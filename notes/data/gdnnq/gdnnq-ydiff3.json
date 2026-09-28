@@ -1,0 +1,1 @@
+{"float32-fpfusionTrue": {"y_diff": 57, "A_mismatch": 21, "scale_eq": false}, "float32-fpfusionFalse": {"y_diff": 57, "A_mismatch": 21, "scale_eq": false}, "bfloat16-fpfusionTrue": {"y_diff": 59, "A_mismatch": 3, "scale_eq": true}, "bfloat16-fpfusionFalse": {"y_diff": 59, "A_mismatch": 3, "scale_eq": true}}

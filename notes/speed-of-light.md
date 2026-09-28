@@ -2008,3 +2008,27 @@ prefill chunk size.** 152 K2 configs (BM/BN/BK/warps/stages × split-K 1/2/4/8) 
   these shapes. Summed over a 7.5k prefill ≈ −11 ms (~0.4 % TTFT), per agent turn ≈ −3 ms (~0.5 %): below a 2-start A/B's
   resolution, so not measured end-to-end and not proposed separately; the per-M table (`data/hcfuse/hctune.json`) can ride
   along with any future HC-fusion update.
+
+### 5af. FUSION-AGENDA item 2: GDN output norm + FP8 quant in one kernel — 1.8× faster standalone, drift-level
+
+The GDN output chain today: FLA `rmsnorm_fn` (gated, `norm_before_gate`, head dim 128, tile [4,128], 1 warp) writes bf16
+`y` → `per_token_group_quant_fp8` (CUDA kernel, group 128, column-major scales) → `CutlassFp8BlockScaledMMKernel`
+(out_proj). vLLM's norm+quant fusion pass matches `RMSNormGated` only on ROCm/AITER, so on CUDA these run separately.
+Head dim = quant group = 128, so one Triton program row = one (token, head) = one quant group (`tools/gdnnq/gdnnq.py`).
+
+| tokens | today (norm + quant) | fused | Δ |
+|---|---|---|---|
+| 3,456 | 0.861–0.871 ms | 0.474–0.481 ms | **−0.39 ms (−45 %)** |
+| 595 | 0.097–0.109 | 0.026–0.036 | −0.07 |
+| 128 | 0.041–0.042 | 0.018 | −0.024 |
+
+- **Numerics: drift-level, not bit-identical.** The CUDA quant uses exact division (a fast-math `/` variant gave 16k
+  mismatches; `div_rn` gives the rest identical). The residual: inside the fused kernel 57–59 of 21.2 M `y` elements
+  differ from FLA's by one bf16 ulp, although the same norm code in a standalone kernel is bit-identical (0 of 21.2 M,
+  with implicit, explicit, rtne and manual-RNE conversions alike) and FP contraction on/off changes nothing: the compiler
+  schedules the combined kernel differently. Result: ≤ 21 FP8 bytes of 21.2 M and a few scales differ at 3,456 tokens;
+  595 and 128 tokens bit-identical in the first run. A `noinline` norm helper would isolate it but Triton rejects
+  constexpr parameters there. Accepted as drift (quality rule: no *noticeable* loss).
+- In the hypothesis range for time (−0.26…−0.41 ms per GDN layer-chunk), out of it for bit-identity. Projected: ~−31 ms per
+  7.5k prefill (36 GDN layers × 3 chunks, ~1.1 % TTFT); ~−2.5 ms per agent turn. Next: env-gated overlay on the clone venv
+  (custom op, calls the same CUTLASS GEMM with the fused A/scales), op test, TTFT A/B.
