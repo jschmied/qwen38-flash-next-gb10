@@ -8,3 +8,12 @@ H: A bytes and scales bit-identical to today's (so the GEMM output is identical)
 quant 0.54 + 0.27 = 0.81 ms today -> 0.40..0.55 ms fused (reads x and z 42.5 MB each, writes 21 MB fp8 + scales:
 ~106 MB vs ~212 MB), i.e. -0.26..-0.41 ms per GDN layer-chunk, x 72 per 7.5k prefill ~ -0.7..-1.1 % TTFT.
 Out of range: not bit-identical (then find the rounding difference before any timing claim) or no time gain.
+
+GDNNQ server A/B (2026-09-28 ~21:40). Overlay on the clone venv (patch_gdnnq.py, backup *.orig-gdnnq, env FN_GDNNQ=1);
+installed op test with a non-contiguous z: 1 fp8 byte of 21.2 M (3,456 tokens) and of 3.7 M (595) differs, scales
+identical, 6 tokens bit-exact. Arms gdnnq vs base on the full prod config (FN_HCFUSE=1, FULL_AND_PIECEWISE, K=5, bf16
+state, pmu 64, KV 4 GiB), 2 starts each, probe nvprobe. The fused path also runs in the decode verify (RecoverSSM goes
+through _output_projection), where it is ~2x faster per call.
+H: TTFT 8k and 30k -0.7..-1.5 % (36 GDN layers x chunks x -0.39 ms); decode c=1 code/prose -0.5..-1.5 % (36 x ~-0.02 ms of
+a ~64 ms cycle); c=4 -0..-1.5 %; greedy hashes may differ (drift-level op). Out of range: any cell slower by > 1 %,
+or TTFT gain < 0.3 %.
