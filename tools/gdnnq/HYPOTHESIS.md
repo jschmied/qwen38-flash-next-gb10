@@ -18,6 +18,8 @@ H: TTFT 8k and 30k -0.7..-1.5 % (36 GDN layers x chunks x -0.39 ms); decode c=1 
 a ~64 ms cycle); c=4 -0..-1.5 %; greedy hashes may differ (drift-level op). Out of range: any cell slower by > 1 %,
 or TTFT gain < 0.3 %.
 
-VOID run 1 (gdnnq, 21:20): the fused path never ran - gdn_output_fusable required fmt type "FormatScheme", but resolve()
-gives every FP8_PB_WO layer _Fp8PbWoPartialBlock (a pass-through when the width is block-aligned). Fixed: accept it when
-the layer has no _pbwo_logical_out. Relaunched as gdnnq2. The void rule (required log line) caught the silent fallback.
+GDNNQ quality screen (2026-09-28 ~22:10). §5r's evalq (GSM8K 1,319 + HumanEval 164, scored offline as the unprivileged
+user), gdnnq vs base on the full prod config (HC fusion + F4), 2 starts each.
+H: no measurable change: every gdnnq-vs-base McNemar p > 0.05 and both scores inside base's own start-to-start spread
+(the HC-fusion screen saw base GSM8K 95.98-96.66 %, HumanEval 157-159). Out of range: a same-direction gap larger than
+base's spread in both starts -> SWE-bench before any proposal.

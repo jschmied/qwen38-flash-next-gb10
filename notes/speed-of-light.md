@@ -2051,3 +2051,11 @@ the eligibility check rejected the pass-through `_Fp8PbWoPartialBlock` scheme ev
   from kernel time — not claimed. The replay's cold/warm times differ for the same reason (different output text).
 - **The drift reaches the greedy text** on the probes (the op is ≤ 1 ulp on ~3e-6 of values, §5af standalone): a quality
   screen (GSM8K/HumanEval, as for the HC fusion) comes before any prod proposal.
+
+**FUSION-AGENDA item 4 closed (remaining FP8/FP4 activation quants into their producers): ~0.3 % TTFT, below resolution.**
+Activation quantization in the 7.5k prefill window (ledger trace, `data/ledger/`): `per_token_group_quant` on the GDN
+out_proj input 25.6 ms (0.96 %, **covered by item 2**), `cvt_fp16_to_fp4` on the MoE input 11.1 ms (0.41 %), the
+2,560-dim FP8 quant of the attention/GDN inputs 7.6 ms (0.29 %), two small sites 1.4 ms (0.06 %). The producer of all the
+remaining ones is our HC fusion's K3, whose bf16 output must still be written (router, shared expert and `in_proj_ba`
+consume bf16), so a fused quant would save only the quant kernels' bf16 re-read, ≈ 0.3 % TTFT, below a 2-start A/B's
+resolution, at the cost of four consumer hooks and the FP4 swizzled scale layout. Not built.

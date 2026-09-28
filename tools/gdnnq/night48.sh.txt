@@ -1,0 +1,8 @@
+# GDNNQ quality screen (GSM8K + HumanEval), then offline scoring as the unprivileged user.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "E2 prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/gdnnq/spec-evalgq.json --out $RES/evalgq.jsonl > $RES/evalgq.txt 2>&1; log "E2 evalgq rc=$?"
+/usr/sbin/runuser -u jschmied -- python3 /opt/llm/runners/evalq/evalscore.py $RES evalgq-gdnnq0 evalgq-base0 evalgq-gdnnq1 evalgq-base1 > $RES/evalgq-score.txt 2>&1; log "E2 score rc=$?"
+log "== NIGHT48 DONE =="
