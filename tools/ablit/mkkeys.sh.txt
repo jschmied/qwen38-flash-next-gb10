@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# ExecStartPre (as root): build the vLLM --config YAML with every key from the shared key file, so keys never reach argv.
+set -euo pipefail
+SRC=/etc/llama-server/api_keys.txt; DIR=/run/vllm-flashnext-ablit; OUT=$DIR/keys.yaml
+install -d -m 0750 -o root -g llm "$DIR"
+umask 027
+{ echo "api-key:"; grep -v '^\s*\(#\|$\)' "$SRC" | sed -E 's/^\s+|\s+$//g; s/.*/  - "&"/'; } > "$OUT.tmp"
+n=$(grep -c '^  - ' "$OUT.tmp"); [ "$n" -ge 1 ] || { echo "no keys in $SRC"; exit 1; }
+chown root:llm "$OUT.tmp"; chmod 0640 "$OUT.tmp"; mv "$OUT.tmp" "$OUT"
+echo "keys.yaml written with $n keys"

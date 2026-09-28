@@ -1972,3 +1972,9 @@ path line; kernels as fast as prod; acceptance lower.**
   hidden states now come from 12 edited attention layers. dealignai report ~2.4 accepted per step with their own
   (also edited) MTP head on SGLang. A same-text check (teacher-forced drafter agreement on fixed text, both targets)
   would separate the two.
+
+**§5ae — served (2026-09-28, user: "start it on 8080 with the api key file").** `vllm-flashnext-ablit.service`
+(`tools/ablit/`): prod's environment with the model swapped, on 127.0.0.1:8080 as `flashnext-abliterated`, API keys from
+the shared key file via a tmpfs `--config` YAML (never on argv; 4 of 4 keys accepted, no key → 401). Port 8080 is what
+Open WebUI (LAN only) and the Cloudflare tunnel (behind Cloudflare Access) point at. Not enabled at boot; prod's unit
+conflicts with it.

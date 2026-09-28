@@ -1,0 +1,43 @@
+[Unit]
+Description=Qwen3.8-Flash-Next ABLITERATED (dealignai o_proj edit in our prod format) on vLLM, :8080, API keys from /etc/llama-server/api_keys.txt
+Documentation=file:///opt/llm/models/qwen38-flash-next-mtpfp4-ablit/PROVENANCE.md
+After=network-online.target
+Wants=network-online.target
+# One server on the GPU at a time.
+Conflicts=vllm-flashnext.service vllm-qwen38.service
+
+[Service]
+Type=exec
+User=llm
+Group=llm
+WorkingDirectory=/opt/llm
+AmbientCapabilities=CAP_SYS_PTRACE
+CapabilityBoundingSet=CAP_SYS_PTRACE
+NoNewPrivileges=no
+# Prod's effective environment (vllm-flashnext + drop-ins 20..55), model swapped.
+Environment=FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7
+Environment=FN_MODEL=/opt/llm/models/qwen38-flash-next-mtpfp4-ablit
+Environment=FN_MAXLEN=32768
+Environment=FN_SEQS=16
+Environment=FN_SPEC_METHOD=mtp
+Environment=FN_SPEC_N=5
+Environment=FN_SPEC_NODROP=1
+Environment=FN_SPEC_LOCALARGMAX=0
+Environment=FN_DRAFT_VOCAB=/opt/llm/runners/dv/draft_vocab_32768.txt
+Environment=FN_PLE_OFFLOAD=0
+Environment=FN_DRAFT_HEAD_NVFP4=1
+Environment=FN_NVFP4_CFG=64,4
+Environment=FN_DRAFT_PROB=1
+Environment=FN_SPEC_DRAFTPROB=1
+Environment=FN_CG_SIZES=[1,2,4,6,8,12,16,18,24,30,36,48,60,72,96]
+Environment=FN_HCFUSE=1
+Environment=FN_CG_MODE=FULL_AND_PIECEWISE
+# Port 8080 and the served name override the launcher's (argparse: last wins); keys come in via --config (not argv).
+Environment="FN_EXTRA=--engram-config {\"checkpoint_mapped\":true} --use-replayssm --block-size 1728 --prefix-match-unit 64 --mamba-ssm-cache-dtype bfloat16 --port 8080 --served-model-name flashnext-abliterated --config /run/vllm-flashnext-ablit/keys.yaml"
+ExecStartPre=+/opt/llm/runners/ablit/mkkeys.sh
+ExecStart=/opt/llm/serve-flashnext.sh
+TimeoutStartSec=1800
+Restart=no
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStopSec=120
