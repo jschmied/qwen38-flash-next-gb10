@@ -124,7 +124,10 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
      run its *generic* kernel for exactly this reason.
    - CUTLASS SM120 grouped GEMM (today's `device_kernel` + separate `doActivation`): an EVT epilogue for SwiGLU + fp4
      quant is the general fix and the most work (12-min FlashInfer rebuilds, `tools/moe_swz.py` harness).
-   **Order:** (1) clone venv: RETAINED_SLICES 4 → 5, compile check, then a one-layer b12x-gated vs cutlass standalone
+   **Step 1 CLOSED 2026-09-28 (§5aa):** the b12x gated kernel needs 128×128 MMA tiles, which b12x never picks for 512
+   experts at ≤ 4,096-token chunks (it picks 32×128 / 64×128); b12x is also run-to-run nondeterministic (0.65 % rel L2).
+   Only the CUTLASS EVT route remains.
+   **Order (original):** (1) clone venv: RETAINED_SLICES 4 → 5, compile check, then a one-layer b12x-gated vs cutlass standalone
    (correctness vs cutlass output, time at M = 3,456 × top-10) — cheapest, may simply not fit in shared memory;
    (2) only if (1) fails, the CUTLASS EVT route. Determinism: b12x's finalize path must be checked against our
    bit-stable-finalize requirement before any server arm. This is the 36.4 % bucket at the DRAM floor: the biggest kernel prize

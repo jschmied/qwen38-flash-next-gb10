@@ -1,0 +1,1 @@
+{"mode": "gated", "1024": {"ms": 7.3279, "finite": true, "repeat_rel_l2": 0.006755724549293518}, "3456": {"ms": 9.1703, "finite": true, "repeat_rel_l2": 0.0065473634749650955}, "dynamic_kernels": []}

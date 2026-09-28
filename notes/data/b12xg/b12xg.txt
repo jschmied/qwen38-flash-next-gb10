@@ -1,0 +1,1 @@
+{"eligible_before": false, "64": {"generic_ms": 5.4961, "generic_finite": true, "gated_ms": 5.5003, "rel_l2": 0.008869106881320477, "max_abs": 8192.0, "finite": true}, "3456": {"generic_ms": 9.0214, "generic_finite": true, "gated_ms": 8.9806, "rel_l2": 0.006545668002218008, "max_abs": 8192.0, "finite": true}, "eligible_after": true, "kernel_types": ["NoneType", "NoneType"]}

@@ -1810,3 +1810,18 @@ shell logs its own `Cpus_allowed_list` (void rule). Hypothesis `tools/cpuset/HYP
   TTFT gains ~1 %, inside noise-adjacent territory.
 - **Not adopted.** Their gain may depend on their container's thread settings; on bare metal with default threads it
   does not transfer. Pinning only the worker (not the API server) is untested.
+
+**§5aa — MoE activation fusion via b12x's gated kernel: closed (`tools/b12xg/`, TODO item 6 step 1).** The plan was to
+raise b12x's intermediate-size guard (4 × 128 = 512; ours 640) and use its fused FC1 → SwiGLU → FC2-input kernel.
+Standalone, random NVFP4 weights at the model's MoE shapes, one process per mode:
+
+- **Run 1 was void:** flashinfer's dynamic-kernel cache key omits the gated decision, so the "gated" wrapper reused the
+  generic kernel compiled before the guard was raised (equal times).
+- **Runs 2–4 with a witness** (the constructed kernel class, then the selector's own arguments): the gated kernel is
+  **never constructed** even with the guard raised. The dispatch picks MMA tiles **(32, 128) at 1,024 tokens and
+  (64, 128) at 3,456** from rows per expert (3,456 × 10 / 512 ≈ 67); the gated kernel requires (128, 128). With 512
+  experts and ≤ 4,096-token chunks no expert reaches 128 rows, so the intermediate guard was never the binding limit.
+- **b12x is not run-to-run deterministic here:** the same call twice in one process differs by 0.65–0.69 % relative
+  L2 (generic kernel), which our bit-stable-finalize requirement rules out regardless.
+- **Against the hypothesis:** H1 (does not work) holds, for a reason the hypothesis did not name (tile selection, not
+  shared memory). The remaining route to the ~4 % is the CUTLASS SM120 EVT epilogue (TODO item 6, step 2).

@@ -1,0 +1,1 @@
+{"mode": "generic", "1024": {"ms": 7.2457, "finite": true, "repeat_rel_l2": 0.006733912043273449}, "3456": {"ms": 9.0056, "finite": true, "repeat_rel_l2": 0.006441307254135609}, "kernels_built": ["MoEDynamicKernel", "MoEDynamicKernel"], "dyn_cache_len": 2, "static_cache_len": 0}
