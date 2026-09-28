@@ -27,7 +27,7 @@ rest null, outputs identical. The first "8k regression" was nvprobe's random rep
    bf16 SSM state: no TTFT cost, half the Mamba state. Recommendation: bf16 SSM state for agent work.
 2. **GPU-side early exit for the MTP draft loop (confidence stop). — PRICED 2026-09-28 (§5v addendum):** IF nodes alone
    +0.25 / +0.59 % (worthless); with one sync or padded verify rows +1.5…+2.7 % code / +3.6…+5.9 % prose decode, 150–250 LOC,
-   medium-high risk. Prerequisite (FULL draft graphs) met since F4. Measure sync cost + padded-row residual before building.
+   medium-high risk. Prerequisite (FULL draft graphs) met since F4. **Sync cost measured: ≤ ~0.8 ms/cycle (§5v add. 2) → one-sync design worth up to +2.7 % code / +5.9 % prose.** Build decision pending (the user's).
    Earlier text: Offline replay (§5v): stop drafting before the
    first draft with p₁ < **0.70** → **+4.1 % code, +7.5 % prose** predicted (flat optimum 0.60–0.75, robust to the cost
    model). Only pays if the draft steps are really skipped: cutting verify rows alone gives +1.8 / +4 %, and a host sync

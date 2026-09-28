@@ -1913,3 +1913,24 @@ verify row 3.3 ms). The in-round stop (+4.1 % code / +7.5 % prose) assumes a sto
 - **Two unknowns decide it, both measurable cheaply before any build:** (1) the cost of one host sync per cycle on the
   current FULL-graph stack (an env-gated no-op `synchronize()` before verify, A/B); (2) the residual cost of a verify
   row marked padding (AV with a forced per-request budget).
+
+**§5v addendum 2 — the cost of one host sync per verify cycle (`syncprobe2`, `tools/syncprobe/`): ≤ ~0.8 ms, cheap.**
+Env-gated `current_stream().synchronize()` right after `speculator.propose()` (where an early-exit design reads the
+draft count), clone venv with prod's config (HC fusion, FULL_AND_PIECEWISE, K=5, bf16 state, pmu 64), KV 4 GiB,
+2 starts per arm; the patch was installed and removed by the runner (0 markers left). Run 1 (`syncprobe`) was void on
+my own contradictory void rule. Data `data/syncprobe/`.
+
+| | sync, s1 / s2 | no sync, s1 / s2 | Δ |
+|---|---|---|---|
+| code c=1 greedy, ms/tok | 14.798 / 15.012 | 14.843 / 14.654 | −0.3…+2.4 % (sign flips: noise) |
+| code c=1 sampled | 16.694 / 16.732 | 16.655 / 16.537 | +0.2…+1.2 % (sign holds) |
+| prose c=1 | 23.772 / 23.740 | 23.745 / 23.816 | null |
+| code c=4, tok/s | 133.98 / 140.59 | 134.82 / 132.89 | null (mixed) |
+| hashes | identical | | |
+
+- **At or below the hypothesis range** (+0.5…+1.5 ms per cycle predicted): the one cell with a stable sign gives
+  +0.13…+0.8 ms per ~66 ms cycle; the others are inside noise.
+- **Consequence for the early exit:** the one-sync design sits in the cheap regime of the replay, i.e. **up to
+  +2.7 % code / +5.9 % prose decode** (τ 0.75 / 0.65), with no padded-row mechanism needed. It still needs IF-node
+  draft steps (prerequisite met since F4), forced rejection of stopped positions, and a host-known verify size
+  1 + d from the synced count. 150–250 LOC, medium-high risk; agent-level effect ~1 %. A build decision, not queued.
