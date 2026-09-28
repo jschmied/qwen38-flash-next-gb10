@@ -31,3 +31,9 @@ scheduler_block_size (3456)"). The scheduler block on this model is 3456 tokens,
 diag's hit was exactly 3456). So v2's follow-up (1871 tokens) could never hit, whatever the retention rule: the v2 void
 was the probe's length, not (only) retention. decblk3b: decblk3.py = 380 numbers (~3.1k-token prompt), 520 sampled tokens
 cross 3456 during decode, follow-up ~3.57k; retention interval 3456. B must hit >= 3456 > prompt. Same H0/H1/void rule.
+
+AMENDED 2026-09-28 ~11:30 (decblk3b VOID: prompt 3071, follow-up 3551; B hit 0 (spec) / 1728 (nospec), never 3456).
+The 3456 boundary lies inside the generated tokens, and v2/v3 rebuild the follow-up by re-tokenizing the generated
+text, so a mismatch there is not excluded. decblk4 = v1's exact token-id method (/v1/completions, return_token_ids,
+follow-up = prompt ids + first 480 generated ids) with a 380-number prompt, interval 3456. If B still stops below 3456
+with exact ids, decode-crossed boundaries are not retained even with the interval set: record that as the answer.

@@ -1,0 +1,8 @@
+# decblk4 after night32 (f4ctx).
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night32[.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "D4 prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/decblk/spec-decblk4.json --out $RES/decblk4.jsonl > $RES/decblk4.txt 2>&1; log "D4 decblk4 rc=$?"
+log "== NIGHT33 DONE =="

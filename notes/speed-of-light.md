@@ -1525,6 +1525,10 @@ and cache hits come in that unit (the diagnostic's hit was exactly 3,456). The v
 were too short to hit at all, so **the void was the probe's length**; the retention rule below is from reading the code
 and was not what this probe measured. decblk3b (380-number prompt, follow-up ~3.57k crossing 3,456 during decode,
 retention interval 3,456) is queued as `night31`.
+**decblk3b (same day): void again.** Prompt 3,071, follow-up 3,551; B hit 0 (spec) and 1,728 (nospec, a prompt-only
+boundary), never 3,456, R missed in all. The 3,456 boundary lies inside the generated tokens, and v2/v3 rebuild the
+follow-up by re-tokenizing the generated text, so a token mismatch there is not excluded. decblk4 (v1's exact token-id
+method, same long prompt and interval) is queued as `night33`. Data `data/decblk3b/`.
 
 From the code (`v1/core/single_type_kv_cache_manager.py`, reachable-boundary mask; `config/cache.py`): align-mode
 Mamba retains recurrent-state snapshots **sparsely**. `--prefix-cache-retention-interval` defaults to **0 = "only
