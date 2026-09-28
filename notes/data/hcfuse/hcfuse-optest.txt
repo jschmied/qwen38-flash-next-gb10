@@ -1,0 +1,4 @@
+INFO 09-28 12:35:52 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=512, min=512)
+INFO 09-28 12:35:53 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=595, min=512)
+INFO 09-28 12:35:53 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=3456, min=512)
+{"min_m": 512, "6": {"path": "today", "res_eq": true, "inj_eq": true, "y_eq": true, "y_maxdiff": 0.0}, "96": {"path": "today", "res_eq": true, "inj_eq": true, "y_eq": true, "y_maxdiff": 0.0}, "511": {"path": "today", "res_eq": true, "inj_eq": true, "y_eq": true, "y_maxdiff": 0.0}, "512": {"path": "fused", "res_eq": true, "inj_eq": false, "y_eq": false, "y_maxdiff": 0.0078125}, "595": {"path": "fused", "res_eq": true, "inj_eq": false, "y_eq": false, "y_maxdiff": 0.0078125}, "3456": {"path": "fused", "res_eq": true, "inj_eq": true, "y_eq": true, "y_maxdiff": 0.0}}

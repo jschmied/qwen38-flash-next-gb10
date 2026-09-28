@@ -1,0 +1,8 @@
+# HC fusion server A/B (FN_HCFUSE=1 vs base) on the clone venv.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "H1 prod running - skip"; exit 1; }
+grep -q "FNHCFUSE" /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/vllm/models/qwen4_exp/nvidia/hyperconnection.py || { log "H1 overlay missing - skip"; exit 3; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/hcfuse/spec-hcfuse.json --out $RES/hcfuse-ab.jsonl > $RES/hcfuse-ab.txt 2>&1; log "H1 hcfuse A/B rc=$?"
+log "== NIGHT37 DONE =="

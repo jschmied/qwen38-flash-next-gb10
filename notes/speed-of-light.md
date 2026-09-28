@@ -1696,7 +1696,7 @@ TTFT-bound.
   `combine_norm`: `combine_norm` outputs bit-exact, block input within today's own rounding error of an fp32 reference, at M = 3,456 and M = 6, timed standalone; a server A/B
   on TTFT only if the standalone saves ≥ 0.6 ms per block.
 
-**§5aa addendum — HC fusion standalone (`tools/hcfuse/hcfuse.py`, hypothesis there): −0.92 ms per block at prefill, bit-identical.**
+**§5aa addendum — HC fusion standalone (`tools/hcfuse/hcfuse.py`, hypothesis there): −0.92 ms per block at prefill, drift-level numerics.**
 One hyper-connection block with injection, random bf16 data at the model's shapes, median of 30, 4 tile configs:
 
 | | today (combine_norm → cuBLAS down → silu → cuBLAS up → gate_mix) | fused (K1 residual + rrms → K2 down, normalize on load → silu → K3 up + gate-mix epilogue) |
@@ -1707,7 +1707,10 @@ One hyper-connection block with injection, random bf16 data at the model's shape
 | block input vs today | | **identical at M = 3,456** (max diff 0.0); 1 bf16 ulp at M = 6 |
 | block input vs fp32 reference (max / mean) | 0.0101 / 5.46e-4 | 0.0101 / 5.46e-4 (same) |
 
-- In the hypothesis range (−0.6…−1.2 ms per block), and ahead of it on numerics (bit-identical at prefill).
+- In the hypothesis range (−0.6…−1.2 ms per block). Numerics: identical to today at M = 3,456 in this test, but the
+  registered op's test (`tools/hcfuse/test_hcfuse_op.py`, `data/hcfuse/`) shows 1 bf16 ulp in the down GEMM's output and
+  the block input at M = 512 and 595 (Triton vs cuBLAS accumulation order), so **drift-level, not bit-identical**. Below
+  the size threshold the op runs today's kernels and is bit-identical (M = 6, 96, 511).
 - **Dispatch by size:** fused only for prefill chunks (slower at decode). The size branch must live inside a custom op,
   not in traced Python (memory `vllm-compile-freezes-branches`).
 - Projected at the server: −0.92 ms × ~196 blocks + the tail ≈ **−0.19 s per 7.5k prefill (≈ −6.7 % TTFT)**. Next:

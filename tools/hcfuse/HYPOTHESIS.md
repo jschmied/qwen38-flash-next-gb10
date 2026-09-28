@@ -7,3 +7,13 @@ per block. Correctness: residual and rrms-derived xn bit-exact to today's; block
 fp32 reference (max and mean |err| within 1.5x of today's). M = 6: correct; time not a criterion (L2-resident).
 Proceed to a server A/B only if the saving is >= 0.6 ms per block at M = 3,456 and correctness holds.
 Out of range: fused slower (Triton GEMM too far below cuBLAS), or block-input error > 1.5x today's.
+
+HCFUSE server A/B (2026-09-28 ~12:45). Overlay installed on the clone venv rssm (patch_hcfuse.py, backup
+*.orig-hcfuse, env FN_HCFUSE=1, threshold FN_HCFUSE_MIN=512 tokens per batch). Op test: below 512 bit-identical to
+today; at >= 512 drift-level (1 bf16 ulp at 512/595, identical at 3456). Arms: hcfuse vs base, prod config (PIECEWISE,
+K=5, probabilistic drafts, bf16 state, pmu 64, KV 4 GiB), 2 starts each, alternating. Probe nvprobe.py (fixed replay).
+H: TTFT 8k -4..-8 % (standalone -0.92 ms x ~196 blocks = -0.19 s of ~2.85 s), 30k -4..-9 %; cache-hit replay (prefill of a
+short suffix + 96 tokens decode) within +-2 %; decode c=1 code/prose and c=4 within +-1.5 % (path not taken below 512);
+code_c1 hashes identical if every probe prompt is < 512 tokens, drift allowed otherwise; the fused log line in the
+hcfuse arm only. Out of range: TTFT gain < 2 % (the in-model block is not byte-bound the way the standalone is) or any
+decode slowdown > 2 %.
