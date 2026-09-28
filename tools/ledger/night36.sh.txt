@@ -1,0 +1,9 @@
+# Byte-ledger nsys capture (TODO 5b). One start; the server exits at /stop_profile (stop-shutdown), so armrun may say VOID.
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+idle; systemctl is-active -q vllm-flashnext && { log "L1 prod running - skip"; exit 1; }
+mkdir -p /opt/llm/capture/ledger; chown llm:llm /opt/llm/capture/ledger 2>/dev/null || true
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/ledger/spec-ledger.json --out $RES/ledger.jsonl > $RES/ledger.txt 2>&1; log "L1 ledger capture rc=$?"
+ls -la /opt/llm/capture/ledger >> $RES/ledger.txt 2>&1
+log "== NIGHT36 DONE =="
