@@ -1531,3 +1531,24 @@ during decode is not retained, so there is nothing to hit, with or without specu
   test the path for configs that set it.
 - det-236 (09-24, "15 reads into decode-written blocks, 0 divergent") ran on the older stack; whether its reads really
   hit decode-written states was not re-checked against this mechanism, so it no longer counts as evidence either way.
+
+### 5y. Validation of the 2026-09-28 prod config (bf16 SSM state, `--prefix-match-unit 64`, fast loading, tool guards)
+
+One start with prod's venv, launcher and drop-in flags (armrun `prodval2`, default KV size, as the 09-27 `prodval`),
+13 required path lines present (incl. `'prefix_match_unit': 64`, `mamba_ssm_cache_dtype': 'bfloat16'`, the MTP name
+prefilter), 5 forbidden absent. Data `data/prodval2/`.
+
+| | 09-27 config (`prodval`) | 09-28 config (`prodval2`) |
+|---|---|---|
+| code, c=1 greedy | 15.37 ms/tok | 14.74 ms/tok (accept 4.37) |
+| code, c=1 sampled | 16.14 ms/tok | 16.60 ms/tok |
+| prose, c=1 greedy | 24.72 ms/tok | 23.66 ms/tok |
+| code, c=4 | 134.9 tok/s | 144.8 tok/s |
+| TTFT 8k / 30k (cold, nonce) | — | 2.89 / 10.39 s |
+| cache-hit replay (same 8k twice) | — | 5.02 → 2.10 s, output equal |
+| start to ready | ~12 min | 2 min 39 s |
+
+- **Validates the config**: every path taken, cache replay equal, nothing slower beyond single-start spread.
+- **Not an A/B**: one start per config, and restarts alone move c=1 by up to 11 % (§4c, cold window), so the
+  −4 % / +7 % differences are not attributed to any of the four changes. Greedy hashes differ from 09-27, as
+  expected with a bf16 state (a precision change; SWE-bench showed no loss, §5u).
