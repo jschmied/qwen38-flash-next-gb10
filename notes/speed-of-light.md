@@ -1825,3 +1825,19 @@ Standalone, random NVFP4 weights at the model's MoE shapes, one process per mode
   L2 (generic kernel), which our bit-stable-finalize requirement rules out regardless.
 - **Against the hypothesis:** H1 (does not work) holds, for a reason the hypothesis did not name (tile selection, not
   shared memory). The remaining route to the ~4 % is the CUTLASS SM120 EVT epilogue (TODO item 6, step 2).
+
+**§5aa — HC fusion quality screen (`evalhc`, §5r's GSM8K + HumanEval, 2 starts per arm): no measurable change.**
+Clone venv, prod config, thinking off, greedy, c = 16; HumanEval scored offline as the unprivileged user
+(`data/hcfuse/evalhc-score.txt`).
+
+| | GSM8K (1,319) | HumanEval (164) | TTFT 8k / 30k |
+|---|---|---|---|
+| hcfuse, s1 / s2 | 96.29 / 96.29 % | 158 / 156 | 2.716, 9.732 / 2.741, 9.808 s |
+| base, s1 / s2 | 95.98 / 96.66 % | 157 / 159 | 2.905, 10.416 / 2.928, 10.555 s |
+
+- Every hcfuse-vs-base McNemar p ≥ 0.25 (GSM8K 0.27–0.52, HumanEval 0.25–1.0). The base arm's two starts differ more
+  from each other on GSM8K (p = 0.049; c = 16 is not batch-invariant across starts) than either hcfuse start does from base.
+- Against the hypothesis: GSM8K inside base's spread; HumanEval start 2 (156) is one item below base's 157–159, start 1
+  inside, so the out-of-range rule (gap in both starts) is not met. **Verdict: no measurable quality change**; the HC
+  fusion (installed in prod the same day on the user's go) stands.
+- TTFT reproduces the A/B above (−6…−7 % at 8k, −6.6…−7.1 % at 30k).

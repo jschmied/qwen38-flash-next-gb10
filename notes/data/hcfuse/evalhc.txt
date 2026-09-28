@@ -1,0 +1,23 @@
+== armrun evalhc: 2 arms x 2 start(s), port 8092 ==
+-- evalhc-hcfuse0  env={'FN_CG_MODE': 'PIECEWISE', 'FN_HCFUSE': '1'}
+Running as unit: fx-armrun-evalhc.service; invocation ID: c49b4a4ee5e24b2a829e9f2feb9d9a95
+   void checks passed (15 required, 6 forbidden)
+   {"ttft": {"8k": {"median_s": 2.716, "all": [2.909, 2.716, 2.709]}, "30k": {"median_s": 9.732, "all": [9.717, 9.748, 9.732]}}, "gsm8k": {"n": 1319, "acc": 0.9629, "correct": 1270, "truncated": 20, "gen_tokens": 467451, "s": 2057.9}, "humaneval": {"n": 164, "truncated": 4, "gen_tokens": 40965, "s": 169.1, "file": "/opt/llm/runners/results/evalq-evalhc-hcfuse0.jsonl"}, "total_s": 2264.5}
+-- evalhc-base0  env={'FN_CG_MODE': 'PIECEWISE'}
+Running as unit: fx-armrun-evalhc.service; invocation ID: ea2491531c9646a18604a8d780f1b803
+   void checks passed (14 required, 7 forbidden)
+   {"ttft": {"8k": {"median_s": 2.905, "all": [3.13, 2.905, 2.899]}, "30k": {"median_s": 10.416, "all": [10.416, 10.424, 10.404]}}, "gsm8k": {"n": 1319, "acc": 0.9598, "correct": 1266, "truncated": 27, "gen_tokens": 468323, "s": 2076.8}, "humaneval": {"n": 164, "truncated": 3, "gen_tokens": 39853, "s": 161.0, "file": "/opt/llm/runners/results/evalq-evalhc-base0.jsonl"}, "total_s": 2278.0}
+-- evalhc-hcfuse1  env={'FN_CG_MODE': 'PIECEWISE', 'FN_HCFUSE': '1'}
+Running as unit: fx-armrun-evalhc.service; invocation ID: 856758e60cf84ee5aea747e432125eda
+   void checks passed (15 required, 6 forbidden)
+   {"ttft": {"8k": {"median_s": 2.741, "all": [2.935, 2.741, 2.738]}, "30k": {"median_s": 9.808, "all": [9.809, 9.772, 9.808]}}, "gsm8k": {"n": 1319, "acc": 0.9629, "correct": 1270, "truncated": 19, "gen_tokens": 466518, "s": 2040.4}, "humaneval": {"n": 164, "truncated": 2, "gen_tokens": 39537, "s": 169.7, "file": "/opt/llm/runners/results/evalq-evalhc-hcfuse1.jsonl"}, "total_s": 2247.9}
+-- evalhc-base1  env={'FN_CG_MODE': 'PIECEWISE'}
+Running as unit: fx-armrun-evalhc.service; invocation ID: aa72e7d34131472193749096690735cb
+   void checks passed (14 required, 7 forbidden)
+   {"ttft": {"8k": {"median_s": 2.928, "all": [3.15, 2.928, 2.912]}, "30k": {"median_s": 10.555, "all": [10.565, 10.545, 10.555]}}, "gsm8k": {"n": 1319, "acc": 0.9666, "correct": 1275, "truncated": 16, "gen_tokens": 468020, "s": 2068.7}, "humaneval": {"n": 164, "truncated": 2, "gen_tokens": 38515, "s": 157.5, "file": "/opt/llm/runners/results/evalq-evalhc-base1.jsonl"}, "total_s": 2266.9}
+
+== RESULT ==
+  hcfuse       total_s 2247.9–2264.5  start 0–1
+  base         total_s 2266.9–2278.0  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
