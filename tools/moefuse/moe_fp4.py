@@ -70,10 +70,14 @@ def _quant_rows(X, Q, S, M, H: tl.constexpr, g, BM: tl.constexpr, BN: tl.constex
 @triton.jit
 def _gemm1_swiglu_fp4(XQ, XS, W, WS, SORTED, EXPERTS, NTPP, ALPHA1, G2, OQ, OS, num_valid, NMB,
                       TOPK: tl.constexpr, H: tl.constexpr, I: tl.constexpr,
-                      BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
+                      BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr, N_FASTEST: tl.constexpr = False):
     pid = tl.program_id(0)
-    pid_m = pid % NMB
-    pid_n = pid // NMB
+    if N_FASTEST:  # the N tiles of one M block are neighbours: its gathered A rows are read from DRAM once
+        pid_n = pid % (I // BN)
+        pid_m = pid // (I // BN)
+    else:
+        pid_m = pid % NMB
+        pid_n = pid // NMB
     if pid_m * BM >= tl.load(NTPP):
         return
     e = tl.load(EXPERTS + pid_m).to(tl.int64)
@@ -109,11 +113,111 @@ def _gemm1_swiglu_fp4(XQ, XS, W, WS, SORTED, EXPERTS, NTPP, ALPHA1, G2, OQ, OS, 
 
 
 @triton.jit
-def _gemm2(IQ, IS, W, WS, SORTED, EXPERTS, NTPP, ALPHA2, Y, num_valid, NMB,
-           H: tl.constexpr, I: tl.constexpr, BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
+def _gemm1_swiglu_fp4_tma(XQ, XS, WD, WS, SORTED, EXPERTS, NTPP, ALPHA1, G2, OQ, OS, num_valid, NMB,
+                          TOPK: tl.constexpr, H: tl.constexpr, I: tl.constexpr,
+                          BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
+    # _gemm1_swiglu_fp4 with the weight tiles (the bulk of the bytes) loaded by TMA from a [E * 2I, H/2] descriptor.
     pid = tl.program_id(0)
     pid_m = pid % NMB
     pid_n = pid // NMB
+    if pid_m * BM >= tl.load(NTPP):
+        return
+    e32 = tl.load(EXPERTS + pid_m)
+    e = e32.to(tl.int64)
+    rm = pid_m * BM + tl.arange(0, BM)
+    sid = tl.load(SORTED + rm)
+    tok = tl.where(sid < num_valid, sid // TOPK, 0)
+    rn = pid_n * BN + tl.arange(0, BN)
+    rkb = tl.arange(0, BK // 2)
+    rks = tl.arange(0, BK // 16)
+    wsb = WS + e * (2 * I * (H // 16))
+    row_u = e32 * (2 * I) + pid_n * BN
+    acc_u = tl.zeros([BM, BN], dtype=tl.float32)
+    acc_g = tl.zeros([BM, BN], dtype=tl.float32)
+    for k0 in range(0, H, BK):
+        kb = k0 // 2 + rkb
+        ks = k0 // 16 + rks
+        a = tl.load(XQ + tok[:, None] * (H // 2) + kb[None, :])
+        a_s = tl.load(XS + _sw(tok[:, None], ks[None, :], H // 64))
+        bu = WD.load([row_u, k0 // 2])
+        bg = WD.load([row_u + I, k0 // 2])
+        su = tl.load(wsb + _sw(rn[:, None], ks[None, :], H // 64))
+        sg = tl.load(wsb + _sw((I + rn)[:, None], ks[None, :], H // 64))
+        acc_u = tl.dot_scaled(a, a_s, "e2m1", tl.trans(bu), su, "e2m1", acc_u)
+        acc_g = tl.dot_scaled(a, a_s, "e2m1", tl.trans(bg), sg, "e2m1", acc_g)
+    alpha = tl.load(ALPHA1 + e)
+    up = (acc_u * alpha).to(tl.bfloat16).to(tl.float32)
+    gate = (acc_g * alpha).to(tl.bfloat16).to(tl.float32)
+    h = (gate * (1.0 / (1.0 + tl.exp(-gate)))) * up
+    h = h.to(tl.bfloat16).to(tl.float32)
+    q, sf = _nvfp4_block(h, tl.load(G2 + e), BM, BN)
+    tl.store(OQ + rm[:, None] * (I // 2) + (pid_n * (BN // 2) + tl.arange(0, BN // 2))[None, :], q)
+    tl.store(OS + rm[:, None] * (I // 16) + (pid_n * (BN // 16) + tl.arange(0, BN // 16))[None, :], sf)
+
+
+@triton.jit
+def _gemm1_swiglu_fp4_p(XQ, XS, W, WS, SORTED, EXPERTS, NTPP, ALPHA1, G2, OQ, OS, num_valid,
+                        TOPK: tl.constexpr, H: tl.constexpr, I: tl.constexpr, NPROG: tl.constexpr,
+                        BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr, NS: tl.constexpr):
+    # Persistent form of _gemm1_swiglu_fp4: one flattened (tile, k) loop per program so the pipeliner prefetches the
+    # next tile's operands under the current tile's epilogue. Tiles run m-fastest (the M blocks of one expert and
+    # N tile are neighbours in time and share its weights in L2); the tile count comes from the device-side row
+    # count, so padding blocks cost nothing.
+    KT: tl.constexpr = H // BK
+    NT: tl.constexpr = I // BN
+    nmb = tl.load(NTPP) // BM
+    ntiles = nmb * NT
+    my_tiles = (ntiles - tl.program_id(0) + NPROG - 1) // NPROG
+    rkb = tl.arange(0, BK // 2)
+    rks = tl.arange(0, BK // 16)
+    acc_u = tl.zeros([BM, BN], dtype=tl.float32)
+    acc_g = tl.zeros([BM, BN], dtype=tl.float32)
+    for it in tl.range(0, my_tiles * KT, num_stages=NS):
+        tile = tl.program_id(0) + (it // KT) * NPROG
+        ki = it % KT
+        pid_m = tile % nmb
+        pid_n = tile // nmb
+        e = tl.load(EXPERTS + pid_m).to(tl.int64)
+        rm = pid_m * BM + tl.arange(0, BM)
+        sid = tl.load(SORTED + rm)
+        tok = tl.where(sid < num_valid, sid // TOPK, 0)
+        rn = pid_n * BN + tl.arange(0, BN)
+        wb = W + e * (2 * I * (H // 2))
+        wsb = WS + e * (2 * I * (H // 16))
+        kb = ki * (BK // 2) + rkb
+        ks = ki * (BK // 16) + rks
+        a = tl.load(XQ + tok[:, None] * (H // 2) + kb[None, :])
+        a_s = tl.load(XS + _sw(tok[:, None], ks[None, :], H // 64))
+        bu = tl.load(wb + rn[:, None] * (H // 2) + kb[None, :])
+        bg = tl.load(wb + (I + rn)[:, None] * (H // 2) + kb[None, :])
+        su = tl.load(wsb + _sw(rn[:, None], ks[None, :], H // 64))
+        sg = tl.load(wsb + _sw((I + rn)[:, None], ks[None, :], H // 64))
+        acc_u = tl.dot_scaled(a, a_s, "e2m1", tl.trans(bu), su, "e2m1", acc_u)
+        acc_g = tl.dot_scaled(a, a_s, "e2m1", tl.trans(bg), sg, "e2m1", acc_g)
+        if ki == KT - 1:
+            alpha = tl.load(ALPHA1 + e)
+            up = (acc_u * alpha).to(tl.bfloat16).to(tl.float32)
+            gate = (acc_g * alpha).to(tl.bfloat16).to(tl.float32)
+            h = (gate * (1.0 / (1.0 + tl.exp(-gate)))) * up
+            h = h.to(tl.bfloat16).to(tl.float32)
+            q, sf = _nvfp4_block(h, tl.load(G2 + e), BM, BN)
+            tl.store(OQ + rm[:, None] * (I // 2) + (pid_n * (BN // 2) + tl.arange(0, BN // 2))[None, :], q)
+            tl.store(OS + rm[:, None] * (I // 16) + (pid_n * (BN // 16) + tl.arange(0, BN // 16))[None, :], sf)
+            acc_u = tl.zeros([BM, BN], dtype=tl.float32)
+            acc_g = tl.zeros([BM, BN], dtype=tl.float32)
+
+
+@triton.jit
+def _gemm2(IQ, IS, W, WS, SORTED, EXPERTS, NTPP, ALPHA2, Y, num_valid, NMB,
+           H: tl.constexpr, I: tl.constexpr, BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr,
+           N_FASTEST: tl.constexpr = False):
+    pid = tl.program_id(0)
+    if N_FASTEST:  # the N tiles of one M block are neighbours: its A rows stay in L2
+        pid_n = pid % (H // BN)
+        pid_m = pid // (H // BN)
+    else:  # the M blocks of one expert are neighbours: its weight tile stays in L2
+        pid_m = pid % NMB
+        pid_n = pid // NMB
     if pid_m * BM >= tl.load(NTPP):
         return
     e = tl.load(EXPERTS + pid_m).to(tl.int64)
@@ -161,8 +265,8 @@ def _log_once(m):
             pass
 
 
-CFG1 = dict(BM=64, BN=64, BK=256, num_warps=4, num_stages=3)
-CFG2 = dict(BM=64, BN=128, BK=128, num_warps=4, num_stages=3)
+CFG1 = dict(BM=64, BN=64, BK=256, num_warps=4, num_stages=2, N_FASTEST=True)
+CFG2 = dict(BM=64, BN=256, BK=128, num_warps=8, num_stages=4, N_FASTEST=True)
 
 
 def moe_fp4_prefill(xq, xs, w13, w13_s, w2, w2_s, alpha1, a2_gscale, alpha2, topk_ids, topk_weights, out,
@@ -201,11 +305,12 @@ def _moe_fp4_prefill(xq, xs, w13, w13_s, w2, w2_s, alpha1, a2_gscale, alpha2, to
     num_valid = M * TOPK
     _gemm1_swiglu_fp4[(NMB * (I // c1["BN"]),)](
         xq, xs, w13, w13_s, sorted_ids, expert_ids, ntpp, alpha1, a2_gscale, iq, isf, num_valid, NMB,
-        TOPK=TOPK, H=H, I=I, BM=BM, BN=c1["BN"], BK=c1["BK"], num_warps=c1["num_warps"],
+        TOPK=TOPK, H=H, I=I, BM=BM, BN=c1["BN"], BK=c1["BK"], N_FASTEST=c1["N_FASTEST"], num_warps=c1["num_warps"],
         num_stages=c1["num_stages"])
     y = torch.empty(num_valid, H, dtype=torch.bfloat16, device=dev)
     _gemm2[(NMB * (H // c2["BN"]),)](
         iq, isf, w2, w2_s, sorted_ids, expert_ids, ntpp, alpha2, y, num_valid, NMB,
-        H=H, I=I, BM=BM, BN=c2["BN"], BK=c2["BK"], num_warps=c2["num_warps"], num_stages=c2["num_stages"])
+        H=H, I=I, BM=BM, BN=c2["BN"], BK=c2["BK"], N_FASTEST=c2["N_FASTEST"], num_warps=c2["num_warps"],
+        num_stages=c2["num_stages"])
     _finalize[(M, H // 512)](y, topk_weights, out, H=H, TOPK=TOPK, BH=512, num_warps=4)
     return out
