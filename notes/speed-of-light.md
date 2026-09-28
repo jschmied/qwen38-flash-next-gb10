@@ -1934,3 +1934,21 @@ my own contradictory void rule. Data `data/syncprobe/`.
   +2.7 % code / +5.9 % prose decode** (τ 0.75 / 0.65), with no padded-row mechanism needed. It still needs IF-node
   draft steps (prerequisite met since F4), forced rejection of stopped positions, and a host-known verify size
   1 + d from the synced count. 150–250 LOC, medium-high risk; agent-level effect ~1 %. A build decision, not queued.
+
+### 5ae. dealignai's abliterated checkpoint, carried over into our format (`qwen38-flash-next-mtpfp4-ablit`)
+
+User: "there is dealignai/Qwen3.8-Flash-Next-ABLITERATED-NVFP4 maybe requant some components to same as our current
+model". An uncensored research artifact (refusal directions projected out of weights by the upstream author); the work
+here is a format conversion only. Tools `tools/ablit/`; data `data/ablit/`; provenance in the checkpoint's `PROVENANCE.md`.
+
+- **What they changed:** their files are RadixArk's layer-sharded mixed checkpoint (the same lineage as ours); 203 of
+  208 files are byte-identical to our prod checkpoint and all 384 expert shards to RadixArk. A per-tensor diff of the
+  3 differing shards against RadixArk (run read-only on the backup box, file hashes = HF's): **13 tensors, all BF16
+  `self_attn.o_proj.weight`** — the 12 full-attention layers (3, 7, …, 47) and `mtp.layers.0`. No experts, GDN, PLE or
+  embeddings touched.
+- **Our format for those tensors:** the 12 main o_proj are FP8 E4M3 128×128 blockwise in our checkpoint (from
+  lovedheart's FP8-mixed conversion); MTP o_proj is RadixArk's BF16 unchanged. `scale = amax · (1/448)` reproduces all
+  12 FP8 weights and scales **bit-exactly** from RadixArk's BF16 (`amax / 448` misses on ~0.07 % of bytes), so the
+  carried-over tensors are what the original conversion would have produced from the abliterated BF16.
+- **Build:** hardlinks to `qwen38-flash-next-mtpfp4` except the 3 rewritten shards (~8 GB new); per-tensor diff against
+  prod's checkpoint = exactly the 25 intended tensors (12 weights + 12 scales + 1 BF16). `SHA256SUMS` for every file.
