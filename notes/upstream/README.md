@@ -1443,3 +1443,6 @@ wait on one ~100 GB pull, and they share one serve.
 - **2026-09-27 ~20:40 — vllm#58785, comment (user's go: "post").** Cross-link to #55122 (same kernel; rescanning radix
   select has no capped buffer, so no overflow; not yet run against their new test; the PRs conflict). Draft
   `comment-58785-topk-crosslink.md`. <https://github.com/vllm-project/vllm/pull/58785#issuecomment-5858469619>
+- **2026-09-28 03:39 — vllm#53912, reply from ming616 (no response needed).** Not their path: their fork gates RecoverSSM
+  to Kimi-K3 KDA and their GLM deployment never passes `--use-replayssm`. They moved to speculation disabled as the
+  interim mitigation (prefix cache + align kept) and will follow #58863.
