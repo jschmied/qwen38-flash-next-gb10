@@ -1589,3 +1589,19 @@ Data `data/f4/`.
   attention/QSA launched for the capture shape rather than the live context).
 - **Verdict: not a prod candidate** as is. Agent work runs at long context. Next: a decode-vs-context sweep, both arms
   (`tools/f4/`, queued), to locate the regression before any upstream follow-up.
+
+**§5z addendum — decode vs context (`f4ctx`, same arms, 2 starts each): no context-dependent decode cost.** Streamed
+decode (prefill excluded), greedy, 256 tokens, 2 fixed prompts per size; hashes identical between arms at every size.
+
+| context | full, ms/tok (req 1, req 2; s1 / s2) | piecewise | Δ |
+|---|---|---|---|
+| 1k | 22.01, 19.37 / 21.91, 18.47 | 21.99, 18.65 / 21.93, 18.64 | null |
+| 8k | 19.49, 18.42 / 19.24, 18.26 | 19.68, 18.56 / 19.63, 18.37 | ≈ −1 % |
+| 16k | 18.93, 18.53 / 19.35, 18.58 | 19.12, 18.91 / 19.27, 18.72 | ≈ null |
+| 28k | 19.59, 15.81 / 19.28, 15.87 | 19.57, 16.15 / 19.59, 16.35 | 0…−3 % |
+
+TTFT equal at every size (e.g. 28k: 9.80–9.85 vs 9.82–9.87 s). **H-alt holds**: the §5z 8k-request slowdown is not
+decode at long context. Still unexplained: that request (8k prompt + 96 tokens, run after the TTFT probes) paid a fixed
++0.35…0.5 s in both full starts. Its output was not hashed or token-counted across arms, so a different output length is
+not excluded. Next: a replay probe that streams, counts and hashes, run both before and after the TTFT probes.
+Data `data/f4/f4ctx.*`.
