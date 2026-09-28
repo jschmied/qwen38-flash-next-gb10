@@ -1451,3 +1451,10 @@ wait on one ~100 GB pull, and they share one serve.
   a note that the description undersells the non-cold-window case, and our wait-vs-no-wait result (§4x) with a
   question whether his 250 ms bound fired under load. Draft `comment-58835-reply-antonio.md`. <https://github.com/vllm-project/vllm/pull/58835#issuecomment-5864205041>
   PR body updated the same day: added the non-cold-window paragraph citing his comment.
+- **2026-09-28 — MiaAI #78, comment (user's go: "offer 58863 to mia and blazux").** Lever 3 is now vllm#58863; numbers,
+  the boundary fix note, v0.30.0 not a clean apply (1 test conflict + 2 context hunks), backport branch offered.
+  Draft `comment-miaai-78-recoverssm-pr.md`. <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/issues/78#issuecomment-5864260066>
+- **2026-09-28 — blazux new issue (same go).** Offer of #58863 for their MTP + prefix-cache default, same numbers and
+  notes. Draft `issue-blazux-recoverssm.md`. <https://github.com/blazux/qwen3.8-Flash-DGX/issues/45>
+  (The user's "issue on blazux for missing credit" was NOT filed: their README already credits #55122 / PR #10 / our
+  write-up; told the user.)
