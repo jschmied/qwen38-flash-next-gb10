@@ -123,10 +123,9 @@ find $SP/vllm -name __pycache__ -prune -exec rm -rf {} +
 ```
 
 [`tools/main/main1ea7-prod-overlay.diff`](tools/main/main1ea7-prod-overlay.diff) is the exact
-difference between prod's venv and the pristine wheel: 35 modified files and 8 new ones (regenerated
-2026-09-28 after the fast-loading set and the tool-call parser guards went in; applied to the pristine `1ea7c63f4` tree
-it reproduces every `.py` file of prod's `vllm` package byte for byte, checked over the whole tree rather than a file list,
-which is how the 09-27 version was found to miss the tool guards and the postprocess half of the boundary fix). Everything
+difference between prod's venv and the pristine wheel: 36 modified files and 9 new ones (regenerated
+2026-09-28 after the HC fusion and F4 went in; applied to the pristine `1ea7c63f4` tree it reproduces every `.py`
+file of prod's `vllm` package byte for byte, checked over the whole tree rather than a file list). Everything
 that is not always-on is gated by a flag or an environment variable:
 
 | part | files | switch | prod |
@@ -141,6 +140,8 @@ that is not always-on is gated by a flag or an environment variable:
 | NVFP4 draft-head slice | `qwen4_exp/nvidia/mtp.py`, `fn_nvfp4_head.py` (new) | `FN_DRAFT_HEAD_NVFP4=1`, `FN_NVFP4_CFG=64,4` | on |
 | fast weight loading: [vllm#58868](https://github.com/vllm-project/vllm/pull/58868) (touch mmap pages before the H2D copy) + blazux patch 16 (FusedMoE expert name index) + patch 18 (MTP name prefilter, ported to 1ea7) | `utils.py`, `parameter.py`, `linear.py`, `vocab_parallel_embedding.py`, `fused_moe/routed_experts.py`, `weight_utils.py`, `qwen4_exp/nvidia/mtp.py` ([`tools/fastload/`](tools/fastload/)) | always (integrated GPU); `VLLM_MTP_NAME_PREFILTER=0` disables the prefilter | on — log line `qwen38 MTP name prefilter: N tensors kept, M skipped` |
 | blazux's tool-call parser guards (patches 12 + 13) | `parser/qwen3.py`, `parser/nemotron_v3.py`, `parser/engine/{parser_engine_config,streaming_parser_engine}.py` ([`tools/toolguard/`](tools/toolguard/)) | always | on |
+| fused hyper-connection kernels (HC fusion) | `qwen4_exp/nvidia/hyperconnection.py` (hook), `qwen4_exp/nvidia/ops/hc_fused.py` (new; [`tools/hcfuse/`](tools/hcfuse/)) | `FN_HCFUSE=1`; fused from `FN_HCFUSE_MIN` (128) tokens per batch, today's kernels below | on — log line `FNHCFUSE fused hyper-connection kernels ran` |
+| full CUDA graphs for the RecoverSSM verify path (F4) | `v1/attention/backends/{gdn,ple}_recoverssm.py` (`UNIFORM_BATCH`, null-padded rows) | `FN_CG_MODE=FULL_AND_PIECEWISE` | on — `Capturing CUDA graphs (FULL)` |
 | experiments, all measured null or not promoted | `linear.py` + `fn_bf16sk.py`, `ple_pageable.py` extras, `weight_utils.py`, `fused_sigmoid_gating.py` | `FN_BF16SK`, `FN_PLE_SYNCTOUCH`, `FN_PLE_POPULATE`, `FN_PFTIME`, `FN_LOAD_DROPCACHE`, `FN_GDN_STORE_CS` | off |
 
 **Any `pip install` of vLLM into this venv silently reverts the whole overlay.** To see what is actually
@@ -173,6 +174,8 @@ Environment=FN_NVFP4_CFG=64,4
 Environment=FN_DRAFT_PROB=1
 Environment=FN_SPEC_DRAFTPROB=1
 Environment=FN_CG_SIZES=[1,2,4,6,8,12,16,18,24,30,36,48,60,72,96]
+Environment=FN_CG_MODE=FULL_AND_PIECEWISE
+Environment=FN_HCFUSE=1
 ```
 
 The flags that are not obvious:
@@ -185,7 +188,7 @@ The flags that are not obvious:
 | `--prefix-match-unit 64` | saves the recurrent state at the exact end of each prompt, so the next agent turn resumes there instead of at the last 1728-token block: warm-turn recompute −74 %, turn TTFT −35 % (0.87 → 0.57 s); a prompt edited before its old end pays +0.1 s ([§5t](notes/speed-of-light.md)) |
 | prefix cache (defaults) | align-mode Mamba keeps recurrent states only at semantic checkpoints (`--prefix-cache-retention-interval 0`): the end of a prompt and where requests share a prefix. Hits come in units of the **3,456-token scheduler block** (2 × 1728) unless `--prefix-match-unit` adds the prompt end. An identical prompt's **first** repeat does not hit, the second does, and a state written during decode is not kept at the default (measured: 16/16 follow-ups hit 0 tokens). With the interval set (3,456) such states are served, and 16 follow-ups per arm showed no contamination beyond cached-vs-recomputed drift (vllm#53912, [§5x](notes/speed-of-light.md)) |
 | `--block-size 1728` | K=5 needs it: the QSA raw-key ring capacity (12 here) must divide the block size, and the auto size (1696) does not; without it K=5 hard-fails at start ([vllm#54912](https://github.com/vllm-project/vllm/pull/54912)) |
-| `--use-replayssm` | with speculative decoding, selects RecoverSSM for Qwen4Exp: GDN verify from one checkpoint with a per-token replay record, committed once after sampling; −2.4…−4.0 % per cycle at c=1, −5.2 % at c=4, −16 % per agent turn, +37 % KV. The backends declare no full-graph support, so `FULL_AND_PIECEWISE` resolves to PIECEWISE (the launcher's default anyway). V2 model runner, Triton mamba backend, PP=1 |
+| `--use-replayssm` | with speculative decoding, selects RecoverSSM for Qwen4Exp: GDN verify from one checkpoint with a per-token replay record, committed once after sampling; −2.4…−4.0 % per cycle at c=1, −5.2 % at c=4, −16 % per agent turn, +37 % KV. Since 2026-09-28 the backends declare `UNIFORM_BATCH` full-graph support (F4, [§5z](notes/speed-of-light.md)); prod runs `FULL_AND_PIECEWISE` (drop-in 55). V2 model runner, Triton mamba backend, PP=1 |
 | `FN_DRAFT_PROB=1`, `FN_SPEC_DRAFTPROB=1`, `FN_SPEC_LOCALARGMAX=0` | drafts are sampled (`draft_sample_method: probabilistic`) and accepted by rejection sampling: −5.5 % on sampled code at K=5, greedy unchanged, exact. The local-argmax shortcut must be off, because the sampler needs the drafter's logits ([§5n](notes/speed-of-light.md)) |
 | `FN_CG_SIZES` | CUDA-graph capture sizes on multiples of K+1 = 6 so verify batches at 1–16 streams land on a captured size |
 | `VLLM_USE_DEEP_GEMM=0` | DeepGEMM gates on capability *family* 120, which sm_121 satisfies, then faults with `unspecified launch failure` (vllm#54125) |

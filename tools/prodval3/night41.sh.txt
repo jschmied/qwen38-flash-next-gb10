@@ -1,0 +1,8 @@
+# Prod validation after HC fusion + F4 (after night40, the quality screen).
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night40[.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "V3 prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/produp/spec-prodval3.json --out $RES/prodval3.jsonl > $RES/prodval3.txt 2>&1; log "V3 prodval3 rc=$?"
+log "== NIGHT41 DONE =="

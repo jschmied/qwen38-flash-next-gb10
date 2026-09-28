@@ -25,6 +25,9 @@ five more are open there.
 > The whole 09-28 config (bf16 SSM state, `--prefix-match-unit 64`, fast loading, tool guards) is validated on one start:
 > every path line present, code 14.74 ms/tok, prose 23.66, 4 streams 144.8 tok/s, cache replay equal
 > ([§5y](notes/speed-of-light.md), [data](notes/data/prodval2/)).
+> **2026-09-28, HC fusion + F4 in prod** (user: "yes, both goes to prod"; drop-in 55, installed, service still stopped):
+> TTFT −5.5…−7.9 % at 8k / −6.2…−7.8 % at 30k, decode c=1 −1…−2 % on the clone venv ([§5aa](notes/speed-of-light.md),
+> [§5z](notes/speed-of-light.md)). Validation start on the prod venv queued (prodval3); the GSM8K/HumanEval screen is running.
 > K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
 > Forwarded to nightly `a9eafde59` (266 commits newer; [§5s](notes/speed-of-light.md)): the overlay applies and c=1 output is
 > bit-identical to prod, but c=4 is 4.5 % slower and not reproducible, so prod stays on `1ea7c63f4` for now.
@@ -35,8 +38,8 @@ five more are open there.
 | decode, single stream, **prose** (same probe) | 41.1 tok/s greedy — 43.1 with the 09-26 config (K=3 is better on prose) | [speed of light §5o](notes/speed-of-light.md) |
 | decode, single stream, 09-26 config (warm second pass, prose) | 46.5 tok/s (21.49 ms/tok; 2.53 accepted per cycle) — was 17.1 on the published checkpoint | [speed of light §4t](notes/speed-of-light.md), [fp8 checkpoint](notes/fp8-mixed-checkpoint.md), [lm_head](notes/quantizing-lm-head.md), [speculation](notes/speculation-on-flash-next.md) |
 | precision options: bf16 SSM state (**adopted** 2026-09-28); GDN projections as NVFP4 W4A16 (not adopted) | NVFP4 GDN: code 71.3 tok/s greedy (−7 % decode) but **+6 % TTFT**. Both pass a GSM8K + HumanEval screen and **SWE-bench** (58 instances × 2 runs: prod 48/52, NVFP4 GDN 51/50, bf16 state 50/51 — all inside prod's own spread); the bf16 state is in the prod config since 2026-09-28 | [speed of light §5j, §5o, §5r, §5u](notes/speed-of-light.md) |
-| option, not in prod yet: fused hyper-connection kernels (`FN_HCFUSE=1`) | **TTFT −5.5…−7.9 % at 8k, −6.2…−7.8 % at 30k**; warm agent turns ~−1 %; decode unchanged; deterministic 1-ulp drift, needs a quality check (2 starts per arm). The byte ledger found the HC normalized copy and gate round-tripping DRAM at prefill | [speed of light §5aa](notes/speed-of-light.md) |
-| option, not in prod yet: full CUDA graphs for the RecoverSSM verify path (F4) | code c=1 **−1.1…−2.1 %**, cache-hit replay and TTFT −1…−2.5 %, prose and 4 streams null; outputs identical at c=1 (2 starts per arm; a first "8k regression" was a probe artefact, withdrawn) | [speed of light §5z](notes/speed-of-light.md) |
+| **in prod since 2026-09-28:** fused hyper-connection kernels (`FN_HCFUSE=1`) | **TTFT −5.5…−7.9 % at 8k, −6.2…−7.8 % at 30k**; warm agent turns ~−1 %; decode unchanged; deterministic 1-ulp drift, needs a quality check (2 starts per arm). The byte ledger found the HC normalized copy and gate round-tripping DRAM at prefill | [speed of light §5aa](notes/speed-of-light.md) |
+| **in prod since 2026-09-28:** full CUDA graphs for the RecoverSSM verify path (F4) | code c=1 **−1.1…−2.1 %**, cache-hit replay and TTFT −1…−2.5 %, prose and 4 streams null; outputs identical at c=1 (2 starts per arm; a first "8k regression" was a probe artefact, withdrawn) | [speed of light §5z](notes/speed-of-light.md) |
 | decode, 4 streams | **code, K=5: 135.0–138.3 tok/s** aggregate (09-27 config, 2 starts); 144.8 in the 09-28 validation (one start, default KV). The 09-26 config on the decode probe: ~100 (99.7–100.0) | [speed of light §5o, §5y, §4t](notes/speed-of-light.md) |
 | agent loop (8 dependent turns, prefix cache + MTP) | **1.10 s/turn**, 1.31 without RecoverSSM | [speed of light §4t](notes/speed-of-light.md) |
 | warm agent turns (46 replayed SWE-bench turns) | 0.87 s median; **0.57 s with `--prefix-match-unit 64`** (recompute −74 %), in the prod config since 2026-09-27 | [speed of light §5t](notes/speed-of-light.md) |

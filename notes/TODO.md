@@ -13,12 +13,11 @@ MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1
 
 **HC fusion (`FN_HCFUSE=1`) — DONE 2026-09-28, §5aa:** TTFT −5.5…−7.9 % (8k) / −6.2…−7.8 % (30k), decode null; warm agent
 turns only ~−1 % (B null, A −2…−5 %); deterministic 1-ulp drift (replay output differs, reproducible). Needs a quality
-check before prod. **Awaiting the user: prod install? upstream PR?** Next byte items: MoE GEMM1 epilogue (~4 %),
+check before prod. **IN PROD 2026-09-28** (user: "yes, both goes to prod"; drop-in 55 with F4; prodval3 queued). Upstream PR: not asked. Next byte items: MoE GEMM1 epilogue (~4 %),
 deterministic fused finalize (3–5 %).
 
 **F4 (full CUDA graphs, RecoverSSM verify) — DONE 2026-09-28, §5z:** short-context c=1 −1.1…−2.1 %, replay/TTFT −1…−2.5 %,
-rest null, outputs identical. The first "8k regression" was nvprobe's random replay nonce (withdrawn). **Awaiting the
-user: prod install? upstream follow-up to #58863?** Un-parks the GPU-side early exit (item 2).
+rest null, outputs identical. The first "8k regression" was nvprobe's random replay nonce (withdrawn). **IN PROD 2026-09-28** (drop-in 55). Un-parks the GPU-side early exit (item 2).
 
 **Open, ranked:**
 0. **Weight loading — top priority (user 2026-09-28: "move loading speed on top since it speeds up everything").** **#58868 measured (§5w): main load 505–534 s → 65–66 s, model loading ~10 → ~2 min, output identical.** **Fastload set (#58868 + blazux 16 + 18) IN PROD VENV 2026-09-28** (user: "yes, promote and post"; 2 starts: model loading 605–651 → 56–57 s, same hash (§5w addendum); prodval2 checks the prefilter line); GB10 numbers posted on #58868. Remaining: hand-port blazux's loading patches 15–18 (pread for
