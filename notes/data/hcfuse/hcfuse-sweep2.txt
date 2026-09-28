@@ -1,0 +1,10 @@
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=512, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=576, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=608, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=640, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=672, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=704, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=768, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=1024, min=1)
+INFO 09-28 13:05:07 [hc_fused.py:121] FNHCFUSE fused hyper-connection kernels ran (M=1536, min=1)
+{"512": {"today_ms": 0.3681, "fused_ms": 0.3681, "delta_pct": 0.0}, "576": {"today_ms": 0.3849, "fused_ms": 0.3904, "delta_pct": 1.4}, "608": {"today_ms": 0.4026, "fused_ms": 0.4049, "delta_pct": 0.6}, "640": {"today_ms": 0.4693, "fused_ms": 0.4152, "delta_pct": -11.5}, "672": {"today_ms": 0.5022, "fused_ms": 0.4284, "delta_pct": -14.7}, "704": {"today_ms": 0.5306, "fused_ms": 0.4427, "delta_pct": -16.6}, "768": {"today_ms": 0.5806, "fused_ms": 0.4592, "delta_pct": -20.9}, "1024": {"today_ms": 0.7884, "fused_ms": 0.5579, "delta_pct": -29.2}, "1536": {"today_ms": 1.1407, "fused_ms": 0.8258, "delta_pct": -27.6}}

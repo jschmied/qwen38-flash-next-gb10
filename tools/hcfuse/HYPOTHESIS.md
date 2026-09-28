@@ -17,3 +17,9 @@ short suffix + 96 tokens decode) within +-2 %; decode c=1 code/prose and c=4 wit
 code_c1 hashes identical if every probe prompt is < 512 tokens, drift allowed otherwise; the fused log line in the
 hcfuse arm only. Out of range: TTFT gain < 2 % (the in-model block is not byte-bound the way the standalone is) or any
 decode slowdown > 2 %.
+
+HCFUSE threshold sweep (2026-09-28 ~13:10). The 512-token threshold was a guess. Agent turns prefill short suffixes
+(pmu 64 leaves a few hundred uncached tokens), so the crossover matters. Standalone, the registered op with
+FN_HCFUSE_MIN=1 (always fused) vs today's sequence at M = 16, 32, 64, 96, 128, 192, 256, 384, 512, 768.
+H: fused loses below ~200 tokens (launch-bound, L2-resident), wins above ~300-400; crossover 200..400.
+Set the threshold to the smallest M where fused wins in every size above it.

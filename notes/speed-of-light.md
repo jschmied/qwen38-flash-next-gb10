@@ -1740,3 +1740,18 @@ op's log line (present / absent). Probe nvprobe (fixed replay prompt). Data `dat
 - **Status:** clone venv only. **Prod candidate (the user's call)** — the largest TTFT lever measured this week — and an
   upstream candidate (the HC ops live in vLLM's `qwen4_exp`). Items 2–3 of the ranking (MoE epilogue, deterministic
   fused finalize) stay open.
+
+**§5aa — HC fusion size threshold (`tools/hcfuse/sweep_hcfuse.py`): crossover at 640 tokens, not 200–400.** The op
+forced fused vs today's sequence, one block, median of 50:
+
+| M | 16–64 | 96 | 128 | 256 | 384 | 512 | 576 | 608 | 640 | 704 | 1024 | 1536 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| fused vs today | +203…+227 % | +143 % | +102 % | +24 % | +11 % | 0…+6 % | +1.4 % | +0.6 % | **−11.5 %** | −16.6 % | −29.2 % | −27.6 % |
+
+- **Out of the hypothesis range** (predicted crossover 200–400). The fused path has a ~0.195 ms floor: the down GEMM
+  launches only cdiv(M, 64) × 3 programs, each looping over K = 10,240, so below ~600 tokens it is latency-bound. The
+  jump at 640 is on today's side (cuBLAS changes tile: 0.40 → 0.47 ms).
+- **Default threshold moved 512 → 640** (clone venv and `tools/hcfuse/hc_fused.py`). It changes only batches of
+  512–639 tokens (≤ 1.4 % of one block), so the A/B above stands.
+- **Follow-up:** split-K in the down GEMM would lower the floor and extend the win to agent-turn suffixes (a few hundred
+  tokens with pmu 64), where most prefill in the agent loop happens.

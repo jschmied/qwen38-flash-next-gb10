@@ -17,7 +17,7 @@ from vllm.utils.torch_utils import direct_register_custom_op
 from .hc import _hc_combine_norm, _hc_gate_mix, _hc_silu
 
 logger = init_logger(__name__)
-_MIN_M = int(os.environ.get("FN_HCFUSE_MIN", "512"))
+_MIN_M = int(os.environ.get("FN_HCFUSE_MIN", "640"))  # crossover sweep 2026-09-28: fused wins from 640 on
 _K2 = (64, 128, 64, 4, 3)
 _K3 = (64, 64, 64, 4, 2)
 
