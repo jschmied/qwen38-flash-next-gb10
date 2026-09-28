@@ -2166,3 +2166,26 @@ GB10"). Their probes, not ours: "chat" ≠ our prose set, so only the code colum
   2.3 s on a returning 35k conversation, M5 Ultra); int8/int4 KV on CUDA (we measured NVFP4/fp8 KV as a trade, §4l);
   prompt kernels compiled at startup; head only on the final prefill chunk (vLLM already computes logits only at
   sampled positions). Open: #67 (read the ModelOpt NVFP4 Flash-Next checkpoint on CUDA), #73 (n-gram rows on 16 threads).
+
+### TensorFold CUDA kernels: provenance check (2026-09-28, user: "did they copy them from somewhere?")
+
+Clone of `ashhart/TensorFold` @ main (87 commits); every CUDA/Triton file under `src/tensorfold/**/cuda/` (~7,900
+Triton + ~5,300 CUDA C lines) scanned against vLLM (fork csrc + the venv's model_executor/attention/third_party,
+incl. vLLM's own `qwen4_exp` kernels), FlashInfer csrc, flash-linear-attention, ExLlamaV3, MLX, llama.cpp's
+ggml-cuda and our repo: share of each file's 12-token shingles found verbatim, and of 20-token shingles with
+identifiers normalized (`tools/tfold/sim.py`, data `data/tfold/provenance_scan.json`).
+
+- **No copying found.** Exact overlap ≤ 6 % per file against every donor; the normalized overlap (15–35 %) is the same
+  against unrelated donors, i.e. the floor of generic Triton/CUDA idioms. Two outliers (`qmm_frag.cuh` 27–33 %,
+  `experts.cuh` 13–19 %) match all three C++ donors equally; their longest verbatim runs (`tools/tfold/runs.py`) are
+  standard inline PTX (`mma.sync.aligned.m16n8k16…bf16`, `ldmatrix … x4`, `cp.async`) found in dozens of projects.
+- Their THIRD_PARTY_NOTICES declare what they build on: the EXL3 format, codebooks and KV quant scheme (ExLlamaV3,
+  checked bit-exact), FLA's DeltaNet numerics, vLLM's NCCL stream convention, z-lab's DFlash2 architecture, and
+  MLX/mlx-lm/mlx-vlm on the Apple side. The code style is consistent across files (terse rounding/determinism
+  comments, `--fmad=false`).
+- **Prior art for our HC fusion:** `families/qwen4_exp/cuda/qmm.py` `_qmm_hcdown` + `_qmm_upmix`, since 0.3.0
+  (2026-09-26, PR #8) — two days before ours (§5aa). Same design: normalize on load in the down GEMM from
+  precomputed per-stream sums of squares, split-K with K slices inside one stream and ordered partials, and the up
+  projection with the 4-stream gate mix in its epilogue, bf16 rounding points matched to the unfused path. One
+  difference: they store the normalized `xn` once (from `hc_down`) and read it in `upmix`; ours never stores it and
+  rebuilds it from the residual and rrms. Weights 4-bit affine there, BF16 here. Cite this in any upstream PR.

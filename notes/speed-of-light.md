@@ -1647,6 +1647,10 @@ and hashes are identical between arms, and the output length alone moves the cac
 
 ### 5aa. Byte ledger (TODO 5b): at prefill, ~15–20 % of TTFT is intermediates that round-trip DRAM; hyper-connections are the largest
 
+> **Prior art (found 2026-09-28, after these measurements):** TensorFold shipped the same HC fusion two days earlier
+> (`_qmm_hcdown` / `_qmm_upmix`, 0.3.0, 2026-09-26) for 4-bit weights; it stores `xn` once where ours rebuilds it.
+> Details and the provenance check in [the-field](the-field.md). Our work was independent; cite theirs upstream.
+
 User: "do we have fusable kernels where a fusion would lower bytes read/written? I think we checked only for launch
 overhead". §4m and §5f priced fusions by launches and by avoidable work; this prices them by **bytes**. One nsys trace
 on the prod config (clone venv, PIECEWISE, K=5, bf16 state, KV 4 GiB): a 7,507-token prefill (chunks 3,456 + 3,456 +
