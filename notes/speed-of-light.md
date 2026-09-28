@@ -1577,7 +1577,7 @@ prefilter), 5 forbidden absent. Data `data/prodval2/`.
   −4 % / +7 % differences are not attributed to any of the four changes. Greedy hashes differ from 09-27, as
   expected with a bf16 state (a precision change; SWE-bench showed no loss, §5u).
 
-### 5z. F4: full CUDA graphs for the RecoverSSM verify path — −1.1…−2.1 % short-context decode, but slower at 8k context
+### 5z. F4: full CUDA graphs for the RecoverSSM verify path — −1.1…−2.1 % short-context decode, no regression (the 8k "regression" was a probe artefact, withdrawn below)
 
 User: "do 4. next", then "all". The GDN and PLE RecoverSSM builders now declare `UNIFORM_BATCH`; graph padding rows
 get null state slots and zero-length windows (the verify kernel writes zeros and returns for them). Kernel and config
@@ -1602,7 +1602,7 @@ Data `data/f4/`.
   graphs in both starts (gap beats each arm's spread). Same direction as finding 237 (FULL_DECODE_ONLY: agent turns
   3–4 % slower). Mechanism not yet known; the lead is a context-dependent decode cost under full graphs (graph-captured
   attention/QSA launched for the capture shape rather than the live context).
-- **Verdict: not a prod candidate** as is. Agent work runs at long context. Next: a decode-vs-context sweep, both arms
+- ~~**Verdict: not a prod candidate** as is.~~ Superseded by the withdrawal below. Agent work runs at long context. Next: a decode-vs-context sweep, both arms
   (`tools/f4/`, queued), to locate the regression before any upstream follow-up.
 
 **§5z addendum — decode vs context (`f4ctx`, same arms, 2 starts each): no context-dependent decode cost.** Streamed
@@ -1620,3 +1620,22 @@ decode at long context. Still unexplained: that request (8k prompt + 96 tokens, 
 +0.35…0.5 s in both full starts. Its output was not hashed or token-counted across arms, so a different output length is
 not excluded. Next: a replay probe that streams, counts and hashes, run both before and after the TTFT probes.
 Data `data/f4/f4ctx.*`.
+
+**§5z withdrawal — the 8k-request regression was the probe (`f4rep`, same arms, 2 starts).** nvprobe's replay prompt
+carries a random `uuid4` nonce, so every arm and start answered a *different* prompt, with a different text and length.
+With fixed prompts (3 replay pairs on the fresh server, the TTFT probes, 3 more pairs), outputs, token counts (76–96)
+and hashes are identical between arms, and the output length alone moves the cache-hit request between 1.69 and
+2.30 s: the whole §5z spread. Full vs piecewise on the same prompts:
+
+| | full, s1 / s2 | piecewise, s1 / s2 | Δ |
+|---|---|---|---|
+| cache-hit replay, phase A (3 prompts), s | 2.175, 2.257, 1.688 / 2.186, 2.265, 1.692 | 2.223, 2.304, 1.721 / 2.221, 2.303, 1.721 | −1.5…−2.2 % |
+| cache-hit replay, phase B (after the TTFT probes), s | 1.808, 2.093, 2.255 / 1.818, 2.100, 2.269 | 1.846, 2.136, 2.304 / 1.846, 2.137, 2.301 | −1.4…−2.1 % |
+| TTFT 8k (median of 3) / 30k, s | 2.773, 10.180 / 2.789, 10.214 | 2.845, 10.429 / 2.808, 10.312 | −0.7…−2.5 % / −1…−2.4 % |
+
+- **H1 (output length) confirmed; H2 (state after long prefills) and H3 (per-request cost) refuted.** The §5z row
+  "8k prompt + 96 tokens … +7…+13 % / +13…+29 %" is **withdrawn**. nvprobe's replay now uses a fixed prompt, so its
+  replay times compare across arms (earlier nvprobe replay numbers compare only within one server).
+- **Revised F4 verdict:** short-context c=1 −1.1…−2.1 %, replay and TTFT −1…−2.5 %, everything else null, outputs
+  identical at c=1. **A prod candidate (the user's call)** and an upstream follow-up to #58863. It also un-parks the
+  GPU-side early exit, which needs the draft steps under full graphs. Data `data/f4/f4rep.*`.

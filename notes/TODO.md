@@ -11,6 +11,10 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1728`, `--prefix-match-unit 64`
 (§5t), blazux's tool-call parser guards (`tools/toolguard/`, installed 09-28). Drop-ins in `tools/main/dropins/`.
 
+**F4 (full CUDA graphs, RecoverSSM verify) — DONE 2026-09-28, §5z:** short-context c=1 −1.1…−2.1 %, replay/TTFT −1…−2.5 %,
+rest null, outputs identical. The first "8k regression" was nvprobe's random replay nonce (withdrawn). **Awaiting the
+user: prod install? upstream follow-up to #58863?** Un-parks the GPU-side early exit (item 2).
+
 **Open, ranked:**
 0. **Weight loading — top priority (user 2026-09-28: "move loading speed on top since it speeds up everything").** **#58868 measured (§5w): main load 505–534 s → 65–66 s, model loading ~10 → ~2 min, output identical.** **Fastload set (#58868 + blazux 16 + 18) IN PROD VENV 2026-09-28** (user: "yes, promote and post"; 2 starts: model loading 605–651 → 56–57 s, same hash (§5w addendum); prodval2 checks the prefilter line); GB10 numbers posted on #58868. Remaining: hand-port blazux's loading patches 15–18 (pread for
    small tensors, expert name index, chunked embedding copy, MTP prefilter) onto 1ea7 — their full set took the main

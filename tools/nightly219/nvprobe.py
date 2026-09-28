@@ -24,7 +24,7 @@ for reps, name in ((220, "8k"), (860, "30k")):
     ts = [chat(f"[{uuid.uuid4()}]\n" + unit * reps + "\nSummarise what handler() does in one sentence.", 1)[0]
           for _ in range(3)]
     tt[name] = {"median_s": round(statistics.median(ts), 3), "all": [round(x, 3) for x in ts]}
-q = f"[{uuid.uuid4()}]\n" + unit * 220 + "\nList three risks in this module, one line each."
+q = "[replay-fixed]\n" + unit * 220 + "\nList three risks in this module, one line each."  # fixed: comparable across arms (§5z withdrawal)
 c1, a1 = chat(q, 96); c2, a2 = chat(q, 96)
 out["ttft"] = tt
 out["replay"] = {"cold_s": round(c1, 3), "warm_s": round(c2, 3), "equal": a1 == a2}
