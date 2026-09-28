@@ -25,3 +25,9 @@ during decode is not retained, so there is nothing for B to hit, with or without
 (interval unset): a decode-written recurrent state is never served from the prefix cache, so #53912's path is not
 reachable in our config. v3 = decblk3: same probe, both arms with `--prefix-cache-retention-interval 1728` (every block
 retained), to test the path for configs that do set it. Same H0/H1 and void rule.
+
+AMENDED 2026-09-28 ~11:05 (decblk3 VOID at startup: "prefix_cache_retention_interval (1728) must be ... a multiple of
+scheduler_block_size (3456)"). The scheduler block on this model is 3456 tokens, and cache hits come in that unit (the
+diag's hit was exactly 3456). So v2's follow-up (1871 tokens) could never hit, whatever the retention rule: the v2 void
+was the probe's length, not (only) retention. decblk3b: decblk3.py = 380 numbers (~3.1k-token prompt), 520 sampled tokens
+cross 3456 during decode, follow-up ~3.57k; retention interval 3456. B must hit >= 3456 > prompt. Same H0/H1/void rule.

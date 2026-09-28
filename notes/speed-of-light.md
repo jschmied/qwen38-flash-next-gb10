@@ -1520,15 +1520,20 @@ in both arms. The follow-up never hit past the first request's prompt (0 of 16 s
 probe's own diagnostic shows the cache working (an identical prompt's first repeat hits 0, its second hits 3,456
 tokens). Data `data/decblk2/`.
 
-Cause, from the code (`v1/core/single_type_kv_cache_manager.py`, reachable-boundary mask; `config/cache.py`): align-mode
+**Correction (same day, decblk3's start failed on it):** the scheduler block on this model is **3,456 tokens** (2 × 1,728),
+and cache hits come in that unit (the diagnostic's hit was exactly 3,456). The v1/v2 follow-ups (1,871 and 3,127 tokens)
+were too short to hit at all, so **the void was the probe's length**; the retention rule below is from reading the code
+and was not what this probe measured. decblk3b (380-number prompt, follow-up ~3.57k crossing 3,456 during decode,
+retention interval 3,456) is queued as `night31`.
+
+From the code (`v1/core/single_type_kv_cache_manager.py`, reachable-boundary mask; `config/cache.py`): align-mode
 Mamba retains recurrent-state snapshots **sparsely**. `--prefix-cache-retention-interval` defaults to **0 = "only
 semantic checkpoints"**: the latest replay boundary (prompt end) and shared-prefix junctions. A block boundary crossed
 during decode is not retained, so there is nothing to hit, with or without speculation. The same rule explains the old
 "hits only from the second repetition" observation: the first repeat creates the shared-prefix junction, the second reads it.
 
-- **For prod (interval unset): #53912's path is not reachable**; every served recurrent state was written by a prefill.
-- decblk3 (queued, `night29`) re-runs the probe with `--prefix-cache-retention-interval 1728` (every block retained) to
-  test the path for configs that set it.
+- **For prod (interval unset), by the code: #53912's path is not reachable**; a served recurrent state is a prompt-end or
+  shared-prefix checkpoint. Not yet shown by a measurement (decblk3b).
 - det-236 (09-24, "15 reads into decode-written blocks, 0 divergent") ran on the older stack; whether its reads really
   hit decode-written states was not re-checked against this mechanism, so it no longer counts as evidence either way.
 
