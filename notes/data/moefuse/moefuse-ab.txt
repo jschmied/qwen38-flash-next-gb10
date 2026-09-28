@@ -1,0 +1,14 @@
+== armrun moefuse: 2 arms x 2 start(s), port 8092 ==
+-- moefuse-moefuse0  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1', 'FN_MOEFUSE': '1'}
+   void checks passed (17 required, 6 forbidden)
+-- moefuse-base0  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1'}
+   void checks passed (16 required, 7 forbidden)
+-- moefuse-moefuse1  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1', 'FN_MOEFUSE': '1'}
+   void checks passed (17 required, 6 forbidden)
+-- moefuse-base1  env={'FN_CG_MODE': 'FULL_AND_PIECEWISE', 'FN_HCFUSE': '1'}
+   void checks passed (16 required, 7 forbidden)
+== RESULT ==
+  moefuse      code_ms_tok 14.621–15.017  prose_ms_tok 23.503–23.723  start 0–1
+  base         code_ms_tok 14.805–14.907  prose_ms_tok 23.785–23.845  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==

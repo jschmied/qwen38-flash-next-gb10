@@ -2072,3 +2072,66 @@ out_proj input 25.6 ms (0.96 %, **covered by item 2**), `cvt_fp16_to_fp4` on the
 remaining ones is our HC fusion's K3, whose bf16 output must still be written (router, shared expert and `in_proj_ba`
 consume bf16), so a fused quant would save only the quant kernels' bf16 re-read, ≈ 0.3 % TTFT, below a 2-start A/B's
 resolution, at the cost of four consumer hooks and the FP4 swizzled scale layout. Not built.
+
+### 5ag. MoE prefill fusion in Triton (FUSION-AGENDA item 3, TODO 6): bit-identical to FlashInfer, TTFT −3.8…−4.3 % at 30k
+
+User: "go for 3". Hypothesis and kill criteria written before any timing: `tools/moefuse/HYPOTHESIS.md`.
+
+**Route.** The planned CUTLASS port (FlashInfer's SM120 FP8 dual-tile fused MoE → NVFP4) was replaced by Triton once a
+probe showed that Triton 3.7.1 lowers `tl.dot_scaled(e2m1, e4m3 scales)` to the native
+`mma…kind::mxf4nvf4.block_scale.scale_vec::4X` **when compiled for sm_120**. On sm_121 it falls back (MXFP4: bf16
+upcast; NVFP4: a compiler assertion) because the sm_121 gate is Triton #10010, which 3.7.1 lacks. The wrapper sets
+`triton.knobs.runtime.override_arch = "sm120"` around its own three launches only; Triton's in-memory cache key omits the
+arch, so no other kernel is touched. sm_120 cubins run on sm_121.
+
+**Design** (`tools/moefuse/moe_fp4.py`, prefill only, M ≥ 128 rows, decode stays on FlashInfer; FlashInfer's processed
+tensors are read in place, no weight copy):
+1. GEMM1 gathers A rows from the per-token FP4 input (no `expandInputRows`), computes the up and gate tiles in one CTA
+   (w13 is `[up | gate]` after vLLM's reorder), then applies alpha → bf16 → `silu(gate)·up` → bf16 → NVFP4 with
+   FlashInfer's fast-math recipe (`rcp.approx`, e4m3 scale, RN-even e2m1). No `doActivation`, no 88 MB bf16 round trip.
+2. GEMM2 applies alpha2 and writes bf16 rows per (token, k).
+3. A fixed-order finalize (k ascending, fp32), matching prod's non-fused DETFIN finalize.
+
+**Correctness.** The quant recipe matches `ops.scaled_fp4_quant` bit for bit, codes and scales, at three global scales
+with signed zeros. The whole MoE output is **bit-identical to FlashInfer's** at M = 3,456 / 595 / 128 (0 differing
+elements, output buffer NaN-poisoned first so a no-op cannot pass) and bit-stable run to run.
+
+**Tuning by bytes, not time.** The GPU was shared during tuning, so ncu L2-miss sectors (≈ DRAM reads, independent of
+load) were the instrument. GEMM1's excess over the weight floor came from the gathered A rows: they were re-fetched for
+every N tile after the weight stream evicted them. Making the N tiles of one M block adjacent cut GEMM1 from 1.25 to
+**1.04 GB** (FlashInfer's GEMM1 reads 1.12 GB) and GEMM2 from 843 to 668 MB. A persistent GEMM1 and TMA weight loads were
+both bit-identical and gave no gain. An intermediate byte probe was voided by Python late binding: the stored lambdas all
+ran the last config.
+
+**Standalone, quiet box, one layer, same process** (`test_moefuse.py bench`, 2 runs):
+
+| M | FlashInfer | Triton | Δ |
+|---|---|---|---|
+| 3,456 | 9.64 / 9.72 ms | 8.39 / 8.43 ms | **−12.9…−13.3 %** (−1.25…−1.29 ms; predicted −0.7…−1.3) |
+| 1,024 | 7.26 / 7.28 ms | 6.88 / 6.88 ms | −5.3…−5.5 % |
+| 595 | 6.86 / 6.88 ms | 6.69 / 6.63 ms | −2.3…−3.6 % |
+
+Per kernel at 3,456 (nsys minima): Triton GEMM1 + SwiGLU + FP4 4.33 ms (predicted 3.9–4.6, kill > 4.8), GEMM2 3.09 ms
+(predicted 2.6–3.2), finalize 0.84 ms. FlashInfer: GEMM1 3.68 ms + `doActivation` 0.52 ms + `expandInputRows` 0.37 ms +
+prefix sums and glue. The fused GEMM1 stage is 0.13 ms slower than FlashInfer's GEMM1 + activation; the win is the
+removed expand/activation/glue passes and their bytes.
+
+**Server A/B** (`armrun moefuse`, clone venv, full prod config incl. HC fusion + F4, `FN_MOEFUSE=1`, 2 starts per arm;
+the path line `FNMOEFUSE Triton NVFP4 prefill MoE ran` is a required void check):
+
+| | moefuse, s1 / s2 | base, s1 / s2 | Δ |
+|---|---|---|---|
+| TTFT 30k (median of 3) | 9.316 / 9.301 s | 9.720 / 9.671 s | **−3.8…−4.3 %** |
+| TTFT 8k | 2.606 / 2.680 s | 2.709 / 2.697 s | −0.6…−3.9 % |
+| replay cold / warm | 4.055, 4.155 / 1.520, 1.517 s | 4.168, 4.227 / 1.517, 1.522 s | cold −1.7…−4.0 %, warm null |
+| code c=1 greedy, ms/tok | 14.621 / 15.017 | 14.907 / 14.805 | null (decode path unchanged) |
+| prose c=1, ms/tok | 23.723 / 23.503 | 23.785 / 23.845 | null |
+| greedy code / prose, sampled hashes | d102a738 / 38c70791, 245ccf19 | **identical** | outputs unchanged |
+
+- **Against the hypothesis:** TTFT at 30k is inside the predicted −2.5…−5 %. The 8k prompt is partly below it: its last
+  chunk is 591 tokens, where the kernel gains only ~3 %.
+- **Quality:** the prefill MoE is bit-identical, and the greedy and sampled texts are identical across arms, so no
+  quality screen is needed.
+- **Status:** a prod candidate, **proposed, not installed**. It is installed env-gated (off unless `FN_MOEFUSE=1`) in the
+  clone venv `vllm-venv-rssm` (`fused_moe/fn_moe_fp4.py`, hook in `experts/flashinfer_cutlass_moe.py`, backup
+  `*.orig-moefuse`; `patch_moefuse.py <vllm> off` removes it). Data: `data/moefuse/`.

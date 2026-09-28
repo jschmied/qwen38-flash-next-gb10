@@ -117,7 +117,7 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
    6 MiB/layer, probably L2-resident) and **prefill** (M = thousands: SwiGLU + fp4 quant into MoE GEMM1's epilogue
    ≈ 1.1 of 13.5 ms/layer at 7.5k, item 6; FP8 act-quant ×96 re-reading bf16 activations; HC stream reads/writes).
    Prefill first: agent speed is TTFT-bound.
-6. **MoE epilogue fusion** (findings 144/145). **Scoped 2026-09-28 (plan, agenda item 5):** the prize is ~4 % of TTFT
+6. **MoE epilogue fusion** (findings 144/145). **DONE 2026-09-29 (§5ag): Triton prefill MoE, bit-identical to FlashInfer, TTFT −3.8…−4.3 % at 30k; proposed, not in prod.** History below. **Scoped 2026-09-28 (plan, agenda item 5):** the prize is ~4 % of TTFT
    (§5aa: GEMM1 output + bf16 activation round trips, ~264 MB per layer-chunk). Where a fused GLU exists today:
    - FlashInfer 0.6.18's SM100 "mega" CuTe-DSL MoE (`moe_nvfp4_swapab`, `runner_fc12`): fused fc1/GLU/fc2, **SM100 only**.
    - **b12x's gated-optimized kernel** (`fused_moe/cute_dsl/blackwell_sm12x/moe_dynamic_kernel.py`): runs on sm_12x but
