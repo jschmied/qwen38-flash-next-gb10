@@ -1982,3 +1982,12 @@ path line; kernels as fast as prod; acceptance lower.**
 the shared key file via a tmpfs `--config` YAML (never on argv; 4 of 4 keys accepted, no key → 401). Port 8080 is what
 Open WebUI (LAN only) and the Cloudflare tunnel (behind Cloudflare Access) point at. Not enabled at boot; prod's unit
 conflicts with it.
+
+**§5aa — HC fusion, item 1 of the xn-style list (user: "do all"): L2 row sub-chunking refuted; K2/K3 are GEMM-efficiency-bound.**
+Running K1→K2→silu→K3 over row sub-chunks (S = 256…1024) so the residual stays in L2 between kernels
+(`tools/hcfuse/l2chunk.py`): **slower at every S** (M = 3,456: 1.90–2.09 vs 1.78 ms one pass; M = 1,024: 0.58–0.64 vs 0.56),
+outputs within 1 ulp, reproducible. Out of the hypothesis range (−0.3…−0.6 ms). Per-kernel times (`tools/hcfuse/parts.py`,
+M = 3,456): K1 0.707 ms for 159 MB = **225 GB/s (DRAM-bound)**; K2 0.475 ms for 78 MB = 164 GB/s; K3 0.579 ms for 95 MB =
+164 GB/s; silu 0.017 ms. K2 and K3 each do ~23 GFLOP (~50 TFLOPS effective), so they are bound by GEMM efficiency (tile,
+warps, stages), not DRAM: keeping their input in L2 cannot help, and the extra launches/partials cost more. The lever
+for item 1 is a tile/config sweep of K2 and K3 (≈1.05 ms of the op's 1.78 ms).

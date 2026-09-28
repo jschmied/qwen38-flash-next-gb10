@@ -50,3 +50,12 @@ clone venv (K=5, probabilistic drafts, bf16 state, pmu 64, KV 4 GiB); arms hcfus
 H: no measurable quality change: both scores inside the base arm's own start-to-start spread (§5r prod spread:
 GSM8K 95.91-96.44 %, HumanEval 158-159), McNemar p > 0.05 for every hcfuse-vs-base pair. Out of range: a gap larger
 than the base arm's own spread in the same direction in both starts -> SWE-bench before any prod use.
+
+HCFUSE-L2 (2026-09-28 ~20:05, user: "do all", item 1 of the xn-style list). Run the fused op's K1 -> K2 -> silu -> K3 over
+row sub-chunks of S rows so each sub-chunk's residual (S x 20 KB) stays in the 24 MiB L2 between the kernels: K2 and K3
+read it from L2 instead of DRAM. Standalone, one block, M = 3456 (and 1024), S in {256, 384, 512, 768, 1024}, vs the
+current fused op (one pass) and today's kernels. Split-K per sub-chunk from the op's own schedule.
+H: at M = 3456 the best S saves 0.3..0.6 ms of the fused op's 1.79 ms (DRAM bytes 320 -> ~180 MB); best S 384..768
+(L2 residency vs launch count: 2 * M/S launches + reduces). Output within 1 bf16 ulp of the one-pass op (split-K
+reduction order may change), reproducible run to run. Out of range: no gain (L2 does not hold across launches, or
+launch overhead eats it).
