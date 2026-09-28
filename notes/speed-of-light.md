@@ -1401,3 +1401,31 @@ Probe `tools/i54458/turnreplay.py`: (B) two held-out SWE-bench trajectories repl
   reduction order; the flag arms agree with each other and across starts.
 - **Prod candidate:** `--prefix-match-unit 64` in `FN_EXTRA` — agent turns −35 %, edit-in-the-middle prompts +0.1 s.
   The user's call.
+
+### 5u. SWE-bench (the deciding benchmark): neither NVFP4 GDN nor a bf16 SSM state loses; both stay inside prod's own run-to-run range
+
+The real benchmark for the two precision cuts (user: "NVFP4 GDN need reals becnhmark", "bf16 SSM state also need
+benchmark"). mini-swe-agent 2.4.5 on the x86 box, our fixed slices Verified-30 (Python) + Multilingual-28 (Java/JS),
+4 instances at a time, reasoning_effort medium, the model's sampling 1.0/0.95/20, max_tokens 16,000. Server: the exact
+prod config (K=5, probabilistic drafting, RecoverSSM with the boundary fix, block 1728), 64k context, default KV; 2 runs
+per arm. Hypothesis and verdict rule written first (`tools/swe/HYPOTHESIS-swe.md`). Data `data/swe/` (harness reports,
+exit statuses).
+
+| resolved /58 (Python + Java/JS) | run 1 | run 2 | context overflows (run 1 / 2) |
+|---|---|---|---|
+| prod (FP8 GDN, fp32 SSM state) | 48 (24 + 24) | **52** (28 + 24) | 1 / 1 |
+| NVFP4 GDN | 51 (28 + 23) | 50 (27 + 23) | 2 / 1 |
+| bf16 SSM state | 50 (26 + 24) | 51 (27 + 24) | 3 / 1 |
+
+- **Run-to-run spread of prod itself: 4 instances** (48 vs 52) at temperature 1.0. Both cuts land inside it on both runs.
+- **Per instance, both runs pooled:** NVFP4 GDN better than prod on 7 instances, worse on 5 (sign p = 0.77); bf16 state
+  better on 6, worse on 5 (p = 1.00). The pre-registered rule (a cut is a noticeable loss only if both its runs sit below
+  both prod runs AND losses clearly outnumber wins) is met by neither.
+- **Overflows** (prompt + 16k output > 64k): the same two long lombok instances hit both cuts in run 1; run 2 has one per
+  arm. No repeated-step loops in the overflowed trajectories (checked for bf16's django-14034: 98 distinct steps).
+- **Against Qwen3.8-27B** on the same Java/JS slice (25/28, two runs, temperature 0.6, larger window): Flash-Next 23–24/28;
+  the one instance the 27B alone solved in prod's run 1 (lucene-12212) was a context overflow here, not a wrong answer.
+- **Verdict: no noticeable quality loss from either cut** on real agentic tasks, which is what the GSM8K/HumanEval screen
+  (§5r) could not show on its own. The choice between them is therefore a speed choice: NVFP4 GDN −7 % decode but +6 %
+  TTFT (§5j, §5r); bf16 SSM state no TTFT cost, halves the Mamba state (more KV, smaller align blocks possible). The
+  user's call. Not measured: long single-context (> 64k) work, and whether the two cuts compound on this benchmark.

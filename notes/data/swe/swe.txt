@@ -1,0 +1,32 @@
+== armrun swe: 3 arms x 2 start(s), port 8092 ==
+-- swe-fp8gdn0  env=(spec default)
+Running as unit: fx-armrun-swe.service; invocation ID: 2972302a84e54a4bb7fc7af9edf7119a
+   void checks passed (11 required, 8 forbidden)
+   {"python": {"instances": 30, "preds": 30, "empty_patches": 0, "resolved": 24, "gen_s": 2345, "eval_s": 291}, "javajs": {"instances": 28, "preds": 28, "empty_patches": 1, "resolved": 24, "gen_s": 3505, "eval_s": 406}, "resolved_total": 48, "instances_total": 58}
+-- swe-nvfp4gdn0  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdn4'}
+Running as unit: fx-armrun-swe.service; invocation ID: f5b715be1f6c462bad8df44373beba93
+   void checks passed (12 required, 6 forbidden)
+   {"python": {"instances": 30, "preds": 30, "empty_patches": 0, "resolved": 28, "gen_s": 2363, "eval_s": 280}, "javajs": {"instances": 28, "preds": 28, "empty_patches": 2, "resolved": 23, "gen_s": 3929, "eval_s": 405}, "resolved_total": 51, "instances_total": 58}
+-- swe-bf16ssm0  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --mamba-ssm-cache-dtype bfloat16'}
+Running as unit: fx-armrun-swe.service; invocation ID: 1b59a2e8661d4e9a8b8c07c88adf5a0b
+   void checks passed (12 required, 7 forbidden)
+   {"python": {"instances": 30, "preds": 30, "empty_patches": 1, "resolved": 26, "gen_s": 2810, "eval_s": 275}, "javajs": {"instances": 28, "preds": 28, "empty_patches": 2, "resolved": 24, "gen_s": 2982, "eval_s": 408}, "resolved_total": 50, "instances_total": 58}
+-- swe-fp8gdn1  env=(spec default)
+Running as unit: fx-armrun-swe.service; invocation ID: caf9c75058e34dc1aa066a52218fcade
+   void checks passed (11 required, 8 forbidden)
+   {"python": {"instances": 30, "preds": 30, "empty_patches": 1, "resolved": 28, "gen_s": 2999, "eval_s": 267}, "javajs": {"instances": 28, "preds": 28, "empty_patches": 0, "resolved": 24, "gen_s": 3323, "eval_s": 447}, "resolved_total": 52, "instances_total": 58}
+-- swe-nvfp4gdn1  env={'FN_MODEL': '/opt/llm/models/qwen38-flash-next-mtpfp4-gdn4'}
+Running as unit: fx-armrun-swe.service; invocation ID: 7072c0f6d5204114b62e9ac1c391993e
+   void checks passed (12 required, 6 forbidden)
+   {"python": {"instances": 30, "preds": 30, "empty_patches": 0, "resolved": 27, "gen_s": 2725, "eval_s": 280}, "javajs": {"instances": 28, "preds": 28, "empty_patches": 1, "resolved": 23, "gen_s": 3499, "eval_s": 413}, "resolved_total": 50, "instances_total": 58}
+-- swe-bf16ssm1  env={'FN_EXTRA': '--engram-config {"checkpoint_mapped":true} --use-replayssm --block-size 1728 --mamba-ssm-cache-dtype bfloat16'}
+Running as unit: fx-armrun-swe.service; invocation ID: 82835bf71cfa4c45b5582ea595a2861e
+   void checks passed (12 required, 7 forbidden)
+   {"python": {"instances": 30, "preds": 30, "empty_patches": 1, "resolved": 27, "gen_s": 2773, "eval_s": 233}, "javajs": {"instances": 28, "preds": 28, "empty_patches": 0, "resolved": 24, "gen_s": 2906, "eval_s": 438}, "resolved_total": 51, "instances_total": 58}
+
+== RESULT ==
+  fp8gdn       resolved_total 48–52  instances_total 58  start 0–1
+  nvfp4gdn     resolved_total 50–51  instances_total 58  start 0–1
+  bf16ssm      resolved_total 50–51  instances_total 58  start 0–1
+  ranges, not means -- reps within a start are not exchangeable
+== ALL DONE ==
