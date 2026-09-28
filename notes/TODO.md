@@ -97,6 +97,15 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
    - Depth alone loses: finding 155 measured k=4 at −3.4 %.
    - The depth band 5..8 needs the QSA-ring widening from our PR #54912. It is patched locally already (det-204).
    - The plumbing is issue #57608 (a host hook between proposal and verify).
+5b. **Intermediate-byte ledger (user 2026-09-28: "do we have fusable kernels where a fusion would lower bytes
+   read/written? I think we checked only for launch overhead").** §4m/§5f priced fusions by launches and gaps, and §5f by
+   avoidable work; nobody has listed producer→consumer tensors that round-trip DRAM. GB10's ncu has no DRAM byte
+   counters (finding 144), so compute bytes from shapes per kernel, and decide L2 vs DRAM by size against the 24 MiB L2.
+   Two regimes: **decode** (M = 6 rows: activations are KBs, weights dominate; only state-sized intermediates count:
+   RecoverSSM commit → next verify re-reads the checkpoint, ~54 MiB/step at bf16 ≈ 0.25 ms; QSA split-K fp32 partials,
+   6 MiB/layer, probably L2-resident) and **prefill** (M = thousands: SwiGLU + fp4 quant into MoE GEMM1's epilogue
+   ≈ 1.1 of 13.5 ms/layer at 7.5k, item 6; FP8 act-quant ×96 re-reading bf16 activations; HC stream reads/writes).
+   Prefill first: agent speed is TTFT-bound.
 6. **MoE epilogue fusion** (findings 144/145). This is the 36.4 % bucket at the DRAM floor: the biggest kernel prize
    and the biggest effort.
 7. **65k vs 32k draft vocab.** One arm; cheap disconfirmation, and 32k is expected to hold.
