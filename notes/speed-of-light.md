@@ -1841,3 +1841,24 @@ Clone venv, prod config, thinking off, greedy, c = 16; HumanEval scored offline 
   inside, so the out-of-range rule (gap in both starts) is not met. **Verdict: no measurable quality change**; the HC
   fusion (installed in prod the same day on the user's go) stands.
 - TTFT reproduces the A/B above (−6…−7 % at 8k, −6.6…−7.1 % at 30k).
+
+### 5ac. Validation of the prod config with HC fusion + F4 (prodval3): all paths taken, TTFT −5.4 / −6.2 %, outputs unchanged
+
+User: "yes, both goes to prod". Prod's venv, launcher and drop-ins incl. 55 (`FN_HCFUSE=1`,
+`FN_CG_MODE=FULL_AND_PIECEWISE`), default KV size, one start (as prodval2, §5y). 15 required path lines present
+(incl. `FNHCFUSE fused hyper-connection kernels ran`, `Capturing CUDA graphs (FULL)`, the MTP name prefilter).
+Hypothesis `tools/prodval3/HYPOTHESIS.md`; data `data/prodval3/`.
+
+| | prodval2 (09-28 morning config) | prodval3 (+ HC fusion + F4) | Δ |
+|---|---|---|---|
+| code c=1 greedy / sampled, ms/tok | 14.74 / 16.60 | 14.60 / 16.37 | −0.9 % / −1.4 % |
+| prose c=1, ms/tok | 23.66 | 23.49 | −0.7 % |
+| code c=4, tok/s | 144.8 | 145.7 | ≈ |
+| TTFT 8k / 30k (cold, nonce) | 2.886 / 10.39 s | **2.729 / 9.750 s** | **−5.4 % / −6.2 %** |
+| greedy hashes (code / prose) | d102a738 / 38c70791 | identical | |
+| start to ready | 2 min 39 s | 2 min 43 s | |
+| KV pool at the default size | 840,265 tokens | 791,113 tokens | −5.9 % (full-graph memory) |
+
+- All inside the hypothesis ranges. One start per config, so a validation, not an A/B; the A/Bs are §5z and §5aa.
+- **New cost:** full CUDA graphs take memory, so the default KV pool shrinks 5.9 % (still ~790k tokens, far above
+  what 16 streams at 32k use).

@@ -27,7 +27,9 @@ five more are open there.
 > ([§5y](notes/speed-of-light.md), [data](notes/data/prodval2/)).
 > **2026-09-28, HC fusion + F4 in prod** (user: "yes, both goes to prod"; drop-in 55, installed, service still stopped):
 > TTFT −5.5…−7.9 % at 8k / −6.2…−7.8 % at 30k, decode c=1 −1…−2 % on the clone venv ([§5aa](notes/speed-of-light.md),
-> [§5z](notes/speed-of-light.md)). Validation start on the prod venv queued (prodval3); the GSM8K/HumanEval screen is running.
+> [§5z](notes/speed-of-light.md)). **Validated on the prod venv** (prodval3, [§5ac](notes/speed-of-light.md)): every path line present,
+> TTFT 2.73 / 9.75 s at 8k / 30k (−5.4 / −6.2 % vs the morning config), code 14.60 ms/tok, outputs unchanged; GSM8K/HumanEval
+> screen unchanged (McNemar p ≥ 0.25). The default KV pool shrinks 5.9 % (full-graph memory). Full README re-measure queued.
 > K=5 is the better default for code-heavy agent work; prose is 5 % slower than at K=3 ([§5l](notes/speed-of-light.md)).
 > Forwarded to nightly `a9eafde59` (266 commits newer; [§5s](notes/speed-of-light.md)): the overlay applies and c=1 output is
 > bit-identical to prod, but c=4 is 4.5 % slower and not reproducible, so prod stays on `1ea7c63f4` for now.
@@ -63,7 +65,7 @@ KV is fixed at 4 GiB so the PLE table stays resident, with 2 server starts per a
 - **[REPRODUCE.md](REPRODUCE.md)** — weights, the venv overlay, serve config, and what to check before
   you trust a number. Start here to get it *running*.
 - **[Speed of light](notes/speed-of-light.md)** — how far decode is from the byte floor, where the rest
-  goes, and every lever tried against it (sections 1–5aa, newest last).
+  goes, and every lever tried against it (sections 1–5ac, newest last).
 - **[Failure modes](notes/failure-modes.md)** — every failure hit here, by what you *observe*. Four
   different causes produce "it loads but the output is wrong".
 - **[Closed levers](notes/closed-levers.md)** — what looked like a lever and measured null, with the
@@ -142,7 +144,7 @@ drafted in `notes/upstream/`, numbers trace to a finding, AI assistance is discl
     tools/plecold/                PLE cold-window instruments and the readahead fill
     tools/prof/                   nsys / torch-profile analysis (nsyscmp.py compares two traces)
     tools/armrun.py               the A/B runner every server number comes from
-    notes/speed-of-light.md       decode vs the byte floor, sections 1–5aa
+    notes/speed-of-light.md       decode vs the byte floor, sections 1–5ac
     notes/prefill-investigation.md   numbered findings (prefill, kernels, cache, the mapped PLE)
     notes/determinism-investigation.md   greedy reproducibility; starts with an "answers by question" index
     notes/upstream/               drafts of every post and the posting log
