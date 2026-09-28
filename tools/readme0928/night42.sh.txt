@@ -1,0 +1,8 @@
+# README re-measure on the full 09-28 prod config (after night41, prodval3).
+R=/opt/llm/runners/night; RES=/opt/llm/runners/results
+log(){ echo "$(date '+%F %T') $*" >> $R/night.log; }
+idle(){ while systemctl list-units 'fx-*' --no-legend | grep -q .; do sleep 10; done; }
+while pgrep -f "night/night4[01][.]sh" > /dev/null; do sleep 30; done
+idle; systemctl is-active -q vllm-flashnext && { log "R1 prod running - skip"; exit 1; }
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/readme0928/spec-readme0928.json --out $RES/readme0928.jsonl > $RES/readme0928.txt 2>&1; log "R1 readme0928 rc=$?"
+log "== NIGHT42 DONE =="
