@@ -1789,3 +1789,24 @@ run unsplit, as measured).
 - **Output:** the replay's final greedy text differs between arms and is reproducible within each: the op's 1-ulp
   numerics flip a greedy token somewhere in 46 turns. Deterministic drift, the class the quality rule accepts; a quality
   check (SWE-bench or the logprob screen) would come before any prod use.
+
+### 5ab. Pinning vLLM to the X925 cores (bilikaz's recipe, agenda item 8): no gain; single-stream decode +1.2…1.5 % slower
+
+bilikaz report +2–3 % from `taskset` to the Cortex-X925 cores. On this box those are CPUs 5–9 and 15–19 (MIDR d85,
+3.9 GHz; the A725s are 2.8 GHz). Prod's venv and flags, KV 4 GiB, 2 starts per arm, alternating; the pinned arm's
+shell logs its own `Cpus_allowed_list` (void rule). Hypothesis `tools/cpuset/HYPOTHESIS.md`; data `data/cpuset/`.
+
+| | pinned, s1 / s2 | free, s1 / s2 | Δ |
+|---|---|---|---|
+| code c=1 greedy, ms/tok | 14.990 / 15.017 | 14.815 / 14.799 | **+1.2…+1.5 %** (sign holds both rounds) |
+| code c=1 sampled | 16.700 / 16.838 | 16.653 / 16.676 | +0.1…+1.1 % |
+| prose c=1 | 24.176 / 24.270 | 23.767 / 24.155 | +0.1…+2.1 % |
+| code c=4, tok/s | 142.46 / 145.0 | 143.79 / 144.08 | null |
+| TTFT 8k / 30k, s | 2.877, 10.342 / 2.887, 10.394 | 2.903, 10.449 / 2.903, 10.475 | −0.6…−0.9 % / −0.8…−1.3 % |
+| greedy hashes | identical | | |
+
+- **Out of the hypothesis range** on the slow side (c=1 predicted −0…−3 %). The whole process tree (API server, engine
+  core, worker, their thread pools) shares 10 cores when pinned; the cause of the small c=1 loss is not isolated.
+  TTFT gains ~1 %, inside noise-adjacent territory.
+- **Not adopted.** Their gain may depend on their container's thread settings; on bare metal with default threads it
+  does not transfer. Pinning only the worker (not the API server) is untested.
