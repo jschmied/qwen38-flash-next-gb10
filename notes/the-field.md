@@ -2144,3 +2144,25 @@ drafter for Flash-Next exists. PLE host-gather tricks don't apply because we map
 a hoisted PLE gather are closed (det-202/203). Clock caps are a stability fix costing −1…−4 %. The shm spin-wait
 fix is TP≥2 only. SGLang on GB10 does 57.5 tok/s at c=8, behind us. llama.cpp does 23.6 t/s with IQ1_S.
 TensorRT-LLM has no Spark evidence. Reddit was not fetchable.
+
+## TensorFold, 2026-09-28 check (0.3.6.2; commits 09-27/28, PRs #41–#73)
+
+Source: github.com/ashhart/TensorFold (commits `96c0b0e4`, `163da971`, `675d4c2e`, `71377a53`; PR #42 body, "Measured on a
+GB10"). Their probes, not ours: "chat" ≠ our prose set, so only the code column compares loosely.
+
+| one DGX Spark, 1 stream, tok/s | code greedy | code sampled | chat greedy |
+|---|---|---|---|
+| TensorFold, EXL3 3.05 bpw (turboderp `3.05bpw_h5_ng5`) + MTP | 79.0 | 79.1 | 62.4 |
+| TensorFold, MLX 4-bit + MTP | 71.8 | 66.8 | 58.6 |
+| TensorFold, EXL3 3.05 bpw, serial | 35.1 | 34.9 | 35.0 |
+| us, vLLM 09-28 prod (§5ad, our code probe; our prose 42.2–42.4) | 68.1–68.4 | 58.8–61.4 | — |
+
+- **Decode:** they are ~+16 % on code with a 3.05 bpw pack (fewer bytes than our NVFP4 experts + FP8 dense) and MTP with
+  up to 6 drafts and a confidence stop (`--mtp-confidence`, CUDA default 0.30; "measured policies 0.60 and 0.75" — the
+  same band as our replay optimum τ 0.65–0.75, §5v). EXL3 has no vLLM kernels, and a 3-bit pack's quality is untested here.
+- **Prefill:** their PR #40 put Flash-Next CUDA prefill at ~1,008 tok/s at 8k (0.3.5 reworked it again, no newer Spark
+  figure published); ours is ~2,770 tok/s (TTFT 2.71 s at 7.5k). For agent turns (TTFT-bound) we are ahead.
+- **Other items:** conversation prefixes spilled to disk on eviction (`--spill-gib`, 0.18 s per 2.3 GiB spill, 26 s →
+  2.3 s on a returning 35k conversation, M5 Ultra); int8/int4 KV on CUDA (we measured NVFP4/fp8 KV as a trade, §4l);
+  prompt kernels compiled at startup; head only on the final prefill chunk (vLLM already computes logits only at
+  sampled positions). Open: #67 (read the ModelOpt NVFP4 Flash-Next checkpoint on CUDA), #73 (n-gram rows on 16 threads).
