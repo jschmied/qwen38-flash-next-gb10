@@ -12,7 +12,7 @@ MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1
 (§5t), blazux's tool-call parser guards (`tools/toolguard/`, installed 09-28). Drop-ins in `tools/main/dropins/`.
 
 **Open, ranked:**
-1. **Decision (user): GDN precision cut.** SWE-bench shows no loss from either (§5u). NVFP4 GDN: −7 % decode, +6 % TTFT;
+1. ~~**Decision (user): GDN precision cut.**~~ **DONE 2026-09-28: bf16 SSM state in prod (drop-in 50); validation queued (prodval2).** SWE-bench shows no loss from either (§5u). NVFP4 GDN: −7 % decode, +6 % TTFT;
    bf16 SSM state: no TTFT cost, half the Mamba state. Recommendation: bf16 SSM state for agent work.
 2. **GPU-side early exit for the MTP draft loop (confidence stop).** Offline replay (§5v): stop drafting before the
    first draft with p₁ < **0.70** → **+4.1 % code, +7.5 % prose** predicted (flat optimum 0.60–0.75, robust to the cost
