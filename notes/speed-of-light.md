@@ -1557,3 +1557,31 @@ prefilter), 5 forbidden absent. Data `data/prodval2/`.
 - **Not an A/B**: one start per config, and restarts alone move c=1 by up to 11 % (§4c, cold window), so the
   −4 % / +7 % differences are not attributed to any of the four changes. Greedy hashes differ from 09-27, as
   expected with a bf16 state (a precision change; SWE-bench showed no loss, §5u).
+
+### 5z. F4: full CUDA graphs for the RecoverSSM verify path — −1.1…−2.1 % short-context decode, but slower at 8k context
+
+User: "do 4. next", then "all". The GDN and PLE RecoverSSM builders now declare `UNIFORM_BATCH`; graph padding rows
+get null state slots and zero-length windows (the verify kernel writes zeros and returns for them). Kernel and config
+tests: 91 passed, including a new padded-row test (`data/f4/f4-pytest2.log`). Clone venv `rssm`, prod config (K=5,
+probabilistic drafts, bf16 state, prefix-match-unit 64), KV 4 GiB, `FN_CG_MODE` FULL_AND_PIECEWISE vs PIECEWISE,
+2 starts each, alternating; void rules on `Capturing CUDA graphs (FULL)` / its absence. Hypothesis `tools/f4/HYPOTHESIS.md`.
+Data `data/f4/`.
+
+| | full, s1 / s2 | piecewise, s1 / s2 | Δ |
+|---|---|---|---|
+| code c=1 greedy, ms/tok | 14.723 / 14.695 | 15.003 / 14.882 | **−1.1…−2.1 %** (sign holds both rounds) |
+| code c=1 sampled, ms/tok | 16.596 / 16.502 | 16.731 / 16.687 | −0.8…−1.4 % |
+| prose c=1 greedy, ms/tok | 23.767 / 23.570 | 23.673 / 23.727 | null |
+| code c=4, tok/s | 143.56 / 142.86 | 142.70 / 143.51 | null |
+| TTFT 8k / 30k, s | 2.875, 10.372 / 2.866, 10.355 | 2.922, 10.510 / 2.962, 10.419 | −1…−3 % (prefill is piecewise in both) |
+| 8k prompt + 96 tokens, cold / cache-hit, s | 4.908, 1.968 / 5.147, 2.067 | 4.564, 1.599 / 4.563, 1.744 | **+7…+13 % / +13…+29 %** |
+
+- **Correct:** greedy hashes identical between arms at c=1 (code and prose); the c=4 code hash differs in one full start,
+  within the known non-batch-invariance under concurrency.
+- **Against the hypothesis:** short-context c=1 inside the predicted −0…−4 %; c=4 null as predicted. The 8k-context
+  request is out of range: its cache-hit repeat is mostly decode (96 tokens), and it is 0.22–0.47 s slower with full
+  graphs in both starts (gap beats each arm's spread). Same direction as finding 237 (FULL_DECODE_ONLY: agent turns
+  3–4 % slower). Mechanism not yet known; the lead is a context-dependent decode cost under full graphs (graph-captured
+  attention/QSA launched for the capture shape rather than the live context).
+- **Verdict: not a prod candidate** as is. Agent work runs at long context. Next: a decode-vs-context sweep, both arms
+  (`tools/f4/`, queued), to locate the regression before any upstream follow-up.
