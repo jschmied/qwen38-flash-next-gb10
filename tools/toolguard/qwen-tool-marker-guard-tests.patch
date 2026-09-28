@@ -1,0 +1,178 @@
+diff --git a/tests/parser/engine/test_qwen3_literal_markers.py b/tests/parser/engine/test_qwen3_literal_markers.py
+new file mode 100644
+--- /dev/null
++++ b/tests/parser/engine/test_qwen3_literal_markers.py
+@@ -0,0 +1,173 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Qwen3 tool markers the model is quoting rather than calling with.
++
++A marker inside a fenced code block, or a wrapper-less ``<function=``
++header that does not start a line, is documentation: it must stay in the
++output as text and must not open a tool call.
++"""
++
++import pytest
++
++from vllm.parser.engine.events import EventType
++from vllm.parser.engine.streaming_parser_engine import StreamingParserEngine
++from vllm.parser.qwen3 import qwen3_config
++
++CHUNK_SIZES = [1, 7, 10_000]
++
++
++def _parse(text: str, chunk_size: int, thinking: bool = True):
++    engine = StreamingParserEngine(qwen3_config(thinking=thinking), None)
++    events = []
++    for offset in range(0, len(text), chunk_size):
++        events.extend(engine.feed(text[offset : offset + chunk_size], []))
++    events.extend(engine.finish())
++    return events
++
++
++def _joined(events, event_type):
++    return "".join(e.value for e in events if e.type == event_type)
++
++
++def _tool_names(events):
++    return "".join(e.value for e in events if e.type == EventType.TOOL_NAME)
++
++
++def _tool_count(events):
++    return sum(1 for e in events if e.type == EventType.TOOL_CALL_START)
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_fenced_tool_xml_stays_content(chunk_size):
++    text = (
++        "Short thought.</think>\n\nHere is the XML Qwen emits:\n\n```xml\n"
++        "<tool_call>\n<function=Bash>\n<parameter=command>\nls\n</parameter>\n"
++        "</function>\n</tool_call>\n```\n\nThat is the whole format.\n"
++    )
++    events = _parse(text, chunk_size)
++    content = _joined(events, EventType.TEXT_CHUNK)
++    assert _tool_count(events) == 0
++    assert content == text.split("</think>")[1]
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_fenced_tool_xml_in_reasoning_stays_reasoning(chunk_size):
++    text = (
++        "The format is:\n```\n<tool_call>\n<function=Bash>\n</function>\n"
++        "</tool_call>\n```\nso I will answer.</think>\n\nDone.\n"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 0
++    assert _joined(events, EventType.REASONING_CHUNK) == text.split("</think>")[0]
++    assert _joined(events, EventType.TEXT_CHUNK) == "\n\nDone.\n"
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_bare_function_header_mid_line_stays_content(chunk_size):
++    text = (
++        "Short thought.</think>\n\nIn Qwen's tool syntax, <function=Bash> is a "
++        "marker that opens a call, closed by </function>."
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 0
++    assert _joined(events, EventType.TEXT_CHUNK) == text.split("</think>")[1]
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_real_tool_call_still_parses(chunk_size):
++    text = (
++        "Short thought.</think>\n\nNow I will run it.\n"
++        "<tool_call>\n<function=Bash>\n<parameter=command>\nls -la\n"
++        "</parameter>\n</function>\n</tool_call>"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 1
++    assert _tool_names(events) == "Bash"
++    assert _joined(events, EventType.TEXT_CHUNK).strip() == "Now I will run it."
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_real_tool_call_after_a_closed_fence(chunk_size):
++    text = (
++        "Short thought.</think>\n\nExample:\n```xml\n<tool_call>\n</tool_call>\n"
++        "```\nNow the real one.\n<tool_call>\n<function=Bash>\n"
++        "<parameter=command>\nls\n</parameter>\n</function>\n</tool_call>"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 1
++    assert _tool_names(events) == "Bash"
++    assert "<tool_call>\n</tool_call>" in _joined(events, EventType.TEXT_CHUNK)
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_nested_fences_balance(chunk_size):
++    """A shorter inner fence does not close the block around it.
++
++    The inner block holds a well-formed call, so this fails unless the
++    closing run is compared against the opening one.
++    """
++    text = (
++        "Short thought.</think>\n\n````md\n```xml\n<tool_call>\n<function=Bash>\n"
++        "<parameter=command>\nls\n</parameter>\n</function>\n</tool_call>\n```\n"
++        "````\n\nAfter.\n"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 0
++    assert _joined(events, EventType.TEXT_CHUNK) == text.split("</think>")[1]
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_four_space_indent_is_not_a_fence(chunk_size):
++    """Four leading spaces is indented code in Markdown, not a fence."""
++    text = (
++        "Short thought.</think>\n\n    ```\n<tool_call>\n<function=Bash>\n"
++        "<parameter=command>\nls\n</parameter>\n</function>\n</tool_call>"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 1
++    assert _tool_names(events) == "Bash"
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_tool_call_immediately_after_reasoning_end(chunk_size):
++    """The channel can change with no text between, so the fence state
++    left behind by reasoning must not leak into the answer."""
++    text = (
++        "Format:\n```\n<tool_call>\n<function=Bash>\n</function>\n</tool_call>\n"
++        "ok</think><tool_call>\n<function=Bash>\n<parameter=command>\nls\n"
++        "</parameter>\n</function>\n</tool_call>"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 1
++    assert _tool_names(events) == "Bash"
++    assert _joined(events, EventType.TEXT_CHUNK) == ""
++    assert "<function=Bash>" in _joined(events, EventType.REASONING_CHUNK)
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_unclosed_fence_suppresses_later_calls(chunk_size):
++    """Known trade-off, asserted so a change to it is deliberate.
++
++    A fence the model never closes keeps the guard active for the rest of
++    the turn, so a real call after it is returned as text instead.
++    """
++    text = (
++        "Short thought.</think>\n\nHere:\n```python\nprint(1)\nNow run it.\n"
++        "<tool_call>\n<function=Bash>\n<parameter=command>\nls\n</parameter>\n"
++        "</function>\n</tool_call>"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 0
++    assert "<tool_call>" in _joined(events, EventType.TEXT_CHUNK)
++
++
++@pytest.mark.parametrize("chunk_size", CHUNK_SIZES)
++def test_inline_quoted_marker_still_preserved(chunk_size):
++    """The PR #20 path: a marker quoted mid-line, no fence involved."""
++    text = (
++        "Short thought.</think>\n\nPR #20 buffers the `<tool_call>` marker until "
++        "the next text proves what it is.\n"
++    )
++    events = _parse(text, chunk_size)
++    assert _tool_count(events) == 0
++    assert _joined(events, EventType.TEXT_CHUNK) == text.split("</think>")[1]

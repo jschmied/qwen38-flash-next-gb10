@@ -1,0 +1,18 @@
+# Install blazux's Qwen tool-call parser guards (their patches 12+13, Apache-2.0, blazux/qwen3.8-Flash-DGX
+# src/patches/qwen-tool-preamble.patch + qwen-tool-marker-guard.patch) into the PROD venv (user go 2026-09-28:
+# "take patches 1 and 2"). Runs as fx-toolfix: waits for the SWE-bench chain (night21) so the running eval is not
+# changed mid-run, then patches with backups (*.orig-toolguard). Tested on the 1ea7 base: 45 new cases fixed,
+# 4370/4371 parser tests pass; the one change is intended (an unparsable <tool_call> block is kept as text).
+set -u
+T=/opt/llm/runners/toolguard; SP=/opt/llm/runtime/vllm-venv-main1ea7/lib/python3.12/site-packages; L=$T/install.log
+while systemctl is-active -q night21-chain; do sleep 10; done
+echo "$(date '+%F %T') night21 done; patching" >> $L
+for f in vllm/parser/qwen3.py vllm/parser/nemotron_v3.py vllm/parser/engine/parser_engine_config.py vllm/parser/engine/streaming_parser_engine.py; do
+  [ -e $SP/$f.orig-toolguard ] || cp -p $SP/$f $SP/$f.orig-toolguard
+done
+for p in qwen-tool-preamble.patch qwen-tool-marker-guard.patch; do
+  patch -d $SP -p1 --batch --forward --fuzz=0 --dry-run < $T/$p >> $L 2>&1 && patch -d $SP -p1 --batch --forward --fuzz=0 < $T/$p >> $L 2>&1 || echo "FAILED $p" >> $L
+done
+find $SP/vllm/parser -name __pycache__ -prune -exec rm -rf {} +
+/opt/llm/runtime/vllm-venv-main1ea7/bin/python -m py_compile $SP/vllm/parser/qwen3.py $SP/vllm/parser/nemotron_v3.py $SP/vllm/parser/engine/parser_engine_config.py $SP/vllm/parser/engine/streaming_parser_engine.py >> $L 2>&1
+echo "$(date '+%F %T') marker=$(grep -c '_marker_is_literal\|_resolve_fence_run' $SP/vllm/parser/qwen3.py $SP/vllm/parser/engine/streaming_parser_engine.py | tr '\n' ' ') DONE" >> $L
