@@ -1459,3 +1459,10 @@ target's token per position (`tools/draftlog/`, 1,647 steps). Replay with a cost
   CUDA-graph conditional node around the draft steps), not another host-side rule. Prose at K=5 + stop would also
   recover the K=3-vs-K=5 prose gap (§5l).
 - Caveats: greedy only (sampled drafts differ), c=1, the cost model is ours, not measured per variant; one run.
+- **τ sweep (user: "do a p sweep for maximum"; `data/draftlog/tau-sweep.txt`), stop-drafting variant, τ = 0.05…0.95:**
+  the curve is flat-topped. Code peaks at **τ 0.75, +4.2 %** (3.8 drafts per step), prose at **τ 0.65, +7.6 %** (2.7
+  drafts); the best single τ for both is **0.70: +4.1 % code, +7.5 % prose, +5.8 % mean**, and anything in 0.60–0.75
+  is within 0.7 points of it. Above 0.8 it falls off (too few drafts). The optimum barely moves with the cost model
+  (τ 0.65–0.75 for draft 1.0–1.6 ms and row 2.5–4.0 ms; the gain scales from +3.4 to +7.9 %). TensorFold's 0.3 is far
+  below the optimum for this drafter (+0.6 % code). The rows-only variant peaks lower and earlier (code +1.8 % at 0.7,
+  prose +4.0 % at 0.45).
