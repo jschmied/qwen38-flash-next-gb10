@@ -1545,14 +1545,19 @@ re-tokenized follow-up.
 - Prod runs retention interval 0, which this did not test; decblk5 (interval 0, spec arm) is queued as `night35`.
   Data `data/decblk4/`.
 
+**decblk5 (prod's interval 0, spec arm, same probe): B hit 0 tokens in 16/16**, R 0, 0 divergent. As the code predicted,
+the decode-crossed boundary is not retained at the default, so **in prod a decode-written recurrent state is never
+served: #53912's path is unreachable (measured)**; where a config does retain it (decblk4), it did not contaminate.
+Data `data/decblk5/`.
+
 From the code (`v1/core/single_type_kv_cache_manager.py`, reachable-boundary mask; `config/cache.py`): align-mode
 Mamba retains recurrent-state snapshots **sparsely**. `--prefix-cache-retention-interval` defaults to **0 = "only
 semantic checkpoints"**: the latest replay boundary (prompt end) and shared-prefix junctions. A block boundary crossed
 during decode is not retained, so there is nothing to hit, with or without speculation. The same rule explains the old
 "hits only from the second repetition" observation: the first repeat creates the shared-prefix junction, the second reads it.
 
-- **For prod (interval unset), by the code: a decode-written state is not retained**, so #53912's path would not be
-  reached; decblk5 measures this. Where it is reached (interval 3,456, decblk4), it did not contaminate.
+- **For prod (interval unset): a decode-written state is not retained** (code, then measured by decblk5 below), so
+  #53912's path is not reached. Where it is reached (interval 3,456, decblk4), it did not contaminate.
 - det-236 (09-24, "15 reads into decode-written blocks, 0 divergent") ran on the older stack; whether its reads really
   hit decode-written states was not re-checked against this mechanism, so it no longer counts as evidence either way.
 

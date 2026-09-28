@@ -189,9 +189,8 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
 
 **vllm#53912 / #57128** (prefix cache + spec decode + `disable_eagle_block_drop` poisoning cached Mamba state): our
 exact config family. **Tested 2026-09-24 (det-236): not reproduced on prod.** 15 low-acceptance cache reads into
-decode-written blocks, 0 divergent. **2026-09-28 (§5x): on 1ea7 with the default `--prefix-cache-retention-interval 0`
-a decode-written recurrent state is never cached at all, so the path is unreachable in prod; decblk3 tests it with the
-interval at 1728.** Keep watching; a comment with the MTP counter-datapoint could help, but needs a
+decode-written blocks, 0 divergent. **CLOSED 2026-09-28 (§5x): at prod's default retention interval 0 a decode-written state is never served
+(decblk5, 16/16 hit 0); with interval 3456 it is served and did not contaminate (decblk4: 4 vs 2 of 16, late drift).** Keep watching; a comment with the MTP counter-datapoint could help, but needs a
 go.
 
 **Stale drafts** from 09-08/09, measured on dev401/fnmain2: `comment-54521-zc502-isolation.md`,
