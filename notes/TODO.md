@@ -135,6 +135,12 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
    SwiGLU over interleaved gate/up N-tiles (reorder w13 rows offline) + NVFP4 output with per-16 block scales, JIT
    generation in `jit/gemm/cutlass/generate_kernels.py`, 12-min rebuilds. Multi-day; prize ~4 % TTFT. Needs the user's
    go before starting.
+   **Design template found (2026-09-28):** FlashInfer's `csrc/cute_sm120_mxfp8_groupwise/sm120_fused_moe/` (FP8/MXFP8, SM120)
+   computes each output tile's gate and up halves in the same CTA (`mB_gate`/`mA_gate` at offset N, two accumulators) and
+   applies the activation in-kernel: the dual-tile answer to the N→N/2 problem an EVT epilogue cannot solve. Porting it to
+   our NVFP4 experts needs the SM120 4-bit block-scaled MMA (16-element blocks, e4m3 scales; CUTLASS example 79a/79b
+   territory) and an FP4 output with block scales in GEMM2's swizzled SF layout. MXFP8 experts are not an option (twice
+   the expert bytes at decode). Multi-day kernel port; stopped per the agenda's blocker rule, awaiting the user's go.
    **Order (original):** (1) clone venv: RETAINED_SLICES 4 → 5, compile check, then a one-layer b12x-gated vs cutlass standalone
    (correctness vs cutlass output, time at M = 3,456 × top-10) — cheapest, may simply not fit in shared memory;
    (2) only if (1) fails, the CUTLASS EVT route. Determinism: b12x's finalize path must be checked against our
