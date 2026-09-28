@@ -1466,3 +1466,10 @@ target's token per position (`tools/draftlog/`, 1,647 steps). Replay with a cost
   (τ 0.65–0.75 for draft 1.0–1.6 ms and row 2.5–4.0 ms; the gain scales from +3.4 to +7.9 %). TensorFold's 0.3 is far
   below the optimum for this drafter (+0.6 % code). The rows-only variant peaks lower and earlier (code +1.8 % at 0.7,
   prose +4.0 % at 0.45).
+- **A lagged stop does not work** (`data/draftlog/lagged.txt`). The sync-free option from the feasibility memo
+  (`tools/earlyexit/feasibility-memo.md`): choose the draft count for round n+1 from round n's confidences, which the
+  host already has without a sync. Replayed on the same log, observing only drafted positions: code **−0.8 … −8.2 %**
+  (worse at every τ), prose **+1.9 % at best** (τ 0.4); a running-product rule is worse still. One round's drafter
+  confidence does not predict the next round's, so the whole gain needs the stop *inside* the round, i.e. without a
+  host decision: CUDA-graph IF nodes around FULL-captured draft steps (torch 2.13 has `begin_capture_to_if_node`; no
+  engine we found does this), or first an nsys check of whether the eager draft steps are launch- or GPU-bound.

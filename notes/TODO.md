@@ -22,7 +22,7 @@ MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1
    model). Only pays if the draft steps are really skipped: cutting verify rows alone gives +1.8 / +4 %, and a host sync
    per draft step lost 5–6 % (§5b). Design direction: a CUDA-graph conditional (while/if) node around the draft steps, or
    device-side predication, so no host sync; verify batch then varies 2..6 rows at c=1. Overlaps with item 4 (graph
-   structure). Validate with a real A/B at τ 0.7 against fixed K=5, code + prose, 2 starts; greedy hashes must match.
+   structure). Validate with a real A/B at τ 0.7 against fixed K=5, code + prose, 2 starts; greedy hashes must match. **Update 09-28:** the sync-free lagged variant (K from the previous round) fails the replay gate (code −0.8…−8 %, prose ≤ +1.9 %, §5v); only an in-round stop pays → CUDA-graph IF nodes over FULL-captured draft steps (high risk, no engine does it) or an nsys check first. Parked behind F4, which gives the FULL draft capture it needs.
 4. **F4: full CUDA graphs for the RecoverSSM verify path** (analysis in the lightspeed agenda; est. −1…−2 ms/step;
    also a follow-up PR to #58863).
 5. **Nightly forward:** bisect the c=4 −4.5 % / non-reproducible regression on `a9eafde59` (§5s; candidates #58434,
