@@ -61,3 +61,19 @@ TTFT ±1 %, c=4 ±5 %. Greedy text differs from K=5 (RecoverSSM commit grouping,
 Schedule bs1–10 → K7, 11 → 6, 12 → 5, 13 → 4, 14 → 3, 15 → 2, 16 → 1 (all draft counts captured, max-num-seqs stays 16).
 vs prod K5, 2 starts each. H: c=1 as `kstopab` (code −6…−7 %, prose −1…−3 %); c=4 now within ±3 % of prod (K7 + stop at
 batch 4 instead of K4); TTFT ±1 %.
+
+## TODO 10a: block verification (`blockver`, 2026-09-29, before the run)
+
+`rejection_sample_method: "block"` (myllmbox v4) on top of the confidence-stop config, vs without; 2 starts each, clone
+venv. Block verification only changes the sampled acceptance rule (greedy verify is exact-match either way). H: code
+sampled −2…−6 % ms/tok (more accepted per cycle), greedy code / prose unchanged within ±1 % and greedy hashes identical;
+TTFT ±1 %. If sampled gains < 2 %, not worth a prod change.
+
+## `ksprod` (2026-09-29, before the run): the stop in prod's memory regime
+
+prodval5 (prod venv, fusions + stop, default KV) gave code c=1 14.16 vs prodval4's 14.26 ms/tok (−0.7 %, not −7 %) and
+MiaAI's quicksort greedy 52.2 vs 66.4 tok/s. All A/Bs ran at KV 4 GiB; at prod's default KV the mapped PLE table pages
+(memory note "measure with reduced KV": ~30 major faults per step), and K7 verifies up to 8 rows (more PLE rows per
+step). Arms on the prod venv with prod's exact env (fusions on), default KV: stop (drop-in 65 env) vs K5; 2 starts each;
+nvprobe + MiaAI prompts. H1 (paging): the stop's code gain at default KV is ≤ 2 % and MiaAI quicksort is slower with the
+stop in both starts. H0: prodval5 was one noisy start; the stop gives −5…−8 % here too.

@@ -2350,6 +2350,16 @@ alternating, vs prod K5):
 Inside the hypothesis (c=4 within ±3 %). **Complete prod candidate:** FNKSTOP runner mode, τ 0.75, FN_SPEC_N=7, this
 schedule, #58821 cherry-pick, the launcher's FN_SPEC_DYN line; quality screen null (above).
 
+**§5ah prod install — ON HOLD after validation (2026-09-29).** Installed (user: "integrate anything useful"): prod venv
+FN58821 + FNKSTOP (backups `*.orig-58821`, `*.orig-kstop`), prod launcher FN_SPEC_DYN line (backup
+`serve-flashnext.sh.orig-kstop`), drop-in `65-kstop.conf`. `prodval5` (prod's exact env incl. the §5ag fusions,
+**default KV**, one start): all 20 path lines, TTFT 2.577 / 9.129 s, but code c=1 **14.163** ms/tok (accepted 4.53) vs
+prodval4's 14.26 (−0.7 %, not −7 %), MiaAI quicksort greedy **52.2** vs 66.4 tok/s, chat sampled 39.6 vs 39.3, c=4
+136.8 vs 138.8. Every A/B ran at KV 4 GiB; at the default KV the mapped PLE table pages, and K7 verifies up to 8 rows.
+Drop-in 65 renamed to `65-kstop.conf.disabled` (prod = the validated fusions-only config; the venv code is inert
+without FN_KSTOP). `ksprod` (prod venv, default KV, stop vs K5, 2 starts) queued to decide. Data
+`data/prodval/armrun-prodval5.jsonl`.
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact
