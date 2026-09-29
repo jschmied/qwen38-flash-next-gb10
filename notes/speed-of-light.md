@@ -2156,3 +2156,54 @@ hypothesis in `tools/moefuse/HYPOTHESIS.md`; user: "measure combination and comp
   1.81 s (§5af data), so it comes with GDNNQ. GDNNQ changes those 96 tokens, so this probe cannot separate text from
   kernel. A replay whose decoded tokens are forced (or zero decode, TTFT only) would settle it before a prod proposal of
   GDNNQ that relies on this row.
+
+### 5ah. Deeper drafts need a confidence stop: measured cycle(K) + K=7 replay give +10 % code, +12.8 % prose over K=5 (not built)
+
+User: "didnt we try drafting stop by confidence and longer possible drafts", then graph sizes 8−1 / 6−1 / 4−1, "distinct
+probability limit for uneven draft token", "yes and also try additional capture graphs, i expect 3 to be hit often".
+Hypothesis `tools/kstop/HYPOTHESIS.md` (before any run). Data `data/kstop/`.
+
+**Cost of one verify cycle vs draft count** (`kcost2`: K = 2…7, each with its own exact FULL graph, prod config, KV 4 GiB,
+2 starts each, nvprobe c=1; ms/tok × accepted per cycle):
+
+| K (rows) | 2 (3) | 3 (4) | 4 (5) | 5 (6) prod | 6 (7) | 7 (8) |
+|---|---|---|---|---|---|---|
+| code, ms per cycle | 49.5 / 49.8 | 54.7 / 55.4 | 59.7 / 59.3 | 64.5 / 65.0 | 69.5 / 69.2 | 73.4 / 75.5 |
+| prose, ms per cycle | 51.2 / 51.6 | 56.9 / 56.9 | 61.6 / 61.6 | 67.2 / 68.0 | 72.9 / 72.2 | 77.5 / 76.6 |
+| code / prose ms/tok | 18.4 / 23.0 | 16.2 / **22.1** | 15.2 / 23.1 | 14.8 / 23.7 | **14.7** / 27.4 | 14.9 / 26.3 |
+
+- **+4.8 ms per draft, near linear** (draft step + one verify row incl. the expert union); inside the predicted ranges.
+  Prose cycles are 2–4 ms dearer. The old replay's 43 + K·4.6 ms was close but a bit cheap per draft.
+- **Without a stop, depth does not pay:** code K5/K6/K7 within 1 %; prose best at K3, K6/K7 −12…−17 % (as predicted).
+- **First run `kcost` void at K=4** (`expanded size 72 must match 75`): MRV2 rounds a capture size up to a multiple of
+  1+K and a capture buffer disagrees when the rounded size is not itself in the list; prod's list is closed under
+  rounding for K=5 only. `kcost2` uses per-K lists (1, 2, 4 + multiples of 1+K). Its K=2/K=3 starts of the first run
+  were also CPU-contended by an unrelated pytest run and are discarded.
+- **dynsd (FULL graphs for 3…8 rows in one server via MRV2 dynamic speculative decoding): blocked by a vLLM bug.** The
+  drafter's graph manager derives its step length as `decode_query_len − num_speculative_tokens` and divides by it
+  (`cudagraph_utils.py:314`, ZeroDivisionError) for a multi-step MTP drafter. Needs a small fix before any
+  "graph per draft count" build.
+
+**Replay** (`tools/kstop/replay2.py`, K=7 draft log `dl7`: 567 code + 950 prose verify steps, PIECEWISE because the
+logging hook does not run inside FULL-graph replays; cost = the measured cycle(K) above). Validated: its fixed-K
+predictions match the server (code K7 vs K5 +0.5 % predicted, ≈ 0 measured; prose −9.2 % vs −10 %).
+
+| vs prod K=5, best τ | code | prose |
+|---|---|---|
+| stop, max depth 5, exact graphs | +4.4 % (τ 0.70) | +12.2 % (0.70) |
+| stop, max depth 6, exact graphs | +8.0 % (0.70) | +12.6 % (0.75) |
+| **stop, max depth 7, exact graphs** | **+10.0 %** (0.80; 4.4 drafts per cycle) | **+12.8 %** (0.80; 2.3) |
+| depth 7, graphs for even row counts only, padded row 0 / 1.1 / 3.3 ms | +10.0 / +9.6 / +8.8 % | +12.8 / +12.0 / +10.4 % |
+| depth 7, stop rounded up to fill the paid row | +9.3 % | +11.9 % |
+| depth 7, two thresholds (τ_new / τ_padded), padded row 1.1 / 3.3 ms | +10.2 / +9.1 % | +12.1 / +10.9 % |
+
+- **Depth + stop is the first-order lever; graph granularity is second order.** Exact graphs for every draft count beat
+  even-only graphs by 0.4–1.2 points (code) and 0.8–2.4 (prose), depending on the unmeasured padded-row cost. The
+  user's two-threshold rule recovers about half of that gap when padding is cheap. Prose stops early (2.3 drafts), so
+  the 3-row graph the user expected to be hit often is exactly where prose lives.
+- **Against the hypothesis:** code +10.0 % beats the predicted +4…+7 %; prose +12.8 % is inside +8…+14 %.
+- **Not in the numbers:** one host sync per cycle to size the verify (≤ 0.8 ms, §5v addendum 2, ≈ −1.2 %); steps are
+  treated as independent (greedy text is the target's, so only step boundaries move). Realistic: **code ~+8…9 %,
+  prose ~+10…11.5 % single-stream decode**, for the build: IF nodes around the draft steps, one sync, a FULL graph per
+  draft count (fix the dynamic-SD bug or capture our own), and the stop in the drafter.
+- Decode only; agent turns are TTFT-bound, so the agent-level effect is smaller.
