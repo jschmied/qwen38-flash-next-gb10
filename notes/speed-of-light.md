@@ -2417,6 +2417,26 @@ stop vs K5, 2 starts):
   per cycle at the default KV, not measured directly.
 - Agenda 2e (concurrency ladder) is skipped: its condition, ≥ 4 % code c=1 gain at 4 GiB, is not met.
 
+**TODO 10c — Marlin MoE (`--moe-backend marlin`, `VLLM_MARLIN_USE_ATOMIC_ADD=1`, the myllmbox setting) vs FlashInfer
+CUTLASS (`marlin`, clone venv, K5, fusions off, KV 4 GiB, 2 starts): not adopted — run-to-run nondeterministic.**
+
+| | Marlin, s1 / s2 | CUTLASS, s1 / s2 |
+|---|---|---|
+| greedy code / prose hashes | 23ff4843 / e0814028, **9211aa0b / f9038d55 (differ)** | d102a738 / 38c70791 (both) |
+| code c=1 greedy, ms/tok (accepted) | 15.551 / 14.910 (4.06 / 4.26) | 14.529 / 14.807 (4.37) |
+| code sampled | 15.556 / 14.262 | 16.443 / 16.803 |
+| prose | 22.594 / 24.030 | 23.507 / 23.794 |
+| code c=4, tok/s | **158.9 / 157.2** | 145.6 / 133.3 |
+| TTFT 8k / 30k | 2.810, 10.146 / 2.819, 10.140 s | 2.726, 9.791 / 2.711, 9.701 s |
+| replay cold / warm | 5.23, 2.27 / 4.48, 2.73 s | 4.20, 1.51 / 4.25, 1.52 s |
+
+- **Greedy output changes between two starts of the same config** (the atomic-add reduction order), which breaks the
+  project's run-to-run determinism; c=1 cells then compare different texts (accepted per cycle 4.06 / 4.26 vs 4.37).
+- **c=4 +8…+18 %** (Marlin's small-M GEMM beats CUTLASS FP4 at decode batches), **TTFT +3…+5 %** (bf16 math at
+  prefill), warm replay +50…+80 % (partly text).
+- Follow-up (agenda 5): Marlin without atomic add (deterministic?) at decode only, CUTLASS / the Triton prefill MoE
+  (§5ag) at prefill; its weights are repacked, so it would need its own weight copy or a shared layout: scope first.
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact
