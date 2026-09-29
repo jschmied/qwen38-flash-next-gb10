@@ -1,0 +1,1 @@
+FNKSTOP draft-count histogram after 475 cycles: {1: 255, 2: 75, 3: 31, 4: 31, 5: 11, 6: 14, 7: 58}

@@ -2505,6 +2505,39 @@ CUTLASS (`marlin`, clone venv, K5, fusions off, KV 4 GiB, 2 starts): not adopted
 - The stop vs K5 (again): code c=1 −6.2…−7.2 %, sampled −6.5…−6.7 %, prose −1.9…−2.1 %, c=4 −5…+2 %, TTFT equal.
   Data `data/kstop/armrun-kstopval.jsonl`.
 
+**Agenda 2c — no-async scheduling at c=4, re-verified (`noasync2`, clone venv, K5 prod config, KV 4 GiB, 3 starts
+alternating): null; not proposed.**
+
+| | no-async, s1 / s2 / s3 | async (default), s1 / s2 / s3 |
+|---|---|---|
+| code c=1, ms/tok | 14.741 / 14.653 / 14.646 | 14.619 / 14.796 / 14.568 |
+| code sampled / prose | 16.75, 23.70 / 16.47, 23.26 / 16.50, 23.56 | 16.68, 23.54 / 16.63, 23.87 / 16.47, 23.64 |
+| code c=4, tok/s | 142.8 / 149.2 / 146.6 | 148.2 / 146.1 / 145.5 |
+| TTFT 8k / 30k | 2.73, 9.69 / 2.70, 9.71 / 2.71, 9.74 | 2.72, 9.71 / 2.72, 9.73 / 2.74, 9.72 |
+
+- c=4 per start pair: −3.6 %, +2.1 %, +0.8 %: the sign flips, so H (+1…+3 % in every pair) fails and the bar for a
+  proposal (≥ 3 % in every pair) is far off. c=1 flips too. Greedy hashes identical in all six starts.
+- `noasync`'s +11…12 % is withdrawn: its async arm (132 tok/s) was an outlier low; async K5 reads 145–148 here.
+  What stands from `noasync`: giving up async scheduling costs nothing at c=1.
+
+**Agenda 2d — the confidence stop's −21 % on MiaAI's quicksort prompt (`miadiag`, clone venv, prod text: GDNNQ +
+FNMOEFUSE, KV 4 GiB, stop vs K5, 1 start, probe `tools/kstop/miadiag.py`): it does not reproduce on the clone.**
+
+| quicksort, greedy, 256 tokens | stop | K5 |
+|---|---|---|
+| tok/s (client side, median of 5) | **52.3** | **44.7** |
+| tokens per cycle (accepted per cycle) | 2.70 (1.72) | 2.75 (1.76) |
+| acceptance by position 0…6 | .70 .36 .22 .20 .11 .07 .06 | .74 .45 .29 .18 .10 |
+| hash | cb1762a0 | b06b16cf |
+
+- This is low-acceptance text (the prompt runs in the template's default thinking mode): 1.7 accepted per cycle. The
+  stop drafts 1 token in 54 % of cycles (histogram after 475 cycles: d=1 255, 2 75, 3 31, 4 31, 5 11, 6 14, 7 58), so its
+  cycles are cheaper at almost the same tokens per cycle: **+17 %, the stop working as designed.**
+- The stop's rate matches the prod venv (51.9–52.3 in kssplit/ksprod); K5's does not (44.7 here vs 66.1–66.2 there). So
+  the −21 % is K5 being fast on the prod venv for this one prompt, not the stop being slow. nvprobe's GDNNQ texts are
+  the same on both venvs (K5 71fc9ede, stop d1a6e348), so the quicksort text is the open question: `miadiag2` (the
+  same probe on the prod venv, kssplit config) is queued. Data `data/kstop/armrun-miadiag.jsonl`, `miadiag-stop0-hist.txt`.
+
 **Agenda 2b — GDNNQ warm replay (`gqreplay`, prod venv, prod env with FNMOEFUSE, KV 4 GiB, FN_GDNNQ on vs off, 2 starts,
 probe `tools/gdnnq/replay1.py`): no regression, GDNNQ stays in drop-in 60.**
 

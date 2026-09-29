@@ -139,3 +139,14 @@ from the log. First check: the −21 % reproduces here (−15…−25 %); if not
 spec, 3 starts per arm. H: prose −1…−3 % in all three start pairs, code c=1 and TTFT within ±1 %, hashes identical.
 H0: the prose sign flips in any start pair → the 2-start result was noise; drop it. Even if it holds, adoption is a
 user decision (the PR is the recipe author's, open upstream).
+
+## Agenda 2d follow-up: `miadiag2` (2026-09-29, before the run)
+
+`miadiag` on the clone did NOT reproduce the −21 %: stop 52.3 tok/s (the same as on the prod venv, 51.9–52.3), K5
+**44.7** (prod venv: 66.1–66.2). Per cycle the two arms were close (2.70 vs 2.75 tokens), so on the clone the stop won
++17 % through cheaper cycles on low-acceptance text (histogram: d = 1 in 54 % of cycles). The nvprobe hashes with
+GDNNQ are the same on both venvs (K5 71fc9ede, stop d1a6e348), so the gap is K5 on this one prompt. `miadiag2` = the
+kssplit spec (prod venv, fusions on, KV 4 GiB) with the miadiag probe, 1 start. H: prod-venv K5 gives a different
+quicksort text from the clone's (b06b16cf) with ≥ 3.8 tokens per cycle, and the stop reproduces cb1762a0 at ~52 tok/s.
+Then the −21 % is "K5 landed on a high-acceptance text on the prod venv", not a stop defect. If K5 reproduces
+b06b16cf at ~45 tok/s here, the difference is miaprobe's context (it runs after nvprobe on a warm server).
