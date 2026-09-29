@@ -2441,6 +2441,32 @@ CUTLASS (`marlin`, clone venv, K5, fusions off, KV 4 GiB, 2 starts): not adopted
 - Follow-up (agenda 5): first find the nondeterminism (standalone `fused_marlin_moe` on fixed inputs, twice per process
   and across two processes, with the real expert shapes); then Marlin at decode only, CUTLASS / the Triton prefill MoE
   (§5ag) at prefill; its weights are repacked, so it would need its own weight copy or a shared layout: scope first.
+- **The Marlin MoE kernel itself is deterministic** (`tools/marlin/det_marlin_moe.py`, hypothesis there; Flash-Next
+  expert shapes E=512, H=2560, I=640, top-k 10, random NVFP4 weights via vLLM's own helper): M = 1, 4, 55, 512 give one
+  output class over 5 repeats, the same hashes in two separate processes, and bit-identical outputs with the tokens
+  permuted — although `moe_align_block_size` builds a different per-expert token order on every call at M ≥ 55 (5 of 5
+  orders distinct). So H-outside: the server divergence comes from the serving context, not the GEMMs. Candidates not
+  yet tested: the weight repack at load, a shared Marlin workspace under CUDA graphs, and whether the Marlin arm is
+  reproducible *within* one start (the probe records one hash per prompt per start, so within-start is unknown).
+  Data `data/marlin/det_marlin_moe.json`.
+
+**Agenda 2f — batch draft count by expected value (`kstopval`, clone venv, K7 + stop τ 0.75 runner sizing, KV 4 GiB,
+2 starts): not adopted, `max` stays.**
+
+| | stop, max | stop, value | K5 |
+|---|---|---|---|
+| code c=1 greedy, ms/tok (accepted) | 13.697 / 13.796 (4.78) | 13.813 / 13.963 (4.78) | 14.758 / 14.713 (4.37) |
+| code sampled | 15.421 / 15.378 | 15.540 / 15.605 | 16.488 / 16.483 |
+| prose | 23.146 / 23.103 | 23.310 / 23.315 | 23.612 / 23.592 |
+| code c=4, tok/s (accepted) | 137.97 / 148.07 (4.88 / 5.25) | 148.16 / 126.81 (4.66 / 3.95) | 145.64 / 145.13 |
+| TTFT 8k / 30k | 2.71, 9.64 / 2.72, 9.72 s | 2.74, 9.74 / 2.71, 9.68 s | 2.75, 9.76 / 2.72, 9.75 s |
+
+- c=1: identical greedy hashes max vs value in both starts (one request = the same rule, as designed); value costs
+  +0.8…+1.2 % (the per-step value computation).
+- c=4: H (value ≥ max by 2…6 %) is **not supported**: the sign flips between starts (+7 % then −14 %), and the
+  stop arms' c=4 spread (±7 %) exceeds any effect. The shared draft count is not shown to limit c=4; value is dropped.
+- The stop vs K5 (again): code c=1 −6.2…−7.2 %, sampled −6.5…−6.7 %, prose −1.9…−2.1 %, c=4 −5…+2 %, TTFT equal.
+  Data `data/kstop/armrun-kstopval.jsonl`.
 
 **Agenda 2b — GDNNQ warm replay (`gqreplay`, prod venv, prod env with FNMOEFUSE, KV 4 GiB, FN_GDNNQ on vs off, 2 starts,
 probe `tools/gdnnq/replay1.py`): no regression, GDNNQ stays in drop-in 60.**
