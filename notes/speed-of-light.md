@@ -1561,6 +1561,27 @@ during decode is not retained, so there is nothing to hit, with or without specu
 - det-236 (09-24, "15 reads into decode-written blocks, 0 divergent") ran on the older stack; whether its reads really
   hit decode-written states was not re-checked against this mechanism, so it no longer counts as evidence either way.
 
+**decblk6 (2026-09-29, #53912 at prod's `--prefix-match-unit 64`): the fine-grained path IS reached, and speculation
+adds no divergence.** decblk5 above ran without `--prefix-match-unit 64`, which prod has used since 09-28; with it, the
+Mamba lookup takes the fine-grained branch cch-zuzuche flagged on #53912 (it returns the prompt's partial-tail entry
+and ignores `drop_eagle_block`; the same code is in our venv). Same probe (decblk4.py, 16 seeds), prod flags; spec =
+MTP K5 + RecoverSSM + nodrop, nospec = the same flags without speculation; 1 start each.
+
+| arm | B hits | divergent / 16 | first divergence (token) |
+|---|---|---|---|
+| spec | 3,008 × 16 | 5 | 22, 9, 2, 11, 3 |
+| nospec | 3,008 × 16 | 5 | 8, 13, 1, 8, 0 |
+
+- **B hits 3,008 = the prompt's last 64-token boundary in 16/16**, so decblk5's "unreachable" no longer holds for prod
+  flags: the partial-tail state is served. It is a prefill-written state (no decode, no drafts in it).
+- **H0 holds on the count** (spec 5 ≤ nospec 5 + 2). H1's "divergence at tokens 0–2" clause fired, but in **both**
+  arms, and earlier without speculation (token 0 and 1): it is cache-hit vs recompute numeric drift, not a
+  speculation effect. Three seeds (2, 6, 13) diverge in both arms. The continuation is random 7-digit numbers, i.e.
+  near-ties at every digit, which is why a small drift shows up at once.
+- Not covered: the concurrent producer/consumer copy-on-write case (a sibling hitting a partial tail while its producer
+  still decodes in that block) and cch-zuzuche's shape (0 % acceptance episodes on 85k+ reused agent prefixes). No
+  degeneration was seen here, but this probe compares tokens, not text quality. Data `data/decblk6/`.
+
 ### 5y. Validation of the 2026-09-28 prod config (bf16 SSM state, `--prefix-match-unit 64`, fast loading, tool guards)
 
 One start with prod's venv, launcher and drop-in flags (armrun `prodval2`, default KV size, as the 09-27 `prodval`),

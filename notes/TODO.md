@@ -254,7 +254,9 @@ decode-written blocks, 0 divergent. **CLOSED 2026-09-28 (§5x): at prod's defaul
 **REOPENED 2026-09-29:** decblk5 ran without `--prefix-match-unit 64` (prod since 09-28). cch-zuzuche (#53912,
 09-29) shows the fine-grained Mamba lookup that flag enables returns the prompt's partial-tail entry and ignores
 `drop_eagle_block` (same code in our venv, `MambaManager.find_longest_cache_hit`). `decblk6` (prod flags incl. pmu 64,
-spec + nospec) is queued after kstopval. Keep watching; a comment with the MTP counter-datapoint could help, but needs a
+spec + nospec) ran the same evening (§5x decblk6): the partial tail IS served (B hit 3,008 in 16/16), and
+speculation adds no divergence (spec 5/16 vs nospec 5/16, early flips in both = cache-hit drift on near-ties). Open:
+the concurrent copy-on-write case and long agent prefixes; watch #53912 / #57128. Keep watching; a comment with the MTP counter-datapoint could help, but needs a
 go.
 
 **Stale drafts** from 09-08/09, measured on dev401/fnmain2: `comment-54521-zc502-isolation.md`,
