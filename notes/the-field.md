@@ -2224,3 +2224,19 @@ identifiers normalized (`tools/tfold/sim.py`, data `data/tfold/provenance_scan.j
   projection with the 4-stream gate mix in its epilogue, bf16 rounding points matched to the unfused path. One
   difference: they store the normalized `xn` once (from `hc_down`) and read it in `upmix`; ours never stores it and
   rebuilds it from the residual and rrms. Weights 4-bit affine there, BF16 here. Cite this in any upstream PR.
+
+## Upstream HC fusion work vs ours (2026-09-29, user: "also consider #58706 (ROCm) and #53909")
+
+| PR | state | platform | widths | what it fuses |
+|---|---|---|---|---|
+| [#58957](https://github.com/vllm-project/vllm/pull/58957) | **merged** | NVIDIA, CuTe DSL | decode, M ≤ 48 (unfused above) | down projection + SiLU (`hc_down_silu`, hook `_down_and_inject` in `nvidia/hyperconnection.py`); combine+RMSNorm still writes `xn`, up GEMM and gate mix unfused. GB300 TP4 + MTP3: TPOT −2.1…−4.0 % at c 1–16, GSM8K equal |
+| [#58706](https://github.com/vllm-project/vllm/pull/58706) | open | ROCm only | decode, M ≤ 5 | down + SiLU, and up GEMM + sigmoid gate mix in the epilogue (the `[M, hyper_hidden]` gate tensor never written): the same idea as our K3, for AMD decode, motivated by launches |
+| [#53909](https://github.com/vllm-project/vllm/pull/53909) | open, idle since 09-01 | Triton | — | standalone kernels (grouped Gemma RMSNorm, gate reduce, injection combine; plus QSA and PLE-state ops) with tests; not wired into the model path |
+| ours (§5aa, prod 09-28) | local | NVIDIA, Triton | prefill, M ≥ 128 | combine + rrms without `xn` (the down GEMM normalizes on load), down + SiLU with split-K, up GEMM + gate mix; TTFT −5.5…−7.9 % |
+
+- **Complementary, not duplicate:** #58957 covers NVIDIA decode (≤ 48), ours prefill (≥ 128); 49–127 is unfused in both.
+  Ours is the only one that removes `xn` and the only prefill-sized one.
+- **Before any HC upstream post:** rebase our hook onto #58957's `_down_and_inject` dispatch (same file) and choose by
+  M; cite TensorFold (stores `xn`), #58706 (gate mix in the up-GEMM epilogue) and #58957.
+- **For prod:** nothing changes on the 1ea7 base. On a newer main, #58957 may cut decode time on GB10 as well; check
+  that its CuTe DSL kernel builds for sm_121, then a decode A/B.
