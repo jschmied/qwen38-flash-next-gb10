@@ -2297,3 +2297,26 @@ scheduler counts the cut drafts as rejected, so its accounting holds). `krun`, 1
 
 Runner mode recovers ~2 ms per cycle and works with async scheduling on. Greedy text is identical across all kstop
 runs and differs from K5 (RecoverSSM commit grouping, §5b): a quality screen is required before any prod proposal.
+
+**§5ah A/B (`kstopab`): confidence stop vs prod K=5, 2 starts each, alternating, clone venv, full prod config (async
+scheduling on in both).** kstop = runner-mode sizing, τ 0.75, depth 7, dynamic-SD graphs (schedule bs1→7, 2→6, 3→5,
+4→4, 5→3, 6→2, 7–16→1), #58821 cherry-pick.
+
+| | kstop, s1 / s2 | prod K5, s1 / s2 | Δ |
+|---|---|---|---|
+| code c=1 greedy, ms/tok (accepted) | 13.738 / 13.714 (4.78) | 14.760 / 14.687 (4.37) | **−6.4…−7.1 %** (72.8 vs 67.9 tok/s) |
+| code c=1 sampled, ms/tok | 15.473 / 15.379 | 16.662 / 16.454 | **−6.0…−7.6 %** |
+| prose c=1, ms/tok (accepted) | 23.184 / 23.117 (2.44) | 23.916 / 23.484 (2.86) | **−1.3…−3.3 %** |
+| code c=4, tok/s | 138.1 / 135.9 | 140.3 / 148.1 | −1.5…−8.3 % |
+| TTFT 8k / 30k | 2.712, 9.664 / 2.711, 9.676 s | 2.745, 9.733 / 2.720, 9.757 s | −0.3…−1.2 % |
+| replay cold / warm | 4.055, 1.418 / 4.073, 1.414 s | 4.181, 1.527 / 4.212, 1.513 s | cold −2.5…−3.3 %, warm −6.5…−7.4 % |
+| greedy code / prose hashes | 89e8d183 / e18fc436 (both starts) | d102a738 / 38c70791 | text differs (RecoverSSM grouping) |
+
+- **Inside the hypothesis on c=1** (code and sampled −5…−8 %, prose −3…+1 %). Below the replay's +8.4…10.3 % because
+  ~1.3–2.7 ms per cycle of overhead remains (the d_max wait before the verify batch, sequential shared experts in the
+  drafter's steps).
+- **c=4 worse** (outside ±5 % on one start): this schedule gives batch size 4 at most K=4, below prod's K=5, and d_max
+  is shared by the batch. The quality-screen schedule keeps K=7 up to 16 requests; a c=4 re-measure with it is the
+  follow-up.
+- Quality screen (GSM8K + HumanEval, 16 concurrent, schedule 1–16→K7) queued as `evalks`; control = this morning's
+  `evalgq-base0/1` (identical config on the same venv; the overlays installed since are env-gated and inert).
