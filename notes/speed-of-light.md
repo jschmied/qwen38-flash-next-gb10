@@ -2430,11 +2430,16 @@ CUTLASS (`marlin`, clone venv, K5, fusions off, KV 4 GiB, 2 starts): not adopted
 | TTFT 8k / 30k | 2.810, 10.146 / 2.819, 10.140 s | 2.726, 9.791 / 2.711, 9.701 s |
 | replay cold / warm | 5.23, 2.27 / 4.48, 2.73 s | 4.20, 1.51 / 4.25, 1.52 s |
 
-- **Greedy output changes between two starts of the same config** (the atomic-add reduction order), which breaks the
-  project's run-to-run determinism; c=1 cells then compare different texts (accepted per cycle 4.06 / 4.26 vs 4.37).
+- **Greedy output changes between two starts of the same config**, which breaks the project's run-to-run determinism.
+  Cause NOT established. It is not atomic add: this build hard-codes `use_atomic_add=False` in both Marlin MoE GEMMs
+  (`experts/marlin_moe.py`; `VLLM_MARLIN_USE_ATOMIC_ADD` only reaches the dense Marlin path), the split-K reduce is
+  fp32, the top-k combine is `ops.moe_sum`, and `VLLM_MOE_SKIP_PADDING` (the −1 top-k sentinel) was off. The 09-02
+  bisection had already seen Marlin diverge at prefill (router logits bit-identical, `mlp.experts` first to differ).
+  The c=1 cells therefore compare different texts (accepted per cycle 4.06 / 4.26 vs 4.37).
 - **c=4 +8…+18 %** (Marlin's small-M GEMM beats CUTLASS FP4 at decode batches), **TTFT +3…+5 %** (bf16 math at
   prefill), warm replay +50…+80 % (partly text).
-- Follow-up (agenda 5): Marlin without atomic add (deterministic?) at decode only, CUTLASS / the Triton prefill MoE
+- Follow-up (agenda 5): first find the nondeterminism (standalone `fused_marlin_moe` on fixed inputs, twice per process
+  and across two processes, with the real expert shapes); then Marlin at decode only, CUTLASS / the Triton prefill MoE
   (§5ag) at prefill; its weights are repacked, so it would need its own weight copy or a shared layout: scope first.
 
 **Agenda 2b — GDNNQ warm replay (`gqreplay`, prod venv, prod env with FNMOEFUSE, KV 4 GiB, FN_GDNNQ on vs off, 2 starts,
