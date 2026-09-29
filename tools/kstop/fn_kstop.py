@@ -26,6 +26,13 @@ SIZE = MODE != "off"
 # True while a drafter decode step is captured inside the IF node: stream forks (the MoE shared-experts aux stream)
 # are illegal in a conditional body ("merge of separate capture sequences"), so those layers run sequentially then.
 IF_CAPTURE = False
+# FN_KSTOP_AGG: how one draft count is chosen for a batch. "max" = the largest per-request d (one confident request keeps
+# the batch drafting); "value" = the d that maximizes (bonus tokens + expected accepted tokens) / estimated cycle cost,
+# with expected accepted from each request's survival product (running product of the drafter's top-1 probabilities,
+# counted while the request is still active under the tau rule). At one request "value" equals "max".
+AGG = os.environ.get("FN_KSTOP_AGG", "max")
+# cycle cost model for "value": A + (D + R * n**ALPHA) * d  [ms], n = requests, d = drafts (c=1 fit: 43 + 4.6 d)
+_A, _D, _R, _ALPHA = (float(x) for x in os.environ.get("FN_KSTOP_COST", "43,1.3,3.3,0.7").split(","))
 _S: dict = {}
 
 
@@ -36,12 +43,17 @@ def _buf(max_reqs: int, device) -> dict:
         _S["any"] = torch.zeros((), dtype=torch.bool, device=device)
         _S["dmax"] = torch.zeros((), dtype=torch.int32, device=device)
         _S["nreq"] = torch.zeros((), dtype=torch.int64, device=device)
+        _S["surv"] = torch.zeros(max_reqs, dtype=torch.float32, device=device)
+        _S["cume"] = torch.zeros((), dtype=torch.float32, device=device)
+        _S["best"] = torch.zeros((), dtype=torch.float32, device=device)
+        _S["dbest"] = torch.zeros((), dtype=torch.int32, device=device)
         _S["ar"] = torch.arange(max_reqs, device=device)
         _S["host"] = torch.zeros((1,), dtype=torch.int32, pin_memory=True)
         _S["event"] = torch.cuda.Event()
         _S["hist"] = {}
         _S["cycles"] = 0
-        logger.info("FNKSTOP active: tau %.2f, verify sized to the draft count: %s (%s)", TAU, SIZE, MODE)
+        logger.info("FNKSTOP active: tau %.2f, verify sized to the draft count: %s (%s), batch draft count: %s", TAU,
+                    SIZE, MODE, AGG)
     return _S
 
 
@@ -67,10 +79,45 @@ def update(logits: torch.Tensor, draft_step: torch.Tensor) -> None:
     new_act = torch.where(is0, valid, act & (conf >= TAU) & valid)
     new_d = torch.where(is0, valid.to(torch.int32),
                         torch.where(new_act, (draft_step + 1).to(torch.int32), d))
+    if AGG == "value":
+        _value_update(conf, valid, is0, act, new_act, new_d, draft_step)
+        act.copy_(new_act)
+        d.copy_(new_d)
+        return
     act.copy_(new_act)
     d.copy_(new_d)
     _S["any"].copy_(new_act.any())
     _S["dmax"].copy_(new_d.max())
+
+
+def _cost(dd, n):
+    return _A + (_D + _R * n ** _ALPHA) * dd
+
+
+def _value_update(conf, valid, is0, act, new_act, new_d, draft_step) -> None:
+    """Batch draft count by expected value (graph-safe tensor ops). After draft j (0-based) a request that is still active
+    contributes its survival product s_r(j) = prod_{i<=j} p_r(i) as the expected acceptance of that draft."""
+    n = conf.shape[0]
+    surv = _S["surv"][:n]
+    nf = _S["nreq"].to(torch.float32)
+    step = draft_step.to(torch.float32)
+    new_surv = torch.where(is0, torch.where(valid, conf, 0.0), torch.where(new_act, surv * conf, 0.0))
+    surv.copy_(new_surv)
+    cume = torch.where(is0, new_surv.sum(), _S["cume"] + new_surv.sum())
+    _S["cume"].copy_(cume)
+    ndraft = step + 1.0                                   # drafts verified if the batch stops here
+    val = (nf + cume) / _cost(ndraft, nf)
+    better = is0 | (val > _S["best"])
+    _S["best"].copy_(torch.where(better, val, _S["best"]))
+    _S["dbest"].copy_(torch.where(better, ndraft.to(torch.int32), _S["dbest"]))
+    # one request: exactly the tau rule (d = its own d); otherwise the value choice
+    single = _S["nreq"] == 1
+    _S["dmax"].copy_(torch.where(single, new_d.max(), _S["dbest"]))
+    # keep drafting only while some request is active AND an optimistic next step (every active request survives the
+    # next draft at its current survival) could still beat the best value so far
+    ub = (nf + cume + new_surv.sum()) / _cost(ndraft + 1.0, nf)
+    go = new_act.any() & (single | (ub > _S["best"]))
+    _S["any"].copy_(go)
 
 
 def copy_d_async() -> None:

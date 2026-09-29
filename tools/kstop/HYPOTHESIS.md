@@ -97,3 +97,10 @@ Clone venv, K5, KV 4 GiB, fusions off (GDNNQ and FNMOEFUSE unset: the text equal
 prefill MoE only hooks the FlashInfer path), `--moe-backend marlin` + `VLLM_MARLIN_USE_ATOMIC_ADD=1` vs FlashInfer
 CUTLASS; 2 starts. H: decode c=1 within ±3 % (the experts' bytes are the same 4.5 bpw; Marlin dequantizes to bf16);
 TTFT +10…+30 % with Marlin (bf16 math at prefill); greedy hashes may differ (different MoE kernel numerics).
+
+## Agenda 2b: GDNNQ warm replay (`gqreplay`, 2026-09-29, before the run)
+
+Prod venv, prod env with FNMOEFUSE, KV 4 GiB, FN_GDNNQ on vs off, 2 starts; probe `tools/gdnnq/replay1.py` (the fixed
+8k replay prompt with 1 output token: cold, then 3 warm; and with 96 tokens as nvprobe). H0 (text): warm 1-token TTFT
+equal within ±3 % (the 1.81 vs 1.52 s gap is GDNNQ's different 96 decoded tokens); cold 1-token TTFT −1…−3 % with
+GDNNQ (§5af). H1 (regression): warm 1-token TTFT slower with GDNNQ by > 5 % in both starts → propose removing GDNNQ.
