@@ -77,3 +77,10 @@ MiaAI's quicksort greedy 52.2 vs 66.4 tok/s. All A/Bs ran at KV 4 GiB; at prod's
 step). Arms on the prod venv with prod's exact env (fusions on), default KV: stop (drop-in 65 env) vs K5; 2 starts each;
 nvprobe + MiaAI prompts. H1 (paging): the stop's code gain at default KV is ≤ 2 % and MiaAI quicksort is slower with the
 stop in both starts. H0: prodval5 was one noisy start; the stop gives −5…−8 % here too.
+
+## TODO 10e: vllm#58449 fused draft metadata (`f58449`, 2026-09-29, before the run)
+
+Prod K5 on the clone venv (KV 4 GiB, no stop), #58449 on vs off (armrun source_toggle), 2 starts each. Witness:
+`FN58449 fused QSA draft metadata update ran` in the on arm; `Fused multi-step draft decode is not supported` only in the
+off arm. H: greedy hashes identical (the same metadata computed in place); code c=1 −1…−4 % ms/tok (no host metadata
+rebuild between the 4 decode draft steps); prose similar; TTFT ±1 %; c=4 ±3 %.
