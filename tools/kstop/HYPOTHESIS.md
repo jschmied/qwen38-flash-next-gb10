@@ -104,3 +104,11 @@ Prod venv, prod env with FNMOEFUSE, KV 4 GiB, FN_GDNNQ on vs off, 2 starts; prob
 8k replay prompt with 1 output token: cold, then 3 warm; and with 96 tokens as nvprobe). H0 (text): warm 1-token TTFT
 equal within ±3 % (the 1.81 vs 1.52 s gap is GDNNQ's different 96 decoded tokens); cold 1-token TTFT −1…−3 % with
 GDNNQ (§5af). H1 (regression): warm 1-token TTFT slower with GDNNQ by > 5 % in both starts → propose removing GDNNQ.
+
+## Agenda 2f: batch draft count by expected value (`kstopval`, 2026-09-29, before the run)
+
+Clone venv (rssm), the kstopab2 config (K7 + stop, tau 0.75, runner sizing, dynamic-SD schedule, KV 4 GiB, no GDNNQ /
+FNMOEFUSE); arms `FN_KSTOP_AGG=max` vs `value` (cost 43, 1.3, 3.3, 0.7) vs K5; 2 starts. Witness: `batch draft count:
+max|value` in the FNKSTOP active line. H: c=1 code/prose equal between max and value within ±1 % and identical greedy
+hashes (one request → the same rule); c=4 value ≥ max by 2…6 % (max lets one confident request drag the batch to 7
+drafts) and ≥ K5. H0 (null): c=4 within ±2 % of max — then the shared d is not what limits c=4 and value is dropped.
