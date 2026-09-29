@@ -2470,6 +2470,22 @@ CUTLASS (`marlin`, clone venv, K5, fusions off, KV 4 GiB, 2 starts): not adopted
   yet tested: the weight repack at load, a shared Marlin workspace under CUDA graphs, and whether the Marlin arm is
   reproducible *within* one start (the probe records one hash per prompt per start, so within-start is unknown).
   Data `data/marlin/det_marlin_moe.json`.
+- **In the server, Marlin is nondeterministic within one start, intermittently, with or without MTP** (`marlinrep2`,
+  probe `tools/marlin/repro.py`: greedy A, A, B, A with a unique `cache_salt` each, then A twice as cache hits; 2 starts
+  per arm; `marlinrep` start 0's Marlin arm matches). Hash of A per request:
+
+  | arm | start 0 | start 1 |
+  |---|---|---|
+  | Marlin + MTP K5 | 1 class (62837025 ×6) | **3 classes**: salted repeats diverge at tokens 42 and 53; cache hits = A0 |
+  | Marlin, no speculation | 1 class | **2 classes**: one salted repeat diverges at token 42 |
+  | CUTLASS + MTP K5 | 1 class | 1 class |
+
+  All arms' first A is the same text (62837025, Marlin and CUTLASS alike); B differs between Marlin starts, CUTLASS's B
+  is one text. So H-run holds, not H-start: a runtime race in the serving context, independent of the drafter. The
+  kernel is deterministic standalone, and Marlin's lock workspace is keyed per stream (`get_marlin_workspace`), so the
+  remaining candidates are CUDA-graph replay of Marlin's per-call buffers, a stream overlap around the MoE call, or the
+  moe_align order at shapes the standalone did not test. **Parked:** Marlin is not adopted; finding the race would
+  mainly serve an upstream report (needs a go).
 
 **Agenda 2f — batch draft count by expected value (`kstopval`, clone venv, K7 + stop τ 0.75 runner sizing, KV 4 GiB,
 2 starts): not adopted, `max` stays.**
@@ -2504,6 +2520,12 @@ probe `tools/gdnnq/replay1.py`): no regression, GDNNQ stays in drop-in 60.**
   the clone venv (kstopab2, K5) and 1.76–1.90 s on the prod venv with either GDNNQ state. Not yet explained; the prod venv
   carries the inert FNKSTOP/FN58821 overlays and FNMOEFUSE (M ≥ 128 only, so not in a warm 96-token replay). Queued as
   agenda 2g.
+- **Agenda 2g, closed (`venvtext`): there is no venv gap; my comparison was wrong.** The prod venv with FNMOEFUSE and
+  without GDNNQ gives the clone's exact greedy hashes (code d102a738, prose 38c70791) and nvprobe's replay at
+  **1.513 s**, code c=1 14.57 ms/tok. The 1.90 s came from `replay1.py`, whose prompt carries a different tag
+  (`[replay-96tok]` vs nvprobe's `[replay-fixed]`), so it gets a different reply. The replay cell measures one 96-token
+  reply's acceptance: it moves with K (K2 1.40, K3 1.58, K4 1.42, K5 1.52, K6 1.64 s) and with anything that changes
+  the text (GDNNQ 1.76–1.82 s). Rank replay only between arms with identical text. Data `data/kstop/armrun-venvtext.jsonl`.
 
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
