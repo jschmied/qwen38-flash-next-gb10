@@ -1,0 +1,10 @@
+#!/bin/bash
+# kstop chain: dl7 (draft log at K=7) -> kcost (K=2..7, 2 starts) -> dynsd (graphs for 3..8 rows in one server)
+set -u
+D=/opt/llm/.cache-armrun/draftlog
+[ -f $D/draftlog.jsonl ] && mv $D/draftlog.jsonl $D/draftlog-k5-0927.jsonl
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/kstop/spec-dl7.json; echo "dl7 rc=$?"
+[ -f $D/draftlog.jsonl ] && cp $D/draftlog.jsonl $D/draftlog-k7-0929.jsonl
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/kstop/spec-kcost.json; echo "kcost rc=$?"
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/kstop/spec-dynsd.json; echo "dynsd rc=$?"
+echo "== KSTOP CHAIN DONE =="

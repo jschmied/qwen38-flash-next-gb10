@@ -1,0 +1,3 @@
+81a82,83
+>   # KSTOP dynsd (runner copy only): FN_SPEC_DYN="lo:hi:K,..." -> num_speculative_tokens_per_batch_size
+>   if [ -n "${FN_SPEC_DYN:-}" ]; then D=$(echo "$FN_SPEC_DYN" | sed 's/\([0-9]*\):\([0-9]*\):\([0-9]*\)/[\1,\2,\3]/g'); X="${X},\"num_speculative_tokens_per_batch_size\":[${D}]"; fi
