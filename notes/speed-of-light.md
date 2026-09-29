@@ -2360,6 +2360,20 @@ Drop-in 65 renamed to `65-kstop.conf.disabled` (prod = the validated fusions-onl
 without FN_KSTOP). `ksprod` (prod venv, default KV, stop vs K5, 2 starts) queued to decide. Data
 `data/prodval/armrun-prodval5.jsonl`.
 
+**TODO 10a — block verification (`rejection_sample_method: block`, from the myllmbox v4 recipe): rejected.** `blockver`,
+on the confidence-stop config (clone venv, KV 4 GiB), 2 starts each; hypothesis in `tools/kstop/HYPOTHESIS.md`.
+
+| | block, s1 / s2 | strict (ours), s1 / s2 |
+|---|---|---|
+| code sampled, ms/tok (accepted per cycle) | 15.873 / 15.809 (3.96) | 15.352 / 15.345 (4.12) |
+| code greedy / prose, ms/tok | 13.768 / 13.713, 23.053 / 23.209 | 13.720 / 13.760, 23.202 / 23.104 |
+| c=4, tok/s | 145.2 / 139.4 | 145.8 / 144.1 |
+| greedy hashes | 89e8d183 / e18fc436 (identical in all four) | |
+
+- **Outside the hypothesis, the wrong way:** sampled code is **+3.0…+3.4 % slower**, with fewer drafts accepted per
+  cycle (3.96 vs 4.12); greedy is unchanged and bit-identical, as predicted (the rule only differs on sampled drafts);
+  c=4 −0.4…−3.3 %. Not adopted. Their recipe's acceptance of 5.1 of 6 is prompt-driven, not block verification.
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact
