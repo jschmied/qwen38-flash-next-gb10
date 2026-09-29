@@ -2135,3 +2135,24 @@ the path line `FNMOEFUSE Triton NVFP4 prefill MoE ran` is a required void check)
 - **Status:** a prod candidate, **proposed, not installed**. It is installed env-gated (off unless `FN_MOEFUSE=1`) in the
   clone venv `vllm-venv-rssm` (`fused_moe/fn_moe_fp4.py`, hook in `experts/flashinfer_cutlass_moe.py`, backup
   `*.orig-moefuse`; `patch_moefuse.py <vllm> off` removes it). Data: `data/moefuse/`.
+
+**§5ag addendum — both candidates together (`combo`: FN_MOEFUSE=1 + FN_GDNNQ=1 vs prod, 2 starts each, alternating;
+hypothesis in `tools/moefuse/HYPOTHESIS.md`; user: "measure combination and compare to values in our README").**
+
+| | combo, s1 / s2 | prod, s1 / s2 | Δ vs prod | README (09-28) | Δ vs README |
+|---|---|---|---|---|---|
+| TTFT 8k (7,503 tok) | 2.564 / 2.564 s | 2.727 / 2.729 s | **−6.0 %** | 2.71–2.72 s | −5.4…−5.7 % |
+| TTFT 30k (29,263 tok) | 9.127 / 9.116 s | 9.725 / 9.757 s | **−6.1…−6.6 %** | 9.69–9.73 s | −5.8…−6.3 % |
+| prefill rate 8k / 30k | ~2,930 / ~3,210 tok/s | ~2,750 / ~3,005 tok/s | | ~2,770 / ~3,020 | |
+| code c=1 greedy, per verify cycle | 63.84 / 64.53 ms | 64.97 / 64.12 ms | null | | |
+| greedy code / prose hashes | 71fc9ede / 3bab2af1 | d102a738 / 38c70791 | text differs (GDNNQ drift; = §5af's gdnnq arm) | | |
+
+- **Against the hypothesis:** 30k 9.12 s is inside the predicted 9.00–9.25 s, and the gains add (MoE −4 %, GDNNQ
+  −2.3 %). 8k 2.56 s is inside the predicted 2.55–2.66 s, at its fast end. Decode per verify cycle is null, as predicted.
+- **ms/tok on code and sampled code moves (14.27–14.42 vs 14.69–14.89; sampled 14.5–14.6 vs 16.6–16.9):** that is
+  GDNNQ's different output text accepting differently (4.474 vs 4.365 per cycle), as in §5af, not kernel time.
+- **Open, not claimed: the cache-hit replay** (fixed 8k prompt, then 96 decoded tokens, twice) reads cold 4.40–4.42 vs
+  4.21–4.28 s and warm 1.81 vs 1.52 s. The MoE-only run left it unchanged (§5ag), and the GDNNQ-only run showed the same
+  1.81 s (§5af data), so it comes with GDNNQ. GDNNQ changes those 96 tokens, so this probe cannot separate text from
+  kernel. A replay whose decoded tokens are forced (or zero decode, TTFT only) would settle it before a prod proposal of
+  GDNNQ that relies on this row.

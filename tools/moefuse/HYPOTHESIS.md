@@ -37,3 +37,12 @@ No weight copies: all kernels read FlashInfer's processed tensors (a second copy
 | S2 GEMM2 standalone | 2.6–3.2 ms | > 3.3 ms |
 | S3 whole prefill MoE vs FlashInfer, same process, same inputs | −0.7…−1.3 ms of 8.9 ms per layer-chunk; output rel L2 ≤ 1e-2 vs FlashInfer; bit-identical run to run | slower, or rel L2 > 3e-2 |
 | S4 server A/B (2 starts per arm, prod config, clone venv) | TTFT −2.5…−5 %; decode unchanged | |
+
+## Combination run (`combo`, 2026-09-29, user: "measure combination and compare to values in our README")
+
+Arms: `combo` (FN_MOEFUSE=1 + FN_GDNNQ=1) vs `base` (prod config), 2 starts each, full prod config incl. HC fusion + F4.
+The two fusions touch disjoint kernels (MoE vs GDN out_proj), so the gains should add:
+- TTFT 30k: **9.00–9.25 s** (base 9.67–9.72; MoE −3.8…−4.3 %, GDNNQ −2.3…−2.5 %), i.e. −5…−7 %.
+- TTFT 8k: **2.55–2.66 s** (base ~2.70).
+- Decode c=1 / c=4: null. Greedy code/prose text differs from base (GDNNQ drift, §5af), identical to the gdnnq arm of §5af.
+Against the README (2.71–2.72 / 9.69–9.73 s): 30k ~−6 %, 8k ~−3 %.
