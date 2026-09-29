@@ -45,3 +45,15 @@ DECBLK5 (prod's default retention interval 0, spec arm only, same probe, 1 start
 decode-crossed 3456 boundary is not retained at interval 0, so B stops at a prompt-internal boundary (1728 or 0) in
 16/16. Out of range: B hits 3456 -> the code reading was wrong and prod does serve decode-written states (then the
 decblk4 H0 result is the relevant one for prod).
+
+## decblk6 (2026-09-29, before the run): #53912 at prod's `--prefix-match-unit 64`
+
+Trigger: cch-zuzuche on #53912 (2026-09-29) shows the fine-grained Mamba lookup (`prefix-match-unit` below the Mamba
+page) returns the partial-tail entry at the prompt's last hash boundary and ignores `drop_eagle_block`; their corruption
+is `!`-walls at 0 % acceptance on long reused agent prefixes. decblk5 (the "unreachable" result) ran WITHOUT
+`--prefix-match-unit 64`, which prod has used since 09-28, so it did not cover this path. Same probe (decblk4.py, 16
+seeds, token-id follow-up = prompt + 480 sampled ids), decblk5's spec arm + `--prefix-match-unit 64
+--mamba-ssm-cache-dtype bfloat16`, plus a nospec control with the same flags; 1 start each.
+H0 (clean): B hits ~3,008 tokens (the prompt's last 64-token boundary, a prefill-written state) in 16/16 of both arms;
+divergent spec ≤ nospec + 2, any divergence late (token ≥ 5). H1 (poisoned): spec ≥ nospec + 4 divergent, or any
+divergence at tokens 0–2, or a degenerate B. Void: B hits 0 in both arms (the path was not reached), or R hits > 0.

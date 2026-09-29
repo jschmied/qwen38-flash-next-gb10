@@ -243,7 +243,11 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
 **vllm#53912 / #57128** (prefix cache + spec decode + `disable_eagle_block_drop` poisoning cached Mamba state): our
 exact config family. **Tested 2026-09-24 (det-236): not reproduced on prod.** 15 low-acceptance cache reads into
 decode-written blocks, 0 divergent. **CLOSED 2026-09-28 (§5x): at prod's default retention interval 0 a decode-written state is never served
-(decblk5, 16/16 hit 0); with interval 3456 it is served and did not contaminate (decblk4: 4 vs 2 of 16, late drift).** Keep watching; a comment with the MTP counter-datapoint could help, but needs a
+(decblk5, 16/16 hit 0); with interval 3456 it is served and did not contaminate (decblk4: 4 vs 2 of 16, late drift).**
+**REOPENED 2026-09-29:** decblk5 ran without `--prefix-match-unit 64` (prod since 09-28). cch-zuzuche (#53912,
+09-29) shows the fine-grained Mamba lookup that flag enables returns the prompt's partial-tail entry and ignores
+`drop_eagle_block` (same code in our venv, `MambaManager.find_longest_cache_hit`). `decblk6` (prod flags incl. pmu 64,
+spec + nospec) is queued after kstopval. Keep watching; a comment with the MTP counter-datapoint could help, but needs a
 go.
 
 **Stale drafts** from 09-08/09, measured on dev401/fnmain2: `comment-54521-zc502-isolation.md`,
