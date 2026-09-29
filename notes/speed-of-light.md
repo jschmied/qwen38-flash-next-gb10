@@ -2321,6 +2321,20 @@ scheduling on in both).** kstop = runner-mode sizing, τ 0.75, depth 7, dynamic-
 - Quality screen (GSM8K + HumanEval, 16 concurrent, schedule 1–16→K7) queued as `evalks`; control = this morning's
   `evalgq-base0/1` (identical config on the same venv; the overlays installed since are env-gated and inert).
 
+**§5ah quality screen (`evalks`, GSM8K + HumanEval greedy, 16 concurrent, 2 starts; schedule 1–16 → K7 so the stop and
+the d_max-sized verify are active at that concurrency; control = `evalgq-base0/1`): no measurable change.**
+
+| | GSM8K | HumanEval |
+|---|---|---|
+| kstop, s1 / s2 | 95.91 / 96.66 % | 96.34 / 95.12 % |
+| control (prod config), s1 / s2 | 95.91 / 96.21 % | 95.12 / 95.12 % |
+
+Every kstop-vs-control McNemar p ≥ 0.087 (the lowest in kstop's favour); the two kstop starts differ from each other
+more (GSM8K 4 vs 14 discordant, p = 0.031) than from the control: c=16 batch noise. Per the quality rule, the confidence
+stop is a **prod candidate** (the user's call): code c=1 −6.4…−7.1 %, sampled −6.0…−7.6 %, prose −1.3…−3.3 %, TTFT
+equal; open: c=4 with the 1–16 → K7 schedule (the A/B schedule dropped to K4 at batch 4 and lost 1.5–8.3 %). Data
+`data/kstop/evalks-score.txt`.
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact
