@@ -2437,6 +2437,22 @@ CUTLASS (`marlin`, clone venv, K5, fusions off, KV 4 GiB, 2 starts): not adopted
 - Follow-up (agenda 5): Marlin without atomic add (deterministic?) at decode only, CUTLASS / the Triton prefill MoE
   (§5ag) at prefill; its weights are repacked, so it would need its own weight copy or a shared layout: scope first.
 
+**Agenda 2b — GDNNQ warm replay (`gqreplay`, prod venv, prod env with FNMOEFUSE, KV 4 GiB, FN_GDNNQ on vs off, 2 starts,
+probe `tools/gdnnq/replay1.py`): no regression, GDNNQ stays in drop-in 60.**
+
+| | GDNNQ on, s1 / s2 | GDNNQ off, s1 / s2 |
+|---|---|---|
+| 8k prompt, 1 token: cold | 2.581 / 2.635 s | 2.708 / 2.637 s |
+| same, warm (median of 3) | **0.122 / 0.123 s** | **0.128 / 0.129 s** |
+| 8k + 96 tokens: cold / warm | 4.307, 1.763 / 4.316, 1.768 s | 4.463, 1.897 / 4.510, 1.896 s |
+
+- H1 (warm slower with GDNNQ by > 5 %) is refuted: warm 1-token TTFT is 5 % *faster* with GDNNQ, and the 96-token warm
+  replay 7 % faster (outputs equal to their own cold run in every cell).
+- So the old 1.81 vs 1.52 s gap was never GDNNQ. It is a **venv/config gap**: the same probe shape reads 1.51–1.52 s on
+  the clone venv (kstopab2, K5) and 1.76–1.90 s on the prod venv with either GDNNQ state. Not yet explained; the prod venv
+  carries the inert FNKSTOP/FN58821 overlays and FNMOEFUSE (M ≥ 128 only, so not in a warm 96-token replay). Queued as
+  agenda 2g.
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact

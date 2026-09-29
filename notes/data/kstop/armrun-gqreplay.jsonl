@@ -1,0 +1,4 @@
+{"tag": "gqreplay-gdnnq0", "tok1": {"cold_s": 2.581, "warm_s": [0.122, 0.122, 0.121], "warm_median_s": 0.122}, "tok96": {"cold_s": 4.307, "warm_s": 1.763, "equal": true}, "arm": "gdnnq", "start": 0, "ts": "2026-09-29 19:22:32"}
+{"tag": "gqreplay-nogdnnq0", "tok1": {"cold_s": 2.708, "warm_s": [0.125, 0.129, 0.128], "warm_median_s": 0.128}, "tok96": {"cold_s": 4.463, "warm_s": 1.897, "equal": true}, "arm": "nogdnnq", "start": 0, "ts": "2026-09-29 19:25:34"}
+{"tag": "gqreplay-gdnnq1", "tok1": {"cold_s": 2.635, "warm_s": [0.123, 0.122, 0.128], "warm_median_s": 0.123}, "tok96": {"cold_s": 4.316, "warm_s": 1.768, "equal": true}, "arm": "gdnnq", "start": 1, "ts": "2026-09-29 19:28:26"}
+{"tag": "gqreplay-nogdnnq1", "tok1": {"cold_s": 2.637, "warm_s": [0.129, 0.129, 0.126], "warm_median_s": 0.129}, "tok96": {"cold_s": 4.51, "warm_s": 1.896, "equal": true}, "arm": "nogdnnq", "start": 1, "ts": "2026-09-29 19:31:17"}
