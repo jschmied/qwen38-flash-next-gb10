@@ -2374,6 +2374,31 @@ on the confidence-stop config (clone venv, KV 4 GiB), 2 starts each; hypothesis 
   cycle (3.96 vs 4.12); greedy is unchanged and bit-identical, as predicted (the rule only differs on sampled drafts);
   c=4 −0.4…−3.3 %. Not adopted. Their recipe's acceptance of 5.1 of 6 is prompt-driven, not block verification.
 
+**§5ah `ksprod` — in prod's exact config the confidence stop does not pay; drop-in 65 stays disabled.** Prod venv, prod
+env incl. the §5ag fusions, default KV, stop vs K5, 2 starts each:
+
+| | stop, s1 / s2 | K5, s1 / s2 | Δ |
+|---|---|---|---|
+| code c=1, ms/tok (accepted) | 14.175 / 14.220 (4.53) | 14.360 / 14.254 (4.47) | −0.2…−1.3 % |
+| code sampled | 14.180 / 14.129 | 14.534 / 14.487 | −2.2…−2.8 % |
+| prose | 23.464 / 23.531 | 23.525 / 23.251 | null…+1.2 % |
+| code c=4, tok/s | 131.6 / 132.2 | 142.4 / 143.1 | **−7.6…−8.1 %** |
+| MiaAI quicksort greedy, tok/s | 51.9 / 52.0 | 66.2 / 66.1 | **−21 %** |
+| TTFT 8k / 30k | 2.56, 9.10–9.14 s | 2.55–2.78, 9.09–9.12 s | equal |
+
+H1 of `ksprod` holds. The clone-venv gain came with +9 % accepted tokens per cycle (4.78 vs 4.37 on the no-GDNNQ text);
+here the stop adds +1 % (4.53 vs 4.47) on GDNNQ's text, at default KV. Two differences, not yet separated: the text
+(GDNNQ changes the greedy output and with it where the drafter is confident) and the KV size (the mapped PLE table
+pages at default KV; K7 verifies up to 8 rows). A 2×2 (stop × KV 4 GiB / default, both with the fusions) would split
+them. The venv code stays installed and inert.
+
+**TODO 10e — vllm#58449 fused draft metadata (`f58449`, clone venv, K5, KV 4 GiB, armrun source toggle, 2 starts): bit-
+identical, small.** Greedy hashes identical in all four starts (the metadata is the same, computed in place). Code c=1
+14.750 / 14.764 vs 14.873 / 14.653 ms/tok (null); sampled null; **prose 23.666 / 23.657 vs 24.117 / 24.163 (−1.9…−2.1 %,
+sign holds)**; c=4 132.4 / 142.8 vs 144.8 / 144.4 (one bad start); TTFT equal. Below the predicted −1…−4 % on code; a
++2 % prose effect with identical output. Not adopted on two starts; a candidate for a larger A/B, and its upstream PR is
+the recipe author's (open). The venv was restored (0 markers).
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact

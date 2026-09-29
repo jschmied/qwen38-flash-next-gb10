@@ -154,7 +154,8 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
     (b) [already done: §5e, `vm.compaction_proactiveness=0` null at our headroom; only a server at the memory edge
     stalls]; (c) Marlin MoE at decode vs FlashInfer CUTLASS (our Triton prefill MoE reads
     FlashInfer's layout, so this needs a split); (d) NVFP4 W4A16 target lm_head (0.33 vs ~0.64 GB per cycle);
-    (e) vllm#58449 fused draft metadata vs the confidence stop's per-step overhead.
+    (e) [done: §5ah, #58449 bit-identical, prose −2 %, code null; not adopted on 2 starts].
+    Follow-up: split the confidence stop's prod-config loss (§5ah `ksprod`) into text vs KV size with a 2×2.
 9. **Cherry-pick two merged upstream PRs that run in our decode path, one A/B each** (added 2026-09-29, user: "record
    as todo"; not a merge of main, per the cherry-pick rule):
    - **#58957** (NVIDIA HC down projection + SiLU, CuTe DSL, decode M ≤ 48). First: its tests and a compile on sm_121
