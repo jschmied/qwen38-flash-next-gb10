@@ -1466,3 +1466,8 @@ wait on one ~100 GB pull, and they share one serve.
   for a PR (opt-in switch on their v0.30.0 Dockerfile, numbers on their default config, smoke test, unit test). Declined:
   we don't run their container, so we can't build, test or measure on their stack; pointed to #58863 and our §4t–4u/§5l
   numbers. Draft `comment-blazux-45-no-pr.md`. <https://github.com/blazux/qwen3.8-Flash-DGX/issues/45#issuecomment-5868669448>
+- **2026-09-29 — vllm#58863, reply to @antoniocuegervas (user's go: "post reply and offer full graph as addition").**
+  Their second-GB10 backport: +10 % gen tok/s at 16 agent sessions (+36 % late, less KV pressure), ~3 % slower at c=1
+  from the PIECEWISE fallback. Replied with our F4 numbers (FULL graphs for the RecoverSSM verify: −1.1…−2.1 % c=1, §5z)
+  and offered F4 as a follow-up commit on this PR (or a separate PR if reviewers prefer). Draft
+  `pr58863-reply-antoniocuegervas.md`. <https://github.com/vllm-project/vllm/pull/58863#issuecomment-5883389008>

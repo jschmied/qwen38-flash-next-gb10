@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. vllm-project/vllm#58863, reply to @antoniocuegervas's second-GB10 data point (2026-09-29).
+POSTED 2026-09-29 (user: "post reply and offer full graph as addition"). vllm-project/vllm#58863, reply to @antoniocuegervas's second-GB10 data point (2026-09-29).
 
 Thanks, this is the first measurement of the PR under real agent load, and the 16-session result is the case it was
 written for: the same sessions in less of the pool, so the eviction cliff moves out.
@@ -15,8 +15,10 @@ zero-length window, so the verify kernel writes nothing for them. FULL_AND_PIECE
 | code, c=4 (tok/s) | 143.56 / 142.86 | 142.70 / 143.51 |
 
 That is −1.1…−2.1 % at one stream, level at four, identical greedy text, and it passes the GDN/PLE tests plus a new
-padded-row test (91 passed). It would close most of the ~3 % you see against native FULL_DECODE_ONLY. It isn't in this
-PR yet; I can push it here as a follow-up commit, or open it separately once this one is reviewed. Whichever the
-reviewers prefer.
+padded-row test (91 passed). It should close most of the ~3 % you see against native FULL_DECODE_ONLY.
+
+I'd like to add it to this PR as a follow-up commit, so `--use-replayssm` works with the default FULL_AND_PIECEWISE
+mode instead of falling back to PIECEWISE. Reviewers: if you'd rather keep this PR as is, I'll open it as a separate
+PR on top.
 
 *Disclosure: drafted with Claude (Anthropic); I reviewed the numbers and the post.*
