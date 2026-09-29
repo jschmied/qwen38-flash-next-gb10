@@ -2273,3 +2273,27 @@ Their method: `tools/bench.py`, prefill = the server's own prefill seconds on fr
   Still not strictly like-for-like: both use server-default sampling, and ours (the model's generation config) is
   likely hotter than TensorFold's, which lowers acceptance on sampled text; their code-greedy number is not published.
   The confidence stop (§5ah) adds −6…−7 % ms/tok on code, −1…−3 % on prose.
+
+## myllmbox / bilikaz recipe v4 (2026-09-29, user: "look at …/qwen38-flash-next-recipe")
+
+<https://github.com/myllmbox/qwen38-flash-next-recipe> @ `004d19e2` (v4 2026-09-25, 87 stars). vLLM 0.30 docker image +
+patches, checkpoint `myllmbox/Qwen3.8-Flash-Next-hibrid48`. Claims (their method: 10-second engine windows, all streams
+decoding, "pasture" prompt, thinking off, 3 runs per rung; not re-measured by us): **73 tok/s single-stream (82 peak),
+288 tok/s at 16 streams (318 peak), acceptance 5.06–5.14 of 6 at K=5**, 830,582-token bf16 KV (27 GB pin), ~4 min boot.
+Quality (lm-eval, thinking on, 200-question subsets): HumanEval 95.7, GSM8K 98.0, IFEval 91.5, MMLU-Pro 84.9.
+
+**hibrid48 is not 4-bit dense** (config.json `quantized_layers`: 436 W4A16_NVFP4 + 155 NVFP4; model card): routed
+experts NVFP4 W4A4 (Inferact's), GDN projections NVFP4 W4A16 (Marlin), lm_head NVFP4 W4A16 (0.33 GiB, the MTP drafter
+shares it), attention q/k/v/o + shared experts + HC mixers + embeddings **bf16**, PLE table NVFP4 (28.6 GiB vs our FP8
+47.7 GiB). Their dense bytes are higher than ours (bf16 vs our FP8) except GDN and the head.
+
+Serving config (recipe.yaml): `moe-backend: marlin` (+ `VLLM_MARLIN_USE_ATOMIC_ADD=1`), `rejection_sample_method:
+"block"` with `draft_sample_method: "probabilistic"`, K=5, block 1632, PIECEWISE graphs (capture multiples of 6),
+async scheduling on, `gdn-prefill-backend: triton`, fastsafetensors, cpuset on the X925 cores, host tuning
+`vm.compaction_proactiveness=0` ("a 4–5 s slowdown every ~37 s … worth ~10 %"), fused multi-step draft metadata
+(their open vllm#58449).
+
+**Levers we have not tested** (queued in TODO item 10): block verification; `vm.compaction_proactiveness=0` (ours is
+20); Marlin MoE at decode; an NVFP4 W4A16 target lm_head (we closed lm_head precision on FP8 earlier); #58449 for the
+confidence stop's per-step draft overhead. Their acceptance 5.1 of 6 is prompt-driven (their card: reasoning prose ≈ 3,
+dense code ≈ 4.9 of 5); our code probe accepts 4.37 at K=5 without block verification.
