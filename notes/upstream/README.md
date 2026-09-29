@@ -1472,3 +1472,10 @@ wait on one ~100 GB pull, and they share one serve.
   and offered F4 as a follow-up commit on this PR (or a separate PR if reviewers prefer). Draft
   `pr58863-reply-antoniocuegervas.md`. <https://github.com/vllm-project/vllm/pull/58863#issuecomment-5883389008>
   Edited 2026-09-29 (user: "add link to patch in our repo"): pinned links to `tools/f4/f4.diff` (applies cleanly to PR head 5567cc1b, checked) and §5z.
+- **2026-09-29 — vllm#58439 and #58835 rebased onto main (user: "58835 has conflicts").** One conflict, in #58439's
+  first commit: upstream #59068 (Engram THP private tables) added `and not self.use_thp` to the same `dp_shared_memory`
+  default where we add `and not self.checkpoint_mapped`; both kept. #58439 3f…→ `4a00123ebd`, #58835 → `47b9933db8`
+  (force-with-lease). Tests on the rebased stack: engram/PLE/pageable pass; `tests/test_config.py`'s 28 failures are
+  identical on plain upstream main in the same environment (gated HF repos, wheel ABI imports). Both now MERGEABLE.
+  No comment posted. Noted while rebasing: upstream #58957 "Fuse HC down projection and SiLU on NVIDIA" merged, which
+  overlaps our HC fusion (§5aa) and must be read before any HC upstream post.
