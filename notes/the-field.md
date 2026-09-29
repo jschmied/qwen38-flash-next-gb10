@@ -2293,7 +2293,6 @@ async scheduling on, `gdn-prefill-backend: triton`, fastsafetensors, cpuset on t
 `vm.compaction_proactiveness=0` ("a 4–5 s slowdown every ~37 s … worth ~10 %"), fused multi-step draft metadata
 (their open vllm#58449).
 
-**Levers we have not tested** (queued in TODO item 10): block verification; `vm.compaction_proactiveness=0` (ours is
-20); Marlin MoE at decode; an NVFP4 W4A16 target lm_head (we closed lm_head precision on FP8 earlier); #58449 for the
+**Levers we have not tested** (queued in TODO item 10): block verification; Marlin MoE at decode; an NVFP4 W4A16 target lm_head (we closed lm_head precision on FP8 earlier); #58449 for the
 confidence stop's per-step draft overhead. Their acceptance 5.1 of 6 is prompt-driven (their card: reasoning prose ≈ 3,
 dense code ≈ 4.9 of 5); our code probe accepts 4.37 at K=5 without block verification.

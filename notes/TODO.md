@@ -150,9 +150,9 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
 8. **Finish the MTP re-measurement** (`mtp-remeasure-plan.md`). The Quant Map page flags its depth curve as under
    re-measurement.
 10. **Levers from the myllmbox v4 recipe (the-field, 2026-09-29), one A/B each on the prod config, after the §5ah
-    quality screen:** (a) `rejection_sample_method: block` with our probabilistic drafts (acceptance); (b)
-    `vm.compaction_proactiveness=0` vs our 20 (host sysctl, reversible; they report a 4–5 s stall every ~37 s from
-    migrating GPU-mapped pages); (c) Marlin MoE at decode vs FlashInfer CUTLASS (our Triton prefill MoE reads
+    quality screen:** (a) `rejection_sample_method: block` with our probabilistic drafts (acceptance);
+    (b) [already done: §5e, `vm.compaction_proactiveness=0` null at our headroom; only a server at the memory edge
+    stalls]; (c) Marlin MoE at decode vs FlashInfer CUTLASS (our Triton prefill MoE reads
     FlashInfer's layout, so this needs a split); (d) NVFP4 W4A16 target lm_head (0.33 vs ~0.64 GB per cycle);
     (e) vllm#58449 fused draft metadata vs the confidence stop's per-step overhead.
 9. **Cherry-pick two merged upstream PRs that run in our decode path, one A/B each** (added 2026-09-29, user: "record
