@@ -2296,3 +2296,25 @@ async scheduling on, `gdn-prefill-backend: triton`, fastsafetensors, cpuset on t
 **Levers we have not tested** (queued in TODO item 10): block verification; Marlin MoE at decode; an NVFP4 W4A16 target lm_head (we closed lm_head precision on FP8 earlier); #58449 for the
 confidence stop's per-step draft overhead. Their acceptance 5.1 of 6 is prompt-driven (their card: reasoning prose ≈ 3,
 dense code ≈ 4.9 of 5); our code probe accepts 4.37 at K=5 without block verification.
+
+## TensorFold 0.3.6 EXL3 announcement (2026-09-29, user: "check")
+
+The PR #42 author's post: a shared CUDA EXL3 module (3inst / MCG / mul1 codebooks, 1–8 bits, mixed width per tensor,
+row-invariant linear 1–128 rows without cuBLAS, one grouped-GEMV launch per MoE projection for mixed widths, CUDA-graph
+capturable), 49 files +5,673/−37; 2-bit MiMo kernel bandwidth 157→220 / 76→186 / 79→193 GB/s (vs ExLlamaV3 176–233);
+0.3.6.2 adds int8/int4 KV for Flash Next CUDA (1.7× / 2.6× context), `--mtp-confidence`, and a fix for EXL3 packs that
+keep `<|im_end|>` only in generation_config.json.
+
+**The Flash-Next numbers are the ones already recorded above** (their recipe table: EXL3 3.05 bpw code sampled / greedy
+/ chat greedy 80.8 / 77.7 / 69.2 tok/s vs "vLLM MTP=3" 42.4 / 40.9 / 37.6). What the post does not say:
+- **Their vLLM row is a stock config, not ours.** On their own public bench (`tools/tfbench/`, 64 tokens) our prod vLLM
+  does code greedy 55.8–55.9, chat greedy 55.1 (+37 % / +47 % over their "vLLM" row); on MiaAI's 256-token prompts
+  66.4 greedy code; and the confidence stop (§5ah) takes code another −6.7…−7.8 % ms/tok. Their EXL3 pack is still
+  ahead on decode (77.7 vs 55.9 at 64 tokens), with ~0.5× our weight bytes per token and untested 3-bit quality.
+- **Prefill** (the post says it "still needs work"): their Flash-Next CUDA prefill is 930–970 tok/s cold; ours is
+  ~2,930 / ~3,210 tok/s at 8k / 30k with the §5ag fusions. Agent turns are TTFT-bound.
+- **`--mtp-confidence`**: their CUDA default is 0.30; our replay optimum for this drafter is 0.70–0.80 (§5v, §5ah), and at
+  0.30 the stop is worth only ~+0.6 % in our replay.
+- Row invariance 1–128 rows is the property our determinism work cares about (batch-invariant greedy); their MoE path's
+  equality claim (2,472 outputs torch.equal) is per tensor, not end-to-end across concurrency.
+- int8 / int4 KV: our fp8 / NVFP4 KV measurements (§4l) found a quality/speed trade, not a free win.
