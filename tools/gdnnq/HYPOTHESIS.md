@@ -23,3 +23,13 @@ user), gdnnq vs base on the full prod config (HC fusion + F4), 2 starts each.
 H: no measurable change: every gdnnq-vs-base McNemar p > 0.05 and both scores inside base's own start-to-start spread
 (the HC-fusion screen saw base GSM8K 95.98-96.66 %, HumanEval 157-159). Out of range: a same-direction gap larger than
 base's spread in both starts -> SWE-bench before any proposal.
+
+## Agenda 2g: `venvtext` (2026-09-29, before the run) — why the warm replay is 1.8–1.9 s on the prod venv
+
+Existing data: on the clone venv FNMOEFUSE alone leaves the replay at 1.52 s with identical greedy hashes (moefuse A/B),
+GDNNQ gives 1.81 s with different hashes (combo); the replay time also moves non-monotonically with K (kcost2: K2 1.40,
+K3 1.58, K4 1.42, K5 1.52, K6 1.64 s). So the replay cell is set by the 96-token reply's text (its draft acceptance).
+The prod venv without GDNNQ reads 1.90 s (gqreplay). One start, prod venv, prod K5 config, FNMOEFUSE on, GDNNQ off,
+nvprobe. H-text: code/prose hashes differ from the clone's d102a738 / 38c70791 (the venvs' numerics differ, so the
+reply differs) and code c=1 ms/tok stays within ±3 % of the clone's 14.7. H-speed: the hashes are equal → the same text
+decodes slower on the prod venv; then diff the two venvs' overlays.

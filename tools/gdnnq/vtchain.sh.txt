@@ -1,0 +1,4 @@
+#!/bin/bash
+sleep 20
+while systemctl is-active -q mr-chain; do sleep 20; done
+exec python3 /opt/llm/runners/armrun.py /opt/llm/runners/produp/spec-venvtext.json
