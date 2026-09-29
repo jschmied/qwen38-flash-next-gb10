@@ -2207,3 +2207,18 @@ predictions match the server (code K7 vs K5 +0.5 % predicted, ≈ 0 measured; pr
   prose ~+10…11.5 % single-stream decode**, for the build: IF nodes around the draft steps, one sync, a FULL graph per
   draft count (fix the dynamic-SD bug or capture our own), and the stop in the drafter.
 - Decode only; agent turns are TTFT-bound, so the agent-level effect is smaller.
+
+**§5ah addendum — is τ 0.8 optimal, and does verifying two candidates at ~50/50 pay?** (user; `tools/kstop/tau_cv.py`,
+`data/kstop/tau_cv.json`, depth 7, exact graphs, measured costs, extra verify row 3.5 ms)
+- **τ curve is flat-topped:** code 9.5–10.0 % for τ 0.70–0.90 (7.6 % at 0.95, 6.8 % at 0.50); prose 12.6–12.8 % for
+  0.70–0.80 (11.7 % at 0.85, 7.7 % at 0.50). Too low a τ drafts deep into misses and costs more than it wins.
+- **Cross-validated by prompt** (fit τ on 2 of the 4 prompts, score the other 2, all 6 splits): fitted τ 0.70–0.85;
+  held-out gain at fixed τ 0.8 is code 8.9–11.0 % (mean 9.9), prose 10.3–15.4 % (mean 12.8), and 0.8 did at least as
+  well as the in-sample fit in every split. So 0.8 is a robust choice **on this log**; not validated: sampled output,
+  other prompt kinds (tool calls, long agent turns), and a real build (replay only).
+- **Two candidates at the stop position** (one extra row for the drafter's second choice when p2 ≥ θ): the second
+  choice is right at 40.5 % (code) / 36.4 % (prose) of breaks, and at 58.9 % / 49.5 % of the near-50/50 breaks
+  (p1 0.35–0.65, p2 ≥ 0.25). A rescued break still gains exactly one token for one extra row, so: **code 0**
+  (+9.92…+10.01 % vs +10.01 % without), **prose +0.9 points** at θ 0.15 (13.74 vs 12.83 %). With the stop, the ~50/50
+  steps are mostly the ones already cut, so branching adds little; an add-on at most, not a lever of its own (§5v's
+  earlier "branch: rejected" holds for code).
