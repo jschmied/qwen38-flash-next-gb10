@@ -1,0 +1,6 @@
+#!/bin/bash
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/produp/spec-kssplit.json
+echo "kssplit rc=$?"
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/kstop/spec-marlin.json
+echo "marlin rc=$?"
+echo "== CHAIN DONE =="

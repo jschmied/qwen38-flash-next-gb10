@@ -84,3 +84,16 @@ Prod K5 on the clone venv (KV 4 GiB, no stop), #58449 on vs off (armrun source_t
 `FN58449 fused QSA draft metadata update ran` in the on arm; `Fused multi-step draft decode is not supported` only in the
 off arm. H: greedy hashes identical (the same metadata computed in place); code c=1 −1…−4 % ms/tok (no host metadata
 rebuild between the 4 decode draft steps); prose similar; TTFT ±1 %; c=4 ±3 %.
+
+## `kssplit` (2026-09-29, before the run): text vs KV size
+
+Same as `ksprod` (prod venv, fusions on) but `--kv-cache-memory-bytes 4294967296`; stop vs K5, 2 starts. With `ksprod`
+this is a 2×2. H-KV: the stop regains −5…−8 % code c=1 and MiaAI quicksort ≥ K5 at 4 GiB → the loss is the default-KV
+regime (PLE paging). H-text: the stop stays within ±2 % at 4 GiB too → the loss is GDNNQ's text.
+
+## TODO 10c: Marlin MoE at decode (`marlin`, 2026-09-29, before the run)
+
+Clone venv, K5, KV 4 GiB, fusions off (GDNNQ and FNMOEFUSE unset: the text equals the K5 baseline and the Triton
+prefill MoE only hooks the FlashInfer path), `--moe-backend marlin` + `VLLM_MARLIN_USE_ATOMIC_ADD=1` vs FlashInfer
+CUTLASS; 2 starts. H: decode c=1 within ±3 % (the experts' bytes are the same 4.5 bpw; Marlin dequantizes to bf16);
+TTFT +10…+30 % with Marlin (bf16 math at prefill); greedy hashes may differ (different MoE kernel numerics).
