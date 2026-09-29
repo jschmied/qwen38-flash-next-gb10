@@ -1471,3 +1471,4 @@ wait on one ~100 GB pull, and they share one serve.
   from the PIECEWISE fallback. Replied with our F4 numbers (FULL graphs for the RecoverSSM verify: −1.1…−2.1 % c=1, §5z)
   and offered F4 as a follow-up commit on this PR (or a separate PR if reviewers prefer). Draft
   `pr58863-reply-antoniocuegervas.md`. <https://github.com/vllm-project/vllm/pull/58863#issuecomment-5883389008>
+  Edited 2026-09-29 (user: "add link to patch in our repo"): pinned links to `tools/f4/f4.diff` (applies cleanly to PR head 5567cc1b, checked) and §5z.

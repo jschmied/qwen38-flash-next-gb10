@@ -19,6 +19,8 @@ padded-row test (91 passed). It should close most of the ~3 % you see against na
 
 I'd like to add it to this PR as a follow-up commit, so `--use-replayssm` works with the default FULL_AND_PIECEWISE
 mode instead of falling back to PIECEWISE. Reviewers: if you'd rather keep this PR as is, I'll open it as a separate
-PR on top.
+PR on top. The patch as it stands (188 lines, applies cleanly to this PR's head `5567cc1b`):
+[`tools/f4/f4.diff`](https://github.com/jschmied/qwen38-flash-next-gb10/blob/ef5367ab23ac8a5f1180fc41c7714ed1271eeb18/tools/f4/f4.diff); the A/B behind the
+table: [§5z](https://github.com/jschmied/qwen38-flash-next-gb10/blob/ef5367ab23ac8a5f1180fc41c7714ed1271eeb18/notes/speed-of-light.md#L1585).
 
 *Disclosure: drafted with Claude (Anthropic); I reviewed the numbers and the post.*
