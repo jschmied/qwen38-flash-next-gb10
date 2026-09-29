@@ -1,0 +1,7 @@
+#!/bin/bash
+sleep 30
+while systemctl is-active -q prodval4-chain || systemctl is-active -q kstopab-chain; do sleep 30; done
+python3 /opt/llm/runners/armrun.py /opt/llm/runners/kstop/spec-evalks.json
+echo "evalks rc=$?"
+/usr/sbin/runuser -u jschmied -- python3 /opt/llm/runners/evalq/evalscore.py /opt/llm/runners/results evalks-kstop0 evalgq-base0 evalks-kstop1 evalgq-base1 > /opt/llm/runners/results/evalks-score.txt 2>&1
+echo "score rc=$?"
