@@ -2240,3 +2240,31 @@ identifiers normalized (`tools/tfold/sim.py`, data `data/tfold/provenance_scan.j
   M; cite TensorFold (stores `xn`), #58706 (gate mix in the up-GEMM epilogue) and #58957.
 - **For prod:** nothing changes on the 1ea7 base. On a newer main, #58957 may cut decode time on GB10 as well; check
   that its CuTe DSL kernel builds for sm_121, then a decode A/B.
+
+## MiaAI-Lab: Flash-Next on one Spark with TensorFold (2026-09-29, user: "check …-TensorFold")
+
+<https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark-TensorFold>, created 2026-09-29 04:51, head `4cd99569`.
+TensorFold v0.3.6.2 + 8 patches of theirs (2 upstreamed: TensorFold #75, #79), Vontra's **MLX 4-bit** checkpoint (group
+32, with the MTP head), int8 KV, n-gram (PLE) tables read from SSD by a C++ thread pool, MTP up to 6 drafts with a
+confidence stop at 0.60, prompt-lookup "copy" drafts, 5 streams × 262k context. Outputs byte-identical to serial.
+Their method: `tools/bench.py`, prefill = the server's own prefill seconds on fresh random prose; decode prompts are
+"Write a Python quicksort with docstring and tests." (greedy) and "Explain why the sky is blue in a few paragraphs."
+(sampled), 256 tokens, median of 5. Not re-measured by us.
+
+| | MiaAI TensorFold (theirs) | us, prod 09-28 | us, + §5ag candidates |
+|---|---|---|---|
+| prefill ~8k | 2,503 tok/s (TTFT 3.29 s at 8,229) | ~2,750 tok/s (2.73 s at 7,503) | ~2,930 (2.56 s) |
+| prefill ~32k | 2,499 tok/s (13.13 s at 32,806) | ~3,010 tok/s (9.72 s at 29,263) | ~3,210 (9.12 s) |
+| prefill 64k / 128k | 2,414 / 2,200 tok/s | not measured | not measured |
+| decode, 1 stream | prose 62.4 tok/s (their prompt) | prose 42.2–42.4 (our essays); code 68.1–68.4 | — |
+| decode, 4 / 5 streams | prose 106.7 / 119.3 aggregate | prose 80.8–83.6 (4); code 144.3–144.7 (4) | — |
+
+- **Prefill: we lead by ~10–28 %** at 8–32k (TTFT client-side for us, server-side for them, which favours them
+  slightly). Their patches doubled stock TensorFold's prefill (930–1,490 → ~2,500 tok/s); patch 0003/0004 (SSD read-ahead,
+  native reader) is the mechanism, the same class as our PLE readahead (#58835).
+- **Decode: not comparable as measured.** Different prompts and lengths, and acceptance swings tok/s by tens of percent
+  (§ TensorFold bench above). Structurally they read fewer bytes per token (4-bit dense as well as experts, vs our FP8
+  dense) and run the confidence stop we priced in §5ah (they use τ 0.60 at depth 6; our replay optimum is 0.8 at depth 7).
+- **Capacity:** 5 × 262k tokens at int8 KV; ours 626k tokens at prod's default KV.
+- Like-for-like would be their `bench.py` decode prompts against our server (client-side decode rate; its prefill
+  part reads TensorFold-only server stats).
