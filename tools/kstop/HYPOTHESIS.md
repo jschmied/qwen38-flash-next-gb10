@@ -120,3 +120,15 @@ and config read 145–146 tok/s (kstopab2, kstopval) except one 133 (marlin cutl
 alternating. H: no-async c=4 147–149 vs async 143–146 tok/s → +1…+3 %, below the 3 % proposal bar; c=1 −0.5…−2 % for
 no-async as before; greedy hashes identical. Propose `--no-async-scheduling` only if c=4 gains ≥ 3 % in every start
 pair with c=1 not worse.
+
+## Agenda 2d: `miadiag` (2026-09-29, before the run) — why the stop loses 21 % on MiaAI's quicksort prompt
+
+The loss held at both KV sizes on the prod venv (kssplit, ksprod), so it is a text property. Clone venv (fn_kstop.py with
+the new `FN_KSTOP_HIST_EVERY` knob, histogram every 25 cycles), kstopab2 config + GDNNQ + FNMOEFUSE (prod's text), KV
+4 GiB, stop vs K5, 1 start (diagnostic, the −21 % reproduced in 4 of 4 starts). Probe `miadiag.py`: the quicksort
+prompt alone ×5 with spec-decode counter deltas (tokens per cycle, acceptance per position) + the draft-count histogram
+from the log. First check: the −21 % reproduces here (−15…−25 %); if not, the venv matters and that is the finding.
+- H-trunc (expected): tokens per cycle with the stop ≥ 15 % below K5, the histogram weighted to d ≤ 2, and K5's
+  acceptance at positions 2–5 well above zero: the drafter's top-1 probability on this reasoning text sits below τ
+  0.75 while its drafts are still accepted, so the stop cuts drafts that would have landed.
+- H-cost: tokens per cycle within ±5 % of K5 but the rate 21 % lower → per-cycle overhead on this prompt.

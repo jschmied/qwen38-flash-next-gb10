@@ -1,0 +1,9 @@
+#!/bin/bash
+sleep 20
+while systemctl is-active -q noasync2-run; do sleep 20; done
+V=/opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/vllm/v1/worker/gpu/spec_decode
+cp /opt/llm/runners/kstop/fn_kstop.py.histevery $V/fn_kstop.py || exit 1
+find $V -name __pycache__ -prune -exec rm -rf {} +
+/opt/llm/runtime/vllm-venv-rssm/bin/python -m py_compile $V/fn_kstop.py || exit 1
+grep -q _HIST_EVERY $V/fn_kstop.py || exit 1
+exec python3 /opt/llm/runners/armrun.py /opt/llm/runners/kstop/spec-miadiag.json

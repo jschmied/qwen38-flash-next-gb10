@@ -31,6 +31,8 @@ IF_CAPTURE = False
 # with expected accepted from each request's survival product (running product of the drafter's top-1 probabilities,
 # counted while the request is still active under the tau rule). At one request "value" equals "max".
 AGG = os.environ.get("FN_KSTOP_AGG", "max")
+# FN_KSTOP_HIST_EVERY: log the draft-count histogram every N cycles (diagnostics; default 2000).
+_HIST_EVERY = max(1, int(os.environ.get("FN_KSTOP_HIST_EVERY", "2000")))
 # cycle cost model for "value": A + (D + R * n**ALPHA) * d  [ms], n = requests, d = drafts (c=1 fit: 43 + 4.6 d)
 _A, _D, _R, _ALPHA = (float(x) for x in os.environ.get("FN_KSTOP_COST", "43,1.3,3.3,0.7").split(","))
 _S: dict = {}
@@ -139,7 +141,7 @@ def host_d(default: int) -> int:
     _S["cycles"] += 1
     if _S["cycles"] == 1:
         logger.info("FNKSTOP verify sized to the draft count (first cycle: %d of %d)", v, default)
-    if _S["cycles"] % 2000 == 0:
+    if _S["cycles"] % _HIST_EVERY == 0:
         logger.info("FNKSTOP draft-count histogram after %d cycles: %s", _S["cycles"], dict(sorted(h.items())))
     return v
 
