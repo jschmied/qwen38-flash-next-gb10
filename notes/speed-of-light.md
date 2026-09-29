@@ -2223,6 +2223,12 @@ predictions match the server (code K7 vs K5 +0.5 % predicted, ≈ 0 measured; pr
   steps are mostly the ones already cut, so branching adds little; an add-on at most, not a lever of its own (§5v's
   earlier "branch: rejected" holds for code).
 
+**§5ah correction (2026-09-29): the replay under-charged a stopped cycle.** To know draft j's confidence the drafter
+must run step j, so a stop at j still pays that forward pass; it saves only the later steps and the verify rows. The
+replay priced a stop at j as cycle(j). Re-priced as cycle(j) + one draft step (1.3–1.8 ms) on stopped cycles:
+**code +8.4…+8.8 %, prose +9.4…+10.3 %** at depth 7 (best τ 0.70–0.75), not +10.0 / +12.8 %. After the ≤ 0.8 ms sync:
+**code ~+7 %, prose ~+8…9 %**. The ranking of the designs does not change.
+
 **§5ah build, phase 1 — FULL verify graphs for every draft count in one server: works** (user: "yes" to the build).
 vllm#58821 (open; one-line guard for #58692, the dynamic-SD ZeroDivisionError) cherry-picked into the clone venv as a
 removable overlay (`tools/kstop/patch_58821.py`, backup `*.orig-58821`). `dynsd2`: schedule 1 req → K7, 2 → K6, 3 → K5,
@@ -2232,3 +2238,31 @@ server**, code 14.82 vs 14.88 / 15.31 ms/tok, TTFT equal. At c=4 the scheduler r
 134.2 tok/s, 3.88 accepted per cycle, no errors, so the RecoverSSM + MTP verify handles query lengths below its
 maximum (spec_query_len 8). Data `data/kstop/armrun-dynsd2.jsonl`. Next: phase 2, a per-step draft count chosen by
 the drafter (confidence) instead of by batch size.
+
+**§5ah build — async scheduling costs us nothing to give up** (`noasync`, prod config K=5, 2 starts each; hypothesis in
+`tools/kstop/HYPOTHESIS.md`). An exactly sized verify needs the scheduler to know each request's draft count, which the
+AsyncScheduler (on by default: MTP is an EAGLE type) cannot. `--no-async-scheduling` (witness: `'async_scheduling':
+False` in the non-default args):
+
+| | no-async, s1 / s2 | async (prod default), s1 / s2 |
+|---|---|---|
+| code c=1, ms/tok (per cycle) | 14.568 / 14.671 (63.6 / 64.0) | 14.850 / 14.770 (64.8 / 64.5) |
+| code sampled / prose, ms/tok | 16.58 / 16.51, 23.39 / 23.41 | 16.66 / 16.52, 23.78 / 23.26 |
+| code c=4, tok/s | 147.7 / 148.1 | 132.0 / 132.8 |
+| TTFT 8k / 30k | 2.699 / 9.648, 2.711 / 9.718 | 2.722 / 9.727, 2.714 / 9.700 |
+| replay warm | 1.472 / 1.478 s | 1.519 / 1.521 s |
+
+- **Outside the hypothesis** (predicted +2…+6 % cost): no cost; c=1 −0.6…−1.9 %, hashes identical in all four starts.
+  With ~64 ms GPU cycles there is nothing for async scheduling to hide.
+- **c=4 +11…+12 %** in this run, but the async arm sat below its usual 143–145 tok/s (§5ad), so not claimed until
+  repeated. The launcher's "never combine MTP with async scheduling" caution is stale: the n-gram context now reads GPU
+  token ids (`nvidia/model_state.py::_prepare_ngram_context`), not a CPU mirror.
+- **Consequence:** the exact-size design (a verify of 1 + d rows) is free on the scheduling side.
+
+**§5ah build — FNKSTOP overlay** (`tools/kstop/fn_kstop.py`, `patch_kstop.py`, env-gated `FN_KSTOP=1`, τ `FN_KSTOP_TAU`):
+per draft step on the GPU a request stays active while the drafter's top-1 probability >= τ; the drafter's FULL
+decode-step graphs are captured inside a CUDA-graph IF node on "any request active", so later steps are skipped on
+the GPU; d_max goes to the host once per step and the scheduler gets `[-1] * d_max` drafts, so the next verify is
+1 + d_max rows (a FULL graph per draft count via the dynamic-SD schedule + #58821). Unit test on the GPU
+(`test_kstop.py`): 300 random confidence sequences, IF-node skipping, d per request, d_max and graph-padding masking
+all match a Python reference, **0 mismatches**.

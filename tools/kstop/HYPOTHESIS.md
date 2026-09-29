@@ -29,3 +29,14 @@ Replay after (offline, no GPU): depth 5/6/7 × τ, three designs:
 (c) two thresholds, τ_new when the next draft opens a new graph size and τ_padded when it fills a paid row.
 (b) and (c) are bracketed over padded-row cost 0 / 1.1 / 3.3 ms because that residual is unmeasured. The (a) vs K5
 baseline predicted: code +4…+7 %, prose +8…+14 % (deeper drafts help code only with the stop).
+
+## Async-scheduling cost (`noasync`, 2026-09-29, before the run)
+
+Why: an exactly sized verify needs the scheduler to know each request's draft count, which under async scheduling it
+cannot (the AsyncScheduler sets next-step spec placeholders at schedule time, before drafting). The exact-size design
+therefore runs with `--no-async-scheduling`; the async-compatible alternative (8-row verify, stopped rows padded) only
+pays if a padded row costs <= ~0.5 ms (replay: code +7.1 / prose +6.2 % at 0.5 ms, prose negative at 1.5 ms).
+Arms: prod config at K=5 (per-K capture list), async (default: MTP is an EAGLE type, so vLLM enables it) vs
+`--no-async-scheduling`; 2 starts each, nvprobe. Witness: `'async_scheduling': False` in the non-default-args line.
+H: no-async costs +2…+6 % ms/tok at c=1 (step n+1's scheduling and input prep no longer overlap step n); TTFT ±1 %;
+greedy hashes equal. Decision: if the cost is <= ~2 %, the exact-size design (+8.4…10.3 % before it) wins.
