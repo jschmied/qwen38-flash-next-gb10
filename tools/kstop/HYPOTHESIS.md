@@ -55,3 +55,9 @@ launches still run on the CPU while the GPU has nothing to do): kstop τ1.1 − 
 kstop in runner mode (τ 0.75, depth 7, dynamic-SD graphs, async scheduling ON as in prod) vs prod K=5, 2 starts each,
 alternating. From the single starts (`krun`): H: code c=1 −5…−8 % ms/tok, sampled code −5…−8 %, prose −3…+1 %,
 TTFT ±1 %, c=4 ±5 %. Greedy text differs from K=5 (RecoverSSM commit grouping, §5b), identical between kstop starts.
+
+## `kstopab2` (2026-09-29, before the run): prod-shaped schedule
+
+Schedule bs1–10 → K7, 11 → 6, 12 → 5, 13 → 4, 14 → 3, 15 → 2, 16 → 1 (all draft counts captured, max-num-seqs stays 16).
+vs prod K5, 2 starts each. H: c=1 as `kstopab` (code −6…−7 %, prose −1…−3 %); c=4 now within ±3 % of prod (K7 + stop at
+batch 4 instead of K4); TTFT ±1 %.

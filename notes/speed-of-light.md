@@ -2335,6 +2335,21 @@ stop is a **prod candidate** (the user's call): code c=1 −6.4…−7.1 %, samp
 equal; open: c=4 with the 1–16 → K7 schedule (the A/B schedule dropped to K4 at batch 4 and lost 1.5–8.3 %). Data
 `data/kstop/evalks-score.txt`.
 
+**§5ah `kstopab2`: the prod-shaped schedule closes c=4** (bs1–10 → K7, 11 → 6 … 16 → 1; max-num-seqs 16; 2 starts each,
+alternating, vs prod K5):
+
+| | kstop, s1 / s2 | prod K5, s1 / s2 | Δ |
+|---|---|---|---|
+| code c=1, ms/tok | 13.724 / 13.733 | 14.887 / 14.714 | **−6.7…−7.8 %** (72.8 vs 67.6 tok/s) |
+| code c=1 sampled, ms/tok | 15.362 / 15.411 | 16.592 / 16.474 | **−6.4…−7.4 %** |
+| prose c=1, ms/tok | 23.116 / 23.175 | 23.272 / 23.646 | −0.4…−2.3 % |
+| code c=4, tok/s (accepted per cycle) | 145.5 / 144.7 (5.04) | 146.5 / 145.3 (4.37–4.41) | −0.4…−1.2 % |
+| TTFT 8k / 30k | 2.708, 9.701 / 2.693, 9.668 s | 2.713, 9.673 / 2.704, 9.704 s | equal |
+| replay warm | 1.411 / 1.418 s | 1.512 / 1.520 s | −6.6…−7.2 % |
+
+Inside the hypothesis (c=4 within ±3 %). **Complete prod candidate:** FNKSTOP runner mode, τ 0.75, FN_SPEC_N=7, this
+schedule, #58821 cherry-pick, the launcher's FN_SPEC_DYN line; quality screen null (above).
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact
