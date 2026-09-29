@@ -132,3 +132,10 @@ from the log. First check: the −21 % reproduces here (−15…−25 %); if not
   acceptance at positions 2–5 well above zero: the drafter's top-1 probability on this reasoning text sits below τ
   0.75 while its drafts are still accepted, so the stop cuts drafts that would have landed.
 - H-cost: tokens per cycle within ±5 % of K5 but the rate 21 % lower → per-cycle overhead on this prompt.
+
+## Agenda 4: `f58449b` (2026-09-29, before the run) — the #58449 prose signal with 3 starts
+
+`f58449` (2 starts): greedy hashes identical, code null, prose −1.9…−2.1 % with the sign holding in both starts. Same
+spec, 3 starts per arm. H: prose −1…−3 % in all three start pairs, code c=1 and TTFT within ±1 %, hashes identical.
+H0: the prose sign flips in any start pair → the 2-start result was noise; drop it. Even if it holds, adoption is a
+user decision (the PR is the recipe author's, open upstream).
