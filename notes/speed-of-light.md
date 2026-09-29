@@ -2399,6 +2399,24 @@ sign holds)**; c=4 132.4 / 142.8 vs 144.8 / 144.4 (one bad start); TTFT equal. B
 +2 % prose effect with identical output. Not adopted on two starts; a candidate for a larger A/B, and its upstream PR is
 the recipe author's (open). The venv was restored (0 markers).
 
+**§5ah `kssplit` — the prod loss is the text, not the KV size** (`ksprod` repeated at KV 4 GiB; prod venv, fusions on,
+stop vs K5, 2 starts):
+
+| | stop, s1 / s2 | K5, s1 / s2 | Δ (4 GiB) | Δ in `ksprod` (default KV) |
+|---|---|---|---|---|
+| code c=1, ms/tok (accepted) | 14.220 / 14.440 (4.53) | 14.375 / 14.435 (4.47) | −1.1…0 % | −0.2…−1.3 % |
+| code sampled | 13.989 / 14.226 | 14.422 / 14.602 | −2.6…−3.0 % | −2.2…−2.8 % |
+| prose | 23.304 / 23.453 | 23.118 / 23.827 | null | null |
+| code c=4, tok/s | 151.2 / 151.2 | 141.0 / 141.7 | **+6.7…+7.2 %** | −7.6…−8.1 % |
+| MiaAI quicksort greedy | 52.3 / 51.9 | 66.2 / 66.2 | **−21 %** | −21 % |
+
+- **H-text holds for c=1:** flat at both KV sizes. On GDNNQ's greedy text the stop adds only +1 % accepted per cycle
+  (4.53 vs 4.47; on the no-GDNNQ text it was +9 %, 4.78 vs 4.37), so the shorter-cycle gain disappears. The MiaAI
+  prompt loses 21 % at both KV sizes: a text property too (agenda 2d explains it).
+- **Only c=4 depends on the KV size:** +7 % at 4 GiB, −8 % at the default. Consistent with PLE paging under more rows
+  per cycle at the default KV, not measured directly.
+- Agenda 2e (concurrency ladder) is skipped: its condition, ≥ 4 % code c=1 gain at 4 GiB, is not met.
+
 **Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
 patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
 `/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact
