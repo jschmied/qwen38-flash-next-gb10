@@ -2420,6 +2420,12 @@ sign holds)**; c=4 132.4 / 142.8 vs 144.8 / 144.4 (one bad start); TTFT equal. B
 +2 % prose effect with identical output. Not adopted on two starts; a candidate for a larger A/B, and its upstream PR is
 the recipe author's (open). The venv was restored (0 markers).
 
+**Agenda 4 — #58449 with 3 starts (`f58449b`, same spec): the prose signal was noise; dropped.** Witness line in all
+three fused starts, absent in all rebuild starts; greedy hashes identical in all six. Prose fused vs rebuild per start
+pair: 23.707 vs 23.513 (+0.8 %), 23.571 vs 23.499 (+0.3 %), 23.514 vs 23.954 (−1.8 %): the sign flips, so H0 holds
+and `f58449`'s −2 % does not stand. Code c=1 14.73 / 14.65 / 14.72 vs 14.57 / 14.58 / 14.84 (null), c=4 147.0 / 141.6 /
+134.5 vs 148.9 / 143.0 / 147.1, TTFT equal. Not adopted. Data `data/kstop/armrun-f58449b.jsonl`.
+
 **§5ah `kssplit` — the prod loss is the text, not the KV size** (`ksprod` repeated at KV 4 GiB; prod venv, fusions on,
 stop vs K5, 2 starts):
 
