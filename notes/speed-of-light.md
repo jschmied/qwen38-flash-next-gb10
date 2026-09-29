@@ -2543,6 +2543,14 @@ FNMOEFUSE, KV 4 GiB, stop vs K5, 1 start, probe `tools/kstop/miadiag.py`): it do
   the −21 % is K5 being fast on the prod venv for this one prompt, not the stop being slow. nvprobe's GDNNQ texts are
   the same on both venvs (K5 71fc9ede, stop d1a6e348), so the quicksort text is the open question: `miadiag2` (the
   same probe on the prod venv, kssplit config) is queued. Data `data/kstop/armrun-miadiag.jsonl`, `miadiag-stop0-hist.txt`.
+- **`miadiag2` (prod venv, kssplit config, same probe, 1 start) closes it.** The stop reproduces exactly: text cb1762a0,
+  52.5 tok/s, 2.70 tokens per cycle, the same acceptance by position. K5 writes a **different** reply here (a5fc09c4,
+  the clone's K5 wrote b06b16cf) that drafts far better: 4.06 tokens per cycle (3.08 accepted; by position .87 .71 .62
+  .49 .38) → 66.4 tok/s. **So the −21 % is K5 landing on an easy-to-draft reply on the prod venv, not a stop defect;
+  on the clone, where K5's reply is hard to draft, the stop is +17 %.** This thinking-mode prompt is a near-tie text:
+  the two K5 servers (prod venv + `serve-flashnext.sh` + capture list 1,2,4,6,8,… vs clone + `serve-dynsd.sh` + 1,2,4,6,12,…)
+  write different replies although nvprobe's hashes agree. One 256-token reply ranks texts, not mechanisms; MiaAI's
+  single-prompt number is not a basis for judging the stop. Data `data/kstop/armrun-miadiag2.jsonl`.
 
 **Agenda 2b — GDNNQ warm replay (`gqreplay`, prod venv, prod env with FNMOEFUSE, KV 4 GiB, FN_GDNNQ on vs off, 2 starts,
 probe `tools/gdnnq/replay1.py`): no regression, GDNNQ stays in drop-in 60.**
