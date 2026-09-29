@@ -2167,6 +2167,41 @@ GB10"). Their probes, not ours: "chat" ≠ our prose set, so only the code colum
   prompt kernels compiled at startup; head only on the final prefill chunk (vLLM already computes logits only at
   sampled positions). Open: #67 (read the ModelOpt NVFP4 Flash-Next checkpoint on CUDA), #73 (n-gram rows on 16 threads).
 
+### TensorFold's public benchmark run against our server (2026-09-29, user: "pull the numbers and compare to ours")
+
+The user relayed a TensorFold statement: "Mia's Flash Next recipe is still the one to beat on vLLM: 79.6 on our suite.
+TensorFold Flash Next came in at 101.9 on the same box." That text is not in their repo, docs, changelog, PRs, issues or
+comments, nor in MiaAI's or blazux's issues (searched 2026-09-29), so "our suite" is unknown. What *is* public is their
+benchmark: `tools/bench_openai.py` (copied unmodified to `tools/tfbench/`, `SOURCE.txt` pins the commit). It has two
+prompts (a raw Fibonacci completion, a GPU chat prompt with thinking off), 5 seeds, temperature 1 (top-k 20, top-p 0.95)
+and 0, and reports the median decode rate after the first token. We ran their published command (64 tokens) and a
+400-token variant against our server: full prod config vs prod + both §5ag candidates, 2 starts each (`tools/tfbench/`,
+data `data/tfbench/`). Their EXL3 column is from their recipe (`docs/recipes/qwen3.8-flash-next.md`, 64 tokens), not
+re-measured by us.
+
+| 64 tokens, tok/s (median of 5) | ours, prod, s1 / s2 | ours, prod + MoE + GDNNQ | TensorFold EXL3 3.05 bpw (theirs) | their "vLLM MTP=3" |
+|---|---|---|---|---|
+| code, greedy | 55.9 / 55.8 | 53.3 / 53.1 | 77.7 | 40.9 |
+| code, sampled | 51.2 / 51.3 | 51.0 / 50.3 | 80.8 | 42.4 |
+| chat, greedy | 55.1 / 55.1 | 52.7 / 52.5 | 69.2 | 37.6 |
+| chat, sampled | 39.6 / 39.7 | 43.5 / 43.2 | 59.4 | 33.2 |
+
+| 400 tokens, tok/s | ours, prod | ours, + MoE + GDNNQ |
+|---|---|---|
+| code, greedy / sampled | 63.7–63.9 / 55.4–55.8 | 62.6–62.8 / 61.4–62.1 |
+| chat, greedy / sampled | 47.2–47.3 / 42.5–42.9 | 49.1–49.3 / 46.6–46.8 |
+
+- **On their bench, their EXL3 decode is 26–58 % ahead of ours at 64 tokens** (e.g. code greedy 77.7 vs 55.9). Their
+  pack reads fewer bytes per token (3.05 bpw everywhere vs our NVFP4 experts + FP8 dense), their drafting uses a
+  confidence stop (§5v), and its quality at 3 bpw is untested here. Our "vLLM MTP=3" row is their measurement of an
+  older vLLM setup; our prod is 30–50 % above it.
+- **Prefill is the other way round:** their recipe gives cold prefill 930–970 tok/s (2k–64k); ours is ~2,750–3,000
+  (prod) and ~2,930–3,210 with the §5ag candidates. On these tiny prompts TTFT is equal (0.08–0.17 s both).
+- **Combo vs prod on this bench** moves both ways (greedy −4 %, chat sampled +9 %): GDNNQ changes the text and with it
+  the acceptance. Not a decode-kernel effect (§5ag, decode per cycle null).
+- **Their 79.6 for Mia's vLLM recipe** would sit above our 51–64 here, if "our suite" is this bench. We have not run
+  Mia's current single-Spark recipe on it. That run (same box, same bench) is the next step to take the claim apart.
+
 ### TensorFold CUDA kernels: provenance check (2026-09-28, user: "did they copy them from somewhere?")
 
 Clone of `ashhart/TensorFold` @ main (87 commits); every CUDA/Triton file under `src/tensorfold/**/cuda/` (~7,900
