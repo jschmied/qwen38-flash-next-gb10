@@ -149,6 +149,18 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
 7. **65k vs 32k draft vocab.** One arm; cheap disconfirmation, and 32k is expected to hold.
 8. **Finish the MTP re-measurement** (`mtp-remeasure-plan.md`). The Quant Map page flags its depth curve as under
    re-measurement.
+9. **Cherry-pick two merged upstream PRs that run in our decode path, one A/B each** (added 2026-09-29, user: "record
+   as todo"; not a merge of main, per the cherry-pick rule):
+   - **#58957** (NVIDIA HC down projection + SiLU, CuTe DSL, decode M ≤ 48). First: its tests and a compile on sm_121
+     (only tested on GB300). Then a width dispatch against our HC fusion in the same file (`_down_and_inject`: ≤ 48
+     theirs, ≥ 128 ours, 49–127 unfused), then a decode A/B on the clone venv, 2 starts per arm. Expected on GB10:
+     +0.5…1.5 % decode (same weight bytes; saves a launch and the SiLU pass), vs their −2…−4 % TPOT on GB300 TP4.
+   - **#58114** ("Reduce PLE metadata construction overhead"): same procedure, per-step CPU/launch overhead on our
+     path.
+   - Not taken: #58706 (ROCm only, `amd/` files) and #53909 (standalone kernels, not wired into the model).
+   - Moving prod's whole base to current main would bring all of these, but it means porting every overlay (RecoverSSM,
+     fastload, HC fusion, F4, the §5ag candidates); separate job, not mixed with these A/Bs. See the-field "Upstream
+     HC fusion work vs ours".
 
 ## ~~FULL_DECODE_ONLY decode graphs~~ — MEASURED 2026-09-24 (finding 237): decode null, agent turns 3–4 % slower; keep PIECEWISE. `be7a84fe4` pushed to #58439.
 
