@@ -112,3 +112,11 @@ FNMOEFUSE); arms `FN_KSTOP_AGG=max` vs `value` (cost 43, 1.3, 3.3, 0.7) vs K5; 2
 max|value` in the FNKSTOP active line. H: c=1 code/prose equal between max and value within ±1 % and identical greedy
 hashes (one request → the same rule); c=4 value ≥ max by 2…6 % (max lets one confident request drag the batch to 7
 drafts) and ≥ K5. H0 (null): c=4 within ±2 % of max — then the shared d is not what limits c=4 and value is dropped.
+
+## Agenda 2c: `noasync2` (2026-09-29, before the run) — does no-async really gain at c=4?
+
+`noasync`'s +11…12 % at c=4 compared against an async arm at 132 tok/s; every later async K5 arm on the same clone venv
+and config read 145–146 tok/s (kstopab2, kstopval) except one 133 (marlin cutlass s1). Same spec, 3 starts per arm,
+alternating. H: no-async c=4 147–149 vs async 143–146 tok/s → +1…+3 %, below the 3 % proposal bar; c=1 −0.5…−2 % for
+no-async as before; greedy hashes identical. Propose `--no-async-scheduling` only if c=4 gains ≥ 3 % in every start
+pair with c=1 not worse.
