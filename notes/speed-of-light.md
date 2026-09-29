@@ -2266,3 +2266,34 @@ the GPU; d_max goes to the host once per step and the scheduler gets `[-1] * d_m
 1 + d_max rows (a FULL graph per draft count via the dynamic-SD schedule + #58821). Unit test on the GPU
 (`test_kstop.py`): 300 random confidence sequences, IF-node skipping, d per request, d_max and graph-padding masking
 all match a Python reference, **0 mismatches**.
+
+**§5ah build — first server runs.** Two voids before the first valid one: (1) capture failed with "operation would
+result in a merge of separate capture sequences": the drafter's MoE shared experts fork to an aux stream, which a
+CUDA-graph conditional body forbids; fixed by running them sequentially only while a draft step is captured inside the
+IF node (`fn_kstop.IF_CAPTURE`, one check in `shared_experts.py`); (2) my own void rule required a log line that is
+only written after the first request. `kstop3` (sched mode: the scheduler learns d_max, `--no-async-scheduling`):
+draft-count histogram over 2,000 cycles {1: 465, 2: 287, 3: 228, 4: 177, 5: 120, 6: 124, 7: 599}; accepted tokens per
+cycle match the replay (code 4.78 vs 4.56, prose 2.44 vs 2.46) but the cycle is 2.4–4.3 ms longer than modelled.
+
+**Overhead diagnosis** (`kdiag`, 1 start per arm, all no-async; ms per verify cycle):
+
+| | code | prose |
+|---|---|---|
+| static K7 / kstop τ 0 (never stops) | 73.8 / 76.1 (+2.3) | 76.1 / 80.1 (+4.0) |
+| static K1 / kstop τ 1.1 (always d = 1) | 43.8 / 47.5 (+3.7, of it 1.3 the paid probe step) | 45.2 / 50.7 (+5.6) |
+
+Skipped steps are cheap (H2 rejected); the ~2.3–4 ms is present with no stop at all (H1 exceeded). Mechanism: without
+sizing, the CPU schedules the next step while the GPU is still drafting; the sizing sync made the CPU wait for the
+drafts before scheduling. **Runner mode** (`FN_KSTOP_SIZE=runner`): the scheduler keeps K placeholders and does not
+wait; the runner trims every decode request to d_max in `gather_batch_req_state`, right before the verify batch (the
+scheduler counts the cut drafts as rejected, so its accounting holds). `krun`, 1 start each:
+
+| | code ms/tok (per cycle) | sampled code | prose | c=4 tok/s |
+|---|---|---|---|---|
+| kstop runner, no-async | 13.84 (66.1) | 15.46 | 23.71 | 147.7 |
+| kstop runner, async | 13.79 (65.9) | 15.44 | 23.14 | 136.2 |
+| kstop sched, no-async (`kstop3`) | 14.26 (68.1) | 15.78 | 23.58 | 147.0 |
+| prod K5 async (`noasync` as5, 2 starts) | 14.77–14.85 | 16.52–16.66 | 23.26–23.78 | 132.0–132.8 |
+
+Runner mode recovers ~2 ms per cycle and works with async scheduling on. Greedy text is identical across all kstop
+runs and differs from K5 (RecoverSSM commit grouping, §5b): a quality screen is required before any prod proposal.

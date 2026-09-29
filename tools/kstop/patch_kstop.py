@@ -2,7 +2,9 @@
   spec_decode/speculator.py               update() after each draft sample (probabilistic-drafting path)
   spec_decode/autoregressive/speculator.py set_nreq() in propose(); IF-node predicate on the drafter's decode manager
   cudagraph_utils.py                      capture inside the IF node when the manager carries a predicate
-  spec_decode/utils.py                    d_max copy after drafting; [-1] * d_max drafts to the scheduler
+  fused_moe/runner/shared_experts.py      no aux stream while capturing inside the IF node
+  spec_decode/utils.py                    d_max copy after drafting; [-1] * d_max drafts to the scheduler (sched mode)
+  model_runner.py                         runner mode: trim decode requests to d_max before the verify batch
 Everything is inert unless FN_KSTOP=1. Usage: python patch_kstop.py <site-packages>/vllm [off]. Backups *.orig-kstop.
 VLLM_X_ROOT=<dir with a copy of the vllm tree> patches the copy instead (dry run)."""
 import os, shutil, sys
@@ -45,12 +47,32 @@ EDITS = {
          "                            graph, self.pool, stream=self._capture_stream(desc)\n"
          "                        ):\n"
          "                            if _fn_pred is not None:  " + M + "\n"
+         "                                from vllm.v1.worker.gpu.spec_decode import fn_kstop as _fk  " + M + "\n"
+         "                                _fk.IF_CAPTURE = True  " + M + "\n"
          "                                graph.begin_capture_to_if_node(_fn_pred)  " + M + "\n"
          "                            forward_fn(CUDAGraphMode.NONE)\n"),
         ("                            get_offloader().join_after_forward()\n",
          "                            get_offloader().join_after_forward()\n"
          "                            if _fn_pred is not None:  " + M + "\n"
-         "                                graph.end_capture_to_conditional_node()  " + M + "\n"),
+         "                                graph.end_capture_to_conditional_node()  " + M + "\n"
+         "                                _fk.IF_CAPTURE = False  " + M + "\n"),
+    ],
+    "model_executor/layers/fused_moe/runner/shared_experts.py": [
+        ("import vllm.envs as envs\n", "import vllm.envs as envs\n" + IMP),
+        ("        if self._disable_shared_experts_overlap:\n",
+         "        if _fn_kstop.IF_CAPTURE:  " + M + "\n"
+         "            return SharedExpertsOrder.NO_OVERLAP  " + M + "\n"
+         "        if self._disable_shared_experts_overlap:\n"),
+    ],
+    "v1/worker/gpu/model_runner.py": [
+        (LOG, LOG + IMP),
+        ("        draft_tokens = scheduler_output.scheduled_spec_decode_tokens\n        # batch_idx -> req_id\n",
+         "        if (_fn_kstop.ENABLED and _fn_kstop.MODE == \"runner\"  " + M + "\n"
+         "                and scheduler_output.scheduled_spec_decode_tokens):  " + M + "\n"
+         "            _fn_kstop.trim(scheduler_output)  " + M + "\n"
+         "            num_toks = scheduler_output.total_num_scheduled_tokens  " + M + "\n"
+         "            max_query_len = max(scheduler_output.num_scheduled_tokens.values())  " + M + "\n"
+         "        draft_tokens = scheduler_output.scheduled_spec_decode_tokens\n        # batch_idx -> req_id\n"),
     ],
     "v1/worker/gpu/spec_decode/utils.py": [
         (LOG, LOG + IMP),
@@ -60,7 +82,7 @@ EDITS = {
          "            _fn_kstop.copy_d_async()  " + M + "\n"),
         ("            draft_token_ids = [[-1] * self.num_draft_tokens for _ in self.req_ids]\n",
          "            _fn_n = (_fn_kstop.host_d(self.num_draft_tokens)  " + M + "\n"
-         "                     if _fn_kstop.ENABLED and _fn_kstop.SIZE else self.num_draft_tokens)  " + M + "\n"
+         "                     if _fn_kstop.ENABLED and _fn_kstop.MODE == \"sched\" else self.num_draft_tokens)  " + M + "\n"
          "            draft_token_ids = [[-1] * _fn_n for _ in self.req_ids]  " + M + "\n"),
     ],
 }

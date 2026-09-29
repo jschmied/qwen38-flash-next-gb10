@@ -40,3 +40,18 @@ Arms: prod config at K=5 (per-K capture list), async (default: MTP is an EAGLE t
 `--no-async-scheduling`; 2 starts each, nvprobe. Witness: `'async_scheduling': False` in the non-default-args line.
 H: no-async costs +2…+6 % ms/tok at c=1 (step n+1's scheduling and input prep no longer overlap step n); TTFT ±1 %;
 greedy hashes equal. Decision: if the cost is <= ~2 %, the exact-size design (+8.4…10.3 % before it) wins.
+
+## Overhead diagnosis (`kdiag`, 2026-09-29, before the run)
+
+Smoke `kstop3` (τ 0.75): accepted tokens per cycle match the replay (code 4.78 vs 4.56, prose 2.44 vs 2.46) but the
+cycle takes longer (code 68.1 vs 63.8 ms, prose 57.6 vs 55.2): ~2.4–4.3 ms of machinery overhead. Arms, 1 start each,
+all `--no-async-scheduling`: static K7; kstop τ=0 (never stops, d=7 always); kstop τ=1.1 (always d=1); static K1.
+H1 (machinery at full drafting: IF-node conditional + confidence softmax + d copy/sync + per-K verify graphs):
+kstop τ0 − static K7 = +0.5…+2 ms per cycle. H2 (host prep of skipped steps: per-step attention metadata and graph
+launches still run on the CPU while the GPU has nothing to do): kstop τ1.1 − static K1 = +1…+4 ms per cycle.
+
+## A/B `kstopab` (2026-09-29, before the run)
+
+kstop in runner mode (τ 0.75, depth 7, dynamic-SD graphs, async scheduling ON as in prod) vs prod K=5, 2 starts each,
+alternating. From the single starts (`krun`): H: code c=1 −5…−8 % ms/tok, sampled code −5…−8 %, prose −3…+1 %,
+TTFT ±1 %, c=4 ±5 %. Greedy text differs from K=5 (RecoverSSM commit grouping, §5b), identical between kstop starts.

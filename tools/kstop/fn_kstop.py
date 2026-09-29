@@ -8,6 +8,7 @@
 #   - copy_d_async() / host_d(): d_max goes to the host once per step, and the scheduler receives [-1] * d_max drafts
 #     per request, so the next verify runs exactly 1 + d_max rows (needs --no-async-scheduling and a FULL verify graph
 #     per draft count, i.e. a dynamic-SD schedule; FN_KSTOP_SIZE=0 keeps K rows and only skips draft steps).
+#   - IF_CAPTURE: set by the capture hook; the MoE shared experts run without their aux stream inside the IF body.
 import os
 
 import torch
@@ -17,7 +18,14 @@ from vllm.logger import init_logger
 logger = init_logger(__name__)
 ENABLED = os.environ.get("FN_KSTOP") == "1"
 TAU = float(os.environ.get("FN_KSTOP_TAU", "0.75"))
-SIZE = os.environ.get("FN_KSTOP_SIZE", "1") == "1"
+# FN_KSTOP_SIZE: "1"/"sched" = the scheduler learns d_max (sync in get_draft_tokens, before scheduling);
+# "runner" = the scheduler keeps K placeholders and the runner trims every decode request to d_max right before the
+# verify batch is built (the wait moves after scheduling); "0" = no sizing (verify stays 1 + K rows).
+MODE = {"1": "sched", "sched": "sched", "runner": "runner"}.get(os.environ.get("FN_KSTOP_SIZE", "1"), "off")
+SIZE = MODE != "off"
+# True while a drafter decode step is captured inside the IF node: stream forks (the MoE shared-experts aux stream)
+# are illegal in a conditional body ("merge of separate capture sequences"), so those layers run sequentially then.
+IF_CAPTURE = False
 _S: dict = {}
 
 
@@ -33,7 +41,7 @@ def _buf(max_reqs: int, device) -> dict:
         _S["event"] = torch.cuda.Event()
         _S["hist"] = {}
         _S["cycles"] = 0
-        logger.info("FNKSTOP active: tau %.2f, verify sized to the draft count: %s", TAU, SIZE)
+        logger.info("FNKSTOP active: tau %.2f, verify sized to the draft count: %s (%s)", TAU, SIZE, MODE)
     return _S
 
 
@@ -87,3 +95,21 @@ def host_d(default: int) -> int:
     if _S["cycles"] % 2000 == 0:
         logger.info("FNKSTOP draft-count histogram after %d cycles: %s", _S["cycles"], dict(sorted(h.items())))
     return v
+
+
+def trim(scheduler_output) -> None:
+    """Runner-side sizing: cut every decode request's scheduled drafts to d_max (the scheduler scheduled K; it counts
+    the cut drafts as rejected, so its accounting stays right)."""
+    dt = scheduler_output.scheduled_spec_decode_tokens
+    k = max(len(v) for v in dt.values())
+    d = host_d(k)
+    if d >= k:
+        return
+    cut = 0
+    for req, lst in list(dt.items()):
+        if len(lst) > d:
+            c = len(lst) - d
+            dt[req] = lst[:d]
+            scheduler_output.num_scheduled_tokens[req] -= c
+            cut += c
+    scheduler_output.total_num_scheduled_tokens -= cut
