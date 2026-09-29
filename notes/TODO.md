@@ -153,7 +153,14 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
     quality screen:** (a) [done: §5ah, block verification REJECTED, sampled +3.0…+3.4 % slower, fewer accepted];
     (b) [already done: §5e, `vm.compaction_proactiveness=0` null at our headroom; only a server at the memory edge
     stalls]; (c) Marlin MoE at decode vs FlashInfer CUTLASS (our Triton prefill MoE reads
-    FlashInfer's layout, so this needs a split); (d) NVFP4 W4A16 target lm_head (0.33 vs ~0.64 GB per cycle);
+    FlashInfer's layout, so this needs a split); (d) NVFP4 W4A16 target lm_head (0.33 vs ~0.64 GB per cycle) — **scoped 2026-09-29, parked for the user:** no download
+    needed (requantize our FP8 `lm_head` at load with `tools/nvfp4head/fn_nvfp4_head.py`'s `quantize_nvfp4_rows`; the
+    Triton W4A16 `nvfp4_rows_gemv` already serves the draft head's 32k slice in prod, and handles any M). Overlay size:
+    small (the FNNVFP4 pattern, applied to the target's `compute_logits`). Expected gain from bytes alone: 0.31 GB less
+    per verify cycle ≈ 1.1 ms of a ~64 ms K5 cycle ≈ **−1.8 % c=1**. It is a precision cut of the target itself (every
+    token's distribution), so by the quality rule it needs the evalprobe/McNemar screen plus a real task run before any
+    prod use; the 08-19 head measurement put the head's loss in its weights (BF16→FP8 already −0.2 pp Δtop-1).
+    Decision for the user: is ~2 % worth a 4-bit target head plus a quality run?
     (e) [done: §5ah, #58449 bit-identical, prose −2 %, code null; not adopted on 2 starts].
     Follow-up: split the confidence stop's prod-config loss (§5ah `ksprod`) into text vs KV size with a 2×2.
 9. **Cherry-pick two merged upstream PRs that run in our decode path, one A/B each** (added 2026-09-29, user: "record
