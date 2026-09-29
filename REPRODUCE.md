@@ -254,7 +254,7 @@ code probe is `tools/ksweep/codeprobe.py` (4 code and 4 prose prompts, 700 token
 | prose, single stream, greedy | 23.57–23.68 ms/tok = 42.2–42.4 tok/s |
 | code, 4 streams | 144.3–144.7 tok/s aggregate (c=4 text is not reproducible between starts) |
 | prose, 8 / 16 streams | 122–123 / 162–165 tok/s aggregate (`/opt/llm/runners/cg/concprobe.py`) |
-| TTFT, ~7.5k / ~29k-token cold prompt | 2.71–2.72 s / 9.69–9.73 s (nvprobe, a unique prefix per request so the prefix cache cannot serve it) |
+| TTFT, ~7.5k / ~29k-token cold prompt | 2.71–2.72 s / 9.69–9.73 s (nvprobe, a unique prefix per request so the prefix cache cannot serve it); **2.57 / 9.12 s** with `FN_MOEFUSE=1` + `FN_GDNNQ=1` (installed 2026-09-29, [§5ag](notes/speed-of-light.md)) |
 | agent loop, 8 dependent turns (`agentloop2.py`) | 1.25 s/turn |
 | warm agent turns, 46 replayed SWE-bench turns (`tools/i54458/turnreplay.py`) | 0.563–0.567 s median |
 

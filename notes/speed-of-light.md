@@ -2320,3 +2320,11 @@ scheduling on in both).** kstop = runner-mode sizing, τ 0.75, depth 7, dynamic-
   follow-up.
 - Quality screen (GSM8K + HumanEval, 16 concurrent, schedule 1–16→K7) queued as `evalks`; control = this morning's
   `evalgq-base0/1` (identical config on the same venv; the overlays installed since are env-gated and inert).
+
+**Prod install of the §5ag candidates (user go, 2026-09-29) — validated, service still stopped.** Prod venv main1ea7
+patched with FNMOEFUSE and FNGDNNQ (backups `*.orig-moefuse`, `*.orig-gdnnq`, scripts in
+`/opt/llm/runners/prodinst0929`), drop-in `60-moefuse-gdnnq.conf`. `prodval4` (one transient start with prod's exact
+environment, default KV, port 8092): all 17 path lines incl. `FNMOEFUSE Triton NVFP4 prefill MoE ran` and `FNGDNNQ
+fused GDN norm+quant ran`; TTFT **2.567 s at 8k, 9.123 s at 30k** (combo A/B: 2.564 / 9.12); code 14.26 ms/tok, c=4
+138.8 tok/s; greedy hashes 71fc9ede / 3bab2af1 (= the GDNNQ arms); replay warm 1.81 s (GDNNQ's text, §5ag open item).
+Data `data/prodval/armrun-prodval4.jsonl`.

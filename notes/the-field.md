@@ -2266,5 +2266,10 @@ Their method: `tools/bench.py`, prefill = the server's own prefill seconds on fr
   (§ TensorFold bench above). Structurally they read fewer bytes per token (4-bit dense as well as experts, vs our FP8
   dense) and run the confidence stop we priced in §5ah (they use τ 0.60 at depth 6; our replay optimum is 0.8 at depth 7).
 - **Capacity:** 5 × 262k tokens at int8 KV; ours 626k tokens at prod's default KV.
-- Like-for-like would be their `bench.py` decode prompts against our server (client-side decode rate; its prefill
-  part reads TensorFold-only server stats).
+- **Their decode prompts against our server** (`tools/tfbench/miaprobe.py`, `prodval4`, prod venv with the §5ag
+  fusions, K=5 without the confidence stop, median of 5, client-side decode rate): "Write a Python quicksort …"
+  greedy **66.4 tok/s** (all five identical); "Explain why the sky is blue …" at the server's default sampling
+  **39.3 tok/s** (31.1–44.5). Their README's 62.4 tok/s single-stream prose is the second prompt on their server.
+  Still not strictly like-for-like: both use server-default sampling, and ours (the model's generation config) is
+  likely hotter than TensorFold's, which lowers acceptance on sampled text; their code-greedy number is not published.
+  The confidence stop (§5ah) adds −6…−7 % ms/tok on code, −1…−3 % on prose.
