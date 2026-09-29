@@ -2222,3 +2222,13 @@ predictions match the server (code K7 vs K5 +0.5 % predicted, ≈ 0 measured; pr
   (+9.92…+10.01 % vs +10.01 % without), **prose +0.9 points** at θ 0.15 (13.74 vs 12.83 %). With the stop, the ~50/50
   steps are mostly the ones already cut, so branching adds little; an add-on at most, not a lever of its own (§5v's
   earlier "branch: rejected" holds for code).
+
+**§5ah build, phase 1 — FULL verify graphs for every draft count in one server: works** (user: "yes" to the build).
+vllm#58821 (open; one-line guard for #58692, the dynamic-SD ZeroDivisionError) cherry-picked into the clone venv as a
+removable overlay (`tools/kstop/patch_58821.py`, backup `*.orig-58821`). `dynsd2`: schedule 1 req → K7, 2 → K6, 3 → K5,
+4 → K4, 5 → K3, 6–16 → K2 (`serve-dynsd.diff`, a runner copy of the launcher). 57 FULL graphs captured in 8 s, 1.84 GiB
+(static K=7: 4 s, 0.81 GiB). At c=1 (K=7) greedy code / prose and sampled hashes are **identical to the static K=7
+server**, code 14.82 vs 14.88 / 15.31 ms/tok, TTFT equal. At c=4 the scheduler runs K=4 (5-row verify graphs) cleanly:
+134.2 tok/s, 3.88 accepted per cycle, no errors, so the RecoverSSM + MTP verify handles query lengths below its
+maximum (spec_query_len 8). Data `data/kstop/armrun-dynsd2.jsonl`. Next: phase 2, a per-step draft count chosen by
+the drafter (confidence) instead of by batch size.
