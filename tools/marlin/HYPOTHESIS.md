@@ -22,3 +22,7 @@ speculation, CUTLASS + K5 (control; must give one A class per start and the same
 - H-run: A has > 1 class within a Marlin start → a runtime race (shared workspace/locks under CUDA graphs, stream
   overlap); if only with MTP, the drafter's own Marlin MoE call is involved.
 Expectation: H-start, a guess: nothing measured so far separates the two.
+
+`marlinrep` was stopped after start 0's Marlin arm (A one class within the start, A0 62837025…): its no-speculation arm
+cannot start with `--use-replayssm` (RecoverSSM requires speculation). `marlinrep2` = the same spec with that flag
+removed from the no-speculation arm only; same hypotheses.
