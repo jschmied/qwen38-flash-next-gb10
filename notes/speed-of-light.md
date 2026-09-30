@@ -2680,3 +2680,38 @@ today's prod config at `--max-model-len 131072`. One request each, nothing else 
   same failure rate. The spread is between seeds, not engines, so nothing here ranks the EXL3 quant against NVFP4.
 - Page with all four live: https://claude.ai/artifact/9KEoopw1XJzh7fyjiMxCXo (private); LAN http://10.0.0.133:8765/.
   Data `data/fishscene/` (html, json, `check-round{1,2}.jsonl`).
+
+### 5al. Harder slices: TensorFold + EXL3 3 points ahead in both runs, inside the noise
+
+User: "should we add some harder swt cases" → "replace 10 easy with 5 harder and 5 hardest" → (Java/JS) "yes, prune
+after current run and swap slices". Hypotheses written before the runs: `tools/swe/HYPOTHESIS-swe.md` "Hard slice" and
+"Java/JS swap". **Mixed Python 30** = 20 kept + 10 hard Verified (all three ">4 hours" + seven "1-4 hours", seed 1;
+`set-hard.txt`); **mixed Java/JS 28** = 18 kept + the 10 largest reference patches in the same repos (`set-jshard.txt`,
+23–219 lines). The 20 dropped were easy instances every earlier run solved. Same servers, client and sampling as §5aj
+(64k context, max_tokens 16000, 4 workers). Kept instances are scored from the earlier runs, so: vLLM run 1 = vllmnow1
+(kept) + vllmhard1; vLLM run 2 = vllmmix2 (all 58 fresh); TensorFold run 1 = tfexl3r1 + tfhard1; TensorFold run 2 =
+tfexl3r2 (kept: **a replay of run 1**, §5aj) + tfhard2 (`seed: 2`, independent; verified: first tool calls differ).
+Overflows are **not** counted as solved here (the 128k reruns below settle them).
+
+| | Python /30 | Java/JS /28 | **total /58** | hard 20 alone | context overflows | gen s, hard 20 |
+|---|---|---|---|---|---|---|
+| vLLM run 1 | 24 | 18 | **42** | 11 (7 + 4) | 6 | 4,424 |
+| vLLM run 2 | 21 | 18 | **39** | 9 (6 + 3) | 3 | (full 58: 7,855) |
+| TensorFold + EXL3 run 1 | 25 | 20 | **45** | 13 (8 + 5) | 3 | 3,918 |
+| TensorFold + EXL3 run 2 | 23 | 19 | **42** | 10 (6 + 4) | 5 | 4,339 |
+
+- **Engines: TensorFold + EXL3 is 3 ahead in both pairings (45 vs 42, 42 vs 39), +2 and +1 on the hard 20 alone** (the
+  independent part). Paired on the hard 20: TensorFold-only 4 + 3, vLLM-only 2 + 2 (7 vs 4 over both runs; a sign test
+  gives p ≈ 0.55). Inside the ±3 the hypothesis allowed, with the sign holding twice: **no quality loss from EXL3
+  3.05 bpw on harder work either, and no demonstrated gain.**
+- **Hard Python ran above the prediction** (2–6 expected; 7, 6, 8, 6): Verified's time labels track difficulty for
+  this model only loosely (the easy halves score ~90 %, these ~70 %). Solved by all four runs include the ">4 hours"
+  sphinx-7590; unsolved by all: xarray-6992 (">4 hours"), axios-5316, lombok-3371, vuejs-11739, vuejs-11899.
+- **Java/JS hard inside the prediction** (3–7; 4, 3, 5, 4): the large-patch set is the harder half.
+- **Overflows are the same condition on both engines**, reported differently: vLLM rejects prompt + max_tokens > 65,536
+  (`ContextWindowExceededError`), TensorFold refuses the same ("... exceeding the server's 65536-token safe cache
+  capacity", which mini-swe-agent files as `BadRequestError`). Every overflow is a hard instance at a prompt of
+  ~49.5k+ tokens; vuejs-11739 and lombok-3371 overflow in all four runs. The first overflow-rerun set builder matched
+  only vLLM's wording and found no TensorFold overflows; `make-ovf.sh` v2 + `is-ovf.py` match both (dry-run: vLLM sets
+  unchanged, TensorFold 3 + 5), fixed before the chain reached TensorFold.
+- Data `data/swe-tf/` (reports `openai__flashnext.FN_{vllmhard1,vllmmix2,tfhard1,tfhard2}_*.json`, `*-result.json`).
