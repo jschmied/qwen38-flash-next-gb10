@@ -18,3 +18,8 @@ scored by evalscore.py with McNemar).
 - Tasks: GSM8K / HumanEval within start-to-start noise (every head4-vs-base McNemar p > 0.05, and head4-vs-base
   discordance no larger than base-vs-base).
 Per the quality rule this is a screen, not a clearance: a pass makes it a candidate for a longer real-task run.
+
+`head4q` was interrupted on 2026-09-30 07:0x (user: "interrupt work, do both now") after one complete head4 start;
+`head4q2` repeats the full screen (2 starts per arm) on the clone venv now carrying the #58863 head (greedy text
+identical to before, measured). Same hypotheses.
+`head4q2` was interrupted too (2026-09-30 07:47, user: "interrupt, do tensorfold changes now") before any start completed; `head4q3` is the same screen.
