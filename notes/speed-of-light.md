@@ -2639,5 +2639,5 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
   3.05-bit EXL3 experts do not cost measurable task quality against our NVFP4 experts on these benchmarks. Harder
   slices follow (§5al) because 88–90 % on the 58 leaves little headroom to separate the two.
 - **Prefill is TensorFold's weak side:** the same probe's TTFT is 9.27 s at 8k and 36.3 s at 30k tokens, against 2.7 s
-  and 9.7 s for vLLM prod (§5ah control), 3.4–3.8× slower. On agent loops that is partly hidden by 4-way concurrency.
+  and 9.4–9.9 s for vLLM prod in the same probe (`evalgq-base0/1`, 2.64 / 2.71 s at 8k), 3.4–3.9× slower. On agent loops that is partly hidden by 4-way concurrency.
 Data `data/swe-tf/` (harness reports, result JSON).
