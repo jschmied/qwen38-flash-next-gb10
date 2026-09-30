@@ -2581,3 +2581,32 @@ environment, default KV, port 8092): all 17 path lines incl. `FNMOEFUSE Triton N
 fused GDN norm+quant ran`; TTFT **2.567 s at 8k, 9.123 s at 30k** (combo A/B: 2.564 / 9.12); code 14.26 ms/tok, c=4
 138.8 tok/s; greedy hashes 71fc9ede / 3bab2af1 (= the GDNNQ arms); replay warm 1.81 s (GDNNQ's text, §5ag open item).
 Data `data/prodval/armrun-prodval4.jsonl`.
+
+
+### 5aj. SWE-bench on TensorFold + EXL3 3.05 bpw: 52 / 58, inside (at the top of) our vLLM range
+
+User: "can we run swt bench against tensorfold (tool calling)", then "do the 58 swt slice on tensorflow/exl3 (start
+slow and watch)". Hypothesis in `tools/swe/HYPOTHESIS-swe.md` (written before the run: 40–50 expected).
+Server: TensorFold 0.5.0 (EXL3 path stock) on `turboderp/Qwen3.8-Flash-Next-exl3` @ `69e33439` (3.05 bpw, 25/25 files
+verified), `--context 65536 --max-tokens 16000 --parallel 4` (eager decode, MTP 1–6 drafts with its 30 % confidence
+stop). Client exactly §5u's: `/root/fn-swe/run.sh`, `fn.yaml` byte-identical (1.0 / 0.95 / 20, reasoning_effort
+medium, max_tokens 16000), mini-swe-agent 2.4.5 native `bash` tool calls, 4 workers, Verified-30 + Multilingual-28.
+Both checkpoints ship the same chat template and generation config. Smoke (2 instances): 2 / 2.
+
+| | Python /30 | Java/JS /28 | total /58 | gen s, Python / Java/JS |
+|---|---|---|---|---|
+| TensorFold + EXL3 3.05 bpw (run 1) | 27 | 25 | **52** | 2,152 / 3,357 |
+| §5u vLLM prod (FP8 GDN), runs 1 / 2 | 24 / 28 | 24 / 24 | 48 / 52 | 2,345, 2,999 / 3,505, 3,323 |
+| §5u NVFP4 GDN | 28 / 27 | 23 / 23 | 51 / 50 | 2,363, 2,725 / 3,929, 3,499 |
+| §5u bf16 SSM state | 26 / 27 | 24 / 24 | 50 / 51 | 2,810, 2,773 / 2,982, 2,906 |
+
+- **Quality: no loss at 3.05 bpw on this benchmark.** 52 equals the best §5u run; one run, so "inside the range", not
+  "better". Per instance against each §5u arm: 1–3 solved there and not here, 3–7 the other way (TensorFold alone
+  solved django-16667 and babel-15445 against every arm). All 58 trajectories ended `Submitted`: 0 context
+  overflows (§5u had 1–3 per run), no empty patches.
+- **Tool calls:** TensorFold's parser worked throughout (58 trajectories, no format-error loops); 0 server tracebacks.
+- **Speed is not comparable to §5u:** those servers predate HC fusion, F4, the Triton prefill MoE + GDNNQ and ran at the
+  default KV size. Python generated 8–28 % faster, Java/JS within §5u's range. The same-day vLLM baseline (today's
+  prod config, same client) is below once it lands.
+- Draft acceptance over the run: 65–66 % (TensorFold's /health counters).
+Data `data/swe-tf/` (harness reports, result JSON).
