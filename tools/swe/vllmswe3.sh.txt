@@ -1,0 +1,28 @@
+#!/bin/bash
+# Run 2 (user: "at the end do a second vllm run"): after the fish chain, serve today's prod config on vLLM (test unit, :8092), run the same 58 slice.
+R=/opt/llm/runners/results; # v2: -E instead of -p Environment= (systemd rejected the JSON/space values)
+ S=/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad
+log(){ echo "$(date +%T) $*" >> $R/vllmswe-r2.txt; }
+while systemctl is-active -q tfexl3r2-chain || systemctl is-active -q fish-chain2; do sleep 30; done
+for u in fx-tf-exl3 fx-tf-fish fx-vllm-fish; do systemctl is-active -q $u && { systemctl stop $u; log "$u stopped"; }; done
+until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done
+# prod drop-ins 20..60 (65 disabled), as installed; 64k context as in §5u; 8 GiB KV (4 agents x 64k)
+systemd-run --unit=fx-vllm-swe --collect --uid=llm \
+  -E FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7 -E FN_MODEL=/opt/llm/models/qwen38-flash-next-mtpfp4 \
+  -E FN_MAXLEN=65536 -E FN_SEQS=16 -E FN_PLE_OFFLOAD=0 \
+  -E FN_SPEC_METHOD=mtp -E FN_SPEC_N=5 -E FN_SPEC_NODROP=1 -E FN_SPEC_LOCALARGMAX=0 \
+  -E FN_DRAFT_VOCAB=/opt/llm/runners/dv/draft_vocab_32768.txt -E FN_DRAFT_HEAD_NVFP4=1 -E FN_NVFP4_CFG=64,4 \
+  -E FN_DRAFT_PROB=1 -E FN_SPEC_DRAFTPROB=1 -E "FN_CG_SIZES=[1,2,4,6,8,12,16,18,24,30,36,48,60,72,96]" \
+  -E FN_HCFUSE=1 -E FN_CG_MODE=FULL_AND_PIECEWISE -E FN_MOEFUSE=1 -E FN_GDNNQ=1 \
+  -E "FN_EXTRA=--engram-config {\"checkpoint_mapped\":true} --use-replayssm --block-size 1728 --prefix-match-unit 64 --mamba-ssm-cache-dtype bfloat16 --kv-cache-memory-bytes 8589934592" \
+  /opt/llm/serve-flashnext.sh
+ok=0
+for i in $(seq 1 120); do
+  sleep 10
+  systemctl is-active -q fx-vllm-swe || { log "vllm DIED"; break; }
+  curl -sf -H "Authorization: Bearer none" http://127.0.0.1:8092/v1/models > /dev/null && { ok=1; log "vllm ready after $((i*10)) s"; break; }
+done
+if [ $ok = 1 ]; then
+  su -s /bin/bash jschmied -c "bash $S/sweprobe.sh vllmnow2 all > $S/swe-vllmnow2.json 2> $S/swe-vllmnow2.err"; log "swe rc=$? $(cat $S/swe-vllmnow2.json)"
+fi
+systemctl stop fx-vllm-swe; log "vllm stopped"; echo "== VLLMSWE2 DONE ==" >> $R/vllmswe-r2.txt
