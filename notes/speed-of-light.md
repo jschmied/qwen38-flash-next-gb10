@@ -2628,4 +2628,16 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
   run on this slice, not two**, and its run-to-run spread is not measured. Fixed for the hard slice: `tfhard2` layers
   `tools/swe/fn-tfhard2.yaml` (`seed: 2` on every request) through `run2.sh`'s per-arm config; `tfhard1` stays
   prompt-seeded like run 1.
+- **GSM8K + HumanEval screen on the same server (`evalprobe`, greedy, 16 concurrent; control `evalgq-base0/1` = vLLM
+  prod on our checkpoint, 2 starts; `data/swe-tf/evalq-tfexl3-score.txt`): no loss.** TensorFold + EXL3 GSM8K
+  1273/1319 = **96.51 %** (vLLM 95.91 / 96.21 %), HumanEval 159/164 = **96.95 %** (vLLM 95.12 / 95.12 %). Paired per
+  item: GSM8K 16 vs 8 and 14 vs 10 in TensorFold's favour (McNemar p = 0.15, 0.54), HumanEval 3 vs 0 (p = 0.25); the
+  two vLLM starts differ by 11 vs 15 among themselves. Nothing significant; the sign is EXL3's way on all four
+  comparisons. Truncated at the probe's budget: GSM8K 16, HumanEval 2.
+- **Verdict against `tools/swe/HYPOTHESIS-swe.md`:** the quality hypothesis (40–50 of 58, "a larger cut than any §5u
+  arm") is **refuted in the good direction**: 52 / 58 on SWE (one effective run) and no loss on GSM8K/HumanEval.
+  3.05-bit EXL3 experts do not cost measurable task quality against our NVFP4 experts on these benchmarks. Harder
+  slices follow (§5al) because 88–90 % on the 58 leaves little headroom to separate the two.
+- **Prefill is TensorFold's weak side:** the same probe's TTFT is 9.27 s at 8k and 36.3 s at 30k tokens, against 2.7 s
+  and 9.7 s for vLLM prod (§5ah control), 3.4–3.8× slower. On agent loops that is partly hidden by 4-way concurrency.
 Data `data/swe-tf/` (harness reports, result JSON).

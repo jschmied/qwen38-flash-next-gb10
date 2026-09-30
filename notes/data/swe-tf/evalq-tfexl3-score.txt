@@ -1,0 +1,12 @@
+tfexl3       gsm8k     1273/1319 = 96.51 %
+tfexl3       humaneval 159/164 = 96.95 %
+evalgq-base0 gsm8k     1265/1319 = 95.91 %
+evalgq-base0 humaneval 156/164 = 95.12 %
+evalgq-base1 gsm8k     1269/1319 = 96.21 %
+evalgq-base1 humaneval 156/164 = 95.12 %
+tfexl3 vs evalgq-base0 gsm8k    : tfexl3 only 16, evalgq-base0 only 8, Δ -0.61 pp, McNemar p=0.152
+tfexl3 vs evalgq-base0 humaneval: tfexl3 only 3, evalgq-base0 only 0, Δ -1.83 pp, McNemar p=0.250
+tfexl3 vs evalgq-base1 gsm8k    : tfexl3 only 14, evalgq-base1 only 10, Δ -0.30 pp, McNemar p=0.541
+tfexl3 vs evalgq-base1 humaneval: tfexl3 only 3, evalgq-base1 only 0, Δ -1.83 pp, McNemar p=0.250
+evalgq-base0 vs evalgq-base1 gsm8k    : evalgq-base0 only 11, evalgq-base1 only 15, Δ +0.30 pp, McNemar p=0.557
+evalgq-base0 vs evalgq-base1 humaneval: evalgq-base0 only 1, evalgq-base1 only 1, Δ +0.00 pp, McNemar p=1.000

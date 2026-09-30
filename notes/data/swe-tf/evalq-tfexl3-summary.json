@@ -1,0 +1,1 @@
+{"ttft": {"8k": {"median_s": 9.265, "all": [9.272, 9.255, 9.265]}, "30k": {"median_s": 36.334, "all": [36.271, 36.334, 36.37]}}, "gsm8k": {"n": 1319, "acc": 0.9651, "correct": 1273, "truncated": 16, "gen_tokens": 455814, "s": 3238.9}, "humaneval": {"n": 164, "truncated": 2, "gen_tokens": 39975, "s": 283.6, "file": "/opt/llm/runners/results/evalq-tfexl3.jsonl"}, "total_s": 3659.4}
