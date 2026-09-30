@@ -2596,6 +2596,7 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
 | | Python /30 | Java/JS /28 | total /58 | gen s, Python / Java/JS |
 |---|---|---|---|---|
 | TensorFold + EXL3 3.05 bpw (run 1) | 27 | 25 | **52** | 2,152 / 3,357 |
+| vLLM today (prod config, NVFP4 `mtpfp4`, 65,536 context) | 27 | 24 | **51** | 2,619 / 3,219 |
 | §5u vLLM prod (FP8 GDN), runs 1 / 2 | 24 / 28 | 24 / 24 | 48 / 52 | 2,345, 2,999 / 3,505, 3,323 |
 | §5u NVFP4 GDN | 28 / 27 | 23 / 23 | 51 / 50 | 2,363, 2,725 / 3,929, 3,499 |
 | §5u bf16 SSM state | 26 / 27 | 24 / 24 | 50 / 51 | 2,810, 2,773 / 2,982, 2,906 |
@@ -2606,7 +2607,15 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
   overflows (§5u had 1–3 per run), no empty patches.
 - **Tool calls:** TensorFold's parser worked throughout (58 trajectories, no format-error loops); 0 server tracebacks.
 - **Speed is not comparable to §5u:** those servers predate HC fusion, F4, the Triton prefill MoE + GDNNQ and ran at the
-  default KV size. Python generated 8–28 % faster, Java/JS within §5u's range. The same-day vLLM baseline (today's
-  prod config, same client) is below once it lands.
+  default KV size. Python generated 8–28 % faster, Java/JS within §5u's range.
+- **Same-day vLLM baseline (2026-09-30, `tools/swe/vllmswe2.sh.txt`):** today's prod config (`vllm-venv-main1ea7`,
+  `qwen38-flash-next-mtpfp4`, MTP K=5 + probabilistic drafting, HC fusion, GDNNQ, MoE fusion, FULL_AND_PIECEWISE,
+  `--max-model-len 65536`, KV 8 GiB, 16 seqs), same client and sampling. **51 / 58**, all 58 `Submitted`, **0 context
+  overflows**: the §5u overflows were the 32k window, not the model, so the user's rule (count an overflow as solved)
+  is moot at 65k. TensorFold + EXL3 against it: 4 solved there only (babel-15445, django-16667, matplotlib-20859,
+  lombok-3594), 3 here only (django-13551, django-14034, gson-2311): one instance apart, one run each, **a tie**.
+  Generation time: TensorFold **18 % faster on Python** (2,152 vs 2,619 s), vLLM **4 % faster on Java/JS** (3,219 vs
+  3,357 s); total 5,509 vs 5,838 s, TensorFold −6 %. Both at 4 workers, so this is c≈4 agent throughput, where
+  TensorFold runs eager and vLLM with graphs.
 - Draft acceptance over the run: 65–66 % (TensorFold's /health counters).
 Data `data/swe-tf/` (harness reports, result JSON).
