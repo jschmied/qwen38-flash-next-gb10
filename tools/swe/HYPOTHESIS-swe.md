@@ -34,3 +34,13 @@ our FP8/NVFP4 checkpoint, test unit on :8092, 64k context, 8 GiB KV (4 agents ×
 48–52 of 58 (§5u's range; the §5ag/§5aa changes do not change text quality beyond drift); gen time per slice below §5u's
 (2,345–2,999 s Python, 2,906–3,929 s Java/JS) by 10–20 % from the prefill work. Compared with TensorFold+EXL3 run 1 on
 wall-clock per slice and resolved count; one run each, so only large gaps count.
+
+### Queued after the baseline: TensorFold + EXL3 run 2 and the GSM8K/HumanEval screen (2026-09-30, user: "yes")
+
+User read §5aj as "EXL3 is better quant than NVFP4"; one run cannot separate 52 from vLLM's 49–53 (overflows counted as
+solved). Run 2: same server flags, same client. H: 49–54; the pair's mean within ±2 of vLLM's six-run mean (51.9 with
+overflows counted). Logprob divergence against BF16 is not possible on TensorFold's CUDA Flash-Next engine (no
+logprobs, TensorFold#108 open), so the screen is `evalprobe.py` (GSM8K 1319 + HumanEval 164, greedy, thinking off,
+c=16 against `--parallel 4`), compared by McNemar with evalgq-base0/1 (vLLM prod, 95.91 / 96.21 % GSM8K, 95.12 / 95.12 %
+HumanEval). H: within those starts' spread; a drop of more than 1.5 pp GSM8K with McNemar p < 0.05 against both base
+starts is a real loss at 3.05 bpw.

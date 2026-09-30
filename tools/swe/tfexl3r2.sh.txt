@@ -1,0 +1,21 @@
+#!/bin/bash
+# After the vLLM baseline: TensorFold + EXL3 again (same flags as run 1), SWE run 2, then the GSM8K/HumanEval screen.
+R=/opt/llm/runners/results; S=/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad
+T=/opt/llm/runtime/tf-venv; M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw
+log(){ echo "$(date +%T) $*" >> $R/tfexl3r2.txt; }
+while systemctl is-active -q vllmswe-chain2; do sleep 30; done
+until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done
+systemd-run --unit=fx-tf-exl3 --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+  -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
+  bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 65536 --max-tokens 16000 --parallel 4 > /opt/llm/tf-serve-exl3-r2.log 2>&1"
+ok=0
+for i in $(seq 1 90); do
+  sleep 10
+  systemctl is-active -q fx-tf-exl3 || { log "tensorfold DIED"; break; }
+  curl -sf http://127.0.0.1:8092/v1/models > /dev/null && { ok=1; log "tensorfold ready after $((i*10)) s"; break; }
+done
+if [ $ok = 1 ]; then
+  su -s /bin/bash jschmied -c "bash $S/sweprobe.sh tfexl3r2 all > $S/swe-tfexl3-run2.json 2> $S/swe-tfexl3-run2.err"; log "swe run2 rc=$? $(cat $S/swe-tfexl3-run2.json)"
+  timeout 14400 /opt/llm/runtime/vllm-venv-fnext/bin/python /opt/llm/runners/evalq/evalprobe.py tfexl3 > $R/evalq-tfexl3-summary.json 2>> $R/tfexl3r2.txt; log "evalprobe rc=$? $(tail -c 400 $R/evalq-tfexl3-summary.json)"
+fi
+systemctl stop fx-tf-exl3; log "tensorfold stopped"; echo "== TFEXL3R2 DONE ==" >> $R/tfexl3r2.txt
