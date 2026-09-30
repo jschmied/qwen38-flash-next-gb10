@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# x86 side (v3: + ovfpy/ovfjs overflow reruns). argv: <arm> <slice: smoke|python|javajs|hard|jshard|pym|jsm|ovfpy|ovfjs>. Server reached through the reverse tunnel on 18092.
+set -uo pipefail
+ARM=$1; SL=$2; W=/root/fn-swe; OUT=$W/out/$ARM-$SL; mkdir -p $OUT
+export OPENAI_API_BASE=http://127.0.0.1:18092/v1 OPENAI_API_KEY=none MSWEA_COST_TRACKING=ignore_errors
+PY=/root/sweb-venv/bin/python; BASE=/root/sweb-venv/lib/python3.12/site-packages/minisweagent/config/benchmarks/swebench.yaml
+case $SL in
+  smoke)  SET=$W/set-smoke.txt; SUB=verified; DS=princeton-nlp/SWE-bench_Verified;;
+  python) SET=/root/set-python.txt; SUB=verified; DS=princeton-nlp/SWE-bench_Verified;;
+  javajs) SET=/root/set-javajs.txt; SUB=swe-bench/SWE-bench_Multilingual; DS=swe-bench/SWE-bench_Multilingual;;
+  hard)   SET=/root/set-hard.txt; SUB=verified; DS=princeton-nlp/SWE-bench_Verified;;
+  jshard) SET=/root/set-jshard.txt; SUB=swe-bench/SWE-bench_Multilingual; DS=swe-bench/SWE-bench_Multilingual;;
+  pym)    SET=/root/set-python-mixed.txt; SUB=verified; DS=princeton-nlp/SWE-bench_Verified;;
+  jsm)    SET=/root/set-javajs-mixed.txt; SUB=swe-bench/SWE-bench_Multilingual; DS=swe-bench/SWE-bench_Multilingual;;
+  ovfpy)  SET=/root/set-ovf-$ARM-py.txt; SUB=verified; DS=princeton-nlp/SWE-bench_Verified;;
+  ovfjs)  SET=/root/set-ovf-$ARM-js.txt; SUB=swe-bench/SWE-bench_Multilingual; DS=swe-bench/SWE-bench_Multilingual;;
+esac
+EXTRA=(); [ -f $W/fn-$ARM.yaml ] && EXTRA=(-c $W/fn-$ARM.yaml)  # per-arm config layer (seed), 2026-09-30
+RE="^($(paste -sd"|" $SET))$"; t0=$(date +%s)
+timeout 43200 $PY -m minisweagent.run.benchmarks.swebench --subset "$SUB" --split test --filter "$RE" \
+  --model openai/flashnext -c $BASE -c $W/fn.yaml "${EXTRA[@]}" -w 4 -o $OUT/gen --redo-existing > $OUT/gen.log 2>&1
+t1=$(date +%s)
+timeout 14400 $PY -m swebench.harness.run_evaluation --dataset_name $DS --split test \
+  --predictions_path $OUT/gen/preds.json --run_id FN_${ARM}_${SL}_$t0 --max_workers 4 --cache_level env > $OUT/eval.log 2>&1
+t2=$(date +%s)
+$PY - "$OUT" "$SET" $((t1-t0)) $((t2-t1)) <<'PYE'
+import json, sys, glob
+out, setf, gs, es = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4])
+ids = [l.strip() for l in open(setf) if l.strip()]
+preds = json.load(open(f"{out}/gen/preds.json")) if glob.glob(f"{out}/gen/preds.json") else {}
+rep = [json.load(open(f)) for f in glob.glob(f"{out}/../../*FN_*.json")]
+log = open(f"{out}/eval.log").read()
+import re
+res = re.search(r"Instances resolved: (\d+)", log)
+r = {"instances": len(ids), "preds": len(preds),
+     "empty_patches": sum(1 for p in preds.values() if not (p.get("model_patch") or "").strip()),
+     "resolved": int(res.group(1)) if res else None, "gen_s": gs, "eval_s": es}
+json.dump(r, open(f"{out}/result.json", "w")); print(json.dumps(r))
+PYE

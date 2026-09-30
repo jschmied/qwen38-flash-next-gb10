@@ -1,0 +1,8 @@
+#!/bin/bash
+# user 2026-09-30: "re run failed with bigger context". argv: <src arm> <rerun arm>. Writes /root/set-ovf-<rerun>-{py,js}.txt
+# = the instances of <src arm> whose trajectory ended in ContextWindowExceededError; prints the two counts.
+SRC=$1; DST=$2; O=/root/fn-swe/out
+: > /root/set-ovf-$DST-py.txt; : > /root/set-ovf-$DST-js.txt
+for d in $O/$SRC-*; do sl=${d##*-}; case $sl in hard|pym|python) f=/root/set-ovf-$DST-py.txt;; jshard|jsm|javajs) f=/root/set-ovf-$DST-js.txt;; *) continue;; esac
+  for t in $d/gen/*/*.traj.json; do python3 -c "import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get(\"info\",{}).get(\"exit_status\")==\"ContextWindowExceededError\" else 1)" $t && basename $(dirname $t) >> $f; done; done
+echo "$DST py=$(wc -l < /root/set-ovf-$DST-py.txt) js=$(wc -l < /root/set-ovf-$DST-js.txt)"

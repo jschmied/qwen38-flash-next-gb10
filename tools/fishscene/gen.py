@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Send prompt.txt once to the server on :8092 (seed $GEN_SEED, default 1; the model's default sampling and thinking, 100k max output),
+"""Send prompt.txt once to the server on :8092 (prompt $GEN_PROMPT or prompt.txt; seed $GEN_SEED, default 1; the model's default sampling and thinking, 100k max output),
 save the reply's content as <out>.html, the full JSON as <out>.json, and print timings. argv: <out-prefix> [key]"""
 import json, os, sys, time, urllib.request
 out = sys.argv[1]; key = sys.argv[2] if len(sys.argv) > 2 else "none"
-prompt = open(__file__.rsplit("/", 1)[0] + "/prompt.txt").read()
+prompt = open(os.environ.get("GEN_PROMPT") or __file__.rsplit("/", 1)[0] + "/prompt.txt").read()
 b = {"model": "flashnext", "messages": [{"role": "user", "content": prompt}], "max_tokens": 100000,
      "seed": int(os.environ.get("GEN_SEED", "1"))}
 t = time.time()

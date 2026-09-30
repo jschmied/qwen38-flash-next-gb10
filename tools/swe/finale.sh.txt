@@ -1,0 +1,45 @@
+#!/bin/bash
+# User 2026-09-30 19:2x: "re run failed with bigger context. at the end do two runs with: [pasture prompt]".
+# After mixswe2: every trajectory that ended in ContextWindowExceededError is re-run at 131072 context (was 65536), same
+# engine, sampling and seed config (tfhard2x inherits seed 2); then the pasture prompt twice per engine (seed 1, 2).
+R=/opt/llm/runners/results; S=/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad; O=/opt/llm/runners/results/pasture; G=/home/jschmied/git/qwen38-flash-next-gb10/tools
+T=/opt/llm/runtime/tf-venv; M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; P=/opt/llm/runtime/vllm-venv-fnext/bin/python
+X="ssh -n -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts -o BatchMode=yes root@10.0.0.8"
+mkdir -p $O; log(){ echo "$(date +%T) $*" >> $R/finale.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+ready(){ for i in $(seq 1 120); do sleep 10; systemctl is-active -q $1 || { log "$1 DIED"; return 1; }
+  curl -sf -H "Authorization: Bearer none" http://127.0.0.1:8092/v1/models > /dev/null && { log "$1 ready after $((i*10)) s, MemAvailable $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) GiB"; return 0; }; done; return 1; }
+probe(){ su -s /bin/bash jschmied -c "bash $S/sweprobe3.sh $1 $2 > $S/swe-$1-$2.json 2> $S/swe-$1-$2.err"; log "$1 $2 rc=$? $(cat $S/swe-$1-$2.json)"; }
+ovf(){ for sl in ovfpy ovfjs; do f=/root/set-ovf-$1-${sl#ovf}.txt
+  if su -s /bin/bash jschmied -c "$X '[ -s $f ]'"; then probe $1 $sl; else log "$1 $sl: no overflows, skipped"; fi; done; }
+pasture(){ for sd in 1 2; do GEN_PROMPT=$G/pasture/prompt.txt GEN_SEED=$sd timeout 7200 $P $G/fishscene/gen.py $O/$1-$sd >> $R/finale.txt 2>&1; log "pasture $1 seed $sd rc=$?"; done; }
+stopu(){ systemctl stop $1; log "$1 stopped"; sleep 20; memok; }
+while systemctl is-active -q mixswe-chain2; do sleep 30; done
+for a in vllmhard1 vllmmix2 tfhard1 tfhard2; do log "overflow set: $(su -s /bin/bash jschmied -c "$X 'bash /root/fn-swe/make-ovf.sh $a ${a}x'")"; done
+for u in fx-tf-exl3 fx-vllm-swe; do systemctl is-active -q $u && stopu $u; done; memok
+# vLLM at 131072 context, KV 12 GiB (was 65536 / 8 GiB)
+systemd-run --unit=fx-vllm-swe --collect --uid=llm \
+  -E FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7 -E FN_MODEL=/opt/llm/models/qwen38-flash-next-mtpfp4 \
+  -E FN_MAXLEN=131072 -E FN_SEQS=16 -E FN_PLE_OFFLOAD=0 \
+  -E FN_SPEC_METHOD=mtp -E FN_SPEC_N=5 -E FN_SPEC_NODROP=1 -E FN_SPEC_LOCALARGMAX=0 \
+  -E FN_DRAFT_VOCAB=/opt/llm/runners/dv/draft_vocab_32768.txt -E FN_DRAFT_HEAD_NVFP4=1 -E FN_NVFP4_CFG=64,4 \
+  -E FN_DRAFT_PROB=1 -E FN_SPEC_DRAFTPROB=1 -E "FN_CG_SIZES=[1,2,4,6,8,12,16,18,24,30,36,48,60,72,96]" \
+  -E FN_HCFUSE=1 -E FN_CG_MODE=FULL_AND_PIECEWISE -E FN_MOEFUSE=1 -E FN_GDNNQ=1 \
+  -E "FN_EXTRA=--engram-config {\"checkpoint_mapped\":true} --use-replayssm --block-size 1728 --prefix-match-unit 64 --mamba-ssm-cache-dtype bfloat16 --kv-cache-memory-bytes 12884901888" \
+  /opt/llm/serve-flashnext.sh
+if ready fx-vllm-swe; then ovf vllmhard1x; ovf vllmmix2x; pasture vllm-prod; fi
+stopu fx-vllm-swe
+# TensorFold at 131072 context, 4 slots; 2 slots if 4 does not come up
+for par in 4 2; do
+  systemd-run --unit=fx-tf-exl3 --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 131072 --max-tokens 16000 --parallel $par > /opt/llm/tf-serve-exl3-ovf.log 2>&1"
+  if ready fx-tf-exl3; then log "tensorfold --parallel $par"; ovf tfhard1x; ovf tfhard2x; stopu fx-tf-exl3; break; fi
+  systemctl stop fx-tf-exl3 2>/dev/null; systemctl reset-failed fx-tf-exl3 2>/dev/null; sleep 20; memok
+done
+# TensorFold for the pasture prompt: the scene-prompt config (131072, 100k output, 1 slot)
+systemd-run --unit=fx-tf-fish --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
+  bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 131072 --max-tokens 100000 --parallel 1 > /opt/llm/tf-serve-pasture.log 2>&1"
+if ready fx-tf-fish; then pasture tensorfold-exl3; fi
+stopu fx-tf-fish
+CHECK_LIMIT_KB=30 python3 $G/fishscene/check.py $O/*.html >> $R/finale.txt 2>&1; chmod -R a+r $O
+echo "== FINALE DONE ==" >> $R/finale.txt

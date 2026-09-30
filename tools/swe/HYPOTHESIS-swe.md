@@ -70,3 +70,13 @@ vllmmix2 (full mixed 58); TF runs = tfexl3r1/2 kept + tfhard1/2.
 - Java/JS hard 10, per run: **3–7 resolved**; patch size is a weaker difficulty proxy than Verified's labels, so
   expect less of a drop than on the Python hard 10.
 - Mixed 58 per run: **40–50** (from 51–52), engines within ±3; a gap counts only if it holds in both runs.
+
+## Overflow reruns at 131072 context (2026-09-30, before the run)
+
+User: "re run failed with bigger context". Every trajectory of vllmhard1, vllmmix2, tfhard1, tfhard2 that ended in
+`ContextWindowExceededError` at 65,536 is re-run at 131,072 (vLLM KV 12 GiB; TensorFold 4 slots, 2 if 4 do not fit),
+same engine, sampling, per-step max_tokens 16000 and seed config; the rerun's result replaces the overflow in §5al.
+So far 6 of 20 vLLM hard instances overflowed (2 Python, 4 Java/JS).
+- Resolved among the reruns: **25–50 %**, well below the 100 % that "count an overflow as solved" assumes; a trajectory
+  that needs > 64k is usually one that is stuck, not one that is nearly done.
+- A few (0–2 of 6) overflow again at 128k.
