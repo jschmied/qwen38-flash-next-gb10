@@ -2347,3 +2347,22 @@ scales to bf16. Data `data/tensorfold/`.
   in both arms. Decode matmul: `in_proj_qkv` 94 µs FP8G vs 247 µs bf16 (DRAM floor ~96 µs). Found on the way:
   `nvidia/Qwen3.8-Flash-Next-NVFP4` is refused by TensorFold 0.5.0 (MTP experts `FP8_BLOCK_SCALES`, PLE labelled `FP8`);
   listed in the PR as follow-up. Data `data/tensorfold/tfab-*`.
+
+## MiaAI-Lab dual-Spark kit vs our best env (2026-09-30, user: "check whats … Dual-DGX-Sparks missing whats in our best env")
+
+`MiaAI-Lab/Qwen3.8-Flash-Next-Dual-DGX-Sparks` @ `cd839d0` (2026-09-29): 2 Sparks, TP2 + EP (allgather_reducescatter),
+`nvidia/Qwen3.8-Flash-Next-NVFP4` (BF16 dense), image `vllm/vllm-openai:qwen38-flash-next` (v0.30 lane optional), MTP 3
+with local-argmax, 47k draft vocab, `disable_eagle_block_drop`, `index_share_for_mtp_iteration`, fp8 KV (+ their QSA
+fp8 patch), bf16 SSM state, `FULL_DECODE_ONLY` with `mode 0` (no torch.compile), 262k context, 8 seqs, batch 8192;
+determinism envs available but unset.
+
+Missing there, measured here on one GB10:
+- FP8 dense (128×128 blocks, our `mtpfp4`): +39 % single stream. They have an FP8-dense lane (per-channel, built
+  from RadixArk) marked "not yet measured on GPU".
+- MTP K=5 + probabilistic drafting (K3 16.1–16.3 → K5 14.8–14.9 ms/tok, kcost2); NVFP4 draft-head slice −3.4 % c=1.
+- RecoverSSM (`--use-replayssm`, vllm#58863) + the F4 FULL graphs (−1.1…−2.1 % c=1; smaller Mamba page, more KV);
+  `--prefix-match-unit 64` with block 1728 for agent-loop prefix hits.
+- HC fusion (TTFT −5.5…−7.9 %), Triton NVFP4 prefill MoE + GDNNQ (TTFT 2.57 / 9.12 s at 8k / 30k): local overlays.
+- FULL_AND_PIECEWISE with torch.compile (they run FULL_DECODE_ONLY, mode 0).
+They have and we don't: `index_share_for_mtp_iteration` (their claim: code +6 % S=1 … +27 % S=8; our job 90 `ishare2`
+is parked), fp8 KV by default (our §4l: a quality/speed trade), 262k context, per-language draft vocabularies, TP2+EP.
