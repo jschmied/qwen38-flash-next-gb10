@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Send prompt.txt once to the server on :8092 (seed 1, the model's default sampling and thinking, 32k max output),
+"""Send prompt.txt once to the server on :8092 (seed 1, the model's default sampling and thinking, 100k max output),
 save the reply's content as <out>.html, the full JSON as <out>.json, and print timings. argv: <out-prefix> [key]"""
 import json, sys, time, urllib.request
 out = sys.argv[1]; key = sys.argv[2] if len(sys.argv) > 2 else "none"
 prompt = open(__file__.rsplit("/", 1)[0] + "/prompt.txt").read()
-b = {"model": "flashnext", "messages": [{"role": "user", "content": prompt}], "max_tokens": 32000, "seed": 1}
+b = {"model": "flashnext", "messages": [{"role": "user", "content": prompt}], "max_tokens": 100000, "seed": 1}
 t = time.time()
 r = urllib.request.Request("http://127.0.0.1:8092/v1/chat/completions", json.dumps(b).encode(),
                            {"Content-Type": "application/json", "Authorization": "Bearer " + key})

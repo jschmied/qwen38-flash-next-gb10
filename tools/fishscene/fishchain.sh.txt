@@ -7,13 +7,13 @@ while systemctl is-active -q tfexl3r2-chain || systemctl is-active -q vllmswe-ch
 wait_ready(){ for i in $(seq 1 120); do sleep 10; systemctl is-active -q $1 || { log "$1 DIED"; return 1; }; curl -sf -H "Authorization: Bearer none" http://127.0.0.1:8092/v1/models >/dev/null && { log "$1 ready after $((i*10)) s"; return 0; }; done; return 1; }
 until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done
 systemd-run --unit=fx-tf-fish --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
-  bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 65536 --max-tokens 32000 --parallel 4 > /opt/llm/tf-serve-fish.log 2>&1"
+  bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 131072 --max-tokens 100000 --parallel 1 > /opt/llm/tf-serve-fish.log 2>&1"
 if wait_ready fx-tf-fish; then timeout 7200 $P $G/gen.py $O/tensorfold-exl3 >> $R/fishchain.txt 2>&1; log "tf gen rc=$?"; fi
 systemctl stop fx-tf-fish; log "tensorfold stopped"
 until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done
 systemd-run --unit=fx-vllm-fish --collect --uid=llm \
   -E FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7 -E FN_MODEL=/opt/llm/models/qwen38-flash-next-mtpfp4 \
-  -E FN_MAXLEN=65536 -E FN_SEQS=16 -E FN_PLE_OFFLOAD=0 \
+  -E FN_MAXLEN=131072 -E FN_SEQS=16 -E FN_PLE_OFFLOAD=0 \
   -E FN_SPEC_METHOD=mtp -E FN_SPEC_N=5 -E FN_SPEC_NODROP=1 -E FN_SPEC_LOCALARGMAX=0 \
   -E FN_DRAFT_VOCAB=/opt/llm/runners/dv/draft_vocab_32768.txt -E FN_DRAFT_HEAD_NVFP4=1 -E FN_NVFP4_CFG=64,4 \
   -E FN_DRAFT_PROB=1 -E FN_SPEC_DRAFTPROB=1 -E "FN_CG_SIZES=[1,2,4,6,8,12,16,18,24,30,36,48,60,72,96]" \
