@@ -2390,3 +2390,22 @@ needs a login). vLLM 0.30, one GB10, Qwen's MTP head, inspired by TensorFold's `
   (gains only at the extremes: our stop +17 % on hard-to-draft text, −6.7…−7.8 % ms/tok on code on the clone, null on
   GDNNQ's text). Their window study supports per-step drafter confidence (ours, TensorFold's) over acceptance windows.
   To borrow: a strict-schema JSON catalog and a long story in the stop A/B suite, and bad-move counts next to means.
+
+## vcruz305/vllm-exl3 — EXL3 inside vLLM (checked 2026-09-30, user: "is … the way to go or are there disadvantages?")
+
+Out-of-tree vLLM plugin (`--quantization exl3`), head 2026-09-25, dev line 0.5.0 "not GPU-qualified"; checked against
+vLLM v0.30.0; lists `Qwen4ExpForConditionalGeneration`, but its qualification target is GLM-5.3-Flash TP1.
+- **Flash-Next numbers, its own (0.4.2 notes):** 27.9 tok/s greedy single stream without drafts, 979 tok/s prefill on
+  1.2k tokens; MTP k=2: 44.9 / 73.5 / 129.2 tok/s aggregate at 1 / 8 / 32 streams. Ours on vLLM: ~68 tok/s code c=1
+  (14.7 ms/tok), prefill ~2,750–3,000 tok/s; TensorFold's EXL3 on its bench 77.7.
+- **Gaps:** on v0.30.0 an EXL3-quantized n-gram table (turboderp's pack has one) is not reachable: the PLE layer now
+  picks its format through `Qwen4ExpPLEEmbeddingMethod.from_quant_config` and raises for the EXL3 config ("stay on the
+  pinned runtime until the PLE adapter lands"). Needs three patches to vLLM's qwen4_exp model plus an ExLlamaV3 build
+  (vcruz305's fork for mixed-K). The cooperative `exl3_moe` kernel cannot be CUDA-graph captured; the capturable
+  padded MoE is opt-in and unqualified; small-row routed calls carry a known wedge risk. No row-invariance or
+  determinism claim.
+- **License:** AGPL-3.0 (plus Apache parts): network-serving copyleft, and not upstreamable into vLLM (Apache).
+- **What we would lose:** the FlashInfer-path MoE work (Triton prefill MoE, det finalize), NVFP4 draft head, and every
+  measurement taken on the NVFP4 experts; RecoverSSM/F4/HC fusion are independent of the expert format.
+- **Verdict:** not our route. If EXL3 in vLLM becomes the plan, port TensorFold's EXL3 CUDA kernels (MIT, row-exact,
+  measured faster on this model) as a vLLM quantization method instead, after the EXL3 quality check (TODO/§5aj).
