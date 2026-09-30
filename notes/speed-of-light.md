@@ -2642,7 +2642,7 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
   and 9.4–9.9 s for vLLM prod in the same probe (`evalgq-base0/1`, 2.64 / 2.71 s at 8k), 3.4–3.9× slower. On agent loops that is partly hidden by 4-way concurrency.
 Data `data/swe-tf/` (harness reports, result JSON).
 
-### 5ak. The underwater-scene prompt on both engines (round 1, seed 1)
+### 5ak. The underwater-scene prompt on both engines (two seeds)
 
 User: "after the run, let both models do: [the scene prompt]", then "is 32k output enough for this?" (no: default
 thinking is xhigh, so the budget was raised to 100k output, 128k context). `tools/fishscene/`: `prompt.txt`, `gen.py`
@@ -2664,4 +2664,19 @@ today's prod config at `--max-model-len 131072`. One request each, nothing else 
 - Speed: single request, one sample each, so a sanity figure, not a benchmark. vLLM's 46 tok/s sits at its prose
   rate (23 ms/tok at c=1, #58863 table) since most of the reply is thinking; TensorFold's 70 tok/s on the same kind of
   text is unmeasured elsewhere, so this is one data point, not a ranking.
-- Round 2 (seed 2, user: "do both scenes once more") runs in `mixswe2.sh.txt`; data `data/fishscene/`.
+- **Round 2 (seed 2, user: "do both scenes once more", `mixswe2.sh.txt`):**
+
+| | output tokens (thinking) | s | tok/s | HTML bytes | < 18 KB | other checks |
+|---|---|---|---|---|---|---|
+| TensorFold + EXL3 3.05 bpw | 30,427 (22,133) | 412.6 | 73.7 | 19,818 | **no** | all pass |
+| vLLM, our checkpoint | 29,398 (20,357) | 631.5 | 46.6 | 22,084 | **no** | all pass |
+
+- **What they look like** (headless Firefox 1280×800, frames at 0, 4 and 12 s; no other browser checked). Seed 1 is
+  broken on both: TensorFold draws water, sand, seaweed and rising bubbles but **no fish** in any frame (the legend
+  names two); vLLM draws **almost nothing** (no gradient, no floor, one fish clipped in the top-left corner, frozen).
+  Seed 2 works on both, each with one deviation: TensorFold adds a school of ~12 small background fish silhouettes
+  (against "exactly 2 fish"), vLLM shows no tan/brown seafloor. Every reply breaks the 18 KB limit.
+- **Verdict:** four samples, no engine difference: each engine produced one broken and one nearly-correct scene, the
+  same failure rate. The spread is between seeds, not engines, so nothing here ranks the EXL3 quant against NVFP4.
+- Page with all four live: https://claude.ai/artifact/9KEoopw1XJzh7fyjiMxCXo (private); LAN http://10.0.0.133:8765/.
+  Data `data/fishscene/` (html, json, `check-round{1,2}.jsonl`).
