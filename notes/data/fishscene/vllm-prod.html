@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pelagic Drift — an SVG reef in two fish</title>
+<style>
+:root{
+  --display:"Didot","Bodoni MT","Playfair Display","Hoefler Text","Iowan Old Style",Palatino,Georgia,serif;
+  --ui:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#04121f}
+body{font-family:var(--ui);color:#e8f6ff;-webkit-font-smoothing:antialiased}
+#stage{position:fixed;inset:0;width:100vw;height:100vh;display:block;cursor:crosshair}
+
+.hud{position:fixed;left:clamp(18px,3vw,44px);bottom:clamp(16px,3.2vh,40px);z-index:4;
+  pointer-events:none;max-width:min(52vw,380px)}
+.eyebrow{display:flex;align-items:center;gap:9px;font-size:10px;letter-spacing:.3em;
+  text-transform:uppercase;color:rgba(206,234,252,.62)}
+.dot{width:6px;height:6px;border-radius:50%;background:#7fe9ff;box-shadow:0 0 12px #7fe9ff;
+  animation:pulse 2.6s ease-in-out infinite}
+.title{font-family:var(--display);font-style:italic;font-weight:400;line-height:.86;
+  font-size:clamp(32px,4.8vw,60px);letter-spacing:-.01em;margin:10px 0 14px;color:#f4fcff;
+  text-shadow:0 6px 34px rgba(3,20,40,.85)}
+.title span{display:block;font-size:.38em;font-style:normal;letter-spacing:.34em;
+  font-family:var(--ui);opacity:.5;margin-top:10px}
+.rows{display:grid;gap:6px;border-left:1px solid rgba(150,214,244,.28);padding-left:12px}
+.row{display:grid;grid-template-columns:1fr 74px 62px;align-items:center;gap:10px;
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(214,238,255,.68)}
+.row b{text-align:right;font-weight:400;font-variant-numeric:tabular-nums;color:#d7f3ff}
+.bar{display:block;height:2px;background:rgba(178,225,250,.16);overflow:hidden}
+.bar i{display:block;height:100%;width:10%;background:linear-gradient(90deg,#39c7ea,#baf6ff);
+  transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.hint{margin-top:14px;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(190,224,246,.4)}
+
+.kelp{animation:sway 7s ease-in-out infinite}
+.ray{animation:glow 11s ease-in-out infinite}
+.caustic{animation:glow 8s ease-in-out infinite}
+.plank{animation-name:rise;animation-timing-function:linear;animation-iteration-count:infinite}
+.wave{animation:surf 9s linear infinite}
+.bob{animation:bob 5.2s ease-in-out infinite}
+.tail{transform-box:fill-box;transform-origin:100% 50%;animation:wig .95s ease-in-out infinite}
+.fin{transform-box:fill-box;transform-origin:100% 0;animation:flap 1.7s ease-in-out infinite}
+.fA .tail{animation-duration:1.25s}.fB .tail{animation-duration:.42s}
+.fA .fin{animation-duration:1.9s}.fB .fin{animation-duration:.58s}
+.fB .bob{animation-duration:2.1s}
+
+@keyframes sway{0%,100%{transform:rotate(-3.2deg)}50%{transform:rotate(3.6deg)}}
+@keyframes glow{0%,100%{opacity:.10;transform:skewX(0deg)}50%{opacity:.32;transform:skewX(2.6deg)}}
+@keyframes rise{from{transform:translateY(0)}to{transform:translateY(-112vh)}}
+@keyframes surf{from{transform:translateX(0)}to{transform:translateX(-160px)}}
+@keyframes bob{0%,100%{transform:translateY(-6px)}50%{transform:translateY(7px)}}
+@keyframes wig{0%,100%{transform:rotate(-11deg)}50%{transform:rotate(11deg)}}
+@keyframes flap{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(13deg)}}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(.75)}50%{opacity:1;transform:scale(1.2)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Animated underwater scene: two fish swim past seaweed, rising bubbles and a sandy seafloor">
+<defs>
+  <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8fe6f7"/><stop offset=".16" stop-color="#49b4e0"/>
+    <stop offset=".44" stop-color="#1f77aa"/><stop offset=".72" stop-color="#0d4069"/>
+    <stop offset="1" stop-color="#031321"/>
+  </linearGradient>
+  <linearGradient id="gSurf" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#e8feff" stop-opacity=".45"/>
+    <stop offset="1" stop-color="#e8feff" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="gSand" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f3ddaf"/><stop offset=".3" stop-color="#cfa369"/>
+    <stop offset=".75" stop-color="#8c6440"/><stop offset="1" stop-color="#4b3220"/>
+  </linearGradient>
+  <linearGradient id="gRock" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8b8577"/><stop offset=".5" stop-color="#57544c"/>
+    <stop offset="1" stop-color="#262a2d"/>
+  </linearGradient>
+  <linearGradient id="gHill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#1d5f86" stop-opacity=".75"/>
+    <stop offset="1" stop-color="#0a3050" stop-opacity=".95"/>
+  </linearGradient>
+  <linearGradient id="gK1" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#9be29c"/><stop offset=".45" stop-color="#3f9e6b"/>
+    <stop offset="1" stop-color="#12503c"/>
+  </linearGradient>
+  <linearGradient id="gK2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#5ed0ad"/><stop offset=".5" stop-color="#1f7d63"/>
+    <stop offset="1" stop-color="#0b3d34"/>
+  </linearGradient>
+  <linearGradient id="gBodyA" x1=".1" y1="0" x2=".5" y2="1">
+    <stop offset="0" stop-color="#ffe3a1"/><stop offset=".34" stop-color="#ffa84f"/>
+    <stop offset=".72" stop-color="#f2683a"/><stop offset="1" stop-color="#c33b25"/>
+  </linearGradient>
+  <linearGradient id="gFinA" x1="0" y1="0" x2=".8" y2="1">
+    <stop offset="0" stop-color="#ffd27a"/><stop offset=".6" stop-color="#ff8f45"/>
+    <stop offset="1" stop-color="#d3452a" stop-opacity=".85"/>
+  </linearGradient>
+  <linearGradient id="gTailA" x1="1" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffb15c"/><stop offset="1" stop-color="#e4572e" stop-opacity=".62"/>
+  </linearGradient>
+  <linearGradient id="gBodyB" x1="0" y1="0" x2=".2" y2="1">
+    <stop offset="0" stop-color="#e6feff"/><stop offset=".28" stop-color="#6adcee"/>
+    <stop offset=".66" stop-color="#2f9fd0"/><stop offset="1" stop-color="#12507f"/>
+  </linearGradient>
+  <linearGradient id="gFinB" x1="0" y1="0" x2=".6" y2="1">
+    <stop offset="0" stop-color="#ccf5ff"/><stop offset="1" stop-color="#3aa6d6" stop-opacity=".8"/>
+  </linearGradient>
+  <linearGradient id="gTailB" x1="1" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#bff0ff"/><stop offset="1" stop-color="#2f9fd0" stop-opacity=".6"/>
+  </linearGradient>
+  <linearGradient id="gRayH" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#d8f6ff" stop-opacity="0"/>
+    <stop offset=".5" stop-color="#eafcff" stop-opacity=".55"/>
+    <stop offset="1" stop-color="#d8f6ff" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="gMask" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#fff" stop-opacity=".35"/>
+    <stop offset="1" stop-color="#000"/>
+  </linearGradient>
+  <radialGradient id="gBub" cx=".36" cy=".3" r=".76">
+    <stop offset="0" stop-color="#ffffff" stop-opacity=".55"/>
+    <stop offset=".45" stop-color="#cdefff" stop-opacity=".08"/>
+    <stop offset=".88" stop-color="#eaf9ff" stop-opacity=".16"/>
+    <stop offset="1" stop-color="#ffffff" stop-opacity=".5"/>
+  </radialGradient>
+  <radialGradient id="gVig" cx=".5" cy=".4" r=".78">
+    <stop offset=".55" stop-color="#02101d" stop-opacity="0"/>
+    <stop offset="1" stop-color="#020d18" stop-opacity=".72"/>
+  </radialGradient>
+  <mask id="mDepth"><rect id="mRect" x="0" y="0" fill="url(#gMask)"/></mask>
+  <clipPath id="clipBodyA"><path d="M84 4C74-38 40-68 0-66-42-64-70-34-74 0-70 34-42 64 0 66 40 68 74 42 84 4Z"/></clipPath>
+  <clipPath id="clipBodyB"><path d="M42 0C34-11 12-17-8-16-26-15-38-9-42 0-38 9-26 15-8 16 12 17 34 11 42 0Z"/></clipPath>
+</defs>
+
+<rect id="rWater" x="0" y="0" fill="url(#gWater)"/>
+<rect id="rSurf" x="0" y="0" fill="url(#gSurf)"/>
+<g mask="url(#mDepth)" id="rays"></g>
+<g id="surface"><clipPath id="clipSurf"><rect id="surfClip" x="0" y="0"/></clipPath>
+  <g clip-path="url(#clipSurf)"><path class="wave" id="w1" fill="none" stroke="#f0feff" stroke-opacity=".5" stroke-width="2.2"/>
+  <path class="wave" id="w2" fill="none" stroke="#c8f3ff" stroke-opacity=".3" stroke-width="1.4" style="animation-duration:14s;animation-direction:reverse"/></g></g>
+<g id="plank"></g>
+<path id="far" fill="url(#gHill)" opacity=".55"/>
+<path id="sand" fill="url(#gSand)"/>
+<path id="sandEdge" fill="none" stroke="#ffeec6" stroke-opacity=".38" stroke-width="1.6"/>
+<g id="ripples" fill="none" stroke="#7d5a38" stroke-opacity=".35" stroke-width="1.4"></g>
+<g id="caustics"></g>
+<g id="midRock"></g>
+<g id="kelpBack"></g>
+
+<!-- FISH A : deep, round, slow, warm -->
+<g id="fishA" class="fA">
+ <g class="bob">
+  <g>
+   <path class="tail" d="M-56 0L-132-46Q-112 0-132 46Z" fill="url(#gTailA)"/>
+   <path d="M-46-36C-38-82-2-122 42-68 8-76-20-60-46-36Z" fill="url(#gFinA)" opacity=".95" stroke="#c2501e" stroke-opacity=".4"/>
+   <path d="M-44 38C-36 78-6 94 18 60-4 68-24 58-44 38Z" fill="url(#gFinA)" opacity=".9"/>
+   <path id="bodyA" d="M84 4C74-38 40-68 0-66-42-64-70-34-74 0-70 34-42 64 0 66 40 68 74 42 84 4Z" fill="url(#gBodyA)" stroke="rgba(6,24,40,.3)" stroke-width="1.4"/>
+   <g clip-path="url(#clipBodyA)">
+     <path d="M-30-72C-18-26-18 26-30 72L-6 72C6 26 6-26-6-72Z" fill="#fff2c4" opacity=".26"/>
+     <path d="M22-72C34-26 34 26 22 72L46 72C58 26 58-26 46-72Z" fill="#8f2d18" opacity=".2"/>
+   </g>
+   <path d="M34-44C22-18 22 18 34 46" fill="none" stroke="#a83b18" stroke-opacity=".38" stroke-width="2.4"/>
+   <g transform="rotate(-18 28 8)"><path class="fin" d="M28 8L2 44 46 30Z" fill="url(#gFinA)" opacity=".9"/></g>
+   <path d="M72 15C77 21 83 17 85 8" fill="none" stroke="#7c2b12" stroke-opacity=".8" stroke-width="2.8" stroke-linecap="round"/>
+   <circle cx="54" cy="-20" r="11.5" fill="#fff8ec" stroke="#7a3212" stroke-width="1.8"/>
+   <circle cx="56.5" cy="-19" r="5.6" fill="#0e1a26"/>
+   <circle cx="51" cy="-24" r="2.3" fill="#fff"/>
+  </g>
+ </g>
+</g>
+
+<!-- FISH B : slender, small, quick, cold -->
+<g id="fishB" class="fB">
+ <g class="bob">
+  <g transform="scale(-1,1)">
+   <path class="tail" d="M-38 0L-72-21-62 0-72 21Z" fill="url(#gTailB)"/>
+   <path d="M-10-15L4-33 20-12Z" fill="url(#gFinB)"/>
+   <path d="M-8 15L2 30 16 13Z" fill="url(#gFinB)" opacity=".8"/>
+   <path id="bodyB" d="M42 0C34-11 12-17-8-16-26-15-38-9-42 0-38 9-26 15-8 16 12 17 34 11 42 0Z" fill="url(#gBodyB)" stroke="rgba(6,24,40,.3)" stroke-width="1.2"/>
+   <g clip-path="url(#clipBodyB)">
+     <path d="M-24 11C-8 17 16 14 36 4 20 13-6 15-24 11Z" fill="#f4feff" opacity=".5"/>
+     <path d="M-2-16C2-6 2 6-2 16" fill="none" stroke="#0b4d75" stroke-opacity=".35" stroke-width="2"/>
+   </g>
+   <g transform="rotate(14 14 4)"><path class="fin" d="M14 4L-4 24 30 16Z" fill="url(#gFinB)" opacity=".9"/></g>
+   <path d="M36 4Q40 8 44 2" fill="none" stroke="#0c3b5c" stroke-opacity=".85" stroke-width="1.8" stroke-linecap="round"/>
+   <circle cx="26" cy="-4" r="5.6" fill="#f4feff" stroke="#0d4670" stroke-width="1.1"/>
+   <circle cx="27.6" cy="-3.4" r="2.7" fill="#0d1826"/>
+   <circle cx="24.4" cy="-6" r="1.3" fill="#fff"/>
+  </g>
+ </g>
+</g>
+
+<g id="kelpFront"></g>
+<g id="frontRock"></g>
+<g id="bubbles"></g>
+<rect id="rVig" x="0" y="0" fill="url(#gVig)" pointer-events="none"/>
+</svg>
+
+<div class="hud" aria-hidden="true">
+  <div class="eyebrow"><span class="dot"></span>svg primitives · no assets · exactly two fish</div>
+  <h1 class="title">Pelagic<span>Drift</span></h1>
+  <div class="rows">
+    <div class="row"><span>Pterapis lata</span><span class="bar"><i id="b1"></i></span><b id="v1">30 px/s</b></div>
+    <div class="row"><span>Caesorhinus velox</span><span class="bar"><i id="b2"></i></span><b id="v2">88 px/s</b></div>
+    <div class="row"><span>Bubbles aloft</span><span class="bar"><i id="b3" style="width:100%"></i></span><b id="v3">22</b></div>
+    <div class="row"><span>Depth at floor</span><span class="bar"><i id="b4"></i></span><b id="v4">— m</b></div>
+  </div>
+  <p class="hint">click the water to free a bubble · hover a fish to startle it</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg", D=document;
+function $(i){return D.getElementById(i)}
+function mk(t,a,p){var e=D.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function rnd(a,b){return a+Math.random()*(b-a)}
+var W=0,H=0,F=0,frame=0,last=0,rr=0;
+
+var plank=$("plank"),raysG=$("rays"),bubG=$("bubbles"),
+    kBack=$("kelpBack"),kFront=$("kelpFront"),ripG=$("ripples"),cauG=$("caustics"),
+    midR=$("midRock"),frontR=$("frontRock");
+
+/* ---------- rays ---------- */
+var rayDefs=[[.05,150,26],[.23,230,-20],[.42,110,32],[.6,200,-26],[.79,140,14],[.94,180,-12]];
+var rays=rayDefs.map(function(r,i){
+  var g=mk("g",{"class":"ray",fill:"url(#gRayH)"},raysG);
+  g.style.animationDuration=(9+i*1.7)+"s"; g.style.animationDelay=(-i*2.3)+"s";
+  return {g:g,d:r};
+});
+
+/* ---------- plankton ---------- */
+for(var i=0;i<34;i++){
+  var p=mk("circle",{"class":"plank",r:rnd(.7,2.3).toFixed(2),
+    fill:i%3?"#dff6ff":"#9fe6ff","fill-opacity":rnd(.12,.4).toFixed(2)},plank);
+  p.style.animationDuration=rnd(24,68).toFixed(1)+"s";
+  p.style.animationDelay=(-rnd(0,60)).toFixed(1)+"s";
+  plankPts.push({e:p});
+}
+
+/* ---------- bubbles ---------- */
+function src(){var r=Math.random(),acc=0;
+  for(var j=0;j<kelpDefs.length;j++){acc+=.34/kelpDefs.length;if(r<acc)return kelpDefs[j].fx*W+rnd(-26,26)}
+  return rnd(20,Math.max(60,W-20));}
+var BUB=22, bubbles=[], bubOrder=0;
+for(i=0;i<BUB;i++){
+  var g=mk("g",{},bubG), r=rnd(2.4,9);
+  mk("circle",{r:r.toFixed(2),fill:"url(#gBub)",stroke:"rgba(228,248,255,.5)","stroke-width":.9},g);
+  mk("circle",{cx:(-r*.33).toFixed(2),cy:(-r*.34).toFixed(2),r:(r*.26).toFixed(2),fill:"#fff","fill-opacity":.72},g);
+  bubbles.push({g:g,r:r,x:0,y:0,v:0,ph:rnd(0,6),wf:rnd(.7,1.9),wa:rnd(4,13)});
+}
+function respawn(b){b.x=src();b.y=F+rnd(2,30);b.ph=rnd(0,6);
+  b.v=(13+150/b.r)*rnd(.85,1.15);b.g.setAttribute("opacity",1);}
+
+/* ---------- kelp ---------- */
+var kelpDefs=[
+ {fx:.07,h:.30,w:9, amp:26,g:"gK1",dur:7.6},
+ {fx:.14,h:.19,w:6, amp:20,g:"gK2",dur:5.5},
+ {fx:.37,h:.14,w:5, amp:16,g:"gK2",dur:4.7},
+ {fx:.64,h:.24,w:7, amp:24,g:"gK1",dur:6.4},
+ {fx:.78,h:.36,w:10,amp:30,g:"gK2",dur:8.8},
+ {fx:.93,h:.21,w:6, amp:22,g:"gK1",dur:6.9}];
+var kelps=kelpDefs.map(function(c,i){
+  var host=i===4?kFront:kBack;
+  var g=mk("g",{"class":"kelp"},host);
+  g.style.animationDuration=c.dur+"s"; g.style.animationDelay=(-i*1.7)+"s";
+  var stem=mk("path",{fill:"url(#"+c.g+")",opacity:.94},g);
+  var strand=mk("path",{fill:"url(#"+c.g+")",opacity:.5},g);
+  var bulbs=mk("g",{fill:"#2e6b4a"},g), leaves=mk("g",{fill:"url(#"+c.g+")",opacity:.85},g);
+  return {c:c,g:g,stem:stem,strand:strand,bulbs:bulbs,leaves:leaves};
+});
+function strandD(x,b,h,amp,wd,ph){
+  var L=[],R=[],N=9,t,cx,cy,w;
+  for(var i=0;i<=N;i++){t=i/N;cy=b-h*t;cx=x+Math.sin(ph+t*3.5)*amp*(.16+t);w=wd*(1-.86*t);
+    L.push(cx.toFixed(1)+" "+cy.toFixed(1));R.push((cx+w).toFixed(1)+" "+cy.toFixed(1));}
+  return "M"+L.join("L")+"L"+R.reverse().join("L")+"Z";
+}
+
+/* ---------- rocks / pebbles ---------- */
+function rock(host,x,w,h,op){
+  return mk("path",{fill:"url(#gRock)",opacity:op||1},host);
+}
+var midRocks=[{f:.31,w:76,h:46,e:rock(midR,0,0,0,.96)},{f:.66,w:52,h:31,e:rock(midR,0,0,0,.9)}];
+var frontRocks=[{f:.0,w:150,h:74,e:rock(frontR,0,0,0,1)},{f:.97,w:190,h:96,e:rock(frontR,0,0,0,1)}];
+var pebbles=[];for(i=0;i<7;i++)pebbles.push(mk("ellipse",{fill:"#6b4d33","fill-opacity":.55},midR));
+var ripples=[];for(i=0;i<4;i++)ripples.push(mk("path",{},ripG));
+var caustics=[];for(i=0;i<5;i++){var c=mk("ellipse",{"class":"caustic",fill:"#cff4ff"},cauG);
+  c.style.animationDuration=(6+i*1.9)+"s";c.style.animationDelay=(-i*1.6)+"s";caustics.push(c);}
+
+/* ---------- layout ---------- */
+function top(x){return F+Math.sin(x/W*6.2+.6)*H*.016+Math.sin(x/W*2.1)*9}
+function boulder(x,w,h){var y=top(x)+6;
+  return "M"+(x-w)+" "+y+"C"+(x-w*.92)+" "+(y-h*.62)+" "+(x-w*.42)+" "+(y-h)+" "+(x-w*.04)+" "+(y-h)+
+         "C"+(x+w*.44)+" "+(y-h*.96)+" "+(x+w*.86)+" "+(y-h*.5)+" "+(x+w)+" "+y+"Z";}
+function waveD(y,amp){var d="M-240 "+y.toFixed(1);for(var x=-240;x<W+240;x+=160)
+  d+="q40 "+(-amp*2)+" 80 0q40 "+(amp*2)+" 80 0";return d;}
+
+function build(){
+  W=innerWidth;H=innerHeight;F=H-Math.max(64,H*.125);
+  $("rWater").setAttribute("width",W);$("rWater").setAttribute("height",H);
+  $("rVig").setAttribute("width",W);$("rVig").setAttribute("height",H);
+  $("mRect").setAttribute("width",W);$("mRect").setAttribute("height",H);
+  $("surfClip").setAttribute("width",W);$("surfClip").setAttribute("height",Math.max(50,H*.07));
+  $("rSurf").setAttribute("width",W);$("rSurf").setAttribute("height",Math.max(60,H*.12));
+  $("w1").setAttribute("d",waveD(H*.030,6));$("w2").setAttribute("d",waveD(H*.048,4));
+
+  rays.forEach(function(r){var cx=r.d[0]*W,w=r.d[1],sk=r.d[2]*3.2,y=H*.95;
+    r.g.style.transformOrigin=cx+"px 0px";
+    r.g.innerHTML='<path d="M'+cx+' -20L'+(cx+w)+' -20L'+(cx+w*1.7+sk)+' '+y+'L'+(cx+w*.7+sk)+' '+y+'Z"/>';});
+
+  var d="M0 "+(F+40),x;
+  for(x=0;x<=W;x+=110)d+="L"+x+" "+(F-26-Math.sin(x/W*3.4+1.1)*H*.028-Math.cos(x/W*1.4)*14).toFixed(1);
+  $("far").setAttribute("d",d+"L"+W+" "+(F+40)+"Z");
+
+  d="M0 "+(H+2)+"L0 "+top(0).toFixed(1);
+  for(x=0;x<=W;x+=48)d+="L"+x+" "+top(x).toFixed(1);
+  $("sand").setAttribute("d",d+"L"+W+" "+(H+2)+"Z");
+  $("sandEdge").setAttribute("d",d.replace("M0 "+(H+2)+"L0","M0"));
+
+  caustics.forEach(function(c,i){var cx=W*(.13+i*.19);
+    c.setAttribute("cx",cx.toFixed(0));c.setAttribute("cy",(top(cx)+H*.045).toFixed(0));
+    c.setAttribute("rx",(46+i*9).toFixed(0));c.setAttribute("ry",(7+i*2).toFixed(0));});
+  ripples.forEach(function(p,i){var cx=W*(.1+i*.24)+30,y=top(cx)+16,w=52+i*12;
+    p.setAttribute("d","M"+cx.toFixed(0)+" "+y.toFixed(0)+"q"+(w/2)+" -8 "+w+" 0");});
+  pebbles.forEach(function(p,i){var cx=W*(.08+i*.135),y=top(cx)+rnd(10,26);
+    p.setAttribute("cx",cx.toFixed(0));p.setAttribute("cy",y.toFixed(0));
+    p.setAttribute("rx",(5+i%3*4).toFixed(0));p.setAttribute("ry",(2.4+i%3*1.4).toFixed(0));});
+  midRocks.forEach(function(r){r.e.setAttribute("d",boulder(r.f*W,r.w,r.h))});
+  frontRocks.forEach(function(r){r.e.setAttribute("d",boulder(r.f*W,r.w,r.h))});
+
+  kelps.forEach(function(k){
+    var x=k.c.f*W,b=top(x)+5,h=H*k.c.h;
+    k.g.style.transformOrigin=x+"px "+b+"px";
+    k.stem.setAttribute("d",strandD(x,b,h,k.c.amp,k.c.w,0));
+    k.strand.setAttribute("d",strandD(x-k.c.w*.7,b,h*.82,k.c.amp*.7,k.c.w*.55,1.9));
+    k.bulbs.innerHTML="";k.leaves.innerHTML="";
+    mk("ellipse",{cx:x.toFixed(1),cy:(b-3).toFixed(1),rx:(k.c.w*1.25).toFixed(1),
+      ry:(k.c.w*.6).toFixed(1),fill:"#20584a"},k.bulbs);
+    for(var j=1;j<=4;j++){var t=j/5,cy=b-h*t,cx=x+Math.sin(t*3.5)*k.c.amp*(.16+t);
+      mk("ellipse",{cx:cx.toFixed(1),cy:cy.toFixed(1),rx:(k.c.w*2.6).toFixed(1),ry:(k.c.w*.55).toFixed(1),
+        transform:"rotate("+(j%2?32:-36)+" "+cx.toFixed(1)+" "+cy.toFixed(1)+")"},k.leaves);}
+  });
+
+  plankG=plank.children;for(var q=0;q<plankG.length;q++){plankG[q].setAttribute("cx",rnd(0,W));plankGG(plankG[q]);}
+  bubbles.forEach(function(b){if(!b.y)respawn(b);});
+  fish[0].by=H*.40;fish[1].by=H*.22;
+  fish.forEach(function(f){if(f.x===null)f.x=rnd(0,W)});
+}
+function plankGy(e){e.setAttribute("cy",rnd(H*.05,H*.9).toFixed(0))}
+function plankG0(e){e.setAttribute("cy",rnd(H*.05,H*.9).toFixed(0))}
+var plankG=plank.children;
+function plankGG(e){plankGy(e)}
+
+/* ---------- fish ---------- */
+var fish=[
+ {el:$("fishA"),x:null,by:0,dir:1,spd:30,amp:15,bf:.42,m:250,dart:0,hi:0,
+  bar:$("b1"),val:$("v1"),max:120},
+ {el:$("fishB"),x:null,by:0,dir:-1,spd:88,amp:9,bf:1.05,m:110,dart:0,hi:0,
+  bar:$("b2"),val:$("v2"),max:160}
+];
+fish.forEach(function(f){
+  f.el.addEventListener("pointerenter",function(){f.dart=Math.max(f.dart,1.15)});
+});
+
+/* ---------- loop ---------- */
+function tick(ts){
+  var t=ts/1000,dt=Math.min(.05,(last?ts-last:16)/1000);last=ts;frame++;
+  for(var i=0;i<fish.length;i++){var f=fish[i];
+    f.dart-=f.dart*Math.min(1,dt*1.5);
+    var v=f.spd*(1+f.dart);
+    f.x+=f.dir*v*dt;
+    if(f.dir>0&&f.x>W+f.m)f.x=-f.m; else if(f.dir<0&&f.x<-f.m)f.x=W+f.m;
+    var y=f.by+Math.sin(t*f.bf)*f.amp;
+    f.el.setAttribute("transform","translate("+f.x.toFixed(1)+" "+y.toFixed(1)+") rotate("+
+      (Math.cos(t*f.bf)*3.4*f.dir).toFixed(2)+")");
+    if(frame%9===0){f.val.textContent=Math.round(v)+" px/s";
+      f.bar.style.width=Math.min(100,v/f.max*100).toFixed(0)+"%";}
+  }
+  for(i=0;i<bubbles.length;i++){var b=bubbles[i];
+    b.y-=b.v*dt;b.ph+=dt;
+    if(b.y<-14)respawn(b);
+    b.g.setAttribute("transform","translate("+(b.x+Math.sin(b.ph*b.wf)*b.wa).toFixed(1)+" "+b.y.toFixed(1)+")");
+    b.g.setAttribute("opacity",b.y<44?Math.max(0,b.y/44).toFixed(2):1);
+  }
+  if(frame%30===0){$("v4").textContent=Math.round(F/28)+" m";$("b4").style.width=Math.min(100,F/28/1.2).toFixed(0)+"%";}
+  requestAnimationFrame(tick);
+}
+
+$("stage").addEventListener("pointerdown",function(e){
+  for(var k=0;k<7;k++){var b=bubbles[(bubOrder++)%bubbles.length];
+    b.x=e.clientX+rnd(-14,14);b.y=e.clientY+rnd(-12,12);b.v=rnd(38,82);b.ph=rnd(0,6);
+    b.g.setAttribute("opacity",1);}
+});
+addEventListener("resize",build,{passive:true});
+build();requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

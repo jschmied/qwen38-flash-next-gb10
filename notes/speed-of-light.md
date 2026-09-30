@@ -2641,3 +2641,26 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
 - **Prefill is TensorFold's weak side:** the same probe's TTFT is 9.27 s at 8k and 36.3 s at 30k tokens, against 2.7 s
   and 9.4–9.9 s for vLLM prod in the same probe (`evalgq-base0/1`, 2.64 / 2.71 s at 8k), 3.4–3.9× slower. On agent loops that is partly hidden by 4-way concurrency.
 Data `data/swe-tf/` (harness reports, result JSON).
+
+### 5ak. The underwater-scene prompt on both engines (round 1, seed 1)
+
+User: "after the run, let both models do: [the scene prompt]", then "is 32k output enough for this?" (no: default
+thinking is xhigh, so the budget was raised to 100k output, 128k context). `tools/fishscene/`: `prompt.txt`, `gen.py`
+(one request, seed 1, the model's default sampling and thinking, max_tokens 100000), `check.py` (mechanical checks of
+the hard constraints). Servers: TensorFold + EXL3 3.05 bpw `--context 131072 --max-tokens 100000 --parallel 1`; vLLM
+today's prod config at `--max-model-len 131072`. One request each, nothing else on the box.
+
+| | output tokens (thinking) | s | tok/s | HTML bytes | < 18 KB | other checks |
+|---|---|---|---|---|---|---|
+| TensorFold + EXL3 3.05 bpw | 26,234 (17,987) | 374.7 | 70.0 | 19,910 | **no** | all pass |
+| vLLM, our checkpoint | 23,980 (14,769) | 523.0 | 45.9 | 21,507 | **no** | all pass |
+
+- Both finished (`stop`), start with `<!DOCTYPE html>`, no fences, no `<link>`/`<script src>`/fetch/URLs, no
+  pictographs, both use a `linearGradient`. **Both break the one numeric constraint, the 18 KB limit** (18,432 bytes):
+  TensorFold by 8 %, vLLM by 17 %.
+- Static SVG counts differ (TensorFold 5 ellipses, 4 circles, 15 paths; vLLM 0 ellipses, 6 circles, 25 paths); bubbles
+  may be created in script, so the counts say nothing about the required 5 bubbles. Fish count, eyes, wrap-around and
+  motion need a look, not a regex: side by side at http://10.0.0.133:8765/ (LAN) and on the artifact page.
+- Speed: single request, one sample each, so a sanity figure, not a benchmark. TensorFold's 70 tok/s at c=1 (eager,
+  EXL3 3-bit experts, its own drafter) against vLLM's 46 tok/s is in line with its c=1 lead in §5aj's prompts.
+- Round 2 (seed 2, user: "do both scenes once more") runs in `mixswe2.sh.txt`; data `data/fishscene/`.
