@@ -2596,6 +2596,7 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
 | | Python /30 | Java/JS /28 | total /58 | gen s, Python / Java/JS |
 |---|---|---|---|---|
 | TensorFold + EXL3 3.05 bpw (run 1) | 27 | 25 | **52** | 2,152 / 3,357 |
+| TensorFold + EXL3 3.05 bpw (run 2, a near-replay, see below) | 27 | 25 | **52** | 2,307 / 3,346 |
 | vLLM today (prod config, NVFP4 `mtpfp4`, 65,536 context) | 27 | 24 | **51** | 2,619 / 3,219 |
 | §5u vLLM prod (FP8 GDN), runs 1 / 2 | 24 / 28 | 24 / 24 | 48 / 52 | 2,345, 2,999 / 3,505, 3,323 |
 | §5u NVFP4 GDN | 28 / 27 | 23 / 23 | 51 / 50 | 2,363, 2,725 / 3,929, 3,499 |
@@ -2618,4 +2619,13 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
   3,357 s); total 5,509 vs 5,838 s, TensorFold −6 %. Both at 4 workers, so this is c≈4 agent throughput, where
   TensorFold runs eager and vLLM with graphs.
 - Draft acceptance over the run: 65–66 % (TensorFold's /health counters).
+- **TensorFold run 2 is not an independent sample.** Same 52 resolved, and 48 of 58 patches byte-identical to run 1
+  (Python 26/30, Java/JS 22/28); the first trajectory checked (astropy-14539) matches run 1 message for message up to
+  message 26 of 31. Cause: without a `seed` in the request TensorFold seeds each reply from the prompt
+  (`exact_sampling.seed_for`: sha256 of the prompt tokens), so the same conversation samples the same reply; runs part
+  only where a tool output differs (timings, container state). mini-swe-agent sends no seed. vLLM without a seed draws
+  a fresh one per request, so its two §5u runs are independent and TensorFold's two here are not: **TensorFold is one
+  run on this slice, not two**, and its run-to-run spread is not measured. Fixed for the hard slice: `tfhard2` layers
+  `tools/swe/fn-tfhard2.yaml` (`seed: 2` on every request) through `run2.sh`'s per-arm config; `tfhard1` stays
+  prompt-seeded like run 1.
 Data `data/swe-tf/` (harness reports, result JSON).

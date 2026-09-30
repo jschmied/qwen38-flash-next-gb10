@@ -1,0 +1,5 @@
+# TensorFold seeds each request from its prompt when no seed is sent (seed_for), so a second run replays the first.
+# A fixed per-run seed makes tfhard2 an independent sample (2026-09-30). Layered after fn.yaml by run2.sh.
+model:
+  model_kwargs:
+    seed: 2

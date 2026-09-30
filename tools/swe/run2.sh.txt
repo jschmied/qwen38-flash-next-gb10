@@ -13,9 +13,10 @@ case $SL in
   pym)    SET=/root/set-python-mixed.txt; SUB=verified; DS=princeton-nlp/SWE-bench_Verified;;
   jsm)    SET=/root/set-javajs-mixed.txt; SUB=swe-bench/SWE-bench_Multilingual; DS=swe-bench/SWE-bench_Multilingual;;
 esac
+EXTRA=(); [ -f $W/fn-$ARM.yaml ] && EXTRA=(-c $W/fn-$ARM.yaml)  # per-arm config layer (seed), 2026-09-30
 RE="^($(paste -sd"|" $SET))$"; t0=$(date +%s)
 timeout 43200 $PY -m minisweagent.run.benchmarks.swebench --subset "$SUB" --split test --filter "$RE" \
-  --model openai/flashnext -c $BASE -c $W/fn.yaml -w 4 -o $OUT/gen --redo-existing > $OUT/gen.log 2>&1
+  --model openai/flashnext -c $BASE -c $W/fn.yaml "${EXTRA[@]}" -w 4 -o $OUT/gen --redo-existing > $OUT/gen.log 2>&1
 t1=$(date +%s)
 timeout 14400 $PY -m swebench.harness.run_evaluation --dataset_name $DS --split test \
   --predictions_path $OUT/gen/preds.json --run_id FN_${ARM}_${SL}_$t0 --max_workers 4 --cache_level env > $OUT/eval.log 2>&1
