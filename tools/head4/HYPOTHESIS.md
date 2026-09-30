@@ -23,3 +23,4 @@ Per the quality rule this is a screen, not a clearance: a pass makes it a candid
 `head4q2` repeats the full screen (2 starts per arm) on the clone venv now carrying the #58863 head (greedy text
 identical to before, measured). Same hypotheses.
 `head4q2` was interrupted too (2026-09-30 07:47, user: "interrupt, do tensorfold changes now") before any start completed; `head4q3` is the same screen.
+`head4q3` was interrupted (2026-09-30 08:22, user: "do all now", TensorFold PR); `head4q4` repeats the screen from scratch.
