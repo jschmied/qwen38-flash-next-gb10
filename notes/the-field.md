@@ -2357,6 +2357,11 @@ fp8 patch), bf16 SSM state, `FULL_DECODE_ONLY` with `mode 0` (no torch.compile),
 determinism envs available but unset.
 
 Missing there, measured here on one GB10:
+- **Landed in TensorFold 0.6.0 (2026-09-30 21:31)**: our commit `f338e0de` on main, credited in the release notes;
+  the maintainer kept `lm_head` on FP8G (stored bytes, 0.68 vs 1.27 GB a forward) and runs block-FP8 prompts on FP8G
+  by default (bf16 activations; FP8 prompts behind `--prefill-fp8`). Their GB10 figure: out_proj 38–42 µs vs 71 µs
+  on the FP8 GEMM, a tenth of its error vs fp64. 0.6.0 also relicenses to Apache-2.0 and adds prompts inside decode
+  rounds. Our tf-venv is still 0.5.0 + our branch; a 0.6.0 re-measure is a TODO.
 - FP8 dense (128×128 blocks, our `mtpfp4`): +39 % single stream. They have an FP8-dense lane (per-channel, built
   from RadixArk) marked "not yet measured on GPU".
 - MTP K=5 + probabilistic drafting (K3 16.1–16.3 → K5 14.8–14.9 ms/tok, kcost2); NVFP4 draft-head slice −3.4 % c=1.

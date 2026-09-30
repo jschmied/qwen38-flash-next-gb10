@@ -1507,6 +1507,13 @@ wait on one ~100 GB pull, and they share one serve.
     count. <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/pull/72#discussion_r4144309720>
   - Found on the way: `/opt/llm/serve-flashnext.sh` still exports `VLLM_QSA_DET_TOPK=${FN_DET_TOPK:-1}` (det-226 was
     fixed only in serve-fnmain.sh), so `FN_DET_TOPK=0` is not a stock arm there. Prod default unaffected; fix proposed.
+- **2026-09-30 21:33 — TensorFold#126 LANDED in 0.6.0** (closed as landed, not merged via the button): our commit
+  `f338e0de` (authored by us) is on main under the release commit `0dcc1ff5`; release notes credit #126 and @jschmied.
+  @ashhart's two changes on top: the block-FP8 `lm_head` stays on FP8G with its stored bytes (0.68 GB read a forward
+  instead of a 1.27 GB bf16 copy), and since 0.6.0 prompts take bf16 activations by default, so block-FP8 prompts run
+  FP8G too (our FP8 prompt GEMM behind `--prefill-fp8`). Their GB10 numbers: out_proj 38–42 µs vs 71 µs on the FP8
+  GEMM at 1–16 rows, error vs fp64 0.002 vs 0.026. <https://github.com/ashhart/TensorFold/pull/126> (@ashhart's comment 2026-09-30T21:32:56Z).
+  No reply posted.
 - **2026-09-30 — vllm#57946 follow-up (user's go: "push and short reply").** @hclsys ran the file with
   `VLLM_MOE_SKIP_PADDING=0`: 27 failed, because the sentinel test fed `-1` with the guard off (illegal memory access);
   our 48 had come from `-k`. Pushed `a2c8e66411` (their `skipif` + line wraps): 51 passed on / 48 passed 3 skipped off,
