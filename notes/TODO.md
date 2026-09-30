@@ -175,6 +175,20 @@ similar-probability variant (§5v), `--long-prefill-token-threshold` (a stalled 
    - Moving prod's whole base to current main would bring all of these, but it means porting every overlay (RecoverSSM,
      fastload, HC fusion, F4, the §5ag candidates); separate job, not mixed with these A/Bs. See the-field "Upstream
      HC fusion work vs ours".
+11. **Levers from MiaAI's dual-Spark kit (the-field 2026-09-30; user: "put this in todo").** They lack most of ours
+    (FP8 dense, K=5 + probabilistic drafting, NVFP4 draft-head slice, RecoverSSM + F4, prefix-match-unit 64, HC fusion,
+    Triton prefill MoE + GDNNQ, FULL_AND_PIECEWISE with compile); two of theirs are worth checking here:
+    - **`index_share_for_mtp_iteration`** (the drafter reuses the target's QSA top-k instead of running
+      `persistent_topk` on every draft step). Their claim: code decode +6 % at 1 stream, +27 % at 8, prose within noise
+      (TP2+EP, MTP 3). Un-park job 90 (`ishare2`): A/B on the clone venv, prod config K=5, KV 4 GiB, 2 starts per arm,
+      launcher knob `FN_SPEC_SHARE=true`. Hypothesis first: code c=1 −2…−6 % ms/tok, c=4 larger; acceptance may drop
+      (the drafter sees the target's selection, not its own). Check with the det overlay (`VLLM_QSA_DET_TOPK`), since the
+      drafter's top-k was one of the listed nondeterminism sources (mtp-instability survey item 3).
+    - **fp8 KV** is already item 2 above. Their data point: no reasoning or needle regression (12/12 both) with their QSA
+      fp8 patch (`files/patch_qsa_fp8_kv.py`), ×1.70 cache per GiB. Our gate stays logprob divergence, not needles.
+    - **Offer them ours** (needs the user's go for the post): FP8 dense measured +39 % single stream here vs their
+      unmeasured per-channel FP8-dense lane, K=5 + probabilistic drafting, RecoverSSM (#58863), prefix-match-unit 64.
+      TP2+EP compatibility of RecoverSSM on the Qwen GDN path is untested on our side.
 
 ## ~~FULL_DECODE_ONLY decode graphs~~ — MEASURED 2026-09-24 (finding 237): decode null, agent turns 3–4 % slower; keep PIECEWISE. `be7a84fe4` pushed to #58439.
 
@@ -266,7 +280,7 @@ any post, or drop them.
 ## Parked — each needs a user decision
 
 - **Enable the prod unit at boot.**
-- **Job 90** (`ishare2`), in `~/qwen-night/jobs/parked/`.
+- **Job 90** (`ishare2`), in `~/qwen-night/jobs/parked/`. → now TODO item 11 (MiaAI's dual kit claims +6…27 %).
 - **Devanagari U+093E → U+094B.** After det-212..219 every cheap hypothesis is dead (GDN kernel, MTP, FlashInfer,
   tile-union).
   - On the 12-prompt probe fnmain3 is 8/12 vs fnmain2 10/12 (per prompt Fisher p = 0.64; the old 0.318 counted
