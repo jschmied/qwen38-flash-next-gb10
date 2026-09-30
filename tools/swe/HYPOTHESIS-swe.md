@@ -44,3 +44,16 @@ logprobs, TensorFold#108 open), so the screen is `evalprobe.py` (GSM8K 1319 + Hu
 c=16 against `--parallel 4`), compared by McNemar with evalgq-base0/1 (vLLM prod, 95.91 / 96.21 % GSM8K, 95.12 / 95.12 %
 HumanEval). H: within those starts' spread; a drop of more than 1.5 pp GSM8K with McNemar p < 0.05 against both base
 starts is a real loss at 3.05 bpw.
+
+## Hard slice (2026-09-30, written before the run)
+
+User: "replace 10 easy with 5 harder and 5 hardest" (x86 disk space). Verified has only three ">4 hours" instances, so
+the 10 are those three plus seven "1-4 hours" (random, seed 1): `set-hard.txt`. Dropped: ten "<15 min fix" instances
+every run so far solved (tfexl3r1, vllmnow1, tfexl3r2 Python), `set-python-dropped.txt`; the mixed Python slice is the
+20 kept + these 10 (`set-python-mixed.txt`), scored from the existing runs plus the hard runs. Two runs per engine,
+same servers, client and sampling as §5aj.
+
+- Hard 10, per run: **2–6 resolved** (20–60 %); fewer than 2 on both engines means the slice is too hard to
+  separate them, more than 7 means the labels do not track difficulty for this model.
+- Engines: within ±2 per run, i.e. no separable gap at n=10 per run; a gap has to hold in both runs to count.
+- Gen time per run: 25–60 min at 4 workers; context overflows 0–3 per run (longer trajectories than the easy slice).

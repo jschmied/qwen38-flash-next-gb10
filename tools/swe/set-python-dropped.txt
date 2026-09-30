@@ -1,0 +1,10 @@
+sympy__sympy-19954
+django__django-13821
+django__django-17087
+django__django-14915
+sympy__sympy-15809
+django__django-14580
+django__django-11880
+sympy__sympy-17655
+django__django-15851
+sphinx-doc__sphinx-9230
