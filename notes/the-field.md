@@ -2366,3 +2366,27 @@ Missing there, measured here on one GB10:
 - FULL_AND_PIECEWISE with torch.compile (they run FULL_DECODE_ONLY, mode 0).
 They have and we don't: `index_share_for_mtp_iteration` (their claim: code +6 % S=1 … +27 % S=8; our job 90 `ishare2`
 is parked), fp8 KV by default (our §4l: a quality/speed trade), 262k context, per-language draft vocabularies, TP2+EP.
+
+## @vr8vr8: "Dynamic MTP depth: very good on paper, still good in practice" (X Article, 2026-09-30)
+
+Post <https://x.com/vr8vr8/status/2105233321202466862> links an X Article (read via the fxtwitter API; x.com itself
+needs a login). vLLM 0.30, one GB10, Qwen's MTP head, inspired by TensorFold's `--mtp-confidence`.
+- **Rule:** per-request draft depth from the recent plain per-position acceptance of the deepest drafted position
+  (not the conditional rate, which sits near 80 % at every depth); 48-step window, a decision every 24 steps, cap 6,
+  bars 60 / 45 / 25 / 15 %. **Verify trimmed** to the drafted depth at the start of each step, the scheduler counting
+  the cut drafts as rejections (the same mechanism as our runner-mode trim, §5ah, found independently); uniform
+  batches run at the deepest request's depth; the structured-output mask needed the same trim.
+- **Offline:** 843k steps recorded at depth 8 over six content types (thinking SVG scenes, a mixed ERP spec, a
+  strict-schema JSON catalog, TS/Python projects, a 7,000-word story), replayed exactly for fixed depths
+  (min(A, d)) and approximately for rules: +5.8 % over fixed depth 5 on paper.
+- **Live** (two Sparks, six runs per content, c=1): JSON +5 %, story +11 %, thinking and mixed −1…−3 % (more steps/s,
+  fewer tokens/step, cancelling). Causes named: token alignment after a depth change, step time under switching,
+  replay calibration ~8 % off.
+- **Facts worth reusing:** acceptance falls geometrically at a content-set rate (≈ 90 % per position code/JSON, 81 %
+  thinking, 58 % fiction) and is bimodal (fail early or run to the cap); windows under ~40 steps mostly measure noise
+  (R² 0.30 at 20 steps vs 0.43 at 48); their single-Spark step times: 56.8 / 63.9 / 69.5 / 73.4 / 84.3 ms at depth
+  3–7 (depth 7 +11 ms, a trap).
+- **Against ours:** the same replay-over-promises lesson (our corrected ceiling +8.4…10.3 %, §5ah) and the same verdict
+  (gains only at the extremes: our stop +17 % on hard-to-draft text, −6.7…−7.8 % ms/tok on code on the clone, null on
+  GDNNQ's text). Their window study supports per-step drafter confidence (ours, TensorFold's) over acceptance windows.
+  To borrow: a strict-schema JSON catalog and a long story in the stop A/B suite, and bad-move counts next to means.
