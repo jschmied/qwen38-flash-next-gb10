@@ -2661,6 +2661,7 @@ today's prod config at `--max-model-len 131072`. One request each, nothing else 
 - Static SVG counts differ (TensorFold 5 ellipses, 4 circles, 15 paths; vLLM 0 ellipses, 6 circles, 25 paths); bubbles
   may be created in script, so the counts say nothing about the required 5 bubbles. Fish count, eyes, wrap-around and
   motion need a look, not a regex: side by side at http://10.0.0.133:8765/ (LAN) and on the artifact page.
-- Speed: single request, one sample each, so a sanity figure, not a benchmark. TensorFold's 70 tok/s at c=1 (eager,
-  EXL3 3-bit experts, its own drafter) against vLLM's 46 tok/s is in line with its c=1 lead in §5aj's prompts.
+- Speed: single request, one sample each, so a sanity figure, not a benchmark. vLLM's 46 tok/s sits at its prose
+  rate (23 ms/tok at c=1, #58863 table) since most of the reply is thinking; TensorFold's 70 tok/s on the same kind of
+  text is unmeasured elsewhere, so this is one data point, not a ranking.
 - Round 2 (seed 2, user: "do both scenes once more") runs in `mixswe2.sh.txt`; data `data/fishscene/`.
