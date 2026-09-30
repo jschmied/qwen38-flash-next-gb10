@@ -1512,6 +1512,10 @@ wait on one ~100 GB pull, and they share one serve.
   our 48 had come from `-k`. Pushed `a2c8e66411` (their `skipif` + line wraps): 51 passed on / 48 passed 3 skipped off,
   whole file. PR body now says an unguarded `-1` is an out-of-bounds access. Draft `reply-57946-hclsys-2.md`.
   <https://github.com/vllm-project/vllm/pull/57946#issuecomment-5911371374>
+- **2026-09-30 — vllm#53960 (user's go: "post").** On the ptrace_scope finding: the `pidfd_getfd` need is
+  #53899's separate worker (closed unmerged 09-21); main's #54371 is in-process, so no ptrace. Systemd
+  `AmbientCapabilities=CAP_SYS_PTRACE` as the scope-1 option; #54371 pins the whole table on a Spark, #58439 maps it.
+  Draft `reply-53960-ptrace.md`. <https://github.com/vllm-project/vllm/issues/53960#issuecomment-5911536372>
 - **2026-09-30 ~14:30 — vllm#58439 and #58835 rebased onto main again (promised in the #58835 reply).** One conflict
   (#58439 commit 2d0e9d569b vs upstream's new `_finalize_prefetch` None-check): kept our `_join_prefetch_stream()`
   hook and moved upstream's check into it. The auto-merge of `config/engram.py` silently dropped the function-local

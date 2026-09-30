@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. vllm-project/vllm#53960, reply to @alansrobotlab2 / @estrella159 on ptrace_scope (2026-09-30).
+POSTED 2026-09-30 as https://github.com/vllm-project/vllm/issues/53960#issuecomment-5911536372 — user's go 2026-09-30 ("post"). vllm-project/vllm#53960, reply to @alansrobotlab2 / @estrella159 on ptrace_scope.
 
 The `pidfd_getfd` requirement belongs to #53899's separate offload process, and #53899 closed unmerged on 09-21. Main's PLE offload (#54371, merged 09-09) runs in-process over UVA, so there is no second process to attach to, and on current main neither `ptrace_scope` nor `CAP_SYS_PTRACE` matters.
 
