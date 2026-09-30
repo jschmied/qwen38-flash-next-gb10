@@ -1507,3 +1507,11 @@ wait on one ~100 GB pull, and they share one serve.
     count. <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/pull/72#discussion_r4144309720>
   - Found on the way: `/opt/llm/serve-flashnext.sh` still exports `VLLM_QSA_DET_TOPK=${FN_DET_TOPK:-1}` (det-226 was
     fixed only in serve-fnmain.sh), so `FN_DET_TOPK=0` is not a stock arm there. Prod default unaffected; fix proposed.
+- **2026-09-30 ~14:30 — vllm#58439 and #58835 rebased onto main again (promised in the #58835 reply).** One conflict
+  (#58439 commit 2d0e9d569b vs upstream's new `_finalize_prefetch` None-check): kept our `_join_prefetch_stream()`
+  hook and moved upstream's check into it. The auto-merge of `config/engram.py` silently dropped the function-local
+  `current_platform` import our CUDA-only check relied on (NameError, caught by test_ple_pageable: 2 failed); fixed in
+  a new commit `6af74baa5d`. Tests on the PR venv (overlay, restored after): test_ple_pageable 30/30; test_ple.py 64
+  passed / 10 failed, the same 10 metadata-order cases failing without our files (venv older than main's test file);
+  the 4 pinned-prefetch cases that fail on the old head pass. #58439 → `6af74baa5d`, #58835 → `957e1dbef7`
+  (force-with-lease); both no longer in conflict.
