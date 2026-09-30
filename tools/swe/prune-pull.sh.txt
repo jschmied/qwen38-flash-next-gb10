@@ -1,0 +1,10 @@
+#!/bin/bash
+# user 2026-09-30: "prune after current run and swap slices". Remove the images of the 20 dropped easy instances, then
+# pre-pull the 10 large-patch Java/JS instances one by one (never let the harness pull under its 120 s timeout).
+img(){ echo swebench/sweb.eval.x86_64.$(echo $1 | sed "s/__/_1776_/"):latest; }
+df -h / | tail -1
+for i in $(cat /root/set-python-dropped.txt /root/set-javajs-dropped.txt); do docker rmi $(img $i) >/dev/null 2>&1 && echo "removed $i" || echo "rmi FAILED/absent $i"; done
+df -h / | tail -1
+for i in $(cat /root/set-jshard.txt); do n=$(img $i); docker image inspect $n >/dev/null 2>&1 && { echo "have $i"; continue; }
+  docker pull -q $n >/dev/null && echo "pulled $i" || echo "FAILED $i"; done
+df -h / | tail -1; echo PRUNEPULL DONE

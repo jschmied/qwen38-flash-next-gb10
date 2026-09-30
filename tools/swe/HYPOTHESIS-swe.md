@@ -57,3 +57,16 @@ same servers, client and sampling as §5aj.
   separate them, more than 7 means the labels do not track difficulty for this model.
 - Engines: within ±2 per run, i.e. no separable gap at n=10 per run; a gap has to hold in both runs to count.
 - Gen time per run: 25–60 min at 4 workers; context overflows 0–3 per run (longer trajectories than the easy slice).
+
+## Java/JS swap and the combined plan (2026-09-30, before the run)
+
+User: "yes, prune after current run and swap slices". Multilingual has no difficulty labels; proxy = reference-patch
+size. Our 28 Java/JS were all one file, ≤ 11 lines (the pool in the same 9 repos: median 8, max 219 lines, up to 8
+files). Dropped: the 10 smallest-patch instances both tfexl3r1 and vllmnow1 solved (`set-javajs-dropped.txt`); added:
+the 10 largest reference patches in the same repos (`set-jshard.txt`, 23–219 lines). Chain `mixswe.sh.txt` replaces
+the queued vllmswe3 + hardswe (stopped before they started): vLLM run 1 = vllmnow1 kept + vllmhard1; vLLM run 2 =
+vllmmix2 (full mixed 58); TF runs = tfexl3r1/2 kept + tfhard1/2.
+
+- Java/JS hard 10, per run: **3–7 resolved**; patch size is a weaker difficulty proxy than Verified's labels, so
+  expect less of a drop than on the Python hard 10.
+- Mixed 58 per run: **40–50** (from 51–52), engines within ±3; a gap counts only if it holds in both runs.

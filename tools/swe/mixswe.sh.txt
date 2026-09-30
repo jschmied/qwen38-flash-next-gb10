@@ -1,0 +1,36 @@
+#!/bin/bash
+# Swapped slices (user 2026-09-30: "yes, prune after current run and swap slices"). Replaces vllmswe3 + hardswe.
+# Mixed Python = 20 kept + 10 hard Verified (3 ">4 hours" + 7 "1-4 hours"); mixed Java/JS = 18 kept + the 10 largest
+# reference patches in the same repos. Kept results come from existing runs, so:
+#   vLLM run 1 = vllmnow1 (kept) + vllmhard1 (hard + jshard);  vLLM run 2 = vllmmix2 (pym + jsm, full mixed 58)
+#   TF run 1/2 = tfexl3r1/2 (kept) + tfhard1/2 (hard + jshard)
+# After TensorFold run 2: prune the 20 dropped instances' images on the x86 box and pre-pull the 10 Java/JS ones.
+R=/opt/llm/runners/results; S=/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad
+T=/opt/llm/runtime/tf-venv; M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw
+log(){ echo "$(date +%T) $*" >> $R/mixswe.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+ready(){ for i in $(seq 1 120); do sleep 10; systemctl is-active -q $1 || { log "$1 DIED"; return 1; }
+  curl -sf -H "Authorization: Bearer none" http://127.0.0.1:8092/v1/models > /dev/null && { log "$1 ready after $((i*10)) s"; return 0; }; done; return 1; }
+probe(){ su -s /bin/bash jschmied -c "bash $S/sweprobe2.sh $1 $2 > $S/swe-$1-$2.json 2> $S/swe-$1-$2.err"; log "$1 $2 rc=$? $(cat $S/swe-$1-$2.json)"; }
+while systemctl is-active -q tfexl3r2-chain; do sleep 30; done
+su -s /bin/bash jschmied -c "ssh -n -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts -o BatchMode=yes root@10.0.0.8 'bash /root/prune-pull.sh'" > $R/mixswe-prunepull.txt 2>&1
+log "prune-pull: $(grep -c '^removed' $R/mixswe-prunepull.txt) removed, $(grep -c -E '^(pulled|have)' $R/mixswe-prunepull.txt) java/js images present, $(grep -c FAILED $R/mixswe-prunepull.txt) failed; $(tail -2 $R/mixswe-prunepull.txt | head -1)"
+while systemctl is-active -q fish-chain2; do sleep 30; done
+for u in fx-tf-exl3 fx-tf-fish fx-vllm-fish fx-vllm-swe; do systemctl is-active -q $u && { systemctl stop $u; log "$u stopped"; }; done
+memok
+systemd-run --unit=fx-vllm-swe --collect --uid=llm \
+  -E FN_VENV=/opt/llm/runtime/vllm-venv-main1ea7 -E FN_MODEL=/opt/llm/models/qwen38-flash-next-mtpfp4 \
+  -E FN_MAXLEN=65536 -E FN_SEQS=16 -E FN_PLE_OFFLOAD=0 \
+  -E FN_SPEC_METHOD=mtp -E FN_SPEC_N=5 -E FN_SPEC_NODROP=1 -E FN_SPEC_LOCALARGMAX=0 \
+  -E FN_DRAFT_VOCAB=/opt/llm/runners/dv/draft_vocab_32768.txt -E FN_DRAFT_HEAD_NVFP4=1 -E FN_NVFP4_CFG=64,4 \
+  -E FN_DRAFT_PROB=1 -E FN_SPEC_DRAFTPROB=1 -E "FN_CG_SIZES=[1,2,4,6,8,12,16,18,24,30,36,48,60,72,96]" \
+  -E FN_HCFUSE=1 -E FN_CG_MODE=FULL_AND_PIECEWISE -E FN_MOEFUSE=1 -E FN_GDNNQ=1 \
+  -E "FN_EXTRA=--engram-config {\"checkpoint_mapped\":true} --use-replayssm --block-size 1728 --prefix-match-unit 64 --mamba-ssm-cache-dtype bfloat16 --kv-cache-memory-bytes 8589934592" \
+  /opt/llm/serve-flashnext.sh
+if ready fx-vllm-swe; then probe vllmhard1 hard; probe vllmhard1 jshard; probe vllmmix2 pym; probe vllmmix2 jsm; fi
+systemctl stop fx-vllm-swe; log "vllm stopped"; sleep 20; memok
+systemd-run --unit=fx-tf-exl3 --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+  -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
+  bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 65536 --max-tokens 16000 --parallel 4 > /opt/llm/tf-serve-exl3-mix.log 2>&1"
+if ready fx-tf-exl3; then for r in 1 2; do probe tfhard$r hard; probe tfhard$r jshard; done; fi
+systemctl stop fx-tf-exl3; log "tensorfold stopped"; echo "== MIXSWE DONE ==" >> $R/mixswe.txt
