@@ -2611,8 +2611,8 @@ Both checkpoints ship the same chat template and generation config. Smoke (2 ins
 - **Same-day vLLM baseline (2026-09-30, `tools/swe/vllmswe2.sh.txt`):** today's prod config (`vllm-venv-main1ea7`,
   `qwen38-flash-next-mtpfp4`, MTP K=5 + probabilistic drafting, HC fusion, GDNNQ, MoE fusion, FULL_AND_PIECEWISE,
   `--max-model-len 65536`, KV 8 GiB, 16 seqs), same client and sampling. **51 / 58**, all 58 `Submitted`, **0 context
-  overflows**: the §5u overflows were the 32k window, not the model, so the user's rule (count an overflow as solved)
-  is moot at 65k. TensorFold + EXL3 against it: 4 solved there only (babel-15445, django-16667, matplotlib-20859,
+  overflows** (§5u, also at 64k, had 1–3 per run; with one run here that is within run-to-run variation, not a
+  cause), so the user's rule (count an overflow as solved) changes nothing in either row today. TensorFold + EXL3 against it: 4 solved there only (babel-15445, django-16667, matplotlib-20859,
   lombok-3594), 3 here only (django-13551, django-14034, gson-2311): one instance apart, one run each, **a tie**.
   Generation time: TensorFold **18 % faster on Python** (2,152 vs 2,619 s), vLLM **4 % faster on Java/JS** (3,219 vs
   3,357 s); total 5,509 vs 5,838 s, TensorFold −6 %. Both at 4 workers, so this is c≈4 agent throughput, where
