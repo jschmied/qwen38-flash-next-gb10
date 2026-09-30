@@ -25,3 +25,12 @@ Reference: vLLM prod on our FP8/NVFP4 checkpoint, 48 and 52 of 58 (§5u).
 - H (tool calls): TensorFold's tool-call parsing works for mini-swe-agent (checked: two parallel `bash` calls, valid
   JSON); format errors per trajectory no higher than on vLLM. The smoke (2 instances) gates the full slice.
 - Not comparable on speed: eager decode under `--parallel`, different engine.
+
+### Same-day vLLM baseline (`vllmnow1`, queued after TensorFold run 1)
+
+User: "but our old swt run was before many speed optimizations". Today's prod config (drop-ins 20–60: K=5 +
+probabilistic drafting, NVFP4 draft head, RecoverSSM + F4, pmu 64, bf16 SSM, HC fusion, Triton prefill MoE + GDNNQ) on
+our FP8/NVFP4 checkpoint, test unit on :8092, 64k context, 8 GiB KV (4 agents × 64k), same client and slices. H: resolved
+48–52 of 58 (§5u's range; the §5ag/§5aa changes do not change text quality beyond drift); gen time per slice below §5u's
+(2,345–2,999 s Python, 2,906–3,929 s Java/JS) by 10–20 % from the prefill work. Compared with TensorFold+EXL3 run 1 on
+wall-clock per slice and resolved count; one run each, so only large gaps count.
