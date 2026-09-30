@@ -1,0 +1,1 @@
+{"tag": "tfab-fp8block", "code_greedy": {"decode_tps_median": 38.1, "all": [38.1, 38.1, 38.1, 38.1, 38.2], "tokens": [256, 256, 256, 256, 256], "ttft_median": 0.188}, "chat_sampled": {"decode_tps_median": 41.7, "all": [41.7, 41.7, 41.7, 41.7, 41.7], "tokens": [256, 256, 256, 256, 256], "ttft_median": 0.196}}

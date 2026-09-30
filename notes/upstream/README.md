@@ -1489,3 +1489,10 @@ wait on one ~100 GB pull, and they share one serve.
   <https://github.com/vllm-project/vllm/pull/58863#issuecomment-5904899697>. GB10 data `notes/data/pr2/` (one start per
   arm: hashes identical, c=1 and TTFT level, c=4 141 vs 131/132 unresolved at one start). Clone venv `vllm-venv-rssm`
   now carries the branch head's four source files (backups `*.orig-pr2`).
+- **2026-09-30 ~10:05 — ashhart/TensorFold#126 opened (user's go: "do all now" after "can we open PR to tensorfold with
+  our changes?").** `jschmied/TensorFold:fp8-block` @ `abbcca0` (one commit on v0.5.0; local-only commits and the
+  `TF_FP8BLOCK_AS_BF16` A/B switch left out, on local branch `fp8-block`). Block-scaled FP8 (`FP8_PB_WO`) linears for
+  Flash Next: lane-matmul mode FP8G, `Fp8BlockLinear`, `Concat`, block-FP8 lm_head dequant, format + gate. Tests 75
+  passed / 3 skipped on GB10 (CPU subset: the same 10 failures as clean v0.5.0). Served checks on our checkpoint: 6
+  long-prompt pairs drafted == serial and resumed == fresh; `bench_concurrent --alone --serial` all equal; +6…27 % over
+  the same weights dequantized to bf16. Draft `tensorfold-pr-fp8block.md`. <https://github.com/ashhart/TensorFold/pull/126>

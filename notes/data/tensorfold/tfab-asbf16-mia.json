@@ -1,0 +1,1 @@
+{"tag": "tfab-asbf16", "code_greedy": {"decode_tps_median": 34.1, "all": [34.1, 34.1, 34.1, 34.1, 34.1], "tokens": [256, 256, 256, 256, 256], "ttft_median": 0.209}, "chat_sampled": {"decode_tps_median": 36.1, "all": [36.1, 36.1, 36.1, 36.1, 36.1], "tokens": [256, 256, 256, 256, 256], "ttft_median": 0.219}}

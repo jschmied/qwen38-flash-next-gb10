@@ -2341,3 +2341,9 @@ different replies. Not yet known: where TensorFold's decode time goes on our wei
 path, `Concat`'s extra copies, acceptance). Nothing sent upstream. Their maintainer's rule (vllm-style e4m3 copies
 rejected in TensorFold #104: "no precision traded for speed") is met on decode; the prompt path rounds our fp32 block
 scales to bf16. Data `data/tensorfold/`.
+- **2026-09-30: upstreamed as ashhart/TensorFold#126** (user's go). Against the same weights dequantized to bf16 on
+  TensorFold's stock path (local `TF_FP8BLOCK_AS_BF16` switch, one start each): code c=1 59.2 vs 49.1 greedy / 60.1 vs
+  52.0 sampled, chat 36.6 vs 34.6 greedy / 41.6 vs 32.8 sampled, MiaAI 38.1/41.7 vs 34.1/36.1; exactness contract holds
+  in both arms. Decode matmul: `in_proj_qkv` 94 µs FP8G vs 247 µs bf16 (DRAM floor ~96 µs). Found on the way:
+  `nvidia/Qwen3.8-Flash-Next-NVFP4` is refused by TensorFold 0.5.0 (MTP experts `FP8_BLOCK_SCALES`, PLE labelled `FP8`);
+  listed in the PR as follow-up. Data `data/tensorfold/tfab-*`.

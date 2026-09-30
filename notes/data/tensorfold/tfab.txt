@@ -1,0 +1,29 @@
+08:34:38 fp8block ready after 200 s
+08:39:34 fp8block exact rc=0
+08:51:05 fp8block conc rc=0
+08:52:24 fp8block mia rc=0
+{"label": "", "prompt": "fibonacci-raw", "temperature": 1.0, "decode_tps_median": 54.81308629544549, "decode_tps_all": [54.81, 44.81, 62.32, 58.36, 43.58], "ttft_s_median": 0.12030016793869436}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 1.0, "decode_tps_median": 39.73670321612998, "decode_tps_all": [41.0, 34.98, 58.19, 39.74, 32.01], "ttft_s_median": 0.15768198505975306}
+{"label": "", "prompt": "fibonacci-raw", "temperature": 0.0, "decode_tps_median": 48.681772928908856, "decode_tps_all": [48.72, 48.41, 48.77, 48.63, 48.68], "ttft_s_median": 0.10661883698776364}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 0.0, "decode_tps_median": 40.20024497430046, "decode_tps_all": [40.25, 40.07, 40.24, 40.2, 40.08], "ttft_s_median": 0.14391775999683887}
+{"label": "", "prompt": "fibonacci-raw", "temperature": 1.0, "decode_tps_median": 49.72138553077639, "decode_tps_all": [50.28, 45.43, 50.08, 42.65, 49.72], "ttft_s_median": 0.10594111203681678}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 1.0, "decode_tps_median": 40.86178263976382, "decode_tps_all": [42.09, 39.54, 43.47, 40.86, 39.65], "ttft_s_median": 0.14368411898612976}
+{"label": "", "prompt": "fibonacci-raw", "temperature": 0.0, "decode_tps_median": 59.378518875580404, "decode_tps_all": [59.4, 59.38, 59.4, 59.21, 59.31], "ttft_s_median": 0.11973211902659386}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 0.0, "decode_tps_median": 37.58373347804302, "decode_tps_all": [37.51, 37.58, 37.59, 37.62, 37.58], "ttft_s_median": 0.1452568240929395}
+08:56:37 fp8block tfbench rc=0
+08:56:39 fp8block stopped
+09:00:20 asbf16 ready after 220 s
+09:05:59 asbf16 exact rc=0
+09:19:11 asbf16 conc rc=0
+09:20:42 asbf16 mia rc=0
+{"label": "", "prompt": "fibonacci-raw", "temperature": 1.0, "decode_tps_median": 44.60493154261084, "decode_tps_all": [46.82, 45.55, 34.45, 44.6, 41.18], "ttft_s_median": 0.11583878193050623}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 1.0, "decode_tps_median": 33.50710693446695, "decode_tps_all": [27.22, 36.18, 42.07, 33.51, 24.52], "ttft_s_median": 0.15500486094970256}
+{"label": "", "prompt": "fibonacci-raw", "temperature": 0.0, "decode_tps_median": 45.197043161883215, "decode_tps_all": [45.04, 45.2, 45.24, 45.18, 45.24], "ttft_s_median": 0.12750646902713925}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 0.0, "decode_tps_median": 35.950530285038326, "decode_tps_all": [35.91, 35.96, 35.95, 35.91, 35.97], "ttft_s_median": 0.16520543000660837}
+{"label": "", "prompt": "fibonacci-raw", "temperature": 1.0, "decode_tps_median": 43.82857381515533, "decode_tps_all": [43.36, 48.3, 39.44, 47.42, 43.83], "ttft_s_median": 0.11595083505380899}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 1.0, "decode_tps_median": 35.552231891454184, "decode_tps_all": [35.55, 35.0, 36.27, 37.86, 30.79], "ttft_s_median": 0.16590408305637538}
+{"label": "", "prompt": "fibonacci-raw", "temperature": 0.0, "decode_tps_median": 49.321618895994526, "decode_tps_all": [49.29, 49.3, 49.32, 49.33, 49.33], "ttft_s_median": 0.11499544198159128}
+{"label": "", "prompt": "gpu-chat-no-think", "temperature": 0.0, "decode_tps_median": 32.256507376388946, "decode_tps_all": [32.27, 32.26, 32.25, 32.22, 32.28], "ttft_s_median": 0.15432486205827445}
+09:25:34 asbf16 tfbench rc=0
+09:25:37 asbf16 stopped
+== TFAB DONE ==
