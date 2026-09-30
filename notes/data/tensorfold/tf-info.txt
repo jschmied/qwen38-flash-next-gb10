@@ -1,0 +1,13 @@
+model_type   qwen4_exp
+family       Qwen3.8 Flash Next (tensorfold.families.qwen4_exp)
+engine       MLX lane engine, CUDA engine
+kernels      qwen/flash_next/v1
+num_hidden_layers 48
+hidden_size  2560
+num_experts  512
+num_experts_per_tok 10
+vocab_size   248320
+max_position_embeddings 262144
+quantization modelopt MIXED_PRECISION
+runs on      NVIDIA GPUs (CUDA)
+sampling     {'temperature': 1.0, 'top_k': 20, 'top_p': 0.95}

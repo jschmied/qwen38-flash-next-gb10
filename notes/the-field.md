@@ -2318,3 +2318,26 @@ keep `<|im_end|>` only in generation_config.json.
 - Row invariance 1–128 rows is the property our determinism work cares about (batch-invariant greedy); their MoE path's
   equality claim (2,472 outputs torch.equal) is per tensor, not end-to-end across concurrency.
 - int8 / int4 KV: our fp8 / NVFP4 KV measurements (§4l) found a quality/speed trade, not a free win.
+
+## TensorFold on our exact checkpoint (2026-09-30, user: "fetch tensorfold and do the changes to run our checkpoint")
+
+TensorFold 0.5.0 refused `qwen38-flash-next-mtpfp4` at the config gate (only `NVFP4 / W4A16_NVFP4 / MXFP8` layers;
+ours has 157 `FP8_PB_WO` layers: FP8 with an fp32 scale per 128×128 block). Local branch `fp8-block` in
+`~/git/tensorfold` (commit `00b6f3e`, not pushed anywhere):
+- `qmmf.cu` mode `FP8G`: e4m3 bytes in their FP8 fragment order and one fp32 scale per (64 inputs, column), applied
+  after each 64-input stage's bf16 MMAs (the stored weight exactly; rows batch-invariant as their other modes);
+- `Fp8BlockLinear` (decode on FP8G, prompts on their FP8 prompt GEMM with the scales as bf16 group scales), `Concat`
+  for stacks that mix block FP8 and bf16 (GDN `in_proj_b/a`, the attention indexer), the loader mapping
+  `weight_scale_inv`, and `lm_head` / draft head dequantized with their block scales (stock casts FP8 to bf16 raw);
+- format detection `fp8block` and the family gate. Our NVFP4 MTP experts, FP8 n-gram table and bf16 shared expert load
+  unchanged.
+
+Result: tests 23 passed (synthetic shapes, M 1–33, row invariance, prefill, Concat) + the real `in_proj_qkv` of layer 0;
+`tensorfold serve` loads in 275 s (startup estimate 80.1 of 102.5 GiB, n-gram tables 143 s, 21 decode graphs, MTP 1–6
+drafts with a 30 % confidence stop) and answers coherently. MiaAI's prompts (`tools/tfbench/miaprobe.py`, client-side
+rate, median of 5): quicksort greedy **38.2** tok/s, sky sampled **41.7** (runs 36.1–41.7). Ours on vLLM: 66.4 / 39.3 on
+the prod venv, and the quicksort reply swings 44.7–66.4 with the text (§5ah miadiag), so the greedy cell compares
+different replies. Not yet known: where TensorFold's decode time goes on our weights (the FP8G kernel vs their bf16
+path, `Concat`'s extra copies, acceptance). Nothing sent upstream. Their maintainer's rule (vllm-style e4m3 copies
+rejected in TensorFold #104: "no precision traded for speed") is met on decode; the prompt path rounds our fp32 block
+scales to bf16. Data `data/tensorfold/`.

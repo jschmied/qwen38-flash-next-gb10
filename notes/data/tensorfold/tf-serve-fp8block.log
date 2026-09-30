@@ -1,0 +1,23 @@
+[tensorfold] this is TensorFold 0.5.0; what's new: https://github.com/ashhart/TensorFold/blob/v0.5.0/CHANGELOG.md
+[tensorfold] loading flashnext: Qwen3.8 Flash Next (qwen4_exp) on CUDA
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 102.49 GiB; native 262144, allocated prompt/reply window 32768, cache slots 32775
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_experts_v7 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn_io (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_gdn_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 30%; 32768-token prompt/reply window; 32775-token cache; n-gram tables read in 143.0s; 21 decode graphs captured; prompt kernels warmed in 24.1s
+[tensorfold] serving flashnext at http://127.0.0.1:8092/v1 on CUDA (sampling: temperature 1.0, top_k 20, top_p 0.95; drafts: on; context: 32768; loaded in 275.0s)
+Exception ignored in: <module 'threading' from '/usr/lib/python3.12/threading.py'>
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1592, in _shutdown
+    atexit_call()
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 31, in _python_exit
+    t.join()
+  File "/usr/lib/python3.12/threading.py", line 1147, in join
+    self._wait_for_tstate_lock()
+  File "/usr/lib/python3.12/threading.py", line 1167, in _wait_for_tstate_lock
+    if lock.acquire(block, timeout):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jschmied/git/tensorfold/src/tensorfold/cuda/http.py", line 201, in _terminate
+    raise KeyboardInterrupt
+KeyboardInterrupt: 
