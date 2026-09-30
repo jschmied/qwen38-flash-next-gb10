@@ -1,0 +1,20 @@
+#!/bin/bash
+# jschmied/vllm#2 on GB10: base arm, install the three fixes into the clone venv, tests, pr2 arm.
+R=/opt/llm/runners/results; D=/opt/llm/runners/pr2; VE=/opt/llm/runtime/vllm-venv-rssm; V=$VE/lib/python3.12/site-packages
+log(){ echo "$(date +%T) $*" >> $R/pr2chain.txt; }
+log "start"
+python3 /opt/llm/runners/armrun.py $D/spec-pr2base.json >> $R/pr2chain.txt 2>&1; log "base rc=$?"
+FILES="vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py vllm/model_executor/layers/mamba/gdn/recoverssm_gdn.py vllm/v1/worker/gpu/cudagraph_utils.py vllm/v1/worker/gpu/model_states/recoverssm.py"
+cd $V && for f in $FILES; do [ -f $f.orig-pr2 ] || cp $f $f.orig-pr2; done
+patch -p1 --no-backup-if-mismatch < $D/pr2-src.diff >> $R/pr2chain.txt 2>&1 || { log "PATCH FAILED"; for f in $FILES; do cp $f.orig-pr2 $f; done; echo "== PR2CHAIN DONE ==" >> $R/pr2chain.txt; exit 1; }
+find $V/vllm -name __pycache__ -path "*mamba*" -prune -exec rm -rf {} + ; find $V/vllm/v1/worker -name __pycache__ -prune -exec rm -rf {} +
+for f in $FILES; do $VE/bin/python -m py_compile $f || log "COMPILE FAIL $f"; done
+log "installed: $(grep -c 'def reset' $V/vllm/v1/worker/gpu/model_states/recoverssm.py) reset, $(grep -c getattr.self,..use_gdn_recoverssm $V/vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py) guard"
+cd /home/jschmied/git/vllm-rssm-pr
+PYTHONSAFEPATH=1 timeout 3600 $VE/bin/python -m pytest -q -p no:cacheprovider \
+  tests/v1/worker/test_gpu_model_runner_v2_cudagraph_profiling.py tests/kernels/mamba/test_gdn_fused_mtp.py \
+  tests/kernels/mamba/test_recoverssm_gdn.py tests/config/test_recoverssm_config.py > $R/pr2-pytest.txt 2>&1
+log "pytest rc=$?"; tail -3 $R/pr2-pytest.txt >> $R/pr2chain.txt
+cd /
+python3 /opt/llm/runners/armrun.py $D/spec-pr2pr2.json >> $R/pr2chain.txt 2>&1; log "pr2 rc=$?"
+echo "== PR2CHAIN DONE ==" >> $R/pr2chain.txt

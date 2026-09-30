@@ -1479,3 +1479,13 @@ wait on one ~100 GB pull, and they share one serve.
   identical on plain upstream main in the same environment (gated HF repos, wheel ABI imports). Both now MERGEABLE.
   No comment posted. Noted while rebasing: upstream #58957 "Fuse HC down projection and SiLU on NVIDIA" merged, which
   overlaps our HC fusion (§5aa) and must be read before any HC upstream post.
+- **2026-09-30 ~07:45 — vllm#58863: jschmied/vllm#2 merged, F4 + a race fix pushed, description edited, reply posted
+  (user's go: "interrupt work, do both now").** Branch `gdn-recoverssm` fast-forwarded 5567cc1b25 → 3388ba1a25:
+  lucifer1004's three commits (teardown releases the RecoverSSM step; `getattr` guard; one fold per program), our F4
+  FULL-graph builders (`3aa3d5b586`), and `3388ba1a25` fixing a race the one-fold split introduced (boundary state can
+  land in the window's source slot; `test_recoverssm_gdn.py` 9/12 runs failed, 0/12 on the fused kernel, 0/20 after the
+  fix; 121/121 on the five test files; ruff 0.14.0 clean). Description: UNIFORM_BATCH / FULL graphs, `max_num_seqs <=
+  num_blocks` caveat, commits 3–6, test plan and results. Reply `pr58863-reply-pr2-f4.md` →
+  <https://github.com/vllm-project/vllm/pull/58863#issuecomment-5904899697>. GB10 data `notes/data/pr2/` (one start per
+  arm: hashes identical, c=1 and TTFT level, c=4 141 vs 131/132 unresolved at one start). Clone venv `vllm-venv-rssm`
+  now carries the branch head's four source files (backups `*.orig-pr2`).
