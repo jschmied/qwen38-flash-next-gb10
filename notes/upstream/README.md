@@ -1507,6 +1507,11 @@ wait on one ~100 GB pull, and they share one serve.
     count. <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/pull/72#discussion_r4144309720>
   - Found on the way: `/opt/llm/serve-flashnext.sh` still exports `VLLM_QSA_DET_TOPK=${FN_DET_TOPK:-1}` (det-226 was
     fixed only in serve-fnmain.sh), so `FN_DET_TOPK=0` is not a stock arm there. Prod default unaffected; fix proposed.
+- **2026-09-30 — vllm#57946 follow-up (user's go: "push and short reply").** @hclsys ran the file with
+  `VLLM_MOE_SKIP_PADDING=0`: 27 failed, because the sentinel test fed `-1` with the guard off (illegal memory access);
+  our 48 had come from `-k`. Pushed `a2c8e66411` (their `skipif` + line wraps): 51 passed on / 48 passed 3 skipped off,
+  whole file. PR body now says an unguarded `-1` is an out-of-bounds access. Draft `reply-57946-hclsys-2.md`.
+  <https://github.com/vllm-project/vllm/pull/57946#issuecomment-5911371374>
 - **2026-09-30 ~14:30 — vllm#58439 and #58835 rebased onto main again (promised in the #58835 reply).** One conflict
   (#58439 commit 2d0e9d569b vs upstream's new `_finalize_prefetch` None-check): kept our `_join_prefetch_stream()`
   hook and moved upstream's check into it. The auto-merge of `config/engram.py` silently dropped the function-local
