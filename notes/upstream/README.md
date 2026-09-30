@@ -1496,3 +1496,14 @@ wait on one ~100 GB pull, and they share one serve.
   passed / 3 skipped on GB10 (CPU subset: the same 10 failures as clean v0.5.0). Served checks on our checkpoint: 6
   long-prompt pairs drafted == serial and resumed == fresh; `bench_concurrent --alone --serial` all equal; +6…27 % over
   the same weights dequantized to bf16. Draft `tensorfold-pr-fp8block.md`. <https://github.com/ashhart/TensorFold/pull/126>
+- **2026-09-30 ~13:55 — four replies (user's go: "do all important replies"), after checking every thread we are in:**
+  - vllm#57946 → @hclsys: both review points taken in `da6d4a0068` (guard gated on `VLLM_MOE_SKIP_PADDING`, per-row
+    note in code and description; 51 / 48 tests passed on GB10). <https://github.com/vllm-project/vllm/pull/57946#issuecomment-5910775978>
+  - vllm#55122 → @k3dani: thanks for the same-image A/B; the `"0"` gate is the overlay's, the same bug we had
+    (det-226). <https://github.com/vllm-project/vllm/pull/55122#issuecomment-5910776384>
+  - vllm#58835 → @antoniocuegervas: thanks for the load test; rebase announced. <https://github.com/vllm-project/vllm/pull/58835#issuecomment-5910776899>
+  - MiaAI#72 → @usmaneth (inline on README.md:1212): stock and det `persistent_topk` never leave a -1 before a real id
+    (0 / 1,152 rows, 916 underfull); stock order not ascending on 21 % of rows; open: the expand cap vs real-id
+    count. <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/pull/72#discussion_r4144309720>
+  - Found on the way: `/opt/llm/serve-flashnext.sh` still exports `VLLM_QSA_DET_TOPK=${FN_DET_TOPK:-1}` (det-226 was
+    fixed only in serve-fnmain.sh), so `FN_DET_TOPK=0` is not a stock arm there. Prod default unaffected; fix proposed.
