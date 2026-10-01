@@ -2982,3 +2982,41 @@ t=0, 8 × 2k every 15 s), one start per arm. Predictions `tools/tfbig/HYPOTHESIS
 - The real cost here is the table not staying resident (1.1 M faults in 400 s). Locking it would need ~48 GiB that this
   checkpoint's shape does not leave; a smaller table (NVFP4, 28.6 GiB, as hibrid48) or the EXL3 5-bit one (30 GiB,
   locked in §5an) is the lever, not the gather.
+
+### 5at. TensorFold's host-side cost: the draft chain is GPU-bound, the concurrent path is eager (~10 %), and a lone request on a multi-stream server loses its graphs (+11–13 %)
+
+User: "go for it", after the agenda mapping (tensorfold-opportunities, "Speed-of-light agenda"). TF 0.6.0 (`c464617`),
+EXL3 3.05bpw, greedy, 512 tokens of code per stream after a 64-token warm-up, one process per arm, two starts per
+timing arm (no nsys), then one nsys run per arm. Probe `tools/tfhost/host_probe.py`, duty cycle `tools/tfhost/duty.py`
+(union of kernel, memcpy, memset and graph-replay intervals over the capture window). Predictions
+`tools/tfhost/HYPOTHESIS.md`; data `data/tfhost/`.
+
+| arm | ms/token per stream, start a / b | aggregate tok/s | GPU busy (nsys) | idle per token | kernel launches per token |
+|---|---|---|---|---|---|
+| S1 one stream, graphs (default) | 12.094 / 12.190 | 82.7 / 82.0 | **97.6 %** | 0.29 ms | 25.6 + 1.44 graph replays |
+| S0 one stream, eager | 13.554 / 13.532 | 73.8 / 73.9 | 88.3 % | 1.60 ms | 557 |
+| M2 streams=2, c=2 (eager) | 17.877 / 17.933 | 111.9 / 111.5 | 87.8 % | 1.13 ms | 308 |
+| M4 streams=4, c=4 (eager) | 25.249 / 25.327 | 158.4 / 157.9 | 89.5 % | 0.68 ms | 161 |
+| L4 streams=4 engine, ONE request | **13.625 / 13.518** | 73.4 / 74.0 | — | — | — |
+
+All arms write the same tokens for the shared prompt (`1bb116eb6ff5` in S1, S0, M2, M4 and L4; streams 1–3 identical
+across M2/M4): the exactness contract holds. nsys adds 1.4 % (S0) to 3 % (M2) to eager wall time, so the traced idle
+slightly overstates the untraced one.
+
+- **Draft-chain host round trips (agenda item 2): closed.** With graphs the serial path is 97.6 % GPU-busy; all host
+  time, the per-draft round trip included, is ≤ 0.29 ms per token (~1 ms per round). Removing it entirely is worth
+  ≤ 2.4 %, not the restructure of `draft()` a device-side chain needs. Predicted 75–90 % busy; the out-of-range result
+  says TF's one-stream graph path already hides its Python between replays.
+- **Graphs on the serial path are worth 9.9–11.0 %** (S0 vs S1, pairwise per round), all of it idle removed: S0's GPU
+  busy time (6.21 s) is S1's whole wall (6.30 s). Predicted 10–30 %: low end.
+- **The concurrent path (agenda item 3) runs eager at 88–90 % busy**, the same idle share graphs removed on the serial
+  path, so graphs there are worth **~9–10 % at c=2 and c=4** (upper bound from the traced idle). Predicted 40–75 %
+  busy: out of range high, eager launch costs ~2.9 µs per kernel on the X925s, cheaper than assumed. Scaling over S1:
+  M2 1.35–1.36×, M4 1.92× (both in range).
+- **New, the concrete one: a lone request on a multi-stream engine runs eager.** L4 is S0's speed, +10.9…+12.7 % per
+  token over S1 (pairwise). `qwen4_exp`'s `MultiDecoder` never uses the one-stream graphs (`multi.py:33`, "eager: no
+  CUDA graphs"), while `qwen3_5_moe`'s does ("a lone stream replays `graphs`", `qwen3_5_moe/cuda/multi.py:44`,
+  `:225-233`). A server started with `--parallel` > 1 therefore serves every single-user request ~11 % slower than
+  `--parallel 1`. Porting the qwen3_5_moe pattern is the cheap fix; full graphs for c ≥ 2 are the larger, harder one.
+
+Nothing posted. Upstream candidate (one topic): the lone-stream graph replay for `qwen4_exp`, needs the user's go.

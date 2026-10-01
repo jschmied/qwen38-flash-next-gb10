@@ -41,11 +41,15 @@ User: "check out lightspeed agenda against tensorfold, what applies?" Each open 
 the speed levers) and the done agenda items, checked against TF 0.6.0 source. Code reading only; nothing measured on TF.
 
 **Applies (new, not in the table above):**
-- **GPU-side draft chain (TODO item 2).** TF's chain is host-driven: `draft()` (`decode.py:231-256`) gets each draft
+- ~~**GPU-side draft chain (TODO item 2).**~~ **CLOSED by measurement (§5at):** the serial graph path is 97.6 % GPU-busy, all host
+  time ≤ 0.29 ms/token, so ≤ 2.4 % to gain. Original note: TF's chain is host-driven: `draft()` (`decode.py:231-256`) gets each draft
   token and its probability back on the host through `sample_draft` (`decode.py:182`) before the next `mtp_forward`, so
   every draft step pays a sync whether or not the confidence stop fires. §5b: a per-step host sync cost vLLM 5–6 %;
   §5v add. 2: one sync per cycle ≤ ~0.8 ms. First step: time the per-draft sync on TF (nsys, depth 6). A keep-on-device
   chain plus a graph conditional is a restructure of `draft()`, not a patch.
+- **MEASURED (§5at): a lone request on a `--parallel` > 1 server runs eager, +10.9…+12.7 % per token** (qwen3_5_moe's
+  MultiDecoder replays the one-stream graphs for a lone stream; qwen4_exp's does not). Cheapest fix: port that pattern.
+  Concurrent c=2/c=4 are 88–90 % GPU-busy eager, so full concurrent graphs are worth ~9–10 %.
 - **Graphs for the concurrent path (TODO item 3, capture widths).** `multi.py:33`: the multi-stream engine is "eager:
   no CUDA graphs"; only the serial path captures (`graphs.py`, ≤ 8 rows). Our F4 / capture-width work says graphs are
   worth 1–2 % at c=1 in vLLM; TF at c ≥ 2 runs every launch eager, so the gap is likely larger. Measure launch-bound

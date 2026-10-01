@@ -1,0 +1,19 @@
+#!/bin/bash
+# TensorFold 0.6.0 host-cost probe: timing arms (no nsys) S1 S0 M2 M4 x2, then nsys arms S1 S0 M2 M4, duty cycle.
+R=/opt/llm/runners/results/tfhost; mkdir -p $R; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost; SRC=/home/jschmied/git/tensorfold/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; N=512
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext HOME=/root PYTHONUNBUFFERED=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for arm in S1 S0 M2 M4; do memok
+  timeout 1800 $T/bin/python $L/host_probe.py $SRC $M $arm $N > $R/$arm-$rep.log 2>&1
+  echo "$(date +%T) $arm-$rep rc=$? $(grep '^ARM ' $R/$arm-$rep.log | cut -c1-400)" >> $R/chain.txt
+done; done
+for arm in S1 S0 M2 M4; do memok
+  timeout 1800 /usr/local/bin/nsys profile -o $R/n-$arm --force-overwrite=true --trace=cuda,osrt --capture-range=cudaProfilerApi \
+    --capture-range-end=stop --sample=none --cpuctxsw=none $T/bin/python $L/host_probe.py $SRC $M $arm $N nsys > $R/n-$arm.log 2>&1
+  tok=$(grep '^ARM ' $R/n-$arm.log | sed 's/^ARM //' | $T/bin/python -c 'import json,sys; print(json.load(sys.stdin)["tokens"])')
+  /usr/local/bin/nsys export --type sqlite --force-overwrite=true -o $R/n-$arm.sqlite $R/n-$arm.nsys-rep > /dev/null 2>&1
+  echo "$(date +%T) n-$arm $(grep '^ARM ' $R/n-$arm.log | cut -c1-200) DUTY $($T/bin/python $L/duty.py $R/n-$arm.sqlite $tok)" >> $R/chain.txt
+  rm -f $R/n-$arm.sqlite
+done
+echo "== TFHOST DONE ==" >> $R/chain.txt

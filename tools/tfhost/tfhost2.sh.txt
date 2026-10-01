@@ -1,0 +1,11 @@
+#!/bin/bash
+# L4: TensorFold streams=4 engine serving ONE request (does a lone stream replay graphs on qwen4_exp?), 2 starts.
+R=/opt/llm/runners/results/tfhost; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost; SRC=/home/jschmied/git/tensorfold/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; N=512
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext HOME=/root PYTHONUNBUFFERED=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do memok
+  timeout 1800 $T/bin/python $L/host_probe.py $SRC $M L4 $N > $R/L4-$rep.log 2>&1
+  echo "$(date +%T) L4-$rep rc=$? $(grep '^ARM ' $R/L4-$rep.log | cut -c1-400)" >> $R/chain.txt
+done
+echo "== TFHOST2 DONE ==" >> $R/chain.txt

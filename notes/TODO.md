@@ -27,6 +27,10 @@ test: develop in a separate worktree, never switch that checkout while a server 
       `PREFILL_ROWS` 2048/4096/8192 sweep (T8). Fast cells only (8k/32k); the full 2k–65k sweep at the end.
 - [~] **mtpfp8 on TensorFold** (§5ar): branch `pr-mtp-fp8` `e44d367` — FP8 MTP experts dequantized → drafter; real weights load, replies identical, MTP 86/93; **PR #178** (2026-10-01)
 - [x] Deferred big suites: SWE dropped (user), fill-order big mix and FP8 full sweep dropped ("only important tests"); gather A/B done (§5as)
+- [x] ~~**T10 GPU-side draft chain**~~ CLOSED (§5at): serial graph path 97.6 % GPU-busy, host ≤ 0.29 ms/token → ≤ 2.4 %.
+- [ ] **T11 lone-stream graph replay for qwen4_exp** (§5at): a `--parallel` > 1 server serves one request eager,
+      +10.9…+12.7 % per token vs `--parallel 1`; port qwen3_5_moe's "a lone stream replays graphs" (`multi.py:44,225-233`).
+      Upstream post (issue or PR) needs the user's go. Full concurrent graphs (c ≥ 2, 88–90 % busy eager): ~9–10 %, larger job.
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
 
