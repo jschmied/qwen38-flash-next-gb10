@@ -10,17 +10,16 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 `notes/tensorfold-opportunities.md`; tf-venv on 0.6.0 (`~/git/tensorfold` branch `v060`, used by the live tf060
 test: develop in a separate worktree, never switch that checkout while a server runs). Baseline = the tf060 run
 (`tools/tf060/`, `notes/data/tf060/`). Order: measure, then an issue with numbers, then a PR; nothing posted without a go.
-- [ ] **T1 EXL3 n-gram gather**: thread it and gather whole rows (2-D row views) instead of flat byte offsets
+- [~] **T1 EXL3 n-gram gather** (code `1c73244` on `ple-gather`, CPU tests pass; micro-bench queued in tfple1): thread it and gather whole rows (2-D row views) instead of flat byte offsets
       (`exl3_pack.py:156-170`); same bytes out. Measure: gather µs for decode-size and prompt-size id sets, cold and
       warm; TTFT at 8k/30k on EXL3.
-- [ ] **T2 cold-page queueing before the decode gather** (WILLNEED + POPULATE_READ on the rows' pages, as vllm#58835);
+- [~] **T2 cold-page queueing before the decode gather** (code `911d9f6`: adaptive on per-thread major faults, all table types; bench cells queued) (WILLNEED + POPULATE_READ on the rows' pages, as vllm#58835);
       matters more in 0.6.0, where KV growth evicts the table. Measure: majflt/round and round time with the table cold.
 - [ ] **T3 prompt-row read-ahead on CUDA** (`ReadAhead` is Mac-only; CUDA `stage()` gathers synchronously); more gather
       threads than 16.
-- [ ] **T4 EXL3 startup `release()` may drop the prefetched table pages** (code reading: `pk.get` marks the n-gram
+- [~] **T4 EXL3 startup `release()` may drop the prefetched table pages** (0.6.0 EXL3 locked the table in 22.2 s vs 0.3–0.4 s on 0.5.0; cause (release vs memory pressure) measured in tfple1) (code reading: `pk.get` marks the n-gram
       file touched → whole-file `POSIX_FADV_DONTNEED`). Check first: majflt on the first request after start.
-- [ ] T5 server-side seed salt for evals (rerun = replay today); T6 loader guards (refuse, don't cast, unknown
-      quantized bytes); T7 32k draft vocabulary A/B; T8 prompt chunk 2048 → 4096/8192 + grouped raster in `_b16mm`.
+- [~] T5 seed salt (`cbab428`: `TENSORFOLD_SEED_SALT`, docs + tests); T6 loader guards (`2d6c82f`: `_plain` + up-front NVFP4-outside-experts refusal); T7 32k draft vocabulary A/B; T8 prompt chunk 2048 → 4096/8192 + grouped raster in `_b16mm`.
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
 
