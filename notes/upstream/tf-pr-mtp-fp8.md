@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold PR from jschmied/TensorFold:pr-mtp-fp8 into main (2026-10-01).
+POSTED 2026-10-01 as https://github.com/ashhart/TensorFold/pull/178 — user's go 2026-10-01 ("post as new pr"). ashhart/TensorFold PR from jschmied/TensorFold:pr-mtp-fp8.
 
 TITLE: Flash Next CUDA: read FP8 experts in the MTP drafter
 
