@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold PR, base `pr-141-0.6.1`, head `jschmied:exl3-tile-list-061` (2026-10-01).
+POSTED 2026-10-01 (user: "yes, both"). ashhart/TensorFold PR, base `pr-141-0.6.1`, head `jschmied:exl3-tile-list-061` (2026-10-01).
 Title: CUDA EXL3 experts: one program a member tile in use, not one a tile of the window (prompts −10 % on Flash Next)
 
 The grouped EXL3 expert kernels launch ⌈maxm / 16⌉ member tiles for every expert, where maxm is the window's rows. On

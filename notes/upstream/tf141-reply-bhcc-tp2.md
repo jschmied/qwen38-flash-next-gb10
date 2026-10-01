@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #141 reply to BHCC2025's two-rank run (2026-10-01), together with a
+POSTED 2026-10-01 (user: "yes, both"). ashhart/TensorFold #141 reply to BHCC2025's two-rank run (2026-10-01), together with a
 push of the follow-up commit to #180.
 
 Thanks for the two-rank run. It found a bug in #180. On two ranks, rank 0 plans on `Shadow`s of the slots, and

@@ -1566,3 +1566,12 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold #179 comment** (same go): our `mtpfp4` serves the identical FP8 n-gram table through the loader's FP8
   lane; the fix belongs in #178's per-layer predicate; `_TABLE`/`ple_bytes` are MLX-only. Text `tf179-fp8-ngram-table.md`.
   https://github.com/ashhart/TensorFold/issues/179#issuecomment-5931347536
+- **TensorFold #180 follow-up commit** (2026-10-01 ~15:20, user: "yes, both"): `6ada832` pushed to
+  `jschmied:solo-graph-keep` — `_is_solo` compares the slots behind rank 0's plan Shadows (the first commit never matched
+  while planning, so #180 did nothing on two ranks); PR description updated via the API.
+- **TensorFold #141 reply to BHCC2025** (same go): their #180-vs-`cb5101d` spread is noise (same path on two ranks); the
+  lone-request gap is the recapture; asked for a rerun of the 1-user cells. Text `tf141-reply-bhcc-tp2.md`.
+  https://github.com/ashhart/TensorFold/pull/141#issuecomment-5931876720
+- **TensorFold PR #184** (same go): EXL3 grouped experts launch one program a member tile in use (T13, §5ax); base
+  `pr-141-0.6.1`, head `jschmied:exl3-tile-list-061` `90fafa8`. Body `tf-pr-exl3-tile-list.md`.
+  https://github.com/ashhart/TensorFold/pull/184

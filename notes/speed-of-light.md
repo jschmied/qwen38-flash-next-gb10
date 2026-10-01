@@ -3151,4 +3151,11 @@ User: "write this as next todo", "start with it". The plan was decode-once reuse
 - **Next, still in the kernel:** decode reuse across row tiles needs more rows per expert per call (bigger windows:
   `group_kernel`'s shared memory caps them at 1,024 rows × 11 slots, #151); `group_kernel` is one block scanning all
   picks per expert (not yet measured).
-- Upstream: PR draft `notes/upstream/tf-pr-exl3-tile-list.md` — needs the user's go.
+- Upstream: **PR #184** (2026-10-01, base `pr-141-0.6.1`, `90fafa8`; 0.6.1 rebase adds #151's static-smem count and
+  a 16-bit tile field): https://github.com/ashhart/TensorFold/pull/184
+
+**§5au addendum (2026-10-01, BHCC2025's two-rank run on #141):** #180's `_is_solo` compared rank 0's plan `Shadow`
+with the real slot and never matched while planning, so on two ranks #180 changed only the warm-up order — their
+`cb5101d` vs `+ #180` spread (−5…+2 %) is run-to-run variation, and their lone-request gap (~11 % on `--parallel 8`)
+is the unfixed recapture. Fix `6ada832` (compare the slots behind the Shadows; idle-slot release allowed while planning,
+recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, reply posted. Two ranks not testable here.
