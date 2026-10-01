@@ -1591,3 +1591,8 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold PR #193** (2026-10-01 ~20:00, user: "191 is merged, do a folow up"; GitHub still showed #191 open):
   64-bit member offset in `grouped_kernel` (P2 from the #191 review), stacked on #191, `5727ea6`. Body
   `tf-pr-exl3-member-offset.md`. https://github.com/ashhart/TensorFold/pull/193
+- **TensorFold #180 fourth commit + reply + description** (2026-10-01 ~23:00, user: "yes"): plotarmordev's GPU-test
+  update `4a5385d` cherry-picked as `d2e651a` (their authorship) and pushed; 180 passed / 1 skipped here; reply
+  `tf180-reply-plotarmordev.md` https://github.com/ashhart/TensorFold/pull/180#issuecomment-5935298166
+- **TensorFold PR #195** (same go): the EXL3 down epilogue writes a prompt's bf16 rows (T13 lever 4b, −4…−5 % prefill,
+  bit-identical), stacked on #193. Body `tf-pr-exl3-bf16-rows.md`. https://github.com/ashhart/TensorFold/pull/195

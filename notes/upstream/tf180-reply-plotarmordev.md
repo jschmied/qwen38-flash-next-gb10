@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #180 reply to plotarmordev's two-Spark review (2026-10-01), together with
+POSTED 2026-10-01 (user: "yes"). ashhart/TensorFold #180 reply to plotarmordev's two-Spark review (2026-10-01), together with
 a push of their test commit (cherry-picked, their authorship).
 
 Thanks for the run and the test fix. I hadn't run `test_flashnext_tp_multi.py`, and you're right that it still
