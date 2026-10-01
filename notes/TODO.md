@@ -19,8 +19,8 @@ test: develop in a separate worktree, never switch that checkout while a server 
       threads than 16.
 - [x] ~~**T4**~~ CLOSED (§5ao): residency stays 100 %, lock 0.6 s at both shapes; the 22.2 s was the first start after the install (JIT build) (code reading: `pk.get` marks the n-gram
       file touched → whole-file `POSIX_FADV_DONTNEED`). Check first: majflt on the first request after start.
-- [~] T5 seed salt (`cbab428`: `TENSORFOLD_SEED_SALT`, docs + tests); T6 loader guards (`2d6c82f`: `_plain` + up-front NVFP4-outside-experts refusal); T7 32k draft vocabulary A/B; ~~T8 prompt chunk 2048 → 4096/8192~~ null on both checkpoints (§5aq).
-- [x] **T9 shortest-remaining-first prompt fill on CUDA** (v1 `a8f4ea8` + v2 `2e07da5`; §5aq: short-request TTFT 22–47 s → 6–8 s, long +11 s, exactness equal) — PR draft (with an age guard): 0.6.0 fills oldest first (`multi.py`
+- [x] T5 seed salt **PR #175**; T6 loader guards **PR #176**; (`2d6c82f`: `_plain` + up-front NVFP4-outside-experts refusal); T7 32k draft vocabulary A/B; ~~T8 prompt chunk 2048 → 4096/8192~~ null on both checkpoints (§5aq).
+- [x] **T9 shortest-remaining-first prompt fill on CUDA** (§5aq: 22–47 s → 6–8 s) — **PR #174** (2026-10-01) (with an age guard): 0.6.0 fills oldest first (`multi.py`
       `_pieces`), so in the long mix (§5an) 2k requests waited 630–715 s behind four 120k prompts; the Mac path
       already does "fewest tokens left first". Prototype + re-run a small mix (1 long + 4 short) first.
 - [x] **Prefill per-token cost** CLOSED as a scheduling/chunking lever (§5ap/§5aq: per-row cost; window 2048 −2 %, chunk sweep null). Remaining lever = number format → separate W4A4 question (§5an: EXL3 flat ~720 tok/s, ours ~1,300): nsys profile of one 8k prefill, then a

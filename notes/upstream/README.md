@@ -1507,6 +1507,19 @@ wait on one ~100 GB pull, and they share one serve.
     count. <https://github.com/MiaAI-Lab/Qwen3.8-Flash-Next-Single-DGX-Spark/pull/72#discussion_r4144309720>
   - Found on the way: `/opt/llm/serve-flashnext.sh` still exports `VLLM_QSA_DET_TOPK=${FN_DET_TOPK:-1}` (det-226 was
     fixed only in serve-fnmain.sh), so `FN_DET_TOPK=0` is not a stock arm there. Prod default unaffected; fix proposed.
+- **2026-10-01 ~09:45 — TensorFold: one issue + three PRs, one topic each (user's go: "post whats ready"; rule:
+  "one topic, one issue"):**
+  - #173 issue (question): opt-in FP4-activation prompt path for NVFP4 experts, on the `--prefill-fp8` model; profile
+    (experts 36.7 %), chunk/window sweeps null, FP8 prompts 1.14–1.19×. Draft `tf-issue-w4a4-prompts.md`.
+    <https://github.com/ashhart/TensorFold/issues/173>
+  - #174 PR `pr-fill-order`: requests admitted between a lone prompt's passes + fewest-rows-first with the Mac age guard;
+    short-request TTFT 22–47 s → 6–8 s (§5ap/§5aq), exactness 36/36 + 12/12, GPU multi tests 27/27.
+    Draft `tf-pr-fill-order.md`. <https://github.com/ashhart/TensorFold/pull/174>
+  - #175 PR `pr-seed-salt`: `TENSORFOLD_SEED_SALT` (rerun = replay, §5aj). Draft `tf-pr-seed-salt.md`.
+    <https://github.com/ashhart/TensorFold/pull/175>
+  - #176 PR `pr-loader-guards`: refuse quantized bytes in bf16 load paths + NVFP4 outside experts at the check.
+    Draft `tf-pr-loader-guards.md`. <https://github.com/ashhart/TensorFold/pull/176>
+  - Not posted: the n-gram gather PR (T1+T2) — waits for its server A/B in the end-of-work long mix.
 - **2026-09-30 21:33 — TensorFold#126 LANDED in 0.6.0** (closed as landed, not merged via the button): our commit
   `f338e0de` (authored by us) is on main under the release commit `0dcc1ff5`; release notes credit #126 and @jschmied.
   @ashhart's two changes on top: the block-FP8 `lm_head` stays on FP8G with its stored bytes (0.68 GB read a forward
