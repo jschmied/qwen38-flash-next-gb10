@@ -1,0 +1,6 @@
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 54.93 GiB within 103.77 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 7.2s; 21 decode graphs captured; prompt kernels warmed in 22.2s
+{"label": "bf16rows-b", "tokens": 8202, "prefill_s": 9.028, "wall_s": 10.308, "hash": "93f5ec6aecc9"}
+{"label": "bf16rows-b", "tokens": 32779, "prefill_s": 36.455, "wall_s": 38.091, "hash": "44d33ab594f8"}

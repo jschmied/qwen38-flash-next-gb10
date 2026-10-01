@@ -3220,3 +3220,11 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   rows, no per-window copy; same fp32 value rounded to nearest even. 8k 9.62/9.61 → 9.19/9.09 s, 32k 38.77/38.77 →
   37.20/36.72 s (−4.1…−5.5 %), tokens identical, 78 EXL3 GPU tests (incl. bf16-out == fp32.to(bf16)). Not posted.
   Cumulative 8k on 0.6.1: 11.42 → 10.27 (#184) → 9.40 (#191) → **9.14 s** (−20 %); window 2048 not stacked yet.
+- **Parked (inconclusive end to end, tokens identical):** window 2048 stacked on 4b (8k 8.92/9.21 → 8.76/8.62, 32k
+  36.08/37.27 → 36.01/34.86 — base arm drifted 3 %); 64-row tiles for the prompt's fp16 matmuls (`exl3-f16-prompt-tile`:
+  microbench bit-identical, −34…−50 % on the HC mixes; e2e 8k −1.7…−3.9 %, 32k sign flips). Both need ≥ 3 starts.
+- **#180 review by plotarmordev (2 Sparks, `5824347`):** merge-ready with one GPU test updated —
+  `tests/cuda/test_flashnext_tp_multi.py::test_a_lone_stream_retargets…` asserted the old slot swap (I had run
+  `test_flashnext_multi.py`, not this file). Their commit `4a5385d` (authorship kept) cherry-picked as `d2e651a`.
+  Two ranks: exactness all equal; #180 ≥ `cb5101d` in most cells; first lone request after start 67.0 → 108.7 tok/s;
+  remaining single-request gap on two ranks = the slot swap (`_relocate_kept` is one GPU only).
