@@ -10,10 +10,10 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 `notes/tensorfold-opportunities.md`; tf-venv on 0.6.0 (`~/git/tensorfold` branch `v060`, used by the live tf060
 test: develop in a separate worktree, never switch that checkout while a server runs). Baseline = the tf060 run
 (`tools/tf060/`, `notes/data/tf060/`). Order: measure, then an issue with numbers, then a PR; nothing posted without a go.
-- [~] **T1 EXL3 n-gram gather** (`1c73244`; §5ao: prompt sizes 1.8–2.5× faster warm but ~0.5 % of a chunk; decode sizes slower → v2: one row view per file; cold re-measure, one process per variant): thread it and gather whole rows (2-D row views) instead of flat byte offsets
+- [x] **T1 EXL3 n-gram gather** (`1c73244` + v2 `88c17d6`; §5ao re-measure: faster at every size, cold 3–20×, warm 2.7–6×, bytes equal) — server A/B in the end-of-work long mix: thread it and gather whole rows (2-D row views) instead of flat byte offsets
       (`exl3_pack.py:156-170`); same bytes out. Measure: gather µs for decode-size and prompt-size id sets, cold and
       warm; TTFT at 8k/30k on EXL3.
-- [~] **T2 cold-page queueing before the decode gather** (`911d9f6`; §5ao: warm cost nil (adaptive), forced +0.45…+1.9 ms; cold gain to re-measure) (WILLNEED + POPULATE_READ on the rows' pages, as vllm#58835);
+- [x] **T2 cold-page queueing before the decode gather** (`911d9f6`; §5ao: cold decode gathers 30–46× faster with T1, warm cost nil) — server A/B in the end-of-work long mix (WILLNEED + POPULATE_READ on the rows' pages, as vllm#58835);
       matters more in 0.6.0, where KV growth evicts the table. Measure: majflt/round and round time with the table cold.
 - [ ] **T3 prompt-row read-ahead on CUDA** (`ReadAhead` is Mac-only; CUDA `stage()` gathers synchronously); more gather
       threads than 16.

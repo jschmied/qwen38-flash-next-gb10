@@ -1,0 +1,10 @@
+07:17:06 == fp8 (--prefill-fp8)
+07:18:27 fp8 ready: prompts: FP8 activations;
+07:19:47 fp8 prefill rc=1
+07:20:09 == bf16 (--no-prefill-fp8)
+07:21:29 bf16 ready: prompts: bf16 activations;
+07:23:05 bf16 prefill rc=1
+07:23:27 == fp8b (--prefill-fp8)
+07:24:57 fp8b ready: prompts: FP8 activations;
+07:26:20 fp8b prefill rc=1
+== TFP8 DONE ==

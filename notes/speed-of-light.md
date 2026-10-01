@@ -2807,6 +2807,12 @@ checkpoint, `--context 262144 --parallel 8`, nothing else on the box. Hypothesis
   decoded 0.7–3.9 tok/s while others filled (one round per prompt pass). TensorFold's Mac path already fills
   "fewest tokens left first"; the CUDA one does not → TODO **T9**. Major faults over the run: 15,092.
 
+- **Prompt precision on our checkpoint** (user: "check this also"; FP8, bf16, FP8 starts after the §5an bf16 start,
+  8k/32k × 3 each, medians): FP8 prompts **8k 5.19 / 5.25 s vs bf16 6.00 / 6.08 s; 32k 21.36 / 22.07 s vs 25.09 /
+  25.50 s** → FP8 **1.14–1.19× faster** (each arm's starts within 1–3 %). Below the 1.2–1.5× hypothesised: only the
+  dense projections switch (experts, attention and the GDN chain do not). Even FP8 prompts leave our checkpoint at
+  ~2.0× vLLM's 8k TTFT. Accuracy cost not measured here (Flash Next on CUDA returns no logprobs, TF #108).
+
 ### 5ao. TensorFold n-gram work, first measurements: T4 closed, T2's warm cost nil, T1 helps prompts but costs decode, cold cells void
 
 Hypotheses `tools/tfple/HYPOTHESIS.md`; data `data/tfple/`. Branch `ple-gather` (worktree `~/git/tensorfold-ple`).
@@ -2829,3 +2835,25 @@ Hypotheses `tools/tfple/HYPOTHESIS.md`; data `data/tfple/`. Branch `ple-gather` 
   **0.6 s at 262144/8 and at 65536/4**. The 22.2 s in §5an was the first start after the 0.6.0 install, which built
   the CUDA extensions (nvcc) during the load; the likeliest reading is that the build's memory evicted the table, not
   a loader defect (not separately proven; the same shape no longer reproduces it).
+
+- **Re-measure, one fresh process per cell** (`gather_bench2.py`, 5 seeds a cell, 150/150 bytes equal; T1 v2 =
+  one row view per file). Medians, ms (0.6.0 → branch without the cold fill → branch with it):
+
+  | ids | cold | warm |
+  |---|---|---|
+  | 112 (one round, c=1) | 23.8 → 7.36 → **0.80** | 0.112 → 0.041 → 0.022 |
+  | 448 (c=4) | 95.9 → 29.1 → **2.27** | 0.255 → 0.087 → 0.037 |
+  | 896 (c=8) | 184.1 → 58.0 → **3.99** | 0.403 → 0.137 → 0.058 |
+  | 32,768 (a 2,048-token chunk) | 5,461 → 269 → 266 | 12.9 → 4.1 → 4.7 |
+  | 131,072 (an 8,192-token chunk) | 18,584 → 1,112 → 1,116 | 51.4 → 8.8 → 8.9 |
+
+  Against the hypothesis: **cold decode-size gathers 30–46× faster** with both changes (hypothesis 4–12×); T1 alone
+  is already 3.2× faster cold (hypothesis ≈ old: its views carry `MADV_RANDOM`, so a fault reads one page instead
+  of 0.6.0's default readahead window); **cold prompt chunks 17–20× faster** (hypothesis 5–15×); **warm**, T1 v2
+  is now faster than 0.6.0 at every size (2.7–6× ; v1's decode-size regression is gone). The warm t1t2 < t1 at
+  decode sizes is the extra warm-up gather t1t2 gets, not the fill.
+- **What it buys a server:** warm, almost nothing (a round's gather is 0.1 ms of ~13 ms; a chunk's 13 ms of
+  ~2.8 s). Cold, a lot: a decode round on a cold table drops from 24–184 ms to 1–4 ms of gather, and a cold
+  2,048-token chunk's gather from 5.5 s to 0.27 s. A table is cold when memory pressure has reclaimed it: our
+  checkpoint's table is not locked under 0.6.0 (§5an), and 0.6.0's KV growth takes memory from it by design. The
+  server-level A/B therefore belongs in the long mix on our checkpoint (a big suite, at the end).
