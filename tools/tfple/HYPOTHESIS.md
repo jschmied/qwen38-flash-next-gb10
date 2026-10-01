@@ -27,3 +27,11 @@ between the prefetch and the lock. Test: two stock 0.6.0 EXL3 starts with the ta
 - Expected: **(b)**: residency reaches ~100 % during the prefetch, then falls before the lock at 262144/8, and the lock
   takes > 10 s there; at 65536/4 it stays resident and locks in < 1 s. If residency falls right after layer 1 in both,
   it is (a).
+
+## Re-measure (gather_bench2.py, one fresh process per cell, own ids) — T1 v2 (one row view per file) + T2
+The first run's cold cells were void (§5ao: DONTNEED cannot evict pages the process still maps).
+- Warm, decode sizes (112/448/896): T1 v2 **≤ old** (one index per file again, row views); prompt sizes 1.8–2.5×
+  faster (as §5ao).
+- Cold, decode sizes: t1 ≈ old (serial faults either way, ~60 µs a page); **t1t2 4–12× faster** than both.
+- Cold, prompt sizes: t1/t1t2 **5–15× faster** than old (16 threads overlapping their faults).
+- Bytes equal in every cell.

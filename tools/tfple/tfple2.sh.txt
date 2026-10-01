@@ -1,0 +1,10 @@
+#!/bin/bash
+# T1 v2 + T2 re-measure: one fresh process per cell (gather_bench2.py). After tfp8b (no GPU timing beside it).
+R=/opt/llm/runners/results/tfple; P=/opt/llm/runtime/tf-venv/bin/python; L=/opt/llm/runners/tfple
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; SRC=/home/jschmied/git/tensorfold-ple/src
+while systemctl is-active -q tfp8b-chain; do sleep 30; done
+: > $R/gather2.jsonl
+for mode in cold warm; do for n in 112 448 896 32768 131072; do for v in old t1 t1t2; do for seed in 1 2 3 4 5; do
+  timeout 600 $P $L/gather_bench2.py $SRC $M $v $mode $n $((seed * 1000 + n)) >> $R/gather2.jsonl 2>> $R/gather2.err
+done; done; done; done
+echo "$(date +%T) == TFPLE2 DONE ==" >> $R/chain.txt
