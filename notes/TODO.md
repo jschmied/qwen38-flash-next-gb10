@@ -25,6 +25,7 @@ test: develop in a separate worktree, never switch that checkout while a server 
       already does "fewest tokens left first". Prototype + re-run a small mix (1 long + 4 short) first.
 - [x] **Prefill per-token cost** CLOSED as a scheduling/chunking lever (§5ap/§5aq: per-row cost; window 2048 −2 %, chunk sweep null). Remaining lever = number format → separate W4A4 question (§5an: EXL3 flat ~720 tok/s, ours ~1,300): nsys profile of one 8k prefill, then a
       `PREFILL_ROWS` 2048/4096/8192 sweep (T8). Fast cells only (8k/32k); the full 2k–65k sweep at the end.
+- [~] **mtpfp8 on TensorFold** (§5ar): branch `pr-mtp-fp8` `e44d367` — FP8 MTP experts dequantized → drafter; real weights load, replies identical, MTP 86/93; PR drafted (`tf-pr-mtp-fp8.md`), needs a go
 - [ ] Deferred big suites (user: "fast tests first"): our checkpoint's long mix; full `prefill_cold` sweeps; SWE.
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.

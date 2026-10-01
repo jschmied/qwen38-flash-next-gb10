@@ -2946,3 +2946,12 @@ prompts (64 tokens) and `/health` draft counters. Predictions `tools/tfzoo/HYPOT
   (draft only). `mtpfp8`'s refusal could name its offending layers the same way (a separate, minor topic).
 - Not covered: combinations nobody built (e.g. MXFP8 dense + NVFP4 head); TensorFold's tiny synthetic checkpoint
   generator could cover every per-component format as a GPU unit test.
+- **`mtpfp8` fixed on branch `pr-mtp-fp8`** (`e44d367`, user: "can we fix mtpfp8?"): FP8 MTP experts (per tensor, per
+  row or 128×128 blocks) are dequantized to bf16 at load and re-quantized as TensorFold already does for bf16 drafter
+  experts; FP8 in the main experts stays refused; the check accepts FP8 on MTP expert layers only. Real weights:
+  loads, the same three greedy replies, MTP **86/93** (vs `mtpfp4` 86/99; hypothesis ±5 pp, +5.6 — three short
+  prompts, read as "no worse"); `mtpfp4` on the branch identical to stock. Tiny-checkpoint test: FP8 experts draft and
+  accept exactly as stacked bf16 experts holding the same dequantized values, and drafted == serial (greedy and
+  sampled, depths 2/4, confidence 0/0.3). A first run of that test failed on my own bug (drafting without
+  re-prefilling after the serial run), not the change. Covers NVIDIA's block-FP8 MTP layout in code; not measured
+  (we hold no such checkpoint).

@@ -10,3 +10,6 @@
 09:54:15 pr176-mtpfp4-gdn4 NOT SERVING: 
 09:57:26 pr176-mtpfp4 LOADED
 == TFZOO DONE ==
+10:27:09 mtpfp8br-mtpfp8 LOADED
+10:28:52 mtpfp8br-mtpfp4 LOADED
+== TFZOO2 DONE ==
