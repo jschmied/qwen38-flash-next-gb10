@@ -6,6 +6,24 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 
 ## Current (2026-09-28) — read this first; the sections below are older
 
+**TensorFold work (user 2026-10-01: "write this in todo and start work")** — list and evidence in
+`notes/tensorfold-opportunities.md`; tf-venv on 0.6.0 (`~/git/tensorfold` branch `v060`, used by the live tf060
+test: develop in a separate worktree, never switch that checkout while a server runs). Baseline = the tf060 run
+(`tools/tf060/`, `notes/data/tf060/`). Order: measure, then an issue with numbers, then a PR; nothing posted without a go.
+- [ ] **T1 EXL3 n-gram gather**: thread it and gather whole rows (2-D row views) instead of flat byte offsets
+      (`exl3_pack.py:156-170`); same bytes out. Measure: gather µs for decode-size and prompt-size id sets, cold and
+      warm; TTFT at 8k/30k on EXL3.
+- [ ] **T2 cold-page queueing before the decode gather** (WILLNEED + POPULATE_READ on the rows' pages, as vllm#58835);
+      matters more in 0.6.0, where KV growth evicts the table. Measure: majflt/round and round time with the table cold.
+- [ ] **T3 prompt-row read-ahead on CUDA** (`ReadAhead` is Mac-only; CUDA `stage()` gathers synchronously); more gather
+      threads than 16.
+- [ ] **T4 EXL3 startup `release()` may drop the prefetched table pages** (code reading: `pk.get` marks the n-gram
+      file touched → whole-file `POSIX_FADV_DONTNEED`). Check first: majflt on the first request after start.
+- [ ] T5 server-side seed salt for evals (rerun = replay today); T6 loader guards (refuse, don't cast, unknown
+      quantized bytes); T7 32k draft vocabulary A/B; T8 prompt chunk 2048 → 4096/8192 + grouped raster in `_b16mm`.
+- [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
+      checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
+
 **Prod config** (service stopped until the user says "up"): vLLM main `1ea7c63f4` + overlay
 (`tools/main/main1ea7-prod-overlay.diff`, regenerated 09-27) incl. RecoverSSM as vllm#58863 with the align boundary fix,
 MTP K=5 + probabilistic drafting over the 32k NVFP4 draft slice, `--block-size 1728`, `--prefix-match-unit 64`
