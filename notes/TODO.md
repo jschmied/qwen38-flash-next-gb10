@@ -31,7 +31,14 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [x] **T11 lone-stream graph replay** — already in the 0.6.1 port (`multi_solo.py`); measured there it recaptured on
       every slot resize (+35 %/token, §5au); **fix `solo-graph-keep` `153817c`** on our fork, all arms = S1 / 0.6.0.
       Upstream: **PR #180** + comment on #141 (posted 2026-10-01).
-- [ ] **T12 graphs for c ≥ 2 rounds** (§5at ~9–10 %, scoped §5au): persistent round tables, table-driven sparse
+- [ ] **T12 graphs for c ≥ 2 rounds** — scoped §5ba (2026-10-01): coarse key required (fine key unique per round;
+      coarse 51 / 30 / 33 keys at c=4), capture only repeated keys; ≈ 9–10 % steady state. **Pending user decision:**
+      (1) short TF issue asking the maintainer whether they'd take it / are on it; (2) groundwork (persistent tables,
+      table-driven sparse select) can start locally either way.
+- [ ] **T13 follow-ups pending user decision:** PR "window 2048" stacked on #195 (established −3.7 % 8k / −6.0 % 32k,
+      branch `exl3-stack-win`); fp16 prompt tile only helps on top of it (~2 %, branch `exl3-f16-win`) → separate PR.
+      Closed: lever 3 (slower, §5ax), decode levers ≈ 5 % at most (§5az).
+- [ ] ~~T12 original line~~ (§5at ~9–10 %, scoped §5au): persistent round tables, table-driven sparse
       select, key (rows, streams, parity, context bucket); would also make the solo copy-in unnecessary. On 0.6.1.
 - [x] ~~T11 original~~ (§5at): a `--parallel` > 1 server serves one request eager,
       +10.9…+12.7 % per token vs `--parallel 1`; port qwen3_5_moe's "a lone stream replays graphs" (`multi.py:44,225-233`).

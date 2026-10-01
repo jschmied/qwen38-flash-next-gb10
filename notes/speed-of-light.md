@@ -3259,3 +3259,22 @@ DeltaNet chain 3.5 %. My first "8× above the byte floor" estimate assumed 11 ex
   prompt tile alone **not** established (sign flips); both together −5.6 % (8k) / −6.5 % (32k), and both-vs-window is
   −1.9/−2.2/−2.0 % at 8k (−0.6/−2.9/−2.9 at 32k) — the tile helps on top of the window. Branches `exl3-stack-win`
   (window) and `exl3-f16-win` (both), not posted. Cumulative 8k on 0.6.1: 11.42 → ~8.43 s (−26 %).
+
+### 5ba. T12 scoping: concurrent-round graphs need a coarse key, and pay only in long-lived servers
+
+`tools/tfhost/shape_probe.py` (wraps `gdn_multi.Tables` / `attn_multi.Step`, no behaviour change; #180 branch, EXL3,
+512 tokens a stream, code + prose prompts; `data/tfhost/shapes.txt`):
+
+| | c=2 (145 rounds) | c=4 (229 rounds) |
+|---|---|---|
+| DeltaNet tables, fine key (per-stream window + fold tuples) | 124 distinct | 212 |
+| DeltaNet tables, coarse key (rows, streams, parity, folds, bucket) | 20 | 51 |
+| attention steps, coarse (streams, rows, bucket) | 10 | 30 |
+| MTP draft steps, coarse | 11 (627 steps) | 33 (1,031 steps) |
+
+- The fine key is unique almost every round → graphs must take every per-stream layout from device tables (round
+  tables persistent + one staging copy; a table-driven sparse select: `_scores` reading `pooled` per row from
+  `Step.ptrs`, `_select` once over all rows; tree `max_rows` fixed at depth + 1).
+- Even coarse, a short c=4 run meets 51 + 30 + 33 keys; at ~130 ms a capture that is more than ~2.5 ms × rounds saved,
+  so capture a key only after it has repeated (eager until then). Steady-state gain ≈ 9–10 % a round at c ≥ 2 (§5at).
+- Effort 2–3 days on code 0.6.1 is reworking. Proposed: ask the maintainer first (issue draft, not posted).
