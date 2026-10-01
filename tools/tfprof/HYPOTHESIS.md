@@ -25,3 +25,13 @@ then `bench_concurrent --alone --serial --levels 1,2` on the branch.
 - Branch: short requests' TTFT **2.5–8 s** (their own ~2.8 s prefill plus at most one other pass); the long prompt's
   TTFT grows by ≤ 4 × ~3 s.
 - Exactness on the branch: all alone/serial hashes equal.
+
+## Round 2 (after §5ap), written before the runs
+- **T9 v2** (branch `ple-gather` `2e07da5`: a waiting request stops a lone prompt's passes), same small mix as §5ap:
+  short requests' TTFT **2.5–8 s** (stock §5ap: 22–47 s); the 32k prompt's TTFT grows by ≤ 4 × ~3 s; exactness at
+  levels 1, 2 all equal.
+- **EXL3 `MOE_WINDOW` 512 / 1024 / 2048** (`prefill-rows-exp` = branch + TF#151's 96 KB smem attribute +
+  `TF_MOE_WINDOW`, own extension cache): if the grouped kernel's cost is per call (weight decode per window), 512 →
+  TTFT **+40…+60 %**, 2048 → **−20…−30 %** vs 1024; if per row, all within ±5 %. Greedy reply identical in all arms.
+- **Our checkpoint, `TF_PREFILL_ROWS` 2048 / 4096 / 8192** (NVFP4 experts run per chunk): 4096 **−10…−20 %**, 8192
+  **−15…−25 %** TTFT if per-chunk weight reads dominate; greedy reply identical.
