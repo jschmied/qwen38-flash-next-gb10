@@ -2437,3 +2437,13 @@ Same ideas, built independently:
   `FORCE_UNSAFE_MOE=1`. They do not apply the fix.
 
 Possibly useful to us: their decode-only HC kernel for M ≤ 32 (we already run FP8 dense, which they just made default). Nothing posted.
+
+## TensorFold #203: Jetson AGX Thor (sm_110) Flash-Next NVFP4 prompt path (2026-10-01, mcclanahanaman)
+
+0.6.0 on Thor (datacenter Blackwell, tcgen05): stock prefill 926 / 899 / 798 tok/s at 8k / 32k / 128k, decode
+36.7 tok/s (vLLM FP8: 38.4 decode, 2,101 tok/s prefill at 32k). Their local path: routed NVFP4 experts on FlashInfer's
+CuTe-DSL `Sm100W4A16GroupedGemmKernel` (NVFP4 decoded to bf16 in smem, bf16 tcgen05 MMAs) +40 % prefill; dense prompt
+GEMMs as cuBLAS bf16 over exact weights (MXFP8 is exact in bf16) → +79 % total; 6/10 outputs byte-identical, 4 diverge
+at bf16 ties. For GB10 (sm_121, mma.sync only) the tcgen05 kernels do not apply; the "dense prompt GEMMs on cuBLAS bf16
+over exact weights" idea may apply to our NVFP4 checkpoint's block-FP8 dense layers (`qmmf_kernel` 18.5 % of a prompt,
+§5ap) — untested. Not ours to answer.
