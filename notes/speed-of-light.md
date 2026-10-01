@@ -2773,5 +2773,5 @@ Firefox at 1280×800, frames at 4 and 12 s. Hypothesis `tools/pasture/HYPOTHESIS
   across both prompts vLLM produced the same "dark page, one shape clipped top-left" failure twice and TensorFold once
   a page without fish, so 2 of 4 vs 1 of 4 broken renders over the two prompts, still n too small to rank.
 - TensorFold thinks longer here (33–44k thinking tokens vs 20–30k) and still finishes faster (70–73 vs 47–49 tok/s,
-  one request each). Page: https://claude.ai/artifact/9KEoopw1XJzh7fyjiMxCXo (pasture section), LAN
+  one request each). Page: https://claude.ai/artifact/UX283L4b7bkk2S7ehSjnWM (companion to the fish page), LAN
   http://10.0.0.133:8765/. Data `data/pasture/`.
