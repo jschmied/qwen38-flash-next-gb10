@@ -2918,3 +2918,31 @@ Hypotheses `tools/tfprof/HYPOTHESIS.md` "Round 2"; data `data/tfsweep2/`. One st
   TFLOPS, §5ap); batching more rows per call or per chunk does not change it. What is left is how each kernel
   computes a row: W4A16/bf16 MMAs and the EXL3 trellis decode per row-tile, against vLLM's FP4 tensor cores (W4A4).
   That is the opt-in W4A4 question (its own issue), not a scheduling or chunking change.
+
+### 5ar. Quant zoo on TensorFold: no silent garbage anywhere; NVFP4 dense layers crash late on stock, #176 refuses them up front
+
+User: "we have a zoo of different quants for some components. we could try if all combinations are handled
+properly". Every Flash-Next variant on disk, one start each, `--context 32768 --parallel 1`, three fixed greedy
+prompts (64 tokens) and `/health` draft counters. Predictions `tools/tfzoo/HYPOTHESIS.md`; data `data/tfzoo/`.
+
+| variant (what differs) | stock 0.6.0 | PR #176 branch |
+|---|---|---|
+| `fp8head` (block-FP8 dense + head, NVFP4 experts, bf16 MTP) | loads; replies sane; MTP 87/95 | — |
+| `mtpfp4` (+ NVFP4 MTP experts) | loads; sane; 86/99 | loads; identical replies and counts |
+| `mtpfp4-gdnbf16` (bf16 DeltaNet) | loads; sane; 87/94 | — |
+| `mtpfp4-plebf16` (bf16 n-gram table) | loads; sane; 86/99 | — |
+| `exl3` (EXL3 3.05 bpw) | loads; sane; 84/102 | — |
+| `mtpfp8` (per-tensor FP8 MTP experts) | **refused at the check** (lists the accepted formats; does not name the FP8 layers) | — |
+| `mtpfp4d` (NVFP4 MTP dense + fc) | **load error after ~1.5 min**: `torch.cat` shape mismatch (1280 vs 2560) in `b16_from_rows` | **refused at the check**: "NVFP4 in the routed experts only; … 20 other layer(s), e.g. model.mtp.fc_embedding" |
+| `mtpfp4-gdn4` (W4A16 NVFP4 DeltaNet) | **load error**: same shape mismatch | **refused at the check**: "… 108 other layer(s), e.g. …layers.0.linear_attn.in_proj_qkv" |
+
+- **Every prediction held** (the acceptance band was set too low: 82–92 % on these short greedy prompts, not 55–75 %).
+  All five loading variants give the same three greedy replies (primes, Paris, a factorial function).
+- **No variant loads and decodes garbage silently.** The packed NVFP4 dense weights do not survive as far as decoding:
+  their halved K (`K/2` bytes a row) breaks a `torch.cat` while the stacks are built, so stock fails loudly, but late
+  (after loading most weights) and with a message about tensor sizes, not formats.
+- **PR #176's refusals are right, not harsher than needed:** stock does not serve `mtpfp4d` or `mtpfp4-gdn4` at all,
+  so the branch only turns a late shape crash into an immediate refusal that names a layer. Worth a line on #176
+  (draft only). `mtpfp8`'s refusal could name its offending layers the same way (a separate, minor topic).
+- Not covered: combinations nobody built (e.g. MXFP8 dense + NVFP4 head); TensorFold's tiny synthetic checkpoint
+  generator could cover every per-component format as a GPU unit test.

@@ -1,0 +1,12 @@
+09:44:30 stock-fp8head LOADED
+09:46:20 stock-mtpfp4 LOADED
+09:48:04 stock-mtpfp4-gdnbf16 LOADED
+09:49:58 stock-mtpfp4-plebf16 LOADED
+09:50:21 stock-mtpfp8 NOT SERVING: 
+09:51:47 stock-mtpfp4d NOT SERVING: RuntimeError: Sizes of tensors must match except in dimension 0. Expected size 1280 but got size 2560 for tensor number 3 in the list. 
+09:52:07 stock-mtpfp4-gdn4 NOT SERVING: RuntimeError: Sizes of tensors must match except in dimension 0. Expected size 1280 but got size 2560 for tensor number 2 in the list. 
+09:53:32 stock-exl3 LOADED
+09:53:55 pr176-mtpfp4d NOT SERVING: 
+09:54:15 pr176-mtpfp4-gdn4 NOT SERVING: 
+09:57:26 pr176-mtpfp4 LOADED
+== TFZOO DONE ==

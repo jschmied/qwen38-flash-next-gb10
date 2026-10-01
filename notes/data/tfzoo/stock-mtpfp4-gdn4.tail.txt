@@ -1,0 +1,4 @@
+  File "/home/jschmied/git/tensorfold/src/tensorfold/families/qwen4_exp/cuda/bf16.py", line 167, in stack_b16
+    return b16_from_rows(torch.cat(rows, dim=0))
+                         ^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Sizes of tensors must match except in dimension 0. Expected size 1280 but got size 2560 for tensor number 2 in the list.
