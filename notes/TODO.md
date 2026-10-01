@@ -10,10 +10,10 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 `notes/tensorfold-opportunities.md`; tf-venv on 0.6.0 (`~/git/tensorfold` branch `v060`, used by the live tf060
 test: develop in a separate worktree, never switch that checkout while a server runs). Baseline = the tf060 run
 (`tools/tf060/`, `notes/data/tf060/`). Order: measure, then an issue with numbers, then a PR; nothing posted without a go.
-- [x] **T1 EXL3 n-gram gather** (`1c73244` + v2 `88c17d6`; §5ao re-measure: faster at every size, cold 3–20×, warm 2.7–6×, bytes equal) — server A/B in the end-of-work long mix: thread it and gather whole rows (2-D row views) instead of flat byte offsets
+- [x] ~~**T1 EXL3 n-gram gather**~~ micro 3–46× but **server null** (§5as) — no PR: thread it and gather whole rows (2-D row views) instead of flat byte offsets
       (`exl3_pack.py:156-170`); same bytes out. Measure: gather µs for decode-size and prompt-size id sets, cold and
       warm; TTFT at 8k/30k on EXL3.
-- [x] **T2 cold-page queueing before the decode gather** (`911d9f6`; §5ao: cold decode gathers 30–46× faster with T1, warm cost nil) — server A/B in the end-of-work long mix (WILLNEED + POPULATE_READ on the rows' pages, as vllm#58835);
+- [x] ~~**T2 cold-page queueing**~~ server null on our checkpoint (§5as: +20 % faults, ~2 % slower) — no PR (WILLNEED + POPULATE_READ on the rows' pages, as vllm#58835);
       matters more in 0.6.0, where KV growth evicts the table. Measure: majflt/round and round time with the table cold.
 - [ ] **T3 prompt-row read-ahead on CUDA** (`ReadAhead` is Mac-only; CUDA `stage()` gathers synchronously); more gather
       threads than 16.
@@ -26,7 +26,7 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [x] **Prefill per-token cost** CLOSED as a scheduling/chunking lever (§5ap/§5aq: per-row cost; window 2048 −2 %, chunk sweep null). Remaining lever = number format → separate W4A4 question (§5an: EXL3 flat ~720 tok/s, ours ~1,300): nsys profile of one 8k prefill, then a
       `PREFILL_ROWS` 2048/4096/8192 sweep (T8). Fast cells only (8k/32k); the full 2k–65k sweep at the end.
 - [~] **mtpfp8 on TensorFold** (§5ar): branch `pr-mtp-fp8` `e44d367` — FP8 MTP experts dequantized → drafter; real weights load, replies identical, MTP 86/93; **PR #178** (2026-10-01)
-- [ ] Deferred big suites (user: "fast tests first"): our checkpoint's long mix; full `prefill_cold` sweeps; SWE.
+- [x] Deferred big suites: SWE dropped (user), fill-order big mix and FP8 full sweep dropped ("only important tests"); gather A/B done (§5as)
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
 

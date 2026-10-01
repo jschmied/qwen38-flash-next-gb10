@@ -1,0 +1,6 @@
+10:50:16 mix-stock ready: n-gram tables read in 12.7s
+10:57:15 mix-stock rc=0
+11:00:18 mix-gather ready: n-gram tables read in 12.1s
+11:07:23 mix-gather rc=0
+11:07:27 stopped after the gather arm (user: only important tests)
+== TFBIG DONE ==

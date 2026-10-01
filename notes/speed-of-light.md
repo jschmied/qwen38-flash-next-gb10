@@ -2955,3 +2955,30 @@ prompts (64 tokens) and `/health` draft counters. Predictions `tools/tfzoo/HYPOT
   sampled, depths 2/4, confidence 0/0.3). A first run of that test failed on my own bug (drafting without
   re-prefilling after the serial run), not the change. Covers NVIDIA's block-FP8 MTP layout in code; not measured
   (we hold no such checkpoint).
+
+### 5as. The n-gram gather work (T1 + T2) does nothing for a server under load: no PR
+
+User: "skip queued swt ... run the other tests", then "do only important tests": only the gather A/B ran (the
+fill-order big mix and the full FP8-prompt sweep were dropped: #174 is accepted, and the maintainer declined FP8
+prompts for Flash Next). Our checkpoint `mtpfp4`, `--context 262144 --parallel 8`, `longmix.py` (4 × ~120k prompts at
+t=0, 8 × 2k every 15 s), one start per arm. Predictions `tools/tfbig/HYPOTHESIS.md`; data `data/tfbig/`.
+
+| | stock 0.6.0 | `pr-ngram-gather` (T1 + T2) |
+|---|---|---|
+| errors / out-of-memory stops | 0 / 0 | 0 / 0 |
+| MemAvailable minimum | 21.8 GiB | 20.9 GiB |
+| major faults over the run | **1,114,573** | **1,339,940** |
+| the four long prompts' first tokens | 98 / 197 / 294 / 392 s | 100 / 202 / 301 / 400 s |
+| the short requests' first tokens | 297–389 s | 306–397 s |
+| short requests' decode | 3.2–24.2 tok/s | 3.6–26.0 tok/s |
+
+- **Stock against its prediction:** no stops, MemAvailable far above the reserve, short requests 297–389 s (predicted
+  250–400 s), and the table faults heavily (1.1 M major faults, predicted ≥ 10k): on this checkpoint the 47.7 GiB
+  FP8 table is not locked and does not stay resident beside the weights and growing caches.
+- **T1 + T2: null to slightly worse** (~2 % later first tokens, +20 % major faults, one start each). T1 cannot act on
+  this checkpoint (FP8 table, not EXL3); T2's fill touches whole pages for decode-sized gathers but the faults come from
+  the prompt gathers (~7.7 M row lookups for 480k prompt tokens), which the pool already threads. The micro-benchmark
+  gains (§5ao: cold decode gathers 30–46×) do not reach a server, so **no gather PR** — the branch stays local.
+- The real cost here is the table not staying resident (1.1 M faults in 400 s). Locking it would need ~48 GiB that this
+  checkpoint's shape does not leave; a smaller table (NVFP4, 28.6 GiB, as hibrid48) or the EXL3 5-bit one (30 GiB,
+  locked in §5an) is the lever, not the gather.
