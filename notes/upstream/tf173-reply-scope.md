@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #173 (closed) comment (2026-10-02).
+SUPERSEDED by PR #211 — not posted. ashhart/TensorFold #173 (closed) comment (2026-10-02).
 
 Thanks. As far as I can read 0.6.1, `--precision checkpoint` reaches the 27B only: `precision.mode()` and
 `tensorfold.cuda.nvfp4.checkpoint` are used by `families/qwen3_5` alone, and Flash Next's routed NVFP4 experts still

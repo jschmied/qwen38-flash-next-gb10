@@ -37,6 +37,8 @@ test: develop in a separate worktree, never switch that checkout while a server 
       coarse 51 / 30 / 33 keys at c=4), capture only repeated keys; ≈ 9–10 % steady state. **Pending user decision:**
       (1) short TF issue asking the maintainer whether they'd take it / are on it; (2) groundwork (persistent tables,
       table-driven sparse select) can start locally either way.
+- [x] **T15 Flash Next routed NVFP4 experts in the checkpoint math → PR #211** (2026-10-02, §5bd): prompts −9…−10 %,
+      decode level, ppl +1.27 % vs full. Watch for review.
 - [x] **T13 window 2048 posted as PR #207** (2026-10-02, stacked on #195). fp16 prompt tile (`exl3-f16-win`) held:
       ~2 % on top at 8k, within the base spread at 32k — only with a 4th+ round or a user ask.
       Closed: lever 3 (slower, §5ax), decode levers ≈ 5 % at most (§5az).

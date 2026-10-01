@@ -1610,3 +1610,8 @@ wait on one ~100 GB pull, and they share one serve.
 - **TF #173 closed by the maintainer** (2026-10-01 20:21): "0.6.1 runs NVFP4 checkpoints in their own math by default
   (`--precision checkpoint`)". Checked 0.6.1 (`17c73e1`): only `families/qwen3_5` (27B) uses it; Flash Next's routed
   experts still run `nvfp4_expert_kernel` on bf16 rows. Reply draft `tf173-reply-scope.md` (scope question), NOT posted.
+- **TensorFold PR #211** (2026-10-02, user: "I would just post proposed pr", after #173 closed with 0.6.1's
+  `--precision checkpoint`, which covered the 27B only): Flash Next's routed NVFP4 experts in the checkpoint's math
+  (FP4 x FP4), base main, `99ccde3`. Prompts −8.7…−9.9 % (8k/32k, 3 rounds), decode −0.6 % (8 prompts), quality vs
+  full KL 0.038 / top-1 95.6 % / ppl +1.27 %; tests/cuda 1,208 passed. Draft `tf-pr-fp4-experts.md` (§5bd).
+  Not posted: the #173 scope-question draft (superseded by the PR). https://github.com/ashhart/TensorFold/pull/211
