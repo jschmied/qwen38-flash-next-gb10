@@ -2414,3 +2414,26 @@ vLLM v0.30.0; lists `Qwen4ExpForConditionalGeneration`, but its qualification ta
   measurement taken on the NVFP4 experts; RecoverSSM/F4/HC fusion are independent of the expert format.
 - **Verdict:** not our route. If EXL3 in vLLM becomes the plan, port TensorFold's EXL3 CUDA kernels (MIT, row-exact,
   measured faster on this model) as a vLLM quantization method instead, after the EXL3 quality check (TODO/§5aj).
+
+## sfxnz/Qwen3.8-Flash-Next-NVFP4-vLLM-2x-DGX-Spark — does it carry our code? (2026-10-01, user: "did he include our code?")
+
+TP=2 cookbook for `nvidia/Qwen3.8-Flash-Next-NVFP4` on two Sparks, MIT; five big commits pushed 2026-10-01 07:00 UTC
+(v0.30.0 image + overlay set). Checked at `d66a95e1`: clone, grep for our name/repo/PR numbers, function-name
+intersection (577 of ours vs 899 of theirs), provenance headers (every overlay carries `upstream_PR`).
+
+**No code of ours.** No mention of our repo or login. The 24 shared function names are stock vLLM functions both
+overlay sets copy, plus generic ones (`mcnemar`, `summarize`). Their credits go to upstream PRs (#55375, #56067),
+FR-Spec, quickreduce, and their own "DeepSeek-V4.1 sibling" repo.
+
+Same ideas, built independently:
+- **HC fusion (their K5):** three Triton kernels, decode only (M ≤ 32), split-K down GEMM with fixed-order reduction.
+  Ours (`FN_HCFUSE`, §5aa) targets prefill (fused from 128 tokens). Different regimes, so they could stack.
+- **Draft head:** reduced-vocab head (their L1b: 131k/164k, FR-Spec style, greedy only, refuses probabilistic
+  drafting; off by default) and a load-time FP8 per-row draft head (L1b′, +12–14 % c=1). Ours: 32k slice
+  (det-135) and the NVFP4 draft-head slice (prod 09-24), with probabilistic drafting.
+- **Lazy GDN commit (their K3, −7.6 % c=8, bit-exact):** the same deferred-commit idea as our RecoverSSM port. Their
+  K3.md says RecoverSSM is "Kimi-KDA only", so they have not seen vllm#58863 (open), which extends it to GDN/Qwen4Exp.
+- **#57946** (ours, open) is cited only as a crash report: `run.sh` refuses `MOE_BACKEND=b12x` unless
+  `FORCE_UNSAFE_MOE=1`. They do not apply the fix.
+
+Possibly useful to us: FP8 dense as default (+27 % prose c=1), decode-only HC kernel for M ≤ 32. Nothing posted.
