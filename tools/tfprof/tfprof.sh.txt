@@ -1,0 +1,13 @@
+#!/bin/bash
+# nsys profile of one cold 8k prefill per checkpoint (TensorFold 0.6.0 stock), then kernel/API summaries.
+R=/opt/llm/runners/results/tfprof; mkdir -p $R; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfprof; SRC=/home/jschmied/git/tensorfold/src
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for name in exl3:/opt/llm/models/qwen38-flash-next-exl3-3.05bpw mtpfp4:/opt/llm/models/qwen38-flash-next-mtpfp4; do
+  tag=${name%%:*}; M=${name#*:}; memok
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext HOME=/root timeout 1800 /usr/local/bin/nsys profile -o $R/$tag --force-overwrite=true \
+    --trace=cuda,nvtx,osrt --capture-range=cudaProfilerApi --capture-range-end=stop --sample=none --cpuctxsw=none \
+    $T/bin/python $L/prefill_profile.py $SRC $M 8192 > $R/$tag-run.json 2> $R/$tag-run.err
+  echo "$(date +%T) $tag rc=$? $(tail -1 $R/$tag-run.json)" >> $R/chain.txt
+  /usr/local/bin/nsys stats -r cuda_gpu_kern_sum,cuda_api_sum,cuda_gpu_mem_time_sum -f csv -o $R/$tag $R/$tag.nsys-rep >> $R/chain.txt 2>&1
+done
+echo "== TFPROF DONE ==" >> $R/chain.txt
