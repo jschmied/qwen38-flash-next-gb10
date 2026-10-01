@@ -1554,3 +1554,9 @@ wait on one ~100 GB pull, and they share one serve.
   passed / 10 failed, the same 10 metadata-order cases failing without our files (venv older than main's test file);
   the 4 pinned-prefetch cases that fail on the old head pass. #58439 → `6af74baa5d`, #58835 → `957e1dbef7`
   (force-with-lease); both no longer in conflict.
+- **TensorFold PR #180** (2026-10-01 ~13:35, user: "post short comment on 141, can we create PR for current 0.6.1?"):
+  base `pr-141-0.6.1`, head `jschmied:solo-graph-keep` `6a3a8b1` — the lone stream's graph slot keeps its rows (0.6.1
+  port recaptured on every resize, +35 %/token, §5au). Body `tf-pr-solo-graph-keep.md`.
+  https://github.com/ashhart/TensorFold/pull/180
+- **TensorFold #141 comment** (2026-10-01 ~13:36, same go): short finding + pointer to #180. Text
+  `tf141-solo-recapture.md`. https://github.com/ashhart/TensorFold/pull/141#issuecomment-5930174017

@@ -30,7 +30,7 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [x] ~~**T10 GPU-side draft chain**~~ CLOSED (§5at): serial graph path 97.6 % GPU-busy, host ≤ 0.29 ms/token → ≤ 2.4 %.
 - [x] **T11 lone-stream graph replay** — already in the 0.6.1 port (`multi_solo.py`); measured there it recaptured on
       every slot resize (+35 %/token, §5au); **fix `solo-graph-keep` `153817c`** on our fork, all arms = S1 / 0.6.0.
-      Upstream: comment on #141 drafted (`notes/upstream/tf141-solo-recapture.md`), needs the user's go.
+      Upstream: **PR #180** + comment on #141 (posted 2026-10-01).
 - [ ] **T12 graphs for c ≥ 2 rounds** (§5at ~9–10 %, scoped §5au): persistent round tables, table-driven sparse
       select, key (rows, streams, parity, context bucket); would also make the solo copy-in unnecessary. On 0.6.1.
 - [x] ~~T11 original~~ (§5at): a `--parallel` > 1 server serves one request eager,
