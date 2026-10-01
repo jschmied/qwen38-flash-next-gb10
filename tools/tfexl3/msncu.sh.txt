@@ -1,0 +1,8 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3
+export HOME=/root TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-ms
+/usr/local/cuda/bin/ncu -k regex:grouped_kernel -c 4 --section SpeedOfLight --section Occupancy --section LaunchStats \
+  --section WarpStateStats --metrics smsp__inst_executed.sum,smsp__inst_executed_pipe_tensor.sum,l1tex__t_bytes.sum,lts__t_bytes.sum \
+  -o $R/ms --force-overwrite /opt/llm/runtime/tf-venv/bin/python $L/ms_ncu.py /home/jschmied/git/tf-exl3-ms/src > $R/msncu.log 2>&1
+/usr/local/cuda/bin/ncu -i $R/ms.ncu-rep --page details --csv > $R/ms-details.csv 2>&1
+echo "== MSNCU DONE ==" >> $R/msncu.log

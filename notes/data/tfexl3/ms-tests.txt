@@ -1,0 +1,5 @@
+.............................................sssssssssssssssssssssssssss [ 55%]
+ssssssssssssssssss...........................ssssss......s               [100%]
+78 passed, 52 skipped in 61.34s (0:01:01)
+tests rc=0
+== MS DONE ==

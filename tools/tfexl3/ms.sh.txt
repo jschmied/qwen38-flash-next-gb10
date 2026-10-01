@@ -1,0 +1,12 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+export HOME=/root PYTHONUNBUFFERED=1
+cd /home/jschmied/git/tf-exl3-ms && TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-ms PYTHONPATH=$PWD/src timeout 3000 \
+  $PY -m pytest -q -p no:cacheprovider tests/cuda/test_exl3_experts.py tests/cuda/test_qwen4_exp_exl3.py tests/cuda/test_group_kernel_smem.py > $R/ms-tests.txt 2>&1
+echo "tests rc=$?" >> $R/ms-tests.txt
+for rep in a b; do
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-grp $PY $L/routed_bench.py /home/jschmied/git/tf-exl3-grp/src > $R/ms-base-$rep.txt 2>&1
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-ms $PY $L/routed_bench.py /home/jschmied/git/tf-exl3-ms/src > $R/ms-branch-$rep.txt 2>&1
+done
+TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-ms $PY $L/routed_profile.py /home/jschmied/git/tf-exl3-ms/src > $R/ms-prof.txt 2>&1
+echo "== MS DONE ==" >> $R/ms-tests.txt

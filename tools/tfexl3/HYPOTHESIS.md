@@ -100,3 +100,27 @@ count (atomics) → one-block scan over experts (places, tiles) → a warp an ex
 
 Round 9 result: grouping 2.53 → 0.083 ms (R 1024), 5.07 → 0.16 (R 2048); routed() 18.71/18.88 → 16.35/16.38 ms
 (−13 %), R 64 −3.5 %, R 1/8 noise (R 1 swings 0.080–0.109 ms between processes); hashes identical; 76 EXL3 GPU tests pass.
+
+## Round 10: lever 2 rebased on #184 head (`0b851ce`) — end to end
+prefill_ab 8k/32k #184 vs #184 + parallel grouping (`f71d25f`), alternating, two rounds; EXL3 GPU tests (incl. the
+review's reuse test); small_bench R 1–16 both, three rounds.
+- prefill −7…−10 % (routed −13 %, ~71 % of prefill), token hashes identical.
+- small windows: equal or faster than #184 (grouping cheaper at every R).
+
+## Round 11: lever 3 — two member tiles a program (branch `exl3-subtiles` on #193)
+Windows ≥ 512 rows: a program covers two consecutive 16-row member tiles of one expert (MS 2) with 4 n tiles (NT 8 ×
+MS 2 would need 64 KB of static reduction memory); each decoded fragment feeds 4 mma instead of 2; K order, splits and
+warp reduction unchanged. Decode windows keep MS 1 / NT 8.
+- grouped launches −20…−35 % at R 1024 (13.8 → 9–11 ms); routed() −15…−25 %; prefill −10…−18 % vs #193.
+- routed() hashes identical at R 1/8/64/1024 (1024 = 83704058100e6b60); MS2-vs-MS1 test bit-equal.
+- < 10 % on the grouped launches → stop (activation loads per mma double with NT 4; may cancel the decode saving).
+
+Round 11 result — STOPPED by the rule (negative): MS 2 / NT 4 bit-identical (78 tests) but grouped +16 % (R 1024) /
++64 % (R 2048); ncu: instructions −26 %, tensor +11 % (empty halves of partial pairs), L1 bytes +24 %, cycles per
+issued instruction 14.3 → 23.0, occupancy 25 % both. Latency-bound: decode reuse only pays with an ILP redesign.
+
+## Round 12: lever 4 — epilogues and rot_in in larger blocks (branch on #193)
+After #191: gateup_epilogue 1.10, down_epilogue 1.07, rot_in 0.64 ms of routed() 16.4 at R 1024 (17 %); all launched as
+one warp a (row, 128-column block): 56 k / 225 k / 450 k blocks. Fold 8 rows (or 8 column blocks) into one 256-thread
+block, same per-element arithmetic and order.
+- the three kernels 2.8 → 1.0…1.6 ms; routed() −7…−11 %; hashes identical.

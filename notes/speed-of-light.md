@@ -3208,3 +3208,8 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   u = 2,048). Fixed with a size_t offset (`5727ea6`, **PR #193**); audited the other
   offsets on the path (rotation, epilogues, combine, activation rows): already 64-bit. 77 EXL3 GPU tests pass, hashes
   unchanged. A test at the boundary would need ~8.6 GB of members — not added.
+- **Lever 3 (two member tiles a program) — closed, slower:** bit-identical, but grouped launches +16 % at 1,024 rows
+  and +64 % at 2,048 (`data/tfexl3/ms-*`). ncu: instructions −26 %, cycles per issued instruction 14.3 → 23.0 (NT 4
+  doubles activation loads per mma and the programs; occupancy 25 % either way; NT 8 × MS 2 needs 64 KB reduction
+  memory and ~230 registers). The grouped kernel is latency-bound; decode reuse needs an ILP redesign first (pipelined
+  activation loads / cp.async). Branch `exl3-subtiles`, local only.
