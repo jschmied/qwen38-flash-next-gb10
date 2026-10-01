@@ -1,0 +1,409 @@
+[tensorfold] building CUDA extension tensorfold_exl3_experts_v1_mb4 (first start after an install or update; later starts reuse it)
+[1/6] c++ -MMD -MF experts.o.d -DTORCH_EXTENSION_NAME=tensorfold_exl3_experts_v1_mb4 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -fPIC -std=c++20 -c /home/jschmied/git/tf-exl3-prefill/src/tensorfold/cuda/exl3/experts.cpp -o experts.o 
+[2/6] /usr/local/cuda/bin/nvcc -MD -MF experts.cuda.o.d -DTORCH_EXTENSION_NAME=tensorfold_exl3_experts_v1_mb4 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -lineinfo -DTF_EXL3_MINB=4 -Xptxas -v -gencode=arch=compute_121,code=sm_121 -std=c++20 -c /home/jschmied/git/tf-exl3-prefill/src/tensorfold/cuda/exl3/experts.cu -o experts.cuda.o 
+ptxas info    : 28 bytes gmem
+ptxas info    : Compiling entry function '_ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b13rot_in_kernelI6__halfEEvPKT_iPKiPKS1_S8_PS1_S9_iii' for 'sm_121'
+ptxas info    : Function properties for _ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b13rot_in_kernelI6__halfEEvPKT_iPKiPKS1_S8_PS1_S9_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 20 registers, used 0 barriers
+ptxas info    : Compile time = 7.589 ms
+ptxas info    : Compiling entry function '_ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b13rot_in_kernelI13__nv_bfloat16EEvPKT_iPKiPK6__halfS9_PS7_SA_iii' for 'sm_121'
+ptxas info    : Function properties for _ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b13rot_in_kernelI13__nv_bfloat16EEvPKT_iPKiPK6__halfS9_PS7_SA_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 20 registers, used 0 barriers
+ptxas info    : Compile time = 6.091 ms
+ptxas info    : Compiling entry function '_ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b19down_combine_kernelEPKfPKiPK6__halfPfS1_S7_iiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b19down_combine_kernelEPKfPKiPK6__halfPfS1_S7_iiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 23.559 ms
+ptxas info    : Compiling entry function '_ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b14combine_kernelEPKfS1_Pfii' for 'sm_121'
+ptxas info    : Function properties for _ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b14combine_kernelEPKfS1_Pfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 38 registers, used 0 barriers
+ptxas info    : Compile time = 3.895 ms
+ptxas info    : Compiling entry function '_ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b20down_epilogue_kernelEPKfPKiPK6__halfPfiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b20down_epilogue_kernelEPKfPKiPK6__halfPfiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 48 registers, used 0 barriers
+ptxas info    : Compile time = 17.317 ms
+ptxas info    : Compiling entry function '_ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b22gateup_epilogue_kernelEPKfPKiPK6__halfS6_S6_PS4_iiiifi' for 'sm_121'
+ptxas info    : Function properties for _ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b22gateup_epilogue_kernelEPKfPKiPK6__halfS6_S6_PS4_iiiifi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 28.561 ms
+ptxas info    : Compiling entry function '_ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b12group_kernelEPKiPiS2_S2_iiii' for 'sm_121'
+ptxas info    : Function properties for _ZN43_GLOBAL__N__bb276a14_10_experts_cu_e130889b12group_kernelEPKiPiS2_S2_iiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 42 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 24.811 ms
+[3/6] /usr/local/cuda/bin/nvcc -MD -MF experts_cb1.cuda.o.d -DTORCH_EXTENSION_NAME=tensorfold_exl3_experts_v1_mb4 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -lineinfo -DTF_EXL3_MINB=4 -Xptxas -v -gencode=arch=compute_121,code=sm_121 -std=c++20 -c /home/jschmied/git/tf-exl3-prefill/src/tensorfold/cuda/exl3/experts_cb1.cu -o experts_cb1.cuda.o 
+ptxas info    : 28 bytes gmem
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi16EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi16EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 3.451 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi15EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi15EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 37 registers, used 0 barriers
+ptxas info    : Compile time = 4.146 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi14EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi14EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 36 registers, used 0 barriers
+ptxas info    : Compile time = 3.894 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi13EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi13EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 37 registers, used 0 barriers
+ptxas info    : Compile time = 3.968 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi12EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi12EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 30 registers, used 0 barriers
+ptxas info    : Compile time = 3.384 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi11EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi11EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 30 registers, used 0 barriers
+ptxas info    : Compile time = 2.890 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi10EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi10EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 28 registers, used 0 barriers
+ptxas info    : Compile time = 2.840 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi9EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi9EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 28 registers, used 0 barriers
+ptxas info    : Compile time = 2.842 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi8EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi8EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 21 registers, used 0 barriers
+ptxas info    : Compile time = 1.660 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi7EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi7EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 23 registers, used 0 barriers
+ptxas info    : Compile time = 2.574 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi6EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi6EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 2.170 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi5EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi5EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 2.148 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi4EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi4EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 1.948 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi3EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi3EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 2.135 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi1ELi2EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi1ELi2EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 1.954 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi4ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi4ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 325.137 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi4ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi4ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 123 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 135.566 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi4ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi4ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 91 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 17.879 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    152 bytes stack frame, 1760 bytes spill stores, 1488 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 152 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 776.259 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    80 bytes stack frame, 368 bytes spill stores, 272 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 80 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 305.056 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 30.366 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi1ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi1ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    40 bytes stack frame, 184 bytes spill stores, 120 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 40 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 298.513 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi1ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi1ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 139.495 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi1ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi1ELi8ELi4ELi1ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 121 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 19.377 ms
+[4/6] /usr/local/cuda/bin/nvcc -MD -MF experts_cb2.cuda.o.d -DTORCH_EXTENSION_NAME=tensorfold_exl3_experts_v1_mb4 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -lineinfo -DTF_EXL3_MINB=4 -Xptxas -v -gencode=arch=compute_121,code=sm_121 -std=c++20 -c /home/jschmied/git/tf-exl3-prefill/src/tensorfold/cuda/exl3/experts_cb2.cu -o experts_cb2.cuda.o 
+ptxas info    : 28 bytes gmem
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi16EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi16EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 3.418 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi15EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi15EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 4.139 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi14EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi14EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 3.934 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi13EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi13EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 3.878 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi12EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi12EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 28 registers, used 0 barriers
+ptxas info    : Compile time = 3.107 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi11EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi11EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 28 registers, used 0 barriers
+ptxas info    : Compile time = 2.887 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi10EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi10EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 30 registers, used 0 barriers
+ptxas info    : Compile time = 2.855 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi9EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi9EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 30 registers, used 0 barriers
+ptxas info    : Compile time = 2.847 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi8EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi8EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 23 registers, used 0 barriers
+ptxas info    : Compile time = 1.677 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi7EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi7EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 23 registers, used 0 barriers
+ptxas info    : Compile time = 2.577 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi6EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi6EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 20 registers, used 0 barriers
+ptxas info    : Compile time = 2.182 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi5EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi5EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 20 registers, used 0 barriers
+ptxas info    : Compile time = 2.173 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi4EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi4EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 20 registers, used 0 barriers
+ptxas info    : Compile time = 1.960 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi3EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi3EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 20 registers, used 0 barriers
+ptxas info    : Compile time = 2.143 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi2ELi2EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi2ELi2EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 20 registers, used 0 barriers
+ptxas info    : Compile time = 1.990 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi4ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi4ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 282.778 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi4ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi4ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 125 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 133.549 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi4ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi4ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 90 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 17.193 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    160 bytes stack frame, 1724 bytes spill stores, 1548 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 160 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 758.366 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    56 bytes stack frame, 304 bytes spill stores, 304 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 56 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 293.820 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 28.147 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi1ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi1ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    48 bytes stack frame, 180 bytes spill stores, 120 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 48 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 295.427 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi1ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi1ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 133.609 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi1ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi2ELi8ELi4ELi1ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 126 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 18.548 ms
+[5/6] /usr/local/cuda/bin/nvcc -MD -MF experts_cb0.cuda.o.d -DTORCH_EXTENSION_NAME=tensorfold_exl3_experts_v1_mb4 -DTORCH_API_INCLUDE_EXTENSION_H -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options '-fPIC' -O3 -lineinfo -DTF_EXL3_MINB=4 -Xptxas -v -gencode=arch=compute_121,code=sm_121 -std=c++20 -c /home/jschmied/git/tf-exl3-prefill/src/tensorfold/cuda/exl3/experts_cb0.cu -o experts_cb0.cuda.o 
+ptxas info    : 28 bytes gmem
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi16EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi16EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 3.472 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi15EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi15EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 4.292 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi14EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi14EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 4.068 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi13EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi13EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 40 registers, used 0 barriers
+ptxas info    : Compile time = 3.998 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi12EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi12EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 33 registers, used 0 barriers
+ptxas info    : Compile time = 3.257 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi11EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi11EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 33 registers, used 0 barriers
+ptxas info    : Compile time = 2.986 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi10EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi10EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 2.925 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi9EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi9EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 2.912 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi8EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi8EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 22 registers, used 0 barriers
+ptxas info    : Compile time = 1.730 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi7EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi7EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 26 registers, used 0 barriers
+ptxas info    : Compile time = 2.631 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi6EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi6EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 0 barriers
+ptxas info    : Compile time = 2.267 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi5EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi5EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 0 barriers
+ptxas info    : Compile time = 2.225 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi4EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi4EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 0 barriers
+ptxas info    : Compile time = 1.997 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi3EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi3EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 0 barriers
+ptxas info    : Compile time = 2.201 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14dequant_kernelILi0ELi2EEEvPKjP6__halfii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14dequant_kernelILi0ELi2EEEvPKjP6__halfii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 18 registers, used 0 barriers
+ptxas info    : Compile time = 2.027 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi4ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi4ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    16 bytes stack frame, 20 bytes spill stores, 16 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 16 bytes cumulative stack size, 16448 bytes smem
+ptxas info    : Compile time = 291.281 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi4ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi4ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 116 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 142.744 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi4ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi4ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 92 registers, used 1 barriers, 16448 bytes smem
+ptxas info    : Compile time = 18.215 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi2ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    160 bytes stack frame, 1804 bytes spill stores, 1536 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 160 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 775.606 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi2ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    72 bytes stack frame, 352 bytes spill stores, 272 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 72 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 305.913 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi2ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 30.586 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi1ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi1ELi2ELi16EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    40 bytes stack frame, 188 bytes spill stores, 128 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 40 bytes cumulative stack size, 32832 bytes smem
+ptxas info    : Compile time = 299.811 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi1ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi1ELi2ELi10EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 140.658 ms
+ptxas info    : Compiling entry function '_ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi1ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii' for 'sm_121'
+ptxas info    : Function properties for _ZN8tf_exl3x14grouped_kernelILi0ELi8ELi4ELi1ELi8ELi8EEEvPK6__halfS3_PKlS5_PKiS7_S7_S7_S7_Pfiiiiii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 123 registers, used 1 barriers, 32832 bytes smem
+ptxas info    : Compile time = 19.643 ms
+[6/6] c++ experts.o experts.cuda.o experts_cb0.cuda.o experts_cb1.cuda.o experts_cb2.cuda.o -shared -L/opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/lib -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch -ltorch_python -L/usr/local/cuda/lib64 -lcudart -o tensorfold_exl3_experts_v1_mb4.so
+{"case": "routed10", "experts": 512, "max_rows": 37, "mean_rows": 20.0, "tiles": 914, "rows_total": 10240, "stock_gateup_ms": 14.528, "stock_down_ms": 6.861, "compact_gateup_ms": 9.428, "compact_down_ms": 4.509, "hash_gateup": "3bca8e7ed69b", "hash_down": "c8036bdfc5f6", "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 1.53, "compact_us_per_tile": 15.25, "compact_us_per_row": 1.361}
+{"case": "shared_only", "experts": 1, "max_rows": 1024, "mean_rows": 1024.0, "tiles": 64, "rows_total": 1024, "stock_gateup_ms": 1.61, "stock_down_ms": 0.799, "compact_gateup_ms": 1.631, "compact_down_ms": 0.804, "hash_gateup": "1c1932e5c63c", "hash_down": "5e1785f634cc", "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 0.99, "compact_us_per_tile": 38.05, "compact_us_per_row": 2.378}
+{"case": "routed10+shared", "experts": 513, "max_rows": 1024, "mean_rows": 22.0, "tiles": 978, "rows_total": 11264, "stock_gateup_ms": 14.913, "stock_down_ms": 7.0, "compact_gateup_ms": 14.74, "compact_down_ms": 6.987, "hash_gateup": "ab9246dac373", "hash_down": "cdc2de49b916", "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 1.01, "compact_us_per_tile": 22.22, "compact_us_per_row": 1.929}

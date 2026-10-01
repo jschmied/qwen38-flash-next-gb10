@@ -1,0 +1,11 @@
+{"case": "routed4", "experts": 512, "max_rows": 16, "mean_rows": 8.0, "tiles": 512, "rows_total": 4096, "stock_gateup_ms": 8.946, "stock_down_ms": 4.052, "compact_gateup_ms": 4.185, "compact_down_ms": 1.935, "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 2.12, "compact_us_per_tile": 11.95, "compact_us_per_row": 1.494}
+{"case": "routed8", "experts": 512, "max_rows": 29, "mean_rows": 16.0, "tiles": 726, "rows_total": 8192, "stock_gateup_ms": 12.18, "stock_down_ms": 5.685, "compact_gateup_ms": 7.506, "compact_down_ms": 3.67, "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 1.6, "compact_us_per_tile": 15.39, "compact_us_per_row": 1.364}
+Traceback (most recent call last):
+  File "/opt/llm/runners/tfexl3/grouped_bench2.py", line 88, in <module>
+    case(f"routed{top}", pk, top)
+  File "/opt/llm/runners/tfexl3/grouped_bench2.py", line 45, in case
+    ext.group(pk, ids, s.count, members, R, slots, EA)
+torch.AcceleratorError: CUDA error: invalid argument
+Search for `cudaErrorInvalidValue' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+For more detailed error information, run with CUDA_LOG_FILE=stderr
+

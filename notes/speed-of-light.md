@@ -3115,3 +3115,40 @@ M4 (sum of the four streams' decode seconds, not aggregate tok/s, §5av): code 4
   depth 6/0.7), so depth 7/8 add almost nothing.
 - **For #136:** on these prompts a perfect per-round depth choice has ≈ 1 % left over TF's default; a depth rule from
   *recent* acceptance lost in our replay (§5v: code −0.8…−8.2 %). Posted 2026-10-01: https://github.com/ashhart/TensorFold/issues/136#issuecomment-5931347120
+
+### 5ax. T13: TensorFold's EXL3 routed experts launched a program per 16-row tile of the whole window; a tile list cuts prefill 9.4–10.2 %, bit-identical
+
+User: "write this as next todo", "start with it". The plan was decode-once reuse; the measurements moved it. TF 0.6.0
+`cuda/exl3/experts*.{cu,cuh,py}`, Flash Next shapes (D 2560, expert width 640, 512 routed + shared = 11 slots, K2 6,
+`mul1`), prefill windows of 1,024 rows. Hypotheses and stop rules `tools/tfexl3/HYPOTHESIS.md` (rounds 1–6); data
+`data/tfexl3/`; branch `exl3-prefill` (worktree `~/git/tf-exl3-prefill`).
+
+1. **Decode once into fp16 (option 2) is dead:** dequantising a window's experts and a padded bmm took 59 ms against
+   the grouped kernel's 21 ms: fp16 weights are ~5 GB a window against ~0.95 GB of 3-bit trellis. In-register decode is right.
+2. **ncu** (`grouped_ncu.py`): memory throughput 12–14 %, SM 17–19 %, 167 registers → 3 blocks/SM (25 % occupancy),
+   ~16 cycles per issued instruction, tensor instructions 2–3 % of all: latency-bound. **Capping registers**
+   (launch bounds 4/5 blocks): null / +12 % (spills) — rejected.
+3. **The grid:** z = mats·splits·⌈maxm/16⌉ with maxm = the window, so every expert got 64 row-tile programs although a
+   routed expert has ~20 rows; the shared expert (all 1,024 rows) made trimming maxm impossible on the real path. Up to
+   97 % of 1.3 M gate/up programs started, read `members`, and returned.
+4. **Fix (tile list):** `group_kernel` also writes `tiles[]` = (place << 8 | member tile) for every non-empty tile and
+   `tcount`; `grouped_kernel` takes its expert and member tile from the list; grid (⌈R·slots/16⌉ + maxu, N blocks,
+   mats·splits). Each program's arithmetic is unchanged.
+
+| | stock | tile list | Δ |
+|---|---|---|---|
+| `routed()` R 1,024 (3 rounds), ms | 26.42 / 26.39 / 26.41 | 18.69 / 18.67 / 18.70 | **−29 %** |
+| `routed()` R 64 / 8 / 1, ms | 3.87–3.92 / 0.74–0.78 / 0.077–0.081 | 3.55–3.60 / 0.75–0.78 / 0.078–0.081 | −8 % / ±0 / ±0 |
+| EXL3 prefill 8k, s (2 rounds, real checkpoint) | 11.42 / 11.47 | **10.35 / 10.32** | −9.4…−10.0 % |
+| EXL3 prefill 32k, s | 46.18 / 46.38 | **41.79 / 41.66** | −9.5…−10.2 % |
+
+- **Bit-identical:** `routed()` output hashes equal stock at R 1/8/64/1,024; the first 16 generated tokens after the 8k
+  and 32k prompts equal stock in every arm; TF's EXL3 GPU tests pass (incl. GLM bit-identity and graph replay) and a new
+  test checks the tile list is exactly the non-empty tiles.
+- **Against the hypothesis:** kernel −29 % beat the predicted −13…−19 %; end to end −9.4…−10.2 % sits at the bottom of
+  −10…−18 % (the grouped launches are ~56 % of an 8k prefill; the rest of `routed()` — the single-block `group_kernel`,
+  rotation, epilogues — and the dense layers are unchanged).
+- **Next, still in the kernel:** decode reuse across row tiles needs more rows per expert per call (bigger windows:
+  `group_kernel`'s shared memory caps them at 1,024 rows × 11 slots, #151); `group_kernel` is one block scanning all
+  picks per expert (not yet measured).
+- Upstream: PR draft `notes/upstream/tf-pr-exl3-tile-list.md` — needs the user's go.

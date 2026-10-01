@@ -1,0 +1,13 @@
+#!/bin/bash
+# T13 round 5: routed() stock vs tile-work-list branch (3 alternating rounds), then TF's EXL3 GPU tests on the branch.
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+export HOME=/root PYTHONUNBUFFERED=1
+for rep in a b c; do
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext $PY $L/routed_bench.py /home/jschmied/git/tensorfold/src > $R/wl-stock-$rep.txt 2>&1
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3exp $PY $L/routed_bench.py /home/jschmied/git/tf-exl3-prefill/src > $R/wl-branch-$rep.txt 2>&1
+  echo "round $rep done" >> $R/wl-chain.txt
+done
+cd /home/jschmied/git/tf-exl3-prefill && TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3exp PYTHONPATH=$PWD/src \
+  timeout 2400 $PY -m pytest -q -p no:cacheprovider tests/cuda/test_exl3_experts.py tests/cuda/test_qwen4_exp_exl3.py > $R/wl-tests.txt 2>&1
+echo "tests rc=$?" >> $R/wl-chain.txt
+echo "== WL DONE ==" >> $R/wl-chain.txt

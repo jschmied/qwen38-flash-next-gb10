@@ -36,7 +36,9 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [x] ~~T11 original~~ (§5at): a `--parallel` > 1 server serves one request eager,
       +10.9…+12.7 % per token vs `--parallel 1`; port qwen3_5_moe's "a lone stream replays graphs" (`multi.py:44,225-233`).
       Upstream post (issue or PR) needs the user's go. Full concurrent graphs (c ≥ 2, 88–90 % busy eager): ~9–10 %, larger job.
-- [ ] **T13 NEXT: EXL3 routed-expert prefill — decode once, use many times** (user 2026-10-01: "write this as next todo").
+- [x] **T13 DONE (§5ax): tile list → EXL3 prefill −9.4…−10.2 % (8k/32k), bit-identical; branch `exl3-prefill`; PR draft
+      needs a go.** Decode-once (option 2) dead, register cap null; decode reuse across tiles = next (needs bigger windows).
+- [ ] ~~T13 original plan~~: **EXL3 routed-expert prefill — decode once, use many times** (user 2026-10-01: "write this as next todo").
       `cuda/exl3/experts_grouped.cuh` is a grouped GEMV: each program takes ONE 16-row M tile, decodes its weight
       fragment in registers (`decode_tile`: mul/dp4a/byte_perm/hadd2) and feeds it to ONE `mma.m16n8k16` — decode work
       ∝ ⌈rows/16⌉ per expert, which is why window/chunk sweeps were null (§5ap/§5aq) and the kernel runs at ~5 TFLOPS

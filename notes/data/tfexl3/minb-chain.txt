@@ -1,0 +1,4 @@
+minb=stock rc=0
+minb=4 rc=0
+minb=5 rc=0
+== MINB DONE ==

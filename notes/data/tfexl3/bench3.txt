@@ -1,0 +1,3 @@
+{"case": "routed10", "experts": 512, "max_rows": 37, "mean_rows": 20.0, "stock_gateup_ms": 14.042, "stock_down_ms": 6.615, "compact_gateup_ms": 9.368, "compact_down_ms": 4.498, "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 1.49}
+{"case": "shared_only", "experts": 1, "max_rows": 1024, "mean_rows": 1024.0, "stock_gateup_ms": 1.65, "stock_down_ms": 0.801, "compact_gateup_ms": 1.614, "compact_down_ms": 0.8, "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 1.02}
+{"case": "routed10+shared", "experts": 513, "max_rows": 1024, "mean_rows": 22.0, "stock_gateup_ms": 14.312, "stock_down_ms": 6.756, "compact_gateup_ms": 14.281, "compact_down_ms": 6.759, "bit_identical_gateup": true, "bit_identical_down": true, "speedup": 1.0}

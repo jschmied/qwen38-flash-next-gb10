@@ -1,0 +1,10 @@
+#!/bin/bash
+# ncu on the four grouped launches of grouped_ncu.py (T13).
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext HOME=/root
+/usr/local/cuda/bin/ncu -k regex:grouped_kernel -c 4 --section SpeedOfLight --section MemoryWorkloadAnalysis \
+  --section Occupancy --section WarpStateStats --section LaunchStats --section ComputeWorkloadAnalysis \
+  --metrics dram__bytes_read.sum,dram__bytes_write.sum,lts__t_bytes.sum,gpu__time_duration.sum,smsp__inst_executed_pipe_tensor.sum,smsp__inst_executed.sum \
+  -o $R/grouped --force-overwrite /opt/llm/runtime/tf-venv/bin/python $L/grouped_ncu.py /home/jschmied/git/tensorfold/src > $R/ncu.log 2>&1
+/usr/local/cuda/bin/ncu -i $R/grouped.ncu-rep --page details --csv > $R/grouped-details.csv 2>&1
+echo "== NCU DONE rc=$? ==" >> $R/ncu.log

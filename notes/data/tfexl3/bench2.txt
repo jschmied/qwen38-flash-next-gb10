@@ -1,0 +1,17 @@
+{"R": 1024, "routed_ms": 26.558, "grouped_gateup_ms": 14.329, "grouped_down_ms": 6.736, "grouped_share": 0.793, "us_per_row_grouped": 20.571, "experts_used": 513, "cfg_gu": [8, 4, 4, 1], "cfg_d": [8, 4, 1, 1]}
+{"R": 1024, "oracle_decode_ms": 35.456, "oracle_bmm_ms": 23.91, "oracle_total_ms": 59.366, "max_rows_per_expert": 33, "speedup_vs_grouped": 0.35, "decode_launches": 1539}
+Traceback (most recent call last):
+  File "/opt/llm/runners/tfexl3/grouped_bench.py", line 50, in <module>
+    full = timed(lambda: X.routed(x, pk, None, ex, s, None, R))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/llm/runners/tfexl3/grouped_bench.py", line 34, in timed
+    fn()
+  File "/opt/llm/runners/tfexl3/grouped_bench.py", line 50, in <lambda>
+    full = timed(lambda: X.routed(x, pk, None, ex, s, None, R))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jschmied/git/tensorfold/src/tensorfold/cuda/exl3/experts.py", line 186, in routed
+    ext.group(pick, ids, s.count, members, R, slots, E)
+torch.AcceleratorError: CUDA error: invalid argument
+Search for `cudaErrorInvalidValue' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+For more detailed error information, run with CUDA_LOG_FILE=stderr
+
