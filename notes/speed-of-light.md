@@ -3254,3 +3254,8 @@ DeltaNet chain 3.5 %. My first "8× above the byte floor" estimate assumed 11 ex
   achievable: at most ≈ −2…−2.5 ms a round (≈ −5 % decode) from bandwidth tuning of `linear_kernel`.
 - Conclusion: decode levers left are small and kernel-heavy; the largest measured TF lever remains graphs for
   concurrent rounds (§5at, ~9–10 % at c = 2/4).
+- **D (parked levers settled, 4 arms × 3 alternating rounds on #195, `data/tfexl3/d4.txt`, tokens identical):**
+  window 2048 **established** — 8k −3.5/−3.9/−4.0 % (base spread 0.4 %), 32k −3.5/−6.6/−2.3 % (spread 3.1 %); fp16
+  prompt tile alone **not** established (sign flips); both together −5.6 % (8k) / −6.5 % (32k), and both-vs-window is
+  −1.9/−2.2/−2.0 % at 8k (−0.6/−2.9/−2.9 at 32k) — the tile helps on top of the window. Branches `exl3-stack-win`
+  (window) and `exl3-f16-win` (both), not posted. Cumulative 8k on 0.6.1: 11.42 → ~8.43 s (−26 %).
