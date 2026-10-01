@@ -3205,6 +3205,6 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   `model.mtp.*` entries). Posted: https://github.com/ashhart/TensorFold/pull/178#issuecomment-5934208411
 - **#191 review (user-pasted, P2):** with the grouping's shared-memory ceiling gone, `grouped_kernel`'s
   `members[u * maxm + m]` overflowed int32 for windows the limits now accept (2,049 experts × 1,048,576 rows at
-  u = 2,048). Fixed with a size_t offset (`5727ea6` local); audited the other
+  u = 2,048). Fixed with a size_t offset (`5727ea6`, **PR #193**); audited the other
   offsets on the path (rotation, epilogues, combine, activation rows): already 64-bit. 77 EXL3 GPU tests pass, hashes
   unchanged. A test at the boundary would need ~8.6 GB of members — not added.

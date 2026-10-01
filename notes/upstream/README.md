@@ -1588,3 +1588,6 @@ wait on one ~100 GB pull, and they share one serve.
   NVFP4-FP8 @ a9786bf (205/206 shards identical); as published 0.6.0 fails at load (`KeyError … weight_scale_2`), #178
   loads, 86/93. Text `tf178-receipt.md`. https://github.com/ashhart/TensorFold/pull/178#issuecomment-5934208411
 - Accepted so far (ashhart, 2026-10-01): #174 (0.6.1), #175, #176, #178 (landed on their next branch as our commits).
+- **TensorFold PR #193** (2026-10-01 ~20:00, user: "191 is merged, do a folow up"; GitHub still showed #191 open):
+  64-bit member offset in `grouped_kernel` (P2 from the #191 review), stacked on #191, `5727ea6`. Body
+  `tf-pr-exl3-member-offset.md`. https://github.com/ashhart/TensorFold/pull/193
