@@ -3159,3 +3159,26 @@ with the real slot and never matched while planning, so on two ranks #180 change
 `cb5101d` vs `+ #180` spread (−5…+2 %) is run-to-run variation, and their lone-request gap (~11 % on `--parallel 8`)
 is the unfixed recapture. Fix `6ada832` (compare the slots behind the Shadows; idle-slot release allowed while planning,
 recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, reply posted. Two ranks not testable here.
+
+**§5au addendum 2 (2026-10-01, user: "#180 need a fix more?") — yes: two more paths.** `tools/tfhost/solo_switch.py`
+(a `--parallel 4` engine, requests A, B, C with three prompts, then A2 extending A; 256 tokens each, greedy; data
+`data/tf061fix/switch-*.txt`):
+
+| captures, ms/token | 0.6.1 port | #180 `6ada832` | + `5824347` |
+|---|---|---|---|
+| A | 33, 31.6 | 0, 14.0 | 0, 14.0 |
+| B (new prompt) | 32, 29.4 | **32, 29.3** | 0, 12.7 |
+| C (new prompt) | 30, 27.3 | **30, 27.5** | 0, 11.7 |
+| A2 (resumes A) | 19, 23.0 | **19, 22.1** | 0, 12.1 |
+
+- **Path 1 (prefix cache):** a finished lone request keeps its prompt end in the graph slot; the next lone request
+  with another prompt lands elsewhere and `_move_to_solo` made *that* slot the graph slot (`_state_changed`). Fix:
+  move the kept end to a free slot of the same rows (`copy_from`; snapshot unchanged), keep the graph slot. No free
+  slot that fits without evicting → the old swap; two ranks keep the swap (kept ends are keyed by slot in the plan).
+- **Path 2 (latent crash in #180):** with the graph slot keeping its rows, a stream from a smaller slot no longer has
+  the same geometry and `copy_from` failed on tensor sizes. Fix: `copy_from` takes a smaller source into the first rows.
+- Every reply byte-identical to the port's (hashes), incl. A2 resumed from the moved prompt end. Host tests: 211 passed,
+  same 29 unrelated failures; the two new tests fail on `6ada832`; `tests/cuda/test_flashnext_multi.py` 27/27 on both.
+- Window lever (T13 round 8): MOE_WINDOW 2048 on #184: 8k 10.40/10.30 → 9.90/9.92 s, 32k 42.29/41.57 → 40.26/39.86 s
+  (−3.2…−5.7 %), hashes identical; branch `exl3-window-2048`, not posted. routed() breakdown on #184: grouped 72 %,
+  group_kernel 13 %, epilogues 11 %, rot_in 3 % (`data/tfexl3/prof184.txt`); parallel grouping in progress.

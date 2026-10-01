@@ -1,0 +1,6 @@
+USDT:2026-10-01 15:03:24 790931:790931 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-01 15:03:24 790931:790931 SyncActivityProfilerHandler.cpp:59] profiler_stop
+{"R": 1024, "total_ms": 18.969, "per_row_us": 18.52, "kernels_ms": {"void tf_exl3x::grouped_kernel<2, 8, 4, 1, 2, 10>(__half cons": 13.626, "(anonymous namespace)::group_kernel(int const*, int*, int*, ": 2.526, "(anonymous namespace)::gateup_epilogue_kernel(float const*, ": 1.106, "(anonymous namespace)::down_epilogue_kernel(float const*, in": 1.068, "void (anonymous namespace)::rot_in_kernel<__half>(__half con": 0.643}}
+USDT:2026-10-01 15:03:24 790931:790931 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-01 15:03:24 790931:790931 SyncActivityProfilerHandler.cpp:59] profiler_stop
+{"R": 2048, "total_ms": 34.686, "per_row_us": 16.94, "kernels_ms": {"void tf_exl3x::grouped_kernel<2, 8, 4, 1, 2, 10>(__half cons": 23.955, "(anonymous namespace)::group_kernel(int const*, int*, int*, ": 5.072, "(anonymous namespace)::gateup_epilogue_kernel(float const*, ": 2.224, "(anonymous namespace)::down_epilogue_kernel(float const*, in": 2.149, "void (anonymous namespace)::rot_in_kernel<__half>(__half con": 1.287}}
