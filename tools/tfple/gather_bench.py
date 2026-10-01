@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """T1 (TensorFold EXL3 n-gram gather): 0.6.0's single-thread byte-offset gather vs whole-row views on threads.
 Real EXL3 pack, random row ids (n-gram ids are hashes, so uniform is the realistic access), id counts for a decode
-round (7 tokens x 16 heads = 112), a 4-stream round (448) and prompt chunks (2048 / 8192 tokens x 16 = 32768 / 131072).
+round (7 tokens x 16 heads = 112), a 4-stream round (448), an 8-stream round (896, T2 only) and prompt chunks (2048 / 8192 tokens x 16 = 32768 / 131072).
 cold: the table file's pages dropped (POSIX_FADV_DONTNEED) before every rep; warm: read once first. Bytes compared.
 Prints ONE json. argv: <tensorfold src dir> <model dir> [cold|warm|both] [reps]"""
 import json, os, sys, time
@@ -68,5 +68,25 @@ for mode in modes:
             cell[name + "_ms"] = round(sorted(ts)[len(ts) // 2] * 1e3, 3)
             cell[name + "_all"] = [round(t * 1e3, 2) for t in ts]
         cell["equal"] = bool(np.array_equal(old_gather(table, ids[0]), table.gather(ids[0])))
+        res["cells"].append(cell)
+    # T2: decode rounds (c=1, c=4, c=8 under --parallel) with the cold fill off, adaptive, and forced on
+    cf = getattr(table, "_cold", None)
+    for n in (112, 448, 896) if cf is not None else ():
+        ids = [rng.integers(0, table.rows, n) for _ in range(reps)]
+        cell = {"mode": mode, "ids": n, "t2": True}
+        for name, ok, force in (("nofill", False, False), ("adaptive", True, False), ("forced", True, True)):
+            ts = []
+            for r in range(reps):
+                if mode == "cold":
+                    drop(); cf.cold = True
+                else:
+                    cf.ok = True; table.gather(ids[r]); table.gather(ids[r])           # warm and settled
+                cf.ok = ok
+                if force:
+                    cf.cold = True
+                t0 = time.perf_counter(); table.gather(ids[r]); ts.append(time.perf_counter() - t0)
+            cell[name + "_ms"] = round(sorted(ts)[len(ts) // 2] * 1e3, 3)
+            cell[name + "_all"] = [round(t * 1e3, 2) for t in ts]
+        cf.ok = True
         res["cells"].append(cell)
 print(json.dumps(res))

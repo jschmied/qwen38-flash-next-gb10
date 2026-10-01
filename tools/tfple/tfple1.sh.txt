@@ -1,0 +1,25 @@
+#!/bin/bash
+# After tf060: T1/T2 gather benchmark (CPU, no server), then T4 (two stock 0.6.0 EXL3 starts with residency sampling).
+R=/opt/llm/runners/results/tfple; mkdir -p $R; P=/opt/llm/runtime/vllm-venv-fnext/bin/python; T=/opt/llm/runtime/tf-venv
+L=/opt/llm/runners/tfple; M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; F=$M/ngram_embedding.safetensors
+log(){ echo "$(date +%T) $*" >> $R/chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+while systemctl is-active -q tf060-chain; do sleep 30; done
+memok
+for src in /home/jschmied/git/tensorfold/src /home/jschmied/git/tensorfold-ple/src; do
+  n=$(basename $(dirname $src)); timeout 3600 $T/bin/python $L/gather_bench.py $src $M both 5 > $R/gather-$n.json 2> $R/gather-$n.err
+  log "gather $n rc=$?"
+done
+for shape in 262144:8 65536:4; do
+  ctx=${shape%%:*}; par=${shape#*:}; memok; sync; echo 3 > /proc/sys/vm/drop_caches; log "== T4 start $ctx/$par (caches dropped)"
+  systemd-run --unit=fx-tfple --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context $ctx --parallel $par > /opt/llm/tfple-t4-$ctx.log 2>&1"
+  $P $L/resident.py $F 2 150 > $R/t4-resident-$ctx.txt 2>&1 &
+  RP=$!
+  for i in $(seq 1 60); do sleep 5; curl -sf http://127.0.0.1:8092/v1/models >/dev/null && break; done
+  sleep 20; kill $RP 2>/dev/null
+  log "T4 $ctx/$par: $(grep -o 'n-gram tables[^;]*;' /opt/llm/tfple-t4-$ctx.log) MemAvailable $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) GiB"
+  systemctl stop fx-tfple; sleep 20
+done
+echo "== TFPLE1 DONE ==" >> $R/chain.txt
