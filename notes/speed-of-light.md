@@ -2775,3 +2775,34 @@ Firefox at 1280×800, frames at 4 and 12 s. Hypothesis `tools/pasture/HYPOTHESIS
 - TensorFold thinks longer here (33–44k thinking tokens vs 20–30k) and still finishes faster (70–73 vs 47–49 tok/s,
   one request each). Page: https://claude.ai/artifact/UX283L4b7bkk2S7ehSjnWM (companion to the fish page), LAN
   http://10.0.0.133:8765/. Data `data/pasture/`.
+
+### 5an. TensorFold 0.6.0 on the Spark: exact, faster decode on EXL3, prefill 2.3–4.4× vLLM, and prompts queue oldest-first
+
+User: "do the update and test". tf-venv moved to 0.6.0 (`c464617`, local branch `v060`); one server start per
+checkpoint, `--context 262144 --parallel 8`, nothing else on the box. Hypothesis `tools/tf060/HYPOTHESIS.md`; data
+`data/tf060/`. Our checkpoint's long mix was stopped at the user's "fast tests first" and is deferred.
+
+| | EXL3 3.05 bpw | our `mtpfp4` (block FP8 + NVFP4) |
+|---|---|---|
+| startup estimate / budget | 61.97 / 104.36 GiB | 84.24 / 104.60 GiB |
+| n-gram table | locked, **22.2 s** to lock (0.5.0: 0.3–0.4 s in six starts → T4) | not locked (no room), read in 12.2 s |
+| exactness: concurrent == alone / alone == serial | **84/84, 30/30** | **84/84, 30/30** |
+| decode c=1, `bench_openai` 400 tok, greedy fib / chat | 77.1 / 61.2 tok/s | 57.9 / 43.2 tok/s |
+| decode c=4 aggregate, code greedy | 239.5 tok/s | 200.2 tok/s |
+| TTFT 2k / 8k / 32k / 65k (`prefill_cold`) | 2.75 / 11.4 / 46.0 / 93.6 s | 1.47 / 6.0 / 25.1 / 51.3 s |
+| prefill rate | flat **~720 tok/s** | ~1,280–1,395 tok/s |
+
+- **Exactness holds on both** (hypothesis met).
+- **Decode, our checkpoint vs 0.5.0 + our branch** (TF#126 table: fib 59.4 / chat 37.6 greedy): fib −2.5 %, chat
+  +15 %. Outside the +3…+10 % hypothesis in both directions, and not a clean comparison: 0.6.0's `lm_head` on FP8G
+  and bf16 prompts change the greedy text, so each cell decodes a different reply (§5ah: one reply ranks texts).
+- **TTFT** (hypothesis: still 2.5–4× vLLM's 2.6 s at 8k): ours **2.3×** (6.0 s), EXL3 **4.4×** (11.4 s). Both
+  rates are nearly flat with length, so a per-token cost dominates, not attention. EXL3 prompts never read the
+  `--prefill-fp8` switch (only `cuda/nvfp4/linear.py` does), so bf16 prompts do not explain EXL3's rate; the
+  0.5.0 figure (9.27 s at 8k) came from a different probe and is not comparable. Next: profile + chunk-size sweep.
+- **Long mix, EXL3** (4 × ~120k-token prompts at t=0, 8 × 2k every 15 s): no errors, **no out-of-memory stops**,
+  MemAvailable min **12.15 GiB** (gate reserve 2 GiB) — as hypothesised. But **the short requests waited 630–715 s
+  for their first token** (hypothesis: decode at 15–35 tok/s alongside): CUDA fills prompts **oldest first**
+  (`multi.py` `_pieces`), so each 2k request sat behind ~480k prompt tokens at ~660 tok/s; the live long streams
+  decoded 0.7–3.9 tok/s while others filled (one round per prompt pass). TensorFold's Mac path already fills
+  "fewest tokens left first"; the CUDA one does not → TODO **T9**. Major faults over the run: 15,092.

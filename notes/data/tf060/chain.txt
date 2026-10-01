@@ -1,0 +1,35 @@
+{"length": 1024, "rep": 0, "tokens": 1024}
+{"length": 2048, "rep": 0, "tokens": 2048}
+{"length": 2048, "rep": 1, "tokens": 2048}
+{"length": 2048, "rep": 2, "tokens": 2048}
+{"length": 8192, "rep": 0, "tokens": 8192}
+{"length": 8192, "rep": 1, "tokens": 8192}
+{"length": 8192, "rep": 2, "tokens": 8192}
+{"length": 16384, "rep": 0, "tokens": 16382}
+{"length": 16384, "rep": 1, "tokens": 16383}
+{"length": 16384, "rep": 2, "tokens": 16384}
+{"length": 32768, "rep": 0, "tokens": 32768}
+{"length": 32768, "rep": 1, "tokens": 32768}
+{"length": 32768, "rep": 2, "tokens": 32768}
+{"length": 65536, "rep": 0, "tokens": 65536}
+{"length": 65536, "rep": 1, "tokens": 65535}
+{"length": 65536, "rep": 2, "tokens": 65536}
+06:17:21 == exl3
+06:18:31 ready after 70 s, MemAvailable 27 GiB
+[tensorfold] CUDA rank 0 startup estimate 61.97 GiB within 104.36 GiB; native 262144, allocated prompt/reply window 262144, cache slots 262151
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; up to 8 streams, each growing to 262144 prompt/reply tokens while memory lasts (49.9 GiB free for their caches, 7.52 GiB for one at the full window), eager; n-gram tables read alongside the weights (0.0s after them), locked in memory in 22.2s; 0 decode graphs captured; prompt kernels warmed in
+[tensorfold] serving flashnext at http://127.0.0.1:8092/v1 on CUDA (sampling: temperature 1.0, top_k 20, top_p 0.95; drafts: on; prompts: bf16 activations; context: 262144; loaded in 67.4s)
+06:23:36 exl3 concurrent rc=0
+06:25:15 exl3 openai rc=0
+06:34:08 exl3 prefill rc=0
+06:46:38 exl3 longmix rc=0
+06:46:40 exl3 stopped
+06:47:00 == mtpfp4
+06:48:40 ready after 100 s, MemAvailable 38 GiB
+[tensorfold] CUDA rank 0 startup estimate 84.24 GiB within 104.60 GiB; native 262144, allocated prompt/reply window 262144, cache slots 262151
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; up to 8 streams, each growing to 262144 prompt/reply tokens while memory lasts (29.2 GiB free for their caches, 7.52 GiB for one at the full window), eager; n-gram tables read in 12.2s; 0 decode graphs captured; prompt kernels warmed in 18.0s
+[tensorfold] serving flashnext at http://127.0.0.1:8092/v1 on CUDA (sampling: temperature 1.0, top_k 20, top_p 0.95; drafts: on; prompts: bf16 activations; context: 262144; loaded in 96.7s)
+06:55:26 mtpfp4 concurrent rc=0
+06:57:40 mtpfp4 openai rc=0
+07:02:30 mtpfp4 prefill rc=0
+07:09:56 mtpfp4 longmix STOPPED by user priority (fast tests first; long suites at the end)

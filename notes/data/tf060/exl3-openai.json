@@ -1,0 +1,58 @@
+[
+ {
+  "label": "",
+  "prompt": "fibonacci-raw",
+  "temperature": 1.0,
+  "tokens": 400,
+  "decode_tps_median": 73.3846334326833,
+  "decode_tps_all": [
+   73.3,
+   73.38,
+   76.58
+  ],
+  "ttft_s_median": 0.08975572499912232,
+  "sample": "\n\n<think>\n\n</think>\n\nHere is a short and efficient Python function to compute the Fibonacci sequence, followed by a detailed explanation.\n\n### The Code\n\n```pyth"
+ },
+ {
+  "label": "",
+  "prompt": "gpu-chat-no-think",
+  "temperature": 1.0,
+  "tokens": 400,
+  "decode_tps_median": 54.54725512679083,
+  "decode_tps_all": [
+   54.55,
+   51.6,
+   57.81
+  ],
+  "ttft_s_median": 0.09075160906650126,
+  "sample": "### How Matrix Multiplication Uses a GPU (Plain English)\n\nImagine you have two large grids of numbers (matrices) and you need to calculate their product. This i"
+ },
+ {
+  "label": "",
+  "prompt": "fibonacci-raw",
+  "temperature": 0.0,
+  "tokens": 400,
+  "decode_tps_median": 77.05009154164541,
+  "decode_tps_all": [
+   77.05,
+   77.25,
+   76.92
+  ],
+  "ttft_s_median": 0.08992826798930764,
+  "sample": "\n\n<think>\n\n</think>\n\nHere is a short and efficient Python function to compute the Fibonacci sequence, followed by a detailed explanation.\n\n### The Code\n\n```pyth"
+ },
+ {
+  "label": "",
+  "prompt": "gpu-chat-no-think",
+  "temperature": 0.0,
+  "tokens": 400,
+  "decode_tps_median": 61.20889215076712,
+  "decode_tps_all": [
+   61.46,
+   61.21,
+   60.95
+  ],
+  "ttft_s_median": 0.09137910802382976,
+  "sample": "Here is an explanation of how GPUs accelerate matrix multiplication, followed by a small numerical example.\n\n### Part 1: How GPUs Use Matrix Multiplication (Pla"
+ }
+]
