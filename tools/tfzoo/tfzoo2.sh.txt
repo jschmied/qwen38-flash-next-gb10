@@ -1,0 +1,17 @@
+#!/bin/bash
+# mtpfp8 (+ mtpfp4 control) on branch pr-mtp-fp8. After the GPU unit tests (no GPU work beside them).
+R=/opt/llm/runners/results/tfzoo; T=/opt/llm/runtime/tf-venv; P=/opt/llm/runtime/vllm-venv-fnext/bin/python; L=/opt/llm/runners/tfzoo
+BR=/home/jschmied/git/tf-pr-mtp-fp8/src; M=/opt/llm/models
+log(){ echo "$(date +%T) $*" >> $R/chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+while pgrep -f "tests/cuda/test_flashnext_nvfp4_loader" >/dev/null; do sleep 15; done
+for v in mtpfp8 mtpfp4; do memok
+  systemd-run --unit=fx-tfzoo --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin -E PYTHONPATH=$BR \
+    bash -c "$T/bin/tensorfold serve $M/qwen38-flash-next-$v --port 8092 --name flashnext --context 32768 --parallel 1 > /opt/llm/tfzoo-mtpfp8br-$v.log 2>&1"
+  ok=0; for i in $(seq 1 180); do sleep 5; systemctl is-active -q fx-tfzoo || break; curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { ok=1; break; }; done
+  if [ $ok = 1 ]; then log "mtpfp8br-$v LOADED"; timeout 1200 $P $L/zoo_probe.py mtpfp8br-$v >> $R/probe.jsonl 2>> $R/probe.err
+  else log "mtpfp8br-$v NOT SERVING: $(grep -E 'Error|error|refus|reads' /opt/llm/tfzoo-mtpfp8br-$v.log | tail -3 | tr '\n' ' ' | cut -c1-500)"; fi
+  systemctl stop fx-tfzoo 2>/dev/null; systemctl reset-failed fx-tfzoo 2>/dev/null; sleep 15
+done
+echo "== TFZOO2 DONE ==" >> $R/chain.txt

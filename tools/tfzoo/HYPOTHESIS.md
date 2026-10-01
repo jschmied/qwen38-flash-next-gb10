@@ -18,3 +18,9 @@ Expected per variant (stock):
   linear → **load error on shapes or garbage replies**.
 - Branch #176: `mtpfp4d` and `mtpfp4-gdn4` refused at the check, naming a layer; every other variant unchanged.
 Out of range (e.g. a variant that loads and decodes garbage without an error) → that is a finding for its own issue.
+
+## mtpfp8 on branch `pr-mtp-fp8` (FP8 MTP experts dequantized, then re-quantized like the bf16 drafter), before the run
+- Loads (stock refuses it at the check, §5ar); the three greedy replies identical to `mtpfp4`'s (the target is the same,
+  drafts never change replies); MTP acceptance within ±5 pp of `mtpfp4`'s 86/99 (both drafters end as NVFP4 made
+  at load from near-identical values: FP8 per tensor vs NVFP4 per 16).
+- `mtpfp4` on the branch: identical to stock (control).
