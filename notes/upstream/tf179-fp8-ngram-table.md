@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #179 comment (2026-10-01).
+POSTED 2026-10-01 (user: "post"). ashhart/TensorFold #179 comment (2026-10-01).
 
 Supporting data for the main point. Our own Flash Next export (`mtpfp4`: NVFP4 experts, block-FP8 linears) stores the
 n-gram table exactly like this checkpoint: `ngram_embedding.shard_{0..127}.weight` `F8_E4M3 [2500012, 160]` and a

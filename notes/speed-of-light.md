@@ -3114,4 +3114,4 @@ M4 (sum of the four streams' decode seconds, not aggregate tok/s, §5av): code 4
 - **Deeper chains barely draft deeper at τ 0.8:** the chain rarely survives to position 6 (drafted 465 vs 502 at
   depth 6/0.7), so depth 7/8 add almost nothing.
 - **For #136:** on these prompts a perfect per-round depth choice has ≈ 1 % left over TF's default; a depth rule from
-  *recent* acceptance lost in our replay (§5v: code −0.8…−8.2 %). Draft `notes/upstream/tf136-depth-measurements.md`.
+  *recent* acceptance lost in our replay (§5v: code −0.8…−8.2 %). Posted 2026-10-01: https://github.com/ashhart/TensorFold/issues/136#issuecomment-5931347120

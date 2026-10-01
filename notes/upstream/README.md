@@ -1560,3 +1560,9 @@ wait on one ~100 GB pull, and they share one serve.
   https://github.com/ashhart/TensorFold/pull/180
 - **TensorFold #141 comment** (2026-10-01 ~13:36, same go): short finding + pointer to #180. Text
   `tf141-solo-recapture.md`. https://github.com/ashhart/TensorFold/pull/141#issuecomment-5930174017
+- **TensorFold #136 comment** (2026-10-01 ~14:40, user: "post"): TF depth × confidence A/B (default 6/0.7 within ±1 %
+  of the best cell, §5aw) + our vLLM draft-length findings (§5v, §5ah, §5p, §5l). Text `tf136-depth-measurements.md`.
+  https://github.com/ashhart/TensorFold/issues/136#issuecomment-5931347120
+- **TensorFold #179 comment** (same go): our `mtpfp4` serves the identical FP8 n-gram table through the loader's FP8
+  lane; the fix belongs in #178's per-layer predicate; `_TABLE`/`ple_bytes` are MLX-only. Text `tf179-fp8-ngram-table.md`.
+  https://github.com/ashhart/TensorFold/issues/179#issuecomment-5931347536

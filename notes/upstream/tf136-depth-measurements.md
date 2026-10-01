@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #136 comment (2026-10-01).
+POSTED 2026-10-01 (user: "post"). ashhart/TensorFold #136 comment (2026-10-01).
 
 Some measurements for this, from one GB10 (Flash Next, EXL3 3.05 bpw, TensorFold 0.6.0). The first table is the A/B on
 TensorFold itself. The rest is from vLLM on the same model.

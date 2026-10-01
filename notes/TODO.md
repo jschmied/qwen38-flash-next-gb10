@@ -54,7 +54,7 @@ test: develop in a separate worktree, never switch that checkout while a server 
       depth rules lose (replay code −0.8…−8.2 %, §5v; vr8vr8 live mixed); in-round confidence stop is the winner, τ 0.70
       flat 0.60–0.75 = TF's default (§5v); depth 7 + τ 0.8 +10 % code / +12.8 % prose vs fixed 5 in replay (§5ah);
       verify-row trimming alone loses (§5p). TF-native sweep DONE (§5aw): TF's 6/0.7 is within ±1 % of the best cell
-      (7/0.8 code −0.9 %, prose +0.5 %). Comment draft `notes/upstream/tf136-depth-measurements.md` — needs a go.
+      (7/0.8 code −0.9 %, prose +0.5 %). Comment POSTED 2026-10-01 (#136).
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
 
