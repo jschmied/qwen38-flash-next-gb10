@@ -20,10 +20,10 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [x] ~~**T4**~~ CLOSED (§5ao): residency stays 100 %, lock 0.6 s at both shapes; the 22.2 s was the first start after the install (JIT build) (code reading: `pk.get` marks the n-gram
       file touched → whole-file `POSIX_FADV_DONTNEED`). Check first: majflt on the first request after start.
 - [~] T5 seed salt (`cbab428`: `TENSORFOLD_SEED_SALT`, docs + tests); T6 loader guards (`2d6c82f`: `_plain` + up-front NVFP4-outside-experts refusal); T7 32k draft vocabulary A/B; T8 prompt chunk 2048 → 4096/8192 + grouped raster in `_b16mm`.
-- [ ] **T9 shortest-remaining-first prompt fill on CUDA** (with an age guard): 0.6.0 fills oldest first (`multi.py`
+- [~] **T9 shortest-remaining-first prompt fill on CUDA** (v1 `a8f4ea8` order only: null, §5ap — a lone prompt's passes never return to the scheduler; v2 = return between passes when a request waits) (with an age guard): 0.6.0 fills oldest first (`multi.py`
       `_pieces`), so in the long mix (§5an) 2k requests waited 630–715 s behind four 120k prompts; the Mac path
       already does "fewest tokens left first". Prototype + re-run a small mix (1 long + 4 short) first.
-- [ ] **Prefill per-token cost** (§5an: EXL3 flat ~720 tok/s, ours ~1,300): nsys profile of one 8k prefill, then a
+- [~] **Prefill per-token cost** (§5ap: GPU-busy 96–99 %; EXL3 experts ~75 % in `MOE_WINDOW`=1024-row windows → chunk size null; next: window 512/1024/2048 (needs TF#151's smem attribute) on EXL3, chunk sweep on our NVFP4 checkpoint) (§5an: EXL3 flat ~720 tok/s, ours ~1,300): nsys profile of one 8k prefill, then a
       `PREFILL_ROWS` 2048/4096/8192 sweep (T8). Fast cells only (8k/32k); the full 2k–65k sweep at the end.
 - [ ] Deferred big suites (user: "fast tests first"): our checkpoint's long mix; full `prefill_cold` sweeps; SWE.
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4

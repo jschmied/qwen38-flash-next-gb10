@@ -2857,3 +2857,39 @@ Hypotheses `tools/tfple/HYPOTHESIS.md`; data `data/tfple/`. Branch `ple-gather` 
   2,048-token chunk's gather from 5.5 s to 0.27 s. A table is cold when memory pressure has reclaimed it: our
   checkpoint's table is not locked under 0.6.0 (§5an), and 0.6.0's KV growth takes memory from it by design. The
   server-level A/B therefore belongs in the long mix on our checkpoint (a big suite, at the end).
+
+### 5ap. Where TensorFold's prompt time goes: 99 % GPU-busy, the experts' per-window work; chunk size is not the lever
+
+Hypotheses `tools/tfprof/HYPOTHESIS.md`; data `data/tfprof/`, `data/tfsweep/`. One cold 8k prompt per checkpoint
+under nsys (0.6.0 stock, one stream).
+
+| | EXL3 3.05 bpw (11.75 s wall) | our `mtpfp4`, bf16 prompts (6.11 s wall) |
+|---|---|---|
+| GPU kernel time | 11.65 s (**99 %**) | 5.89 s (**96 %**) |
+| routed experts | `tf_exl3x::grouped_kernel` **55.9 %** (882 calls), grouping 8.1 %, epilogues 7.3 %, unpack/rotate 3.7 % → **~75 %** | `nvfp4_expert_kernel` ×2 **36.7 %** (245 + 245 calls) |
+| dense projections | `_gemm` 5.6 %, `_f16_mm` 4.7 % | `qmmf_kernel` (block FP8) **18.5 %**, `_b16mm` 7.2 %, `_fp4mm` 5.6 % |
+| attention (`_chunks`) | 2.4 % | 4.9 % |
+| DeltaNet chain | 1.6 % | 3.2 % |
+| hyper-connections | 3.5 % | 9.5 % |
+
+- **Hypothesis met on both counts that matter:** GPU-busy ≥ 85 % (99 / 96 %), experts ≥ 50 % on EXL3 (~75 %),
+  NVFP4 experts ≥ 40 % on ours (36.7 %, just under; dense FP8 projections 18.5 % inside the 15–30 % expected).
+  Busy is not efficient: at ~6.8 GFLOP a token these prefills reach ~5 (EXL3) and ~9 (ours) TFLOPS against vLLM's
+  ~21 on our checkpoint — few rows per expert per call, EXL3's trellis decode per call, and W4A16 instead of
+  vLLM's W4A4 (FP4 tensor cores).
+- **Chunk-size sweep on EXL3: null, and the profile says why.** `TF_PREFILL_ROWS` 2048 / 4096 / 8192 (one start
+  each, override confirmed: startup estimate 56.0 → 59.2 GiB): TTFT 8k **11.24 / 11.21 / 11.24 s**, 32k **45.71 /
+  45.50 / 45.55 s**; greedy 64-token replies byte-identical in all three (`1a329bc1f8568edf`: chunk size does not
+  change bits). The EXL3 routed-expert path runs in windows of **`MOE_WINDOW = 1024` rows** whatever the chunk
+  (`exl3_pack.py:17`, "its grouping keeps every pick in 48 KB of shared memory"): 8,221 tokens → 9 windows × 2 calls ×
+  49 layers ≈ the 882 grouped-kernel calls counted. The hypothesis (−20…−45 %) was built on the wrong knob. The real
+  one is the window: 1,024 rows × 11 slots × 4 B = 45 KB; 2,048 would need 90 KB, inside GB10's opt-in maximum
+  (~99 KB) once the attribute is raised — TF#151 does that, which the maintainer plans for 0.6.1. Our checkpoint's
+  NVFP4 experts do run per 2,048-row chunk (245 calls = 5 chunks × 49), so the chunk sweep is still open there.
+- **T9 v1 (shortest-first order): no effect** (small mix, 1 × 32k + 4 × 2k every 10 s, stock vs branch): short
+  requests' first tokens at 46.5 / 39.3 / 32.1 / 22.4 s (stock) vs 51.8 / 39.0 / 26.1 / 22.1 s (branch), i.e. all
+  of them wait for the 32k prompt to end (~45 s). Cause, from the code: with no stream decoding, `_fill` runs pass
+  after pass until the filling prompts are done and never returns to the scheduler, so a new request is not even
+  admitted until then; the order rule never sees two prompts. Exactness on the branch (levels 1, 2): alone 36/36,
+  serial 12/12 equal. Fix (T9 v2): `_fill` also returns between passes when a
+  foreground request waits (`MultiDecoder.arrived`, set by the scheduler to `waiting.foreground`).

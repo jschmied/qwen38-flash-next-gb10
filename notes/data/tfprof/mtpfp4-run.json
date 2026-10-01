@@ -1,0 +1,11 @@
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 103.82 GiB; native 262144, allocated prompt/reply window 16384, cache slots 16391
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 16384-token prompt/reply window; 16391-token cache; n-gram tables read in 11.7s; 21 decode graphs captured; prompt kernels warmed in 1.4s
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-7222.qdstrm'
+[1/1] [0%                          ] mtpfp4.nsys-repProcessing events...
+[1/1] [0%                          ] mtpfp4.nsys-rep[1/1] [=====30%                    ] mtpfp4.nsys-rep[1/1] [=============58%            ] mtpfp4.nsys-rep[1/1] [=================74%        ] mtpfp4.nsys-rep[1/1] [========================100%] mtpfp4.nsys-rep[1/1] [========================100%] mtpfp4.nsys-rep
+{"model": "/opt/llm/models/qwen38-flash-next-mtpfp4", "tokens": 8220, "wall_s": 6.106, "stats": {"prefill_s": 6.1056, "cached": 0, "drafts": true}}
+Generated:
+	/opt/llm/runners/results/tfprof/mtpfp4.nsys-rep

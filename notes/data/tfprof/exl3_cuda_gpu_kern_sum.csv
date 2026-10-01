@@ -1,0 +1,44 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+55.9,6516551360,882,7388380.2,5824016.0,178016,13289152,3769232.1,"void tf_exl3x::grouped_kernel<(int)2, (int)8, (int)4, (int)1, (int)2, (int)10>(const __half *, const __half *, const long *, const long *, const int *, const int *, const int *, const int *, const int *, float *, int, int, int, int, int, int)"
+8.1,948938240,441,2151787.4,2411456.0,63200,2566496,739300.2,"<unnamed>::group_kernel(const int *, int *, int *, int *, int, int, int, int)"
+5.6,654133056,875,747580.6,837824.0,48128,2257856,544506.7,_gemm
+4.7,551239424,9290,59336.9,38944.0,4160,4767904,147188.4,_f16_mm
+3.7,430391200,441,975943.8,1089504.0,17856,1234912,337047.9,"<unnamed>::gateup_epilogue_kernel(const float *, const int *, const __half *, const __half *, const __half *, __half *, int, int, int, int, float, int)"
+3.6,423032928,441,959258.3,1067072.0,10912,1258528,336175.5,"<unnamed>::down_epilogue_kernel(const float *, const int *, const __half *, float *, int, int, int, int)"
+2.4,280850112,441,636848.3,712800.0,3040,847040,224635.7,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)"
+2.4,279000256,429,650350.2,757376.0,60704,1032800,220988.5,_chunks
+2.2,251607040,505,498231.8,392096.0,1824,972640,331881.3,_hc_writeback
+2.2,250782816,441,568668.5,623968.0,14016,1028064,201177.8,"void <unnamed>::rot_in_kernel<__nv_bfloat16>(const T1 *, int, const int *, const __half *, const __half *, __half *, __half *, int, int, int)"
+1.6,185829984,216,860324.0,1257904.0,14976,1754944,592099.4,"void <unnamed>::chain_kernel<float, (int)128, (int)32>(const T1 *, const T1 *, const __nv_bfloat16 *, const float *, const float *, const float *, float *, __nv_bfloat16 *, int, int, int)"
+1.5,170735872,800,213419.8,194592.0,11104,614816,111998.6,"void <unnamed>::unpack_kernel<(int)10, (int)2>(const unsigned int *, __half *, int, long, long)"
+1.4,168163680,500,336327.4,426464.0,1248,491776,175701.4,_hc_mix
+1.3,153127808,500,306255.6,385136.0,1568,620064,160032.5,_hc_normed
+0.6,73512096,180,408400.5,499232.0,7040,904896,204353.6,"void <unnamed>::front_kernel<(int)16, (int)48>(const __nv_bfloat16 *, const long long *, const int *, const int *, const __nv_bfloat16 *, const float *, const float *, float *, float *, __nv_bfloat16 *, float *, float *)"
+0.6,73153472,876,83508.5,76064.0,1600,404448,68608.2,"<unnamed>::rot_in_kernel(const void *, int, const __half *, __half *, int)"
+0.5,52502368,216,243066.5,358272.0,1376,545600,171364.1,"void <unnamed>::back_kernel<(int)16, (int)48>(const __nv_bfloat16 *, const __nv_bfloat16 *, const __nv_bfloat16 *, float, __nv_bfloat16 *, float *)"
+0.4,44794336,429,104415.7,129024.0,3968,195136,45027.4,_merge
+0.2,23060192,429,53753.4,56640.0,1024,171968,37622.4,_scores
+0.2,22411488,245,91475.5,103968.0,18944,257952,37784.4,_router
+0.2,20074336,8785,2285.1,2368.0,992,48416,1611.0,_reduce
+0.1,17453696,65,268518.4,332768.0,1856,358976,134239.5,_attn_gate
+0.1,15915744,65,244857.6,302976.0,4896,331264,120697.0,_attn_prep
+0.1,13773632,429,32106.4,37184.0,1280,62720,18494.8,_select
+0.1,6130976,245,25024.4,30144.0,3616,47232,10741.7,_topk_rows
+0.0,3437504,5,687500.8,636352.0,635584,883104,109441.6,"void <unnamed>::prefill_kernel<(int)32, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)"
+0.0,3079072,5,615814.4,753728.0,9280,802016,339661.4,_ple_conv
+0.0,2654688,5,530937.6,654912.0,31936,658400,278956.5,_ple_gate
+0.0,2269248,500,4538.5,5024.0,1024,26784,2328.9,_hc_act
+0.0,1757472,1,1757472.0,1757472.0,1757472,1757472,0.0,"void <unnamed>::linear_kernel<(int)10, (int)2, (int)8>(const __half *, const unsigned int *, long long, long long, const __half *, const __half *, void *, int, float *, int *, int, int, int, int)"
+0.0,1739136,5,347827.2,419712.0,3616,478880,194269.2,_add_streams
+0.0,1675680,10,167568.0,60112.0,2432,359328,164352.8,_rmsnorm
+0.0,1413056,65,21739.3,22720.0,14112,37984,4154.9,"void <unnamed>::unpack_kernel<(int)6, (int)2>(const unsigned int *, __half *, int, long, long)"
+0.0,1113920,1,1113920.0,1113920.0,1113920,1113920,0.0,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<float>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+0.0,1094272,10,109427.2,74752.0,1920,296736,89813.9,_embed
+0.0,878336,10,87833.6,80800.0,61312,164128,27707.5,"void <unnamed>::unpack_kernel<(int)8, (int)2>(const unsigned int *, __half *, int, long, long)"
+0.0,659392,5,131878.4,163424.0,4736,165120,71080.8,_ple_rows
+0.0,427360,65,6574.8,6048.0,2880,28768,3811.6,_pool
+0.0,405056,441,918.5,832.0,768,7168,485.5,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<int>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+0.0,388736,222,1751.1,1824.0,864,12800,1050.5,_shift_windows
+0.0,148096,180,822.8,832.0,800,896,18.1,"void at::native::vectorized_elementwise_kernel<(int)2, at::native::FillFunctor<long>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+0.0,11680,2,5840.0,5840.0,3072,8608,3914.5,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<c10::BFloat16>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+0.0,7360,1,7360.0,7360.0,7360,7360,0.0,"void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, (int)4, (int)4>>(T3)"

@@ -1,0 +1,12 @@
+07:50:59 rows2048 ready
+07:54:05 rows2048 done
+07:55:02 rows4096 ready
+07:58:07 rows4096 done
+07:59:03 rows8192 ready
+08:02:09 rows8192 done
+08:04:30 t9stock ready
+08:05:39 t9stock rc=0
+08:08:01 t9branch ready
+08:09:08 t9branch rc=0
+08:12:06 t9 exact rc=0
+== TFSWEEP DONE ==

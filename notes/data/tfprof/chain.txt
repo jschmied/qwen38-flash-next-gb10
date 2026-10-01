@@ -1,0 +1,17 @@
+07:47:11 exl3 rc=0 	/opt/llm/runners/results/tfprof/exl3.nsys-rep
+Generating SQLite file /opt/llm/runners/results/tfprof/exl3.sqlite from /opt/llm/runners/results/tfprof/exl3.nsys-rep
+Processing [/opt/llm/runners/results/tfprof/exl3.sqlite] with [/opt/nvidia/nsight-systems/2025.3.2/host-linux-armv8/reports/cuda_gpu_kern_sum.py] to [/opt/llm/runners/results/tfprof/exl3_cuda_gpu_kern_sum.csv]... PROCESSED
+
+Processing [/opt/llm/runners/results/tfprof/exl3.sqlite] with [/opt/nvidia/nsight-systems/2025.3.2/host-linux-armv8/reports/cuda_api_sum.py] to [/opt/llm/runners/results/tfprof/exl3_cuda_api_sum.csv]... PROCESSED
+
+Processing [/opt/llm/runners/results/tfprof/exl3.sqlite] with [/opt/nvidia/nsight-systems/2025.3.2/host-linux-armv8/reports/cuda_gpu_mem_time_sum.py] to [/opt/llm/runners/results/tfprof/exl3_cuda_gpu_mem_time_sum.csv]... PROCESSED
+
+07:48:52 mtpfp4 rc=0 	/opt/llm/runners/results/tfprof/mtpfp4.nsys-rep
+Generating SQLite file /opt/llm/runners/results/tfprof/mtpfp4.sqlite from /opt/llm/runners/results/tfprof/mtpfp4.nsys-rep
+Processing [/opt/llm/runners/results/tfprof/mtpfp4.sqlite] with [/opt/nvidia/nsight-systems/2025.3.2/host-linux-armv8/reports/cuda_gpu_kern_sum.py] to [/opt/llm/runners/results/tfprof/mtpfp4_cuda_gpu_kern_sum.csv]... PROCESSED
+
+Processing [/opt/llm/runners/results/tfprof/mtpfp4.sqlite] with [/opt/nvidia/nsight-systems/2025.3.2/host-linux-armv8/reports/cuda_api_sum.py] to [/opt/llm/runners/results/tfprof/mtpfp4_cuda_api_sum.csv]... PROCESSED
+
+Processing [/opt/llm/runners/results/tfprof/mtpfp4.sqlite] with [/opt/nvidia/nsight-systems/2025.3.2/host-linux-armv8/reports/cuda_gpu_mem_time_sum.py] to [/opt/llm/runners/results/tfprof/mtpfp4_cuda_gpu_mem_time_sum.csv]... PROCESSED
+
+== TFPROF DONE ==

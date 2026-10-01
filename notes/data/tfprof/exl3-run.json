@@ -1,0 +1,10 @@
+[tensorfold] CUDA rank 0 startup estimate 54.32 GiB within 103.85 GiB; native 262144, allocated prompt/reply window 16384, cache slots 16391
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 16384-token prompt/reply window; 16391-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 10.8s; 21 decode graphs captured; prompt kernels warmed in 2.2s
+Capture range started in the application.
+Capture range ended in the application.
+Generating '/tmp/nsys-report-5e95.qdstrm'
+[1/1] [0%                          ] exl3.nsys-repProcessing events...
+[1/1] [0%                          ] exl3.nsys-rep[1/1] [=16%                        ] exl3.nsys-rep[1/1] [=====32%                    ] exl3.nsys-rep[1/1] [==========47%               ] exl3.nsys-rep[1/1] [==============62%           ] exl3.nsys-rep[1/1] [=================73%        ] exl3.nsys-rep[1/1] [========================100%] exl3.nsys-rep[1/1] [========================100%] exl3.nsys-rep
+{"model": "/opt/llm/models/qwen38-flash-next-exl3-3.05bpw", "tokens": 8221, "wall_s": 11.753, "stats": {"prefill_s": 11.7528, "cached": 0, "drafts": true}}
+Generated:
+	/opt/llm/runners/results/tfprof/exl3.nsys-rep
