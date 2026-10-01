@@ -1,0 +1,7 @@
+q-full rc=0
+q-checkpoint rc=0
+acc-full-a rc=0 TOTAL {"label": "full-a", "mode": "full", "rounds": 693, "drafted": 1957, "accepted": 1349, "decode_s": 39.0238, "tokens": 2048, "tok_s": 52.48, "ms_per_round": 56.31, "accept": 0.6893, "tokens_per_round": 2.955}
+acc-checkpoint-a rc=0 TOTAL {"label": "checkpoint-a", "mode": "checkpoint", "rounds": 720, "drafted": 1852, "accepted": 1326, "decode_s": 39.208600000000004, "tokens": 2048, "tok_s": 52.23, "ms_per_round": 54.46, "accept": 0.716, "tokens_per_round": 2.844}
+acc-full-b rc=0 TOTAL {"label": "full-b", "mode": "full", "rounds": 693, "drafted": 1957, "accepted": 1349, "decode_s": 39.068999999999996, "tokens": 2048, "tok_s": 52.42, "ms_per_round": 56.38, "accept": 0.6893, "tokens_per_round": 2.955}
+acc-checkpoint-b rc=0 TOTAL {"label": "checkpoint-b", "mode": "checkpoint", "rounds": 720, "drafted": 1852, "accepted": 1326, "decode_s": 39.3728, "tokens": 2048, "tok_s": 52.02, "ms_per_round": 54.68, "accept": 0.716, "tokens_per_round": 2.844}
+== QUAL DONE ==

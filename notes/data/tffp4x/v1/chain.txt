@@ -1,0 +1,2 @@
+23:51:42 full-a rc=0 routed NVFP4 experts on bf16 rows (W4A16)
+23:53:41 checkpoint-a rc=0 routed NVFP4 experts in the checkpoint's math (FP4 x FP4 under its static input scales)

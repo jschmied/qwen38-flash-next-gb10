@@ -1,0 +1,9 @@
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 0, "rounds": 77, "drafted": 240, "accepted": 179, "decode_s": 4.4616, "tokens": 256}
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 1, "rounds": 70, "drafted": 226, "accepted": 186, "decode_s": 4.0495, "tokens": 256}
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 2, "rounds": 64, "drafted": 244, "accepted": 192, "decode_s": 3.87, "tokens": 256}
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 3, "rounds": 76, "drafted": 253, "accepted": 180, "decode_s": 4.4173, "tokens": 256}
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 4, "rounds": 121, "drafted": 218, "accepted": 134, "decode_s": 6.2163, "tokens": 256}
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 5, "rounds": 97, "drafted": 254, "accepted": 159, "decode_s": 5.304, "tokens": 256}
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 6, "rounds": 120, "drafted": 185, "accepted": 136, "decode_s": 5.9492, "tokens": 256}
+{"label": "checkpoint-b", "mode": "checkpoint", "task": 7, "rounds": 95, "drafted": 232, "accepted": 160, "decode_s": 5.1049, "tokens": 256}
+TOTAL {"label": "checkpoint-b", "mode": "checkpoint", "rounds": 720, "drafted": 1852, "accepted": 1326, "decode_s": 39.3728, "tokens": 2048, "tok_s": 52.02, "ms_per_round": 54.68, "accept": 0.716, "tokens_per_round": 2.844}

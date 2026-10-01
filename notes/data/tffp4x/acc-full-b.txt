@@ -1,0 +1,9 @@
+{"label": "full-b", "mode": "full", "task": 0, "rounds": 76, "drafted": 251, "accepted": 180, "decode_s": 4.5073, "tokens": 256}
+{"label": "full-b", "mode": "full", "task": 1, "rounds": 59, "drafted": 235, "accepted": 196, "decode_s": 3.6515, "tokens": 256}
+{"label": "full-b", "mode": "full", "task": 2, "rounds": 60, "drafted": 236, "accepted": 196, "decode_s": 3.6588, "tokens": 256}
+{"label": "full-b", "mode": "full", "task": 3, "rounds": 65, "drafted": 241, "accepted": 190, "decode_s": 3.9758, "tokens": 256}
+{"label": "full-b", "mode": "full", "task": 4, "rounds": 127, "drafted": 258, "accepted": 128, "decode_s": 6.6959, "tokens": 256}
+{"label": "full-b", "mode": "full", "task": 5, "rounds": 87, "drafted": 274, "accepted": 168, "decode_s": 5.0676, "tokens": 256}
+{"label": "full-b", "mode": "full", "task": 6, "rounds": 127, "drafted": 218, "accepted": 128, "decode_s": 6.4308, "tokens": 256}
+{"label": "full-b", "mode": "full", "task": 7, "rounds": 92, "drafted": 244, "accepted": 163, "decode_s": 5.0813, "tokens": 256}
+TOTAL {"label": "full-b", "mode": "full", "rounds": 693, "drafted": 1957, "accepted": 1349, "decode_s": 39.068999999999996, "tokens": 2048, "tok_s": 52.42, "ms_per_round": 56.38, "accept": 0.6893, "tokens_per_round": 2.955}

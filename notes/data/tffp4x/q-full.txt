@@ -1,0 +1,11 @@
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 104.78 GiB; native 262144, allocated prompt/reply window 4160, cache slots 4167
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 4160-token prompt/reply window; 4167-token cache; routed NVFP4 experts on bf16 rows (W4A16); n-gram tables read in 12.2s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.4s
+seq 0 done 32s nll 0.4141
+seq 1 done 65s nll 1.1915
+seq 2 done 97s nll 1.8245
+seq 3 done 129s nll 1.4770
+seq 4 done 162s nll 0.1576
+seq 5 done 196s nll 0.1328
+seq 6 done 229s nll 0.1624
+seq 7 done 263s nll 0.0641

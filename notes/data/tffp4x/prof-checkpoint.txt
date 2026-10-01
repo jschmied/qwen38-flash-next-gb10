@@ -1,0 +1,38 @@
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 103.65 GiB; native 262144, allocated prompt/reply window 16384, cache slots 16391
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 16384-token prompt/reply window; 16391-token cache; routed NVFP4 experts in the checkpoint's math (FP4 x FP4 under its static input scales); n-gram tables read in 11.7s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.3s
+USDT:2026-10-02 00:17:24 1212599:1212599 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 00:17:30 1212599:1212599 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== checkpoint 8k prefill (5.5596 s): GPU kernel time 5250.8 ms
+     977.97 ms  18.6 % x   245  void (anonymous namespace)::experts_ck_kernel<1>((anonymous namespace)::Rows, (anonymous n
+     619.31 ms  11.8 % x   245  void (anonymous namespace)::experts_ck_kernel<3>((anonymous namespace)::Rows, (anonymous n
+     557.18 ms  10.6 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+     532.51 ms  10.1 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+     424.40 ms   8.1 % x  1270  _b16mm
+     327.37 ms   6.2 % x   490  _fp4mm
+     319.58 ms   6.1 % x  1005  _reduce
+     284.84 ms   5.4 % x   429  _chunks
+     255.41 ms   4.9 % x   505  _hc_writeback
+     172.02 ms   3.3 % x   500  _hc_mix
+     156.58 ms   3.0 % x   500  _hc_normed
+     135.34 ms   2.6 % x   216  void (anonymous namespace)::chain_kernel<float, 128, 32>(float const*, float const*, __nv_
+     118.33 ms   2.3 % x   970  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      75.23 ms   1.4 % x   180  void (anonymous namespace)::front_kernel<16, 48>(__nv_bfloat16 const*, long long const*, i
+USDT:2026-10-02 00:17:31 1212599:1212599 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 00:17:35 1212599:1212599 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== checkpoint decode 256: GPU kernel time 4054.6 ms
+     871.03 ms  21.5 % x  3729  void (anonymous namespace)::experts_ck_kernel<1>((anonymous namespace)::Rows, (anonymous n
+     845.74 ms  20.9 % x  3480  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+     728.74 ms  18.0 % x 20298  _b16mm
+     403.70 ms  10.0 % x  3457  void (anonymous namespace)::experts_ck_kernel<3>((anonymous namespace)::Rows, (anonymous n
+     286.56 ms   7.1 % x  3408  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+     285.21 ms   7.0 % x  7458  _fp4mm
+     145.02 ms   3.6 % x   272  void (anonymous namespace)::qmm_kernel<32, 16, 64, 1, 4, 4, false, false, false>(__nv_bflo
+     114.22 ms   2.8 % x  2556  void (anonymous namespace)::chain_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const
+      56.28 ms   1.4 % x  3729  _router
+      37.98 ms   0.9 % x  1116  void (anonymous namespace)::replay_kernel<16, 48>(float const*, float const*, __nv_bfloat1
+      35.40 ms   0.9 % x 15879  _reduce
+      23.25 ms   0.6 % x 13881  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      20.76 ms   0.5 % x  7875  _hc_writeback
+      17.03 ms   0.4 % x   272  void (anonymous namespace)::experts_ck_kernel<0>((anonymous namespace)::Rows, (anonymous n
+STATS {"prefill_s": 0.1362, "cached": 0, "drafts": true, "drafted": 248, "accepted": 185, "min_rows": 2, "decode_s": 4.2339, "rounds": 71, "decode_tps": 60.23}

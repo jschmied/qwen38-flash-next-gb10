@@ -1,0 +1,14 @@
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 104.84 GiB; native 262144, allocated prompt/reply window 4160, cache slots 4167
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 4160-token prompt/reply window; 4167-token cache; routed NVFP4 experts in the checkpoint's math (FP4 x FP4 under its static input scales); n-gram tables read in 11.7s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.3s
+seq 0 done 32s nll 0.4388
+seq 1 done 63s nll 1.1941
+seq 2 done 95s nll 1.8313
+seq 3 done 126s nll 1.4939
+seq 4 done 159s nll 0.1673
+seq 5 done 191s nll 0.1491
+seq 6 done 224s nll 0.1661
+seq 7 done 257s nll 0.0846
+RESULT wikitext: KL(full||checkpoint) mean 0.05078, top-1 agreement 93.01 %, perplexity full 3.4102 checkpoint 3.4540 (+1.29 %), positions 16384
+RESULT code: KL(full||checkpoint) mean 0.02589, top-1 agreement 98.25 %, perplexity full 1.1380 checkpoint 1.1523 (+1.26 %), positions 16384
+RESULT all: KL(full||checkpoint) mean 0.03833, top-1 agreement 95.63 %, perplexity full 1.9700 checkpoint 1.9950 (+1.27 %), positions 32768

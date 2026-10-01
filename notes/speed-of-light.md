@@ -3324,3 +3324,37 @@ data `data/tfhost/t12/`; predictions `tools/tfhost/HYPOTHESIS.md` round 7.
   a staging copy of the round tables and a table-driven PLE conv / sparse select, and runs eager until a key repeats.
 - Consequence: T12 = the main forward only (no MTP graphs), worth ~7–8 % at c=2 and ~5–6 % at c=4 for 2–3 days of
   rework on code that is still moving; a maintainer issue first (one topic), not a PR. Not posted.
+
+### 5bd. Flash Next's routed NVFP4 experts in the checkpoint's math (FP4 x FP4) on TensorFold: prompts −9…−10 %, decode level, perplexity +1.27 %
+
+User 2026-10-02: "I would just post proposed pr" (TF #173 was closed with 0.6.1's `--precision checkpoint`, which reaches
+the 27B only: `precision.mode()` and `cuda/nvfp4/checkpoint.py` are used by `families/qwen3_5` alone, and Flash
+Next's routed experts kept `nvfp4_expert_kernel` on bf16 rows). Branch `flashnext-fp4-experts` (`~/git/tf-fp4x`, on
+0.6.1 `17c73e1`); predictions `tools/tffp4x/HYPOTHESIS.md`; data `data/tffp4x/`.
+
+Design: rows quantized once a layer (`quant4`) under gate/up's input scale (one value for all 512 experts in every
+layer of `qwen38-flash-next-mtpfp4` except layer 0, which has two, 0.0020 and 0.0040: the max, as FlashInfer's CUTLASS
+MoE takes); `experts_ck.cu`, a warp per (plan item, 32 columns), FP4 mma m16n8k64 against the 27B's `pack4` words
+and block scales re-laid lane-major (two 16-byte code loads and one scale load a lane a K step), four K steps in
+flight; gate|up's epilogue = SiLU(gate) * up in fp32 quantized to down's NVFP4 input under each expert's own down
+input scale (`nvfp4q.cuh`); down writes each pair's row. One rank, SM 12.x; MTP draft-only experts unchanged.
+
+| | `--precision full` (W4A16) | `checkpoint` (FP4 x FP4) | |
+|---|---|---|---|
+| 8k prefill (s), 3 alternating rounds | 6.11 / 6.13 / 6.18 | 5.57 / 5.60 / 5.56 | −8.7…−9.9 % |
+| 32k prefill (s) | 24.51 / 24.62 / 24.78 | 22.32 / 22.41 / 22.33 | −8.9…−9.9 % |
+| 8k prefill, routed experts (torch.profiler) | 2,154 ms | 1,597 ms | −26 % |
+| decode, 8 prompts x 256 tokens, drafts on (2 runs, identical) | 52.45 tok/s, 56.3 ms a round, 2.955 tok a round | 52.1 tok/s, 54.6 ms, 2.844 | −0.6 % |
+| teacher-forced vs full, 8 x 4,096 positions | — | KL 0.038, top-1 95.6 %, ppl +1.27 % | wikitext KL 0.051 / 93.0 %; code 0.026 / 98.3 % |
+
+- First 16 tokens after both prompts identical to full in every run; drafted == serial 4/4 (160 tokens) in checkpoint
+  mode; TF CUDA suite 1,208 passed / 98 skipped; new kernel tests (bytes vs a torch quantizer, products to 1e-5, pair
+  bits alone / in any plan) pass.
+- Microbench (one layer, random weights, `kbench.py`): FP4/W4A16 0.85 at 1 row, 0.98–0.99 at 4–32 rows, 0.59 at a
+  2,048-row prompt chunk. In the model the prompt saving is −26 % on the experts (real routing), so −9 % end to end.
+- First build (64 columns a warp, no prefetch, 8-byte loads): decode −16 % on one reply; the profile showed it was the
+  drafter's acceptance on that reply (71 vs 59 rounds), not the kernel (per round 6 % faster). Over 8 prompts decode is
+  level: rounds 3 % faster, 3.8 % fewer tokens a round (different text, different drafts).
+- Predictions: prefill −8…−18 % — in range (low end); decode ±5 % — in range; quality top-1 −1…−4 pp — out of range
+  (−4.4 pp: 95.6 % agreement, 93.0 % on wikitext). For scale, TF's own 27B table has checkpoint math at KL 0.070,
+  top-1 92.9 %, ppl +3.9 % against fp32 (every layer, not only the experts).

@@ -1,0 +1,7 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tffp4x; L=/opt/llm/runners/tffp4x; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; SRC=/home/jschmied/git/tf-fp4x/src
+export HOME=/root PYTHONUNBUFFERED=1 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-fp4x MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for mode in full checkpoint; do memok; timeout 3600 $PY $L/prof.py $SRC $M $mode > $R/prof-$mode.log 2>&1; echo "$mode rc=$?" >> $R/prof-chain.txt; done
+echo "== PROF DONE ==" >> $R/prof-chain.txt

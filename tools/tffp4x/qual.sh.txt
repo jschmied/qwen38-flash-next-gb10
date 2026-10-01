@@ -1,0 +1,12 @@
+#!/bin/bash
+# teacher-forced quality (full = reference, then checkpoint) and decode acceptance over 8 prompts, two rounds a mode
+R=/opt/llm/runners/results/tffp4x; L=/opt/llm/runners/tffp4x; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; SRC=/home/jschmied/git/tf-fp4x/src
+export HOME=/root PYTHONUNBUFFERED=1 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-fp4x MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+memok; timeout 3600 $PY $L/tf_quality.py $SRC $M full $L/wikitext2-test.txt $R/q-full.pt > $R/q-full.log 2>&1; echo "q-full rc=$?" >> $R/qual-chain.txt
+memok; timeout 3600 $PY $L/tf_quality.py $SRC $M checkpoint $L/wikitext2-test.txt $R/q-checkpoint.pt $R/q-full.pt > $R/q-checkpoint.log 2>&1; echo "q-checkpoint rc=$?" >> $R/qual-chain.txt
+for rep in a b; do for mode in full checkpoint; do
+  memok; timeout 3600 $PY $L/accept.py $SRC $M $mode-$rep $mode > $R/acc-$mode-$rep.log 2>&1; echo "acc-$mode-$rep rc=$? $(grep TOTAL $R/acc-$mode-$rep.log)" >> $R/qual-chain.txt
+done; done
+echo "== QUAL DONE ==" >> $R/qual-chain.txt

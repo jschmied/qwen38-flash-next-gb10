@@ -1,0 +1,30 @@
+{"label": "full-a", "mode": "full", "tokens": 8202, "prefill_s": 6.106, "wall_s": 7.348, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "full-a", "mode": "full", "tokens": 32779, "prefill_s": 24.508, "wall_s": 25.909, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "full-a", "mode": "full", "decode_rep": 0, "tokens": 256, "decode_s": 3.692, "tok_s": 69.35, "hash": "482dfcfdcf18"}
+{"label": "full-a", "mode": "full", "decode_rep": 1, "tokens": 256, "decode_s": 3.596, "tok_s": 71.18, "hash": "482dfcfdcf18"}
+{"label": "full-a", "mode": "full", "decode_rep": 2, "tokens": 256, "decode_s": 3.599, "tok_s": 71.13, "hash": "482dfcfdcf18"}
+{"label": "checkpoint-a", "mode": "checkpoint", "tokens": 8202, "prefill_s": 5.57, "wall_s": 6.659, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "checkpoint-a", "mode": "checkpoint", "tokens": 32779, "prefill_s": 22.321, "wall_s": 23.614, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "checkpoint-a", "mode": "checkpoint", "decode_rep": 0, "tokens": 256, "decode_s": 4.159, "tok_s": 61.55, "hash": "3655b34647b6"}
+{"label": "checkpoint-a", "mode": "checkpoint", "decode_rep": 1, "tokens": 256, "decode_s": 4.068, "tok_s": 62.93, "hash": "3655b34647b6"}
+{"label": "checkpoint-a", "mode": "checkpoint", "decode_rep": 2, "tokens": 256, "decode_s": 4.067, "tok_s": 62.94, "hash": "3655b34647b6"}
+{"label": "full-b", "mode": "full", "tokens": 8202, "prefill_s": 6.132, "wall_s": 7.285, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "full-b", "mode": "full", "tokens": 32779, "prefill_s": 24.616, "wall_s": 26.029, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "full-b", "mode": "full", "decode_rep": 0, "tokens": 256, "decode_s": 3.693, "tok_s": 69.31, "hash": "482dfcfdcf18"}
+{"label": "full-b", "mode": "full", "decode_rep": 1, "tokens": 256, "decode_s": 3.609, "tok_s": 70.93, "hash": "482dfcfdcf18"}
+{"label": "full-b", "mode": "full", "decode_rep": 2, "tokens": 256, "decode_s": 3.608, "tok_s": 70.96, "hash": "482dfcfdcf18"}
+{"label": "checkpoint-b", "mode": "checkpoint", "tokens": 8202, "prefill_s": 5.601, "wall_s": 6.747, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "checkpoint-b", "mode": "checkpoint", "tokens": 32779, "prefill_s": 22.41, "wall_s": 23.711, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "checkpoint-b", "mode": "checkpoint", "decode_rep": 0, "tokens": 256, "decode_s": 4.147, "tok_s": 61.74, "hash": "3655b34647b6"}
+{"label": "checkpoint-b", "mode": "checkpoint", "decode_rep": 1, "tokens": 256, "decode_s": 4.052, "tok_s": 63.17, "hash": "3655b34647b6"}
+{"label": "checkpoint-b", "mode": "checkpoint", "decode_rep": 2, "tokens": 256, "decode_s": 4.053, "tok_s": 63.16, "hash": "3655b34647b6"}
+{"label": "full-c", "mode": "full", "tokens": 8202, "prefill_s": 6.177, "wall_s": 7.333, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "full-c", "mode": "full", "tokens": 32779, "prefill_s": 24.781, "wall_s": 26.11, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "full-c", "mode": "full", "decode_rep": 0, "tokens": 256, "decode_s": 3.694, "tok_s": 69.3, "hash": "482dfcfdcf18"}
+{"label": "full-c", "mode": "full", "decode_rep": 1, "tokens": 256, "decode_s": 3.602, "tok_s": 71.07, "hash": "482dfcfdcf18"}
+{"label": "full-c", "mode": "full", "decode_rep": 2, "tokens": 256, "decode_s": 3.6, "tok_s": 71.11, "hash": "482dfcfdcf18"}
+{"label": "checkpoint-c", "mode": "checkpoint", "tokens": 8202, "prefill_s": 5.564, "wall_s": 6.65, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "checkpoint-c", "mode": "checkpoint", "tokens": 32779, "prefill_s": 22.327, "wall_s": 23.624, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "checkpoint-c", "mode": "checkpoint", "decode_rep": 0, "tokens": 256, "decode_s": 4.149, "tok_s": 61.7, "hash": "3655b34647b6"}
+{"label": "checkpoint-c", "mode": "checkpoint", "decode_rep": 1, "tokens": 256, "decode_s": 4.05, "tok_s": 63.21, "hash": "3655b34647b6"}
+{"label": "checkpoint-c", "mode": "checkpoint", "decode_rep": 2, "tokens": 256, "decode_s": 4.051, "tok_s": 63.19, "hash": "3655b34647b6"}

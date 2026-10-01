@@ -1,0 +1,16 @@
+#!/bin/bash
+# Flash Next NVFP4 routed experts: --precision full (W4A16) vs checkpoint (FP4 x FP4), branch flashnext-fp4-experts,
+# three alternating rounds, 8k + 32k prefill and decode.
+R=/opt/llm/runners/results/tffp4x; mkdir -p $R; L=/opt/llm/runners/tffp4x; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; SRC=/home/jschmied/git/tf-fp4x/src
+export HOME=/root PYTHONUNBUFFERED=1 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-fp4x MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b c; do
+  for mode in full checkpoint; do
+    memok
+    timeout 3600 $PY $L/fp4x_ab.py $SRC $M $mode-$rep $mode > $R/$mode-$rep.log 2>&1
+    echo "$(date +%T) $mode-$rep rc=$? $(grep -o 'routed NVFP4 experts[^;]*' $R/$mode-$rep.log | head -1)" >> $R/chain.txt
+    grep '^{' $R/$mode-$rep.log >> $R/fp4x.jsonl
+  done
+done
+echo "== FP4X DONE ==" >> $R/chain.txt

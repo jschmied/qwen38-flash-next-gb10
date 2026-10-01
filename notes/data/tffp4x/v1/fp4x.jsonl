@@ -1,0 +1,10 @@
+{"label": "full-a", "mode": "full", "tokens": 8202, "prefill_s": 6.059, "wall_s": 7.232, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "full-a", "mode": "full", "tokens": 32779, "prefill_s": 24.444, "wall_s": 25.843, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "full-a", "mode": "full", "decode_rep": 0, "tokens": 256, "decode_s": 3.695, "tok_s": 69.28, "hash": "482dfcfdcf18"}
+{"label": "full-a", "mode": "full", "decode_rep": 1, "tokens": 256, "decode_s": 3.615, "tok_s": 70.81, "hash": "482dfcfdcf18"}
+{"label": "full-a", "mode": "full", "decode_rep": 2, "tokens": 256, "decode_s": 3.616, "tok_s": 70.8, "hash": "482dfcfdcf18"}
+{"label": "checkpoint-a", "mode": "checkpoint", "tokens": 8202, "prefill_s": 5.434, "wall_s": 6.606, "hash": "93f5ec6aecc9", "first": [1385, 1445, 11386, 470, 12953, 8, 198, 309, 364, 869, 303, 424, 25, 198, 388, 413]}
+{"label": "checkpoint-a", "mode": "checkpoint", "tokens": 32779, "prefill_s": 21.888, "wall_s": 23.323, "hash": "44d33ab594f8", "first": [369, 6681, 4139, 25941, 1881, 1330, 24959, 11, 198, 262, 279, 1442, 7308, 369, 5743, 13]}
+{"label": "checkpoint-a", "mode": "checkpoint", "decode_rep": 0, "tokens": 256, "decode_s": 4.415, "tok_s": 57.98, "hash": "3655b34647b6"}
+{"label": "checkpoint-a", "mode": "checkpoint", "decode_rep": 1, "tokens": 256, "decode_s": 4.326, "tok_s": 59.17, "hash": "3655b34647b6"}
+{"label": "checkpoint-a", "mode": "checkpoint", "decode_rep": 2, "tokens": 256, "decode_s": 4.327, "tok_s": 59.16, "hash": "3655b34647b6"}

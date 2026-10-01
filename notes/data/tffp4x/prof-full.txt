@@ -1,0 +1,38 @@
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 103.57 GiB; native 262144, allocated prompt/reply window 16384, cache slots 16391
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 16384-token prompt/reply window; 16391-token cache; routed NVFP4 experts on bf16 rows (W4A16); n-gram tables read in 12.8s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.4s
+USDT:2026-10-02 00:16:13 1212220:1212220 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 00:16:19 1212220:1212220 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== full 8k prefill (6.1659 s): GPU kernel time 5826.7 ms
+    1264.53 ms  21.7 % x   245  void (anonymous namespace)::nvfp4_expert_kernel<2, 2, 4>(__nv_bfloat16 const*, int, int, u
+     889.44 ms  15.3 % x   245  void (anonymous namespace)::nvfp4_expert_kernel<1, 3, 4>(__nv_bfloat16 const*, int, int, u
+     558.98 ms   9.6 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+     536.86 ms   9.2 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+     427.27 ms   7.3 % x  1270  _b16mm
+     327.59 ms   5.6 % x  1005  _reduce
+     326.75 ms   5.6 % x   490  _fp4mm
+     286.36 ms   4.9 % x   429  _chunks
+     260.16 ms   4.5 % x   505  _hc_writeback
+     173.28 ms   3.0 % x   500  _hc_mix
+     155.74 ms   2.7 % x   500  _hc_normed
+     136.22 ms   2.3 % x   216  void (anonymous namespace)::chain_kernel<float, 128, 32>(float const*, float const*, __nv_
+     119.23 ms   2.0 % x   970  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      75.30 ms   1.3 % x   180  void (anonymous namespace)::front_kernel<16, 48>(__nv_bfloat16 const*, long long const*, i
+USDT:2026-10-02 00:16:20 1212220:1212220 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 00:16:24 1212220:1212220 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== full decode 256: GPU kernel time 3624.8 ms
+     838.10 ms  23.1 % x  3151  void (anonymous namespace)::nvfp4_expert_kernel<2, 2, 4>(__nv_bfloat16 const*, int, int, u
+     707.15 ms  19.5 % x  2892  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+     641.74 ms  17.7 % x 17350  _b16mm
+     393.38 ms  10.9 % x  2881  void (anonymous namespace)::nvfp4_expert_kernel<1, 3, 4>(__nv_bfloat16 const*, int, int, u
+     244.36 ms   6.7 % x  2832  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+     241.17 ms   6.7 % x  6302  _fp4mm
+     149.88 ms   4.1 % x   270  void (anonymous namespace)::qmm_kernel<32, 16, 64, 1, 4, 4, false, false, false>(__nv_bflo
+      97.44 ms   2.7 % x  2124  void (anonymous namespace)::chain_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const
+      47.76 ms   1.3 % x  3151  _router
+      30.48 ms   0.8 % x 13537  _reduce
+      24.98 ms   0.7 % x   720  void (anonymous namespace)::replay_kernel<16, 48>(float const*, float const*, __nv_bfloat1
+      19.34 ms   0.5 % x 11576  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      17.77 ms   0.5 % x  6693  _hc_writeback
+      17.65 ms   0.5 % x   270  void (anonymous namespace)::nvfp4_expert_kernel<1, 0, 4>(__nv_bfloat16 const*, int, int, u
+STATS {"prefill_s": 0.1378, "cached": 0, "drafts": true, "drafted": 251, "accepted": 197, "min_rows": 2, "decode_s": 3.7588, "rounds": 59, "decode_tps": 67.84}
