@@ -1,0 +1,7 @@
+07:11:43 gather tensorfold rc=0
+07:14:11 gather tensorfold-ple rc=0
+07:14:16 == T4 start 262144/8 (caches dropped)
+07:15:11 T4 262144/8: n-gram tables read alongside the weights (0.0s after them), locked in memory in 0.6s; MemAvailable 31 GiB
+07:15:33 == T4 start 65536/4 (caches dropped)
+07:16:28 T4 65536/4: n-gram tables read alongside the weights (0.0s after them), locked in memory in 0.6s; MemAvailable 33 GiB
+== TFPLE1 DONE ==

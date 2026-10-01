@@ -2806,3 +2806,26 @@ checkpoint, `--context 262144 --parallel 8`, nothing else on the box. Hypothesis
   (`multi.py` `_pieces`), so each 2k request sat behind ~480k prompt tokens at ~660 tok/s; the live long streams
   decoded 0.7–3.9 tok/s while others filled (one round per prompt pass). TensorFold's Mac path already fills
   "fewest tokens left first"; the CUDA one does not → TODO **T9**. Major faults over the run: 15,092.
+
+### 5ao. TensorFold n-gram work, first measurements: T4 closed, T2's warm cost nil, T1 helps prompts but costs decode, cold cells void
+
+Hypotheses `tools/tfple/HYPOTHESIS.md`; data `data/tfple/`. Branch `ple-gather` (worktree `~/git/tensorfold-ple`).
+
+- **Cold cells VOID (method bug, mine).** `gather_bench.py` ran the variants of a cell back to back in one process on
+  the same ids; `POSIX_FADV_DONTNEED` cannot evict page-cache pages that are still mapped, and the first variant's
+  gather had mapped exactly those pages, so every later variant ran warm (e.g. stock's own gather, the same algorithm
+  as "old", came out 31 → 0.26 ms "cold"). Every cold old-vs-new and T2 nofill-vs-fill number here is withdrawn;
+  the re-run uses one process per variant and its own ids.
+- **T1, warm (valid):** prompt-size gathers **1.8–2.5× faster** (32,768 ids 17.1 → 9.5 ms; 131,072 ids 50.4 →
+  20.3 ms; bytes equal in every cell) — but that is ~0.5 % of a 2,048-row chunk's ~2.8 s on EXL3, so **T1 cannot
+  move warm TTFT**. Decode-size gathers got **slower**: 112 ids 0.116 → 0.195 ms, 448 ids 0.227 → 0.366 ms (the
+  per-shard loop runs ~100 small fancy indexes over 128 shards where the old code did one over the file). Fix: one
+  2-D row view per file (all shards sit in one file, contiguous), one gather per file → T1 v2.
+- **T2, warm (valid):** adaptive within noise of no fill (112/448/896 ids: 0.200/0.355/0.419 vs 0.205/0.363/0.430 ms)
+  — as hypothesised; forced fill on a warm table costs +0.45/+1.17/+1.92 ms (hypothesis +0.2…+2), so the adaptive
+  gate is needed. Cold gain: void (above).
+- **T4 closed: neither candidate.** Two stock 0.6.0 EXL3 starts with caches dropped, residency sampled every 2 s:
+  the table goes 0 → 99.4 % within ~20 s of launch and stays at 100 % (no drop after layer 1), and the lock takes
+  **0.6 s at 262144/8 and at 65536/4**. The 22.2 s in §5an was the first start after the 0.6.0 install, which built
+  the CUDA extensions (nvcc) during the load; the likeliest reading is that the build's memory evicted the table, not
+  a loader defect (not separately proven; the same shape no longer reproduces it).
