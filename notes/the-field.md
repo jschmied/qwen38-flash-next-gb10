@@ -2436,4 +2436,4 @@ Same ideas, built independently:
 - **#57946** (ours, open) is cited only as a crash report: `run.sh` refuses `MOE_BACKEND=b12x` unless
   `FORCE_UNSAFE_MOE=1`. They do not apply the fix.
 
-Possibly useful to us: FP8 dense as default (+27 % prose c=1), decode-only HC kernel for M ≤ 32. Nothing posted.
+Possibly useful to us: their decode-only HC kernel for M ≤ 32 (we already run FP8 dense, which they just made default). Nothing posted.
