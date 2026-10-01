@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #178 reply to "Which export did you measure on? We'd like a real
+POSTED 2026-10-01 (user: "post reply"). ashhart/TensorFold #178 reply to "Which export did you measure on? We'd like a real
 receipt for it too." (2026-10-01).
 
 The export is public: [lovedheart/Qwen3.8-Flash-Next-NVFP4-FP8](https://huggingface.co/lovedheart/Qwen3.8-Flash-Next-NVFP4-FP8)

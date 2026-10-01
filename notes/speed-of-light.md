@@ -3202,4 +3202,4 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   shard ours) + two FP8 `quantized_layers` entries (both spellings) that lovedheart's config does not have. As
   published (`qwen38-flash-next-mtpfp8-asrel`, hardlinks + their algo set): stock 0.6.0 passes the check and fails at
   load (`KeyError … weight_scale_2`); #178 loads, same replies, 86/93 accepted. First asrel run void (kept the
-  `model.mtp.*` entries). Draft `notes/upstream/tf178-receipt.md`.
+  `model.mtp.*` entries). Posted: https://github.com/ashhart/TensorFold/pull/178#issuecomment-5934208411

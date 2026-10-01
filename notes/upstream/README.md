@@ -1584,3 +1584,7 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold PR #191** (2026-10-01 ~18:10, user: "ok" to the plan): EXL3 grouping in parallel (T13 lever 2), stacked
   on #184; base `pr-141-0.6.1`, head `jschmied:exl3-group-parallel` `f71d25f`. 8k/32k prefill −7…−9 % vs #184,
   bit-identical. Body `tf-pr-exl3-group-parallel.md`. https://github.com/ashhart/TensorFold/pull/191
+- **TensorFold #178 receipt reply** (2026-10-01 ~19:15, user: "post reply"): the export is lovedheart/Qwen3.8-Flash-Next-
+  NVFP4-FP8 @ a9786bf (205/206 shards identical); as published 0.6.0 fails at load (`KeyError … weight_scale_2`), #178
+  loads, 86/93. Text `tf178-receipt.md`. https://github.com/ashhart/TensorFold/pull/178#issuecomment-5934208411
+- Accepted so far (ashhart, 2026-10-01): #174 (0.6.1), #175, #176, #178 (landed on their next branch as our commits).
