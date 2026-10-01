@@ -1,0 +1,27 @@
+#!/bin/bash
+# TensorFold 0.6.0 on the Spark (user 2026-10-01: "do the update and test"). Hypothesis: tools/tf060/HYPOTHESIS.md.
+# Per checkpoint: serve --context 262144 --parallel 8; exactness (bench_concurrent --alone --serial), decode
+# (bench_openai 400 tokens), TTFT (prefill_cold 2k-65k), the long-context mix (longmix.py); then stop.
+R=/opt/llm/runners/results/tf060; mkdir -p $R; T=/opt/llm/runtime/tf-venv; P=/opt/llm/runtime/vllm-venv-fnext/bin/python
+TF=/home/jschmied/git/tensorfold; L=/opt/llm/runners/tf060
+log(){ echo "$(date +%T) $*" >> $R/chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+ready(){ for i in $(seq 1 90); do sleep 10; systemctl is-active -q fx-tf060 || { log "server DIED"; return 1; }
+  curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { log "ready after $((i*10)) s, MemAvailable $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) GiB"; return 0; }; done; return 1; }
+[ -s $R/prefill_prompts.json ] || $T/bin/python $TF/tools/prefill_cold.py build /opt/llm/models/qwen38-flash-next-exl3-3.05bpw $R/prefill_prompts.json >> $R/chain.txt 2>&1
+for name in exl3:/opt/llm/models/qwen38-flash-next-exl3-3.05bpw mtpfp4:/opt/llm/models/qwen38-flash-next-mtpfp4; do
+  tag=${name%%:*}; M=${name#*:}; memok; log "== $tag"
+  systemd-run --unit=fx-tf060 --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 262144 --parallel 8 > /opt/llm/tf060-$tag.log 2>&1"
+  if ready; then
+    grep -E "streams|n-gram|budget|cache slots|serving" /opt/llm/tf060-$tag.log | cut -c1-400 >> $R/chain.txt
+    $T/bin/python $TF/tools/bench_concurrent.py http://127.0.0.1:8092 flashnext --levels 1,2,4 --alone --serial --output $R/$tag-concurrent.json > $R/$tag-concurrent.txt 2>&1; log "$tag concurrent rc=$?"
+    $T/bin/python $TF/tools/bench_openai.py http://127.0.0.1:8092 flashnext --tokens 400 --reps 3 --output $R/$tag-openai.json > $R/$tag-openai.txt 2>&1; log "$tag openai rc=$?"
+    $T/bin/python $TF/tools/prefill_cold.py run http://127.0.0.1:8092 flashnext $R/prefill_prompts.json $R/$tag-prefill.json > $R/$tag-prefill.txt 2>&1; log "$tag prefill rc=$?"
+    timeout 7200 $P $L/longmix.py $tag $M > $R/$tag-longmix.json 2> $R/$tag-longmix.err; log "$tag longmix rc=$?"
+    curl -s http://127.0.0.1:8092/health > $R/$tag-health.json
+  fi
+  systemctl stop fx-tf060; log "$tag stopped"; sleep 20
+done
+echo "== TF060 DONE ==" >> $R/chain.txt
