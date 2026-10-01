@@ -124,3 +124,9 @@ After #191: gateup_epilogue 1.10, down_epilogue 1.07, rot_in 0.64 ms of routed()
 one warp a (row, 128-column block): 56 k / 225 k / 450 k blocks. Fold 8 rows (or 8 column blocks) into one 256-thread
 block, same per-element arithmetic and order.
 - the three kernels 2.8 → 1.0…1.6 ms; routed() −7…−11 %; hashes identical.
+
+## Round 12 (revised): lever 4b — the down epilogue writes the prompt's bf16 rows (branch `exl3-epilogue-blocks` on #193)
+8k profile on #193 (`p8k`): grouped 54.5 %, dense prompt GEMMs 13.1 %, epilogues 9.2 % (at DRAM bandwidth already, so
+bigger blocks were dropped), `bfloat16_copy_kernel` 3.0 % (forward's per-window fp32 → bf16 copy of routed()'s rows),
+rot_in 2.7 %, HC glue 6.2 %. Change: down_epilogue stores bf16 directly into buf.y (same fp32 value, RNE), no copy.
+- prefill 8k/32k −2.5…−4 %; tokens identical; new test bf16-out == fp32.to(bf16).

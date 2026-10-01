@@ -1,0 +1,13 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw
+export HOME=/root PYTHONUNBUFFERED=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+cd /home/jschmied/git/tf-exl3-epi && TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-epi PYTHONPATH=$PWD/src timeout 2400 \
+  $PY -m pytest -q -p no:cacheprovider tests/cuda/test_exl3_experts.py tests/cuda/test_qwen4_exp_exl3.py tests/cuda/test_group_kernel_smem.py > $R/epi-tests.txt 2>&1
+echo "tests rc=$?" >> $R/epi-tests.txt
+for rep in a b; do
+  memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-grp $PY $L/prefill_ab.py /home/jschmied/git/tf-exl3-grp/src $M pr193-$rep > $R/epi-pr193-$rep.txt 2>&1
+  memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-epi $PY $L/prefill_ab.py /home/jschmied/git/tf-exl3-epi/src $M epi-$rep > $R/epi-branch-$rep.txt 2>&1
+done
+echo "== EPI DONE ==" >> $R/epi-tests.txt

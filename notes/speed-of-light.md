@@ -3213,3 +3213,10 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   doubles activation loads per mma and the programs; occupancy 25 % either way; NT 8 × MS 2 needs 64 KB reduction
   memory and ~230 registers). The grouped kernel is latency-bound; decode reuse needs an ILP redesign first (pipelined
   activation loads / cp.async). Branch `exl3-subtiles`, local only.
+- **8k profile on the current stack** (#184 + #191 + #193, `data/tfexl3/p8k*`): grouped 54.5 %, dense prompt GEMMs
+  (`_gemm` + `_f16_mm`) 13.1 %, epilogues 9.2 % (at DRAM bandwidth), `bfloat16_copy_kernel` 3.0 %, rot_in 2.7 %, HC glue
+  6.2 %, attention 3.5 %, DeltaNet chain 2.0 %.
+- **Lever 4b — the down epilogue writes the prompt's bf16 rows** (branch `exl3-bf16-rows` on #193, local): no fp32
+  rows, no per-window copy; same fp32 value rounded to nearest even. 8k 9.62/9.61 → 9.19/9.09 s, 32k 38.77/38.77 →
+  37.20/36.72 s (−4.1…−5.5 %), tokens identical, 78 EXL3 GPU tests (incl. bf16-out == fp32.to(bf16)). Not posted.
+  Cumulative 8k on 0.6.1: 11.42 → 10.27 (#184) → 9.40 (#191) → **9.14 s** (−20 %); window 2048 not stacked yet.

@@ -1,0 +1,9 @@
+#!/bin/bash
+# Real 8k EXL3 prefill under nsys on the current stack (#184 + #191 + #193 = tf-exl3-grp @ 5727ea6); kernel summary.
+R=/opt/llm/runners/results/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python; L=/opt/llm/runners/tfprof
+export HOME=/root TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-grp PYTHONUNBUFFERED=1
+/usr/local/bin/nsys profile -o $R/p8k --force-overwrite=true --trace=cuda,nvtx --capture-range=cudaProfilerApi \
+  --capture-range-end=stop --sample=none --cpuctxsw=none $PY $L/prefill_profile.py /home/jschmied/git/tf-exl3-grp/src \
+  /opt/llm/models/qwen38-flash-next-exl3-3.05bpw 8192 > $R/p8k-run.json 2> $R/p8k-run.err
+/usr/local/bin/nsys stats -r cuda_gpu_kern_sum,cuda_gpu_mem_time_sum -f csv -o $R/p8k $R/p8k.nsys-rep > /dev/null 2>&1
+echo "== P8K DONE ==" >> $R/p8k-run.json
