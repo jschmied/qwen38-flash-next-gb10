@@ -3088,3 +3088,30 @@ M4, alternating, two rounds; code prompts, then `PROMPT_SET=prose` (English, Ger
 - **Verdict:** T7 closed, no proposal — TF's default list is the better general choice (the kill rule in the
   hypothesis: total prose rounds +7.1 % > 5 %). The vLLM 32k slice (det-135) was measured against the full 248k head,
   not against a 79k list that keeps all low ids.
+
+### 5aw. TensorFold's draft depth 6 / confidence 0.7 sits at the optimum (±1 %): depth/τ is not a lever there (#136)
+
+User: "check #136, i think we measured a lot here" (#136: choose the draft count by expected committed tokens per ms;
+ashhart: an A/B by net tok/s on held-out prompts before any default changes). TF 0.6.0 `--mtp-drafts` /
+`--mtp-confidence` through the probe (`MTP_DEPTH`, `MTP_CONF`), EXL3, greedy, 512 tokens, code and prose sets
+(English/German/Chinese/French), S1 and M4, two rounds. Hypothesis `tools/tfhost/HYPOTHESIS.md` round 6; data
+`data/tfdepth/`. Hashes identical in every cell.
+
+| S1 ms/token | 6 / 0.7 (default) | 6 / 0.8 | 7 / 0.8 | 8 / 0.8 |
+|---|---|---|---|---|
+| code | 12.16 / 12.22 | 12.27 / 12.27 | 12.06 / 12.08 | 11.99 / 12.07 |
+| prose (en) | 18.63 / 18.63 | 18.70 / 18.77 | 18.74 / 18.72 | 18.75 / 18.76 |
+| code rounds / drafted / accepted | 145 / 502 / 367 | 155 / 444 / 356 | 148 / 465 / 363 | 147 / 465 / 364 |
+
+M4 (sum of the four streams' decode seconds, not aggregate tok/s, §5av): code 48.3 / 48.6 / 48.6 / 48.7 s, prose
+78.8 / 78.2 / 78.6 / 79.6 s — every cell within ±1 % of the default.
+
+- **All inside the hypothesis.** 7/0.8 vs default: code −0.9 % (predicted 0…−3 %), prose +0.5 % (−2…+1 %); 8/0.8
+  ≈ 7/0.8; 6/0.8 +0.6…+0.9 % slower.
+- **Consistent with our vLLM replay once the baselines match:** §5ah's +10 % code / +12.8 % prose is depth 7 + stop
+  against a *fixed* depth 5; against a depth-6/τ-0.7 stop (TF's default) the same replay predicts +2 % code / +0.2 %
+  prose, measured +0.9 % / −0.5 %. The gain is the in-round stop itself, which TF already has.
+- **Deeper chains barely draft deeper at τ 0.8:** the chain rarely survives to position 6 (drafted 465 vs 502 at
+  depth 6/0.7), so depth 7/8 add almost nothing.
+- **For #136:** on these prompts a perfect per-round depth choice has ≈ 1 % left over TF's default; a depth rule from
+  *recent* acceptance lost in our replay (§5v: code −0.8…−8.2 %). Draft `notes/upstream/tf136-depth-measurements.md`.

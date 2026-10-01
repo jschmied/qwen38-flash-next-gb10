@@ -53,8 +53,8 @@ test: develop in a separate worktree, never switch that checkout while a server 
       record: cost +4.8 ms/draft near-linear (§5ah); per-position acceptance code vs prose (§5v); lagged/recent-acceptance
       depth rules lose (replay code −0.8…−8.2 %, §5v; vr8vr8 live mixed); in-round confidence stop is the winner, τ 0.70
       flat 0.60–0.75 = TF's default (§5v); depth 7 + τ 0.8 +10 % code / +12.8 % prose vs fixed 5 in replay (§5ah);
-      verify-row trimming alone loses (§5p). TF-native sweep running (round 6: depth 6/7/8 × τ 0.7/0.8, code + prose,
-      `data/tfdepth/`). Then a comment draft for #136 (one topic: measurements for the A/B ashhart plans) — needs a go.
+      verify-row trimming alone loses (§5p). TF-native sweep DONE (§5aw): TF's 6/0.7 is within ±1 % of the best cell
+      (7/0.8 code −0.9 %, prose +0.5 %). Comment draft `notes/upstream/tf136-depth-measurements.md` — needs a go.
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
 
