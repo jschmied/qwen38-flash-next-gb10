@@ -130,3 +130,12 @@ block, same per-element arithmetic and order.
 bigger blocks were dropped), `bfloat16_copy_kernel` 3.0 % (forward's per-window fp32 → bf16 copy of routed()'s rows),
 rot_in 2.7 %, HC glue 6.2 %. Change: down_epilogue stores bf16 directly into buf.y (same fp32 value, RNE), no copy.
 - prefill 8k/32k −2.5…−4 %; tokens identical; new test bf16-out == fp32.to(bf16).
+
+Round 12 result: lever 4b 8k 9.62/9.61 → 9.19/9.09 s, 32k 38.77/38.77 → 37.20/36.72 s (−4.1…−5.5 %), tokens identical.
+Window 2048 stacked on 4b: 8k 8.92/9.21 → 8.76/8.62, 32k 36.08/37.27 → 36.01/34.86 — sign holds, but round a 32k
+(−0.2 %) is below the base arm's own 3 % drift: inconclusive, parked.
+
+## Round 13: lever 5 — 64-row tiles for the prompt's fp16 matmuls (`_f16_mm`, 6.0 % of 8k)
+`F16.prefill` used the decode tile (BM 16); BM 64 only groups rows. Microbench (`f16_bits.py`, 5 shapes): bit-identical
+at every shape; −34…−50 % on the large mixes, ±0 on the small. E2E (prefill_ab, vs `exl3-bf16-rows`, two rounds):
+- 8k/32k prefill −2…−4 %; tokens identical.

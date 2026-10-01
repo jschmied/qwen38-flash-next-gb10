@@ -1,0 +1,62 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+32.3,2007291872,15200,132058.7,114912.0,37280,588416,71436.2,"void tf_exl3x::grouped_kernel<(int)2, (int)8, (int)4, (int)1, (int)2, (int)10>(const __half *, const __half *, const long *, const long *, const int *, const int *, const int *, const int *, const int *, float *, int, int, int, int, int, int)"
+17.9,1111383296,37424,29697.1,31072.0,3744,273600,17336.1,_f16_mm
+15.0,930259584,7697,120860.0,88032.0,74560,1984832,221489.0,"void <unnamed>::linear_kernel<(int)10, (int)2, (int)8>(const __half *, const unsigned int *, long long, long long, const __half *, const __half *, void *, int, float *, int *, int, int, int, int)"
+11.9,737220288,17433,42288.8,51104.0,11104,161440,18220.7,"void <unnamed>::linear_kernel<(int)10, (int)2, (int)4>(const __half *, const unsigned int *, long long, long long, const __half *, const __half *, void *, int, float *, int *, int, int, int, int)"
+5.1,318541152,591,538986.7,533312.0,528928,1064128,23883.0,"void <unnamed>::qmm_kernel<(int)32, (int)16, (int)64, (int)1, (int)4, (int)4, (bool)0, (bool)0, (bool)0>(const __nv_bfloat16 *, const float *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, float *, int, int, int, int, int, int, int)"
+3.5,218067520,5220,41775.4,41440.0,30976,159104,7087.6,"void <unnamed>::chain_kernel<(int)16, (int)48>(const __nv_bfloat16 *, const __nv_bfloat16 *, const __nv_bfloat16 *, const float *, const float *, const float *, const __nv_bfloat16 *, float, int, __nv_bfloat16 *, float *, float *, float *, __nv_bfloat16 *, float *, float *)"
+1.9,120260448,7600,15823.7,15680.0,11808,92704,3253.0,_router
+1.4,89150720,7600,11730.4,11296.0,3392,31744,5023.2,"<unnamed>::group_kernel(const int *, int *, int *, int *, int, int, int, int)"
+1.1,68725920,2088,32914.7,31936.0,24960,86464,4069.5,"void <unnamed>::replay_kernel<(int)16, (int)48>(const float *, const float *, const __nv_bfloat16 *, const float *, const float *, int, float *)"
+0.9,54446976,16084,3385.2,3392.0,1728,52544,1610.3,_hc_writeback
+0.8,51509152,7600,6777.5,7264.0,3264,68608,3243.1,"<unnamed>::gateup_epilogue_kernel(const float *, const int *, const __half *, const __half *, const __half *, __half *, int, int, int, int, float, int)"
+0.7,44061856,28818,1529.0,1408.0,1216,112256,1430.3,"<unnamed>::rot_in_kernel(const void *, int, const __half *, __half *, int)"
+0.7,42523200,7600,5595.2,5440.0,1824,46848,2462.3,"void <unnamed>::rot_in_kernel<__nv_bfloat16>(const T1 *, int, const int *, const __half *, const __half *, __half *, __half *, int, int, int)"
+0.6,40155776,23092,1738.9,1568.0,1120,47872,1004.5,"void at::native::elementwise_kernel<(int)128, (int)4, void at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 12)]::operator ()() const::[lambda(c10::BFloat16) (instance 1)]>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)"
+0.6,39842976,2344,16997.9,16560.0,4256,122176,8797.4,_chunks
+0.6,38436512,7600,5057.4,4960.0,2144,148416,2890.6,"<unnamed>::down_epilogue_kernel(const float *, const int *, const __half *, float *, int, int, int, int)"
+0.5,30173376,160,188583.6,168352.0,10848,519648,104748.4,"void <unnamed>::unpack_kernel<(int)10, (int)2>(const unsigned int *, __half *, int, long, long)"
+0.5,29201312,15838,1843.7,1728.0,1632,48256,1151.3,_hc_reduce_act
+0.5,29064544,175,166083.1,166880.0,47808,356800,79680.1,_gemm
+0.5,28879328,7600,3799.9,3680.0,3584,77216,1154.5,_topk_rows
+0.5,28649888,2331,12290.8,11616.0,10784,72576,3287.7,"void <unnamed>::linear_kernel<(int)6, (int)2, (int)4>(const __half *, const unsigned int *, long long, long long, const __half *, const __half *, void *, int, float *, int *, int, int, int, int)"
+0.4,25020352,15938,1569.9,1440.0,1248,50240,1105.5,_hc_normed
+0.4,23858848,1182,20185.2,17984.0,16896,50432,4505.3,"void <unnamed>::linear_kernel<(int)8, (int)2, (int)4>(const __half *, const unsigned int *, long long, long long, const __half *, const __half *, void *, int, float *, int *, int, int, int, int)"
+0.3,20942816,15938,1314.0,1216.0,1056,46496,1026.9,_hc_mix
+0.2,9335712,2344,3982.8,4192.0,2592,31840,1333.0,_attn_prep
+0.1,8176960,590,13859.3,13696.0,13504,33664,1337.8,"void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<float, at::native::MaxOps<float>, unsigned int, float, (int)4, (int)4>>(T3)"
+0.1,6237472,5502,1133.7,1024.0,864,30752,1066.8,_reduce
+0.1,4857664,590,8233.3,8064.0,7904,39200,1538.2,"void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::MaxNanFunctor<float>>, unsigned int, float, (int)4, (int)4>>(T3)"
+0.1,4848928,2344,2068.7,2208.0,832,20256,1142.1,_pool
+0.1,4623872,590,7837.1,7744.0,7616,26112,890.3,"void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator ()(at::TensorIterator &)::[lambda(float, float) (instance 1)]>, unsigned int, float, (int)4, (int)4>>(T3)"
+0.1,4157888,2344,1773.8,1536.0,1472,132736,3065.2,_merge
+0.1,3765056,146,25788.1,24960.0,24064,64480,3676.7,_ple_gate
+0.1,3343552,1184,2823.9,3040.0,2016,31904,1449.3,_rmsnorm
+0.0,2806304,327,8582.0,4320.0,864,60896,7407.7,_shift_windows
+0.0,2778656,2344,1185.4,992.0,928,29312,1084.0,_attn_gate
+0.0,2647296,1180,2243.5,2832.0,1152,96064,2989.8,"void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 3)]::operator ()() const::[lambda() (instance 7)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>, (int)4, TrivialOffsetCalculator<(int)1, unsigned int>, TrivialOffsetCalculator<(int)1, unsigned int>, at::native::memory::LoadWithCast<(int)1>, at::native::memory::StoreWithCast<(int)1>>(int, T1, T2, T4, T5, T6, T7)"
+0.0,2096640,146,14360.5,12656.0,5504,25824,5165.9,"void at::native::reduce_kernel<(int)512, (int)1, at::native::ReduceOp<c10::BFloat16, at::native::ArgMaxOps<float>, unsigned int, long, (int)4, (int)4>>(T3)"
+0.0,2066400,2344,881.6,800.0,736,13504,524.3,_select
+0.0,1949312,738,2641.3,1680.0,1408,46176,2149.4,_embed
+0.0,1867040,2344,796.5,736.0,704,12736,512.0,_scores
+0.0,1296576,883,1468.4,1376.0,768,8608,689.8,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::FillFunctor<int>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+0.0,964896,36,26802.7,26976.0,19904,32576,3742.6,"void <unnamed>::chain_kernel<float, (int)128, (int)32>(const T1 *, const T1 *, const __nv_bfloat16 *, const float *, const float *, const float *, float *, __nv_bfloat16 *, int, int, int)"
+0.0,911360,590,1544.7,1472.0,1440,6688,307.2,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::exp_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)"
+0.0,904896,590,1533.7,1408.0,1280,6336,453.4,"void at::native::elementwise_kernel<(int)128, (int)2, void at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<float>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)"
+0.0,837152,592,1414.1,1312.0,1248,14144,635.5,_add_streams
+0.0,801024,590,1357.7,1312.0,1280,7104,308.1,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::<unnamed>::masked_fill_kernel(at::TensorIterator &, const c10::Scalar &)::[lambda() (instance 1)]::operator ()() const::[lambda() (instance 7)]::operator ()() const::[lambda(float, bool) (instance 1)], std::array<char *, (unsigned long)3>>(int, T2, T3)"
+0.0,777824,590,1318.3,1312.0,1248,3392,93.1,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, bool, at::native::<unnamed>::CompareEqFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+0.0,774400,590,1312.5,1280.0,1248,3904,225.9,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::AbsFunctor<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+0.0,710208,590,1203.7,1056.0,1024,38464,1792.1,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+0.0,708992,590,1201.7,1152.0,1120,11136,535.8,"void at::native::<unnamed>::CatArrayBatchedCopy_alignedK_contig<at::native::<unnamed>::OpaqueType<(unsigned int)4>, unsigned int, (int)2, (int)128, (int)1, (int)16>(T1 *, at::native::<unnamed>::CatArrInputTensorMetadata<T1, T2, T4, T5>, at::native::<unnamed>::TensorSizeStride<T2, (unsigned int)4>, int, T2)"
+0.0,690336,590,1170.1,1120.0,1088,6848,289.2,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::log_kernel_cuda(at::TensorIteratorBase &)::[lambda() (instance 2)]::operator ()() const::[lambda() (instance 2)]::operator ()() const::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)"
+0.0,627520,1,627520.0,627520.0,627520,627520,0.0,"void <unnamed>::prefill_kernel<(int)32, (int)128, (int)128, (int)2, (int)4, (int)3, (bool)0>(const __nv_bfloat16 *, const unsigned int *, const __nv_bfloat16 *, const __nv_bfloat16 *, void *, int, int, int, int, int, int)"
+0.0,559072,146,3829.3,4288.0,1664,4736,929.0,_ple_rows
+0.0,518112,146,3548.7,3392.0,3008,17536,1338.2,_ple_conv
+0.0,196576,13,15121.2,14528.0,13888,23232,2475.1,"void <unnamed>::unpack_kernel<(int)6, (int)2>(const unsigned int *, __half *, int, long, long)"
+0.0,165376,100,1653.8,1408.0,960,18144,1847.1,_hc_act
+0.0,159072,2,79536.0,79536.0,70144,88928,13282.3,"void <unnamed>::unpack_kernel<(int)8, (int)2>(const unsigned int *, __half *, int, long, long)"
+0.0,130784,36,3632.9,3360.0,3072,7328,851.6,"void <unnamed>::front_kernel<(int)16, (int)48>(const __nv_bfloat16 *, const long long *, const int *, const int *, const __nv_bfloat16 *, const float *, const float *, float *, float *, __nv_bfloat16 *, float *, float *)"
+0.0,61120,36,1697.8,1504.0,1472,5216,676.1,"void <unnamed>::back_kernel<(int)16, (int)48>(const __nv_bfloat16 *, const __nv_bfloat16 *, const __nv_bfloat16 *, float, __nv_bfloat16 *, float *)"
+0.0,51456,49,1050.1,960.0,928,2912,373.8,"void at::native::vectorized_elementwise_kernel<(int)4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase &)::[lambda(float) (instance 1)], std::array<char *, (unsigned long)2>>(int, T2, T3)"
+0.0,29408,36,816.9,816.0,800,864,17.9,"void at::native::vectorized_elementwise_kernel<(int)2, at::native::FillFunctor<long>, std::array<char *, (unsigned long)1>>(int, T2, T3)"

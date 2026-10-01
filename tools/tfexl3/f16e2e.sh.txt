@@ -1,0 +1,12 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw
+export HOME=/root PYTHONUNBUFFERED=1 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-epi
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+cd /home/jschmied/git/tf-exl3-f16 && PYTHONPATH=$PWD/src timeout 1800 $PY -m pytest -q -p no:cacheprovider tests/cuda/test_qwen4_exp_exl3.py > $R/f16-tests.txt 2>&1
+echo "tests rc=$?" >> $R/f16-tests.txt
+for rep in a b; do
+  memok; $PY $L/prefill_ab.py /home/jschmied/git/tf-exl3-epi/src $M bf16rows-$rep > $R/f16-base-$rep.txt 2>&1
+  memok; $PY $L/prefill_ab.py /home/jschmied/git/tf-exl3-f16/src $M f16tile-$rep > $R/f16-tile-$rep.txt 2>&1
+done
+echo "== F16 DONE ==" >> $R/f16-tests.txt

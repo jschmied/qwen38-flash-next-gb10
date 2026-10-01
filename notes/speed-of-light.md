@@ -3240,3 +3240,17 @@ On our GB10 (`~/git/vllm-rssm-pr`, test venv `~/venvs/vllm-m58863`): with the fi
 state; an exact check fails for that reason, not the kernel). Server-level identity: ArtyomITA's measurement, not
 repeated here. Pushed as `514102a1db`; this removes §5 RecoverSSM's "reduction-order-size drift" caveat once merged
 (our prod overlay still runs the closed form).
+
+### 5az. TensorFold decode is near its memory roof; the best kernel lever left is ≈ 5 %
+
+TF 0.6.0, EXL3 3.05 bpw, one stream, depth 6 (`n-S0` eager trace from §5at, `data/tfexl3/n-S0-dec_*`): 42.8 ms of
+kernels a verify round = routed `grouped_kernel` 32.3 % (13.8 ms; ~5-row windows touch ~45–50 experts a layer),
+`_f16_mm` 17.9 % (7.7 ms; the fp16 hyper-connection mixes, ~13 MB a layer, ~30 µs a call ≈ bandwidth), EXL3 dense
+`linear_kernel` 26.9 % (11.5 ms; 5-bit attention/DeltaNet projections, ~1.8 GB a round), `qmm_kernel` 5.1 % (head),
+DeltaNet chain 3.5 %. My first "8× above the byte floor" estimate assumed 11 experts a layer — wrong.
+- Dense linear bandwidth (`lin_bw.py`, a rotating pool of distinct matrices > 120 MB so nothing is L2-resident — the
+  first run reused one matrix and read 350–470 GB/s from L2, void): in_proj_qkv 187–197, q_proj 198–206, z/out/o
+  162–176 GB/s at 1–6 rows (in-model ≈ 157); k/v (0.8 MB) 45–48 GB/s (latency, ~0.6 ms a round). Against ~224 GB/s
+  achievable: at most ≈ −2…−2.5 ms a round (≈ −5 % decode) from bandwidth tuning of `linear_kernel`.
+- Conclusion: decode levers left are small and kernel-heavy; the largest measured TF lever remains graphs for
+  concurrent rounds (§5at, ~9–10 % at c = 2/4).
