@@ -3187,3 +3187,9 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   2.53 → 0.083 ms a 1,024-row window (5.07 → 0.16 at 2,048), routed() 18.71/18.88 → 16.35/16.38 ms (−13 %), hashes
   identical at 1/8/64/1,024 rows, EXL3 GPU tests 76 passed. No picks in shared memory any more, so the grouping has no
   window limit (#151's opt-in launch test becomes "a window past the old ceiling groups exactly"). Not posted.
+- **#184 review (2026-10-01, user-pasted; P3 + a reuse test):** grid.x = min(tile capacity, experts · ⌈maxm/16⌉) — short
+  windows launch what they did before #184; new GPU test reuses one Scratch through 1,024 → 1 → 17 rows → no valid
+  picks → 17 rows (77 EXL3 tests pass). Small-window cost vs `cb5101d` (`small_bench.py`, median of 5 × 2,000 calls,
+  3 processes each): 1 row 76.6–78.3 vs 78.7–83.8 µs (noisy), 2–8 rows +0…+2 %, 16 rows ~+0.5 %; the rest is the
+  second scan/tile writes in `group` and one more dependent load per program (`tcount` → `tiles`). Est. ≈ +0.5 % per
+  decode round, below e2e noise (not measured e2e). Commit `0b851ce` on `exl3-tile-list-061`, not pushed.

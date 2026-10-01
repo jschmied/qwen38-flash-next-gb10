@@ -1,0 +1,5 @@
+.............................................sssssssssssssssssssssssssss [ 55%]
+ssssssssssssssssss..........................ssssss......s                [100%]
+77 passed, 52 skipped in 25.96s
+tests rc=0
+== REV DONE ==
