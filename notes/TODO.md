@@ -31,6 +31,8 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [x] **T11 lone-stream graph replay** — already in the 0.6.1 port (`multi_solo.py`); measured there it recaptured on
       every slot resize (+35 %/token, §5au); **fix `solo-graph-keep` `153817c`** on our fork, all arms = S1 / 0.6.0.
       Upstream: **PR #180** + comment on #141 (posted 2026-10-01).
+- [ ] **T12 gain MEASURED (§5bc, 2026-10-02): ~4 ms a forward = 7.8 % of a round at c=2, 5.6–6.2 % at c=4; MTP steps
+      not worth graphing.** Next: maintainer issue (needs the user's go), then main-forward graphs only.
 - [ ] **T12 graphs for c ≥ 2 rounds** — scoped §5ba (2026-10-01): coarse key required (fine key unique per round;
       coarse 51 / 30 / 33 keys at c=4), capture only repeated keys; ≈ 9–10 % steady state. **Pending user decision:**
       (1) short TF issue asking the maintainer whether they'd take it / are on it; (2) groundwork (persistent tables,

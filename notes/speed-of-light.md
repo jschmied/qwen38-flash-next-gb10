@@ -3297,3 +3297,30 @@ Drafts per step: gate 4.92 / 2.78, controller 5.49 / 2.86, oracle 4.04 / 2.13 (c
 than the gate and loses 1–2 %; the headroom an oracle shows is not reachable from the drafter's probabilities on this
 log. Caveats: vLLM's costs, not TensorFold's; steps treated as independent; one log. A live TF A/B would need the
 controller inside `decode.py`'s draft loop.
+
+### 5bc. T12 gain measured: one graph replay saves ~4 ms a concurrent forward, 7.8 % of a round at c=2, 5.8 % at c=4
+
+User: "3 a prototype to test gain". Before building the persistent tables (§5ba), the bound itself:
+`tools/tfhost/t12_bound.py` on the #180 head (`d2e651a`), EXL3 3.05 bpw, 512 tokens a stream, code + prose prompts.
+Every 15th full round the round's forward is captured as it stands (its tables, rows and launch parameters) and
+timed eager vs replay, 3 alternating blocks of 5 calls; the same for the round's first MTP step. Two runs per cell;
+data `data/tfhost/t12/`; predictions `tools/tfhost/HYPOTHESIS.md` round 7.
+
+| | c=2 run a / b | c=4 run a / b |
+|---|---|---|
+| round wall, median (ms) | 58.1 / 57.9 | 84.0 / 83.8 |
+| forward eager → replay (ms, median of 10) | 51.6 → 47.5 / 51.6 → 47.8 | 71.8 → 67.9 / 72.1 → 68.1 |
+| forward saved (ms), every block faster | **3.97 / 3.94**, yes | **3.90 / 4.05**, yes |
+| MTP step eager → replay (ms) | 1.70 → 1.59 / 1.70 → 1.55 | 2.16 → 1.95 / 2.23 → 1.95 |
+| MTP steps a round | 4.08 | 5.34 |
+| saved a round (forward + steps × step saving) | 4.55 / 4.56 ms = **7.8 %** | 4.68 / 5.16 ms = **5.6–6.2 %** |
+
+- The forward's saving is a constant ~4 ms whatever the rows (4 rows: 41.4 → 36.9; 10 rows: 56.9 → 53.0), i.e. pure
+  launch overhead; the relative gain falls as rounds grow (c=8 extrapolates to ~4 %). Predicted 0.8–2.5 ms a forward:
+  out of range high (the eager forward launches more than the traced idle suggested).
+- MTP steps: 0.14–0.21 ms a step, not every block faster at c=2. Predicted 0.3–1.0: out of range low — the MTP step is
+  already GPU-bound; graphing it is not worth its keys (§5ba: 11–33 coarse keys).
+- Round total within the predicted 6–11 % (c=2) / 5–10 % (c=4). This is an upper bound for T12: the real version adds
+  a staging copy of the round tables and a table-driven PLE conv / sparse select, and runs eager until a key repeats.
+- Consequence: T12 = the main forward only (no MTP graphs), worth ~7–8 % at c=2 and ~5–6 % at c=4 for 2–3 days of
+  rework on code that is still moving; a maintainer issue first (one topic), not a PR. Not posted.

@@ -1,0 +1,11 @@
+#!/bin/bash
+# T12 gain bound: t12_bound.py on the #180 head, c=2 and c=4, two runs each, alternating.
+R=/opt/llm/runners/results/tft12; mkdir -p $R; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost; SRC=/home/jschmied/git/tf-t12/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; N=512
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-061 HOME=/root PYTHONUNBUFFERED=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for c in 2 4; do memok
+  timeout 1800 $T/bin/python $L/t12_bound.py $SRC $M $c $N 15 > $R/c$c-$rep.log 2>&1
+  echo "$(date +%T) c$c-$rep rc=$? $(tail -1 $R/c$c-$rep.log | cut -c1-600)" >> $R/chain.txt
+done; done
+echo "== TFT12 DONE ==" >> $R/chain.txt

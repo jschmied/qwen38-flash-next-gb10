@@ -67,3 +67,15 @@ per-round cost read, not aggregate tok/s). Cells: 6/0.7 (default), 7/0.8, 8/0.8,
 - 7/0.8 vs 6/0.7: code 0…+3 %, prose −1…+2 % (ms/token, S1).
 - 8/0.8 within ±2 % of 7/0.8; 6/0.8 −1…+2 % vs default.
 - Hashes identical across all cells (drafts never change output).
+
+## Round 7 (2026-10-02): T12 gain bound — concurrent round forward eager vs one graph replay (`t12_bound.py`)
+
+#180 head (`d2e651a`), EXL3, c=2 and c=4, 512 tokens a stream, code + prose prompts, every 15th full round measured:
+the round's forward (and its first MTP step) captured as it stands, eager vs replay in 3 alternating blocks of 5.
+§5at's traced idle (12 % at M2, 10.5 % at M4) bounds what graphs can remove.
+- Forward: replay saves 0.8–2.5 ms of a ~25–45 ms forward at c=2, 0.6–2.5 ms at c=4; every block faster.
+- MTP step: replay saves 0.3–1.0 ms a step (it is short and launch-heavy).
+- Sum over a round (forward + mean MTP steps × MTP saving) = 6–11 % of the round wall at c=2, 5–10 % at c=4.
+- Below 4 %: T12 is not worth the 2–3 days; above 12 %: the probe measures more than launch overhead (check the method).
+- **Result (§5bc):** forward saved 3.9–4.05 ms (out of range high), MTP 0.14–0.21 ms a step (out of range low); round
+  total 7.8 % (c=2), 5.6–6.2 % (c=4): in range.
