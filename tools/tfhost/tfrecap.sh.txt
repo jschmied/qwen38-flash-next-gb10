@@ -1,0 +1,13 @@
+#!/bin/bash
+# 0.6.1 branch: does the lone-stream slot recapture its graphs mid-request? CAPTURE_LOG=1 times every capture.
+# L4 warm 64 (slot grows 256 -> 8448 inside the measured run), L4 warm 600 (grown during warm-up), S1 warm 64 (control).
+# M2 warm 64: does the 2-stream regression (-11 % vs 0.6.0) come from captures too?
+R=/opt/llm/runners/results/tf061; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost; SRC=/home/jschmied/git/tf-061/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; N=512
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-061 HOME=/root PYTHONUNBUFFERED=1 CAPTURE_LOG=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for cell in L4:64 L4:600 S1:64 M2:64; do memok; arm=${cell%%:*}; w=${cell#*:}
+  WARM_TOKENS=$w timeout 1800 $T/bin/python $L/host_probe.py $SRC $M $arm $N > $R/recap-$arm-$w.log 2>&1
+  echo "$(date +%T) recap-$arm-$w rc=$? $(grep '^ARM ' $R/recap-$arm-$w.log | cut -c1-520)" >> $R/chain.txt
+done
+echo "== TFRECAP DONE ==" >> $R/chain.txt

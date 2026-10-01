@@ -1,0 +1,10 @@
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[tensorfold] CUDA rank 0 startup estimate 54.32 GiB within 104.47 GiB; native 262144, allocated prompt/reply window 16384, cache slots 16391
+[tensorfold] building CUDA extension tensorfold_exl3_linear_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_exl3_experts_v1 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qmm_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn_io (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_gdn_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 16384-token prompt/reply window; 16391-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 20.9s; 21 decode graphs captured; prompt kernels warmed in 23.8s
+ARM {"arm": "S1", "streams": 1, "graphs": true, "nsys": false, "wall_s": 6.313, "tokens": 512, "tok_s": 81.1, "active": 1, "ms_tok_per_stream": 12.33, "hashes": ["1bb116eb6ff5"], "lens": [512], "stats": [{"prefill_s": 0.087, "cached": 30, "drafts": true, "drafted": 502, "accepted": 367, "min_rows": 2, "decode_s": 6.2237, "rounds": 145, "decode_tps": 82.11}]}

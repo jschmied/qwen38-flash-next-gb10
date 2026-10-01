@@ -3020,3 +3020,46 @@ slightly overstates the untraced one.
   `--parallel 1`. Porting the qwen3_5_moe pattern is the cheap fix; full graphs for c ≥ 2 are the larger, harder one.
 
 Nothing posted. Upstream candidate (one topic): the lone-stream graph replay for `qwen4_exp`, needs the user's go.
+
+### 5au. TensorFold 0.6.1's lone-stream graphs recapture on every slot resize (+35 % per token); fixed, branch `solo-graph-keep`
+
+User: "can we fix graphs on single and multiple streams?" (after §5at). Field check first: the unreleased 0.6.1 port
+(`origin/pr-141-0.6.1` = `cb5101d`, ashhart's port of #141) already adds lone-stream graphs (`multi_solo.py`: the
+stream moves into a graph slot after its deferred DeltaNet rows are flushed, then replays the serial graphs). Measured
+it with §5at's probe, worktree `~/git/tf-061`, two starts per arm. Predictions `tools/tfhost/HYPOTHESIS.md` rounds 2–3;
+data `data/tf061/`, `data/tf061fix/`.
+
+| arm | 0.6.0 | 0.6.1 port | 0.6.1 + fix |
+|---|---|---|---|
+| S1 one stream, ms/token | 12.09 / 12.19 | 12.33 / 12.15 | 12.18 / 12.19 |
+| L4 streams=4, one request, ms/token | 13.63 / 13.52 (eager) | **18.41 / 18.56** | **12.18 / 12.20** |
+| M2 two streams, tok/s | 111.9 / 111.5 | 99.8 / 99.1 | 111.7 / 110.8 |
+| M4 four streams, tok/s | 158.4 / 157.9 | 146.8 / 145.1 | 157.6 / 157.8 |
+| graph captures inside the measured reply (L4 / M2) | — | 23 (3.02 s) / 8 (0.93 s) | 0 / 0 |
+
+Every reply byte-identical across all three builds (`1bb116eb6ff5`, `fc0e045ffadf`, …).
+
+- **Cause (measured, `CAPTURE_LOG=1`):** `_grow` and `_shrink` call `_state_changed`, which replaces the solo slot's
+  `Graphs`. A slot starts at 256 rows, grows to 8,192 once the context passes it, and shrinks back after the request,
+  so every lone request recaptures ~23 graphs at ~131 ms each mid-decode. Counterfactual: with the slot grown during
+  the warm-up (`WARM_TOKENS=600`) the same request takes 0 captures and runs at 12.13 ms/token (= S1). M2/M4 regress
+  the same way: stream 0 starts alone, enters the slot, and the slot resizes.
+- **Predicted** L4 = S1 ±2 % on the port: out of range (+49 %), which is what sent us to the capture count.
+- **Fix** (`jschmied/TensorFold` branch `solo-graph-keep`, `153817c`, on `cb5101d`, `multi.py` +15/−5): the solo
+  slot keeps its rows when idle and gives them back only under memory pressure (evicted kept end, newest stream ended,
+  or an idle solo slot freed for another stream's growth); it grows by doubling (≥ 8,192), so a long session
+  recaptures a handful of times; `warm()` captures its graphs last, after the warm request has grown the slot. All
+  arms in the round-3 range: 0 captures, L4 = S1, M2/M4 back to 0.6.0.
+- **Host tests:** 14 multi-decoder files, baseline and fix fail the identical 28 (with a pytest plugin giving the
+  port's new attributes class defaults — the port's own tests build `MultiDecoder` without `__init__` and hit
+  `self.solo`; without the plugin both fail the identical 32). All 8 growing-cache and slot tests pass on both.
+- **Not measured:** int8/int4 KV, the two-rank plan path (`_is_solo` sees through a plan's stand-in, the new
+  eviction branch is skipped while planning), memory pressure with the slot held at its rows.
+- **c ≥ 2 graphs** (the other ~9–10 %, §5at) are not in 0.6.1 either. Scoped from source: the multi-stream round's
+  attention already reads cache pointers from a device table (`attn_multi.Step`), DeltaNet the same
+  (`gdn_multi.Tables`); blockers are the per-round tables allocated fresh (need persistent buffers), the per-stream
+  sparse-select launch with direct pointers (`attn_multi.layer`, needs a table-driven kernel), and launch dims tied to
+  the round's shape (key on total rows, streams, parity, context bucket). Graphs built that way would also survive
+  resizes, so they would replace the solo slot's copy-in. Not started.
+
+Nothing posted. Draft `notes/upstream/tf141-solo-recapture.md` (one topic) needs the user's go.

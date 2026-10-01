@@ -16,3 +16,26 @@ Hypotheses (ranges before measuring):
 - Outputs: S1 and S0 greedy token hashes identical (TF's exactness contract); M2/M4 streams equal to solo per
   contract (same prompts) — a mismatch voids nothing here but is a finding.
 Void: an arm whose log lacks its `ARM` json line, or whose engine reports a different streams/graphs setting.
+
+## Round 2 (2026-10-01): the maintainer's lone-stream fix on the 0.6.1 branch
+
+`origin/pr-141-0.6.1` = `cb5101d` adds `multi_solo.py` (a lone stream moves into a graph slot and replays the serial
+graphs). Same probe, worktree `~/git/tf-061`, own extension cache. Arms S1, L4, M2, M4, two starts each.
+- L4 on 0.6.1 = S1 on 0.6.1 within ±2 % (12.0–12.4 ms/token): the +10.9…+12.7 % gap closes. If L4 stays ≥ 13.3 the
+  solo path is not taken (check why before anything else).
+- S1 on 0.6.1 within ±2 % of 0.6.0's 12.09–12.19; M2/M4 within ±3 % of 0.6.0 (111.5–111.9 / 157.9–158.4 tok/s).
+- Hashes: L4 = S1 on 0.6.1; equal to 0.6.0's `1bb116eb6ff5` unless 0.6.1 changed prompt handling (#163 keeps entries
+  one token early — affects the kept point, not greedy tokens; a change is a note, not a void).
+
+## Round 3 (2026-10-01): fix for the 0.6.1 solo-slot recapture
+
+Round 2 result: 0.6.1 L4 18.41/18.56 ms/token (+35 % vs 0.6.0's eager 13.5), M2 99.8/99.1 (−11 %), M4 146.8/145.1
+(−8 %), S1 unchanged. Cause measured (CAPTURE_LOG): `_grow`/`_shrink` call `_state_changed`, which drops the solo
+slot's graphs; a lone request recaptures 23 graphs (3.02 s) when its slot grows past 256 rows; M2 8 (0.93 s). With
+the slot grown during the warm-up (WARM_TOKENS=600): 0 captures, 12.13 ms/token = S1.
+Fix (`~/git/tf-061-fix`, branch `solo-graph-keep`): the solo slot keeps its rows when idle (released only under
+memory pressure), grows by doubling (≥ 8192), and `warm()` captures its graphs last, at the rows requests will find.
+Arms S1, L4, M2, M4 x2, CAPTURE_LOG=1, default warm-up (64).
+- captures in the measured run: 0 in every arm.
+- L4 12.0–12.4 ms/token (= S1); M2 within ±3 % of 0.6.0 (111.5–111.9 tok/s), M4 within ±3 % (157.9–158.4).
+- hashes unchanged (`1bb116eb6ff5` …). Out of range = the fix is incomplete; find the remaining resize first.

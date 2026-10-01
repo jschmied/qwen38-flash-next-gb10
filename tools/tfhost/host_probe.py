@@ -13,6 +13,22 @@ import torch                                                                    
 from transformers import AutoTokenizer                                           # noqa: E402
 
 from tensorfold.families.qwen4_exp.cuda.engine import FlashNextEngine           # noqa: E402
+import os                                                                        # noqa: E402
+
+CAPS = []                        # CAPTURE_LOG=1: every graph capture's wall time (ms), for the recapture question
+if os.environ.get("CAPTURE_LOG") == "1":
+    from tensorfold.families.qwen4_exp.cuda import graphs as _g
+
+    _orig = _g.Graphs._capture
+
+    def _timed(self, fn):
+        t = time.perf_counter()
+        try:
+            return _orig(self, fn)
+        finally:
+            CAPS.append(round(1000 * (time.perf_counter() - t), 1))
+    _g.Graphs._capture = _timed
+WARM = int(os.environ.get("WARM_TOKENS", "64"))  # the warm-up's tokens a stream (64: the default runs)
 
 TASKS = ["Write a Python module implementing an LRU cache with TTL expiry, type hints and docstrings.",
          "Write a Python command-line tool that parses an nginx access log and prints the top 20 paths by bytes.",
@@ -49,7 +65,8 @@ def run(count):
     return time.perf_counter() - t0, outs, stats
 
 
-run(64)
+run(WARM)
+warm_caps = len(CAPS)
 if prof:
     torch.cuda.profiler.start()
 wall, outs, stats = run(n)
@@ -60,4 +77,4 @@ keep = lambda s: {k: v for k, v in (s or {}).items() if isinstance(v, (int, floa
 print("ARM " + json.dumps({"arm": arm, "streams": streams, "graphs": arm != "S0", "nsys": prof, "wall_s": round(wall, 3),
                            "tokens": total, "tok_s": round(total / wall, 2), "active": active, "ms_tok_per_stream": round(1000 * wall * active / total, 3),
                            "hashes": [hashlib.sha256(json.dumps(o).encode()).hexdigest()[:12] for o in outs],
-                           "lens": [len(o) for o in outs], "stats": [keep(s) for s in stats]}), flush=True)
+                           "lens": [len(o) for o in outs], "warm": WARM, "captures_warm": warm_caps, "captures_run": len(CAPS) - warm_caps, "capture_ms_run": round(sum(CAPS[warm_caps:]), 1), "stats": [keep(s) for s in stats]}), flush=True)

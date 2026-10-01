@@ -28,7 +28,12 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [~] **mtpfp8 on TensorFold** (§5ar): branch `pr-mtp-fp8` `e44d367` — FP8 MTP experts dequantized → drafter; real weights load, replies identical, MTP 86/93; **PR #178** (2026-10-01)
 - [x] Deferred big suites: SWE dropped (user), fill-order big mix and FP8 full sweep dropped ("only important tests"); gather A/B done (§5as)
 - [x] ~~**T10 GPU-side draft chain**~~ CLOSED (§5at): serial graph path 97.6 % GPU-busy, host ≤ 0.29 ms/token → ≤ 2.4 %.
-- [ ] **T11 lone-stream graph replay for qwen4_exp** (§5at): a `--parallel` > 1 server serves one request eager,
+- [x] **T11 lone-stream graph replay** — already in the 0.6.1 port (`multi_solo.py`); measured there it recaptured on
+      every slot resize (+35 %/token, §5au); **fix `solo-graph-keep` `153817c`** on our fork, all arms = S1 / 0.6.0.
+      Upstream: comment on #141 drafted (`notes/upstream/tf141-solo-recapture.md`), needs the user's go.
+- [ ] **T12 graphs for c ≥ 2 rounds** (§5at ~9–10 %, scoped §5au): persistent round tables, table-driven sparse
+      select, key (rows, streams, parity, context bucket); would also make the solo copy-in unnecessary. On 0.6.1.
+- [x] ~~T11 original~~ (§5at): a `--parallel` > 1 server serves one request eager,
       +10.9…+12.7 % per token vs `--parallel 1`; port qwen3_5_moe's "a lone stream replays graphs" (`multi.py:44,225-233`).
       Upstream post (issue or PR) needs the user's go. Full concurrent graphs (c ≥ 2, 88–90 % busy eager): ~9–10 %, larger job.
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4

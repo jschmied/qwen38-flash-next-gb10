@@ -1,0 +1,11 @@
+#!/bin/bash
+# 0.6.1 + solo-graph-keep fix (tf-061-fix): S1 L4 M2 M4 x2, CAPTURE_LOG=1.
+R=/opt/llm/runners/results/tf061fix; mkdir -p $R; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost; SRC=/home/jschmied/git/tf-061-fix/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; N=512
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-061 HOME=/root PYTHONUNBUFFERED=1 CAPTURE_LOG=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for arm in S1 L4 M2 M4; do memok
+  timeout 1800 $T/bin/python $L/host_probe.py $SRC $M $arm $N > $R/$arm-$rep.log 2>&1
+  echo "$(date +%T) $arm-$rep rc=$? $(grep '^ARM ' $R/$arm-$rep.log | cut -c1-400)" >> $R/chain.txt
+done; done
+echo "== TF061FIX DONE ==" >> $R/chain.txt
