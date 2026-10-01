@@ -19,7 +19,7 @@ test: develop in a separate worktree, never switch that checkout while a server 
       threads than 16.
 - [x] ~~**T4**~~ CLOSED (§5ao): residency stays 100 %, lock 0.6 s at both shapes; the 22.2 s was the first start after the install (JIT build) (code reading: `pk.get` marks the n-gram
       file touched → whole-file `POSIX_FADV_DONTNEED`). Check first: majflt on the first request after start.
-- [x] T5 seed salt **PR #175**; T6 loader guards **PR #176**; (`2d6c82f`: `_plain` + up-front NVFP4-outside-experts refusal); T7 32k draft vocabulary A/B; ~~T8 prompt chunk 2048 → 4096/8192~~ null on both checkpoints (§5aq).
+- [x] T5 seed salt **PR #175**; T6 loader guards **PR #176**; (`2d6c82f`: `_plain` + up-front NVFP4-outside-experts refusal); T7 32k draft vocabulary A/B — measured 2026-10-01 (§5av): head −1.4…−2.7 %/round but prose acceptance −7 % (de −31 %), no proposal; ~~T8 prompt chunk 2048 → 4096/8192~~ null on both checkpoints (§5aq).
 - [x] **T9 shortest-remaining-first prompt fill on CUDA** (§5aq: 22–47 s → 6–8 s) — **PR #174** (2026-10-01) (with an age guard): 0.6.0 fills oldest first (`multi.py`
       `_pieces`), so in the long mix (§5an) 2k requests waited 630–715 s behind four 120k prompts; the Mac path
       already does "fewest tokens left first". Prototype + re-run a small mix (1 long + 4 short) first.
@@ -36,6 +36,19 @@ test: develop in a separate worktree, never switch that checkout while a server 
 - [x] ~~T11 original~~ (§5at): a `--parallel` > 1 server serves one request eager,
       +10.9…+12.7 % per token vs `--parallel 1`; port qwen3_5_moe's "a lone stream replays graphs" (`multi.py:44,225-233`).
       Upstream post (issue or PR) needs the user's go. Full concurrent graphs (c ≥ 2, 88–90 % busy eager): ~9–10 %, larger job.
+- [ ] **T13 NEXT: EXL3 routed-expert prefill — decode once, use many times** (user 2026-10-01: "write this as next todo").
+      `cuda/exl3/experts_grouped.cuh` is a grouped GEMV: each program takes ONE 16-row M tile, decodes its weight
+      fragment in registers (`decode_tile`: mul/dp4a/byte_perm/hadd2) and feeds it to ONE `mma.m16n8k16` — decode work
+      ∝ ⌈rows/16⌉ per expert, which is why window/chunk sweeps were null (§5ap/§5aq) and the kernel runs at ~5 TFLOPS
+      (56 % of an 8k prefill). Flash-Next top-10 of 512: a 1,024-row window gives each expert ~20 rows = 2 tiles, the
+      second 1/4 full. Dense EXL3 prompt matmuls already decode once a chunk (`cuda/exl3/prefill.py`); experts do not.
+      (1) **multi-M-tile reuse**: decode a fragment once, `mma` 4–8 m16 sub-tiles (64–128 rows); per-row k-order and
+      mma unchanged → expect bit-identical (verify with tests/cuda/test_exl3_experts.py); needs more rows per expert per
+      call (window: smem, #151). (2) **decode once per chunk** into fp16 scratch (~2 GB/layer) + grouped tensor-core
+      GEMM, like `prefill.py` (new prompt arithmetic: row-independent and chunk-invariant required).
+      Hypothesis (unmeasured): grouped kernel 2–3× faster → 8k prefill −20…−35 %, outputs identical (1). Order:
+      worktree, exactness test first, then `tools/tfprof/prefill_profile.py` 8k/32k. No FP4/FP8: EXL3 values are
+      codebook fp16, not on the E2M1 grid — re-quantizing would stack a second loss (use an NVFP4 checkpoint instead).
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
 

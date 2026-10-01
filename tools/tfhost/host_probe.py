@@ -34,13 +34,20 @@ TASKS = ["Write a Python module implementing an LRU cache with TTL expiry, type 
          "Write a Python command-line tool that parses an nginx access log and prints the top 20 paths by bytes.",
          "Write a Python class for a thread-safe bounded priority queue with blocking get and put, plus tests.",
          "Write a Python implementation of Dijkstra's algorithm on a grid with obstacles, with a small CLI."]
+PROSE = ["Write a 400-word essay on why lighthouses were automated in the twentieth century.",
+         "Schreibe eine ausführliche Erklärung auf Deutsch, wie eine Wärmepumpe im Winter ein Haus heizt.",
+         "请用中文写一篇约四百字的短文，介绍长城的历史和它在今天的意义。",
+         "Écris en français un récit de voyage d'environ quatre cents mots sur une traversée des Alpes à vélo."]
+if os.environ.get("PROMPT_SET") == "prose":       # English, German, Chinese, French prose instead of code
+    TASKS = PROSE
 streams = {"S1": 1, "S0": 1, "M2": 2, "M4": 4, "L4": 4}[arm]
 active = 1 if arm == "L4" else streams      # L4: a streams=4 engine serving one request
 tok = AutoTokenizer.from_pretrained(model)
 prompts = [tok.encode(tok.apply_chat_template([{"role": "user", "content": t}], tokenize=False, add_generation_prompt=True,
                                              enable_thinking=False), add_special_tokens=False) for t in TASKS[:active]]
 assert all(isinstance(p, list) and p and isinstance(p[0], int) for p in prompts)
-eng = FlashNextEngine(model, max_len=16384, streams=streams, graphs=(arm != "S0"))
+DV = os.environ.get("DRAFT_VOCAB", "default")   # "default" (TF's 79,591 ids) or a file of ids
+eng = FlashNextEngine(model, max_len=16384, streams=streams, graphs=(arm != "S0"), draft_vocab=DV)
 
 
 def run(count):
@@ -77,4 +84,4 @@ keep = lambda s: {k: v for k, v in (s or {}).items() if isinstance(v, (int, floa
 print("ARM " + json.dumps({"arm": arm, "streams": streams, "graphs": arm != "S0", "nsys": prof, "wall_s": round(wall, 3),
                            "tokens": total, "tok_s": round(total / wall, 2), "active": active, "ms_tok_per_stream": round(1000 * wall * active / total, 3),
                            "hashes": [hashlib.sha256(json.dumps(o).encode()).hexdigest()[:12] for o in outs],
-                           "lens": [len(o) for o in outs], "warm": WARM, "captures_warm": warm_caps, "captures_run": len(CAPS) - warm_caps, "capture_ms_run": round(sum(CAPS[warm_caps:]), 1), "stats": [keep(s) for s in stats]}), flush=True)
+                           "lens": [len(o) for o in outs], "warm": WARM, "prompt_set": os.environ.get("PROMPT_SET", "code"), "draft_vocab": os.path.basename(DV), "captures_warm": warm_caps, "captures_run": len(CAPS) - warm_caps, "capture_ms_run": round(sum(CAPS[warm_caps:]), 1), "stats": [keep(s) for s in stats]}), flush=True)

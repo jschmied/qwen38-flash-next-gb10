@@ -3063,3 +3063,28 @@ Every reply byte-identical across all three builds (`1bb116eb6ff5`, `fc0e045ffad
   resizes, so they would replace the solo slot's copy-in. Not started.
 
 Posted 2026-10-01 (user's go): PR #180 (`6a3a8b1`, with a host test) against `pr-141-0.6.1`, and a short comment on #141.
+
+### 5av. T7: our 32k draft vocabulary on TensorFold — cheaper head, worse prose acceptance: no proposal
+
+TF 0.6.0, EXL3, greedy, 512 tokens per stream, default draft list (79,591 ids: every id below 65,536 + stdlib-code
+frequency, `docs/recipes/qwen3.8-flash-next.md`) vs ours (`tools/draft_vocab/draft_vocab_32768.txt`, det-135), S1 and
+M4, alternating, two rounds; code prompts, then `PROMPT_SET=prose` (English, German, Chinese, French). Hypothesis
+`tools/tfhost/HYPOTHESIS.md` rounds 4–5; data `data/tfdv/`, `data/tfdv2/`. Hashes identical in every arm.
+
+| | default | 32k |
+|---|---|---|
+| code, one stream, ms/token | 12.13 / 12.22 | 11.13 / 11.15 |
+| code, one stream, ms per round | 42.2 / 42.5 | 41.3 / 41.3 (−2.2…−2.7 %) |
+| code, rounds per prompt (4 prompts) | 145 / 140 / 136 / 115 = 536 | 136 / 140 / 136 / 120 = 532 |
+| prose, one stream (English), ms/token | 18.65 / 18.66 | **19.79 / 19.77 (+6.1 %)** |
+| prose, rounds (en / de / zh / fr) | 263 / 229 / 415 / 288 = 1,195 | 283 / 301 / 373 / 323 = **1,280 (+7.1 %)** |
+
+- **The head is cheaper by 1.4–2.7 % a round**; everything else is acceptance, and acceptance is prompt-specific: the
+  single code prompt of S1 gained 9 rounds (hence its −8 %), German prose lost 31 %, French 12 %, Chinese gained 10 %.
+- **Coverage does not predict it:** on 443k stdlib-code tokens the default covers 99.99 %, ours 97.48 %; our list holds
+  1,826 ids the default lacks, and drops most ids below 65,536.
+- **M4 aggregate tok/s is set by the slowest stream** (all four must finish): its +2.8 % (prose) and +4 % (code) follow
+  the slowest prompt's rounds, not the head. Read c=4 per-round, not aggregate, in future draft-vocab A/Bs.
+- **Verdict:** T7 closed, no proposal — TF's default list is the better general choice (the kill rule in the
+  hypothesis: total prose rounds +7.1 % > 5 %). The vLLM 32k slice (det-135) was measured against the full 248k head,
+  not against a 79k list that keeps all low ids.

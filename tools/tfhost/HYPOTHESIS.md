@@ -39,3 +39,21 @@ Arms S1, L4, M2, M4 x2, CAPTURE_LOG=1, default warm-up (64).
 - captures in the measured run: 0 in every arm.
 - L4 12.0–12.4 ms/token (= S1); M2 within ±3 % of 0.6.0 (111.5–111.9 tok/s), M4 within ±3 % (157.9–158.4).
 - hashes unchanged (`1bb116eb6ff5` …). Out of range = the fix is incomplete; find the remaining resize first.
+
+## Round 4 (2026-10-01): T7, our 32k draft vocabulary on TF 0.6.0
+
+TF's default draft head scores 79,591 ids (`draft_vocab.txt`); ours (`tools/draft_vocab/draft_vocab_32768.txt`, det-135:
++6.4–6.8 % c=1 on vLLM vs the full 248k head) scores 32,768. Arms S1 and M4, default vs 32k, alternating, two rounds.
+- S1 −1…−4 % ms/token with 32k; M4 −1…−3 %. Smaller than vLLM's gain: TF's default head is already 79k, not 248k.
+- Accepted drafts within −1 pp of default (code prompts; §5k coverage 99.0–99.9 %).
+- Hashes identical to default (drafts never change TF's output); a difference voids the run.
+
+Round 4 result (code): per round −2.2…−2.7 % at c=1, c=4 +3.8…+4.5 % tok/s, total rounds 536 vs 532, hashes identical.
+
+## Round 5 (2026-10-01): T7 on prose and other languages
+
+PROMPT_SET=prose: English, German, Chinese, French prose, 512 tokens each. M4 (all four) and S1 (English), default vs
+32k, alternating, two rounds. Our 32k list drops most ids below 65,536 (TF keeps all of them).
+- English: rounds within ±3 %. German/French: rounds +0…+8 % with 32k. Chinese: rounds +5…+25 % (fewer CJK ids).
+- If total M4 rounds rise > 5 %, the 32k list loses on prose despite the cheaper head: no proposal.
+- Hashes identical to default in every arm.

@@ -1,0 +1,12 @@
+#!/bin/bash
+# T7: TF 0.6.0 draft vocabulary default (79,591) vs our 32k, S1 and M4, alternating, two rounds.
+R=/opt/llm/runners/results/tfdv; mkdir -p $R; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost; SRC=/home/jschmied/git/tensorfold/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; N=512; V32=$L/draft_vocab_32768.txt
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext HOME=/root PYTHONUNBUFFERED=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for arm in S1 M4; do for dv in default 32k; do memok
+  v=default; [ $dv = 32k ] && v=$V32
+  DRAFT_VOCAB=$v timeout 1800 $T/bin/python $L/host_probe.py $SRC $M $arm $N > $R/$arm-$dv-$rep.log 2>&1
+  echo "$(date +%T) $arm-$dv-$rep rc=$? $(grep '^ARM ' $R/$arm-$dv-$rep.log | cut -c1-600)" >> $R/chain.txt
+done; done; done
+echo "== TFDV DONE ==" >> $R/chain.txt
