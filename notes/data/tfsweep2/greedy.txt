@@ -1,0 +1,6 @@
+win1024 1a329bc1f8568edf "The provided code implements custom installation logic for Python packages (spec"
+win512 1a329bc1f8568edf "The provided code implements custom installation logic for Python packages (spec"
+win2048 1a329bc1f8568edf "The provided code implements custom installation logic for Python packages (spec"
+fnrows2048 551d0cf417be30bc "The provided code implements a customized Python `distutils` installation system"
+fnrows4096 551d0cf417be30bc "The provided code implements a customized Python `distutils` installation system"
+fnrows8192 551d0cf417be30bc "The provided code implements a customized Python `distutils` installation system"

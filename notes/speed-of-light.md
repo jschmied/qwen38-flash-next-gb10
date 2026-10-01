@@ -2893,3 +2893,28 @@ under nsys (0.6.0 stock, one stream).
   admitted until then; the order rule never sees two prompts. Exactness on the branch (levels 1, 2): alone 36/36,
   serial 12/12 equal. Fix (T9 v2): `_fill` also returns between passes when a
   foreground request waits (`MultiDecoder.arrived`, set by the scheduler to `waiting.foreground`).
+
+### 5aq. Round 2: T9 v2 cuts short-request TTFT 22–47 s → 6–8 s; prompt cost is per row, so neither window nor chunk helps
+
+Hypotheses `tools/tfprof/HYPOTHESIS.md` "Round 2"; data `data/tfsweep2/`. One start per arm, EXL3 unless noted.
+
+- **T9 v2 works** (`ple-gather` `2e07da5`: a request that arrives while a lone prompt fills is admitted between its
+  passes, then the shortest prompt fills first). Same small mix as §5ap (1 × 32k at t=0, 4 × 2k at 5/15/25/35 s):
+
+  | | short 0 / 1 / 2 / 3 first token | the 32k prompt's first token |
+  |---|---|---|
+  | stock 0.6.0 (§5ap) | 46.5 / 39.3 / 32.1 / 22.4 s | 45.5 s |
+  | branch, T9 v2 | **6.19 / 7.50 / 6.07 / 7.70 s** | 56.7 s (+11.2 s) |
+
+  Inside the hypothesis (2.5–8 s; long prompt +≤ 12 s). Exactness at levels 1, 2: alone 36/36, serial 12/12.
+- **EXL3 `MOE_WINDOW`** (branch + TF#151's smem attribute): TTFT 8k / 32k **11.72 / 47.94 s at 512, 11.27 /
+  45.75 s at 1024, 11.09 / 44.71 s at 2048** → 512 +4.0 / +4.8 %, 2048 **−1.6 / −2.3 %**. Hypothesis (per-call cost:
+  512 +40…60 %, 2048 −20…−30 %) **refuted**: the grouped expert kernel's time is per row, with only a few percent
+  per call. Greedy reply byte-identical in all three (`1a329bc1f8568edf`).
+- **Our checkpoint, `TF_PREFILL_ROWS`** (NVFP4 experts per chunk): 8k / 32k **6.05 / 24.26 s at 2048, 6.00 / 23.67 s
+  at 4096, 6.09 / 24.06 s at 8192** → −0.8 / −2.4 % and +0.7 / −0.8 %: null (hypothesis −10…−25 % refuted). Greedy
+  reply identical in all three (`551d0cf417be30bc`). So the L2/swizzle question for bigger chunks is moot too.
+- **Reading:** on both checkpoints TensorFold's prompt time scales with rows at a fixed, low efficiency (~5 and ~9
+  TFLOPS, §5ap); batching more rows per call or per chunk does not change it. What is left is how each kernel
+  computes a row: W4A16/bf16 MMAs and the EXL3 trellis decode per row-tile, against vLLM's FP4 tensor cores (W4A4).
+  That is the opt-in W4A4 question (its own issue), not a scheduling or chunking change.

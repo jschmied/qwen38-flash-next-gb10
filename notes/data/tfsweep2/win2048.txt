@@ -1,0 +1,16 @@
+{"ttft_s": 1.4037, "prompt_tokens": 1024, "length": 1024, "rep": 0}
+{"ttft_s": 11.0918, "prompt_tokens": 8192, "length": 8192, "rep": 0}
+{"ttft_s": 10.8323, "prompt_tokens": 8192, "length": 8192, "rep": 1}
+{"ttft_s": 11.1182, "prompt_tokens": 8192, "length": 8192, "rep": 2}
+{"ttft_s": 44.6362, "prompt_tokens": 32768, "length": 32768, "rep": 0}
+{"ttft_s": 44.7126, "prompt_tokens": 32768, "length": 32768, "rep": 1}
+{"ttft_s": 44.8983, "prompt_tokens": 32768, "length": 32768, "rep": 2}
+Traceback (most recent call last):
+  File "/home/jschmied/git/tensorfold/tools/prefill_cold.py", line 106, in <module>
+    run(*sys.argv[2:6])
+  File "/home/jschmied/git/tensorfold/tools/prefill_cold.py", line 94, in run
+    t = statistics.median(r["ttft_s"] for r in rs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/statistics.py", line 617, in median
+    raise StatisticsError("no median for empty data")
+statistics.StatisticsError: no median for empty data

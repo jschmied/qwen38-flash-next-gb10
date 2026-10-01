@@ -1,0 +1,16 @@
+08:38:43 t9v2 ready (startup estimate 56.27 GiB within 105.35 GiB)
+08:39:50 t9v2 rc=0
+08:42:47 t9v2 exact rc=0
+08:44:59 win1024 ready (startup estimate 56.03 GiB within 105.34 GiB)
+08:48:05 win1024 done
+08:49:02 win512 ready (startup estimate 55.80 GiB within 105.35 GiB)
+08:52:16 win512 done
+08:53:08 win2048 ready (startup estimate 56.47 GiB within 105.35 GiB)
+08:56:10 win2048 done
+08:58:37 fnrows2048 ready (startup estimate 80.08 GiB within 105.37 GiB)
+09:00:19 fnrows2048 done
+09:02:01 fnrows4096 ready (startup estimate 80.08 GiB within 105.36 GiB)
+09:03:40 fnrows4096 done
+09:05:28 fnrows8192 ready (startup estimate 81.11 GiB within 105.36 GiB)
+09:07:09 fnrows8192 done
+== TFSWEEP2 DONE ==
