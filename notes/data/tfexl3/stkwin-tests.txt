@@ -1,0 +1,4 @@
+.............................................sssssssssssssssssssssssssss [ 55%]
+ssssssssssssssssss...........................ssssss......s               [100%]
+78 passed, 52 skipped in 59.39s
+tests rc=0

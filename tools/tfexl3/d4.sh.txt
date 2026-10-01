@@ -1,0 +1,13 @@
+#!/bin/bash
+# Round 14: base / f16 / win / both, three alternating rounds, 8k + 32k.
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw
+export HOME=/root PYTHONUNBUFFERED=1 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-epi
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b c; do
+  for arm in base:tf-exl3-epi f16:tf-exl3-f16 win:tf-exl3-stack both:tf-exl3-both; do
+    memok; $PY $L/prefill_ab.py /home/jschmied/git/${arm#*:}/src $M ${arm%%:*}-$rep >> $R/d4.txt 2>&1
+  done
+  echo "round $rep done" >> $R/d4-chain.txt
+done
+echo "== D4 DONE ==" >> $R/d4-chain.txt

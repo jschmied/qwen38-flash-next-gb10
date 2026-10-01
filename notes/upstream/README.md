@@ -1603,3 +1603,7 @@ wait on one ~100 GB pull, and they share one serve.
   block-size note, a #55122 thank-you, the TF #169 pointer.
 - **TensorFold #136 controller replay reply** (2026-10-02, user: "1 yes"): expected-throughput controller −1…−2 % vs the
   0.7 gate, oracle +14–20 % (§5bb). https://github.com/ashhart/TensorFold/issues/136#issuecomment-5939814044
+- **TensorFold PR #207** (2026-10-02, user: "pr for 2"): routed-expert windows of 2,048 rows, stacked on #195; prefill
+  −3.5…−4.0 % at 8k, −2.3…−6.6 % at 32k (3 rounds, `data/tfexl3/d4.txt`), +454 MiB fixed scratch; tests 78 passed.
+  Draft `tf-pr-exl3-window.md`. The fp16 prompt tile is NOT posted: alone its sign flips; on top of the window
+  −1.9…−2.2 % at 8k but within the 3.1 % base spread at 32k. https://github.com/ashhart/TensorFold/pull/207
