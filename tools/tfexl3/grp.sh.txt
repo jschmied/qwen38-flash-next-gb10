@@ -1,0 +1,13 @@
+#!/bin/bash
+# Round 9: parallel grouping — EXL3 GPU tests, routed() hashes/timing vs #184 (2 rounds), kernel profile.
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+export HOME=/root PYTHONUNBUFFERED=1
+cd /home/jschmied/git/tf-exl3-grp && TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-grp PYTHONPATH=$PWD/src timeout 2400 \
+  $PY -m pytest -q -p no:cacheprovider tests/cuda/test_exl3_experts.py tests/cuda/test_qwen4_exp_exl3.py tests/cuda/test_group_kernel_smem.py > $R/grp-tests.txt 2>&1
+echo "tests rc=$?" >> $R/grp-tests.txt
+for rep in a b; do
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-061 $PY $L/routed_bench.py /home/jschmied/git/tf-exl3-061/src > $R/grp-pr184-$rep.txt 2>&1
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-grp $PY $L/routed_bench.py /home/jschmied/git/tf-exl3-grp/src > $R/grp-branch-$rep.txt 2>&1
+done
+TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-grp $PY $L/routed_profile.py /home/jschmied/git/tf-exl3-grp/src > $R/grp-prof.txt 2>&1
+echo "== GRP DONE ==" >> $R/grp-tests.txt

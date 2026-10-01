@@ -1,0 +1,13 @@
+#!/bin/bash
+# #184 review: EXL3 GPU tests with the grid cap + reuse test; small-window timing cb5101d vs #184+cap, 3 alternating rounds.
+R=/opt/llm/runners/results/tfexl3; L=/opt/llm/runners/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+export HOME=/root PYTHONUNBUFFERED=1
+cd /home/jschmied/git/tf-exl3-061 && TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-061 PYTHONPATH=$PWD/src timeout 2400 \
+  $PY -m pytest -q -p no:cacheprovider tests/cuda/test_exl3_experts.py tests/cuda/test_qwen4_exp_exl3.py tests/cuda/test_group_kernel_smem.py > $R/rev-tests.txt 2>&1
+echo "tests rc=$?" >> $R/rev-tests.txt
+for rep in a b c; do
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-061 $PY $L/small_bench.py /home/jschmied/git/tf-061/src cb5101d-$rep >> $R/rev-small.txt 2>&1
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-061 $PY $L/small_bench.py /home/jschmied/git/tf-exl3-061/src pr184cap-$rep >> $R/rev-small.txt 2>&1
+done
+TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-exl3-061 $PY $L/routed_bench.py /home/jschmied/git/tf-exl3-061/src > $R/rev-routed.txt 2>&1
+echo "== REV DONE ==" >> $R/rev-tests.txt

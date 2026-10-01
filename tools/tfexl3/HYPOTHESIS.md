@@ -74,3 +74,29 @@ on the branch 69 passed / 51 skipped (incl. GLM bit-identity and graph replay).
 8,192 and 32,768 tokens, 16 tokens each; prefill_s from TF's stats + a hash of the 16 tokens. Stock vs branch,
 alternating, two rounds.
 - 8k prefill −10…−18 %; 32k −10…−18 % (per-row cost, same share); token hashes identical across arms.
+
+## Round 7 (after #184): where does routed()'s remaining time go?
+`routed_profile.py` on the #184 branch (0.6.1 + tile list), torch.profiler per kernel, R 1024 and 2048 (#151 allows
+2048), Flash Next shapes. Guesses before measuring: grouped gate/up + down ~75 % of routed(); group_kernel (one block,
+every thread scans all R·11 picks for its 4 experts) 5–10 %; rot_in + epilogues the rest. At 2048 rows per call the
+grouped share per row falls 0–10 % (more rows per expert, same per-tile decode).
+
+Round 7 result (#184 branch, routed() per kernel): R 1024 18.97 ms = grouped 13.63 (72 %), group_kernel 2.53 (13 %),
+epilogues 2.17 (11 %), rot_in 0.64 (3 %); R 2048 34.69 ms = 16.9 µs/row (−8.5 % per row). routed() ≈ 71 % of an 8k
+EXL3 prefill.
+
+## Round 8: lever 1 — MOE_WINDOW 1024 → 2048 (branch `exl3-window-2048` on #184)
+prefill_ab.py, #184 vs #184 + window 2048, alternating, two rounds; Flash Next EXL3 GPU test on the branch.
+- 8k / 32k prefill −4…−7 %; first 16 tokens identical (rows never depend on the window).
+
+Round 8 result: MOE_WINDOW 2048 on #184: 8k 10.40/10.30 → 9.90/9.92 s, 32k 42.29/41.57 → 40.26/39.86 s (−3.2…−5.7 %),
+token hashes identical, qwen4_exp EXL3 test passes.
+
+## Round 9: lever 2 — parallel grouping (branch `exl3-group-parallel` on #184)
+count (atomics) → one-block scan over experts (places, tiles) → a warp an expert compacting its picks with ballots.
+- group: 2.53 → < 0.3 ms at R 1024 (5.07 → < 0.5 at 2048); routed() 18.97 → 16.4…16.9 ms.
+- routed() hashes = #184's at R 1/8/64/1024 (members identical → everything downstream identical).
+- EXL3 GPU tests (incl. group smem file, refusal test rewritten) pass.
+
+Round 9 result: grouping 2.53 → 0.083 ms (R 1024), 5.07 → 0.16 (R 2048); routed() 18.71/18.88 → 16.35/16.38 ms
+(−13 %), R 64 −3.5 %, R 1/8 noise (R 1 swings 0.080–0.109 ms between processes); hashes identical; 76 EXL3 GPU tests pass.

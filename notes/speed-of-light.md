@@ -3182,3 +3182,8 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
 - Window lever (T13 round 8): MOE_WINDOW 2048 on #184: 8k 10.40/10.30 → 9.90/9.92 s, 32k 42.29/41.57 → 40.26/39.86 s
   (−3.2…−5.7 %), hashes identical; branch `exl3-window-2048`, not posted. routed() breakdown on #184: grouped 72 %,
   group_kernel 13 %, epilogues 11 %, rot_in 3 % (`data/tfexl3/prof184.txt`); parallel grouping in progress.
+- **Lever 2, parallel grouping** (branch `exl3-group-parallel` on #184, `data/tfexl3/grp-*`): count (atomics) → one
+  block's scan over the experts → a warp an expert compacting its picks with ballots (row order kept). Grouping
+  2.53 → 0.083 ms a 1,024-row window (5.07 → 0.16 at 2,048), routed() 18.71/18.88 → 16.35/16.38 ms (−13 %), hashes
+  identical at 1/8/64/1,024 rows, EXL3 GPU tests 76 passed. No picks in shared memory any more, so the grouping has no
+  window limit (#151's opt-in launch test becomes "a window past the old ceiling groups exactly"). Not posted.
