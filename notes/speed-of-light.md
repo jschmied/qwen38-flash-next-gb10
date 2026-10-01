@@ -2681,7 +2681,7 @@ today's prod config at `--max-model-len 131072`. One request each, nothing else 
 - Page with all four live: https://claude.ai/artifact/9KEoopw1XJzh7fyjiMxCXo (private); LAN http://10.0.0.133:8765/.
   Data `data/fishscene/` (html, json, `check-round{1,2}.jsonl`).
 
-### 5al. Harder slices: TensorFold + EXL3 3 points ahead in both runs, inside the noise
+### 5al. Harder slices: TensorFold + EXL3 at least level (48/47 vs 47/41), and 64k context is too small
 
 User: "should we add some harder swt cases" → "replace 10 easy with 5 harder and 5 hardest" → (Java/JS) "yes, prune
 after current run and swap slices". Hypotheses written before the runs: `tools/swe/HYPOTHESIS-swe.md` "Hard slice" and
@@ -2715,3 +2715,32 @@ Overflows are **not** counted as solved here (the 128k reruns below settle them)
   only vLLM's wording and found no TensorFold overflows; `make-ovf.sh` v2 + `is-ovf.py` match both (dry-run: vLLM sets
   unchanged, TensorFold 3 + 5), fixed before the chain reached TensorFold.
 - Data `data/swe-tf/` (reports `openai__flashnext.FN_{vllmhard1,vllmmix2,tfhard1,tfhard2}_*.json`, `*-result.json`).
+
+**Overflow reruns at 131,072 context (user: "re run failed with bigger context"; `finale.sh.txt`).** Every overflowed
+trajectory re-run on the same engine, sampling and seed config at 131,072 (vLLM KV 12 GiB, MemAvailable 25 GiB at
+ready; TensorFold `--parallel 4`, 18 GiB). **15 of 17 solved, none overflowed again**: vLLM 7 / 9 (run 1: 5 / 6, only
+lombok-3215 failed; run 2: 2 / 3, lombok-3371 failed), TensorFold 8 / 8. lombok-3371 and vuejs-11739, which had
+overflowed in all four 64k runs, were solved in 3 and 4 of their reruns. Against the hypothesis (25–50 %; 0–2
+overflowing again): **refuted** — at this length the overflowed trajectories were nearly done, not stuck, so the
+user's "with longer context it would pass" was right, and **64k is too small for this agent on hard work**.
+
+**Final mixed table, overflows replaced by their 128k reruns:**
+
+| | Python /30 | Java/JS /28 | **total /58** | hard 20 alone |
+|---|---|---|---|---|
+| vLLM run 1 | 26 | 21 | **47** | 16 |
+| vLLM run 2 | 22 | 19 | **41** | 11 |
+| TensorFold + EXL3 run 1 | 26 | 22 | **48** | 16 |
+| TensorFold + EXL3 run 2 | 25 | 22 | **47** | 15 |
+
+- **TensorFold + EXL3 ahead in both pairings again (+1, +6)**; paired discordances 5 vs 4 and 9 vs 3 (14 vs 7 over
+  both, sign test p ≈ 0.19). Weaker than it looks: TensorFold run 2's kept 38 replay run 1, so babel-15445,
+  django-16667 and matplotlib-20859 count in both pairings; the independent comparison is the hard 20 (16 vs 16,
+  15 vs 11). **Verdict: EXL3 3.05 bpw on TensorFold is at least as good as our NVFP4 on vLLM on this benchmark**; the
+  lead is consistent in sign but not significant at n = 58 × 2.
+- vLLM run 2 (41) is the outlier, the one run where every instance was fresh; its spread against run 1 (47) is the
+  run-to-run variation at temperature 1.0 on this slice, ±3 around 44.
+- Unsolved by all four even at 128k: axios-5316, xarray-6992 (">4 hours"), vuejs-11899.
+- Serving consequence for agent work: run at 131,072 (vLLM: KV 12 GiB fits with 25 GiB free; TensorFold: 4 slots fit
+  with its table still locked). Data: `openai__flashnext.FN_{vllmhard1x,vllmmix2x,tfhard1x,tfhard2x}_*.json`,
+  `*x-ovf*-result.json`.
