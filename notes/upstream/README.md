@@ -1601,3 +1601,5 @@ wait on one ~100 GB pull, and they share one serve.
   kernel tests now torch.equal vs native per-token (closed form failed 28/62; new 62/62); description updated; reply
   https://github.com/vllm-project/vllm/pull/58863#issuecomment-5937642510 . Not posted (not important): k3dani's
   block-size note, a #55122 thank-you, the TF #169 pointer.
+- **TensorFold #136 controller replay reply** (2026-10-02, user: "1 yes"): expected-throughput controller −1…−2 % vs the
+  0.7 gate, oracle +14–20 % (§5bb). https://github.com/ashhart/TensorFold/issues/136#issuecomment-5939814044

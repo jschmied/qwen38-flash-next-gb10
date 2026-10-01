@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #136 reply to mrpmorris (2026-10-01).
+POSTED 2026-10-01 (user: "1 yes"). ashhart/TensorFold #136 reply to mrpmorris (2026-10-01).
 
 @mrpmorris fair point: the sweep tested thresholds, not your controller. Here's a replay of it on our logged drafts. The
 log is the same model on vLLM on a GB10: 567 code and 950 prose verify steps of 7 drafts each, with the drafter's
