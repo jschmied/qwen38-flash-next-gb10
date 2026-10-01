@@ -1581,3 +1581,6 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold #184 second commit + description** (2026-10-01 ~17:40, user: "ok" to the plan; user-pasted reviews):
   `0b851ce` pushed (grid cap min(tile capacity, experts·⌈maxm/16⌉) + a Scratch-reuse GPU test); description corrected
   — Flash Next is the only caller of `cuda/exl3/experts` (the first version wrongly said GLM/Qwen3.5 share it).
+- **TensorFold PR #191** (2026-10-01 ~18:10, user: "ok" to the plan): EXL3 grouping in parallel (T13 lever 2), stacked
+  on #184; base `pr-141-0.6.1`, head `jschmied:exl3-group-parallel` `f71d25f`. 8k/32k prefill −7…−9 % vs #184,
+  bit-identical. Body `tf-pr-exl3-group-parallel.md`. https://github.com/ashhart/TensorFold/pull/191

@@ -3193,3 +3193,7 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   3 processes each): 1 row 76.6–78.3 vs 78.7–83.8 µs (noisy), 2–8 rows +0…+2 %, 16 rows ~+0.5 %; the rest is the
   second scan/tile writes in `group` and one more dependent load per program (`tcount` → `tiles`). Est. ≈ +0.5 % per
   decode round, below e2e noise (not measured e2e). Commit `0b851ce` on `exl3-tile-list-061`, not pushed.
+- **Lever 2 end to end (rebased on #184 head `0b851ce`, `f71d25f`):** 8k prefill 10.27/10.30 → 9.41/9.39 s, 32k
+  41.58/41.49 → 38.64/37.86 s (−6.9…−8.8 %), tokens identical; small windows: 1 row +0…+5 % (three launches + memset
+  instead of one block), 2/4 rows even, 8/16 rows −1.3/−2.4 %. **PR #191** (stacked on #184). Cumulative on 0.6.1 at
+  8k: 11.42 (stock) → 10.27 (#184) → 9.40 s (#191) = −18 %; window 2048 (−4…−5 %) not yet posted; lever 3 next.
