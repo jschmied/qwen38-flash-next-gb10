@@ -1596,3 +1596,8 @@ wait on one ~100 GB pull, and they share one serve.
   `tf180-reply-plotarmordev.md` https://github.com/ashhart/TensorFold/pull/180#issuecomment-5935298166
 - **TensorFold PR #195** (same go): the EXL3 down epilogue writes a prompt's bf16 rows (T13 lever 4b, −4…−5 % prefill,
   bit-identical), stacked on #193. Body `tf-pr-exl3-bf16-rows.md`. https://github.com/ashhart/TensorFold/pull/195
+- **vLLM #58863 exact commit** (2026-10-01 ~24:00, user: "yes, only important posts"): `514102a1db` pushed to
+  `jschmied:gdn-recoverssm` — verify records exp(g), commit replays forward with fma (ArtyomITA's suggestion); FP32
+  kernel tests now torch.equal vs native per-token (closed form failed 28/62; new 62/62); description updated; reply
+  https://github.com/vllm-project/vllm/pull/58863#issuecomment-5937642510 . Not posted (not important): k3dani's
+  block-size note, a #55122 thank-you, the TF #169 pointer.

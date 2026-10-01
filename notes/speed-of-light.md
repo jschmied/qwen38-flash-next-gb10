@@ -3228,3 +3228,15 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   `test_flashnext_multi.py`, not this file). Their commit `4a5385d` (authorship kept) cherry-picked as `d2e651a`.
   Two ranks: exactness all equal; #180 ≥ `cb5101d` in most cells; first lone request after start 67.0 → 108.7 tok/s;
   remaining single-request gap on two ranks = the slot swap (`_relocate_kept` is one GPU only).
+
+### 5ay. vllm#58863 RecoverSSM commit is now bit-identical to the per-token path (ArtyomITA's suggestion)
+
+ArtyomITA (sm_120, Flash-Next) found that recording the verify step's `exp(g)` instead of `g` and committing forward
+with the verify update (`h = fma(c, k, h·decay)`) instead of the backward closed form makes the commit bit-identical.
+On our GB10 (`~/git/vllm-rssm-pr`, test venv `~/venvs/vllm-m58863`): with the five FP32 state assertions in
+`tests/kernels/mamba/test_recoverssm_gdn.py` tightened to `torch.equal` against vLLM's native per-token kernel
+(`fused_sigmoid_gating_delta_rule_update`), the old closed form fails 28 of 62 cases, the forward commit passes 62/62
+(+ config tests 18/18). BF16-state checks keep their one-ulp tolerance (their FP32 reference starts from a different
+state; an exact check fails for that reason, not the kernel). Server-level identity: ArtyomITA's measurement, not
+repeated here. Pushed as `514102a1db`; this removes §5 RecoverSSM's "reduction-order-size drift" caveat once merged
+(our prod overlay still runs the closed form).
