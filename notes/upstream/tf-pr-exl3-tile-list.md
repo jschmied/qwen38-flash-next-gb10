@@ -34,6 +34,6 @@ Bit-identical: `routed()` output hashes at 1, 8, 64 and 1,024 rows, and the firs
   room for the kernel's 256 static bytes instead of 128.
 - On GB10: test_exl3_experts, test_qwen4_exp_exl3 and test_group_kernel_smem: 76 passed, 52 skipped.
 
-Not measured: GLM and Qwen3.5 EXL3 checkpoints (`routed()` is shared, the change is shape-independent), and two ranks.
+Scope: Flash Next (`qwen4_exp`) is the only caller of these grouped experts (GLM has its own EXL3 extension, Qwen3.5 uses `Exl3Linear`). Not measured: two ranks. [corrected 2026-10-01 after review]
 
 Written with AI assistance (Claude Code); the author reviewed every change.

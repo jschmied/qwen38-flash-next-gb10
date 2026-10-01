@@ -1578,3 +1578,6 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold #180 third commit + description + note** (2026-10-01 ~16:30, user: "push 180", "go"): `5824347` pushed
   (prefix-cache slot swap recapture; `copy_from` geometry), PR description updated via the API, short note
   `tf180-third-commit.md`. https://github.com/ashhart/TensorFold/pull/180#issuecomment-5932745939
+- **TensorFold #184 second commit + description** (2026-10-01 ~17:40, user: "ok" to the plan; user-pasted reviews):
+  `0b851ce` pushed (grid cap min(tile capacity, experts·⌈maxm/16⌉) + a Scratch-reuse GPU test); description corrected
+  — Flash Next is the only caller of `cuda/exl3/experts` (the first version wrongly said GLM/Qwen3.5 share it).
