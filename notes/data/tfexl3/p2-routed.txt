@@ -1,0 +1,4 @@
+{"R": 1, "routed_ms": 0.0886, "hash": "5c92379ed8345f20", "finite": true}
+{"R": 8, "routed_ms": 0.7383, "hash": "971ecb9e3c01577e", "finite": true}
+{"R": 64, "routed_ms": 3.4684, "hash": "7257f458540ae6f2", "finite": true}
+{"R": 1024, "routed_ms": 16.536, "hash": "83704058100e6b60", "finite": true}
