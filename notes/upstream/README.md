@@ -1607,3 +1607,6 @@ wait on one ~100 GB pull, and they share one serve.
   −3.5…−4.0 % at 8k, −2.3…−6.6 % at 32k (3 rounds, `data/tfexl3/d4.txt`), +454 MiB fixed scratch; tests 78 passed.
   Draft `tf-pr-exl3-window.md`. The fp16 prompt tile is NOT posted: alone its sign flips; on top of the window
   −1.9…−2.2 % at 8k but within the 3.1 % base spread at 32k. https://github.com/ashhart/TensorFold/pull/207
+- **TF #173 closed by the maintainer** (2026-10-01 20:21): "0.6.1 runs NVFP4 checkpoints in their own math by default
+  (`--precision checkpoint`)". Checked 0.6.1 (`17c73e1`): only `families/qwen3_5` (27B) uses it; Flash Next's routed
+  experts still run `nvfp4_expert_kernel` on bf16 rows. Reply draft `tf173-reply-scope.md` (scope question), NOT posted.
