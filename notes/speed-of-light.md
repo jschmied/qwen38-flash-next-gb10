@@ -3197,3 +3197,9 @@ recorded for rank 1) + a Shadow test that fails on `6a3a8b1`; pushed to #180, re
   41.58/41.49 → 38.64/37.86 s (−6.9…−8.8 %), tokens identical; small windows: 1 row +0…+5 % (three launches + memset
   instead of one block), 2/4 rows even, 8/16 rows −1.3/−2.4 %. **PR #191** (stacked on #184). Cumulative on 0.6.1 at
   8k: 11.42 (stock) → 10.27 (#184) → 9.40 s (#191) = −18 %; window 2048 (−4…−5 %) not yet posted; lever 3 next.
+- **#178 receipt (2026-10-01, ashhart asked which export):** `mtpfp8` = lovedheart/Qwen3.8-Flash-Next-NVFP4-FP8 @
+  `a9786bf` (205/206 weight shards byte-identical by HF lfs.oid; MTP-expert shard `model-bf16-00011` identical; one BF16
+  shard ours) + two FP8 `quantized_layers` entries (both spellings) that lovedheart's config does not have. As
+  published (`qwen38-flash-next-mtpfp8-asrel`, hardlinks + their algo set): stock 0.6.0 passes the check and fails at
+  load (`KeyError … weight_scale_2`); #178 loads, same replies, 86/93 accepted. First asrel run void (kept the
+  `model.mtp.*` entries). Draft `notes/upstream/tf178-receipt.md`.

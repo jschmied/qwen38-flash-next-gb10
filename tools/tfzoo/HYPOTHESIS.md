@@ -24,3 +24,11 @@ Out of range (e.g. a variant that loads and decodes garbage without an error) �
   drafts never change replies); MTP acceptance within ±5 pp of `mtpfp4`'s 86/99 (both drafters end as NVFP4 made
   at load from near-identical values: FP8 per tensor vs NVFP4 per 16).
 - `mtpfp4` on the branch: identical to stock (control).
+
+## asrel (2026-10-01): lovedheart's published layout, for ashhart's #178 question ("which export? a real receipt")
+`mtpfp8`'s MTP-expert shard `model-bf16-00011.safetensors` is byte-identical (sha256 f2b54563…, HF lfs.oid) to
+lovedheart/Qwen3.8-Flash-Next-NVFP4-FP8 @ a9786bf, whose config does NOT list the MTP experts in quantized_layers; ours
+adds the two FP8 entries. Variant `qwen38-flash-next-mtpfp8-asrel` = mtpfp8 hardlinks + config without those entries.
+- stock 0.6.0: check passes (no FP8 declared); loader meets FP8 MTP experts → loud error (no weight_scale_2) or garbage
+  drafts (acceptance ≈ 0, replies still correct).
+- #178 branch: loads (dtype detection), replies identical to mtpfp8's, accepted ≈ 86/93.

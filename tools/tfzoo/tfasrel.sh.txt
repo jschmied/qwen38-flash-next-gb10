@@ -1,0 +1,18 @@
+#!/bin/bash
+# #178 receipt: lovedheart's published layout (FP8 MTP experts, not declared in quantized_layers) on stock 0.6.0 and on
+# the #178 branch; three fixed greedy prompts + drafted/accepted. Hypothesis in HYPOTHESIS.md (asrel).
+R=/opt/llm/runners/results/tfzoo; T=/opt/llm/runtime/tf-venv; P=/opt/llm/runtime/vllm-venv-fnext/bin/python; L=/opt/llm/runners/tfzoo
+M=/opt/llm/models/qwen38-flash-next-mtpfp8-asrel
+log(){ echo "$(date +%T) $*" >> $R/chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for arm in stock:/home/jschmied/git/tensorfold/src pr178:/home/jschmied/git/tf-pr-mtp-fp8/src; do memok
+  tag=asrel-${arm%%:*}; SRC=${arm#*:}
+  systemd-run --unit=fx-tfzoo --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin -E PYTHONPATH=$SRC \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 32768 --parallel 1 > /opt/llm/tfzoo-$tag.log 2>&1"
+  ok=0; for i in $(seq 1 180); do sleep 5; systemctl is-active -q fx-tfzoo || break; curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { ok=1; break; }; done
+  if [ $ok = 1 ]; then log "$tag LOADED"; timeout 1200 $P $L/zoo_probe.py $tag >> $R/probe.jsonl 2>> $R/probe.err
+  else log "$tag NOT SERVING: $(grep -E 'Error|error|refus|reads|scale' /opt/llm/tfzoo-$tag.log | tail -3 | tr '\n' ' ' | cut -c1-600)"; fi
+  systemctl stop fx-tfzoo 2>/dev/null; systemctl reset-failed fx-tfzoo 2>/dev/null; sleep 15
+done
+echo "== TFASREL DONE ==" >> $R/chain.txt
