@@ -3062,4 +3062,4 @@ Every reply byte-identical across all three builds (`1bb116eb6ff5`, `fc0e045ffad
   the round's shape (key on total rows, streams, parity, context bucket). Graphs built that way would also survive
   resizes, so they would replace the solo slot's copy-in. Not started.
 
-Nothing posted. Draft `notes/upstream/tf141-solo-recapture.md` (one topic) needs the user's go.
+Posted 2026-10-01 (user's go): PR #180 (`6a3a8b1`, with a host test) against `pr-141-0.6.1`, and a short comment on #141.
