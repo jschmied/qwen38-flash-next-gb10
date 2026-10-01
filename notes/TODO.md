@@ -49,6 +49,12 @@ test: develop in a separate worktree, never switch that checkout while a server 
       Hypothesis (unmeasured): grouped kernel 2–3× faster → 8k prefill −20…−35 %, outputs identical (1). Order:
       worktree, exactness test first, then `tools/tfprof/prefill_profile.py` 8k/32k. No FP4/FP8: EXL3 values are
       codebook fp16, not on the E2M1 grid — re-quantizing would stack a second loss (use an NVFP4 checkpoint instead).
+- [ ] **T14 TF #136 (dynamic draft count)** — user 2026-10-01: "check #136, i think we measured a lot here". Our
+      record: cost +4.8 ms/draft near-linear (§5ah); per-position acceptance code vs prose (§5v); lagged/recent-acceptance
+      depth rules lose (replay code −0.8…−8.2 %, §5v; vr8vr8 live mixed); in-round confidence stop is the winner, τ 0.70
+      flat 0.60–0.75 = TF's default (§5v); depth 7 + τ 0.8 +10 % code / +12.8 % prose vs fixed 5 in replay (§5ah);
+      verify-row trimming alone loses (§5p). TF-native sweep running (round 6: depth 6/7/8 × τ 0.7/0.8, code + prose,
+      `data/tfdepth/`). Then a comment draft for #136 (one topic: measurements for the A/B ashhart plans) — needs a go.
 - [ ] Docs/tooling offers: byte-floor ledger + profile scripts, Thai/Devanagari canary, per-expert-scale NVFP4
       checkpoint pointer, 128k context for agent recipes, longer replies in `bench_openai`.
 

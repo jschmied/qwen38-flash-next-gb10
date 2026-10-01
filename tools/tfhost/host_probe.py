@@ -47,7 +47,12 @@ prompts = [tok.encode(tok.apply_chat_template([{"role": "user", "content": t}], 
                                              enable_thinking=False), add_special_tokens=False) for t in TASKS[:active]]
 assert all(isinstance(p, list) and p and isinstance(p[0], int) for p in prompts)
 DV = os.environ.get("DRAFT_VOCAB", "default")   # "default" (TF's 79,591 ids) or a file of ids
-eng = FlashNextEngine(model, max_len=16384, streams=streams, graphs=(arm != "S0"), draft_vocab=DV)
+KW = {}                                            # MTP_DEPTH / MTP_CONF: TF's --mtp-drafts / --mtp-confidence
+if os.environ.get("MTP_DEPTH"):
+    KW["depth"] = int(os.environ["MTP_DEPTH"])
+if os.environ.get("MTP_CONF"):
+    KW["confidence"] = float(os.environ["MTP_CONF"])
+eng = FlashNextEngine(model, max_len=16384, streams=streams, graphs=(arm != "S0"), draft_vocab=DV, **KW)
 
 
 def run(count):
@@ -84,4 +89,4 @@ keep = lambda s: {k: v for k, v in (s or {}).items() if isinstance(v, (int, floa
 print("ARM " + json.dumps({"arm": arm, "streams": streams, "graphs": arm != "S0", "nsys": prof, "wall_s": round(wall, 3),
                            "tokens": total, "tok_s": round(total / wall, 2), "active": active, "ms_tok_per_stream": round(1000 * wall * active / total, 3),
                            "hashes": [hashlib.sha256(json.dumps(o).encode()).hexdigest()[:12] for o in outs],
-                           "lens": [len(o) for o in outs], "warm": WARM, "prompt_set": os.environ.get("PROMPT_SET", "code"), "draft_vocab": os.path.basename(DV), "captures_warm": warm_caps, "captures_run": len(CAPS) - warm_caps, "capture_ms_run": round(sum(CAPS[warm_caps:]), 1), "stats": [keep(s) for s in stats]}), flush=True)
+                           "lens": [len(o) for o in outs], "warm": WARM, "prompt_set": os.environ.get("PROMPT_SET", "code"), "draft_vocab": os.path.basename(DV), "depth": eng.depth, "confidence": eng.confidence, "captures_warm": warm_caps, "captures_run": len(CAPS) - warm_caps, "capture_ms_run": round(sum(CAPS[warm_caps:]), 1), "stats": [keep(s) for s in stats]}), flush=True)

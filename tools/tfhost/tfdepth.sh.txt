@@ -1,0 +1,12 @@
+#!/bin/bash
+# Round 6: TF 0.6.0 MTP depth x confidence, S1 and M4, code + prose, two rounds.
+R=/opt/llm/runners/results/tfdepth; mkdir -p $R; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost; SRC=/home/jschmied/git/tensorfold/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; N=512
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext HOME=/root PYTHONUNBUFFERED=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for set in code prose; do for arm in S1 M4; do for cell in 6:0.7 7:0.8 8:0.8 6:0.8; do memok
+  d=${cell%%:*}; c=${cell#*:}; tag=$arm-$set-d$d-c$c-$rep
+  PROMPT_SET=$set MTP_DEPTH=$d MTP_CONF=$c timeout 1800 $T/bin/python $L/host_probe.py $SRC $M $arm $N > $R/$tag.log 2>&1
+  echo "$(date +%T) $tag rc=$? $(grep '^ARM ' $R/$tag.log | cut -c1-900)" >> $R/chain.txt
+done; done; done; done
+echo "== TFDEPTH DONE ==" >> $R/chain.txt

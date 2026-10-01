@@ -57,3 +57,13 @@ PROMPT_SET=prose: English, German, Chinese, French prose, 512 tokens each. M4 (a
 - English: rounds within ±3 %. German/French: rounds +0…+8 % with 32k. Chinese: rounds +5…+25 % (fewer CJK ids).
 - If total M4 rounds rise > 5 %, the 32k list loses on prose despite the cheaper head: no proposal.
 - Hashes identical to default in every arm.
+
+## Round 6 (2026-10-01): draft depth x confidence on TF (#136 context)
+
+TF default depth 6, τ 0.7. vLLM replay (§5ah, our cost model) predicts depth 7 + τ 0.8 at +10 % code / +12.8 % prose
+over fixed depth 5; against TF's own depth-6/τ-0.7 stop the remaining gain should be small. S1 (one stream), code
+and prose sets (S1 uses each set's first prompt only — so also an M4 pass over all four prompts, per-stream rounds and
+per-round cost read, not aggregate tok/s). Cells: 6/0.7 (default), 7/0.8, 8/0.8, 6/0.8. Two rounds.
+- 7/0.8 vs 6/0.7: code 0…+3 %, prose −1…+2 % (ms/token, S1).
+- 8/0.8 within ±2 % of 7/0.8; 6/0.8 −1…+2 % vs default.
+- Hashes identical across all cells (drafts never change output).
