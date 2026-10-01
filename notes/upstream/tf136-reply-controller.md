@@ -18,6 +18,6 @@ knowledge, but on this log the drafter's probabilities don't predict acceptance 
 
 Caveats: these are vLLM's costs, not TensorFold's; steps are treated as independent; and it's one log. A live A/B on
 TensorFold would need the controller inside the draft loop. Script and data:
-<SCRIPT_LINK>.
+https://github.com/jschmied/qwen38-flash-next-gb10/blob/f28684252b70cd9c838bc37e248bb738ebc44506/tools/kstop/replay_et.py (log and costs in `notes/data/kstop/`).
 
 Written with AI assistance (Claude Code).

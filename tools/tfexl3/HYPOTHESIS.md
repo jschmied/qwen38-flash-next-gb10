@@ -139,3 +139,9 @@ Window 2048 stacked on 4b: 8k 8.92/9.21 → 8.76/8.62, 32k 36.08/37.27 → 36.01
 `F16.prefill` used the decode tile (BM 16); BM 64 only groups rows. Microbench (`f16_bits.py`, 5 shapes): bit-identical
 at every shape; −34…−50 % on the large mixes, ±0 on the small. E2E (prefill_ab, vs `exl3-bf16-rows`, two rounds):
 - 8k/32k prefill −2…−4 %; tokens identical.
+
+## Round 14 (D): settle the two parked levers — 4 arms × 3 alternating rounds, 8k + 32k
+Arms on top of #195 (`exl3-bf16-rows`): base, + fp16 prompt tile (`exl3-f16-prompt-tile`), + window 2048
+(`exl3-stack-win`), + both (`exl3-f16-win`). Rule: a lever counts only if its sign holds in all 3 rounds AND its median
+gain beats the base arm's own spread (max − min over rounds).
+- f16 tile: 8k −2…−4 %, 32k −1…−3 %; window: −1…−4 %; both ≈ additive; tokens identical in every arm.
