@@ -34,3 +34,36 @@ verify graphs, keyed probabilistic drafts, draft head over the prompt, NVFP4 dra
 on its quantized prompt GEMMs (already grouped); RecoverSSM (TF replays from records); vLLM paging artefacts (block
 granularity, MTP trailing block, KV pool coupling, prefix-cache nondeterminism); precision cuts (bf16 SSM state, NVFP4
 GDN, FP8 KV) conflict with TF's no-precision-for-speed rule — TF already has int8/int4 KV.
+
+## Speed-of-light agenda against TensorFold (2026-10-01)
+
+User: "check out lightspeed agenda against tensorfold, what applies?" Each open item in `TODO.md` ("Open, ranked" and
+the speed levers) and the done agenda items, checked against TF 0.6.0 source. Code reading only; nothing measured on TF.
+
+**Applies (new, not in the table above):**
+- **GPU-side draft chain (TODO item 2).** TF's chain is host-driven: `draft()` (`decode.py:231-256`) gets each draft
+  token and its probability back on the host through `sample_draft` (`decode.py:182`) before the next `mtp_forward`, so
+  every draft step pays a sync whether or not the confidence stop fires. §5b: a per-step host sync cost vLLM 5–6 %;
+  §5v add. 2: one sync per cycle ≤ ~0.8 ms. First step: time the per-draft sync on TF (nsys, depth 6). A keep-on-device
+  chain plus a graph conditional is a restructure of `draft()`, not a patch.
+- **Graphs for the concurrent path (TODO item 3, capture widths).** `multi.py:33`: the multi-stream engine is "eager:
+  no CUDA graphs"; only the serial path captures (`graphs.py`, ≤ 8 rows). Our F4 / capture-width work says graphs are
+  worth 1–2 % at c=1 in vLLM; TF at c ≥ 2 runs every launch eager, so the gap is likely larger. Measure launch-bound
+  time at c=2/4 before proposing.
+
+**Applies, already in the table:** 32k draft vocab (TODO 7; TF ships 79,591 rows, `draft_vocab.txt`) = row 7; MoE
+epilogue / prefill MoE fusion (TODO 6) → TF's EXL3 grouped expert kernel is 56 % of an 8k prefill (§5ap), but the
+maintainer owns prefill and is already moving to 4096-row pieces; byte-floor ledger = row 6; GDN state write = row 12.
+
+**TF already has it (and the numbers agree):** confidence stop (TODO 5) — TF's `CONFIDENCE = 0.7` sits inside our
+replay optimum 0.60–0.75 (§5v), an independent confirmation; HC fusion (§5aa); fused GDN projections (GDNNQ, §5af);
+exact-size verify graphs (F4); probabilistic drafting; NVFP4 draft head.
+
+**Does not apply:** weight loading #58868 (vLLM loader); bf16 SSM state, INT8/MXFP8 leftovers, NVFP4 W4A16 lm_head,
+fp8 KV (precision cuts against TF's rule); nightly bisect, contamination check, MTP re-measurement, block size /
+prefix-match-unit, cherry-picks #58957/#58114 (vLLM code; TF has its own HC fusion); RecoverSSM / deferred commit
+(TF replays from records); X925 pinning (null on vLLM, §5ab; TF's Python-driven loop might differ, low priority);
+myllmbox block verification (rejected §5ah) and Marlin MoE.
+
+**Unchecked:** MiaAI `index_share_for_mtp_iteration` (drafter reuses the target's QSA top-k) — whether TF's MTP layer
+runs its own QSA selection was not traced.
