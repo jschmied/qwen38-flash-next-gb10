@@ -2744,3 +2744,34 @@ user's "with longer context it would pass" was right, and **64k is too small for
 - Serving consequence for agent work: run at 131,072 (vLLM: KV 12 GiB fits with 25 GiB free; TensorFold: 4 slots fit
   with its table still locked). Data: `openai__flashnext.FN_{vllmhard1x,vllmmix2x,tfhard1x,tfhard2x}_*.json`,
   `*x-ovf*-result.json`.
+
+### 5am. The pasture prompt: TensorFold 2 of 2 usable, vLLM 1 of 2
+
+User: "at the end do two runs with: [pasture prompt]". Same harness as §5ak (`gen.py` with `GEN_PROMPT`, seeds 1 and
+2, 100k output budget, the model's default sampling and thinking), servers at 131,072 context (vLLM from the overflow
+reruns, KV 12 GiB; TensorFold the scene config, 1 slot). `check.py` with `CHECK_LIMIT_KB=30`; visual check in headless
+Firefox at 1280×800, frames at 4 and 12 s. Hypothesis `tools/pasture/HYPOTHESIS.md`.
+
+| | output tokens (thinking) | s | tok/s | bytes | < 30 KB | format | visual |
+|---|---|---|---|---|---|---|---|
+| vLLM, seed 1 | 34,466 (20,079) | 705.4 | 48.9 | 31,889 | **no** | ok | complete scene |
+| vLLM, seed 2 | 46,959 (30,193) | 1004.2 | 46.8 | 39,526 | **no** | ok | **broken** |
+| TensorFold + EXL3, seed 1 | 47,697 (33,315) | 682.8 | 69.9 | 30,432 | yes | ok | complete scene |
+| TensorFold + EXL3, seed 2 | 53,585 (44,065) | 730.1 | 73.4 | 20,765 | yes | **fenced** | complete scene |
+
+- **What renders.** vLLM seed 1: sky gradient, sun with halo and rays, grass, hedge, 4 animals (cow with patches,
+  pink nose and udder; wool-circle sheep with a dark face; pink pig with snout; brown horse with mane and tail); the
+  trees sit cut off at the frame edges and the sheep's and pig's legs are partly lost in the grass. vLLM seed 2:
+  **dark ground, a pig clipped in the top-left corner and only the legend panel**, the same failure as §5ak's vLLM
+  seed 1. TensorFold seed 1: the fullest scene (fence, three rooted trees, clouds, sun, all four animals with their
+  features). TensorFold seed 2: a clean complete scene with labelled animals, but the reply is wrapped in a
+  ```` ```html ```` fence, which the browser shows as a text line at the top (it breaks "starts with <!DOCTYPE html>").
+  Leg counts and bounce phases were not counted frame by frame; "exactly 4 legs" is judged by eye from the stills.
+- `check.py` flags vLLM seed 1 for a "pictograph": `№` in its title text ("FIELD STUDY № 04"), text, not a graphic.
+- **Against the hypothesis:** 0–2 of 4 meeting everything → 1 (TensorFold seed 1; the fenced one misses only the
+  format rule); 2–4 under 30 KB → 2 (both TensorFold); no engine difference separable at n = 2 → holds formally, but
+  across both prompts vLLM produced the same "dark page, one shape clipped top-left" failure twice and TensorFold once
+  a page without fish, so 2 of 4 vs 1 of 4 broken renders over the two prompts, still n too small to rank.
+- TensorFold thinks longer here (33–44k thinking tokens vs 20–30k) and still finishes faster (70–73 vs 47–49 tok/s,
+  one request each). Page: https://claude.ai/artifact/9KEoopw1XJzh7fyjiMxCXo (pasture section), LAN
+  http://10.0.0.133:8765/. Data `data/pasture/`.

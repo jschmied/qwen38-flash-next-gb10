@@ -1,0 +1,580 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>North Pasture — Four Species, Four Legs Apiece</title>
+<style>
+:root{
+ --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+ --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+ --ink:#fbf6e9; --gold:#f3ce7e; --leaf:#95d288;
+ --ease:cubic-bezier(.34,1.3,.5,1);
+ --spd:1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1d14}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased}
+#scene{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+text{font-family:var(--sans)}
+
+/* ---- living pieces ---- */
+.bounce{transform-box:fill-box;transform-origin:50% 100%;animation:hop var(--dur) var(--del) infinite}
+.animal.pop .bounce{animation:hopPop .62s cubic-bezier(.28,1.5,.5,1) 1}
+.hs{transform:scale(1);transform-box:fill-box;transform-origin:50% 100%;transition:transform .45s var(--ease)}
+.animal{cursor:pointer}
+.animal:hover .hs,.animal:focus .hs,.animal.hot .hs{transform:scale(1.055)}
+.shadow{transform-box:fill-box;transform-origin:50% 50%;animation:shpulse var(--dur) var(--del) infinite;pointer-events:none}
+.rays{transform-box:fill-box;transform-origin:50% 50%;animation:spin 96s linear infinite}
+.pulse{transform-box:fill-box;transform-origin:50% 50%;animation:ring 5s ease-out infinite}
+.eyes{transform-box:fill-box;transform-origin:50% 50%;animation:blink var(--bd,5.6s) var(--bdl,0s) infinite}
+.blade{transform-box:fill-box;transform-origin:50% 100%;animation:sway var(--sd,3.6s) ease-in-out var(--sdelay,0s) infinite alternate}
+.wings{transform-box:fill-box;transform-origin:50% 50%;animation:flutter .17s ease-in-out infinite alternate}
+.birdwing{transform-box:fill-box;transform-origin:50% 100%;animation:flap var(--fd,.5s) ease-in-out infinite}
+.beam{animation:beams 17s ease-in-out infinite alternate}
+.tag{opacity:0;transform:translateY(7px);transition:opacity .3s ease,transform .45s var(--ease);pointer-events:none}
+.animal:hover .tag,.animal:focus .tag,.animal.hot .tag{opacity:1;transform:translateY(0)}
+.tn{font-family:var(--serif);font-size:17px;fill:#fffef8;letter-spacing:.01em}
+.ts{font-size:8.5px;fill:#cbe4bc;letter-spacing:.19em;font-weight:600}
+
+@keyframes hop{0%,100%{transform:translateY(0) scaleY(1)}12%{transform:translateY(2px) scaleY(.976)}
+ 34%{transform:translateY(-14px) scaleY(1.032)}58%{transform:translateY(1px) scaleY(.994)}72%{transform:translateY(0)}}
+@keyframes hopPop{0%{transform:translateY(0)}18%{transform:translateY(4px) scaleY(.96)}
+ 45%{transform:translateY(-34px) scaleY(1.06)}78%{transform:translateY(2px)}100%{transform:translateY(0)}}
+@keyframes shpulse{0%,100%{transform:scale(1);opacity:.62}12%{transform:scale(1.06);opacity:.72}34%{transform:scale(.84);opacity:.36}58%{transform:scale(1.02);opacity:.58}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ring{0%{transform:scale(.82);opacity:.5}70%{opacity:0}100%{transform:scale(1.62);opacity:0}}
+@keyframes blink{0%,89%,100%{transform:scaleY(1)}92%{transform:scaleY(.08)}95%{transform:scaleY(1)}}
+@keyframes sway{from{transform:rotate(-3.2deg)}to{transform:rotate(3.6deg)}}
+@keyframes flutter{from{transform:scaleX(1)}to{transform:scaleX(.34)}}
+@keyframes flap{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.28)}}
+@keyframes beams{from{opacity:.10}to{opacity:.24}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---- interface ---- */
+.ui{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;
+ padding:clamp(14px,2.4vw,32px);pointer-events:none;z-index:5}
+.brand{max-width:min(54ch,64vw);animation:rise .9s var(--ease) both}
+.eyebrow{display:flex;align-items:center;gap:10px;font-size:10.5px;letter-spacing:.3em;
+ text-transform:uppercase;color:#eaf6d9;text-shadow:0 1px 10px rgba(8,40,18,.7);margin:0 0 6px}
+.pip{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(243,206,126,.22)}
+.clock{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:.14em}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(2.7rem,8.6vw,6.4rem);line-height:.84;
+ margin:0;letter-spacing:-.025em;text-shadow:0 6px 30px rgba(7,38,17,.55)}
+h1 .it{font-style:italic;color:var(--gold)}
+h1 .sm{display:block;font-size:.26em;letter-spacing:.42em;text-transform:uppercase;
+ font-family:var(--sans);font-weight:700;color:rgba(255,255,255,.82);margin-top:.9em}
+.dek{font-size:clamp(.8rem,1.2vw,.95rem);line-height:1.55;max-width:40ch;margin:14px 0 0;
+ color:rgba(246,255,240,.86);text-shadow:0 2px 14px rgba(8,40,18,.7)}
+.deck{display:flex;flex-wrap:wrap;gap:clamp(8px,1.2vw,16px);align-items:flex-end;pointer-events:none}
+.panel{pointer-events:auto;background:linear-gradient(180deg,rgba(18,48,31,.92),rgba(9,28,17,.94));
+ border:1px solid rgba(214,244,196,.22);border-radius:4px 4px 14px 14px;padding:14px 16px 13px;
+ box-shadow:0 22px 46px -18px rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.14);
+ animation:rise .9s var(--ease) both;animation-delay:.18s;backdrop-filter:blur(2px)}
+.ptitle{font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:#a9d69b;margin:0 0 10px;
+ display:flex;justify-content:space-between;gap:14px;font-weight:700}
+.lg{display:flex;align-items:baseline;gap:8px;padding:6px 8px 6px 10px;border-left:2px solid rgba(149,210,136,.28);
+ cursor:pointer;transition:background .25s,border-color .25s,transform .3s var(--ease);border-radius:0 6px 6px 0}
+.lg:hover,.lg.on{background:rgba(149,210,136,.14);border-color:var(--gold);transform:translateX(3px)}
+.lg b{font-family:var(--serif);font-weight:400;font-size:1.22rem;letter-spacing:.01em}
+.lg i{font-style:normal;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#a9d69b;flex:1}
+.lg em{font-style:normal;font-size:1.12rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--gold);
+ min-width:2.4ch;text-align:right}
+.ctrl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;
+ border-top:1px dashed rgba(214,244,196,.28)}
+.ctrl label{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.22em;
+ text-transform:uppercase;color:#bcdcb0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:78px;height:2px;background:rgba(214,244,196,.34);
+ border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+ background:var(--gold);box-shadow:0 0 0 3px rgba(243,206,126,.24);transition:transform .2s}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.28)}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;border-radius:50%;background:var(--gold)}
+.btn{margin-left:auto;font:inherit;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);
+ background:transparent;border:1px solid rgba(214,244,196,.4);padding:7px 13px;border-radius:99px;cursor:pointer;
+ transition:background .25s,transform .25s var(--ease),border-color .25s}
+.btn:hover{background:var(--gold);color:#16331f;border-color:var(--gold);transform:translateY(-2px)}
+.btn[aria-pressed=true]{background:rgba(243,206,126,.2);border-color:var(--gold)}
+@media (max-width:640px){.dek{display:none}h1{font-size:clamp(2.2rem,13vw,3.2rem)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg id="scene" viewBox="0 0 1600 900" role="img" aria-label="Animated pasture with a cow, sheep, pig and horse">
+<defs>
+ <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#4da9e4"/><stop offset=".42" stop-color="#92d4f1"/>
+  <stop offset=".78" stop-color="#c9ecf8"/><stop offset="1" stop-color="#effaf5"/></linearGradient>
+ <linearGradient id="gGrass" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#6db84f"/><stop offset=".18" stop-color="#4f9e43"/>
+  <stop offset=".62" stop-color="#3f8c3b"/><stop offset="1" stop-color="#27672f"/></linearGradient>
+ <linearGradient id="gCloud" gradientUnits="userSpaceOnUse" x1="0" y1="-48" x2="0" y2="30">
+  <stop offset="0" stop-color="#ffffff"/><stop offset=".62" stop-color="#f8fcff"/>
+  <stop offset="1" stop-color="#d5e8f8"/></linearGradient>
+ <radialGradient id="gHalo"><stop offset=".18" stop-color="#fff5ad" stop-opacity=".95"/>
+  <stop offset=".52" stop-color="#ffe873" stop-opacity=".38"/><stop offset="1" stop-color="#ffe873" stop-opacity="0"/></radialGradient>
+ <radialGradient id="gSun" cx=".38" cy=".34" r=".78">
+  <stop offset="0" stop-color="#fffce0"/><stop offset=".55" stop-color="#ffe766"/>
+  <stop offset="1" stop-color="#fbc63f"/></radialGradient>
+ <linearGradient id="gBeam" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#fff8d2" stop-opacity=".55"/><stop offset="1" stop-color="#fff8d2" stop-opacity="0"/></linearGradient>
+ <radialGradient id="gShadow"><stop offset="0" stop-color="#0f3a19" stop-opacity=".55"/>
+  <stop offset="1" stop-color="#0f3a19" stop-opacity="0"/></radialGradient>
+ <radialGradient id="gVig" cx=".5" cy=".42" r=".8">
+  <stop offset=".5" stop-color="#06240f" stop-opacity="0"/><stop offset="1" stop-color="#06240f" stop-opacity=".4"/></radialGradient>
+ <clipPath id="cCow"><ellipse cx="68" cy="-92" rx="60" ry="38"/></clipPath>
+ <clipPath id="cCowHead"><ellipse cx="138" cy="-124" rx="25" ry="23"/></clipPath>
+ <clipPath id="cHorse"><ellipse cx="78" cy="-108" rx="72" ry="37"/></clipPath>
+ <clipPath id="cPig"><ellipse cx="62" cy="-50" rx="53" ry="34"/></clipPath>
+ <clipPath id="cSheep"><ellipse cx="126" cy="-80" rx="19" ry="22"/></clipPath>
+ <clipPath id="cPigHead"><circle cx="106" cy="-54" r="31"/></clipPath>
+</defs>
+
+<g id="skyLayer"><rect id="sky" fill="url(#gSky)"/>
+ <g id="beams" opacity=".16">
+  <polygon class="beam" fill="url(#gBeam)"/><polygon class="beam" fill="url(#gBeam)" opacity=".7"/>
+ </g>
+ <g id="sun">
+  <circle id="halo" fill="url(#gHalo)"/>
+  <g class="rays" id="rays" stroke="#ffe873" stroke-linecap="round" stroke-width="6" opacity=".85"></g>
+  <circle id="disc" fill="url(#gSun)"/>
+  <circle id="ring" class="pulse" fill="none" stroke="#fff3b0" stroke-width="3"/>
+ </g>
+ <g id="clouds"></g><g id="birds"></g></g>
+
+<g id="landLayer">
+ <path id="hillA" fill="#9ccd86" opacity=".85"/><path id="hillB" fill="#7cbb6b" opacity=".9"/>
+ <path id="treeline" fill="#2f7a45" opacity=".5"/>
+ <rect id="grass" fill="url(#gGrass)"/>
+ <rect id="hzLine" fill="#2b6a2c" opacity=".55"/><rect id="hzHi" fill="#8fd06f" opacity=".35"/>
+ <g id="bands"></g>
+ <path id="fence" stroke="#7a563a" fill="#7a563a" opacity=".55"/>
+ <g id="bushes"></g>
+ <path id="gfar" stroke="#5aa44b" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".55"/>
+ <path id="gnear" stroke="#7ac45c" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".6"/>
+ <g id="flowers"></g>
+</g>
+
+<g id="treeLayer">
+ <g class="tree" id="tree-a"><g>
+  <animateTransform attributeName="transform" type="rotate" values="-0.9;1.1;-0.9" keyTimes="0;.5;1"
+   dur="8.4s" repeatCount="indefinite" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  <ellipse cx="4" cy="2" rx="54" ry="11" fill="url(#gShadow)"/>
+  <path d="M-6,-110 L-26,-126 M6,-122 L28,-136" stroke="#6d492b" stroke-width="7" stroke-linecap="round"/>
+  <path d="M-11,-138 C-9,-88 -13,-40 -18,-6 C-7,-1 8,-1 18,-6 C13,-40 9,-88 11,-138 Z" fill="#6d492b"/>
+  <path d="M-4,-130 C-3,-84 -6,-42 -10,-12" stroke="#4e331d" stroke-width="3" fill="none" opacity=".6"/>
+  <g fill="#3a8a42">
+   <circle cx="-36" cy="-148" r="34"/><circle cx="38" cy="-156" r="31"/><circle cx="-4" cy="-196" r="38"/>
+   <circle cx="18" cy="-174" r="33"/><circle cx="-22" cy="-170" r="29"/><circle cx="2" cy="-146" r="35"/></g>
+  <g fill="#52a855" opacity=".92">
+   <circle cx="-14" cy="-202" r="22"/><circle cx="-42" cy="-160" r="18"/><circle cx="20" cy="-182" r="16"/></g>
+  <g fill="#2b6f34" opacity=".45">
+   <circle cx="30" cy="-140" r="20"/><circle cx="-16" cy="-132" r="18"/><circle cx="6" cy="-128" r="14"/></g>
+ </g></g>
+ <g class="tree" id="tree-b"><g>
+  <animateTransform attributeName="transform" type="rotate" values="1.0;-1.0;1.0" keyTimes="0;.5;1"
+   dur="9.6s" repeatCount="indefinite" calcMode="spline" keySplines=".42 0 .58 1;.42 0 .58 1"/>
+  <ellipse cx="-2" cy="2" rx="46" ry="10" fill="url(#gShadow)"/>
+  <path d="M-5,-98 L-22,-114 M5,-108 L22,-122" stroke="#6d492b" stroke-width="6" stroke-linecap="round"/>
+  <path d="M-10,-124 C-8,-80 -12,-36 -16,-5 C-6,-1 7,-1 16,-5 C11,-36 8,-80 10,-124 Z" fill="#6d492b"/>
+  <path d="M3,-118 C4,-76 6,-38 9,-10" stroke="#4e331d" stroke-width="3" fill="none" opacity=".55"/>
+  <g fill="#37853f">
+   <circle cx="32" cy="-132" r="29"/><circle cx="-32" cy="-138" r="28"/><circle cx="2" cy="-176" r="33"/>
+   <circle cx="-18" cy="-152" r="26"/><circle cx="20" cy="-156" r="26"/><circle cx="-2" cy="-128" r="28"/></g>
+  <g fill="#4fa553" opacity=".9"><circle cx="10" cy="-184" r="19"/><circle cx="30" cy="-146" r="15"/><circle cx="-26" cy="-152" r="14"/></g>
+  <g fill="#2b6f34" opacity=".45"><circle cx="-22" cy="-118" r="16"/><circle cx="14" cy="-116" r="14"/></g>
+ </g></g>
+</g>
+
+<g id="animalLayer">
+
+ <!-- ============ HORSE ============ -->
+ <g class="animal" id="a-horse" tabindex="0" role="group" aria-label="Horse" style="--dur:840ms;--del:-90ms;--bd:6.4s;--bdl:-1.1s">
+  <title>Horse — Equus caballarius</title>
+  <g class="hs"><g class="bounce">
+   <path d="M18,-124 C-6,-110 -14,-78 -4,-50 C2,-72 8,-94 26,-112 Z" fill="#3a2313"/>
+   <path d="M14,-118 C0,-100 -6,-76 -1,-56" stroke="#5c3a20" stroke-width="3" fill="none" stroke-linecap="round"/>
+   <g fill="#7c4f2e"><rect x="34" y="-72" width="12" height="72" rx="5"/><rect x="116" y="-72" width="12" height="72" rx="5"/></g>
+   <g fill="#2f1e0e"><rect x="33" y="-11" width="14" height="11" rx="3"/><rect x="115" y="-11" width="14" height="11" rx="3"/></g>
+   <ellipse cx="78" cy="-108" rx="72" ry="37" fill="#9a6236"/>
+   <g clip-path="url(#cHorse)">
+    <path d="M10,-84 Q78,-56 146,-90 L146,-64 Q78,-40 10,-64 Z" fill="#000" opacity=".09"/>
+    <ellipse cx="46" cy="-96" rx="44" ry="18" fill="#fff" opacity=".08"/>
+    <ellipse cx="116" cy="-132" rx="32" ry="16" fill="#000" opacity=".07"/></g>
+   <ellipse cx="78" cy="-108" rx="72" ry="37" fill="none" stroke="#6d4222" stroke-width="1.4" opacity=".3"/>
+   <path d="M110,-134 L143,-186 L172,-170 L134,-112 Z" fill="#9a6236"/>
+   <path d="M140,-188 C130,-166 118,-142 106,-128 L120,-121 C133,-141 147,-164 153,-183 Z" fill="#3a2313"/>
+   <g transform="rotate(8 168 -182)"><g class="head">
+    <path d="M150,-196 l-4,-20 l16,11 z" fill="#8a5730"/><path d="M151,-198 l-1,-12 l10,6 z" fill="#5c3820"/>
+    <path d="M172,-198 l6,-19 l5,19 z" fill="#8a5730"/>
+    <ellipse cx="168" cy="-182" rx="26" ry="20" fill="#9a6236"/>
+    <ellipse cx="191" cy="-177" rx="14" ry="12" fill="#87522d"/>
+    <path d="M166,-202 l5,28 l-5,10 l-7,-12 z" fill="#e7dccd" opacity=".8"/>
+    <g class="eyes">
+     <circle cx="157" cy="-187" r="4.3" fill="#26170e"/><circle cx="178" cy="-185" r="4.3" fill="#26170e"/>
+     <circle cx="155.6" cy="-188.6" r="1.5" fill="#fff"/><circle cx="176.6" cy="-186.6" r="1.5" fill="#fff"/></g>
+    <ellipse cx="195" cy="-179" rx="2.6" ry="3.4" fill="#472b18"/><ellipse cx="186" cy="-173" rx="2.3" ry="3" fill="#472b18"/>
+    <path d="M159,-206 c-7,-3 -12,4 -7,9 l8,-3 z" fill="#3a2313"/></g></g>
+   <g fill="#9a6236"><rect x="48" y="-72" width="14" height="72" rx="5"/><rect x="130" y="-72" width="14" height="72" rx="5"/></g>
+   <g fill="#2f1e0e"><rect x="47" y="-11" width="16" height="11" rx="3"/><rect x="129" y="-11" width="16" height="11" rx="3"/></g>
+  </g></g>
+  <ellipse class="shadow" fill="url(#gShadow)"/>
+  <g class="tag"><rect x="-74" y="-34" width="148" height="32" rx="8" fill="#12301c" opacity=".88"/>
+   <text class="tn" x="-60" y="-12">Horse</text><text class="ts" x="36" y="-13">01</text></g>
+  <rect class="hit" fill="none" pointer-events="all"/>
+ </g>
+
+ <!-- ============ COW ============ -->
+ <g class="animal" id="a-cow" tabindex="0" role="group" aria-label="Cow" style="--dur:900ms;--del:-380ms;--bd:7.1s;--bdl:-2.4s">
+  <title>Cow — Bos taurus</title>
+  <g class="hs"><g class="bounce">
+   <path d="M12,-106 C-2,-92 -8,-70 -2,-50" stroke="#f6f0e2" stroke-width="7" fill="none" stroke-linecap="round"/>
+   <path d="M-2,-52 c-10,3 -10,16 -1,18 c9,2 11,-9 4,-13 z" fill="#fbf6ea"/>
+   <g fill="#dfd7c3"><rect x="28" y="-54" width="14" height="54" rx="6"/><rect x="98" y="-54" width="14" height="54" rx="6"/></g>
+   <g fill="#bfb59d"><rect x="28" y="-10" width="14" height="10" rx="4"/><rect x="98" y="-10" width="14" height="10" rx="4"/></g>
+   <g clip-path="url(#cCow)">
+    <ellipse cx="68" cy="-92" rx="60" ry="38" fill="#fbf8ef"/>
+    <ellipse cx="30" cy="-108" rx="22" ry="17" fill="#2b2b33"/>
+    <ellipse cx="82" cy="-64" rx="25" ry="15" fill="#2b2b33"/>
+    <ellipse cx="106" cy="-106" rx="18" ry="15" fill="#2b2b33"/>
+    <ellipse cx="52" cy="-84" rx="9" ry="7" fill="#2b2b33"/>
+    <ellipse cx="68" cy="-58" rx="54" ry="14" fill="#000" opacity=".07"/>
+    <ellipse cx="50" cy="-116" rx="40" ry="12" fill="#fff" opacity=".5"/></g>
+   <ellipse cx="68" cy="-92" rx="60" ry="38" fill="none" stroke="#ddd4bd" stroke-width="1.4"/>
+   <ellipse cx="86" cy="-58" rx="14" ry="10" fill="#f0a2b6"/>
+   <rect x="80" y="-51" width="5" height="9" rx="2.5" fill="#e28ba4"/><rect x="89" y="-51" width="5" height="9" rx="2.5" fill="#e28ba4"/>
+   <path d="M104,-126 L122,-138 L138,-110 L118,-96 Z" fill="#f4f0e4"/>
+   <g class="head">
+    <path d="M122,-142 C116,-150 116,-158 122,-161" stroke="#f0e2b8" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+    <path d="M154,-142 C160,-150 160,-158 154,-161" stroke="#f0e2b8" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="112" cy="-134" rx="12" ry="6.5" transform="rotate(-22 112 -134)" fill="#f2ecdc"/>
+    <ellipse cx="164" cy="-134" rx="12" ry="6.5" transform="rotate(22 164 -134)" fill="#f2ecdc"/>
+    <ellipse cx="113" cy="-133" rx="6" ry="3" transform="rotate(-22 113 -133)" fill="#edb3c1"/>
+    <ellipse cx="163" cy="-133" rx="6" ry="3" transform="rotate(22 163 -133)" fill="#edb3c1"/>
+    <ellipse cx="138" cy="-124" rx="25" ry="23" fill="#fbf8ef"/>
+    <g clip-path="url(#cCowHead)"><ellipse cx="126" cy="-140" rx="14" ry="10" fill="#2b2b33"/>
+     <ellipse cx="138" cy="-146" rx="20" ry="7" fill="#fff" opacity=".5"/></g>
+    <ellipse cx="138" cy="-124" rx="25" ry="23" fill="none" stroke="#ddd4bd" stroke-width="1.3"/>
+    <g class="eyes"><circle cx="129" cy="-125" r="4.3" fill="#26262e"/><circle cx="148" cy="-125" r="4.3" fill="#26262e"/>
+     <circle cx="127.6" cy="-126.6" r="1.5" fill="#fff"/><circle cx="146.6" cy="-126.6" r="1.5" fill="#fff"/></g>
+    <ellipse cx="138" cy="-107" rx="17" ry="12" fill="#f0a2b6"/>
+    <ellipse cx="132" cy="-108" rx="2.6" ry="2.1" fill="#c4738b"/><ellipse cx="144" cy="-108" rx="2.6" ry="2.1" fill="#c4738b"/>
+    <path d="M132,-98 q6,5 12,0" stroke="#cf7d94" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+   <g fill="#fbf8ef" stroke="#ddd4bd" stroke-width="1.2"><rect x="42" y="-54" width="16" height="54" rx="7"/><rect x="112" y="-54" width="16" height="54" rx="7"/></g>
+   <g fill="#cfc5ae"><rect x="42" y="-10" width="16" height="10" rx="4"/><rect x="112" y="-10" width="16" height="10" rx="4"/></g>
+  </g></g>
+  <ellipse class="shadow" fill="url(#gShadow)"/>
+  <g class="tag"><rect x="-74" y="-34" width="148" height="32" rx="8" fill="#12301c" opacity=".88"/>
+   <text class="tn" x="-60" y="-12">Cow</text><text class="ts" x="36" y="-13">02</text></g>
+  <rect class="hit" fill="none" pointer-events="all"/>
+ </g>
+
+ <!-- ============ SHEEP ============ -->
+ <g class="animal" id="a-sheep" tabindex="0" role="group" aria-label="Sheep" style="--dur:700ms;--del:-520ms;--bd:5.2s;--bdl:-.6s">
+  <title>Sheep — Ovis aries</title>
+  <g class="hs"><g class="bounce">
+   <g fill="#43434f"><rect x="36" y="-46" width="10" height="46" rx="4"/><rect x="90" y="-46" width="10" height="46" rx="4"/></g>
+   <ellipse cx="66" cy="-68" rx="50" ry="33" fill="#f7f4ea"/>
+   <g fill="#55555f"><rect x="49" y="-46" width="11" height="46" rx="4.5"/><rect x="103" y="-46" width="11" height="46" rx="4.5"/></g>
+   <g fill="#2a2a33"><rect x="49" y="-9" width="11" height="9" rx="3"/><rect x="103" y="-9" width="11" height="9" rx="3"/></g>
+   <g fill="#fdfcf7" stroke="#e6e0cf" stroke-width="1.2">
+    <circle cx="26" cy="-74" r="18"/><circle cx="38" cy="-93" r="17"/><circle cx="62" cy="-97" r="19"/>
+    <circle cx="86" cy="-89" r="17"/><circle cx="99" cy="-70" r="16"/><circle cx="88" cy="-51" r="15"/>
+    <circle cx="62" cy="-45" r="16"/><circle cx="36" cy="-49" r="15"/><circle cx="21" cy="-60" r="15"/></g>
+   <g class="head">
+    <ellipse cx="106" cy="-88" rx="12.5" ry="7" transform="rotate(-32 106 -88)" fill="#3d3d48"/>
+    <ellipse cx="146" cy="-86" rx="12.5" ry="7" transform="rotate(32 146 -86)" fill="#3d3d48"/>
+    <ellipse cx="126" cy="-80" rx="19" ry="22" transform="rotate(5 126 -80)" fill="#4b4b57"/>
+    <g clip-path="url(#cSheep)"><ellipse cx="126" cy="-96" rx="16" ry="9" fill="#5c5c6b"/></g>
+    <ellipse cx="127" cy="-64" rx="9" ry="7.5" fill="#5e5e6c"/>
+    <ellipse cx="123" cy="-64" rx="2" ry="2.6" fill="#2f2f38"/><ellipse cx="131" cy="-64" rx="2" ry="2.6" fill="#2f2f38"/>
+    <g class="eyes"><circle cx="119" cy="-84" r="4.6" fill="#fdfdf8"/><circle cx="134" cy="-84" r="4.6" fill="#fdfdf8"/>
+     <circle cx="119.6" cy="-83.4" r="2.3" fill="#23232b"/><circle cx="134.6" cy="-83.4" r="2.3" fill="#23232b"/></g>
+    <path d="M122,-55 q5,3 10,-1" stroke="#2f2f38" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <g fill="#fdfcf7" stroke="#e6e0cf" stroke-width="1.2">
+     <circle cx="117" cy="-101" r="8"/><circle cx="130" cy="-102" r="7"/><circle cx="123" cy="-108" r="7.5"/></g></g>
+  </g></g>
+  <ellipse class="shadow" fill="url(#gShadow)"/>
+  <g class="tag"><rect x="-74" y="-34" width="148" height="32" rx="8" fill="#12301c" opacity=".88"/>
+   <text class="tn" x="-60" y="-12">Sheep</text><text class="ts" x="36" y="-13">03</text></g>
+  <rect class="hit" fill="none" pointer-events="all"/>
+ </g>
+
+ <!-- ============ PIG ============ -->
+ <g class="animal" id="a-pig" tabindex="0" role="group" aria-label="Pig" style="--dur:610ms;--del:-210ms;--bd:4.6s;--bdl:-3.2s">
+  <title>Pig — Sus domesticus</title>
+  <g class="hs"><g class="bounce">
+   <path d="M14,-58 c-12,-6 -19,6 -9,12 c7,4 13,-3 7,-8" fill="none" stroke="#ee8fa8" stroke-width="5.5" stroke-linecap="round"/>
+   <g fill="#e5839c"><rect x="24" y="-32" width="13" height="32" rx="5"/><rect x="86" y="-32" width="13" height="32" rx="5"/></g>
+   <g fill="#c96d86"><rect x="24" y="-8" width="13" height="8" rx="3"/><rect x="86" y="-8" width="13" height="8" rx="3"/></g>
+   <ellipse cx="62" cy="-50" rx="53" ry="34" fill="#f5a3b8"/>
+   <g clip-path="url(#cPig)"><ellipse cx="52" cy="-62" rx="34" ry="15" fill="#fcc3d0" opacity=".65"/>
+    <ellipse cx="70" cy="-24" rx="40" ry="12" fill="#d9788f" opacity=".35"/></g>
+   <circle cx="106" cy="-54" r="31" fill="#f5a3b8"/>
+   <path d="M84,-76 L77,-100 L105,-85 Z" fill="#ef92ab"/><path d="M86,-79 L83,-93 L99,-84 Z" fill="#d8788f"/>
+   <path d="M121,-80 L133,-100 L137,-71 Z" fill="#ef92ab"/><path d="M124,-80 L131,-93 L133,-75 Z" fill="#d8788f"/>
+   <g clip-path="url(#cPigHead)"><circle cx="98" cy="-46" r="9" fill="#f2839f" opacity=".5"/></g>
+   <ellipse cx="128" cy="-48" rx="14" ry="12" fill="#ec8aa3"/>
+   <ellipse cx="123" cy="-49" rx="2.6" ry="3.6" fill="#a9546e"/><ellipse cx="133" cy="-47" rx="2.6" ry="3.6" fill="#a9546e"/>
+   <ellipse cx="126" cy="-55" rx="6" ry="2.4" fill="#ffd0dc" opacity=".6"/>
+   <g class="eyes"><circle cx="100" cy="-66" r="4" fill="#4b2a33"/><circle cx="118" cy="-67" r="4" fill="#4b2a33"/>
+    <circle cx="98.8" cy="-67.4" r="1.4" fill="#fff"/><circle cx="116.8" cy="-68.4" r="1.4" fill="#fff"/></g>
+   <g fill="#f5a3b8"><rect x="38" y="-32" width="14" height="32" rx="5"/><rect x="100" y="-32" width="14" height="32" rx="5"/></g>
+   <g fill="#cf6d86"><rect x="38" y="-8" width="14" height="8" rx="3"/><rect x="100" y="-8" width="14" height="8" rx="3"/></g>
+  </g></g>
+  <ellipse class="shadow" fill="url(#gShadow)"/>
+  <g class="tag"><rect x="-74" y="-34" width="148" height="32" rx="8" fill="#12301c" opacity=".88"/>
+   <text class="tn" x="-60" y="-12">Pig</text><text class="ts" x="36" y="-13">04</text></g>
+  <rect class="hit" fill="none" pointer-events="all"/>
+ </g>
+</g>
+
+<g id="fgLayer"><path id="fgBand" fill="#2b6b31"/>
+ <g id="blades" fill="none" stroke="#347d37" stroke-width="4" stroke-linecap="round"></g>
+ <rect id="vig" fill="url(#gVig)" pointer-events="none"/>
+ <g id="motes"></g><g id="butterflies"></g></g>
+</svg>
+
+<div class="ui">
+ <header class="brand">
+  <p class="eyebrow"><span class="pip"></span>North pasture · field plate IV<span class="clock" id="clock">14:20</span></p>
+  <h1>Pasture<span class="it"> alive</span><span class="sm">four species · four legs apiece</span></h1>
+  <p class="dek">Every animal below is built from circles, ellipses and paths only — hovering inspects it, clicking
+   startles a higher hop. Clouds drift, the trees lean on the wind, nothing here stands still.</p>
+ </header>
+ <div class="deck">
+  <section class="panel">
+   <p class="ptitle"><span>Specimen log</span><span id="status">grazing</span></p>
+   <div class="lg" data-a="horse"><b>Horse</b><i>mane · long neck</i><em class="hops">0</em></div>
+   <div class="lg" data-a="cow"><b>Cow</b><i>four black patches</i><em class="hops">0</em></div>
+   <div class="lg" data-a="sheep"><b>Sheep</b><i>wool in nine circles</i><em class="hops">0</em></div>
+   <div class="lg" data-a="pig"><b>Pig</b><i>snout · curly tail</i><em class="hops">0</em></div>
+   <div class="ctrl">
+    <label>Bounce<input id="spd" type="range" min=".5" max="2" step=".05" value="1"></label>
+    <label>Wind<input id="wind" type="range" min="0" max="2.4" step=".05" value="1"></label>
+    <button class="btn" id="toggle" aria-pressed="false">Pause</button>
+   </div>
+  </section>
+ </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg",svg=document.getElementById("scene");
+function el(n,a){var e=document.createElementNS(NS,n);if(a)for(var k in a)e.setAttribute(k,a[k]);return e;}
+function se(e,a){for(var k in a)e.setAttribute(k,a[k]);}
+function clamp(v,a,b){return v<a?a:v>b?b:v;}
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+var W=1600,H=900,HZ=585,U=1,wind=1,spd=1,paused=false,t0=performance.now(),pt=0,acc=0,last=0;
+var px=0,py=0,gx=0,gy=0;
+
+var CFG={horse:{fx:.135,piv:96,hl:215,wl:222,k:1.075,dur:840},
+         cow:{fx:.365,piv:82,hl:162,wl:188,k:1.27,dur:900},
+         sheep:{fx:.605,piv:81,hl:122,wl:155,k:1.27,dur:700},
+         pig:{fx:.805,piv:67,hl:99,wl:150,k:1.22,dur:610}};
+var AN=[],K;for(K in CFG){var g=document.getElementById("a-"+K);g.__c=CFG[K];AN.push(g);}
+
+/* ---------- decorative layers ---------- */
+var rayG=document.getElementById("rays"),i;
+for(i=0;i<12;i++){var a=i/12*Math.PI*2;
+ rayG.appendChild(el("line",{x1:(Math.cos(a)*48).toFixed(1),y1:(Math.sin(a)*48).toFixed(1),
+  x2:(Math.cos(a)*(78+(i%2)*17)).toFixed(1),y2:(Math.sin(a)*(78+(i%2)*17)).toFixed(1)}));}
+
+var cloudBox=document.getElementById("clouds"),CLO=[],seed=1337;
+for(i=0;i<5;i++){
+ var r=rng(seed+i*17),g0=el("g",{fill:"url(#gCloud)"});
+ var puffs=[[-46,6,32,19],[-16,-9,33,23],[14,3,38,21],[44,-3,27,18],[4,14,46,15]];
+ for(var j=0;j<puffs.length;j++){var p=puffs[j];
+  g0.appendChild(el("ellipse",{cx:(p[0]*(.9+r()*.25)).toFixed(1),cy:(p[1]+(r()-.5)*5).toFixed(1),
+   rx:(p[2]*(.92+r()*.2)).toFixed(1),ry:(p[3]*(.9+r()*.22)).toFixed(1)}));}
+ cloudBox.appendChild(g0);
+ CLO.push({e:g0,x:0,yf:.06+r()*.2,s:.55+r()*.85,v:(6+r()*11)});}
+
+var birdBox=document.getElementById("birds"),BIR=[];
+for(i=0;i<3;i++){var bg=el("g",{});
+ var bp=el("path",{class:"birdwing",d:"M-13,0 Q-6,-8 0,-2 Q6,-8 13,0",fill:"none",stroke:"#3f6472",
+  "stroke-width":2.8,"stroke-linecap":"round",opacity:".6"});
+ bp.style.setProperty("--fd",(0.42+i*0.09)+"s");bg.appendChild(bp);birdBox.appendChild(bg);
+ BIR.push({e:bg,x:0,yf:.12+i*.055,s:.6+i*.2,v:(26+i*9)});}
+
+var motes=el("g",{}),document_m=document.getElementById("motes");document_m.appendChild(motes);
+var MO=[];for(i=0;i<16;i++){var c=el("circle",{r:(1+Math.random()*1.7).toFixed(1),
+ fill:i%3?"#fff8d8":"#ffe9a8",opacity:".55"});motes.appendChild(c);
+ MO.push({e:c,x:Math.random(),y:Math.random(),f:.5+Math.random(),ph:Math.random()*6.28});}
+
+var bfly=document.getElementById("butterflies"),BF=[];
+for(i=0;i<2;i++){var b=el("g",{}),w=el("g",{class:"wings"});
+ w.appendChild(el("path",{d:"M0,0 C-11,-11 -17,-1 -7,5 Z",fill:i?"#f7f0d2":"#f4dd8f",opacity:".95"}));
+ w.appendChild(el("path",{d:"M0,0 C11,-11 17,-1 7,5 Z",fill:i?"#f7f0d2":"#f4dd8f",opacity:".95"}));
+ b.appendChild(w);b.appendChild(el("ellipse",{rx:2,ry:6,fill:"#3b2f22"}));
+ bfly.appendChild(b);BF.push({e:b,cx:.3+i*.4,cy:.74,cyf:.055,ax:.11+i*.04,ay:.045,f:.31+i*.09,ph:i*2.2});}
+
+var bladeG=document.getElementById("blades"),BLD=[];
+for(i=0;i<13;i++){var bl=el("path",{class:"blade",d:"M0,0 q2,-9 5,-17"});
+ bl.style.setProperty("--sd",(2.6+Math.random()*2.3).toFixed(2)+"s");
+ bl.style.setProperty("--sdelay",(-Math.random()*3).toFixed(2)+"s");
+ bladeG.appendChild(bl);BLD.push(bl);}
+
+var bushG=document.getElementById("bushes"),BUSH=[],flw=document.getElementById("flowers"),FLOW=[];
+for(i=0;i<3;i++){var bu=el("g",{fill:i===2?"#3d8f43":"#37853f"});
+ bu.appendChild(el("circle",{cx:-16,cy:-10,rx:0,r:15}));se(bu.lastChild,{rx:0});
+ bu.appendChild(el("circle",{cx:0,cy:-20,r:19}));bu.appendChild(el("circle",{cx:17,cy:-11,r:14}));
+ bushG.appendChild(bu);BUSH.push({e:bu,fx:[.04,.5,.94][i],fy:[.93,.79,.85][i],s:[1.1,.8,1.4][i]});}
+for(i=0;i<26;i++){var fc=el("g",{}),rr=rng(400+i);
+ var col=["#fff6f8","#ffe9f3","#fff3c9","#f6e2ff"][i%4];
+ for(var q=0;q<5;q++){var an2=q/5*6.283;
+  fc.appendChild(el("circle",{cx:(Math.cos(an2)*3).toFixed(1),cy:(Math.sin(an2)*3).toFixed(1),r:2.2,fill:col}));}
+ fc.appendChild(el("circle",{r:1.7,fill:"#f2c64f"}));flw.appendChild(fc);
+ FLOW.push({e:fc,fx:rr(),fy:.4+rr()*.6,s:.7+rr()*.7});}
+
+var bandsG=document.getElementById("bands"),BND=[];
+for(i=0;i<3;i++){var bd=el("ellipse",{fill:"#8fd06f",opacity:".09"});bandsG.appendChild(bd);
+ BND.push({e:bd,fx:[.2,.62,.95][i],fy:[.25,.55,.8][i],rx:[.42,.34,.3][i],ry:[.05,.045,.05][i]});}
+
+/* ---------- layout ---------- */
+function hill(f,amp,base){var x,d="M0,"+H;if(f>0)d="M0,"+H;
+ var n=6;d="M0,"+(HZ-base+amp);
+ for(var k=0;k<=n;k++){var xx=W*k/n;
+  var yy=HZ-base+amp*(0.5+0.5*Math.sin(k*1.7+f))*-1;
+  if(k===0)d="M"+xx.toFixed(1)+","+yy.toFixed(1);
+  else{var mx=(W*(k-.5)/n).toFixed(1);d+=" Q"+mx+","+(yy-amp*.35).toFixed(1)+" "+xx.toFixed(1)+","+yy.toFixed(1);}}
+ return d+" L"+W+","+(HZ+2)+" L0,"+(HZ+2)+" Z";}
+
+function blades(n,sd,band){
+ var r=rng(sd),d="";
+ for(var i=0;i<n;i++){
+  var t=Math.pow(r(),.75),y=band.a+t*(band.b-band.a),x=r()*W;
+  var dep=(y-HZ)/(H-HZ),h=(4+13*dep)*(.55+r()*.8),ln=(r()-.5)*7*(.3+dep);
+  d+="M"+x.toFixed(1)+" "+y.toFixed(1)+"q"+(ln/2).toFixed(1)+" "+(-h/2).toFixed(1)+" "+ln.toFixed(1)+" "+(-h).toFixed(1);}
+ return d;}
+
+function layout(){
+ W=Math.max(320,window.innerWidth);H=Math.max(300,window.innerHeight);
+ HZ=Math.round(H*.65);U=clamp(Math.min(H/980,W/1400),.26,1.6);
+ svg.setAttribute("viewBox","0 0 "+W+" "+H);
+ se(sky,{x:0,y:0,width:W,height:HZ+2});
+ se(grass,{x:0,y:HZ,width:W,height:H-HZ+1});
+ se(hzLine,{x:0,y:HZ,width:W,height:Math.max(2,3*U)});
+ se(hzHi,{x:0,y:HZ-Math.max(1,1.5*U),width:W,height:Math.max(1,1.6*U)});
+ var sx=W*.855,sy=H*.15;
+ document.getElementById("sun").setAttribute("transform","translate("+sx.toFixed(1)+","+sy.toFixed(1)+") scale("+U.toFixed(3)+")");
+ se(halo,{r:168});se(disc,{r:44});se(ring,{r:52});
+ se(beams.firstChild,{points:(sx-26*U)+","+(sy)+" "+(sx+26*U)+","+sy+" "+(sx-330*U)+","+HZ+" "+(sx-150*U)+","+HZ});
+ se(beams.lastChild,{points:(sx-12*U)+","+(sy)+" "+(sx+16*U)+","+sy+" "+(sx+120*U)+","+HZ+" "+(sx+22*U)+","+HZ});
+ hillA.setAttribute("d",hill(0,44*U,26*U));
+ hillB.setAttribute("d",hill(2.4,62*U,-8*U));
+ var r=rng(77),d="M0,"+(HZ+1),x=0;
+ while(x<W+40){var w=26+40*r();d+=" q"+(w*.5).toFixed(0)+","+(-(20+30*r())).toFixed(0)+" "+w.toFixed(0)+",0";x+=w;}
+ treeline.setAttribute("d",d);
+ var fp="";for(x=0;x<W;x+=38){fp+="M"+x+" "+(HZ-13*U)+"h"+(6*U).toFixed(1)+"v"+(15*U).toFixed(1)+"h-"+(6*U).toFixed(1)+"z";}
+ fence.setAttribute("d",fp);fence.setAttribute("stroke-width","0");
+ var rails="M0,"+(HZ-9*U)+"H"+W+"M0,"+(HZ-3*U)+"H"+W;
+ fence.setAttribute("d",fp+rails);fence.setAttribute("stroke-width",(1.6*U).toFixed(1));
+ gfar.setAttribute("d",blades(Math.round(W/26),11,{a:HZ+4,b:HZ+(H-HZ)*.5}));
+ gnear.setAttribute("d",blades(Math.round(W/17),23,{a:HZ+(H-HZ)*.45,b:H-6}));
+ for(i=0;i<BND.length;i++){var B=BND[i];se(B.e,{cx:(B.fx*W).toFixed(1),cy:(HZ+(H-HZ)*B.fy).toFixed(1),
+  rx:(W*B.rx).toFixed(1),ry:(H*B.ry).toFixed(1)});}
+ var fg="M0,"+H+"L0,"+(H-14*U);
+ for(var k=0;k<=8;k++){var xx=W*k/8,tw=W/8,up=(k%2?10:20)*U;
+  fg+=" Q"+(xx-tw/2).toFixed(1)+","+(H-(14+up)*U).toFixed(1)+" "+xx.toFixed(1)+","+(H-14*U).toFixed(1);}
+ fgBand.setAttribute("d",fg+" L"+W+","+H+" Z");
+ for(i=0;i<BLD.length;i++){var bx=(i+.5)/13*W+(i%3-1)*22,by=H-10*U-((i*37)%3)*U*4;
+  BLD[i].setAttribute("transform","translate("+bx.toFixed(1)+","+by.toFixed(1)+") scale("+(1.3+((i%4)*.22)).toFixed(2)+")");}
+ var T=[document.getElementById("tree-a"),document.getElementById("tree-b")];
+ T[0].setAttribute("transform","translate("+(W*.245).toFixed(1)+","+(H*.735).toFixed(1)+") scale("+(U*1.02).toFixed(3)+")");
+ T[1].setAttribute("transform","translate("+(W*.72).toFixed(1)+","+(H*.70).toFixed(1)+") scale("+(U*.86).toFixed(3)+")");
+ for(i=0;i<BUSH.length;i++){var B2=BUSH[i];
+  B2.e.setAttribute("transform","translate("+(B2.fx*W).toFixed(1)+","+(B2.fy*H).toFixed(1)+") scale("+(B2.s*U).toFixed(3)+")");}
+ for(i=0;i<FLOW.length;i++){var F=FLOW[i];
+  F.e.setAttribute("transform","translate("+(F.fx*W).toFixed(1)+","+(HZ+(H-HZ)*F.fy).toFixed(1)+") scale("+(F.s*U).toFixed(2)+")");}
+ for(i=0;i<AN.length;i++){var G=AN[i],c=G.__c,s=U*c.k,pxx=c.fx*W,pyy=H*.872;
+  G.setAttribute("transform","translate("+pxx.toFixed(1)+","+pyy.toFixed(1)+") scale("+s.toFixed(4)+")");
+  var sh=G.querySelector(".shadow");se(sh,{cx:0,cy:2,rx:c.wl*s*.5,s:0});sh.removeAttribute("s");
+  se(sh,{ry:Math.max(6,11*U)});
+  var hit=G.querySelector(".hit");
+  se(hit,{x:(-c.wl*s/2).toFixed(1),y:(-c.hl*s-8).toFixed(1),width:(c.wl*s+16).toFixed(1),height:(c.hl*s+18).toFixed(1)});
+  G.querySelector(".tag").setAttribute("transform","translate(0,"+(-c.hl*s-14).toFixed(1)+")");}
+}
+
+/* ---------- pointer parallax ---------- */
+window.addEventListener("pointermove",function(e){
+ px=(e.clientX/W-.5)*2;py=(e.clientY/H-.5)*2;},{passive:true});
+
+/* ---------- animation loop ---------- */
+function frame(now){
+ var dt=Math.min(.05,(now-last)/1000);last=now;
+ var t=(now-t0)/1000;
+ if(!paused)acc+=dt*spd;
+ gx+=((px*11*U)-gx)*.05;gy+=((py*7*U)-gy)*.05;
+ skyLayer.setAttribute("transform","translate("+gx.toFixed(2)+","+(gy*.6).toFixed(2)+")");
+ landLayer.setAttribute("transform","translate("+(gx*.35).toFixed(2)+","+(gy*.25).toFixed(2)+")");
+ fgLayer.setAttribute("transform","translate("+(-gx*.9).toFixed(2)+","+(-gy*.4).toFixed(2)+")");
+ for(var i=0;i<CLO.length;i++){var c=CLO[i];
+  if(!paused)c.x+=c.v*wind*dt;
+  var span=W+560,xx=((c.x+280)%span+span)%span-280;
+  c.e.setAttribute("transform","translate("+xx.toFixed(1)+","+(c.yf*H+Math.sin(t*.5+i)*4*U).toFixed(1)+") scale("+c.s+")");}
+ for(i=0;i<BIR.length;i++){var b=BIR[i];
+  if(!paused)b.x+=b.v*wind*dt;
+  var sp=W+260,bx=((b.x+130)%sp+sp)%sp-130;
+  b.e.setAttribute("transform","translate("+bx.toFixed(1)+","+(b.yf*H+Math.sin(t*.9+i*2)*9*U).toFixed(1)+") scale("+(b.s*U).toFixed(2)+")");}
+ for(i=0;i<MO.length;i++){var m=MO[i];
+  if(!paused){m.y-=dt*.012*m.f;if(m.y<-.02)m.y=1.02;}
+  m.e.setAttribute("cx",(m.x*W+Math.sin(t*.6*m.f+m.ph)*18*U).toFixed(1));
+  m.e.setAttribute("cy",(m.y*H).toFixed(1));}
+ for(i=0;i<BF.length;i++){var f=BF[i],tt=(paused?t:acc/1000)*f.f*2.4+f.ph;
+  var fx=f.cx*W+Math.sin(tt)*f.ax*W,fy=f.cy*H+Math.sin(tt*1.7)*f.ay*H;
+  var rot=Math.cos(tt*1.7)*14;
+  f.e.setAttribute("transform","translate("+fx.toFixed(1)+","+fy.toFixed(1)+") rotate("+rot.toFixed(1)+") scale("+U.toFixed(2)+")");}
+ if(!paused)BF.forEach(function(){return 0;});
+ if(now-pt>180){pt=now;updateUI();}
+ requestAnimationFrame(frame);}
+
+var hopEls=[].slice.call(document.querySelectorAll(".hops")),clockEl=document.getElementById("clock");
+function pad(n){return(n<10?"0":"")+n;}
+function updateUI(){
+ for(var i=0;i<AN.length;i++){var a=AN[i];
+  hopEls[i].textContent=Math.floor(acc/1000*spd/a.__c.dur);
+  a.style.setProperty("--dur",Math.round(a.__c.dur/spd)+"ms");}
+ var m=14*60+20+Math.floor(acc/1000*7);
+ clockEl.textContent=pad(Math.floor(m/60)%24)+":"+pad(m%60);
+ status.textContent=paused?"held":(wind>1.5?"blustery":"grazing");}
+
+/* ---------- interactions ---------- */
+[].forEach.call(document.querySelectorAll(".lg"),function(row){
+ var a=document.getElementById("a-"+row.dataset.a);
+ row.addEventListener("pointerenter",function(){a.classList.add("hot");row.classList.add("on");});
+ row.addEventListener("pointerleave",function(){a.classList.remove("hot");row.classList.remove("on");});
+ row.addEventListener("click",function(){popIt(a);});});
+function popIt(a){a.classList.remove("pop");void a.offsetWidth;a.classList.add("pop");
+ clearTimeout(a.__tm);a.__tm=setTimeout(function(){a.classList.remove("pop");},660);}
+[].forEach.call(AN,function(a){
+ a.addEventListener("click",function(){popIt(a);});
+ a.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();popIt(a);}});});
+spdIn.addEventListener("input",function(e){spd=parseFloat(e.target.value)||1;});
+windIn.addEventListener("input",function(e){wind=parseFloat(e.target.value)||0;});
+tog.addEventListener("click",function(){paused=!paused;tog.setAttribute("aria-pressed",paused?"true":"false");
+ tog.textContent=paused?"Resume":"Pause";});
+
+var tId;window.addEventListener("resize",function(){clearTimeout(tId);tId=setTimeout(layout,90);});
+document.getElementById("spd").addEventListener("input",function(e){spd=parseFloat(e.target.value);});
+layout();
+var sun=document.getElementById("sun"),skyLayer=document.getElementById("skyLayer"),
+ landLayer=document.getElementById("landLayer"),fgLayer=document.getElementById("fgLayer"),
+ sky=document.getElementById("sky"),grass=document.getElementById("grass"),
+ hzLine=document.getElementById("hzLine"),hzHi=document.getElementById("hzHi"),
+ hillA=document.getElementById("hillA"),hillB=document.getElementById("hillB"),
+ treeline=document.getElementById("treeline"),fence=document.getElementById("fence"),
+ gfar=document.getElementById("gfar"),gnear=document.getElementById("gnear"),
+ halo=document.getElementById("halo"),disc=document.getElementById("disc"),ring=document.getElementById("ring"),
+ beams=document.getElementById("beams"),vig=document.getElementById("vig"),
+ spdIn=document.getElementById("spd"),windIn=document.getElementById("wind"),
+ tog=document.getElementById("toggle"),status=document.getElementById("status");
+layout();last=performance.now();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
