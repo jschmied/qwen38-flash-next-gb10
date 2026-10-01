@@ -1575,3 +1575,6 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold PR #184** (same go): EXL3 grouped experts launch one program a member tile in use (T13, §5ax); base
   `pr-141-0.6.1`, head `jschmied:exl3-tile-list-061` `90fafa8`. Body `tf-pr-exl3-tile-list.md`.
   https://github.com/ashhart/TensorFold/pull/184
+- **TensorFold #180 third commit + description + note** (2026-10-01 ~16:30, user: "push 180", "go"): `5824347` pushed
+  (prefix-cache slot swap recapture; `copy_from` geometry), PR description updated via the API, short note
+  `tf180-third-commit.md`. https://github.com/ashhart/TensorFold/pull/180#issuecomment-5932745939
