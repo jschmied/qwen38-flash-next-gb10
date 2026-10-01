@@ -1,0 +1,5 @@
+.............................................sssssssssssssssssssssssssss [ 59%]
+ssssssssssssssssss.........................ssssss                        [100%]
+70 passed, 51 skipped in 26.77s
+tests rc=0
+== CLEAN DONE ==

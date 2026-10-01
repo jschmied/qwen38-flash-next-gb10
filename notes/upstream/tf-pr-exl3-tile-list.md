@@ -14,7 +14,8 @@ bit-identical. The second scan adds 128 bytes of static shared memory; the large
 ## Measured
 
 One GB10, Flash Next EXL3 3.05 bpw (512 routed experts + the shared one, 11 slots), two or three alternating runs per
-cell, on 0.6.0 plus this change. On `pr-141-0.6.1` the routed() cells repeat below.
+cell, on 0.6.0 plus this change. On `pr-141-0.6.1` `routed()` at 1,024 rows: 26.36 / 26.38 → 18.85 / 18.82 ms,
+hashes again identical.
 
 | | before | after |
 |---|---|---|
@@ -31,7 +32,7 @@ Bit-identical: `routed()` output hashes at 1, 8, 64 and 1,024 rows, and the firs
   place order, with a shared expert holding every row.
 - `tests/cuda/test_group_kernel_smem.py`: the calls pass the tile list and check it too, and the opt-in launch leaves
   room for the kernel's 256 static bytes instead of 128.
-- On GB10: test_exl3_experts, test_qwen4_exp_exl3 and test_group_kernel_smem: <RESULT>.
+- On GB10: test_exl3_experts, test_qwen4_exp_exl3 and test_group_kernel_smem: 76 passed, 52 skipped.
 
 Not measured: GLM and Qwen3.5 EXL3 checkpoints (`routed()` is shared, the change is shape-independent), and two ranks.
 
