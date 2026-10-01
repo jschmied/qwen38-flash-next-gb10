@@ -1,0 +1,18 @@
+#!/bin/bash
+# Quant-zoo check on TensorFold: every Flash-Next variant, stock 0.6.0; then PR #176's branch on the two it changes.
+R=/opt/llm/runners/results/tfzoo; mkdir -p $R; T=/opt/llm/runtime/tf-venv; P=/opt/llm/runtime/vllm-venv-fnext/bin/python; L=/opt/llm/runners/tfzoo
+log(){ echo "$(date +%T) $*" >> $R/chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+run(){ # $1 tag $2 model dir $3 PYTHONPATH ('' = stock)
+  memok; systemd-run --unit=fx-tfzoo --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin ${3:+-E PYTHONPATH=$3} \
+    bash -c "$T/bin/tensorfold serve $2 --port 8092 --name flashnext --context 32768 --parallel 1 > /opt/llm/tfzoo-$1.log 2>&1"
+  ok=0; for i in $(seq 1 180); do sleep 5; systemctl is-active -q fx-tfzoo || break; curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { ok=1; break; }; done
+  if [ $ok = 1 ]; then log "$1 LOADED"; timeout 1200 $P $L/zoo_probe.py $1 >> $R/probe.jsonl 2>> $R/probe.err
+  else log "$1 NOT SERVING: $(grep -E 'Error|error|refus|cannot|reads' /opt/llm/tfzoo-$1.log | tail -3 | tr '\n' ' ' | cut -c1-600)"; fi
+  systemctl stop fx-tfzoo 2>/dev/null; systemctl reset-failed fx-tfzoo 2>/dev/null; sleep 15; }
+M=/opt/llm/models
+for v in fp8head mtpfp4 mtpfp4-gdnbf16 mtpfp4-plebf16 mtpfp8 mtpfp4d mtpfp4-gdn4; do run stock-$v $M/qwen38-flash-next-$v ""; done
+run stock-exl3 $M/qwen38-flash-next-exl3-3.05bpw ""
+for v in mtpfp4d mtpfp4-gdn4 mtpfp4; do run pr176-$v $M/qwen38-flash-next-$v /home/jschmied/git/tf-pr-loader-guards/src; done
+echo "== TFZOO DONE ==" >> $R/chain.txt
