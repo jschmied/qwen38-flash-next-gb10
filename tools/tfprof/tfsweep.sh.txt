@@ -1,0 +1,39 @@
+#!/bin/bash
+# Chunk-size sweep (EXL3) + T9 quick test. After tfprof. Hypotheses: tools/tfprof/HYPOTHESIS.md.
+R=/opt/llm/runners/results/tfsweep; mkdir -p $R; T=/opt/llm/runtime/tf-venv; P=/opt/llm/runtime/vllm-venv-fnext/bin/python
+TF=/home/jschmied/git/tensorfold; EXP=/home/jschmied/git/tensorfold-exp/src; BR=/home/jschmied/git/tensorfold-ple/src
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; F=/opt/llm/runners/results/tf060/prefill_fast.json
+log(){ echo "$(date +%T) $*" >> $R/chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+serve(){ # $1 tag, $2 PYTHONPATH ('' = stock), $3 extra env, $4 args
+  memok; systemd-run --unit=fx-tfsweep --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin ${2:+-E PYTHONPATH=$2} $3 \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext $4 > /opt/llm/tfsweep-$1.log 2>&1"
+  for i in $(seq 1 90); do sleep 5; systemctl is-active -q fx-tfsweep || { log "$1 DIED: $(tail -2 /opt/llm/tfsweep-$1.log | tr '\n' ' ' | cut -c1-300)"; return 1; }
+    curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { log "$1 ready"; return 0; }; done; return 1; }
+greedy(){ $P - "$1" <<'PY' >> $R/greedy.txt
+import json, sys, urllib.request, hashlib
+items = json.load(open("/opt/llm/runners/results/tf060/prefill_fast.json"))["items"]
+msg = [x for x in items if x["length"] == 8192][0]["messages"]
+b = {"model": "flashnext", "messages": msg, "max_tokens": 64, "temperature": 0, "chat_template_kwargs": {"enable_thinking": False}}
+d = json.loads(urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8092/v1/chat/completions", json.dumps(b).encode(), {"Content-Type": "application/json"}), timeout=600).read())
+t = d["choices"][0]["message"]["content"] or ""
+print(sys.argv[1], hashlib.sha256(t.encode()).hexdigest()[:16], json.dumps(t[:80]))
+PY
+}
+while systemctl is-active -q tfprof-chain; do sleep 30; done
+for rows in 2048 4096 8192; do
+  if serve rows$rows $EXP "-E TF_PREFILL_ROWS=$rows" "--context 65536 --parallel 1"; then
+    $T/bin/python $TF/tools/prefill_cold.py run http://127.0.0.1:8092 flashnext $F $R/rows$rows.json > $R/rows$rows.txt 2>&1
+    greedy rows$rows; log "rows$rows done"
+  fi
+  systemctl stop fx-tfsweep; sleep 15
+done
+for arm in stock: branch:$BR; do tag=${arm%%:*}; pp=${arm#*:}
+  if serve t9$tag "$pp" "" "--context 65536 --parallel 8"; then
+    timeout 1800 $P /opt/llm/runners/tf060/longmix.py t9$tag $M 1 32000 4 2000 10 > $R/t9$tag.json 2> $R/t9$tag.err; log "t9$tag rc=$?"
+    [ $tag = branch ] && { $T/bin/python $TF/tools/bench_concurrent.py http://127.0.0.1:8092 flashnext --levels 1,2 --alone --serial > $R/t9branch-exact.txt 2>&1; log "t9 exact rc=$?"; }
+  fi
+  systemctl stop fx-tfsweep; sleep 15
+done
+echo "== TFSWEEP DONE ==" >> $R/chain.txt
