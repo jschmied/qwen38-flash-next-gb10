@@ -1,0 +1,23 @@
+#!/bin/bash
+# End-of-work suites (user: skip SWE). Hypotheses: tools/tfbig/HYPOTHESIS.md.
+R=/opt/llm/runners/results/tfbig; mkdir -p $R; T=/opt/llm/runtime/tf-venv; P=/opt/llm/runtime/vllm-venv-fnext/bin/python
+TF=/home/jschmied/git/tensorfold; M=/opt/llm/models/qwen38-flash-next-mtpfp4
+log(){ echo "$(date +%T) $*" >> $R/chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+serve(){ # $1 tag $2 PYTHONPATH ('' = stock) $3 extra args
+  memok; systemd-run --unit=fx-tfbig --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin ${2:+-E PYTHONPATH=$2} \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 262144 --parallel 8 $3 > /opt/llm/tfbig-$1.log 2>&1"
+  for i in $(seq 1 120); do sleep 5; systemctl is-active -q fx-tfbig || { log "$1 DIED: $(grep -E 'Error' /opt/llm/tfbig-$1.log | tail -2 | tr '\n' ' ' | cut -c1-300)"; return 1; }
+    curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { log "$1 ready: $(grep -o 'n-gram tables[^;]*' /opt/llm/tfbig-$1.log | head -1)"; return 0; }; done; return 1; }
+stopu(){ systemctl stop fx-tfbig; sleep 20; }
+for arm in stock: gather:/home/jschmied/git/tf-pr-ngram-gather/src fillorder:/home/jschmied/git/tf-pr-fill-order/src; do
+  tag=${arm%%:*}; pp=${arm#*:}
+  if serve mix-$tag "$pp" ""; then
+    timeout 5400 $P /opt/llm/runners/tf060/longmix.py mix-$tag $M > $R/mix-$tag.json 2> $R/mix-$tag.err; log "mix-$tag rc=$?"
+  fi; stopu
+done
+if serve fp8full "" "--prefill-fp8"; then
+  $T/bin/python $TF/tools/prefill_cold.py run http://127.0.0.1:8092 flashnext /opt/llm/runners/results/tf060/prefill_prompts.json $R/fp8full.json > $R/fp8full.txt 2>&1; log "fp8full rc=$?"
+fi; stopu
+echo "== TFBIG DONE ==" >> $R/chain.txt
