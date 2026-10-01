@@ -3278,3 +3278,22 @@ DeltaNet chain 3.5 %. My first "8× above the byte floor" estimate assumed 11 ex
 - Even coarse, a short c=4 run meets 51 + 30 + 33 keys; at ~130 ms a capture that is more than ~2.5 ms × rounds saved,
   so capture a key only after it has repeated (eager until then). Steady-state gain ≈ 9–10 % a round at c ≥ 2 (§5at).
 - Effort 2–3 days on code 0.6.1 is reworking. Proposed: ask the maintainer first (issue draft, not posted).
+
+### 5bb. TF #136: an expected-throughput depth controller does not beat the 0.7 gate on our logs; the oracle bound is +14–20 %
+
+mrpmorris (2026-10-01): the proposal is an online controller (current MTP probabilities + calibrated positional
+statistics → the depth that maximises expected tokens / time), not a fixed threshold. Replay
+`tools/kstop/replay_et.py` on the K=7 draft log (§5ah: vLLM, GB10, 567 code + 950 prose verify steps), priced with the
+measured cycle(d) table; calibration fitted on one half of the steps and scored on the other, both ways:
+
+| vs fixed K=5 | code | prose |
+|---|---|---|
+| gate 0.7, depth 7 | +9.98 % | +12.56 % |
+| controller (p1 deciles) | +8.04 % (−1.76 % vs gate) | +11.51 % (−0.93 % vs gate) |
+| controller (p1 deciles by position) | −1.83 % vs gate | −1.07 % vs gate |
+| oracle (draft exactly the accepted chain) | +25.44 % (+14.06 % vs gate) | +34.68 % (+19.65 % vs gate) |
+
+Drafts per step: gate 4.92 / 2.78, controller 5.49 / 2.86, oracle 4.04 / 2.13 (code / prose). The controller drafts more
+than the gate and loses 1–2 %; the headroom an oracle shows is not reachable from the drafter's probabilities on this
+log. Caveats: vLLM's costs, not TensorFold's; steps treated as independent; one log. A live TF A/B would need the
+controller inside `decode.py`'s draft loop.
