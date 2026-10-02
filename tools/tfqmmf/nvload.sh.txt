@@ -1,0 +1,14 @@
+#!/bin/bash
+# Load the zero-filled stand-in of nvidia/Qwen3.8-Flash-Next-NVFP4 (real headers and configs) on TensorFold 0.6.2.
+R=/opt/llm/runners/results/tfnvidia; mkdir -p $R; T=/opt/llm/runtime/tf-venv
+M=/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/nvidia-fn/ckpt
+SRC=/home/jschmied/git/tf-main062/src
+systemd-run --unit=fx-nvserve --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-qv062 \
+  -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin -E PYTHONPATH=$SRC \
+  bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 8192 --parallel 1 > $R/serve-062.log 2>&1"
+ok=0; for i in $(seq 1 180); do sleep 5; systemctl is-active -q fx-nvserve || break; curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { ok=1; break; }; done
+if [ $ok = 1 ]; then echo "$(date +%T) LOADED" >> $R/chain.txt
+  curl -s http://127.0.0.1:8092/v1/chat/completions -H 'Content-Type: application/json' -d '{"model":"flashnext","messages":[{"role":"user","content":"Hi"}],"max_tokens":8,"temperature":0}' | head -c 400 >> $R/chain.txt; echo >> $R/chain.txt
+else echo "$(date +%T) NOT SERVING" >> $R/chain.txt; fi
+systemctl stop fx-nvserve 2>/dev/null; systemctl reset-failed fx-nvserve 2>/dev/null
+echo "== NVLOAD DONE ==" >> $R/chain.txt

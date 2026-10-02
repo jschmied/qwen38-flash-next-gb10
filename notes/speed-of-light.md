@@ -3595,3 +3595,29 @@ User: "yes, also launch a subagent looking into other exl3 projects". 8k prefill
 - Ranked: (1) NVFP4 `qmmf` prompt tiles (≤ −8 % NVFP4 prefill if it reached `_gemm`'s rate); (2) NVFP4 `_b16mm` /
   `_fp4mm` fused K slices (removes `_reduce`, 6.4 %); (3) EXL3 experts from packed smem (occupancy; #212's kernel);
   (4) HC glue fusion (both paths, ~12 %, unbounded so far); (5) `rot_in` folded into the expert kernel (5.5 %).
+
+### 5bm. NVFP4 path: block-FP8 prompt GEMMs with split K summed in one block — prefill −4.6…−7.6 %, same bits
+
+User: "ok, continue" (lever 1 of §5bl). Branch `qmmf-prompt-tiles` on 0.6.2 (`~/git/tf-qmmf`); data `data/tfqmmf/`.
+- Bigger prompt tiles for `qmmf` (128 x 64 with 2 x 2 or 4 x 1 warps, 128 x 128 with 2 x 4): slower than the decode
+  tiles on every shape but `attn.q_proj` (+12 %); the decode tiles already reach 56–64 TFLOPS on unsplit shapes. Dropped.
+- The slow shapes are the split ones: K 6144 → N 2560 (`gdn.out_proj`, `attn.o_proj`, split 8) at 22 TFLOPS and
+  2560 → 512 (split 8) at 30 — a cluster of 8 blocks exchanges partials every tile. **Fused mode** (`bm` 0 for prompt
+  rows ≥ 256 with split > 1): one block runs all slices of its tile, each from zero over its groups, added in slice
+  order — the cluster's arithmetic. 2,048 rows: 22.5 → 55.7–56.0, 22.6 → 55.6–56.1, 30.3 → 48.2–49.1 TFLOPS; unsplit
+  shapes untouched; output hashes identical in every shape and row count (`qbench-fused.jsonl`).
+- **End to end** (`mtpfp4`, 0.6.2 vs 0.6.2 + fused, `prefill_ab.py`, 3 alternating rounds): 8k 5.99 / 6.05 / 6.24 →
+  5.70 / 5.77 / 5.76 s (−4.6…−7.6 %), 32k 24.59 / 24.29 / 24.97 → 23.36 / 23.12 / 23.17 s (−4.8…−7.2 %); first 16
+  tokens identical. NVFP4 CUDA tests 101 passed. Prediction −5…−7 %: in range. Independent of #211 (on main).
+- Not posted. A PR needs a test (fused prompt rows == the same rows through the cluster / reduce path, bit for bit).
+
+### 5bn. nvidia/Qwen3.8-Flash-Next-NVFP4 (public) loads on TensorFold 0.6.2 — checked with a zero-filled stand-in
+
+User asked whether TF still refuses NVIDIA's export ("this checkpoint has modelopt MIXED_PRECISION" on 0.6.1).
+Repo `fc694b5` (132.7 GB, 11 shards): routed experts NVFP4 (48 layers, per-expert input scales), n-gram table FP8 with
+a bf16 scale, MTP experts FP8 with 128 x 128 bf16 `weight_scale_inv`, everything else bf16 (excluded) — not the
+301-FP8_PB_WO export of #179. Stand-in: the real configs, tokenizer and every shard's safetensors header (range
+requests, no weights), data zero-filled as sparse files (91 MB on disk), plus the real bytes of the n-gram ids
+(`layer_multipliers`, `ngram_heads_*`) and the table scale, which TF checks by value. On 0.6.2 (`56e2e3e`, which has
+#222): loads in 78.9 s and serves (`data/tfnvidia/`; replies are "!!!!" because the weights are zeros). On 0.6.1 the
+config check refused it (the quoted message). Not verified with real weights (needs the 133 GB download).

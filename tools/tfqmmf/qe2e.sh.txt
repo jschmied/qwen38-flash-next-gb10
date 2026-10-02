@@ -1,0 +1,12 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfqmmf; mkdir -p $R; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; L=/opt/llm/runners/tfexl3
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b c; do
+  for arm in v062:tf-main062 fused:tf-qmmf; do
+    memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-q${arm%%:*} timeout 3600 $PY $L/prefill_ab.py /home/jschmied/git/${arm#*:}/src $M ${arm%%:*}-$rep >> $R/qe2e.txt 2>&1
+    echo "$(date +%T) ${arm%%:*}-$rep rc=$?" >> $R/chain.txt
+  done
+done
+echo "== QE2E DONE ==" >> $R/chain.txt
