@@ -3515,3 +3515,20 @@ data `data/tfexl3x/pf-*`; predictions `tools/tfexl3x/HYPOTHESIS.md`.
 - Lesson (memory `bound-the-core-before-overheads` applies again): the stall breakdown, not the instruction mix, named
   the lever; the mix (two thirds decode arithmetic) pointed at extraction and ILP, both null.
 - Not posted. It is a one-hunk change to #212's own kernel → offer it to the author on #212 (needs the user's go).
+- **Corrections after a second review (2026-10-02), §5bi's 1–3.5-bit verdict restated:**
+  1. "The floor of this layout" was too strong — it held for the two variants tested. A third mapping (reviewer's):
+     each lane loads its own hi word (duplicates allowed) and gets lo by ONE shuffle from the lane whose hi it is
+     (`lo_lane = 4 lo / 3` at 3 bits; checked against `LaneMap` for all 32 lanes). Bit-exact. Microbench 163.8 vs
+     164.7–164.9 ps (−0.6 %). **Inside #212's prompt kernel** (on `pr212-prefetch`, branch `pr212-hi1`, test_exl3_prompt_experts
+     passes, hashes identical; `data/tfexl3x/hi1-microbench.jsonl`): gate|up at 2,048 rows −6.2 / −7.3 / +1.8 % (sign
+     flips, inside the base arm's 7 % spread), down slower every round, routed() +1.0 / 0.0 / +1.3 %. Closed on the
+     in-kernel measurement, not on the microbench.
+  2. "The compiler already merged it" (3.5 bits) was wrong: SASS (`data/tfexl3x/sass-counts.txt`) shows the one-run
+     version with 3 SHFL vs 4 and 144 vs 152 instructions a tile; its timing was level anyway.
+  3. The timing-loop checksum cancelled: XOR over 8 tiles x 512 repeats is 0, and my first fix (rotate by 5) cycles
+     back to 0 after 64 iterations. Now multiply-add (`acc = acc * 2654435761u + x`), nonzero and equal across
+     variants (`xdirect.jsonl`). The exactness checks were separate one-pass `torch.equal` on nonzero fragments
+     (524,288 of 524,288 nonzero) and stand; timings are unaffected.
+  4. The microbench (one-warp blocks, L1-resident tiles, no accumulators/smem/barriers) screens candidates only; the
+     load/state/full subtraction does not isolate the codebook (negative differences at some widths). Kernel and
+     prefill durations decide — which is how §5bj found the real lever (memory stalls), not extraction.

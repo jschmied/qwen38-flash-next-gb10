@@ -1,0 +1,14 @@
+SASS of the xdirect/xrun3 benchmark kernels k<K2, V> (V 0 = decode_tile, 1 = two direct loads [K2 7: one 3-word run], 2 = one load + one shuffle).
+Per-tile count = whole-function count / (IDP.4A count / 8): the loop is unrolled; IDP = the codebook's 8 dp4a a tile.
+K2=8 V=1 instructions=112 tiles_unrolled=1 per_tile~112 SHFL=0 LDG=2 SHF=10 LOP3=15 IMAD=18
+K2=8 V=2 instructions=112 tiles_unrolled=1 per_tile~112 SHFL=0 LDG=2 SHF=10 LOP3=15 IMAD=18
+K2=8 V=0 instructions=104 tiles_unrolled=1 per_tile~104 SHFL=1 LDG=1 SHF=7 LOP3=12 IMAD=16
+K2=6 V=1 instructions=120 tiles_unrolled=1 per_tile~120 SHFL=0 LDG=2 SHF=11 LOP3=15 IMAD=22
+K2=6 V=2 instructions=128 tiles_unrolled=1 per_tile~128 SHFL=1 LDG=1 SHF=11 LOP3=15 IMAD=21
+K2=6 V=0 instructions=128 tiles_unrolled=1 per_tile~128 SHFL=2 LDG=1 SHF=10 LOP3=15 IMAD=19
+K2=8 V=1 instructions=112 tiles_unrolled=1 per_tile~112 SHFL=0 LDG=2 SHF=10 LOP3=15 IMAD=17
+K2=8 V=0 instructions=96 tiles_unrolled=1 per_tile~96 SHFL=1 LDG=1 SHF=7 LOP3=12 IMAD=15
+K2=7 V=1 instructions=144 tiles_unrolled=1 per_tile~144 SHFL=3 LDG=1 SHF=13 LOP3=19 IMAD=20
+K2=7 V=0 instructions=152 tiles_unrolled=1 per_tile~152 SHFL=4 LDG=1 SHF=12 LOP3=20 IMAD=21
+K2=6 V=1 instructions=120 tiles_unrolled=1 per_tile~120 SHFL=0 LDG=2 SHF=11 LOP3=15 IMAD=21
+K2=6 V=0 instructions=120 tiles_unrolled=1 per_tile~120 SHFL=2 LDG=1 SHF=10 LOP3=15 IMAD=18

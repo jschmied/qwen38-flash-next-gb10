@@ -36,7 +36,7 @@ __global__ void gk(const uint32_t* T, int ntiles, int reps, uint32_t* out) {
         } else if constexpr (MODE == 0) {
             uint32_t b0[2], b1[2];
             decode_tile<2, K2>(w, m, lane, b0, b1);
-            acc ^= b0[0] ^ b0[1] ^ b1[0] ^ b1[1];
+            acc = acc * 2654435761u + (b0[0] ^ b0[1] ^ b1[0] ^ b1[1]);   // multiply-add: repeats do not cancel
         } else {
             uint32_t st[8];
             tile_states<K2>(w, m, lane, st);
@@ -56,7 +56,7 @@ __global__ void dk(const uint32_t* T, int ntiles, int reps, uint32_t* out) {
         tf_exl3::ldg_lane_words<K2>(tile, lane, w);
         uint32_t b0[2], b1[2];
         tf_exl3::decode_lane<K2, tf_exl3::CB_MUL1>(w, lane, b0, b1);
-        acc ^= b0[0] ^ b0[1] ^ b1[0] ^ b1[1];
+        acc = acc * 2654435761u + (b0[0] ^ b0[1] ^ b1[0] ^ b1[1]);   // multiply-add: repeats do not cancel
     }
     out[blockIdx.x * 32 + lane] = acc;
 }

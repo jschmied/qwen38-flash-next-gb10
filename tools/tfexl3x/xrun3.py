@@ -76,7 +76,7 @@ __global__ void k(const uint32_t* T, int ntiles, int reps, uint32_t* out) {
             o[0] = b0[0]; o[1] = b0[1]; o[2] = b1[0]; o[3] = b1[1];
             return;
         }
-        acc ^= b0[0] ^ b0[1] ^ b1[0] ^ b1[1];
+        acc = acc * 2654435761u + (b0[0] ^ b0[1] ^ b1[0] ^ b1[1]);   // multiply-add: repeats do not cancel
     }
     out[blockIdx.x * 32 + lane] = acc;
 }

@@ -1,0 +1,6 @@
+{"K2": 2, "exact": true, "exact_hi1": null, "decode_tile": [166.0, 165.3, 165.1], "direct": [161.5, 161.2, 160.9], "hi1": null, "checksums_equal": true, "checksum_nonzero": true}
+{"K2": 3, "exact": true, "exact_hi1": null, "decode_tile": [166.4, 165.5, 165.1], "direct": [168.7, 168.8, 168.7], "hi1": null, "checksums_equal": true, "checksum_nonzero": true}
+{"K2": 4, "exact": true, "exact_hi1": null, "decode_tile": [166.2, 166.7, 166.5], "direct": [162.3, 162.1, 162.2], "hi1": null, "checksums_equal": true, "checksum_nonzero": true}
+{"K2": 5, "exact": true, "exact_hi1": null, "decode_tile": [167.0, 167.1, 167.0], "direct": [172.9, 172.2, 172.9], "hi1": null, "checksums_equal": true, "checksum_nonzero": true}
+{"K2": 6, "exact": true, "exact_hi1": true, "decode_tile": [164.9, 164.7, 164.8], "direct": [170.7, 170.8, 171.0], "hi1": [163.8, 163.8, 163.8], "checksums_equal": true, "checksum_nonzero": true}
+{"K2": 8, "exact": true, "exact_hi1": null, "decode_tile": [147.6, 150.3, 150.1], "direct": [162.1, 164.0, 164.4], "hi1": null, "checksums_equal": true, "checksum_nonzero": true}
