@@ -3486,3 +3486,32 @@ codebook (branch `exl3-extract`, SASS unchanged):
   23.35 % — both limits bind, so a 4th block needs ≤ 128 registers and ≤ ~24 KiB shared memory together. (c) The
   remaining experiment is ILP inside #212's kernel (independent decode chains across tiles / overlapping the next
   chunk's decode with this chunk's mma), measured by kernel and prefill duration, same bits. It is #212's code.
+
+### 5bj. #212's prompt kernel waits on its trellis loads: two chunks in flight cut Flash Next EXL3 prefill another −14 %, same bits
+
+User: "yes" (prototype the remaining #212 lever). Branch `pr212-prefetch` on #212 (`0809a5c`, jschmied/TensorFold);
+data `data/tfexl3x/pf-*`; predictions `tools/tfexl3x/HYPOTHESIS.md`.
+
+1. **ILP first (the reviewer's suggestion): null.** Software-pipelining chunk c + 1's decode with chunk c's mma, one
+   barrier a chunk: bit-identical, gate|up level (7.71–7.95 vs 7.84–8.07 ms at 2,048 rows, sign flips), down +7…+9 %.
+   Registers 142 → 160 (still 3 blocks), no spills.
+2. **Why: the stalls are memory, not dependent arithmetic.** ncu warp stalls on `prompt_kernel<2,6,4>`:
+   long_scoreboard 46 %, wait 19 %, barrier 9 %, short_scoreboard 7 %; memory throughput 21 %. The next chunk's
+   trellis words were loaded right after this chunk's decode and needed one barrier + 32 mma later.
+3. **Fix: a ring of PREFETCH chunks of words in flight** (4 registers a chunk at 3 bits; decode, mma and every sum
+   unchanged). Microbench (`pbench.py`, random 3-bit weights, 3 alternating rounds, hashes identical in all arms):
+
+| 2,048 rows | #212 | PF 1 (= #212) | **PF 2** | PF 3 | PF 4 |
+|---|---|---|---|---|---|
+| gate|up (ms) | 7.88–8.10 | 7.73–8.01 | **5.15–5.37** | 5.17–5.36 | 5.20–5.31 |
+| down (ms) | 2.99–3.02 | 2.98–3.14 | 2.82–2.99 | 3.02–3.04 | 3.35–3.66 |
+| routed() (ms) | 12.76–12.85 | 12.68–12.76 | **10.02–10.09** | 10.23–10.31 | 10.48–10.52 |
+
+   At 512 rows gate|up −45 %. PF 2 chosen.
+4. **End to end** (Flash Next EXL3 3.05, `prefill_ab.py`, 3 alternating rounds vs #212): 8k 5.27 / 5.30 / 5.28 →
+   4.53 / 4.55 / 4.56 s (−13.7…−14.2 %), 32k 21.22 / 21.34 / 21.34 → 18.29 / 18.28 / 18.31 s (−13.8…−14.3 %);
+   first 16 tokens identical. Predicted −8…−13 %: slightly above. EXL3 GPU tests 90 passed. Cumulative 8k on 0.6.1:
+   11.4 → 5.3 (#212) → 4.54 s.
+- Lesson (memory `bound-the-core-before-overheads` applies again): the stall breakdown, not the instruction mix, named
+  the lever; the mix (two thirds decode arithmetic) pointed at extraction and ILP, both null.
+- Not posted. It is a one-hunk change to #212's own kernel → offer it to the author on #212 (needs the user's go).

@@ -1,0 +1,13 @@
+#!/bin/bash
+# #212 vs #212 + PREFETCH 2, prefill 8k/32k, three alternating rounds
+R=/opt/llm/runners/results/tfexl3x; mkdir -p $R; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; L=/opt/llm/runners/tfexl3
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b c; do
+  for arm in pr212:tf-pr212 pf2:tf-pr212-ilp; do
+    memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-${arm%%:*} timeout 3600 $PY $L/prefill_ab.py /home/jschmied/git/${arm#*:}/src $M ${arm%%:*}-$rep >> $R/pf.txt 2>&1
+    echo "$(date +%T) ${arm%%:*}-$rep rc=$?" >> $R/chain.txt
+  done
+done
+echo "== PF DONE ==" >> $R/chain.txt
