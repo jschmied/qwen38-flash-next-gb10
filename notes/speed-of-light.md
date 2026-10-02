@@ -3644,3 +3644,10 @@ paging from disk — which their startup lines would show ("N decode graphs capt
   shared instance (memory ~24–25 %), but the 4-bit gate|up instance is barrier-led there (barrier 2.3 vs wait 1.8 per
   issue, 31 % memory, register-bound at 142) — the ring may help less on 4.05. They will measure `0809a5c` on 4.05 and
   welcome it as a follow-up PR once #212 lands. Our data is 3.05 only.
+- **#212 author measured `0809a5c` on 4.05 (2026-10-02 14:37):** 3.05 gate|up 8.1 → 5.0 ms (matches ours); 4.05
+  gate|up level, down slower (2.9–3.3 → 3.5–3.9 ms), layer +5…+8 %; a barrier-free variant gave nothing on 4.05.
+  Their proposal: the ring for gate|up below 4 bits only — 3.05 6K 3.81 → 3.32 s, 24K 15.57 → 13.67 s, hashes equal,
+  drafted == serial — welcomed as our follow-up once #212 lands. Done on `pr212-prefetch` (`prefetch_chunks<K2, TOT>`:
+  2 for gate|up with K2 < 8, else 1): EXL3 tests 90 passed; microbench at 2,048 rows gate|up 7.68 → 5.20 / 5.22 ms,
+  routed() 12.65 → 10.19–10.23 ms, hashes identical (`data/tfexl3x/pf-gated.jsonl`). Down 2.96 → 3.06–3.24 ms in
+  this run although its code path is #212's again (one chunk) — run-order noise to recheck before the PR.
