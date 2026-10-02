@@ -1,0 +1,13 @@
+#!/bin/bash
+# decode: #212 vs #212 + #184/#191/#193, three alternating rounds
+R=/opt/llm/runners/results/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; A=/opt/llm/runners/tffp4x
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b c; do
+  for arm in pr212:tf-pr212 grp:tf-pr212-grp; do
+    memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-${arm%%:*} timeout 3600 $PY $A/accept.py /home/jschmied/git/${arm#*:}/src $M ${arm%%:*}-$rep checkpoint > $R/grp-acc-${arm%%:*}-$rep.log 2>&1
+    echo "$(date +%T) ${arm%%:*}-$rep rc=$? $(grep TOTAL $R/grp-acc-${arm%%:*}-$rep.log)" >> $R/grp-chain.txt
+  done
+done
+echo "== GRP DONE ==" >> $R/grp-chain.txt

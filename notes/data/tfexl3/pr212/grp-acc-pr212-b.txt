@@ -1,0 +1,9 @@
+{"label": "pr212-b", "mode": "checkpoint", "task": 0, "rounds": 85, "drafted": 250, "accepted": 171, "decode_s": 3.4118, "tokens": 256}
+{"label": "pr212-b", "mode": "checkpoint", "task": 1, "rounds": 68, "drafted": 236, "accepted": 188, "decode_s": 2.8056, "tokens": 256}
+{"label": "pr212-b", "mode": "checkpoint", "task": 2, "rounds": 60, "drafted": 238, "accepted": 196, "decode_s": 2.6278, "tokens": 256}
+{"label": "pr212-b", "mode": "checkpoint", "task": 3, "rounds": 78, "drafted": 224, "accepted": 178, "decode_s": 3.0872, "tokens": 256}
+{"label": "pr212-b", "mode": "checkpoint", "task": 4, "rounds": 131, "drafted": 217, "accepted": 124, "decode_s": 4.6518, "tokens": 256}
+{"label": "pr212-b", "mode": "checkpoint", "task": 5, "rounds": 94, "drafted": 234, "accepted": 161, "decode_s": 3.5954, "tokens": 256}
+{"label": "pr212-b", "mode": "checkpoint", "task": 6, "rounds": 132, "drafted": 205, "accepted": 123, "decode_s": 4.6051, "tokens": 256}
+{"label": "pr212-b", "mode": "checkpoint", "task": 7, "rounds": 94, "drafted": 245, "accepted": 162, "decode_s": 3.6559, "tokens": 256}
+TOTAL {"label": "pr212-b", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.440600000000003, "tokens": 2048, "tok_s": 72.01, "ms_per_round": 38.33, "accept": 0.7047, "tokens_per_round": 2.76}

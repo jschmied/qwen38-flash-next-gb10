@@ -1,0 +1,7 @@
+09:48:10 pr212-a rc=0 TOTAL {"label": "pr212-a", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.330400000000004, "tokens": 2048, "tok_s": 72.29, "ms_per_round": 38.18, "accept": 0.7047, "tokens_per_round": 2.76}
+09:51:21 grp-a rc=0 TOTAL {"label": "grp-a", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.3701, "tokens": 2048, "tok_s": 72.19, "ms_per_round": 38.23, "accept": 0.7047, "tokens_per_round": 2.76}
+09:52:31 pr212-b rc=0 TOTAL {"label": "pr212-b", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.440600000000003, "tokens": 2048, "tok_s": 72.01, "ms_per_round": 38.33, "accept": 0.7047, "tokens_per_round": 2.76}
+09:53:40 grp-b rc=0 TOTAL {"label": "grp-b", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.4688, "tokens": 2048, "tok_s": 71.94, "ms_per_round": 38.37, "accept": 0.7047, "tokens_per_round": 2.76}
+09:54:49 pr212-c rc=0 TOTAL {"label": "pr212-c", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.515800000000002, "tokens": 2048, "tok_s": 71.82, "ms_per_round": 38.43, "accept": 0.7047, "tokens_per_round": 2.76}
+09:55:58 grp-c rc=0 TOTAL {"label": "grp-c", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.4579, "tokens": 2048, "tok_s": 71.97, "ms_per_round": 38.35, "accept": 0.7047, "tokens_per_round": 2.76}
+== GRP DONE ==

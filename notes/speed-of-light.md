@@ -3377,3 +3377,7 @@ kernel. Flash Next EXL3 3.05 bpw, `prefill_ab.py`, three alternating rounds (`da
 - Predictions (round 15): −45…−60 % in range; stack −25…−28 % (got −22.6…−25.0, slightly low); decode ±2 % in range.
 - Consequence: our prompt-side EXL3 PRs (#184, #195, #207) are superseded. #191/#193 were measured on prompts only;
   their value for decode/verify windows (≤ 64 rows, one-block grouping is cheap there) is unmeasured.
+- **Our grouping stack on top of #212, decode (round 16, `data/tfexl3/pr212/grp-*`):** #212 72.29 / 72.01 / 71.82
+  tok/s vs #212 + #184/#191/#193 (`pr212-grp`, 53da6ed) 72.19 / 71.94 / 71.97, identical rounds and drafts (742,
+  1,303 / 1,849). Per round −0.1 / −0.1 / +0.2 %: the sign flips and the gap is inside the base arm's 0.65 % spread.
+  No decode value → all five of our EXL3 prompt PRs are superseded by #212. EXL3 tests on the stack: 92 passed.

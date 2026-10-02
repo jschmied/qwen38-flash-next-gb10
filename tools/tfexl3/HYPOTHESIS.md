@@ -157,3 +157,11 @@ decode (`tffp4x/accept.py`, 8 prompts x 256 tokens, drafts on) for 0.6.1 vs #212
 - Their tests + our EXL3 tests pass on GB10.
 - **Result (§5be):** #212 −53.5…−54.6 % (in range), stack −22.6…−25.0 % (slightly below range), hashes identical,
   decode level (71.8–72.0 vs 71.9 tok/s, identical rounds).
+
+## Round 16 (2026-10-02): does our grouping stack (#184 + #191 + #193) still add on top of #212, in decode?
+
+#212 keeps decode/verify windows (≤ 64 rows) on the grouping kernel. Arms: #212 (`9f062b2`) vs #212 + our 4 commits
+(`53da6ed`, branch `pr212-grp`). Decode `tffp4x/accept.py` (8 prompts x 256 tokens, drafts on), three alternating rounds.
+- Prediction: 0…−3 % ms per round (50–70 pairs over ~60 experts: few empty tiles, cheap grouping); tokens identical.
+- Below the base arm's spread or a sign flip: no decode value → close #184/#191/#193 with #195/#207.
+- **Result (§5be):** no decode effect (−0.1 / −0.1 / +0.2 %, sign flips, inside the 0.65 % spread) → close all five.

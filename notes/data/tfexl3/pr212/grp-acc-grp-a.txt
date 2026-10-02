@@ -1,0 +1,9 @@
+{"label": "grp-a", "mode": "checkpoint", "task": 0, "rounds": 85, "drafted": 250, "accepted": 171, "decode_s": 3.4, "tokens": 256}
+{"label": "grp-a", "mode": "checkpoint", "task": 1, "rounds": 68, "drafted": 236, "accepted": 188, "decode_s": 2.7911, "tokens": 256}
+{"label": "grp-a", "mode": "checkpoint", "task": 2, "rounds": 60, "drafted": 238, "accepted": 196, "decode_s": 2.6091, "tokens": 256}
+{"label": "grp-a", "mode": "checkpoint", "task": 3, "rounds": 78, "drafted": 224, "accepted": 178, "decode_s": 3.0845, "tokens": 256}
+{"label": "grp-a", "mode": "checkpoint", "task": 4, "rounds": 131, "drafted": 217, "accepted": 124, "decode_s": 4.6453, "tokens": 256}
+{"label": "grp-a", "mode": "checkpoint", "task": 5, "rounds": 94, "drafted": 234, "accepted": 161, "decode_s": 3.5862, "tokens": 256}
+{"label": "grp-a", "mode": "checkpoint", "task": 6, "rounds": 132, "drafted": 205, "accepted": 123, "decode_s": 4.606, "tokens": 256}
+{"label": "grp-a", "mode": "checkpoint", "task": 7, "rounds": 94, "drafted": 245, "accepted": 162, "decode_s": 3.6479, "tokens": 256}
+TOTAL {"label": "grp-a", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.3701, "tokens": 2048, "tok_s": 72.19, "ms_per_round": 38.23, "accept": 0.7047, "tokens_per_round": 2.76}
