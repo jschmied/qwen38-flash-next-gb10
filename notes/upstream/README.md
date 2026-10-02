@@ -1622,3 +1622,6 @@ wait on one ~100 GB pull, and they share one serve.
   flight in #212's prompt kernel, prefill −14 % at 8k/32k on top of #212, same bits (§5bj); commit jschmied/TensorFold
   `0809a5c` (branch `pr212-prefetch`); offered as a PR against their branch or after #212 lands.
   https://github.com/ashhart/TensorFold/pull/212#issuecomment-5949573427
+- **TensorFold PR #242** (2026-10-02, user: "test nvfp4 prefill to the end and do pr"): qmmf prompt rows add a tile's
+  K slices in one block (no cluster), same bits; Flash Next NVFP4 prefill −4.6…−7.6 % at 8k/32k vs 0.6.2 (§5bm).
+  Branch `qmmf-prompt-slices` (`5e89fbd`), base main. Draft `tf-pr-qmmf-slices.md`. https://github.com/ashhart/TensorFold/pull/242
