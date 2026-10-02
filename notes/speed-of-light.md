@@ -3624,3 +3624,19 @@ config check refused it (the quoted message). Not verified with real weights (ne
 - PR prep (§5bm): new test `test_prompt_rows_add_their_slices_in_one_block_with_the_clusters_bits` (FP4, FP8, block
   FP8, MXFP8 x 6144 → 2560 [8 slices] and 2560 → 512 [4 slices], 300 rows: fused == an explicit cluster launch, and
   16-row decode windows keep the same bits); tests/cuda 1,209 passed / 98 skipped; CPU subset 388 passed.
+
+### 5bo. #180 on an NVFP4 checkpoint: the recapture regression is there too, and #180 removes it
+
+SvangenStudios (#180, 2026-10-02 11:59) found no regression on cb5101d with `local-inference-lab/...-NVFP4` (36 tok/s
+at `--parallel 4` and on v0.6.1) and did not count captures. Our `mtpfp4` (NVFP4 experts, block-FP8 dense), host_probe
+S1 / L4 (512 tokens) and solo_switch (A, B, C, A'), cb5101d vs #180 (d2e651a), two rounds (`data/nv180/chain.txt`):
+
+| | cb5101d | #180 |
+|---|---|---|
+| S1 (one-slot engine), ms/token | 15.93 / 15.90 | 16.05 / 15.87 |
+| L4 (four-slot engine, one request), ms/token | 21.29 / 20.86 (+34 %), 21 captures (2.1–2.3 s) | 15.95 / 15.95, 0 captures |
+| lone requests A / B / C / A', ms/token | 30.7–31.1 / 29.2–29.7 / 26.6–27.5 / 20.9–21.5; 26–29 captures each | 18.2–18.5 / 15.9–16.1 / 14.6–14.8 / 13.8; 0 |
+
+Hashes identical across trees and arms. So the regression is not EXL3-specific; SvangenStudios' 36 tok/s at every
+setting (ours: 63) suggests their decode is limited by something else — graphs not captured, or the n-gram tables
+paging from disk — which their startup lines would show ("N decode graphs captured", "mapped tables do not fit").

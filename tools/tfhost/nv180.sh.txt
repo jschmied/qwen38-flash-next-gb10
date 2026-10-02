@@ -1,0 +1,16 @@
+#!/bin/bash
+# #180 on the NVFP4 checkpoint: S1 / L4 (host_probe) and solo_switch, cb5101d vs #180, two rounds.
+R=/opt/llm/runners/results/nv180; mkdir -p $R; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfhost
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; N=512
+export HOME=/root PYTHONUNBUFFERED=1 CAPTURE_LOG=1
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for tree in base:tf-061 pr180:tf-061-fix; do
+  t=${tree%%:*}; SRC=/home/jschmied/git/${tree#*:}/src; export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-nv-$t
+  for arm in S1 L4; do memok
+    timeout 1800 $T/bin/python $L/host_probe.py $SRC $M $arm $N > $R/$t-$arm-$rep.log 2>&1
+    echo "$(date +%T) $t-$arm-$rep rc=$? $(grep '^ARM ' $R/$t-$arm-$rep.log | cut -c1-420)" >> $R/chain.txt
+  done
+  memok; timeout 1800 $T/bin/python $L/solo_switch.py $SRC $M > $R/$t-switch-$rep.log 2>&1
+  echo "$(date +%T) $t-switch-$rep rc=$? $(grep '^{' $R/$t-switch-$rep.log | tail -5 | tr '\n' ' ' | cut -c1-700)" >> $R/chain.txt
+done; done
+echo "== NV180 DONE ==" >> $R/chain.txt

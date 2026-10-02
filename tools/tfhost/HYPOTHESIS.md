@@ -79,3 +79,13 @@ the round's forward (and its first MTP step) captured as it stands, eager vs rep
 - Below 4 %: T12 is not worth the 2–3 days; above 12 %: the probe measures more than launch overhead (check the method).
 - **Result (§5bc):** forward saved 3.9–4.05 ms (out of range high), MTP 0.14–0.21 ms a step (out of range low); round
   total 7.8 % (c=2), 5.6–6.2 % (c=4): in range.
+
+## Round 8 (2026-10-02): #180 on an NVFP4 checkpoint (SvangenStudios saw no regression on cb5101d with NVFP4)
+
+`mtpfp4` (NVFP4 experts, block-FP8 dense), cb5101d vs #180 (d2e651a), host_probe S1 / L4 (512 tokens, CAPTURE_LOG=1)
+and solo_switch (four lone requests A, B, C, A'), two rounds.
+- cb5101d L4 recaptures like EXL3 (captures_run 15–35) and runs ≥ 10 % slower than S1; #180 L4 has 0 captures and is
+  level with S1. If cb5101d L4 has 0 captures on NVFP4, the regression is EXL3-specific and SvangenStudios' result
+  is expected.
+- **Result (round 8, §5bo):** as predicted — cb5101d L4 +31…+34 % over S1 with 21 recaptures; #180 L4 = S1, 0 captures;
+  lone requests 26–29 captures each on cb5101d, 0 on #180; hashes identical.
