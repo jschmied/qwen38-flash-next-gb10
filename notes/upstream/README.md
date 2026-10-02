@@ -1618,3 +1618,7 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold PRs #184, #191, #193, #195, #207 closed** (2026-10-02, user: "close superceded tickets"), each with
   "Superseded by #212." (§5be: #212 −53.5…−54.6 % prompts, our stack −23…−25 %, the stack on top of #212 adds nothing
   in decode). Confirmation comment posted later (user: "short comment on 212"): https://github.com/ashhart/TensorFold/pull/212#issuecomment-5947876517
+- **TensorFold #212 comment: prefetch offer** (2026-10-02, user: "ok, post to 212"): two chunks of trellis words in
+  flight in #212's prompt kernel, prefill −14 % at 8k/32k on top of #212, same bits (§5bj); commit jschmied/TensorFold
+  `0809a5c` (branch `pr212-prefetch`); offered as a PR against their branch or after #212 lands.
+  https://github.com/ashhart/TensorFold/pull/212#issuecomment-5949573427

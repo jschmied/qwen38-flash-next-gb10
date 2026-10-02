@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold PR #212 comment (2026-10-02).
+POSTED on #212 (2026-10-02, user: "ok, post to 212"): https://github.com/ashhart/TensorFold/pull/212#issuecomment-5949573427
 
 One more for this kernel, if you want it: on GB10, ncu shows `prompt_kernel<2,6,4>` waiting on its own trellis loads
 (46 % of warp stalls long_scoreboard, memory throughput 21 %). The next chunk's words are loaded right after this
