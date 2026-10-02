@@ -1643,3 +1643,11 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold #258 reply** (2026-10-02, user: "short reply"): EXL3 prefill ~670 tok/s at 235k (0.6.1) → pointer to
   #212 (8k 11.4 → 5.3 s, 32k 46.2 → 21.3 s on our GB10), the agreed prefetch follow-up (8k 4.54 s, ~1,800 tok/s) and
   #252 (cold n-gram pages); 235k not measured. https://github.com/ashhart/TensorFold/issues/258#issuecomment-5959052841
+- **TensorFold #248 / #250 / #252 review comments** (2026-10-02 ~22:00, user: "short comment on important pr"), one
+  each, drafts `tf248-cap-vs-floor.md`, `tf250-cost-calibration.md`, `tf252-madv-random.md` (§5bp):
+  #248 the 512 floor is written as a cap, breaks `test_both_planner_paths_…` (passes on 0.6.2), fix `max(limit, 512)` —
+  https://github.com/ashhart/TensorFold/pull/248#issuecomment-5961956270 ;
+  #250 0.06 inert under the 0.70 cut / −6.5…−10 % without it, 0.15 without the cut −3.9 % code, calibrate —
+  https://github.com/ashhart/TensorFold/pull/250#issuecomment-5961956559 ;
+  #252 confirmed (cold 24K 59.3 → 37.5 s, residue 15.1 → 2.4 GiB) + MADV_RANDOM 35.96 s / 0.7 GiB —
+  https://github.com/ashhart/TensorFold/pull/252#issuecomment-5961956852 . #253/#254 not posted.
