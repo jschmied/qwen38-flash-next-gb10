@@ -1,0 +1,8 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfexl3p; mkdir -p $R; L=/opt/llm/runners/tfexl3p
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-pf2 HOME=/root
+/usr/local/cuda/bin/ncu -k "regex:linear_kernel|grouped_kernel" --section SpeedOfLight --section WarpStateStats --section Occupancy \
+  --metrics gpu__time_duration.sum,dram__throughput.avg.pct_of_peak_sustained_elapsed \
+  -o $R/ncup --force-overwrite /opt/llm/runtime/tf-venv/bin/python $L/ncu_targets.py /home/jschmied/git/tf-pr212-ilp/src > $R/ncup.log 2>&1
+/usr/local/cuda/bin/ncu -i $R/ncup.ncu-rep --page raw --csv > $R/ncup-raw.csv 2>&1
+echo "== NCU DONE ==" >> $R/chain.txt

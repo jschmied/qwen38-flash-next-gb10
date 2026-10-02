@@ -3532,3 +3532,28 @@ data `data/tfexl3x/pf-*`; predictions `tools/tfexl3x/HYPOTHESIS.md`.
   4. The microbench (one-warp blocks, L1-resident tiles, no accumulators/smem/barriers) screens candidates only; the
      load/state/full subtraction does not isolate the codebook (negative differences at some widths). Kernel and
      prefill durations decide — which is how §5bj found the real lever (memory stalls), not extraction.
+
+### 5bk. Does "more loads in flight" apply elsewhere? Only where loads are issued late before a long compute phase
+
+User: "does this optimization also apply to other places?" (§5bj: #212's prompt kernel −14 % prefill). Checked every
+weight-streaming kernel on the EXL3/NVFP4 paths, same bits in every arm (output hashes):
+
+- **ncu stall breakdowns** (`tools/tfexl3p/ncu_targets.py`, `data/tfexl3x/ncu-decode-kernels-raw.csv`): dense
+  `linear_kernel<10,2,4>` at 1 / 4 rows: long_scoreboard 69–78 % (2560 x 6144, 6144 x 2560), 44–48 % (2560 x 512,
+  grid of 16 blocks); grouped expert kernel at 8 rows 63–65 %. Expected for bandwidth-bound kernels; the question is
+  whether more bytes in flight raise the bandwidth.
+- **Dense EXL3 linear (decode), depth 1 → 2 / 3** (branch `exl3-linear-prefetch` on main, `lin_bw2.py`, 2 rounds,
+  `data/tfexl3x/linpf.jsonl`): level — 165–205 GB/s at every depth for the large shapes, signs flip across shapes
+  and rounds; 2560 x 512 stays ~45 GB/s (16 blocks for 48 SMs: parallelism, not prefetch). No.
+- **Grouped expert kernel (decode)**: already 192–214 GB/s with its own tiles-in-flight parameter (§5bg). No.
+- **NVFP4 W4A16 expert kernel** (main's `nvfp4_expert_kernel`, `--precision full` and every non-SM 12.x GPU; K-step
+  depth D = 2 hard-coded; branch `nvfp4-w4a16-depth`, `kbench_w4.py`, `data/tfexl3x/w4depth.jsonl`): 2,048-row prompt
+  window 12.83 / 13.44 ms at D 2 → 12.22 / 12.41 (D 3), 12.20 / 11.90 (D 4): −5…−11 %; but decode windows get slower
+  (1 row 0.114 / 0.120 → 0.124–0.132 ms, 4 rows 0.433 → 0.452–0.460, +4…+10 %). Only a row-dependent depth (D 4 for
+  prompt plans, D 2 for decode) would pay: ≈ −3 % of a GB10 prefill under `--precision full`; other GPUs unmeasured.
+- **#212's down kernel**: same body, already covered (§5bj). **#211's FP4 experts kernel**: depth 4 swept at build.
+- **`unpack_kernel`** (prefill dense unpack): one tile per one-warp block, no prefetch, 3.1 % of prefill → ≤ ~1 %.
+
+Pattern: the win needs a kernel that issues the next step's loads and then spends a long phase (barrier + a chunk of
+mma) before using them — #212's prompt kernel, and to a lesser degree W4A16 at prompt sizes. Kernels that stream
+continuously at decode sizes are already near their bandwidth; deeper prefetch only costs registers there.
