@@ -3588,7 +3588,9 @@ User: "yes, also launch a subagent looking into other exl3 projects". 8k prefill
   trellis in shared memory (3-stage cp.async) and decodes each warp's tile straight into the mma B registers — ~5x
   less smem than #212's decoded fp16 tiles, i.e. the route to more than 3 blocks an SM (same decoded values; the
   summation order would have to be kept). Not usable: fp16-accumulate GEMM (changes numerics), b12x's EXL3 (its own
-  codebooks), Atlas (AGPL). Competitor numbers on GB10: Atlas PR #6 1,366 tok/s prefill at 2.8K (3.87 bpw);
+  codebooks). Licenses restrict copying code, not ideas: TF is Apache-2.0, so MIT code (exllamav3, the fat GEMM, ik_llama)
+  may be adapted with its notice kept (TF's EXL3 headers already credit ExLlamaV3, MIT); AGPL (Atlas) and GPL-3 (QTIP)
+  code must not be pasted in, but their techniques can be reimplemented. Atlas's idea is #212's anyway. Competitor numbers on GB10: Atlas PR #6 1,366 tok/s prefill at 2.8K (3.87 bpw);
   MiaAI-Lab claims 979 tok/s at 1.2K. Ours after §5bj: ~1,800 tok/s at 8K (3.05 bpw).
 - Ranked: (1) NVFP4 `qmmf` prompt tiles (≤ −8 % NVFP4 prefill if it reached `_gemm`'s rate); (2) NVFP4 `_b16mm` /
   `_fp4mm` fused K slices (removes `_reduce`, 6.4 %); (3) EXL3 experts from packed smem (occupancy; #212's kernel);
