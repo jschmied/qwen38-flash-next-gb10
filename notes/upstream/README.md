@@ -1617,4 +1617,4 @@ wait on one ~100 GB pull, and they share one serve.
   Not posted: the #173 scope-question draft (superseded by the PR). https://github.com/ashhart/TensorFold/pull/211
 - **TensorFold PRs #184, #191, #193, #195, #207 closed** (2026-10-02, user: "close superceded tickets"), each with
   "Superseded by #212." (§5be: #212 −53.5…−54.6 % prompts, our stack −23…−25 %, the stack on top of #212 adds nothing
-  in decode). The #212 confirmation comment (`tf212-confirm.md`) is NOT posted.
+  in decode). Confirmation comment posted later (user: "short comment on 212"): https://github.com/ashhart/TensorFold/pull/212#issuecomment-5947876517
