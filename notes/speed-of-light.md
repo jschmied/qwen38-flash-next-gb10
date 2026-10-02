@@ -3479,3 +3479,10 @@ codebook (branch `exl3-extract`, SASS unchanged):
   3-bit cannot reach the 4-bit cost structurally: a lane's eight 3-bit windows straddle two unaligned words (two
   fetches + a variable shift), while 4-bit's are its own word plus its neighbour's at fixed offsets. The remaining
   gap (~1 shuffle + 1 shift a tile) is the floor of this layout. Nothing to build.
+- **Reviewer's follow-up checked:** (a) "specialize K2 == 6 with 32-bit funnel shifts" — already the compiled code
+  (`SHF.R.U64` funnel + per-window `SHF`/`LOP3` after 2 `SHFL`, §5bi SASS) and the controlled replacements were
+  level; closed. (b) Occupancy: ncu on #212's `prompt_kernel<2,6,4>` reports Block Limit Registers = 3 AND Block
+  Limit Shared Mem = 3 (sb 16 KiB + sa 16 KiB + 256 B a 128-thread block; 142 registers), theoretical 25 %, achieved
+  23.35 % — both limits bind, so a 4th block needs ≤ 128 registers and ≤ ~24 KiB shared memory together. (c) The
+  remaining experiment is ILP inside #212's kernel (independent decode chains across tiles / overlapping the next
+  chunk's decode with this chunk's mma), measured by kernel and prefill duration, same bits. It is #212's code.
