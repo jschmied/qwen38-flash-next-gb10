@@ -3437,3 +3437,37 @@ Checked on #212 (`profall-pr212-excerpt.txt`, ncu `ncu212-raw.csv`, `tools/tfexl
   kernel is latency-bound on it. Cheaper extraction (the reviewer's 3-bit path) and more ILP/occupancy are the lever:
   if the gate|up + down kernels ran 1.5x faster, an 8k prefill drops ~14 %.
 - It is #212's code (open, not ours); work on it builds on that branch.
+
+### 5bi. EXL3 trellis extraction benched at every width: the widths Flash Next spends its time on are already near-minimal
+
+User: "yes, bench and optimize all extraction paths (is this GB10 specific? platform switch?)". Not GB10-specific: the
+extraction is integer shifts / funnel shifts / warp shuffles, identical on sm_70+, and a faster path yields the same
+16-bit states (no switch needed); only the payoff differs (instruction-bound kernels gain, bandwidth-bound ones don't).
+`tools/tfexl3x/xbench.py` (warps decode L1-resident tiles in a loop; xor of results; ps per tile across the GPU;
+`data/tfexl3x/xbench-base.json`), main `17c73e1` + a pure refactor splitting `decode_tile` into `tile_states` +
+codebook (branch `exl3-extract`, SASS unchanged):
+
+| K2 (bits) | load | extraction | codebook (mul1) | expert decode total | dense decode (decode.cuh) total |
+|---|---|---|---|---|---|
+| 2–6 (1–3) | 34 | 55–65 | 34–43 | 130–133 | 146–151 |
+| 7 (3.5) | 34 | 68 | 43 | 144 | 174 |
+| 8 (4, hand path) | 25 | 60 | 33 | 118 | 156 |
+| 9–12 (4.5–6) | 44 | 127–128 | 9–13 | 181–185 | 174–177 |
+| 13–16 (6.5–8) | 37–45 | 237–265 | ~0–5 | 279–314 | 177–180 |
+
+(The split is approximate: latency hiding makes the parts non-additive.)
+
+- **3-bit (Flash Next 3.05's routed experts, #212's dominant `prompt_kernel<2,6,4>`) is within ~10 % of the
+  hand-tuned 4-bit path**; its SASS is already 2 SHFL + 2 funnel shifts + ~2 instructions a value. The reviewer's
+  dedicated 3-bit path has almost nothing to take. The prompt kernel's limit is structural latency (142 registers,
+  23 % occupancy, §5bh), not extraction instructions.
+- **Widths above 4 bits are 2–4x costlier to extract on the expert path**: a tile of > 32 words sits in two registers
+  per lane and every fetched word costs two shuffles + a select (`fetch<LW=2>`), in up to 4 runs. The dense family
+  (each lane loads its own 2–3 words, no shuffles) is flat at ~175 ps there.
+- What that is worth on Flash Next: only the shared expert uses those widths (5-bit on 3.05, 6-bit on 4.05):
+  `prompt_kernel<2,10,4>` + `prompt_down_kernel<2,10>` = 151 ms of a 5.2 s 8k prefill (2.9 %); halving their
+  extraction is ≤ ~1 % of prefill, 0 in decode (bandwidth-bound). Packs at 4.5–8 bpw (other models, 27B 5–8 bpw)
+  and high-bandwidth GPUs, where decode is closer to instruction-bound, would gain more — not measurable here.
+- Design if built (not built): for TW > 32 words, load word pairs per lane (64-bit coalesced) so a lane's 3–4
+  consecutive words come from 2 source lanes with no selects, and extract all 8 windows from one funnel-shifted
+  multi-word run with compile-time window offsets; exactness = every lane's 8 states equal the old path on random words.
