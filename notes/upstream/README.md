@@ -1615,3 +1615,6 @@ wait on one ~100 GB pull, and they share one serve.
   (FP4 x FP4), base main, `99ccde3`. Prompts −8.7…−9.9 % (8k/32k, 3 rounds), decode −0.6 % (8 prompts), quality vs
   full KL 0.038 / top-1 95.6 % / ppl +1.27 %; tests/cuda 1,208 passed. Draft `tf-pr-fp4-experts.md` (§5bd).
   Not posted: the #173 scope-question draft (superseded by the PR). https://github.com/ashhart/TensorFold/pull/211
+- **TensorFold PRs #184, #191, #193, #195, #207 closed** (2026-10-02, user: "close superceded tickets"), each with
+  "Superseded by #212." (§5be: #212 −53.5…−54.6 % prompts, our stack −23…−25 %, the stack on top of #212 adds nothing
+  in decode). The #212 confirmation comment (`tf212-confirm.md`) is NOT posted.
