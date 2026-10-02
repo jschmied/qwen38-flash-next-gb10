@@ -1,0 +1,7 @@
+21:16:28 off-a rc=0
+21:19:36 ahead-a rc=0
+21:22:43 rand-a rc=0
+21:26:32 off-b rc=0
+21:29:42 ahead-b rc=0
+21:32:49 rand-b rc=0
+== NGRAM DONE ==

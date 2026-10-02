@@ -1,0 +1,13 @@
+21:34:16 code A a rc=0 "ms_tok_per_stream": 12.149 "hashes": ["1bb116eb6ff5"] "drafted": 502 "accepted": 367 
+21:35:16 code E a rc=0 "ms_tok_per_stream": 11.693 "hashes": ["1bb116eb6ff5"] "drafted": 578 "accepted": 384 
+21:36:07 code F a rc=0 "ms_tok_per_stream": 12.141 "hashes": ["1bb116eb6ff5"] "drafted": 501 "accepted": 367 
+21:36:57 prose A a rc=0 "ms_tok_per_stream": 18.557 "hashes": ["bbd73fe02f0f"] "drafted": 449 "accepted": 248 
+21:37:49 prose E a rc=0 "ms_tok_per_stream": 18.733 "hashes": ["bbd73fe02f0f"] "drafted": 512 "accepted": 254 
+21:38:39 prose F a rc=0 "ms_tok_per_stream": 18.578 "hashes": ["bbd73fe02f0f"] "drafted": 449 "accepted": 248 
+21:39:23 code A b rc=0 "ms_tok_per_stream": 12.199 "hashes": ["1bb116eb6ff5"] "drafted": 502 "accepted": 367 
+21:40:11 code E b rc=0 "ms_tok_per_stream": 11.709 "hashes": ["1bb116eb6ff5"] "drafted": 577 "accepted": 384 
+21:41:14 code F b rc=0 "ms_tok_per_stream": 12.2 "hashes": ["1bb116eb6ff5"] "drafted": 501 "accepted": 367 
+21:42:10 prose A b rc=0 "ms_tok_per_stream": 18.537 "hashes": ["bbd73fe02f0f"] "drafted": 449 "accepted": 248 
+21:43:01 prose E b rc=0 "ms_tok_per_stream": 18.702 "hashes": ["bbd73fe02f0f"] "drafted": 520 "accepted": 255 
+21:43:50 prose F b rc=0 "ms_tok_per_stream": 18.619 "hashes": ["bbd73fe02f0f"] "drafted": 449 "accepted": 248 
+== COST2 DONE ==

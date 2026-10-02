@@ -3651,3 +3651,88 @@ paging from disk — which their startup lines would show ("N decode graphs capt
   2 for gate|up with K2 < 8, else 1): EXL3 tests 90 passed; microbench at 2,048 rows gate|up 7.68 → 5.20 / 5.22 ms,
   routed() 12.65 → 10.19–10.23 ms, hashes identical (`data/tfexl3x/pf-gated.jsonl`). Down 2.96 → 3.06–3.24 ms in
   this run although its code path is #212's again (one chunk) — run-order noise to recheck before the PR.
+
+### 5bp. Review of the new TF PRs (#248, #250, #252, #253, #254) — hypotheses before the GPU runs
+
+- **#250 `--mtp-cost`**, EXL3 3.05, host_probe S1 (one-slot engine), 512 tokens, code and prose, two alternating
+  rounds; arms A default 6/0.7, B 6/0.7 + cost 0.06, C 8/0 + cost 0.06, D 7/0.8. Hypothesis: a round here costs
+  ~16 ms (not the MLX fork's ~24 ms fixed work), and a draft adds ~2–3 ms, so C = 0.06 needs a chain product of
+  only ~0.12–0.18 — almost never binding under the per-draft 0.70 cut. Expected B vs A within ±2 %; C vs A −5…+8 %
+  (code gains, prose loses); D vs A ±3 %. Hashes equal in every arm (drafts change speed only). Out of range = a
+  mispriced startup table, read its startup line first.
+- **#252 n-gram read-ahead**, EXL3 3.05, PR tree (dca05e8 on 0.6.1), `tools/tfreview/ngram_cold.py`: a 24,576-token
+  prompt with the table cold (process mappings MADV_DONTNEED + the file's page cache evicted, as the PR measures),
+  twice, then warm; arms `TF_NGRAM_AHEAD=0`, `=1`, `=1` + MADV_RANDOM on the table mappings; two rounds. Hypothesis:
+  cold without read-ahead 2–2.6× warm (PR: 87.7 vs 35.4 s on 4.05); with it within +5…+20 % of warm; residency after
+  a cold read-ahead run 30–60 % of the 30.4 GiB table although the prompt needs ~1.6 GB of rows; MADV_RANDOM lowers
+  that residency only if the excess is fault read-around (if it is WILLNEED's own large-folio readahead it stays).
+  Hashes equal in every arm.
+- **#250 result** (2 rounds, every arm repeats within 0.6 %; `data/tfreview/cost-arms.txt`, `cost-chain.txt`).
+  ms/token, drafted / kept (rounds):
+
+  | arm | code a / b | code drafted / kept | prose a / b | prose drafted / kept |
+  |---|---|---|---|---|
+  | A 6 / 0.70 (default) | 12.17 / 12.15 | 502 / 367 (145) | 18.55 / 18.52 | 449 / 248 (263) |
+  | B 6 / 0.70 + cost 0.06 | 12.12 / 12.12 | **502 / 367** (145) | 18.54 / 18.53 | **449 / 248** (263) |
+  | C 8 / 0 + cost 0.06 | 12.96 / 12.95 (+6.5 %) | 810 / 392 (120) | 20.38 / 20.45 (+10 %) | 824–828 / 273 (238) |
+  | D 7 / 0.80 | 12.02 / 12.01 (−1.2 %) | 465 / 363 (148) | 18.69 / 18.64 (+0.7 %) | 417 / 240 (271) |
+
+  Hashes equal in all 16 runs. Startup prices: verify 26.0–26.2 ms at one row, ~1.95 ms per extra row, a draft step
+  1.13 ms. Findings: (1) **at 0.06 the cost stop never fires** under the 0.70 cut — B drafts exactly A's drafts.
+  (2) **Alone it over-drafts**: C's extra drafts are kept 8 % (code, 25 of 308) / 7 % (prose) while the rule admits a
+  draft only at a chain product ≥ ~0.19 (0.06 × ~3.1 ms) — the head's chain product overstates greedy acceptance
+  ~2.5× on this checkpoint. (3) Prices are close but low: a live round is 42.3 ms where the table gives ~36.7 (≈5.6 ms
+  unpriced host/sampling per round, the PR's own fitted 3.3 ms on MLX); C's extra drafts cost 3.7 ms each live vs
+  3.1 priced. In range of the hypothesis for B and D; C below range (−6.5/−10 %), the cause being calibration, not the
+  table. Enhancements to propose: calibrate the head's probabilities from live acceptance (per-depth kept/drafted, as
+  the round is already measured), price the per-round host time, and derive C from the measured rate instead of a
+  fixed 0.06.
+- **#250 follow-up** (queued after #252): if the 2.5× overconfidence is the whole story, a C scaled by it should
+  recover the default. Arms E 8 / 0 + cost 0.15 and F 6 / 0.70 + cost 0.15, code and prose, two rounds. Hypothesis:
+  E within −3…+3 % of A on both sets; F within ±2 % of A (the 0.70 cut still dominates). E better than A by > 2 % would
+  mean the in-round stop beats the fixed cut once calibrated.
+- **#252 first start VOID** (kept in `data/tfreview/void1/` on the runner host only): the engine had **mlocked** the
+  table at startup (3.05 on GB10 fits the budget: "locked in memory"), so MADV_DONTNEED/FADV_DONTNEED evicted nothing
+  (30.3 GiB resident before the "cold" run, 607 major faults), and runs 2–3 reused the prompt and hit the prefix cache
+  (0.11 s). Probe fixed: munlock the table first (emulates a table that does not fit the lock budget — the only case
+  where #252 can act), a new prompt slice per run (same slices in every arm), warm = `table.prefetch()` then a new
+  slice. Review facts from it: **#252 is a no-op in the default config whenever the table is locked**, and the
+  `TF_NGRAM_LOCK` the PR body names exists in no tree (0.6.1, 0.6.2, main, #254). The un-cached 24K prefill on this
+  tree (0.6.1, no #212) with a resident table: 34.9 s.
+- **#252 result** (EXL3 3.05, PR tree, table unlocked, 24,576-token prompts, two rounds, every cell repeats within
+  0.5 s; `data/tfreview/ngram.jsonl`). Prefill s / major faults / table GiB resident after:
+
+  | arm | cold, prompt 0 | cold, prompt 1 | warm, prompt 2 |
+  |---|---|---|---|
+  | `TF_NGRAM_AHEAD=0` | 59.2–59.4 / 133,263 / 15.1 | 55.9–56.1 / 114,172 / 13.1 | 34.0–34.1 / 0 |
+  | `=1` (the PR) | 37.5 / 14,340 / 2.4 | 38.1–38.2 / 16,339 / 2.5 | 34.2 / 0 |
+  | `=1` + MADV_RANDOM on the table maps | 35.95–35.97 / 15,200 / 0.73 | 36.26–36.30 / 17,440 / 0.59 | 34.2–34.3 / 0 |
+
+  Hashes equal per prompt across arms. In range (cold 1.65–1.74× warm without, +10…+12 % with). **Our review point
+  "unpaced read-ahead floods the page cache" is refuted**: the flood is the *faults'* read-around (15 GiB left
+  resident without the PR); the PR cuts it to 2.4 GiB. Enhancement found: MADV_RANDOM on the unlocked table mapping
+  takes another 1.6–1.9 s off the cold prompt (−4.3 / −4.9 %) and leaves 0.6–0.7 GiB — the remaining faults
+  (~15k) no longer pull 128 KiB windows. Warm cost nil in every arm.
+- **#250 follow-up result** (`data/tfreview/cost2-chain.txt`), ms/token a / b, drafted / kept:
+
+  | arm | code | prose |
+  |---|---|---|
+  | A 6 / 0.70 | 12.15 / 12.20, 502 / 367 | 18.56 / 18.54, 449 / 248 |
+  | E 8 / 0 + cost 0.15 | **11.69 / 11.71 (−3.9 %)**, 577 / 384 | 18.73 / 18.70 (+0.9 %), 512–520 / 254 |
+  | F 6 / 0.70 + cost 0.15 | 12.14 / 12.20, 501 / 367 | 18.58 / 18.62, 449 / 248 |
+
+  Hashes equal. E is in range on prose and beats it on code: the in-round stop does beat the fixed cut once C absorbs
+  the head's overconfidence (0.15 ≈ 2.5 × 0.06). So the PR's idea holds on EXL3/CUDA; what is wrong is the
+  calibration — 0.06 is inert under the default cut and harmful without it. Proposal for the review: scale the chain
+  product by live per-depth acceptance (kept/drafted, already counted per round) or ship a CUDA default near 0.15
+  with `--mtp-confidence 0`; one prompt type (prose) still loses ~1 %, so a per-request calibration matters.
+
+#### 5bp summary — review of #248, #250, #252, #253, #254 (2026-10-02)
+
+| PR | tests (ours) | measured | verdict / gaps | enhancement |
+|---|---|---|---|---|
+| #248 decode-share row_s | 51 passed, **2 failed**; `test_flashnext_prompt_pieces.py::test_both_planner_paths_bound_live_pieces_and_restore_idle_width` fails on the PR and passes on 0.6.2 (new regression); `test_flash_next_pass_rows.py::test_a_rounds_pass_keeps_decoding_its_share` fails on both | — | 512 is a cap, not the floor the body claims; `row_s` is CPU launch time, not GPU work; `row_s` has two meanings | time with CUDA events; split the two `row_s` uses |
+| #250 `--mtp-cost` | 67 passed | 0.06: B == A draft-for-draft; 8/0 + 0.06 −6.5 / −10 %; 8/0 + 0.15 −3.9 % code / +0.9 % prose | exact; prices close (host time ~5.6 ms/round unpriced); the head's chain product overstates acceptance ~2.5× | calibrate from live acceptance; price host time; default C from measured rate; body misquotes our #136 replay |
+| #252 n-gram read-ahead | 11 passed, 7 skipped | cold 24K 59.3 → 37.5–38.2 s (warm 34.1); faults 133k → 14k; residue 15.1 → 2.4 GiB | same bits; no-op when the table is locked (default on 3.05/GB10); not on `--parallel` or NVFP4; executor has no cancel/error path; `TF_NGRAM_AHEAD` only; body names a nonexistent `TF_NGRAM_LOCK` | MADV_RANDOM on unlocked maps: a further −4.3…−4.9 % cold and 0.6 GiB residue |
+| #253 EXL3 mixed rounds | 42 passed, 4 skipped | prompt kernel == grouping kernel fp32 bits verified at K2 6/10, R 65–2048 (`tools/tfreview/prompt_vs_group.py`) | no blocker; no test for that equality; `TF_EXL3_MOE_WINDOW` < window breaks same bits; a full 2048-row pass reads experts twice; lazy staging buffers missing from `nbytes` | add the equality test; clamp the env window |
+| #254 n-gram pin | 13 passed | not measured (no partial-pin scenario forced) | budget is stale (no recheck of free memory); discrete GPUs size from GPU memory; no off switch; mlock failures silent; NVFP4 re-read without pin; cache gate room computed before the pin | recheck MemAvailable; log the pin result |

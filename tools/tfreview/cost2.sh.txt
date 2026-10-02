@@ -1,0 +1,15 @@
+#!/bin/bash
+# #250 follow-up: cost 0.15 with and without the 0.70 cut; starts after the #252 chain.
+R=/opt/llm/runners/results/tfreview; T=/opt/llm/runtime/tf-venv; L=/opt/llm/runners/tfreview
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; SRC=/home/jschmied/git/tf-pr250/src; N=512
+export HOME=/root PYTHONUNBUFFERED=1 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-pr250
+until grep -q "NGRAM DONE" $R/ngram-chain.txt 2>/dev/null; do sleep 30; done
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for set in code prose; do
+  for arm in "A|6|0.7|" "E|8|0|0.15" "F|6|0.7|0.15"; do
+    IFS='|' read name d c k <<< "$arm"; memok
+    env PROMPT_SET=$set MTP_DEPTH=$d MTP_CONF=$c ${k:+MTP_COST=$k} timeout 1800 $T/bin/python $L/host_probe_cost.py $SRC $M S1 $N > $R/cost2-$set-$name-$rep.log 2>&1
+    echo "$(date +%T) $set $name $rep rc=$? $(grep '^ARM ' $R/cost2-$set-$name-$rep.log | grep -o '"ms_tok_per_stream": [0-9.]*\|"drafted": [0-9]*\|"accepted": [0-9]*\|"hashes": \[[^]]*\]' | tr '\n' ' ')" >> $R/cost2-chain.txt
+  done
+done; done
+echo "== COST2 DONE ==" >> $R/cost2-chain.txt
