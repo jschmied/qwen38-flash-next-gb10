@@ -3602,7 +3602,7 @@ User: "ok, continue" (lever 1 of §5bl). Branch `qmmf-prompt-tiles` on 0.6.2 (`~
 - Bigger prompt tiles for `qmmf` (128 x 64 with 2 x 2 or 4 x 1 warps, 128 x 128 with 2 x 4): slower than the decode
   tiles on every shape but `attn.q_proj` (+12 %); the decode tiles already reach 56–64 TFLOPS on unsplit shapes. Dropped.
 - The slow shapes are the split ones: K 6144 → N 2560 (`gdn.out_proj`, `attn.o_proj`, split 8) at 22 TFLOPS and
-  2560 → 512 (split 8) at 30 — a cluster of 8 blocks exchanges partials every tile. **Fused mode** (`bm` 0 for prompt
+  2560 → 512 (split 4) at 30 — a cluster of 4–8 blocks exchanges partials every tile. **Fused mode** (`bm` 0 for prompt
   rows ≥ 256 with split > 1): one block runs all slices of its tile, each from zero over its groups, added in slice
   order — the cluster's arithmetic. 2,048 rows: 22.5 → 55.7–56.0, 22.6 → 55.6–56.1, 30.3 → 48.2–49.1 TFLOPS; unsplit
   shapes untouched; output hashes identical in every shape and row count (`qbench-fused.jsonl`).
@@ -3621,3 +3621,6 @@ requests, no weights), data zero-filled as sparse files (91 MB on disk), plus th
 (`layer_multipliers`, `ngram_heads_*`) and the table scale, which TF checks by value. On 0.6.2 (`56e2e3e`, which has
 #222): loads in 78.9 s and serves (`data/tfnvidia/`; replies are "!!!!" because the weights are zeros). On 0.6.1 the
 config check refused it (the quoted message). Not verified with real weights (needs the 133 GB download).
+- PR prep (§5bm): new test `test_prompt_rows_add_their_slices_in_one_block_with_the_clusters_bits` (FP4, FP8, block
+  FP8, MXFP8 x 6144 → 2560 [8 slices] and 2560 → 512 [4 slices], 300 rows: fused == an explicit cluster launch, and
+  16-row decode windows keep the same bits); tests/cuda 1,209 passed / 98 skipped; CPU subset 388 passed.

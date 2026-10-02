@@ -1,0 +1,7 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfnext; mkdir -p $R; PY=/opt/llm/runtime/tf-venv/bin/python; P=/opt/llm/runners/tfexl3d/prof_all.py
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-pf2 timeout 3600 $PY $P /home/jschmied/git/tf-pr212-ilp/src /opt/llm/models/qwen38-flash-next-exl3-3.05bpw checkpoint > $R/prof-exl3.log 2>&1
+memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-fp4x timeout 3600 $PY $P /home/jschmied/git/tf-fp4x/src /opt/llm/models/qwen38-flash-next-mtpfp4 checkpoint > $R/prof-nvfp4.log 2>&1
+echo "== PROF DONE ==" >> $R/chain.txt

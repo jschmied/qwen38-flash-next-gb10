@@ -1,0 +1,7 @@
+#!/bin/bash
+# User: "do only important tests" — stop tfbig after the gather arm (skip fill-order mix and the full FP8 sweep).
+R=/opt/llm/runners/results/tfbig
+until grep -q "mix-gather rc=" $R/chain.txt 2>/dev/null || ! systemctl is-active -q tfbig-chain; do sleep 10; done
+systemctl stop tfbig-chain; systemctl stop fx-tfbig 2>/dev/null
+echo "$(date +%T) stopped after the gather arm (user: only important tests)" >> $R/chain.txt
+echo "== TFBIG DONE ==" >> $R/chain.txt

@@ -8,7 +8,7 @@ Prompt tile (same bits: an element's group sums, block scales and slice order ar
 - 8k prefill on NVFP4 (#211): −4…−8 %. Below 1.2x in the microbench: stop.
 - Microbench result: decode tiles are already 56–64 TFLOPS on the wide (unsplit) shapes; bigger prompt tiles were
   slower except 128x128 on q_proj (+12 %) → dropped. The weak shapes are the split ones (K 6144 → 2560, sk 8:
-  22 TFLOPS; 2560 → 512, sk 8: 30). Fusing a tile's slices in one block (same slice order, no cluster): 56 / 49
+  22 TFLOPS; 2560 → 512, sk 4: 30). Fusing a tile's slices in one block (same slice order, no cluster): 56 / 49
   TFLOPS, hashes identical.
 - Revised prediction, 8k prefill NVFP4 (0.6.2 vs 0.6.2 + fused slices): the clustered launches were ~555 ms of 5.48 s;
   at 2.4x faster → −5…−7 %.

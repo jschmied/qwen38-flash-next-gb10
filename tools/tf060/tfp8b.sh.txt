@@ -1,0 +1,19 @@
+#!/bin/bash
+# bf16 vs --prefill-fp8 prompts on our checkpoint (user: "check this also"; "fast tests first"): 8k + 32k x3 only. After tfple1. Hypothesis: tools/tf060/HYPOTHESIS.md.
+R=/opt/llm/runners/results/tf060; T=/opt/llm/runtime/tf-venv; TF=/home/jschmied/git/tensorfold; M=/opt/llm/models/qwen38-flash-next-mtpfp4
+log(){ echo "$(date +%T) $*" >> $R/tfp8.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+while systemctl is-active -q tfple1-chain; do sleep 30; done
+for arm in fp8:--prefill-fp8 bf16:--no-prefill-fp8 fp8b:--prefill-fp8; do
+  tag=${arm%%:*}; flag=${arm#*:}; memok; log "== $tag ($flag)"
+  systemd-run --unit=fx-tfp8 --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 262144 --parallel 8 $flag > /opt/llm/tfp8-$tag.log 2>&1"
+  ok=0; for i in $(seq 1 90); do sleep 10; systemctl is-active -q fx-tfp8 || break; curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { ok=1; break; }; done
+  if [ $ok = 1 ]; then
+    log "$tag ready: $(grep -o 'prompts: [^;]*;' /opt/llm/tfp8-$tag.log)"
+    $T/bin/python $TF/tools/prefill_cold.py run http://127.0.0.1:8092 flashnext $R/prefill_fast.json $R/mtpfp4-prefill-$tag.json > $R/mtpfp4-prefill-$tag.txt 2>&1; log "$tag prefill rc=$?"
+  else log "$tag DIED: $(tail -3 /opt/llm/tfp8-$tag.log)"; fi
+  systemctl stop fx-tfp8; sleep 20
+done
+echo "== TFP8 DONE ==" >> $R/tfp8.txt

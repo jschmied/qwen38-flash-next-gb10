@@ -1,0 +1,8 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfnext; L=/opt/llm/runners/tfnext
+export HOME=/root PYTHONUNBUFFERED=1 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-fp4x
+/usr/local/cuda/bin/ncu --profile-from-start off -k "regex:qmmf_kernel|_b16mm|_fp4mm|_reduce|_hc_writeback|_hc_mix|_hc_normed" -c 28 \
+  --section SpeedOfLight --section Occupancy --section LaunchStats --metrics gpu__time_duration.sum,lts__t_bytes.sum \
+  -o $R/ncuprompt --force-overwrite /opt/llm/runtime/tf-venv/bin/python $L/ncu_prompt.py /home/jschmied/git/tf-fp4x/src /opt/llm/models/qwen38-flash-next-mtpfp4 > $R/ncuprompt.log 2>&1
+/usr/local/cuda/bin/ncu -i $R/ncuprompt.ncu-rep --page raw --csv > $R/ncuprompt-raw.csv 2>&1
+echo "== NCUPROMPT DONE ==" >> $R/chain.txt
