@@ -3471,3 +3471,11 @@ codebook (branch `exl3-extract`, SASS unchanged):
 - Design if built (not built): for TW > 32 words, load word pairs per lane (64-bit coalesced) so a lane's 3–4
   consecutive words come from 2 source lanes with no selects, and extract all 8 windows from one funnel-shifted
   multi-word run with compile-time window offsets; exactness = every lane's 8 states equal the old path on random words.
+- **Below the 4-bit hand path for 1–3.5 bits? No** (user: "can we get below the hand tuned values for 1-3 and 3.5
+  bits?"; `tools/tfexl3x/xdirect.py`, `xrun3.py`, all variants bit-exact on every lane of 4,096 random tiles):
+  each lane loading its own two words (no coalesced load, no shuffles) vs `decode_tile`: K2 2 / 4 −6 %, K2 3 / 5
+  +2…+4 %, K2 6 (3-bit) −1 % (noise), K2 8 +10 % (the hand path wins). 3.5 bits (K2 7) as one three-word run instead
+  of two two-word runs: 164.0 / 163.8 / 164.5 vs 164.0 / 163.2 / 163.1 ps — level, the compiler already merged it.
+  3-bit cannot reach the 4-bit cost structurally: a lane's eight 3-bit windows straddle two unaligned words (two
+  fetches + a variable shift), while 4-bit's are its own word plus its neighbour's at fixed offsets. The remaining
+  gap (~1 shuffle + 1 shift a tile) is the floor of this layout. Nothing to build.
