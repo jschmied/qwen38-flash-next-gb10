@@ -15,3 +15,16 @@ Predictions (measured round 38.4 ms on #212):
 - **Result (§5bg):** experts ~37 % of a round (in range) but the grouped kernel runs 192–214 GB/s at decode windows
   (out of range high, stop rule): no expert-kernel lever. fp16 matrices 1.34 GB a forward at 203–239 GB/s (tiny GDN
   a/b at 22 GB/s, ~1.7 %). Remaining levers are bytes (fp16 HC matrices → FP8, ~6 %) or forwards, not kernels.
+
+## Second-opinion check (2026-10-02)
+
+Points checked against #212 profiles: `_ple_rows` 0.68 ms of a 5.2 s 8k prefill (dead); decode-once across 64 rows =
+#212 (done; decode has ~1 row an expert). Open: `unpack_kernel` (3.1 % of 8k prefill) stores; `prompt_kernel` (32.5 %)
+at ~3x its DRAM floor — is the trellis decode (3-bit extraction) its limiter?
+- prompt_kernel: DRAM 25–40 % of peak, tensor-pipe instructions < 15 %, issue-bound on INT/ALU (decode) → a cheaper
+  3-bit extraction would pay roughly in proportion to its instruction share.
+- unpack_kernel: store sectors per request ≥ 2x the ideal (the reviewer's 32 for 16 sectors) and DRAM write < 60 %
+  of peak → better stores worth ≤ ~1.5 % of prefill.
+- **Result (§5bh):** prompt_kernel memory 21 %, tensor 4 % of instructions, ALU+FMA 67 %, issue 30 % busy at 23 %
+  occupancy, 10 cycles/instruction → latency-bound on decode arithmetic (in range). unpack_kernel 160 GB/s, sectors
+  written twice, ≤ ~1 % of prefill (in range, small).

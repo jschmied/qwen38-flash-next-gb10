@@ -3418,3 +3418,22 @@ amortizes the same bytes, T12). Nothing built, nothing posted.
 - **User, same day:** "we are not optimizing by changing weights but by making engine faster" — the FP8
   hyper-connection option is out. Engine-only levers left for EXL3 decode: T12 concurrent-round graphs (7.8 % c=2,
   5.6–6.2 % c=4, §5bc), the 36 launch-bound GDN a/b matmuls (~1.7 %), dense EXL3 linear (≤ ~5 %), expert kernel (≤ ~4 %).
+
+### 5bh. Second opinion on EXL3 kernels, checked: only #212's prompt_kernel matters (latency-bound trellis decode)
+
+A reviewer (on main `17c73e1`, without #212) proposed: (1) grouped bit extraction in `_ple_rows`, (2) packed stores in
+the dense prefill `unpack_kernel`, (3) decode reuse across 32–64 expert rows, (4) a dedicated 3-bit extraction path.
+Checked on #212 (`profall-pr212-excerpt.txt`, ncu `ncu212-raw.csv`, `tools/tfexl3d/ncu_target.py`):
+
+- (1) `_ple_rows`: 0.68 ms of a 5.2 s 8k prefill, 0.20 ms over a 256-token decode — dead.
+- (3) is #212 (one decode per ≤ 64 pairs); in decode an expert has ~1 row (§5bg) — nothing to reuse.
+- (2) `unpack_kernel` (5-bit, 2560 x 8192): 3.1 % of an 8k prefill; 344 µs for 13 MB in + 42 MB out ≈ 160 GB/s,
+  memory 51 %, 60 cycles per issued instruction. Stores: 4 sectors a request (coalesced per instruction) but 2.62 M
+  sectors = 84 MB for a 42 MB matrix — each sector written twice, as the reviewer found. Ceiling ≤ ~1 % of prefill.
+- (4) **`prompt_kernel<2,6,4>`** (#212 gate|up, 2,048 rows, 3-bit): 32.5 % of an 8k prefill (+ down 10.3 %). One
+  layer's call 8.7 ms for 629 MB of trellis = 72 GB/s, ~3x its DRAM floor. ncu: SM 29.6 %, memory 21 %, issue slots
+  29.6 % busy, IPC 1.11, 10.1 cycles per issued instruction, 142 registers, occupancy 23 %. Instructions 1.05 G:
+  ALU 41 %, FMA 26 %, LSU 8 %, tensor 4 % → the trellis decode arithmetic is two thirds of the instructions and the
+  kernel is latency-bound on it. Cheaper extraction (the reviewer's 3-bit path) and more ILP/occupancy are the lever:
+  if the gate|up + down kernels ran 1.5x faster, an 8k prefill drops ~14 %.
+- It is #212's code (open, not ours); work on it builds on that branch.

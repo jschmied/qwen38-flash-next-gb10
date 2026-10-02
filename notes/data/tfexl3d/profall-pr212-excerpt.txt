@@ -1,0 +1,19 @@
+== checkpoint 8k prefill (5.2819 s): GPU kernel time 5202.2 ms
+    1691.27 ms  32.5 % x   196  void tf_exl3x::prompt_kernel<2, 6, 4>(tf_exl3x::PromptArgs)
+     534.24 ms  10.3 % x   196  void tf_exl3x::prompt_down_kernel<2, 6>(tf_exl3x::DownArgs)
+     250.75 ms   4.8 % x   245  void (anonymous namespace)::rot_in_kernel<__nv_bfloat16>(__nv_bfloat16 const*, int, int co
+     160.77 ms   3.1 % x   800  void (anonymous namespace)::unpack_kernel<10, 2>(unsigned int const*, __half*, int, long, 
+      94.07 ms   1.8 % x   196  void tf_exl3x::prompt_kernel<2, 10, 4>(tf_exl3x::PromptArgs)
+      71.27 ms   1.4 % x   876  (anonymous namespace)::rot_in_kernel(void const*, int, __half const*, __half*, int)
+      57.06 ms   1.1 % x   196  void tf_exl3x::prompt_down_kernel<2, 10>(tf_exl3x::DownArgs)
+       3.12 ms   0.1 % x     5  _ple_conv
+       2.73 ms   0.1 % x     5  _ple_gate
+       1.43 ms   0.0 % x    65  void (anonymous namespace)::unpack_kernel<6, 2>(unsigned int const*, __half*, int, long, l
+       0.75 ms   0.0 % x    10  void (anonymous namespace)::unpack_kernel<8, 2>(unsigned int const*, __half*, int, long, l
+       0.68 ms   0.0 % x     5  _ple_rows
+== checkpoint decode 256: GPU kernel time 2693.8 ms
+      31.71 ms   1.2 % x   160  void (anonymous namespace)::unpack_kernel<10, 2>(unsigned int const*, __half*, int, long, 
+      19.21 ms   0.7 % x  3137  void (anonymous namespace)::rot_in_kernel<__nv_bfloat16>(__nv_bfloat16 const*, int, int co
+      16.46 ms   0.6 % x 11939  (anonymous namespace)::rot_in_kernel(void const*, int, __half const*, __half*, int)
+       1.83 ms   0.1 % x    60  _ple_gate
+       0.20 ms   0.0 % x    60  _ple_rows

@@ -1,0 +1,10 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfexl3d; L=/opt/llm/runners/tfexl3d
+export TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-pr212 HOME=/root
+/usr/local/cuda/bin/ncu -k "regex:prompt_kernel|unpack_kernel" -c 6 --section SpeedOfLight --section MemoryWorkloadAnalysis \
+  --section Occupancy --section WarpStateStats --section ComputeWorkloadAnalysis --section InstructionStats \
+  --metrics dram__bytes_read.sum,dram__bytes_write.sum,gpu__time_duration.sum,smsp__inst_executed_pipe_tensor.sum,smsp__inst_executed.sum,smsp__inst_executed_pipe_alu.sum,smsp__inst_executed_pipe_fma.sum,smsp__inst_executed_pipe_lsu.sum,l1tex__t_sectors_pipe_lsu_mem_global_op_st.sum,l1tex__t_requests_pipe_lsu_mem_global_op_st.sum,sm__throughput.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed \
+  -o $R/ncu212 --force-overwrite /opt/llm/runtime/tf-venv/bin/python $L/ncu_target.py /home/jschmied/git/tf-pr212/src > $R/ncu212.log 2>&1
+/usr/local/cuda/bin/ncu -i $R/ncu212.ncu-rep --page raw --csv --metrics dram__bytes_read.sum,dram__bytes_write.sum,gpu__time_duration.sum,smsp__inst_executed_pipe_tensor.sum,smsp__inst_executed.sum,smsp__inst_executed_pipe_alu.sum,smsp__inst_executed_pipe_fma.sum,smsp__inst_executed_pipe_lsu.sum,l1tex__t_sectors_pipe_lsu_mem_global_op_st.sum,l1tex__t_requests_pipe_lsu_mem_global_op_st.sum,sm__throughput.avg.pct_of_peak_sustained_elapsed,dram__throughput.avg.pct_of_peak_sustained_elapsed,launch__registers_per_thread,sm__warps_active.avg.pct_of_peak_sustained_active > $R/ncu212-raw.csv 2>&1
+/usr/local/cuda/bin/ncu -i $R/ncu212.ncu-rep --page details --csv > $R/ncu212-details.csv 2>&1
+echo "== NCU DONE ==" >> $R/chain.txt
