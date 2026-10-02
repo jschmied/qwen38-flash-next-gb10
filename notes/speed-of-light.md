@@ -3415,3 +3415,6 @@ split over three kernel families of ≤ 5 % each. The levers that remain are byt
 hyper-connection matrices are 1.25 GB a forward (FP8 would halve them, ~6 % of a round, but it changes the pack's
 weights — a quality question and a new kind of option for TF), and fewer forwards per token (acceptance; concurrency
 amortizes the same bytes, T12). Nothing built, nothing posted.
+- **User, same day:** "we are not optimizing by changing weights but by making engine faster" — the FP8
+  hyper-connection option is out. Engine-only levers left for EXL3 decode: T12 concurrent-round graphs (7.8 % c=2,
+  5.6–6.2 % c=4, §5bc), the 36 launch-bound GDN a/b matmuls (~1.7 %), dense EXL3 linear (≤ ~5 %), expert kernel (≤ ~4 %).
