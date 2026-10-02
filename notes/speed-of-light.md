@@ -3640,3 +3640,7 @@ S1 / L4 (512 tokens) and solo_switch (A, B, C, A'), cb5101d vs #180 (d2e651a), t
 Hashes identical across trees and arms. So the regression is not EXL3-specific; SvangenStudios' 36 tok/s at every
 setting (ours: 63) suggests their decode is limited by something else — graphs not captured, or the n-gram tables
 paging from disk — which their startup lines would show ("N decode graphs captured", "mapped tables do not fit").
+- **#212 author's reply (2026-10-02 12:58):** they reproduce long_scoreboard dominance on 4.05 for down and the 6-bit
+  shared instance (memory ~24–25 %), but the 4-bit gate|up instance is barrier-led there (barrier 2.3 vs wait 1.8 per
+  issue, 31 % memory, register-bound at 142) — the ring may help less on 4.05. They will measure `0809a5c` on 4.05 and
+  welcome it as a follow-up PR once #212 lands. Our data is 3.05 only.
