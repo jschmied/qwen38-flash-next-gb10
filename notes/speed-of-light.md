@@ -3557,3 +3557,7 @@ weight-streaming kernel on the EXL3/NVFP4 paths, same bits in every arm (output 
 Pattern: the win needs a kernel that issues the next step's loads and then spends a long phase (barrier + a chunk of
 mma) before using them — #212's prompt kernel, and to a lesser degree W4A16 at prompt sizes. Kernels that stream
 continuously at decode sizes are already near their bandwidth; deeper prefetch only costs registers there.
+- **#179 / #222 status (2026-10-02 12:xx):** #222 shipped in TensorFold 0.6.2 (`28a6ae1`, plotarmordev; PR closed as
+  cherry-picked). #179 stays open: the reporter's two load-path refusals are not filed yet (no new issue). Our
+  `ple8decl` result (§5bf: the declared FP8 table loads and serves with #222) stands. 0.6.2 carries none of our open
+  PRs; #180, #211 and #212 all still merge cleanly.
