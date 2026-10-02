@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold PR #180 comment (2026-10-02).
+POSTED on #180 (2026-10-02, user: "ok"): https://github.com/ashhart/TensorFold/pull/180#issuecomment-5953457036
 
 @SvangenStudios thanks for the NVFP4 run. On our NVFP4 export (ModelOpt, NVFP4 experts, block-FP8 dense; one GB10) the
 recaptures do happen on cb5101d and #180 removes them, two rounds, greedy replies identical:
