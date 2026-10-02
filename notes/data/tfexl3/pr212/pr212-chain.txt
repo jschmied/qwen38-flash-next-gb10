@@ -1,0 +1,14 @@
+09:13:53 prefill v061-a rc=0
+09:17:29 prefill pr212-a rc=0
+09:20:31 prefill stack-a rc=0
+09:22:33 prefill v061-b rc=0
+09:23:46 prefill pr212-b rc=0
+09:25:34 prefill stack-b rc=0
+09:27:25 prefill v061-c rc=0
+09:28:37 prefill pr212-c rc=0
+09:30:13 prefill stack-c rc=0
+09:31:22 decode v061-a rc=0 TOTAL {"label": "v061-a", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.481, "tokens": 2048, "tok_s": 71.91, "ms_per_round": 38.38, "accept": 0.7047, "tokens_per_round": 2.76}
+09:32:30 decode pr212-a rc=0 TOTAL {"label": "pr212-a", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.5299, "tokens": 2048, "tok_s": 71.78, "ms_per_round": 38.45, "accept": 0.7047, "tokens_per_round": 2.76}
+09:33:38 decode v061-b rc=0 TOTAL {"label": "v061-b", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.4936, "tokens": 2048, "tok_s": 71.88, "ms_per_round": 38.4, "accept": 0.7047, "tokens_per_round": 2.76}
+09:35:03 decode pr212-b rc=0 TOTAL {"label": "pr212-b", "mode": "checkpoint", "rounds": 742, "drafted": 1849, "accepted": 1303, "decode_s": 28.4569, "tokens": 2048, "tok_s": 71.97, "ms_per_round": 38.35, "accept": 0.7047, "tokens_per_round": 2.76}
+== PR212 DONE ==

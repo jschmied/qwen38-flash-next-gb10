@@ -1,0 +1,19 @@
+#!/bin/bash
+# TF PR #212 on GB10: prefill 0.6.1 / #212 / our stack, three alternating rounds; decode 0.6.1 vs #212, two rounds.
+R=/opt/llm/runners/results/tfexl3; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; L=/opt/llm/runners/tfexl3; A=/opt/llm/runners/tffp4x
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b c; do
+  for arm in v061:tf-main061 pr212:tf-pr212 stack:tf-exl3-stack; do
+    memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-${arm%%:*} timeout 3600 $PY $L/prefill_ab.py /home/jschmied/git/${arm#*:}/src $M ${arm%%:*}-$rep >> $R/pr212.txt 2>&1
+    echo "$(date +%T) prefill ${arm%%:*}-$rep rc=$?" >> $R/pr212-chain.txt
+  done
+done
+for rep in a b; do
+  for arm in v061:tf-main061 pr212:tf-pr212; do
+    memok; TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-${arm%%:*} timeout 3600 $PY $A/accept.py /home/jschmied/git/${arm#*:}/src $M ${arm%%:*}-$rep checkpoint > $R/pr212-acc-${arm%%:*}-$rep.log 2>&1
+    echo "$(date +%T) decode ${arm%%:*}-$rep rc=$? $(grep TOTAL $R/pr212-acc-${arm%%:*}-$rep.log)" >> $R/pr212-chain.txt
+  done
+done
+echo "== PR212 DONE ==" >> $R/pr212-chain.txt

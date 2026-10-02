@@ -1,0 +1,73 @@
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 54.93 GiB within 101.24 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] building CUDA extension tensorfold_exl3_linear_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_exl3_experts_v1 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qmm_v5 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn_io (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_gdn_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 0.7s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 22.9s
+{"label": "v061-a", "tokens": 8202, "prefill_s": 11.386, "wall_s": 12.665, "hash": "93f5ec6aecc9"}
+{"label": "v061-a", "tokens": 32779, "prefill_s": 46.87, "wall_s": 48.5, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 55.37 GiB within 103.43 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] building CUDA extension tensorfold_exl3_linear_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_exl3_experts_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qmm_v5 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn_io (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_gdn_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_experts_v7 (first start after an install or update; later starts reuse it)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 22.2s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 47.2s
+{"label": "pr212-a", "tokens": 8202, "prefill_s": 5.298, "wall_s": 6.586, "hash": "93f5ec6aecc9"}
+{"label": "pr212-a", "tokens": 32779, "prefill_s": 21.294, "wall_s": 22.923, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 55.37 GiB within 103.35 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] building CUDA extension tensorfold_exl3_linear_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_exl3_experts_v4 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qmm_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn_io (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_gdn_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 4.0s; 21 decode graphs captured; prompt kernels warmed in 22.2s
+{"label": "stack-a", "tokens": 8202, "prefill_s": 8.674, "wall_s": 9.877, "hash": "93f5ec6aecc9"}
+{"label": "stack-a", "tokens": 32779, "prefill_s": 36.256, "wall_s": 37.791, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 54.93 GiB within 102.32 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 22.3s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 2.1s
+{"label": "v061-b", "tokens": 8202, "prefill_s": 11.42, "wall_s": 12.68, "hash": "93f5ec6aecc9"}
+{"label": "v061-b", "tokens": 32779, "prefill_s": 46.233, "wall_s": 47.85, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 55.37 GiB within 103.00 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 3.8s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.2s
+{"label": "pr212-b", "tokens": 8202, "prefill_s": 5.305, "wall_s": 6.514, "hash": "93f5ec6aecc9"}
+{"label": "pr212-b", "tokens": 32779, "prefill_s": 21.314, "wall_s": 22.865, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 55.37 GiB within 102.99 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 21.6s; 21 decode graphs captured; prompt kernels warmed in 2.1s
+{"label": "stack-b", "tokens": 8202, "prefill_s": 8.575, "wall_s": 9.783, "hash": "93f5ec6aecc9"}
+{"label": "stack-b", "tokens": 32779, "prefill_s": 34.687, "wall_s": 36.233, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 54.93 GiB within 103.07 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 9.9s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 2.1s
+{"label": "v061-c", "tokens": 8202, "prefill_s": 11.439, "wall_s": 12.745, "hash": "93f5ec6aecc9"}
+{"label": "v061-c", "tokens": 32779, "prefill_s": 46.252, "wall_s": 47.908, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 55.37 GiB within 103.23 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 2.3s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.2s
+{"label": "pr212-c", "tokens": 8202, "prefill_s": 5.287, "wall_s": 6.514, "hash": "93f5ec6aecc9"}
+{"label": "pr212-c", "tokens": 32779, "prefill_s": 21.346, "wall_s": 22.906, "hash": "44d33ab594f8"}
+[transformers] You are using a model of type `qwen4_exp` to instantiate a model of type ``. This may be expected if you are loading a checkpoint that shares a subset of the architecture (e.g., loading a `sam2_video` checkpoint into `Sam2Model`), but is otherwise not supported and can yield errors. Please verify that the checkpoint is compatible with the model you are instantiating.
+[transformers] Token indices sequence length is longer than the specified maximum sequence length for this model (2873621 > 262144). Running this sequence through the model will result in indexing errors
+[tensorfold] CUDA rank 0 startup estimate 55.37 GiB within 102.92 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 8.7s; 21 decode graphs captured; prompt kernels warmed in 2.1s
+{"label": "stack-c", "tokens": 8202, "prefill_s": 8.653, "wall_s": 9.872, "hash": "93f5ec6aecc9"}
+{"label": "stack-c", "tokens": 32779, "prefill_s": 34.983, "wall_s": 36.527, "hash": "44d33ab594f8"}

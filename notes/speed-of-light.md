@@ -3358,3 +3358,22 @@ input scale (`nvfp4q.cuh`); down writes each pair's row. One rank, SM 12.x; MTP 
 - Predictions: prefill −8…−18 % — in range (low end); decode ±5 % — in range; quality top-1 −1…−4 pp — out of range
   (−4.4 pp: 95.6 % agreement, 93.0 % on wikitext). For scale, TF's own 27B table has checkpoint math at KL 0.070,
   top-1 92.9 %, ppl +3.9 % against fp32 (every layer, not only the experts).
+
+### 5be. TF PR #212 (grearjake-star, EXL3 prompt experts) confirmed on our GB10: prompts −53.5…−54.6 %, same bits, decode level
+
+User 2026-10-02: "check other open PR - any direction/gaps for exl3" → "yes" (A/B #212). #212 (`9f062b2` on 0.6.1) gives
+prompt windows over 64 rows a kernel that decodes each trellis tile once for up to 64 pairs (split sums in
+registers), 2,048-row windows, fused fp16 K slices and new prompt GEMM tiles; decode/verify windows keep the grouping
+kernel. Flash Next EXL3 3.05 bpw, `prefill_ab.py`, three alternating rounds (`data/tfexl3/pr212/`):
+
+| prefill (s) | 0.6.1 (`17c73e1`) | #212 | our stack (#184→#207) |
+|---|---|---|---|
+| 8k, rounds a/b/c | 11.39 / 11.42 / 11.44 | 5.30 / 5.31 / 5.29 (−53.5…−53.8 %) | 8.67 / 8.58 / 8.65 (−23.8…−24.9 %) |
+| 32k | 46.87 / 46.23 / 46.25 | 21.29 / 21.31 / 21.35 (−53.8…−54.6 %) | 36.26 / 34.69 / 34.98 (−22.6…−25.0 %) |
+
+- Hashes identical in all three arms (8k `93f5ec6aecc9`, 32k `44d33ab594f8`). Decode, 8 prompts x 256 tokens, drafts
+  on: 0.6.1 71.91 / 71.88 tok/s, #212 71.78 / 71.97, identical rounds and drafts (742, 1,303 / 1,849 accepted).
+- #212's tests + our EXL3 tests on GB10: 90 passed, 52 skipped.
+- Predictions (round 15): −45…−60 % in range; stack −25…−28 % (got −22.6…−25.0, slightly low); decode ±2 % in range.
+- Consequence: our prompt-side EXL3 PRs (#184, #195, #207) are superseded. #191/#193 were measured on prompts only;
+  their value for decode/verify windows (≤ 64 rows, one-block grouping is cheap there) is unmeasured.

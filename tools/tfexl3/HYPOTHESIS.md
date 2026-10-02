@@ -145,3 +145,15 @@ Arms on top of #195 (`exl3-bf16-rows`): base, + fp16 prompt tile (`exl3-f16-prom
 (`exl3-stack-win`), + both (`exl3-f16-win`). Rule: a lever counts only if its sign holds in all 3 rounds AND its median
 gain beats the base arm's own spread (max − min over rounds).
 - f16 tile: 8k −2…−4 %, 32k −1…−3 %; window: −1…−4 %; both ≈ additive; tokens identical in every arm.
+
+## Round 15 (2026-10-02): TF PR #212 (grearjake-star, EXL3 prompt experts) on our GB10
+
+Arms: 0.6.1 (`17c73e1`), #212 (`9f062b2`, on 0.6.1), our stack head `exl3-stack-win` (#184→#207, on pr-141-0.6.1).
+Flash Next EXL3 3.05 bpw, `prefill_ab.py` (8k + 32k code prompts, 16-token hash), three alternating rounds; then
+decode (`tffp4x/accept.py`, 8 prompts x 256 tokens, drafts on) for 0.6.1 vs #212, two rounds.
+- #212 vs 0.6.1: prefill −45…−60 % at 8k and 32k (their 6K/24K: −51/−52 % on 3.05); our stack −25…−28 %.
+- Hashes identical across all three arms (all claim same bits).
+- Decode: #212 within ±2 % of 0.6.1 (decode windows keep the grouping kernel).
+- Their tests + our EXL3 tests pass on GB10.
+- **Result (§5be):** #212 −53.5…−54.6 % (in range), stack −22.6…−25.0 % (slightly below range), hashes identical,
+  decode level (71.8–72.0 vs 71.9 tok/s, identical rounds).
