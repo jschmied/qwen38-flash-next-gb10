@@ -1,0 +1,126 @@
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 102.93 GiB; native 262144, allocated prompt/reply window 16384, cache slots 16391
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 16384-token prompt/reply window; 16391-token cache; routed NVFP4 experts in the checkpoint's math (FP4 x FP4 under its static input scales); n-gram tables read in 12.3s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.3s
+USDT:2026-10-02 12:47:54 1737657:1737657 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 12:48:00 1737657:1737657 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== checkpoint 8k prefill (5.4799 s): GPU kernel time 5282.6 ms
+     970.36 ms  18.4 % x   245  void (anonymous namespace)::experts_ck_kernel<1>((anonymous namespace)::Rows, (anonymous n
+     620.67 ms  11.7 % x   245  void (anonymous namespace)::experts_ck_kernel<3>((anonymous namespace)::Rows, (anonymous n
+     555.56 ms  10.5 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+     529.17 ms  10.0 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+     434.92 ms   8.2 % x  1270  _b16mm
+     338.10 ms   6.4 % x  1005  _reduce
+     329.86 ms   6.2 % x   490  _fp4mm
+     280.60 ms   5.3 % x   429  _chunks
+     261.49 ms   4.9 % x   505  _hc_writeback
+     172.81 ms   3.3 % x   500  _hc_mix
+     160.27 ms   3.0 % x   500  _hc_normed
+     134.65 ms   2.5 % x   216  void (anonymous namespace)::chain_kernel<float, 128, 32>(float const*, float const*, __nv_
+     124.68 ms   2.4 % x   970  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      76.03 ms   1.4 % x   180  void (anonymous namespace)::front_kernel<16, 48>(__nv_bfloat16 const*, long long const*, i
+      54.50 ms   1.0 % x   216  void (anonymous namespace)::back_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const*
+      45.77 ms   0.9 % x   429  _merge
+      23.26 ms   0.4 % x   429  _scores
+      22.05 ms   0.4 % x   245  _router
+      17.92 ms   0.3 % x    65  _attn_gate
+      15.20 ms   0.3 % x    65  _attn_prep
+      14.00 ms   0.3 % x   429  _select
+      12.20 ms   0.2 % x    49  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+       9.64 ms   0.2 % x   490  void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, 
+       8.36 ms   0.2 % x   490  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::direct
+       6.26 ms   0.1 % x   245  _topk_rows
+       6.08 ms   0.1 % x   245  void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<float>
+       5.70 ms   0.1 % x   245  void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::Tenso
+       5.63 ms   0.1 % x   490  void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at
+       5.52 ms   0.1 % x   245  void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIt
+       4.83 ms   0.1 % x   105  Memcpy DtoD (Device -> Device)
+       4.58 ms   0.1 % x    48  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+       4.51 ms   0.1 % x   245  void at::native::vectorized_elementwise_kernel<4, at::native::neg_kernel_cuda(at::TensorIt
+       3.96 ms   0.1 % x   245  (anonymous namespace)::quant4_kernel(__nv_bfloat16 const*, int, int, int, float, unsigned 
+       3.52 ms   0.1 % x     5  void (anonymous namespace)::prefill_kernel<32, 128, 128, 2, 4, 3, false>(__nv_bfloat16 con
+       3.18 ms   0.1 % x     5  _ple_conv
+       2.63 ms   0.0 % x     5  _ple_gate
+       2.38 ms   0.0 % x   500  _hc_act
+       1.96 ms   0.0 % x   196  (anonymous namespace)::plan_offsets(int, int, int, int*, int*, int*)
+       1.71 ms   0.0 % x    10  _rmsnorm
+       1.64 ms   0.0 % x     5  _add_streams
+       1.13 ms   0.0 % x     1  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::arr
+       1.04 ms   0.0 % x    10  _embed
+       0.78 ms   0.0 % x    20  Memcpy HtoD (Pinned -> Device)
+       0.74 ms   0.0 % x   196  (anonymous namespace)::plan_rank(int const*, int, int, int*, int*)
+       0.47 ms   0.0 % x   196  (anonymous namespace)::plan_scatter(int const*, int, int, int const*, int const*, int*)
+       0.45 ms   0.0 % x   222  _shift_windows
+       0.43 ms   0.0 % x   442  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array
+       0.42 ms   0.0 % x     5  _ple_embed_bf16
+       0.39 ms   0.0 % x    65  _pool
+       0.32 ms   0.0 % x   245  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<unsigned char>, 
+       0.17 ms   0.0 % x   180  void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::arra
+       0.15 ms   0.0 % x    49  (anonymous namespace)::plan_kernel(int const*, int, int, int, int*, int*, int*)
+       0.01 ms   0.0 % x     2  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<c10::BFloat16>, 
+       0.01 ms   0.0 % x     1  void at::native::reduce_kernel<512, 1, at::native::ReduceOp<c10::BFloat16, at::native::Arg
+       0.00 ms   0.0 % x     1  Memcpy DtoH (Device -> Pageable)
+       0.00 ms   0.0 % x     1  Memset (Device)
+USDT:2026-10-02 12:48:01 1737657:1737657 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 12:48:05 1737657:1737657 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== checkpoint decode 256: GPU kernel time 4074.6 ms
+     873.01 ms  21.4 % x  3729  void (anonymous namespace)::experts_ck_kernel<1>((anonymous namespace)::Rows, (anonymous n
+     843.45 ms  20.7 % x  3480  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+     744.01 ms  18.3 % x 20298  _b16mm
+     404.19 ms   9.9 % x  3457  void (anonymous namespace)::experts_ck_kernel<3>((anonymous namespace)::Rows, (anonymous n
+     289.95 ms   7.1 % x  3408  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+     284.88 ms   7.0 % x  7458  _fp4mm
+     147.93 ms   3.6 % x   272  void (anonymous namespace)::qmm_kernel<32, 16, 64, 1, 4, 4, false, false, false>(__nv_bflo
+     113.31 ms   2.8 % x  2556  void (anonymous namespace)::chain_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const
+      56.29 ms   1.4 % x  3729  _router
+      38.42 ms   0.9 % x  1116  void (anonymous namespace)::replay_kernel<16, 48>(float const*, float const*, __nv_bfloat1
+      35.18 ms   0.9 % x 15879  _reduce
+      23.26 ms   0.6 % x 13881  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      20.78 ms   0.5 % x  7875  _hc_writeback
+      17.28 ms   0.4 % x   272  void (anonymous namespace)::experts_ck_kernel<0>((anonymous namespace)::Rows, (anonymous n
+      15.53 ms   0.4 % x  7024  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::direct
+      13.50 ms   0.3 % x  3729  _topk_rows
+      13.15 ms   0.3 % x  1137  _chunks
+      10.99 ms   0.3 % x  7803  _hc_normed
+      10.60 ms   0.3 % x    48  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false>(__nv_bfloat16 co
+       9.83 ms   0.2 % x  4705  void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::Tenso
+       9.77 ms   0.2 % x  3729  (anonymous namespace)::plan_kernel(int const*, int, int, int, int*, int*, int*)
+       9.06 ms   0.2 % x  7458  void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, 
+       8.33 ms   0.2 % x  3729  (anonymous namespace)::quant4_kernel(__nv_bfloat16 const*, int, int, int, float, unsigned 
+       8.26 ms   0.2 % x  7803  _hc_act
+       8.11 ms   0.2 % x  7803  _hc_mix
+       6.92 ms   0.2 % x    48  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, true>(__nv_bfloat16 con
+       6.62 ms   0.2 % x  7458  void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at
+       4.86 ms   0.1 % x  1137  _attn_prep
+       4.47 ms   0.1 % x  4000  void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIt
+       4.31 ms   0.1 % x   542  void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::func_wrappe
+       3.72 ms   0.1 % x   271  void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::MaxOps<floa
+       3.45 ms   0.1 % x  3729  void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<float>
+       3.41 ms   0.1 % x  3729  void at::native::vectorized_elementwise_kernel<4, at::native::neg_kernel_cuda(at::TensorIt
+       2.83 ms   0.1 % x  1137  _pool
+       2.39 ms   0.1 % x    72  void (anonymous namespace)::chain_kernel<float, 128, 32>(float const*, float const*, __nv_
+       2.37 ms   0.1 % x  3729  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<unsigned char>, 
+       1.82 ms   0.0 % x  1137  _merge
+       1.81 ms   0.0 % x    72  _ple_gate
+       1.51 ms   0.0 % x   216  _shift_windows
+       1.44 ms   0.0 % x   546  _rmsnorm
+       1.39 ms   0.0 % x    72  void at::native::reduce_kernel<512, 1, at::native::ReduceOp<c10::BFloat16, at::native::Arg
+       1.11 ms   0.0 % x     1  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::arr
+       1.03 ms   0.0 % x  1137  _attn_gate
+       0.96 ms   0.0 % x   345  _embed
+       0.93 ms   0.0 % x   353  Memcpy DtoD (Device -> Device)
+       0.84 ms   0.0 % x  1137  _select
+       0.83 ms   0.0 % x  1137  _scores
+       0.82 ms   0.0 % x     1  void (anonymous namespace)::prefill_kernel<32, 128, 128, 2, 4, 3, false>(__nv_bfloat16 con
+       0.60 ms   0.0 % x   777  memcpy32_post
+       0.50 ms   0.0 % x   412  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array
+       0.44 ms   0.0 % x   326  void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native:
+       0.38 ms   0.0 % x    36  void (anonymous namespace)::front_kernel<16, 48>(__nv_bfloat16 const*, long long const*, i
+       0.37 ms   0.0 % x   271  void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::maske
+       0.35 ms   0.0 % x   271  void at::native::vectorized_elementwise_kernel<4, at::native::AUnaryFunctor<float, float, 
+       0.35 ms   0.0 % x   690  Memcpy HtoD (Pinned -> Device)
+       0.34 ms   0.0 % x   271  void at::native::vectorized_elementwise_kernel<4, at::native::AbsFunctor<float>, std::arra
+       0.32 ms   0.0 % x   273  _add_streams
+       0.32 ms   0.0 % x   271  void at::native::(anonymous namespace)::CatArrayBatchedCopy_alignedK_contig<at::native::(a
+       0.31 ms   0.0 % x   271  void at::native::vectorized_elementwise_kernel<4, at::native::log_kernel_cuda(at::TensorIt
+       0.31 ms   0.0 % x    72  void (anonymous namespace)::back_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const*
+STATS {"prefill_s": 0.1379, "cached": 0, "drafts": true, "drafted": 248, "accepted": 185, "min_rows": 2, "decode_s": 4.2333, "rounds": 71, "decode_tps": 60.24}

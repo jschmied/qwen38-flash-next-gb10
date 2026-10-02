@@ -3561,3 +3561,35 @@ continuously at decode sizes are already near their bandwidth; deeper prefetch o
   cherry-picked). #179 stays open: the reporter's two load-path refusals are not filed yet (no new issue). Our
   `ple8decl` result (§5bf: the declared FP8 table loads and serves with #222) stands. 0.6.2 carries none of our open
   PRs; #180, #211 and #212 all still merge cleanly.
+
+### 5bl. Next prefill levers, bound first: NVFP4's prompt rows run on decode tiles; EXL3's experts are occupancy-limited
+
+User: "yes, also launch a subagent looking into other exl3 projects". 8k prefill, full kernel list (`data/tfnext/prof-*`):
+
+| | EXL3 (#212 + prefetch) 4.51 s | NVFP4 (#211, checkpoint math) 5.48 s |
+|---|---|---|
+| routed + shared experts | ~1.6 s (36 %) | 1.59 s (30 %) |
+| dense prompt GEMM | `_gemm` 642 ms (14.5 %) | `qmmf` 1,085 ms (20.5 %) |
+| bf16 / fp4 matmuls (+ split-K reduce) | `_f16_*` 257 ms | `_b16mm` 435 + `_fp4mm` 330 + `_reduce` 338 = 1,103 ms (21 %) |
+| hyper-connection glue `_hc_*` | 571 ms (12.9 %) | 594 ms (10.8 %) |
+| expert input rotation `rot_in` | 245 ms (5.5 %, ~230 GB/s: at the floor for what it writes) | — |
+| attention / DeltaNet | ~6 % each | ~6 % each |
+
+- **NVFP4 path: prompt rows go through the decode kernels.** Block-FP8 `prefill()` is `self(x, out)` (the lane
+  matmul) unless `--prefill-fp8`; `qmmf` launches at most 64 x 64 tiles (`launch` switch: 16 / 32 / else 64), so a
+  2,048-row chunk re-reads each weight 32x. It does the same dense FLOPs as EXL3's `_gemm` in 1.7x the time (~40 vs
+  ~68 TFLOPS). `_b16mm` / `_fp4mm` write fp32 K slices and `_reduce` sums them — what #212's commits 3–4 removed on
+  the EXL3 path (`_f16_fused`, prompt tiles). Both are tile / launch-shape changes: a row's K order is fixed by the
+  shape's split count, so the bits can stay.
+- **EXL3 path:** experts (#212's kernel) are occupancy-limited (25 %: 32 KB smem + 142 registers a block). ncu on
+  the Triton `_hc_*` kernels failed in the real model (in-place writes under kernel replay); bounded from timing only.
+- **Subagent survey of other EXL3 projects** (exllamav3 `d3739fd`, MiaAI-Lab fat GEMM, b12x, Atlas PR #6, ik_llama
+  KT, QTIP): no better MoE prefill kernel than #212's. Most useful: exllamav3's fused MoE prefill keeps the PACKED
+  trellis in shared memory (3-stage cp.async) and decodes each warp's tile straight into the mma B registers — ~5x
+  less smem than #212's decoded fp16 tiles, i.e. the route to more than 3 blocks an SM (same decoded values; the
+  summation order would have to be kept). Not usable: fp16-accumulate GEMM (changes numerics), b12x's EXL3 (its own
+  codebooks), Atlas (AGPL). Competitor numbers on GB10: Atlas PR #6 1,366 tok/s prefill at 2.8K (3.87 bpw);
+  MiaAI-Lab claims 979 tok/s at 1.2K. Ours after §5bj: ~1,800 tok/s at 8K (3.05 bpw).
+- Ranked: (1) NVFP4 `qmmf` prompt tiles (≤ −8 % NVFP4 prefill if it reached `_gemm`'s rate); (2) NVFP4 `_b16mm` /
+  `_fp4mm` fused K slices (removes `_reduce`, 6.4 %); (3) EXL3 experts from packed smem (occupancy; #212's kernel);
+  (4) HC glue fusion (both paths, ~12 %, unbounded so far); (5) `rot_in` folded into the expert kernel (5.5 %).
