@@ -1640,3 +1640,6 @@ wait on one ~100 GB pull, and they share one serve.
   its indexer changes are a ROCm aiter backend) — csrc not rebuilt. #54912 → `8ddb9139d8`: conflict in the test
   imports (main now takes the Qwen4Exp config classes from transformers); `tests/models/qwen4_exp/test_config.py`
   15 passed on GB10 (transformers 5.17.0 side-loaded). Both MERGEABLE; no comments posted.
+- **TensorFold #258 reply** (2026-10-02, user: "short reply"): EXL3 prefill ~670 tok/s at 235k (0.6.1) → pointer to
+  #212 (8k 11.4 → 5.3 s, 32k 46.2 → 21.3 s on our GB10), the agreed prefetch follow-up (8k 4.54 s, ~1,800 tok/s) and
+  #252 (cold n-gram pages); 235k not measured. https://github.com/ashhart/TensorFold/issues/258#issuecomment-5959052841
