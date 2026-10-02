@@ -1634,3 +1634,9 @@ wait on one ~100 GB pull, and they share one serve.
   now notes the 1,600 → 1,664 block growth (prefix reuse up to one block less) and that the decode gain grows with K
   (k3dani: K=2 PIECEWISE c=1 +1.9…+4 %). Reply to k3dani and lucifer1004:
   https://github.com/vllm-project/vllm/pull/58863#issuecomment-5953690720
+- **vLLM #55122 and #54912: main merged** (2026-10-02, user: "yes"). #55122 → `d672b75416`: conflict only in
+  `tests/kernels/test_top_k_per_row.py` (both sides appended tests; merged file = the union, 44 tests, none lost);
+  `persistent_topk.cuh`, `topk.cu`, `cooperative_topk.*` byte-identical to the tested head (main touched none of them;
+  its indexer changes are a ROCm aiter backend) — csrc not rebuilt. #54912 → `8ddb9139d8`: conflict in the test
+  imports (main now takes the Qwen4Exp config classes from transformers); `tests/models/qwen4_exp/test_config.py`
+  15 passed on GB10 (transformers 5.17.0 side-loaded). Both MERGEABLE; no comments posted.
