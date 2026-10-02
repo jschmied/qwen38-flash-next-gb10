@@ -1629,3 +1629,8 @@ wait on one ~100 GB pull, and they share one serve.
   cb5101d recaptures (+34 % one request on a 4-slot engine, 26–29 captures a lone request) and #180 removes them;
   their 36 tok/s at every setting points at graphs not captured or tables paging (§5bo).
   https://github.com/ashhart/TensorFold/pull/180#issuecomment-5953457036
+- **vLLM #58863: merge main + reply** (2026-10-02, user: "yes" / "post 3"): merged main (`c3e2df3cea`), dropped the
+  obsolete `mamba_cache_mode "all"` test row after #58997 (`372a3c0c16`, 90 RecoverSSM tests pass on GB10); description
+  now notes the 1,600 → 1,664 block growth (prefix reuse up to one block less) and that the decode gain grows with K
+  (k3dani: K=2 PIECEWISE c=1 +1.9…+4 %). Reply to k3dani and lucifer1004:
+  https://github.com/vllm-project/vllm/pull/58863#issuecomment-5953690720
