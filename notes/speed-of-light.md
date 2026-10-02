@@ -3381,3 +3381,12 @@ kernel. Flash Next EXL3 3.05 bpw, `prefill_ab.py`, three alternating rounds (`da
   tok/s vs #212 + #184/#191/#193 (`pr212-grp`, 53da6ed) 72.19 / 71.94 / 71.97, identical rounds and drafts (742,
   1,303 / 1,849). Per round −0.1 / −0.1 / +0.2 %: the sign flips and the gap is inside the base arm's 0.65 % spread.
   No decode value → all five of our EXL3 prompt PRs are superseded by #212. EXL3 tests on the stack: 92 passed.
+
+### 5bf. TF #179: an FP8 n-gram table declared in quantized_layers loads with #222; the remaining refusals are elsewhere
+
+Variant `qwen38-flash-next-mtpfp4-ple8decl` (our mtpfp4, hardlinked, with `layers.1.ple.ple_embedding.ngram_embedding:
+{"quant_algo": "FP8"}` added to quantized_layers, the #179 shape): v0.6.1 refuses at the config check ("this
+checkpoint has modelopt MIXED_PRECISION"); v0.6.1 + #222 (`89d723e`, accepted for 0.6.2) loads and serves — primes,
+"Paris", a factorial function, 86 / 99 drafts accepted (`data/tfzoo/ple8-*`). So the table itself is done; the two
+load-path refusals the reporter still hits come from other differences in their NVIDIA export (their quantized_layers
+has 301 FP8_PB_WO vs our 157, and config_groups with 8-bit group-128 MTP experts) — not identified, not posted.

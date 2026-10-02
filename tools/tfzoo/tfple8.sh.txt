@@ -1,0 +1,17 @@
+#!/bin/bash
+# TF #179: the declared FP8 n-gram table on v0.6.1 and v0.6.1 + #222.
+R=/opt/llm/runners/results/tfzoo; T=/opt/llm/runtime/tf-venv; P=/opt/llm/runtime/vllm-venv-fnext/bin/python; L=/opt/llm/runners/tfzoo
+M=/opt/llm/models/qwen38-flash-next-mtpfp4-ple8decl
+log(){ echo "$(date +%T) $*" >> $R/ple8-chain.txt; }
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for arm in v061:/home/jschmied/git/tf-main061/src pr222:/home/jschmied/git/tf-pr222/src; do memok
+  tag=ple8-${arm%%:*}; SRC=${arm#*:}
+  systemd-run --unit=fx-tfzoo --collect -E HOME=/root -E TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-${arm%%:*} \
+    -E PATH=/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin -E PYTHONPATH=$SRC \
+    bash -c "$T/bin/tensorfold serve $M --port 8092 --name flashnext --context 32768 --parallel 1 > /opt/llm/tfzoo-$tag.log 2>&1"
+  ok=0; for i in $(seq 1 180); do sleep 5; systemctl is-active -q fx-tfzoo || break; curl -sf http://127.0.0.1:8092/v1/models >/dev/null && { ok=1; break; }; done
+  if [ $ok = 1 ]; then log "$tag LOADED"; timeout 1200 $P $L/zoo_probe.py $tag >> $R/ple8-probe.jsonl 2>> $R/ple8-probe.err
+  else log "$tag NOT SERVING: $(grep -E 'Error|error|refus|reads|FP8|quant' /opt/llm/tfzoo-$tag.log | tail -4 | tr '\n' ' ' | cut -c1-900)"; fi
+  systemctl stop fx-tfzoo 2>/dev/null; systemctl reset-failed fx-tfzoo 2>/dev/null; sleep 15
+done
+echo "== PLE8 DONE ==" >> $R/ple8-chain.txt
