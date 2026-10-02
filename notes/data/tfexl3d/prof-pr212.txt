@@ -1,0 +1,37 @@
+[tensorfold] CUDA rank 0 startup estimate 54.32 GiB within 103.29 GiB; native 262144, allocated prompt/reply window 16384, cache slots 16391
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 16384-token prompt/reply window; 16391-token cache; n-gram tables read alongside the weights (0.0s after them), locked in memory in 3.6s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.2s
+USDT:2026-10-02 10:11:04 1637463:1637463 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 10:11:10 1637463:1637463 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== checkpoint 8k prefill (5.2967 s): GPU kernel time 5220.2 ms
+    1699.18 ms  32.6 % x   196  void tf_exl3x::prompt_kernel<2, 6, 4>(tf_exl3x::PromptArgs)
+     634.46 ms  12.2 % x   875  _gemm
+     536.67 ms  10.3 % x   196  void tf_exl3x::prompt_down_kernel<2, 6>(tf_exl3x::DownArgs)
+     283.40 ms   5.4 % x   429  _chunks
+     257.92 ms   4.9 % x   505  _hc_writeback
+     250.56 ms   4.8 % x   245  void (anonymous namespace)::rot_in_kernel<__nv_bfloat16>(__nv_bfloat16 const*, int, int co
+     172.52 ms   3.3 % x   500  _hc_mix
+     161.76 ms   3.1 % x   800  void (anonymous namespace)::unpack_kernel<10, 2>(unsigned int const*, __half*, int, long, 
+     155.83 ms   3.0 % x   500  _hc_normed
+     134.93 ms   2.6 % x   216  void (anonymous namespace)::chain_kernel<float, 128, 32>(float const*, float const*, __nv_
+     130.18 ms   2.5 % x   540  _f16_fused
+     125.24 ms   2.4 % x   245  (anonymous namespace)::gateup_epilogue_kernel(float const*, int const*, __half const*, __h
+     124.25 ms   2.4 % x   650  _f16_mm
+      94.71 ms   1.8 % x   196  void tf_exl3x::prompt_kernel<2, 10, 4>(tf_exl3x::PromptArgs)
+USDT:2026-10-02 10:11:10 1637463:1637463 SyncActivityProfilerHandler.cpp:52] profiler_start
+USDT:2026-10-02 10:11:13 1637463:1637463 SyncActivityProfilerHandler.cpp:59] profiler_stop
+== checkpoint decode 256: GPU kernel time 2698.3 ms
+     907.99 ms  33.7 % x  6274  void tf_exl3x::grouped_kernel<2, 8, 4, 1, 2, 10>(__half const*, __half const*, long const*
+     461.12 ms  17.1 % x 15462  _f16_mm
+     384.83 ms  14.3 % x  3148  void (anonymous namespace)::linear_kernel<10, 2, 8>(__half const*, unsigned int const*, lo
+     301.75 ms  11.2 % x  7140  void (anonymous namespace)::linear_kernel<10, 2, 4>(__half const*, unsigned int const*, lo
+     143.15 ms   5.3 % x   256  void (anonymous namespace)::qmm_kernel<32, 16, 64, 1, 4, 4, false, false, false>(__nv_bflo
+      93.05 ms   3.4 % x  2124  void (anonymous namespace)::chain_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const
+      50.49 ms   1.9 % x  3137  _router
+      43.17 ms   1.6 % x  3137  (anonymous namespace)::group_kernel(int const*, int*, int*, int*, int, int, int, int)
+      32.14 ms   1.2 % x   160  void (anonymous namespace)::unpack_kernel<10, 2>(unsigned int const*, __half*, int, long, 
+      29.55 ms   1.1 % x   175  _gemm
+      24.83 ms   0.9 % x   684  void (anonymous namespace)::replay_kernel<16, 48>(float const*, float const*, __nv_bfloat1
+      24.25 ms   0.9 % x  3137  (anonymous namespace)::gateup_epilogue_kernel(float const*, int const*, __half const*, __h
+      22.02 ms   0.8 % x  6651  _hc_writeback
+      19.58 ms   0.7 % x  3137  void (anonymous namespace)::rot_in_kernel<__nv_bfloat16>(__nv_bfloat16 const*, int, int co
+STATS {"prefill_s": 0.1678, "cached": 0, "drafts": true, "drafted": 229, "accepted": 196, "min_rows": 2, "decode_s": 2.6473, "rounds": 59, "decode_tps": 96.32}

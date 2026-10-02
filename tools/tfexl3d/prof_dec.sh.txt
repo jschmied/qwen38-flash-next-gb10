@@ -1,0 +1,5 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfexl3d; mkdir -p $R; PY=/opt/llm/runtime/tf-venv/bin/python
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-pr212
+timeout 3600 $PY /opt/llm/runners/tffp4x/prof.py /home/jschmied/git/tf-pr212/src /opt/llm/models/qwen38-flash-next-exl3-3.05bpw checkpoint > $R/prof-pr212.log 2>&1
+echo "== PROF DONE rc=$? ==" >> $R/chain.txt

@@ -1,0 +1,8 @@
+{"bytes_per_expert_MB": 1.758}
+{"R": 1, "distinct": 11.0, "routed_ms": 0.1166, "GBps_routed": 173.8, "grouped_ms": 0.0954, "GBps_grouped": 212.5, "kernels_ms": {"grouped_kernel": 0.0954, "": 0.0108}}
+{"R": 2, "distinct": 20.8, "routed_ms": 0.2162, "GBps_routed": 176.9, "grouped_ms": 0.1932, "GBps_grouped": 198.0, "kernels_ms": {"grouped_kernel": 0.1932, "": 0.0165}}
+{"R": 4, "distinct": 39.7, "routed_ms": 0.3811, "GBps_routed": 192.2, "grouped_ms": 0.3556, "GBps_grouped": 206.0, "kernels_ms": {"grouped_kernel": 0.3556, "": 0.023}}
+{"R": 8, "distinct": 75.5, "routed_ms": 0.7113, "GBps_routed": 195.6, "grouped_ms": 0.6621, "GBps_grouped": 210.2, "kernels_ms": {"grouped_kernel": 0.6621, "": 0.0372}}
+{"R": 16, "distinct": 139.9, "routed_ms": 1.2962, "GBps_routed": 198.9, "grouped_ms": 1.2038, "GBps_grouped": 214.1, "kernels_ms": {"grouped_kernel": 1.2038, "": 0.0709}}
+{"R": 32, "distinct": 241.6, "routed_ms": 2.3329, "GBps_routed": 190.9, "grouped_ms": 2.1925, "GBps_grouped": 203.1, "kernels_ms": {"grouped_kernel": 2.1925, "": 0.143}}
+{"R": 64, "distinct": 366.7, "routed_ms": 3.8195, "GBps_routed": 176.9, "grouped_ms": 3.5371, "GBps_grouped": 191.1, "kernels_ms": {"grouped_kernel": 3.5371, "": 0.3064}}

@@ -3390,3 +3390,28 @@ checkpoint has modelopt MIXED_PRECISION"); v0.6.1 + #222 (`89d723e`, accepted fo
 "Paris", a factorial function, 86 / 99 drafts accepted (`data/tfzoo/ple8-*`). So the table itself is done; the two
 load-path refusals the reporter still hits come from other differences in their NVIDIA export (their quantized_layers
 has 301 FP8_PB_WO vs our 157, and config_groups with 8-bit group-128 MTP experts) — not identified, not posted.
+
+### 5bg. EXL3 decode on TF (after #212) is at the DRAM floor: the expert kernel runs 192–214 GB/s; no kernel lever left above ~5 %
+
+User: "work on it" (the open EXL3 lever after #212). Bound first (memory `bound-the-core-before-overheads`); data
+`data/tfexl3d/`; predictions `tools/tfexl3d/HYPOTHESIS.md`.
+
+1. **Profile, #212, c=1, drafts on, 256 tokens (59 rounds, 45.7 ms GPU a round, GPU busy ≈ wall):** grouped expert
+   kernel 33.7 % (+ grouping, epilogues, rotation ≈ 37 %, ~17 ms a round); `_f16_mm` 17.1 %; EXL3 `linear_kernel`
+   25.5 %; head `qmm_kernel` 5.3 %; DeltaNet chain 3.4 %.
+2. **Expert kernel at decode windows** (`dec_bw.py`, random 3-bit trellis, a fresh pick set each call, 1.76 MB an
+   expert): grouped kernel 211 / 196 / 203 / 210 / 214 / 204 / 192 GB/s at 1 / 2 / 4 / 8 / 16 / 32 / 64 rows; the
+   whole `routed()` 173–200 GB/s. Against ~224 GB/s: 87–95 %. In decode an expert has ~1 pair, so there is no
+   cross-row decode redundancy (the #212 lever) — the bytes are the cost. Headroom ≤ ~1.7 ms a round (~4 %).
+   Prediction 90–150 GB/s: out of range high → stop rule hit.
+3. **fp16 matrices the pack keeps** (`f16_census.py`, real model): 1,337 MB a forward — hyper-connection mixes
+   10240 x 320 (100) and 324 x 10240 (98) at 6.3 MB each (1.25 GB), GDN a/b 96 x 2560 (36), two 320 x 10240, the
+   10240 x 2560 and 2560 x 2560. Decode rows: 203–239 GB/s, except 96 x 2560 at 22 GB/s (22 µs each, launch-bound,
+   ~0.8 ms a forward ≈ 1.7 %).
+4. **Dense EXL3 linears:** 160–205 GB/s at 1–6 rows (§5az): ≤ ~2.5 ms a round (~5 %).
+
+Conclusion: every big decode cost is weight streaming at 75–95 % of DRAM; the kernel-side headroom is ~10 % at best,
+split over three kernel families of ≤ 5 % each. The levers that remain are bytes, not kernels: the fp16
+hyper-connection matrices are 1.25 GB a forward (FP8 would halve them, ~6 % of a round, but it changes the pack's
+weights — a quality question and a new kind of option for TF), and fewer forwards per token (acceptance; concurrency
+amortizes the same bytes, T12). Nothing built, nothing posted.
