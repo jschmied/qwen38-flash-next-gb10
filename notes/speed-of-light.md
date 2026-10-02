@@ -3736,3 +3736,63 @@ paging from disk — which their startup lines would show ("N decode graphs capt
 | #252 n-gram read-ahead | 11 passed, 7 skipped | cold 24K 59.3 → 37.5–38.2 s (warm 34.1); faults 133k → 14k; residue 15.1 → 2.4 GiB | same bits; no-op when the table is locked (default on 3.05/GB10); not on `--parallel` or NVFP4; executor has no cancel/error path; `TF_NGRAM_AHEAD` only; body names a nonexistent `TF_NGRAM_LOCK` | MADV_RANDOM on unlocked maps: a further −4.3…−4.9 % cold and 0.6 GiB residue |
 | #253 EXL3 mixed rounds | 42 passed, 4 skipped | prompt kernel == grouping kernel fp32 bits verified at K2 6/10, R 65–2048 (`tools/tfreview/prompt_vs_group.py`) | no blocker; no test for that equality; `TF_EXL3_MOE_WINDOW` < window breaks same bits; a full 2048-row pass reads experts twice; lazy staging buffers missing from `nbytes` | add the equality test; clamp the env window |
 | #254 n-gram pin | 13 passed | not measured (no partial-pin scenario forced) | budget is stale (no recheck of free memory); discrete GPUs size from GPU memory; no off switch; mlock failures silent; NVFP4 re-read without pin; cache gate room computed before the pin | recheck MemAvailable; log the pin result |
+
+### 5bq. TF #260 (BHCC2025, 27B EXL3 prompts + multi-stream verify) — what reaches Flash Next
+
+Flash Next's EXL3 dense layers (5-bit mul1: q/k/v/o, GDN in_proj_qkv/z/out_proj, shared expert; index_qk 3-bit) go
+through the same `Exl3Linear` and `x3prefill.matmul` (with `Workspace()`, fold off). So, with no change: commit 1
+(prompt GEMM BK 64, same bits) and commit 5 (mid-M kernels for 17–128-row calls, same bits) apply; commit 6
+(`linear_wc`) does not (4/6-bit only); commits 3/4/7 are 27B-only or off. Commit 2 (folded W'') is opt-in — one line
+in `exl3_mm.py` (`Workspace(fold=True)`, branch `pr260-fnfold`), generic tiles (no Flash Next entries in
+`FOLD_TILES`), changes rounding.
+Hypotheses (EXL3 3.05, prefill_ab 8K/32K, host_probe S1 and M4 code 512): PR vs 0.6.2 — prefill −0…−3 % (BK 64 on
+the dense share only; 0.6.2 has no #212, so experts dominate), S1 ±1 % (7-row windows, below 17), M4 −2…−8 %
+(28-row verify windows on mid-M); hashes equal. Fold opt-in vs PR — prefill −2…−6 %, hashes may differ (rounding),
+decode unchanged.
+- **#260 round a** (`data/tfreview/pr260-chain.txt`): prefill 8K / 32K s — 0.6.2 11.34 / 45.8, #260 11.35 / 46.3,
+  fold 11.17 / 45.7 (all 1,400 / 4,375 prompt GEMMs on the folded path; same 16-token hashes); decode S1 12.22 → 12.20
+  ms/token, M4 25.28 → 24.93 (−1.4 %, below the −2…−8 % range), hashes equal.
+- **Deep profile, hypothesis** (user: "why not expected speed? do deep profiling"): the PR's levers only touch the
+  dense EXL3 linears; Flash Next spends most of a step elsewhere. Expected: 8K prefill — routed experts 50–70 % of GPU
+  time, dense EXL3 prompt GEMMs (+ W_q decode + rot_in) 5–15 %, so fold's −1.6 % = ~10–30 % off the dense part;
+  M4 decode — dense EXL3 linears 10–25 % of GPU time, mid-M kernels 10–30 % faster per call than `linear_kernel`,
+  GPU busy ≥ 85 % of the step (not host-bound). Out of range = the gain is lost elsewhere (host gaps, mode not taken).
+- **Deep profile result** (nsys, node-level graph trace; `data/tfreview/prof260-*.txt`). 8K prefill, GPU busy 99 %:
+  routed experts ~8.36 s of 11.66 (grouped_kernel 6.56 + group_kernel 0.96 + epilogues 0.85) = 72 %; the dense EXL3
+  prompt path (`_gemm` 0.671 + `rot_in` for it ~0.07 + `unpack` 0.162) ≈ 0.9–1.15 s ≈ 8–10 %; HC 0.58, fp16
+  matrices 0.56. #260 BK 64: `_gemm` 671 → 642 ms (−4 %); fold: `_gemm_fold` 551 + `unpack_fold2` 154, the dense
+  rot_in gone (1,317 → 442 calls; the 392 left are the experts' 11264×20 launches, 248 ms) → −200 ms. M4 decode
+  (256 tokens × 4): dense `linear_kernel` 1,293 ms = 20.7 % of GPU time; #260 routes 6,352 of 17,600 calls (≥ 17 rows)
+  to `linear_mpg_kernel`: those calls 610 → 528 ms (−13 %), whole GPU time 6,251 → 6,180 ms (−1.1 %). No linear_wc
+  (5-bit layers). So in range for the shares, below range for the per-call mid-M gain (hypothesis 10–30 %: low end).
+  Next: microbench (`tools/tfreview/midm_bench.py`) — Flash Next shapes, rows 1–128, modes 0/6/7, GB/s against a
+  copy, and the bf16 GEMM peak. Hypothesis: 5-bit at 28 rows `linear_kernel` ≥ 150 GB/s and mid-M ≤ 15 % faster;
+  at 64–128 rows mid-M ≥ 30 % faster; bf16 matmul peak 80–110 TFLOPS, `_gemm_fold` ≈ 80 TFLOPS on the dense shapes.
+- **Microbench result** (`data/tfreview/midm_bench.jsonl`; copy 218.5 GB/s read+write; same bits in every mode):
+  5-bit, µs at rows 16 / 17 / 28 / 32 / 64, `linear_kernel` → mid-M:
+
+  | layer (K→N) | 16 | 17 | 28 | 32 | 64 |
+  |---|---|---|---|---|---|
+  | GDN in_qkv 2560→10240 | 84 | 112 → 117 | 116 → 104 | 116 → 120 | 192 → 123 |
+  | GDN in_z 2560→6144 | 54 | 72 → 70 | 76 → 58 | 75 → 58 | 120 → 79 |
+  | GDN out 6144→2560 | 61 | 80 → 62 | 97 → 67 | 84 → 63 | 137 → 84 |
+  | attn q 2560→12288 | 94 | 121 → 128 | 124 → 110 | 126 → 130 | 206 → 129 |
+  | lm_head 2560→248320 | 1,733 | 2,197 → 2,025 | 2,232 → 2,030 | 2,239 → 2,065 | 3,825 → 2,435 |
+
+  1–16 rows cost the same as one row (160–230 GB/s: the DRAM floor) — single-stream decode has nothing to gain here.
+  At 17 rows `linear_kernel` steps up ~33 % (a second 16-row decode of every tile). Mid-M recovers 5–31 % at 28 rows
+  but is **no faster or slower on the large-N layers at 17 and 32 rows** (in_qkv, q) and stays 15–23 % above the
+  16-row time there. 4-bit with `linear_wc` (mode 7) instead **stays at the floor through 32 rows** (in_qkv 66 µs at
+  1, 16, 28 and 32 rows; 4-bit mid-M 72–73) — `linear_wc` is 4/6-bit only, so Flash Next's 5-bit layers never get it.
+  bf16 GEMM peak (torch) 91–96 TFLOPS; the folded prompt GEMM does the 44.2 TFLOP of an 8K prompt's dense
+  projections in 551 ms = 80 TFLOPS (84–88 % of peak), the W_q `_gemm` 66.
+- **Why #260 is small on Flash Next** (answer): (1) shares — dense EXL3 is 8–10 % of an 8K prompt and 21 % of M4 decode
+  GPU time, routed experts 72 % / 52 %; on the 27B dense matmuls are nearly all of it. (2) Prompts: the fold makes the
+  dense part 17 % cheaper and its GEMM is at 84–88 % of the bf16 peak — ≤ ~1 % left there. (3) Decode: ≤ 16-row
+  calls are already at the DRAM floor; only M4's ≥ 17-row windows move (6,352 of 17,600 calls), and there 5-bit gets
+  mid-M (−13 % on those calls), not `linear_wc`, and mid-M is weakest exactly at the 17–32 rows that 4 streams × ~4.5
+  rows produce, on the two largest layers. Bound if every ≥ 17-row dense call ran at its 16-row time: ~95 ms of
+  6,180 = ~1.5 % more at M4. Engine levers that follow: `linear_wc` for 5-bit (and 3-bit index_qk) mul1 tiles; mid-M
+  tile choice by N (keep `linear_kernel` for N ≥ 10240 at ≤ 32 rows). Both small; the big buckets remain routed
+  experts (grouped_kernel 2.94 s at M4, 6.56 s at 8K on 0.6.2 without #212), `_f16_mm` 0.73 s, `qmm_kernel` 0.26 s
+  and `tree_kernel` 0.26 s at M4.

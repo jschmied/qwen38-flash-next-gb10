@@ -1,0 +1,15 @@
+00:01:24 prefill base-a rc=0 "tokens": 8202 "prefill_s": 11.34 "calls": {"fold": 0, "wq": 1400} "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 45.8 "calls": {"fold": 0, "wq": 4375} "hash": "44d33ab594f8" 
+00:05:54 prefill pr-a rc=0 "tokens": 8202 "prefill_s": 11.349 "calls": {"fold": 0, "wq": 1400} "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 46.299 "calls": {"fold": 0, "wq": 4375} "hash": "44d33ab594f8" 
+00:10:07 prefill fold-a rc=0 "tokens": 8202 "prefill_s": 11.167 "calls": {"fold": 1400, "wq": 0} "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 45.723 "calls": {"fold": 4375, "wq": 0} "hash": "44d33ab594f8" 
+00:10:53 S1 base-a rc=0 "tok_s": 81.83 "ms_tok_per_stream": 12.221 "hashes": ["1bb116eb6ff5"] 
+00:11:44 M4 base-a rc=0 "tok_s": 158.25 "ms_tok_per_stream": 25.277 "hashes": ["1bb116eb6ff5", "fc0e045ffadf", "4362ba9ffa35", "4db959d86e16"] 
+00:12:29 S1 pr-a rc=0 "tok_s": 81.96 "ms_tok_per_stream": 12.201 "hashes": ["1bb116eb6ff5"] 
+00:13:35 M4 pr-a rc=0 "tok_s": 160.46 "ms_tok_per_stream": 24.929 "hashes": ["1bb116eb6ff5", "fc0e045ffadf", "4362ba9ffa35", "4db959d86e16"] 
+00:15:21 prefill base-b rc=0 "tokens": 8202 "prefill_s": 11.404 "calls": {"fold": 0, "wq": 1400} "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 46.107 "calls": {"fold": 0, "wq": 4375} "hash": "44d33ab594f8" 
+00:17:06 prefill pr-b rc=0 "tokens": 8202 "prefill_s": 11.393 "calls": {"fold": 0, "wq": 1400} "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 46.098 "calls": {"fold": 0, "wq": 4375} "hash": "44d33ab594f8" 
+00:18:50 prefill fold-b rc=0 "tokens": 8202 "prefill_s": 11.207 "calls": {"fold": 1400, "wq": 0} "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 45.401 "calls": {"fold": 4375, "wq": 0} "hash": "44d33ab594f8" 
+00:19:52 S1 base-b rc=0 "tok_s": 81.84 "ms_tok_per_stream": 12.218 "hashes": ["1bb116eb6ff5"] 
+00:20:42 M4 base-b rc=0 "tok_s": 158.74 "ms_tok_per_stream": 25.199 "hashes": ["1bb116eb6ff5", "fc0e045ffadf", "4362ba9ffa35", "4db959d86e16"] 
+00:21:28 S1 pr-b rc=0 "tok_s": 81.94 "ms_tok_per_stream": 12.203 "hashes": ["1bb116eb6ff5"] 
+00:22:17 M4 pr-b rc=0 "tok_s": 159.77 "ms_tok_per_stream": 25.036 "hashes": ["1bb116eb6ff5", "fc0e045ffadf", "4362ba9ffa35", "4db959d86e16"] 
+== PR260 DONE ==

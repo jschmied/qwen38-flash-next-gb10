@@ -1,0 +1,6 @@
+00:23:39 pre-base rc=0 PREFILL {"label": "base", "tokens": 8202, "prefill_s": 11.754, "wall_s": 11.754, "hash": "1bc7a285e0b9"}
+00:24:39 pre-pr rc=0 PREFILL {"label": "pr", "tokens": 8202, "prefill_s": 11.743, "wall_s": 11.743, "hash": "1bc7a285e0b9"}
+00:25:38 pre-fold rc=0 PREFILL {"label": "fold", "tokens": 8202, "prefill_s": 11.553, "wall_s": 11.553, "hash": "1bc7a285e0b9"}
+00:26:44 m4-base rc=0 "ms_tok_per_stream": 29.017
+00:27:47 m4-pr rc=0 "ms_tok_per_stream": 27.273
+== PROF260 DONE ==

@@ -1,0 +1,21 @@
+#!/bin/bash
+# #260 deep profile under nsys (node-level graph trace): 8K prefill (base, pr, fold) and M4 decode 256 (base, pr).
+R=/opt/llm/runners/results/tfreview/prof260; mkdir -p $R; L=/opt/llm/runners/tfreview; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; G=/home/jschmied/git; N=/usr/local/bin/nsys
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+until grep -q "PR260 DONE" /opt/llm/runners/results/tfreview/pr260-chain.txt 2>/dev/null; do sleep 30; done
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+NS="profile --force-overwrite=true --trace=cuda,nvtx,osrt --cuda-graph-trace=node --capture-range=cudaProfilerApi --capture-range-end=stop --sample=none --cpuctxsw=none --wait=all"
+for arm in base:tf-main062 pr:tf-pr260 fold:tf-pr260-fold; do
+  n=${arm%%:*}; memok
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-260$n timeout 3600 $N $NS -o $R/pre-$n $PY $L/prefill_nsys.py $G/${arm#*:}/src $M $n > $R/pre-$n.log 2>&1
+  echo "$(date +%T) pre-$n rc=$? $(grep '^PREFILL' $R/pre-$n.log)" >> $R/chain.txt
+done
+for arm in base:tf-main062 pr:tf-pr260; do
+  n=${arm%%:*}; memok
+  TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-260$n timeout 3600 $N $NS -o $R/m4-$n $PY $L/host_probe_cost.py $G/${arm#*:}/src $M M4 256 nsys > $R/m4-$n.log 2>&1
+  echo "$(date +%T) m4-$n rc=$? $(grep '^ARM' $R/m4-$n.log | grep -o '"ms_tok_per_stream": [0-9.]*')" >> $R/chain.txt
+done
+for f in $R/*.nsys-rep; do $N export --type sqlite --force-overwrite=true -o ${f%.nsys-rep}.sqlite $f > /dev/null 2>&1; done
+chmod -R a+r $R
+echo "== PROF260 DONE ==" >> $R/chain.txt

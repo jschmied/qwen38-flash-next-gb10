@@ -1,0 +1,80 @@
+| | m4-base | m4-pr |
+|---|---|---|
+| captured span ms | 7425.1 | 6979.2 |
+| GPU busy ms (union) | 6250.7 (84 %) | 6179.7 (89 %) |
+| routed experts | 3013.2 (48.2 %) | 3030.3 (49.0 %) |
+| dense EXL3 decode-size (linear_kernel) | 1293.1 (20.7 %) | 683.3 (11.1 %) |
+| other | 845.2 (13.5 %) | 845.2 (13.7 %) |
+| fp16/bf16 matmul (cuBLAS/triton) | 735.3 (11.8 %) | 731.4 (11.8 %) |
+| dense EXL3 mid-M (#260) | 0.0 (0.0 %) | 530.8 (8.6 %) |
+| hyper-connection | 98.6 (1.6 %) | 97.3 (1.6 %) |
+| dense EXL3 rot_in / had | 82.4 (1.3 %) | 80.5 (1.3 %) |
+| norm / elementwise / copy | 75.0 (1.2 %) | 74.7 (1.2 %) |
+| attention | 38.8 (0.6 %) | 38.0 (0.6 %) |
+| dense EXL3 prompt W decode | 32.7 (0.5 %) | 32.7 (0.5 %) |
+| dense EXL3 prompt GEMM | 32.1 (0.5 %) | 31.3 (0.5 %) |
+| n-gram / PLE | 4.1 (0.1 %) | 4.2 (0.1 %) |
+
+== m4-base.sqlite: top kernels (ms, calls, category)
+    2924.03 ms x  9188  grouped_kernel  [routed experts]
+    1293.13 ms x 17600  linear_kernel  [dense EXL3 decode-size (linear_kernel)]
+     735.35 ms x 22748  _f16_mm  [fp16/bf16 matmul (cuBLAS/triton)]
+     258.15 ms x   462  qmm_kernel  [other]
+     256.79 ms x  3060  tree_kernel  [other]
+     149.87 ms x  4594  group_kernel  [other]
+      89.20 ms x  4594  _router  [routed experts]
+      82.36 ms x 22390  rot_in_kernel  [dense EXL3 rot_in / had]
+      60.79 ms x  4594  gateup_epilogue_kernel  [other]
+      41.61 ms x  9826  _hc_writeback  [hyper-connection]
+      38.37 ms x  4594  down_epilogue_kernel  [other]
+      32.73 ms x   196  unpack_kernel  [dense EXL3 prompt W decode]
+      32.14 ms x   196  _gemm  [dense EXL3 prompt GEMM]
+      31.29 ms x 15022  elementwise_kernel  [norm / elementwise / copy]
+      21.97 ms x  9740  _hc_normed  [hyper-connection]
+      21.58 ms x  1460  _chunks_multi  [other]
+      18.73 ms x  9631  _hc_reduce_act  [hyper-connection]
+      17.90 ms x  4594  _topk_rows  [attention]
+      17.74 ms x  3204  front_kernel  [other]
+      16.20 ms x  9740  _hc_mix  [hyper-connection]
+      15.38 ms x  1475  reduce_kernel  [norm / elementwise / copy]
+      12.15 ms x  3204  back_kernel  [other]
+      11.41 ms x  5011  vectorized_elementwise_kernel  [norm / elementwise / copy]
+       7.45 ms x  1460  _prep_multi  [other]
+       7.28 ms x   722  _shift_windows  [other]
+       4.76 ms x   144  chain_kernel  [other]
+       4.69 ms x  1760  computeDigitCumSum  [other]
+       4.09 ms x  1460  _pool_multi  [other]
+       3.97 ms x  1760  computeBlockDigitCounts  [other]
+       3.81 ms x  1760  computeBlockwiseWithinKCounts  [other]
+
+== m4-pr.sqlite: top kernels (ms, calls, category)
+    2940.79 ms x  9188  grouped_kernel  [routed experts]
+     731.36 ms x 22748  _f16_mm  [fp16/bf16 matmul (cuBLAS/triton)]
+     683.33 ms x 11173  linear_kernel  [dense EXL3 decode-size (linear_kernel)]
+     528.27 ms x  6352  linear_mpg_kernel  [dense EXL3 mid-M (#260)]
+     258.45 ms x   462  qmm_kernel  [other]
+     254.92 ms x  3060  tree_kernel  [other]
+     149.97 ms x  4594  group_kernel  [other]
+      89.47 ms x  4594  _router  [routed experts]
+      80.46 ms x 22390  rot_in_kernel  [dense EXL3 rot_in / had]
+      62.14 ms x  4594  gateup_epilogue_kernel  [other]
+      41.55 ms x  9826  _hc_writeback  [hyper-connection]
+      38.85 ms x  4594  down_epilogue_kernel  [other]
+      32.72 ms x   196  unpack_kernel  [dense EXL3 prompt W decode]
+      31.59 ms x 15022  elementwise_kernel  [norm / elementwise / copy]
+      31.34 ms x   196  _gemm  [dense EXL3 prompt GEMM]
+      21.36 ms x  9740  _hc_normed  [hyper-connection]
+      21.35 ms x  1460  _chunks_multi  [other]
+      18.82 ms x  9631  _hc_reduce_act  [hyper-connection]
+      17.96 ms x  3204  front_kernel  [other]
+      17.77 ms x  4594  _topk_rows  [attention]
+      15.46 ms x  9740  _hc_mix  [hyper-connection]
+      15.21 ms x  1475  reduce_kernel  [norm / elementwise / copy]
+      11.89 ms x  3204  back_kernel  [other]
+      11.17 ms x  5011  vectorized_elementwise_kernel  [norm / elementwise / copy]
+       7.37 ms x  1460  _prep_multi  [other]
+       7.31 ms x   722  _shift_windows  [other]
+       4.78 ms x   144  chain_kernel  [other]
+       4.54 ms x  1760  computeDigitCumSum  [other]
+       4.13 ms x  1460  _pool_multi  [other]
+       3.82 ms x  1760  computeBlockDigitCounts  [other]

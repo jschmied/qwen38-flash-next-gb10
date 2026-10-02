@@ -1,0 +1,22 @@
+#!/bin/bash
+# TF #260 on Flash Next EXL3 3.05: 0.6.2 vs #260 vs #260 + fold opt-in; prefill 8K/32K (path witness) and decode S1/M4.
+R=/opt/llm/runners/results/tfreview; L=/opt/llm/runners/tfreview; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw; G=/home/jschmied/git
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do
+  for arm in base:tf-main062 pr:tf-pr260 fold:tf-pr260-fold; do
+    n=${arm%%:*}; memok
+    TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-260$n timeout 3600 $PY $L/prefill_ab260.py $G/${arm#*:}/src $M $n-$rep >> $R/pr260-prefill.txt 2> $R/pr260-prefill-$n-$rep.err
+    echo "$(date +%T) prefill $n-$rep rc=$? $(grep "\"$n-$rep\"" $R/pr260-prefill.txt | grep -o '"tokens": [0-9]*\|"prefill_s": [0-9.]*\|"calls": {[^}]*}\|"hash": "[0-9a-f]*"' | tr '\n' ' ')" >> $R/pr260-chain.txt
+  done
+  for arm in base:tf-main062 pr:tf-pr260; do
+    n=${arm%%:*}
+    for a in S1 M4; do
+      memok
+      TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-260$n timeout 1800 $PY $L/host_probe_cost.py $G/${arm#*:}/src $M $a 512 > $R/pr260-$a-$n-$rep.log 2>&1
+      echo "$(date +%T) $a $n-$rep rc=$? $(grep '^ARM ' $R/pr260-$a-$n-$rep.log | grep -o '"ms_tok_per_stream": [0-9.]*\|"tok_s": [0-9.]*\|"hashes": \[[^]]*\]' | tr '\n' ' ')" >> $R/pr260-chain.txt
+    done
+  done
+done
+echo "== PR260 DONE ==" >> $R/pr260-chain.txt

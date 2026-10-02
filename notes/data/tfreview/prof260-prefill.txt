@@ -1,0 +1,111 @@
+| | pre-base | pre-pr | pre-fold |
+|---|---|---|---|
+| captured span ms | 11753.8 | 11742.5 | 11552.7 |
+| GPU busy ms (union) | 11658.2 (99 %) | 11646.0 (99 %) | 11458.6 (99 %) |
+| routed experts | 6577.9 (56.4 %) | 6585.8 (56.6 %) | 6567.1 (57.3 %) |
+| other | 2431.3 (20.9 %) | 2433.5 (20.9 %) | 2436.0 (21.3 %) |
+| dense EXL3 prompt GEMM | 671.2 (5.8 %) | 642.2 (5.5 %) | 550.9 (4.8 %) |
+| hyper-connection | 581.9 (5.0 %) | 587.5 (5.0 %) | 589.0 (5.1 %) |
+| fp16/bf16 matmul (cuBLAS/triton) | 557.3 (4.8 %) | 557.0 (4.8 %) | 557.4 (4.9 %) |
+| dense EXL3 rot_in / had | 320.8 (2.8 %) | 319.7 (2.7 %) | 248.9 (2.2 %) |
+| norm / elementwise / copy | 307.7 (2.6 %) | 308.3 (2.6 %) | 307.8 (2.7 %) |
+| dense EXL3 prompt W decode | 162.2 (1.4 %) | 163.6 (1.4 %) | 153.7 (1.3 %) |
+| attention | 39.8 (0.3 %) | 40.1 (0.3 %) | 39.5 (0.3 %) |
+| n-gram / PLE | 6.4 (0.1 %) | 6.7 (0.1 %) | 6.5 (0.1 %) |
+| dense EXL3 decode-size (linear_kernel) | 1.7 (0.0 %) | 1.7 (0.0 %) | 1.7 (0.0 %) |
+
+== pre-base.sqlite: top kernels (ms, calls, category)
+    6556.19 ms x   882  grouped_kernel  [routed experts]
+     955.01 ms x   441  group_kernel  [other]
+     671.19 ms x   875  _gemm  [dense EXL3 prompt GEMM]
+     557.29 ms x  9290  _f16_mm  [fp16/bf16 matmul (cuBLAS/triton)]
+     426.98 ms x   441  gateup_epilogue_kernel  [other]
+     421.86 ms x   441  down_epilogue_kernel  [other]
+     320.78 ms x  1317  rot_in_kernel  [dense EXL3 rot_in / had]
+     281.94 ms x  1066  vectorized_elementwise_kernel  [norm / elementwise / copy]
+     281.88 ms x   429  _chunks  [other]
+     256.13 ms x   505  _hc_writeback  [hyper-connection]
+     168.84 ms x   500  _hc_mix  [hyper-connection]
+     162.17 ms x   875  unpack_kernel  [dense EXL3 prompt W decode]
+     154.37 ms x   500  _hc_normed  [hyper-connection]
+     134.23 ms x   216  chain_kernel  [other]
+      73.00 ms x   180  front_kernel  [other]
+      52.22 ms x   216  back_kernel  [other]
+      45.53 ms x   429  _merge  [other]
+      23.06 ms x   429  _scores  [other]
+      21.75 ms x   245  _router  [routed experts]
+      20.64 ms x  8785  _reduce  [norm / elementwise / copy]
+      17.63 ms x    65  _attn_gate  [attention]
+      16.01 ms x    65  _attn_prep  [attention]
+      13.90 ms x   429  _select  [other]
+       6.21 ms x   245  _topk_rows  [attention]
+       3.37 ms x     5  prefill_kernel  [norm / elementwise / copy]
+       3.09 ms x     5  _ple_conv  [n-gram / PLE]
+       2.67 ms x     5  _ple_gate  [n-gram / PLE]
+       2.53 ms x   500  _hc_act  [hyper-connection]
+       1.78 ms x     5  _add_streams  [other]
+       1.75 ms x     1  linear_kernel  [dense EXL3 decode-size (linear_kernel)]
+
+== pre-pr.sqlite: top kernels (ms, calls, category)
+    6564.25 ms x   882  grouped_kernel  [routed experts]
+     955.45 ms x   441  group_kernel  [other]
+     642.17 ms x   875  _gemm  [dense EXL3 prompt GEMM]
+     556.97 ms x  9290  _f16_mm  [fp16/bf16 matmul (cuBLAS/triton)]
+     425.75 ms x   441  gateup_epilogue_kernel  [other]
+     424.68 ms x   441  down_epilogue_kernel  [other]
+     319.67 ms x  1317  rot_in_kernel  [dense EXL3 rot_in / had]
+     282.68 ms x  1066  vectorized_elementwise_kernel  [norm / elementwise / copy]
+     280.35 ms x   429  _chunks  [other]
+     257.93 ms x   505  _hc_writeback  [hyper-connection]
+     171.45 ms x   500  _hc_mix  [hyper-connection]
+     163.59 ms x   875  unpack_kernel  [dense EXL3 prompt W decode]
+     155.63 ms x   500  _hc_normed  [hyper-connection]
+     134.83 ms x   216  chain_kernel  [other]
+      73.61 ms x   180  front_kernel  [other]
+      52.89 ms x   216  back_kernel  [other]
+      45.47 ms x   429  _merge  [other]
+      23.02 ms x   429  _scores  [other]
+      21.60 ms x   245  _router  [routed experts]
+      20.63 ms x  8785  _reduce  [norm / elementwise / copy]
+      17.86 ms x    65  _attn_gate  [attention]
+      16.05 ms x    65  _attn_prep  [attention]
+      13.89 ms x   429  _select  [other]
+       6.20 ms x   245  _topk_rows  [attention]
+       3.19 ms x     5  prefill_kernel  [norm / elementwise / copy]
+       3.13 ms x     5  _ple_conv  [n-gram / PLE]
+       2.89 ms x     5  _ple_gate  [n-gram / PLE]
+       2.44 ms x   500  _hc_act  [hyper-connection]
+       1.77 ms x    10  _rmsnorm  [norm / elementwise / copy]
+       1.73 ms x     1  linear_kernel  [dense EXL3 decode-size (linear_kernel)]
+
+== pre-fold.sqlite: top kernels (ms, calls, category)
+    6545.56 ms x   882  grouped_kernel  [routed experts]
+     955.02 ms x   441  group_kernel  [other]
+     557.41 ms x  9290  _f16_mm  [fp16/bf16 matmul (cuBLAS/triton)]
+     550.94 ms x   875  _gemm_fold  [dense EXL3 prompt GEMM]
+     425.81 ms x   441  gateup_epilogue_kernel  [other]
+     423.32 ms x   441  down_epilogue_kernel  [other]
+     281.66 ms x  1066  vectorized_elementwise_kernel  [norm / elementwise / copy]
+     281.39 ms x   429  _chunks  [other]
+     259.13 ms x   505  _hc_writeback  [hyper-connection]
+     248.86 ms x   442  rot_in_kernel  [dense EXL3 rot_in / had]
+     169.56 ms x   500  _hc_mix  [hyper-connection]
+     158.10 ms x   500  _hc_normed  [hyper-connection]
+     153.75 ms x   875  unpack_fold2_kernel  [dense EXL3 prompt W decode]
+     135.12 ms x   216  chain_kernel  [other]
+      75.01 ms x   180  front_kernel  [other]
+      54.50 ms x   216  back_kernel  [other]
+      45.08 ms x   429  _merge  [other]
+      23.22 ms x   429  _scores  [other]
+      21.52 ms x   245  _router  [routed experts]
+      21.04 ms x  8785  _reduce  [norm / elementwise / copy]
+      17.62 ms x    65  _attn_gate  [attention]
+      15.73 ms x    65  _attn_prep  [attention]
+      13.92 ms x   429  _select  [other]
+       6.17 ms x   245  _topk_rows  [attention]
+       3.38 ms x     5  prefill_kernel  [norm / elementwise / copy]
+       3.14 ms x     5  _ple_conv  [n-gram / PLE]
+       2.67 ms x     5  _ple_gate  [n-gram / PLE]
+       2.26 ms x   500  _hc_act  [hyper-connection]
+       1.74 ms x     1  linear_kernel  [dense EXL3 decode-size (linear_kernel)]
+       1.70 ms x     5  _add_streams  [other]
