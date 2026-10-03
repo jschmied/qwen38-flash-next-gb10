@@ -1680,3 +1680,8 @@ wait on one ~100 GB pull, and they share one serve.
   offered to the author: rank votes + undo, tier cascade, spill robustness, per-window candidates, admission refusal
   (flagged as reversing their choice), and five optional additions (mixed, stops, attach, decode_share, cancelled).
   Draft `tf300-fixes-branch.md`. https://github.com/ashhart/TensorFold/pull/300#issuecomment-5972667699
+- **TensorFold PR #327** (2026-10-03, user: "create a pr"): server strips a reply's own `<think>` (Kolibri 1's
+  template). Draft `tf-pr-think-own-opener.md`. https://github.com/ashhart/TensorFold/pull/327
+- **TensorFold PR #328** (2026-10-03, same go): Kolibri 1 CUDA family (FP8 grouped experts, sliding rings,
+  --parallel exact to solo), on #327. Receipt in `notes/data/kolibri/`. Draft `tf-pr-kolibri1-cuda.md`.
+  https://github.com/ashhart/TensorFold/pull/328
