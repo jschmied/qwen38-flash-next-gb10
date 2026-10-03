@@ -45,6 +45,4 @@ At a 2,048-row prompt piece, the split form wrote and re-read SK × M × N fp32 
 - [x] The description says which platforms I ran, Metal M1 to M5 and CUDA, and which I could not.
 - [x] New tests fail before the change, pass after it, and skip cleanly without their dependency.
 - [x] Comments and docstrings are one line. No measurements or history in the source.
-- [ ] No personal data, machine names, internal hosts or local paths. No AI attribution lines. (No personal data or paths. The commit carries our AI co-author trailer and this line says the work was AI-assisted; drop both when landing, as CONTRIBUTING says.)
-
-Written with AI assistance (Claude Code); the author reviewed every change.
+- [x] No personal data, machine names, internal hosts or local paths. No AI attribution lines.

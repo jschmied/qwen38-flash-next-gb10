@@ -1669,3 +1669,6 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold #300 comment** (2026-10-03 ~17:10, user: "ok"): ran its GPU-only `tests/cuda/test_cuda_rowgraphs.py` on
   GB10 (2 passed) and its CPU suite on aarch64 (133 passed) at `5cbe389` —
   https://github.com/ashhart/TensorFold/pull/300#issuecomment-5970277660
+- **#303 / #304 / #318 bodies edited** (2026-10-03, user: "ai attribution line is for vllm"): AI line removed and the
+  "No AI attribution lines" box ticked, per TF's CONTRIBUTING. The branches' commits still carry our Co-Authored-By /
+  Claude-Session trailers (TF strips tool trailers when landing); new TF commits carry none.
