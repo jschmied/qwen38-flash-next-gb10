@@ -1676,3 +1676,7 @@ wait on one ~100 GB pull, and they share one serve.
   and no input scales refused at startup) fixed with their one line plus a failing-first loader test, pushed as
   5ad55f9; 48 GPU tests pass. Draft `tf211-mtp-nvfp4-fix.md`.
   https://github.com/ashhart/TensorFold/pull/211#issuecomment-5972645803
+- **TensorFold PR #300 comment** (2026-10-03, user: "post to 300"): our `pr300-fixes` branch (18 commits on 5cbe389)
+  offered to the author: rank votes + undo, tier cascade, spill robustness, per-window candidates, admission refusal
+  (flagged as reversing their choice), and five optional additions (mixed, stops, attach, decode_share, cancelled).
+  Draft `tf300-fixes-branch.md`. https://github.com/ashhart/TensorFold/pull/300#issuecomment-5972667699
