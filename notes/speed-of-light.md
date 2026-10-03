@@ -4060,3 +4060,12 @@ behaviour the review describes is real:
   Of our own commits, three go beyond #300's bugs and should travel separately upstream: per-window candidate
   counts (new API), the claim-7 reversal (policy vs the author's choice), link buffers / one-pass hashing (polish).
   #300 CPU suite 164 passed, GPU row-graph test 2 passed.
+- **#300 fixes round 4** (fourth review; user: "check if needed"). All five claims confirmed in code and fixed in
+  `6153235`: `read_pages` built the plane with `torch.cat` on the GPU and `write_pages` moved the whole plane with
+  `.to(device)` (plane-sized device temporaries during eviction pressure) → per-run copies straight into the host
+  array / pool slices; `DiskTier._read` mmap + `.copy()` (2× file size) → one owned aligned buffer; a failed `put`
+  left `<key>.tmp` → removed on any failure; `_header` read whatever length the file claimed → bounded by file size
+  and 64 MiB. Tests: GPU round trip on GB10 with peak device growth < one page (fails on the old code at 256 KiB
+  pages), tmp cleanup, oversized header. Not tested: `_read`'s host peak (tracemalloc does not see the old mmap).
+  #300 CPU suite 166 passed; GPU tests 3 passed. RowGraphs capture-after-eager: reviewer withdrew it (the toy reads
+  and writes KV; GB10 bit-equal run). Branch 13 commits ahead of `5cbe389`.
