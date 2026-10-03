@@ -1,0 +1,11 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfslice; L=/opt/llm/runners/tfreview; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; SRC=/home/jschmied/git/tf-ngov/src
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4 TORCH_EXTENSIONS_DIR=/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/ext-ngov
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for arm in off2k:0:2048 on2k:1:2048 off8k:0:8192 on8k:1:8192; do
+  IFS=: read n d rows <<< "$arm"; memok
+  TF_FLASH_STAGE_DEFER=$d TENSORFOLD_PREFILL_ROWS=$rows timeout 3600 $PY $L/prefill_ab260.py $SRC $M n$n-$rep >> $R/ngov.txt 2> $R/ngov-$n-$rep.err
+  echo "$(date +%T) $n-$rep rc=$? $(grep "\"n$n-$rep\"" $R/ngov.txt | grep -o '"tokens": [0-9]*\|"prefill_s": [0-9.]*\|"hash": "[0-9a-f]*"' | tr '\n' ' ')" >> $R/ngov-chain.txt
+done; done
+echo "== NGOV DONE ==" >> $R/ngov-chain.txt

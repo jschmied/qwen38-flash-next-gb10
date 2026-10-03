@@ -1,0 +1,24 @@
+#!/bin/bash
+# TF PR receipts: v0.6.3 vs PR A vs PR B, tensorfold serve on :8093, alternating; prefill_cold, bench_openai, bench_concurrent (round 1).
+R=/opt/llm/runners/results/tfslice/receipt3; mkdir -p $R; cp -n /opt/llm/runners/results/tfslice/receipt/prompts.json $R/ 2>/dev/null; mkdir -p $R; PY=/opt/llm/runtime/tf-venv/bin/python; G=/home/jschmied/git
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; URL=http://127.0.0.1:8093
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+[ -s $R/prompts.json ] || (cd $G/tf-prA && PYTHONPATH=src $PY tools/prefill_cold.py build $M $R/prompts.json) > $R/build.log 2>&1
+i=0
+for arm in B:tf-prB T:tf-three T:tf-three B:tf-prB; do
+  i=$((i+1)); n=${arm%%:*}; T=$G/${arm#*:}; memok
+  (cd $T && TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-r$n PYTHONPATH=src exec $PY -c 'from tensorfold.cli import main; main()' serve $M --port 8093 --name fn --parallel 4 --context 131072) > $R/serve-$i-$n.log 2>&1 &
+  SP=$!
+  ok=0; for k in $(seq 1 120); do curl -sf $URL/v1/models > /dev/null && { ok=1; break; }; kill -0 $SP 2>/dev/null || break; sleep 10; done
+  if [ $ok = 1 ]; then
+    (cd $G/tf-main063 && $PY tools/prefill_cold.py run $URL fn $R/prompts.json $R/prefill-$i-$n.json) > $R/prefill-$i-$n.log 2>&1
+    (cd $G/tf-main063 && $PY tools/bench_openai.py $URL fn --label $n-$i --output $R/openai-$i-$n.json) > $R/openai-$i-$n.log 2>&1
+    if [ $i -le 2 ]; then (cd $G/tf-main063 && $PY tools/bench_concurrent.py $URL fn --levels 4 --alone --serial --label $n --output $R/conc-$i-$n.json) > $R/conc-$i-$n.log 2>&1; fi
+    echo "$(date +%T) $i $n done $(grep -h -o 'prompt pieces [0-9]* rows' $R/serve-$i-$n.log | head -1)" >> $R/chain.txt
+  else
+    echo "$(date +%T) $i $n SERVER FAILED: $(grep -h -i 'error\|Traceback' $R/serve-$i-$n.log | tail -2)" >> $R/chain.txt
+  fi
+  kill $SP 2>/dev/null; wait $SP 2>/dev/null; sleep 5
+done
+echo "== RECEIPT3 DONE ==" >> $R/chain.txt

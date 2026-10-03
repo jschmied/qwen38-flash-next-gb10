@@ -4003,3 +4003,12 @@ Receipt hypothesis (mtpfp4, `serve --parallel 4 --context 131072`, v0.6.3 / A / 
   #303 / #304 / #318 branches merge cleanly onto 0.6.4. #300 (jayleaton): new shared CUDA serving core (lane
   decoder, page pool, tiered prompt cache incl. disk, drafting policies incl. all-depths ExpectedRate, row graphs),
   no family uses it yet; first user = DS-V4.1-Flash family (#299, two Sparks). Its GPU test was not run (no GPU).
+- **Lever 1 on 0.6.4** (branch `flashnext-ngram-overlap` on v0.6.4, which has #201): a prompt pass of ≥ 256 rows reads
+  its n-gram rows on a thread (`stage`), and `ple_block` (layer 2, every forward path) waits for them, copies them
+  into the same staging buffers and records `b.staged`; capture and EXL3 keep the old order; `TF_FLASH_STAGE_DEFER=0`
+  restores it. Hypothesis: fresh 8K prompt −100…−200 ms (−3…−5 % at 8,192 pieces, less at 2,048); hashes equal.
+- **Lever 1 result** (`data/tfslice-ngov-chain.txt`, v0.6.4 + deferral, same tree, 2 rounds, hashes equal), 8K / 32K s:
+  2,048 pieces off 5.709 / 22.52 and 5.576 / 22.51, on 5.744 / 22.63 and 5.529 / 22.48 (level: #201 already hides
+  pieces 2…n, the first piece's gather is small); 8,192 pieces off 5.646 / 22.93 and 5.805 / 22.42, on 5.503 / 22.29
+  and 5.592 / 22.27 (−2.5…−3.7 % at 8K, −0.7…−2.8 % at 32K). In range at 8,192 pieces, null at the default. Pays only
+  with large pieces, which pay only with #303's grid order → hold until #303/#304; commit `flashnext-ngram-overlap`.

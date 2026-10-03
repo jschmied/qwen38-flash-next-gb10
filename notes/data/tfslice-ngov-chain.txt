@@ -1,0 +1,9 @@
+16:57:25 off2k-a rc=0 "tokens": 8202 "prefill_s": 5.709 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.519 "hash": "44d33ab594f8" 
+16:59:41 on2k-a rc=0 "tokens": 8202 "prefill_s": 5.744 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.628 "hash": "44d33ab594f8" 
+17:02:01 off8k-a rc=0 "tokens": 8202 "prefill_s": 5.646 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.931 "hash": "44d33ab594f8" 
+17:04:21 on8k-a rc=0 "tokens": 8202 "prefill_s": 5.503 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.285 "hash": "44d33ab594f8" 
+17:06:35 off2k-b rc=0 "tokens": 8202 "prefill_s": 5.576 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.514 "hash": "44d33ab594f8" 
+17:08:51 on2k-b rc=0 "tokens": 8202 "prefill_s": 5.529 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.477 "hash": "44d33ab594f8" 
+17:11:10 off8k-b rc=0 "tokens": 8202 "prefill_s": 5.805 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.419 "hash": "44d33ab594f8" 
+17:13:28 on8k-b rc=0 "tokens": 8202 "prefill_s": 5.592 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.266 "hash": "44d33ab594f8" 
+== NGOV DONE ==
