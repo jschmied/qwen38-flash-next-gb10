@@ -1651,3 +1651,9 @@ wait on one ~100 GB pull, and they share one serve.
   https://github.com/ashhart/TensorFold/pull/250#issuecomment-5961956559 ;
   #252 confirmed (cold 24K 59.3 → 37.5 s, residue 15.1 → 2.4 GiB) + MADV_RANDOM 35.96 s / 0.7 GiB —
   https://github.com/ashhart/TensorFold/pull/252#issuecomment-5961956852 . #253/#254 not posted.
+- **TensorFold #242 / #250 replies** (2026-10-03 ~09:20, user: "yes"): #242 — level on the maintainer's boxes is
+  expected (only block-FP8 dense prefill takes the lane matmul; MXFP8/FP8/FP4 use `_prompt`), our 0.6.3 on/off
+  −3.4…−4.6 % on block-FP8 — https://github.com/ashhart/TensorFold/pull/242#issuecomment-5966715642 ; #250 — calibrated
+  `e6ade5e` on 3.05: 0.06 +2…+4.5 % code / +2.2 % prose, 0.15 −3.8 % / 0…−0.6 %; stop pays only with a per-checkpoint C —
+  https://github.com/ashhart/TensorFold/pull/250#issuecomment-5966715748 . Not answered: mrpmorris' all-depths proposal
+  on #250 (07:13), addressed to the PR author.

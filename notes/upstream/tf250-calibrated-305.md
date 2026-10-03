@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. TensorFold PR #250 reply to grearjake-star (2026-10-03).
+POSTED 2026-10-03 (https://github.com/ashhart/TensorFold/pull/250#issuecomment-5966715748). TensorFold PR #250 reply to grearjake-star (2026-10-03).
 Reran on `e6ade5e`: EXL3 3.05, GB10, one stream, 512 tokens, one process per arm, so the calibration starts fresh each run. Two rounds; every arm produced identical tokens.
 
 | | code ms/token | prose ms/token |
