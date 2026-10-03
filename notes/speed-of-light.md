@@ -3897,3 +3897,45 @@ bit-equal to the split path (tests: fused == split per shape, rows alone == in a
   worth ~1.3–1.6 s of the 5.18 s 8K prompt (−25…−30 %), vs −10 % for the fused-slice fix. Caveats: FlashInfer's math
   is W4A4 (FP4 activations; #211 measured ppl +1.27 % for that on this model), TF 0.6.3 runs W4A16; the row-invariance
   check is one pair of batches; FlashInfer would be a new TF dependency (#203 uses FlashInfer's W4A16 grouped GEMM).
+
+### 5bt. Own W4A16 prompt-expert kernel (user chose "Own W4A16 kernel"; fused-slice PR held)
+
+- Current kernel (`cuda/nvfp4/experts.cu`, prompt and decode): a warp owns 32 columns and streams the expert's whole K
+  once per 16 pairs — FP4 decode, e4m3 scale conversion and the weight loads are redone per 16 rows (3 passes at
+  40 pairs/expert, 10 at 160). Step 1 — R row tiles share each decoded fragment (64-pair prompt items, `rt` 4):
+  `data/tfslice-xbench1.jsonl`, bit-equal to v0.6.3: 2,048 rows 13.4 → 9.65 ms/layer (−28 %), 8,192 rows 43.1 →
+  29.6 ms (−31 %); R=1 (decode) 5 % slower than v0.6.3's code (13.39 vs 12.98) — so decode keeps its own unchanged
+  kernel. FlashInfer W4A4: 8.25 / 14.6 ms; floor ≈ 6.4 / 8.7 ms.
+- ncu at 8,192 rows (`data/tfslice-xncu64.txt`): gate|up 20.1 ms, 255 registers with 916k spill requests, occupancy
+  16.7 % (2 blocks of 4 warps per SM), SM 41 %, L2 15 %; down 12.7 ms, 196 registers, 16.7 %, SM 37 %. Not L2- or
+  DRAM-bound: latency-bound — the stages live in registers and each warp loads its own x rows with 2 stages in flight.
+- Design (Marlin / #212 shape): a prompt-only kernel; a CTA of 4 warps = 4 column blocks (128 columns) of one 64-pair
+  item; per 32-input group a cp.async stage holds the item's x rows (64 × 32 bf16, padded rows) and the 4 × M weight
+  blocks (576 B each), 4 stages; each warp decodes its block once and runs the 4 row tiles from shared memory with
+  the same per-row mma / fma order and K permutation → same bits. Hypothesis: 8,192 rows ≤ 18 ms/layer (−40 % vs
+  29.6), 2,048 rows ≤ 7.5 ms; registers ≤ 200 without spills; bits equal to v0.6.3.
+- **Staged prompt kernel** (`nvfp4_expert_prompt_kernel`, decode kernel byte-identical to v0.6.3; `rt` 4 when the
+  plan tile is 64 and N/32 is a multiple of 4): xbench bit-equal to v0.6.3 at every size. v2 (x read per (m, j)):
+  2,048 rows 7.9 ms/layer, 8,192 25.5 ms; ncu: gate|up 210 regs no spills, occupancy 16.7 %, memory (shared) 56 %;
+  down 145 regs, 25 %, 74 %. v3 (x fragments read once a half group, `data/tfslice-xbench3.jsonl`): **2,048 rows
+  13.7 → 7.6 ms (−45 %), 8,192 rows 40.7 → 19.7 ms (−52 %, 41 TF)** — FlashInfer W4A4 8.25 / 14.6, floor ~6.4 / 8.7.
+  Hypothesis was ≤ 7.5 / ≤ 18 ms: 2,048 in range at the edge, 8,192 slightly above. NVFP4 CUDA tests 74 passed (two
+  tests pinned 16-pair NVFP4 prompt items; now 64, and one compares the staged kernel's bits with the decode kernel's).
+  E2E hypothesis (mtpfp4, 8K/32K, 2 rounds): new kernel at 2,048 pieces −15…−22 % vs 16-pair items; 4,096 pieces a
+  further −3…−8 %; 8,192 −0…−10 % (other stages may slow at big pieces); hashes equal.
+- **E2E result** (`data/tfslice-xe2e-chain.txt`, mtpfp4, same tree, hashes equal in all 16 runs): 8K / 32K prefill s —
+  old 16-pair items 5.165 / 20.47 and 5.250 / 20.97; new kernel 2,048 pieces 4.564 / 18.10 and 4.593 / 18.26
+  (−11.6…−12.9 %); **4,096 pieces 4.324 / 17.10 and 4.289 / 17.17 (−16.3…−18.3 %)**; 8,192 pieces 4.565 / 17.82 and
+  4.567 / 17.87. Below the hypothesis at 2,048 (real routing skew: 0.6 s saved, xbench predicted ~1.0 s); 4,096 in
+  range. With the fused slices against v0.6.3 (5.70–5.81 s): 8K −25 %.
+- Why 8,192 pieces lose (`data/tfslice-prof8k-rows{4096,8192}.txt`): experts 1.137 → 0.963 s, but `_b16mm` 0.377 →
+  0.571 s and `_fp4mm` 0.184 → 0.319 s (per call 0.63 → 1.63 ms for 2× rows): their grid runs row tiles fastest, so
+  each column tile re-reads the whole x from DRAM once the piece's x no longer fits L2 (8,192 × 10,240 bf16 = 168 MB for
+  the HC down). Fix: column tiles fastest (same programs, same bits).
+- **Grid order fix** (`_b16mm` / `_fp4mm` column tiles fastest): `data/tfslice-sbench2.jsonl`, every case bit-equal to
+  v0.6.3 incl. 8,192 rows; fused at 8,192 rows now linear in rows: b16 324×10240 1.05 ms (v0.6.3 split 3.94), fp4
+  2560×640 1.39 ms (6.82), b16 2560×6144 4.85 ms (14.06). NVFP4 CUDA tests 74 passed (one direct launch updated).
+  E2E (`data/tfslice-ge2e-chain.txt`, 2 rounds, hashes equal): 8K / 32K — 4,096 pieces 4.180 / 16.13, 4.184 / 16.45;
+  **8,192 pieces 4.114 / 15.95, 4.106 / 15.89**; 16,384 pieces 4.046 / 15.78, 4.051 / 15.84. Startup estimate 80.08 GiB
+  at 4,096 and 8,192, 83.77 GiB at 16,384. Against v0.6.3 at its default (8K 5.70–5.81, 32K 22.84–23.38 s): **−28…−30 %
+  at 8K, −30…−32 % at 32K** with 8,192 pieces. vLLM on this box: 8K TTFT 2.80 s.

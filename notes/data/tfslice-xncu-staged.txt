@@ -1,0 +1,36 @@
+  void <unnamed>::nvfp4_expert_prompt_kernel<2, 2>(const __nv_bfloat16 *, int, int, const uint4 *, const float *, int, int, const int *, const int *, const int *, void *, int, float, int) (96, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.1
+    Memory Throughput                 %         56,24
+    Duration                         ms         20,48
+    L2 Cache Throughput               %         15,29
+    Compute (SM) Throughput           %         34,73
+    Local Memory Spilling Requests                                0
+    Warp Cycles Per Issued Instruction             cycle         5,45
+    Registers Per Thread             register/thread             210
+    Shared Memory Configuration Size           Kbyte          102,40
+    Dynamic Shared Memory Per Block       byte/block               0
+    Static Shared Memory Per Block       Kbyte/block           38,91
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            2
+    Block Limit Shared Mem                block            2
+    Block Limit Warps                     block           12
+    Theoretical Occupancy                     %        16,67
+    Achieved Occupancy                        %        16,52
+  void <unnamed>::nvfp4_expert_prompt_kernel<1, 3>(const __nv_bfloat16 *, int, int, const uint4 *, const float *, int, int, const int *, const int *, const int *, void *, int, float, int) (144, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.1
+    Memory Throughput                 %         73,95
+    Duration                         ms          8,26
+    L2 Cache Throughput               %         34,07
+    Compute (SM) Throughput           %         45,28
+    Local Memory Spilling Requests                                0
+    Warp Cycles Per Issued Instruction             cycle         6,36
+    Registers Per Thread             register/thread             145
+    Shared Memory Configuration Size           Kbyte          102,40
+    Dynamic Shared Memory Per Block       byte/block               0
+    Static Shared Memory Per Block       Kbyte/block           29,70
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            3
+    Block Limit Warps                     block           12
+    Theoretical Occupancy                     %           25
+    Achieved Occupancy                        %        24,95

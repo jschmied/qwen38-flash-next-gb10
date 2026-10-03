@@ -1,0 +1,45 @@
+  void <unnamed>::nvfp4_expert_kernel<2, 2, 4, 4>(const __nv_bfloat16 *, int, int, const uint4 *, const float *, int, int, const int *, const int *, const int *, void *, int, float, int) (96, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.1
+    Memory Throughput                 %         17,86
+    Duration                         ms         20,12
+    L1/TEX Cache Throughput           %         17,45
+    L2 Cache Throughput               %         15,34
+    Compute (SM) Throughput           %         40,94
+    Local Memory Spilling Requests                          915.748
+    Local Memory Spilling Request Overhead           %      no data
+    L1/TEX Hit Rate                                  %        56,14
+    L2 Hit Rate                                      %        48,04
+    Warp Cycles Per Issued Instruction             cycle         4,91
+    OPT   Est. Local Speedup: 47.62%                                                                                    
+    INF   Check the Warp Stall Sampling (All Samples) table for the top stall locations in your source based on         
+    Registers Per Thread             register/thread             255
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            2
+    Block Limit Shared Mem                block           32
+    Block Limit Warps                     block           12
+    Theoretical Occupancy                     %        16,67
+    Achieved Occupancy                        %        16,61
+    OPT   Est. Local Speedup: 83.33%                                                                                    
+  void <unnamed>::nvfp4_expert_kernel<1, 3, 4, 4>(const __nv_bfloat16 *, int, int, const uint4 *, const float *, int, int, const int *, const int *, const int *, void *, int, float, int) (96, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.1
+    Memory Throughput                 %         26,55
+    Duration                         ms         12,68
+    L1/TEX Cache Throughput           %         26,50
+    L2 Cache Throughput               %         20,02
+    Compute (SM) Throughput           %         37,04
+    Local Memory Spilling Requests                                0
+    Local Memory Spilling Request Overhead           %      no data
+    L1/TEX Hit Rate                                  %        66,09
+    L2 Hit Rate                                      %        71,30
+    Warp Cycles Per Issued Instruction             cycle         5,44
+    OPT   Est. Local Speedup: 42.2%                                                                                     
+    OPT   Est. Local Speedup: 33.47%                                                                                    
+    INF   Check the Warp Stall Sampling (All Samples) table for the top stall locations in your source based on         
+    Registers Per Thread             register/thread             196
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            2
+    Block Limit Shared Mem                block           32
+    Block Limit Warps                     block           12
+    Theoretical Occupancy                     %        16,67
+    Achieved Occupancy                        %        16,65
+    OPT   Est. Local Speedup: 83.33%                                                                                    

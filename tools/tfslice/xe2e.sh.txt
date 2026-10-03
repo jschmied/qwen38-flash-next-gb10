@@ -1,0 +1,11 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfslice; L=/opt/llm/runners/tfreview; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; SRC=/home/jschmied/git/tf-slices/src
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-slices2
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for arm in old:16:2048 new:64:2048 new4k:64:4096 new8k:64:8192; do
+  IFS=: read n tile rows <<< "$arm"; memok
+  TF_NVFP4_PROMPT_TILE=$tile TENSORFOLD_PREFILL_ROWS=$rows timeout 3600 $PY $L/prefill_ab260.py $SRC $M x$n-$rep >> $R/xe2e.txt 2> $R/xe2e-$n-$rep.err
+  echo "$(date +%T) $n-$rep rc=$? $(grep "\"x$n-$rep\"" $R/xe2e.txt | grep -o '"tokens": [0-9]*\|"prefill_s": [0-9.]*\|"hash": "[0-9a-f]*"' | tr '\n' ' ')" >> $R/xe2e-chain.txt
+done; done
+echo "== XE2E DONE ==" >> $R/xe2e-chain.txt

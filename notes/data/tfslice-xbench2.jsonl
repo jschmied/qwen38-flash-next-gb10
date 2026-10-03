@@ -1,0 +1,5 @@
+{"rows": 2048, "tile": 16, "gateup_ms": 7.48, "down_ms": 5.79, "layer_ms": 13.27, "TFLOPS": 15.2, "eq_ref": true}
+{"rows": 2048, "tile": 64, "gateup_ms": 5.02, "down_ms": 2.89, "layer_ms": 7.91, "TFLOPS": 25.4, "eq_ref": true}
+{"rows": 8192, "tile": 16, "gateup_ms": 26.17, "down_ms": 14.03, "layer_ms": 40.2, "TFLOPS": 20.0, "eq_ref": true}
+{"rows": 8192, "tile": 64, "gateup_ms": 17.82, "down_ms": 7.68, "layer_ms": 25.51, "TFLOPS": 31.6, "eq_ref": true}
+ALL_EQUAL

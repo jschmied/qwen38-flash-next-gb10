@@ -1,0 +1,7 @@
+10:42:21 g4k-a rc=0 "tokens": 8202 "prefill_s": 4.18 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 16.13 "hash": "44d33ab594f8" 
+10:44:18 g8k-a rc=0 "tokens": 8202 "prefill_s": 4.114 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.946 "hash": "44d33ab594f8" 
+10:46:19 g16k-a rc=0 "tokens": 8202 "prefill_s": 4.046 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.779 "hash": "44d33ab594f8" 
+10:48:15 g4k-b rc=0 "tokens": 8202 "prefill_s": 4.184 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 16.448 "hash": "44d33ab594f8" 
+10:50:13 g8k-b rc=0 "tokens": 8202 "prefill_s": 4.106 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.889 "hash": "44d33ab594f8" 
+10:52:14 g16k-b rc=0 "tokens": 8202 "prefill_s": 4.051 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.844 "hash": "44d33ab594f8" 
+== GE2E DONE ==

@@ -1,0 +1,26 @@
+== checkpoint 8k prefill (4.5935 s): GPU kernel time 4204.2 ms
+     647.39 ms  15.4 % x    98  void (anonymous namespace)::nvfp4_expert_prompt_kernel<2, 2>(__nv_bfloat16 const*, int, in
+     570.90 ms  13.6 % x   508  _b16mm
+     523.98 ms  12.5 % x    48  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false, false>(__nv_bflo
+     318.79 ms   7.6 % x   196  _fp4mm
+     316.20 ms   7.5 % x    98  void (anonymous namespace)::nvfp4_expert_prompt_kernel<1, 3>(__nv_bfloat16 const*, int, in
+     287.54 ms   6.8 % x   429  _chunks
+     267.06 ms   6.4 % x   202  _hc_writeback
+     225.35 ms   5.4 % x    48  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false, true>(__nv_bfloa
+     174.15 ms   4.1 % x   200  _hc_normed
+     170.42 ms   4.1 % x   200  _hc_mix
+     132.84 ms   3.2 % x   108  void (anonymous namespace)::chain_kernel<float, 128, 32>(float const*, float const*, __nv_
+     126.22 ms   3.0 % x   388  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      77.05 ms   1.8 % x    72  void (anonymous namespace)::front_kernel<16, 48>(__nv_bfloat16 const*, long long const*, i
+      62.62 ms   1.5 % x    98  _router
+      53.42 ms   1.3 % x   108  void (anonymous namespace)::back_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const*
+      45.91 ms   1.1 % x   429  _merge
+      27.09 ms   0.6 % x   196  void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, 
+      23.77 ms   0.6 % x   429  _scores
+      18.94 ms   0.5 % x    26  _attn_gate
+      16.44 ms   0.4 % x    26  _attn_prep
+      14.17 ms   0.3 % x   429  _select
+      12.40 ms   0.3 % x   196  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::direct
+      12.31 ms   0.3 % x    49  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, false, false>(__nv_bflo
+       9.82 ms   0.2 % x   196  void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at
+       9.01 ms   0.2 % x    98  void at::native::vectorized_elementwise_kernel<4, at::native::neg_kernel_cuda(at::TensorIt

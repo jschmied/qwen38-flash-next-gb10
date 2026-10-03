@@ -11,7 +11,7 @@ dev = "cuda"
 g = torch.Generator(device=dev).manual_seed(7)
 CASES = [("b16", 324, 10240, True), ("b16", 640, 2560, False), ("b16", 96, 2560, False), ("b16", 2560, 2560, False),
          ("b16", 2560, 6144, False), ("fp4", 2560, 640, False), ("fp4", 2560, 640, True)]
-ROWS = (300, 2048, 2051)
+ROWS = (300, 2048, 2051, 8192)
 W = {}
 for kind, n, k, f32 in CASES:
     if (kind, n, k) in W:

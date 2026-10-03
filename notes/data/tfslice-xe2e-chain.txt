@@ -1,0 +1,9 @@
+10:20:52 old-a rc=0 "tokens": 8202 "prefill_s": 5.165 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 20.474 "hash": "44d33ab594f8" 
+10:22:50 new-a rc=0 "tokens": 8202 "prefill_s": 4.564 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 18.1 "hash": "44d33ab594f8" 
+10:24:46 new4k-a rc=0 "tokens": 8202 "prefill_s": 4.324 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 17.102 "hash": "44d33ab594f8" 
+10:26:46 new8k-a rc=0 "tokens": 8202 "prefill_s": 4.565 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 17.817 "hash": "44d33ab594f8" 
+10:28:47 old-b rc=0 "tokens": 8202 "prefill_s": 5.25 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 20.968 "hash": "44d33ab594f8" 
+10:30:45 new-b rc=0 "tokens": 8202 "prefill_s": 4.593 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 18.26 "hash": "44d33ab594f8" 
+10:32:42 new4k-b rc=0 "tokens": 8202 "prefill_s": 4.289 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 17.172 "hash": "44d33ab594f8" 
+10:34:41 new8k-b rc=0 "tokens": 8202 "prefill_s": 4.567 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 17.872 "hash": "44d33ab594f8" 
+== XE2E DONE ==
