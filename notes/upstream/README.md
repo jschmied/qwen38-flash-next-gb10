@@ -1666,3 +1666,6 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold PR #318** (2026-10-03 ~17:00, user: "post the three as one"): stacked on #304 — bf16 HC fused
   write-back + norm, gate|up split warps, 128×128 lane-matmul prompt tiles; prefill_cold +1…+8 % vs #304 at default
   pieces, decode level, 0 unequal — https://github.com/ashhart/TensorFold/pull/318 (draft `tf-pr-prompt-three.md`).
+- **TensorFold #300 comment** (2026-10-03 ~17:10, user: "ok"): ran its GPU-only `tests/cuda/test_cuda_rowgraphs.py` on
+  GB10 (2 passed) and its CPU suite on aarch64 (133 passed) at `5cbe389` —
+  https://github.com/ashhart/TensorFold/pull/300#issuecomment-5970277660
