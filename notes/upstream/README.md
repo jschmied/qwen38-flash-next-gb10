@@ -1672,3 +1672,7 @@ wait on one ~100 GB pull, and they share one serve.
 - **#303 / #304 / #318 bodies edited** (2026-10-03, user: "ai attribution line is for vllm"): AI line removed and the
   "No AI attribution lines" box ticked, per TF's CONTRIBUTING. The branches' commits still carry our Co-Authored-By /
   Claude-Session trailers (TF strips tool trailers when landing); new TF commits carry none.
+- **TensorFold PR #211 reply** (2026-10-03, user: "ok"): SvangenStudios' 10-02 report (export with NVFP4 MTP experts
+  and no input scales refused at startup) fixed with their one line plus a failing-first loader test, pushed as
+  5ad55f9; 48 GPU tests pass. Draft `tf211-mtp-nvfp4-fix.md`.
+  https://github.com/ashhart/TensorFold/pull/211#issuecomment-5972645803
