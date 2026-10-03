@@ -4050,3 +4050,13 @@ behaviour the review describes is real:
   index + one-pass prefix hashing, `3670830` rank 0 forgets a refused lower-tier entry. #300 CPU suite 156 passed,
   GPU row-graph test 2 passed; every new test fails on the code before its commit. Not done: the per-round vote's
   cost on two real ranks (one GB10 here); bound: one 1-int all-gather per round vs tens-of-ms rounds.
+- **#300 fixes round 3** (third review; user: "check whats needed and what goes to far"). Needed and done in
+  `d1fc34b`: 16-byte header check (a file of MAGIC alone raised `struct.error` past both handlers), best-effort
+  unlink in drop/reconcile (an OSError masked get()'s ValueError and failed the request), disk index keeps token
+  counts not Python id lists (~36 B/token resident on unified memory), host tier ids as int32 counted in `used`,
+  no second state copy in HeldCodec (my own inconsistency with the fresh-arrays contract). Deferred as too far for
+  this round: asynchronous disk writes (design change; measure with a real family first), demote-on-trim (needs
+  async writes), a 1-int all_reduce in Comm (shared interface), measuring the per-round vote (needs two GPUs).
+  Of our own commits, three go beyond #300's bugs and should travel separately upstream: per-window candidate
+  counts (new API), the claim-7 reversal (policy vs the author's choice), link buffers / one-pass hashing (polish).
+  #300 CPU suite 164 passed, GPU row-graph test 2 passed.
