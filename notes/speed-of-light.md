@@ -4069,3 +4069,11 @@ behaviour the review describes is real:
   pages), tmp cleanup, oversized header. Not tested: `_read`'s host peak (tracemalloc does not see the old mmap).
   #300 CPU suite 166 passed; GPU tests 3 passed. RowGraphs capture-after-eager: reviewer withdrew it (the toy reads
   and writes KV; GB10 bit-equal run). Branch 13 commits ahead of `5cbe389`.
+- **#300 gap: mixed rounds** (user: "compute mixed is a real gap for the framework"). `e758ee5`: optional
+  `LaneForward.mixed(pieces, rows, count, masks, counts=...)` — a round's prompt pieces and the windows of lanes
+  already decoding in one forward (experts read once, as Flash Next's `compute_mixed`). A lane whose prompt ends in
+  the round keeps its window for after its save point and `finish_prompt` (its first window follows its last piece
+  in the same round; a snapshot or MTP draft taken from the pre-piece state would be wrong); without `mixed` the
+  round keeps its old order exactly (my first cut drafted every lane before the prefill — caught before commit).
+  Tests: staggered arrivals with a mixed fake, every reply = serial, rank states compared each round, a mixed call
+  never holds a lane's own piece and window; both fail on the previous code. #300 CPU suite 168, GPU tests 3.
