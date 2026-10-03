@@ -1,0 +1,7 @@
+#!/bin/bash
+# nsys trace of one 8K Flash Next NVFP4 prompt (8,192-row pieces) on tf-next for the GPU-idle analysis.
+R=/opt/llm/runners/results/tfslice/idle; mkdir -p $R; PY=/opt/llm/runtime/tf-venv/bin/python; N=/usr/local/bin/nsys
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-next TENSORFOLD_PREFILL_ROWS=8192
+$N profile --force-overwrite=true --trace=cuda,nvtx,osrt --cuda-graph-trace=node --capture-range=cudaProfilerApi --capture-range-end=stop --sample=cpu --cpuctxsw=none --wait=all -o $R/pre8k $PY /opt/llm/runners/tfreview/prefill_nsys.py /home/jschmied/git/tf-next/src /opt/llm/models/qwen38-flash-next-mtpfp4 next > $R/pre8k.log 2>&1
+$N export --type sqlite --force-overwrite=true -o $R/pre8k.sqlite $R/pre8k.nsys-rep > /dev/null 2>&1
+chmod -R a+r $R; echo "== IDLE DONE ==" >> $R/pre8k.log

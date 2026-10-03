@@ -1,0 +1,5 @@
+15:26:43 base-a rc=0 "tokens": 8202 "prefill_s": 4.075 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.758 "hash": "44d33ab594f8"  
+15:30:17 next-a rc=0 "tokens": 8202 "prefill_s": 3.892 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.236 "hash": "44d33ab594f8"  HC fusion self-check on cuda:0: passed; enabled
+15:32:15 base-b rc=0 "tokens": 8202 "prefill_s": 4.068 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.905 "hash": "44d33ab594f8"  HC fusion self-check on cuda:0: passed; enabled
+15:34:13 next-b rc=0 "tokens": 8202 "prefill_s": 3.939 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 15.368 "hash": "44d33ab594f8"  HC fusion self-check on cuda:0: passed; enabled
+== NX DONE ==

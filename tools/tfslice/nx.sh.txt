@@ -1,0 +1,11 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfslice; L=/opt/llm/runners/tfreview; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; G=/home/jschmied/git
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4 TENSORFOLD_PREFILL_ROWS=8192
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b; do for arm in base:tf-nextbase next:tf-next; do
+  n=${arm%%:*}; memok
+  TORCH_EXTENSIONS_DIR=/tmp/claude-1000/-home-jschmied-git-dgx-spark-setup-guide/24a6e32a-d571-4261-96e4-1463dea3f47a/scratchpad/ext-e2e$n timeout 3600 $PY $L/prefill_ab260.py $G/${arm#*:}/src $M h$n-$rep >> $R/nx.txt 2> $R/nx-$n-$rep.err
+  echo "$(date +%T) $n-$rep rc=$? $(grep "\"h$n-$rep\"" $R/nx.txt | grep -o '"tokens": [0-9]*\|"prefill_s": [0-9.]*\|"hash": "[0-9a-f]*"' | tr '\n' ' ') $(grep -h -o 'HC fusion self-check[^"]*' $R/nx.txt | tail -1)" >> $R/nx-chain.txt
+done; done
+echo "== NX DONE ==" >> $R/nx-chain.txt

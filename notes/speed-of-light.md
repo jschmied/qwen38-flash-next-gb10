@@ -3962,3 +3962,37 @@ Receipt hypothesis (mtpfp4, `serve --parallel 4 --context 131072`, v0.6.3 / A / 
   staged kernel is level with the decode kernel at 1–512 rows anyway, `data/tfslice-xsmall.jsonl`). Opened **#303**
   (A) and **#304** (B). Process slip: one v0.6.3 kernel bench ran during a receipt server's load; discarded and
   re-measured on an idle GPU (the receipt bench had not started).
+
+### 5bv. Levers 1 and 2 (user: "then 1 and 2")
+
+- **Lever 1, GPU idle** (`tools/tfslice/gaps.py`, `data/tfslice-idle-gaps.txt`, nsys of an 8K prompt, 8,192-row
+  piece): 286 ms idle of 3,974 ms, 261 ms in ONE gap at the start — the host gathering the prompt's n-gram rows (FP8
+  table, layer 2) before the first copy. Launch gaps ~17 ms total. Gather on the loaded engine
+  (`data/tfslice-populate.txt`, `tools/tfslice/gather_probe.py`): first call 341 ms, repeat 62 ms (raw rows 20 + LUT
+  42 single-threaded; LUT on 16 threads 8 ms, same bytes); fresh prompts 200–255 ms with 15–18k MAJOR faults: the
+  table is 47.7 GiB and does not fit beside the 80 GiB engine, so it is disk-bound. MADV_POPULATE_READ returned −1 and
+  could not help anyway. User: vLLM saw GPU faults much slower and gathers on CPU threads — so CPU-side only. Bound:
+  overlap the gather with layers 0–1 (~150 ms) + threaded LUT (~35 ms) ≈ −4…−6 %; it restructures `stage()`, which
+  #201 (landing in 0.6.4) also changes — do it on top of #201, after lever 2.
+- **Lever 2**: re-attributed — `_chunks/_scores/_merge/_select` are QSA attention (0.37 s), DeltaNet is chain/front/
+  back (0.27 s), hyper-connections 0.61 s (writeback 0.27, normed 0.17, mix 0.17). The released fused HC write-back
+  + norm (`hc_fused.write_norm`, Gluon, byte-checked at startup on sm_121) is gated on `isinstance(hc.down, qmm.Q4)`
+  (MLX 4-bit) — NVFP4's bf16 HC never takes it. Change: allow b16 HC and pass `normed=True` to `_readout_b16`.
+  Hypothesis: 8K prompt −2…−4 %, self-check "passed; enabled", hashes equal.
+- #283 (grearjake) opened our prefetch ring (`0809a5c`) as the #212 follow-up, credited ("@jschmied's design and
+  commit") — our pending follow-up is covered.
+- **HC fusion result** (`data/…/hc-chain`, kernels): writeback+normed 441 ms → `_write_norm` 329 + 11 ms; GPU time
+  3,699 → 3,612 ms (−87 ms); wall 8K 3.96/4.09 → 4.00/3.97 (noise), 32K 15.76/16.14 → 15.53/15.66. Below the
+  −2…−4 % range at 8K. Commit `db822ef` (tf-next).
+- **Gate|up column split** (`data/tfslice-nj-sweep.txt`): NJ 2 for gate|up — 8,192 rows 13.27 → 11.93 ms (−10 %),
+  2,048 level; NJ 2 for down slower (6.28 → 7.38); NJ 1 does not fit the staging (zero x pieces a thread). Bit-equal.
+  Commit `3f62fde`.
+- **qmmf block-FP8 prompt tiles** (`data/tfslice-qbench8.jsonl`, `-qmmf-ncu.txt`, `-qsweep.txt`): FP8G at 53–62 TF vs
+  torch bf16 80–100 TF on the same shapes; ncu 64×64 tile, L2 61 %, issue 47 %, occupancy 16.7 % (157 regs, 50 KB).
+  Sweep (sum of 5 shapes at 8,192 rows, all bit-equal to 64×64): 64×64 25.69 ms; 128×64 27.51; 64×128 29.32;
+  64×128 8 warps 27.03; 128×128 3 stages 24.23; 2 stages 24.16. L2 was not the limiter — the per-element FP8→bf16
+  conversion and per-64-group scale fma (TF's exact math) are. Took 128×128 / 3 stages where npad % 128 == 0
+  (`7c787ae`, ext v5); 98 NVFP4 + linear CUDA tests passed.
+- **Combined e2e** (`data/tfslice-nx-chain.txt`; A+B vs A+B+HC+split+tiles, 8,192 pieces, 2 rounds, hashes equal):
+  8K 4.075/4.068 → 3.892/3.939 (−3.2…−4.5 %), 32K 15.758/15.905 → 15.236/15.368 (−3.3 %). Against v0.6.3:
+  8K 5.70–5.81 → 3.89–3.94 s (−32…−33 %), 32K 22.84–23.38 → 15.24–15.37 s (−33…−35 %). vLLM 8K 2.80 s.

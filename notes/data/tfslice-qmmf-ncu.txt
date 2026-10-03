@@ -1,0 +1,22 @@
+  void <unnamed>::qmmf_kernel<3, 64, 64, 1, 4, 4, 0, 0, 1>(const __nv_bfloat16 *, const unsigned char *, const unsigned char *, float, void *, float *, int, int, int, int, int, int, int) (20480, 1, 1)x(128, 1, 1), Context 1, Stream 7, Device 0, CC 12.1
+    Memory Throughput                 %         60,55
+    Duration                         ms          8,87
+    L1/TEX Cache Throughput           %         36,78
+    L2 Cache Throughput               %         60,55
+    Compute (SM) Throughput           %         46,76
+    Executed Ipc Active   inst/cycle         1,88
+    Issue Slots Busy               %        46,76
+    Warp Cycles Per Issued Instruction             cycle         4,25
+    INF   Check the Warp Stall Sampling (All Samples) table for the top stall locations in your source based on         
+    Block Size                                                   128
+    Grid Size                                                 20.480
+    Registers Per Thread             register/thread             157
+    Dynamic Shared Memory Per Block      Kbyte/block           50,18
+    Static Shared Memory Per Block        byte/block               0
+    Block Limit Barriers                  block           24
+    Block Limit SM                        block           24
+    Block Limit Registers                 block            3
+    Block Limit Shared Mem                block            2
+    Block Limit Warps                     block           12
+    Theoretical Occupancy                     %        16,67
+    Achieved Occupancy                        %        16,60

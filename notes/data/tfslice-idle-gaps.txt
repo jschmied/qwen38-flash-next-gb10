@@ -1,0 +1,31 @@
+span 3974.2 ms, GPU idle 286.0 ms in 6676 gaps
+idle before the next kernel (top 12):
+     262.4 ms  memcpy kind 1
+       9.4 ms  vectorized_elementwise_kernel
+       1.5 ms  elementwise_kernel
+       1.3 ms  _scores
+       1.3 ms  _b16mm
+       1.1 ms  _merge
+       1.1 ms  _select
+       1.1 ms  _chunks
+       0.5 ms  _hc_act
+       0.5 ms  qmmf_kernel
+       0.5 ms  _fp4mm
+       0.5 ms  _hc_writeback
+idle by gap size: {'<10us': 17.2, '>1ms': 268.7, '10-100us': 0.1}
+largest gaps:
+    261080 us  after memcpy kind 1 -> before memcpy kind 1 | host: cudaMemcpyAsync 25us, cudaStreamIsCapturing 4us
+      6337 us  after vectorized_elementwise_kernel -> before vectorized_elementwise_kernel | host: cudaLaunchKernel 5us, cuKernelGetName 0us
+      1296 us  after vectorized_elementwise_kernel -> before memcpy kind 1 | host: cudaMemcpyAsync 31us, cudaEventSynchronize 8us, cudaStreamIsCapturing 3us
+        24 us  after nvfp4_expert_prompt_kernel -> before _fp4mm | host: cudaLaunchKernel 24us
+        22 us  after _router -> before _topk_rows | host: cudaMemcpyAsync 22us
+        21 us  after _merge -> before vectorized_elementwise_kernel | host: cuLaunchKernelEx 21us
+        19 us  after _hc_mix -> before _router | host: cudaLaunchKernel 8us, cuLaunchKernelEx 5us, cuKernelGetName 0us
+        18 us  after _hc_writeback -> before _hc_normed | host: cuLaunchKernelEx 9us
+        13 us  after _reduce -> before elementwise_kernel | host: cuLaunchKernelEx 2us
+        12 us  after _merge -> before vectorized_elementwise_kernel | host: 
+        12 us  after memcpy kind 1 -> before memcpy kind 8 | host: cudaMemcpyAsync 12us
+        10 us  after vectorized_elementwise_kernel -> before _scores | host: cuLaunchKernelEx 5us
+        10 us  after vectorized_elementwise_kernel -> before _scores | host: cuLaunchKernelEx 7us
+        10 us  after plan_scatter -> before nvfp4_expert_prompt_kernel | host: 
+         9 us  after vectorized_elementwise_kernel -> before _scores | host: cuLaunchKernelEx 9us

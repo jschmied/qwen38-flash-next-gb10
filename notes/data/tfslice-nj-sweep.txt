@@ -1,0 +1,17 @@
+== gu4dn4
+{"rows": 2048, "tile": 64, "gateup_ms": 4.64, "down_ms": 2.82, "layer_ms": 7.46, "TFLOPS": 27.0, "eq_ref": true}
+{"rows": 8192, "tile": 64, "gateup_ms": 13.27, "down_ms": 6.28, "layer_ms": 19.55, "TFLOPS": 41.2, "eq_ref": true}
+ALL_EQUAL
+== gu2dn4
+{"rows": 2048, "tile": 64, "gateup_ms": 4.65, "down_ms": 2.95, "layer_ms": 7.59, "TFLOPS": 26.5, "eq_ref": true}
+{"rows": 8192, "tile": 64, "gateup_ms": 11.93, "down_ms": 6.06, "layer_ms": 17.99, "TFLOPS": 44.8, "eq_ref": true}
+ALL_EQUAL
+== gu1dn4
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['ninja', '-v', '-j', '4']' returned non-zero exit status 1.
+    raise RuntimeError(message) from e
+RuntimeError: Error building extension 'tensorfold_nvfp4_v4_gu1dn4': [1/4] c++ -MMD -MF qmmf.o.d -DTORCH_EXTENSION_NAME=tensorfold_nvfp4_v4_gu1dn4 -DTORCH_API_INCLUDE_EXTENSION_H -I/home/jschmied/git/tf-next/src/tensorfold/cuda/nvfp4 -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include -isystem /opt/llm/runtime/vllm-venv-rssm/lib/python3.12/site-packages/torch/include/torch/csrc/api/include -isystem /usr/local/cuda/include -isystem /usr/include/python3.12 -fPIC -std=c++20 -c /home/jschmied/git/tf-next/src/tensorfold/cuda/nvfp4/qmmf.cpp -o qmmf.o 
+== gu2dn2
+{"rows": 2048, "tile": 64, "gateup_ms": 4.65, "down_ms": 2.97, "layer_ms": 7.62, "TFLOPS": 26.4, "eq_ref": true}
+{"rows": 8192, "tile": 64, "gateup_ms": 12.06, "down_ms": 7.38, "layer_ms": 19.44, "TFLOPS": 41.4, "eq_ref": true}
+ALL_EQUAL

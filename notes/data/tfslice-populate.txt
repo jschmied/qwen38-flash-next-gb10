@@ -1,0 +1,7 @@
+before populate: prompt 1 ms / minor / major faults (255.5, 52334, 18264)
+before populate: prompt 2 ms / minor / major faults (214.8, 37989, 15596)
+before populate: prompt 3 ms / minor / major faults (202.5, 34149, 14943)
+populate 47.7 GiB: 0.0 s, rc {-1}
+after populate: prompt 4 ms / minor / major faults (143.7, 22023, 10382)
+after populate: prompt 5 ms / minor / major faults (113.8, 14022, 6649)
+after populate: prompt 6 ms / minor / major faults (187.5, 27301, 15753)
