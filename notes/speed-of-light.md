@@ -4038,3 +4038,15 @@ behaviour the review describes is real:
 7. Hard floor bypassed for the first request: CONFIRMED, deliberate (commented). Debatable, not a bug.
 8. Linear `find` over host/disk entries with list prefix compares: CONFIRMED by reading; perf, P3.
 9. RoundLink per-call allocations (`_gather` output tensor, `torch.tensor` per send): CONFIRMED by reading; minor.
+- **#300 fixes, rounds 1 and 2** (branch `pr300-fixes` on our fork, local only upstream-wise). Round 1 (first review):
+  `8ab84ea` tier cascade + identity pin + keyed lookup, `36b531f` rank vote on ADMIT/EVICT/ROUND + undo + fresh retry
+  + persistent link buffers, `f42791a` stale rows not spilled + compressed-row contract (a hard grid check was wrong:
+  the fake writes a pair row only when complete, so the shared partial page is safe by design), `89923c6` per-window
+  candidate needs, `57047c4` an alone-unfit request refused after trimming the host tier (reverses the author's
+  deliberate bypass; two of their tests changed). Round 2 (second review): `7c35010` ADMIT transactional on the
+  failing rank too + device-cache order restored on undo (found: `named()` reorders entries, EVICT is by index),
+  `781656b` decoder samples only each window's own candidates (poison test), `fc11c5b` pages freed before any spill,
+  failing tiers/codecs drop instead of breaking, HostTier keeps no displaced entries, single host copy, length
+  index + one-pass prefix hashing, `3670830` rank 0 forgets a refused lower-tier entry. #300 CPU suite 156 passed,
+  GPU row-graph test 2 passed; every new test fails on the code before its commit. Not done: the per-round vote's
+  cost on two real ranks (one GB10 here); bound: one 1-int all-gather per round vs tens-of-ms rounds.
