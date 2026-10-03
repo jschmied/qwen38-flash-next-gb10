@@ -4012,3 +4012,29 @@ Receipt hypothesis (mtpfp4, `serve --parallel 4 --context 131072`, v0.6.3 / A / 
   pieces 2…n, the first piece's gather is small); 8,192 pieces off 5.646 / 22.93 and 5.805 / 22.42, on 5.503 / 22.29
   and 5.592 / 22.27 (−2.5…−3.7 % at 8K, −0.7…−2.8 % at 32K). In range at 8,192 pieces, null at the default. Pays only
   with large pieces, which pay only with #303's grid order → hold until #303/#304; commit `flashnext-ngram-overlap`.
+
+### 5bw. TF #300 review claims (user pasted a third-party review; "check for pr 300, locally only") — nothing posted
+
+Checked at `5cbe389` in `~/git/tf-pr300`; four CPU tests written to the reviewer's expectation
+(`tools/tfreview/test_pr300_review.py`, run from the PR's tests dir, not committed there) — all four FAIL, i.e. the
+behaviour the review describes is real:
+1. HostTier→DiskTier cascade: CONFIRMED. `HostTier.put` drops its own LRU entries and returns True;
+   `TieredCache._evict` stops at the first accepting tier (`any(...)`); a displaced host entry is gone (test: host
+   holds 2 of 3, the first is findable nowhere). Severity: lost cache hits, not wrong output — P1 rather than P0.
+2. Asymmetric disk across ranks: CONFIRMED. Followers resolve tier ≥ 0 resumes locally (`held or cache.load`);
+   `DiskTier.retain()` is called nowhere (only `reconcile()` in `__init__`). Test: rank 1's files gone → the follower
+   raises `ValueError` reading the missing file. In the fake Mirror link the error reaches rank 0 synchronously; over
+   NCCL rank 1 leaves `follow()` and rank 0's next collective hangs. P0 for two ranks.
+3. send → local apply not transactional: CONFIRMED for ADMIT (test: rank 0's `_admit` fails after the broadcast →
+   the follower keeps the lane). Rounds are covered (`drop()` sets `broken` on two ranks); ADMIT/EVICT are not.
+4. Partial last page shared without COW at save: real but conditional — save points are on `forward.grid`, `share()`
+   holds the partial page, `adopt()` copies it at resume. Safe while `grid` is a multiple of every plane's
+   `per_tokens`; nothing asserts that. `to_host` writes the whole partial page (stale bytes past the save point to
+   host/disk). P2: assert the invariant or page-align save points.
+5. Victim pinned by length: CONFIRMED (`len(e[0]) not in keep`), narrower than stated — only device-tier resumes pass
+   a nonzero `shared`, and it bites only when every remaining victim has exactly that length. P2.
+6. `count = vocab` for sampled requests without top_k, max across lanes: CONFIRMED by reading. Design concern for
+   a 100K+-vocab family.
+7. Hard floor bypassed for the first request: CONFIRMED, deliberate (commented). Debatable, not a bug.
+8. Linear `find` over host/disk entries with list prefix compares: CONFIRMED by reading; perf, P3.
+9. RoundLink per-call allocations (`_gather` output tensor, `torch.tensor` per send): CONFIRMED by reading; minor.
