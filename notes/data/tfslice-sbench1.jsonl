@@ -1,0 +1,22 @@
+{"case": "b16-324-10240-1-300", "sk": 32, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.106, "fused_ms": 0.108}
+{"case": "b16-324-10240-1-2048", "sk": 32, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.049, "fused_ms": 0.3}
+{"case": "b16-324-10240-1-2051", "sk": 32, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.112, "fused_ms": 0.37}
+{"case": "b16-640-2560-0-300", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.031, "fused_ms": 0.031}
+{"case": "b16-640-2560-0-2048", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.441, "fused_ms": 0.104}
+{"case": "b16-640-2560-0-2051", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.441, "fused_ms": 0.105}
+{"case": "b16-96-2560-0-300", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.022, "fused_ms": 0.029}
+{"case": "b16-96-2560-0-2048", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.034, "fused_ms": 0.031}
+{"case": "b16-96-2560-0-2051", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.034, "fused_ms": 0.033}
+{"case": "b16-2560-2560-0-300", "sk": 4, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.117, "fused_ms": 0.075}
+{"case": "b16-2560-2560-0-2048", "sk": 4, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.012, "fused_ms": 0.342}
+{"case": "b16-2560-2560-0-2051", "sk": 4, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.03, "fused_ms": 0.375}
+{"case": "b16-2560-6144-0-300", "sk": 4, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.258, "fused_ms": 0.222}
+{"case": "b16-2560-6144-0-2048", "sk": 4, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.435, "fused_ms": 1.052}
+{"case": "b16-2560-6144-0-2051", "sk": 4, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.444, "fused_ms": 1.081}
+{"case": "fp4-2560-640-0-300", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.179, "fused_ms": 0.076}
+{"case": "fp4-2560-640-0-2048", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.763, "fused_ms": 0.349}
+{"case": "fp4-2560-640-0-2051", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.705, "fused_ms": 0.361}
+{"case": "fp4-2560-640-1-300", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 0.19, "fused_ms": 0.076}
+{"case": "fp4-2560-640-1-2048", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.787, "fused_ms": 0.402}
+{"case": "fp4-2560-640-1-2051", "sk": 8, "fused_eq_split": true, "row_alone_eq": true, "split_eq_ref": true, "split_ms": 1.833, "fused_ms": 0.432}
+ALL_EQUAL

@@ -3827,3 +3827,73 @@ decode unchanged.
   hand-set 0.15; with it, H is no worse than the defaults on either set (−3.8 % code). Out of the G hypothesis range on
   code (+2…+4.5 vs −4…+1): within 512 tokens the per-depth EMA has too few rounds to pull the product down to the
   kept rate; a longer-lived server may land nearer H. Hashes equal throughout.
+
+### 5bs. NVFP4 path: the bf16 and NVFP4 Triton matmuls sum their K slices in one program for prompt rows
+
+User: "yes" to lever 1 (fold `_b16mm` / `_fp4mm` K slices). Census on 0.6.3, mtpfp4, 8K prompt (5.84 s,
+`tools/tfslice/census.py`): b16 HC down N 324 K 10240 SK 32 fp32 out, 392 calls 405 ms (1.03 ms, 13 TFLOPS); fp4
+shared-expert down N 2560 K 640 SK 8, 196 calls 352 ms (1.80 ms, 3.7 TFLOPS); fp4 1280×2560 SK 1 131 ms; b16
+10240×320 SK 1 110 ms; the rest < 25 ms each. At 2,048 rows each split call writes and re-reads SK × M × N × 4 bytes
+(85 MB / 168 MB) — the partials, not the math, are the cost. Change: a FUSE constexpr — one program a (row, column)
+tile runs the slices in order, each from zero exactly as its split program does, and adds them in slice order as
+`_reduce` does (same bits by construction), grid z 1, no partials, no `_reduce`; taken at ≥ FUSED_ROWS rows.
+Hypothesis: b16 324×10240 1.03 → 0.2–0.4 ms, fp4 2560×640 1.80 → 0.2–0.5 ms; 8K prefill −6…−10 %; every output
+bit-equal to the split path (tests: fused == split per shape, rows alone == in a batch).
+- Kernel check (`tools/tfslice/sbench.py`, `data/tfslice-sbench1.jsonl`): every case bit-equal — fused == split,
+  rows alone == among 300/2048/2051, split == v0.6.3's split (saved reference). Split → fused at 2,048 rows: b16
+  324×10240 SK 32 1.05 → 0.30 ms; b16 640×2560 0.44 → 0.10; b16 2560×2560 1.01 → 0.34; b16 2560×6144 1.44 → 1.05;
+  fp4 2560×640 1.76 → 0.35 (fp32 out 1.79 → 0.40). At 300 rows level or faster except b16 N 96 (0.022 → 0.029 ms).
+  In range. Tests: `test_prompt_rows_add_their_k_slices_in_one_program_with_the_split_bits` (5 cases) + the NVFP4
+  CUDA suites: 74 passed (one direct `_fp4mm` launch in an old test needed `FUSE` to default to False).
+  E2E hypothesis (mtpfp4, same tree, `TF_FUSED_SLICE_ROWS=1e9` off vs default, prefill_ab 8K/32K, 3 rounds): −6…−10 %,
+  hashes equal.
+- **E2E result** (`data/tfslice-e2e-chain.txt`): off / on — 8K 5.755 / 5.069, 5.703 / 5.198, 5.808 / 5.147 s; 32K
+  22.975 / 20.319, 22.837 / 20.818, 23.380 / 20.637 s → −8.8…−11.9 %, hashes equal in all 12 runs. Above the
+  −6…−10 % range on two rounds: the saving (0.5–0.7 s) exceeds the census estimate (0.59 s); the partials' traffic
+  also slowed neighbours (L2). Host subset same as v0.6.3 (128 passed / 4 failed / 2 collection errors both).
+  Branch `flashnext-fused-slices` `5dec591` pushed to the fork; PR needs the user's go.
+- User asked "around a kernel or of the kernel?": of the kernel (the split-K partial round trip was those calls'
+  dominant cost at prompt size) — but those calls are ~10 % of an NVFP4 prompt after the fix; the core buckets are the
+  routed experts and the block-FP8 dense lane matmul, and #203 (Thor) already shows a 2.5× core rewrite (FlashInfer
+  W4A16 grouped experts, cuBLAS bf16 dense over exactly dequantized weights, FlashInfer chunked GDN). Next: bound
+  every bucket of an 8K prompt on tf-slices against its floor, then rank.
+- **Bounded 8K profile on the branch** (`data/tfslice-prof8k.txt`, checkpoint mode, 5.27 s, GPU 5.00 s): routed
+  experts `nvfp4_expert_kernel` 1.38 + 0.88 = 2.27 s (45 %); block-FP8 dense `qmmf` 0.77 s (15 %); `_b16mm` 0.29 +
+  `_fp4mm` 0.20; GDN (_chunks, chain, front/back, merge, scores, select) ~0.63; HC (writeback, mix, normed) ~0.59.
+  Floors: routed experts 10 × 3 × 2560 × 640 MACs/token × 48 layers = 38.7 TFLOP an 8K prompt → 0.42 s at the bf16
+  peak (93 TF); but every 2,048-row piece touches ~all 512 experts of a layer (≈ 40 rows each), so a piece re-reads
+  the whole expert set (≈ 1.4 GB/layer FP4 + scales, ~68 GB/model) → 4 pieces × 68 GB / 218 GB/s ≈ 1.25 s: the experts
+  are **weight-traffic-bound by the piece size**, measured 2.27 s ≈ 55 % of that floor. Bigger pieces cut the traffic
+  (8,192 rows: one read, ~0.31 s) — the engine knob `TENSORFOLD_PREFILL_ROWS` exists in 0.6.3 (#203 runs 4,096).
+  qmmf dense 44.2 TFLOP in 0.77 s = 57 TF (bf16 floor 0.48 s).
+  Hypothesis (prefill_ab 8K/32K, tf-slices, PREFILL_ROWS default 2048 / 4096 / 8192, 2 rounds): 8K 5.15 → 4.2–4.6 s
+  at 4096 and 3.6–4.2 s at 8192; 32K by similar fractions; hashes equal (chunking must not change bits).
+- **Piece-size result — hypothesis REFUTED** (`data/tfslice-rows-chain.txt`, round a; round b stopped once decided):
+  8K / 32K prefill at 2,048 rows 5.18 / 20.36 s, 4,096 rows 5.12 / 19.90 s (−1 / −2 %), 8,192 rows 5.46 / 21.23 s
+  (+5 / +4 %); hashes equal; the startup line confirms the piece size ("idle prompt pieces 4096 rows"). Predicted
+  −10…−30 %. So the routed experts are NOT bound by re-reading weights per piece; the claim in the bounded-profile
+  entry ("weight-traffic-bound by the piece size") is withdrawn. The expert kernel is limited by its own work
+  (FP4 decode + a scale multiply per 16-input block): 2.27 s for 38.7 TFLOP = 17 TF, unchanged by piece size.
+- **Ceiling check (user: "make sure you don't optimize a local maximum")** — `tools/tfslice/expert_oracle.py`
+  (`data/tfslice-expert-oracle.jsonl`): cuBLAS bf16 batched matmuls on the expert shapes (512 × [rows, 2560] ×
+  [2560, 1280] then × [640, 2560], rows = piece × 10 / 512): 2,048-row piece 23.7 ms/layer = 8.5 TF (4.5 s an 8K
+  prompt — bf16 weights are 5 GB/layer, bandwidth-bound), 4,096 15.8 TF (2.4 s), 8,192 25.8 TF (1.5 s). So "use the
+  vendor GEMM in bf16" is worse than TF's FP4 kernel; the global optimum needs FP4 weights in a tensor-core grouped
+  GEMM: floor = max(weight traffic 1.4 GB/layer per piece / 218 GB/s = 6.4 ms/layer per piece, compute 38.7 TFLOP /
+  93 TF bf16 = 0.42 s or FP4-mma rate) ≈ 0.42–0.6 s an 8K prompt at 4,096-row pieces, vs 2.27 s now (−1.7 s,
+  ~−33 % of the prompt). Next reference before writing anything: FlashInfer 0.6.18's CUTLASS NVFP4 fused MoE
+  (`cutlass_fused_moe`, sm120 module, in tf-venv) on these shapes and pieces — what a tuned FP4 grouped GEMM does on
+  GB10 — and whether a pinned config keeps rows' bits independent of the batch.
+- **External reference measured** (`tools/tfslice/fi_moe_oracle.py`, `data/tfslice-fi-moe-oracle.jsonl`; vllm-venv-rssm,
+  FlashInfer CUTLASS NVFP4 fused MoE = what vLLM serves on GB10, autotuned per row count, Flash Next shapes, random
+  weights): ms per layer at 2,048 / 4,096 / 8,192 rows — deterministic finalize 8.25 / 10.2 / 14.6 (24 / 40 / 55 TF),
+  fused (atomic) finalize 8.0 / 10.2 / 14.7. Per 8K prompt (48 layers): 1.58 / 0.98 / 0.70 s. Row bits: with the
+  deterministic finalize the 2,048 rows computed alone equal the same rows inside an 8,192 batch, and runs repeat;
+  with the fused finalize they do not (atomics). Context (prefill-investigation 65, vLLM on this box): 8K TTFT 2.80 s,
+  MoE 14 % of it.
+  Expert path for an 8K prompt: TF 0.6.3 W4A16 2.27 s (flat in piece size) | our #211 W4A4 ~1.59 s (earlier tree) |
+  FlashInfer W4A4 det. 1.58 / 0.98 / 0.70 s at 2K / 4K / 8K pieces | traffic floor 1.26 / 0.63 / 0.32 s | bf16 compute
+  floor 0.42 s. **TF's expert kernel is the local maximum**: a traffic-floor FP4 grouped GEMM plus bigger pieces is
+  worth ~1.3–1.6 s of the 5.18 s 8K prompt (−25…−30 %), vs −10 % for the fused-slice fix. Caveats: FlashInfer's math
+  is W4A4 (FP4 activations; #211 measured ppl +1.27 % for that on this model), TF 0.6.3 runs W4A16; the row-invariance
+  check is one pair of batches; FlashInfer would be a new TF dependency (#203 uses FlashInfer's W4A16 grouped GEMM).

@@ -1,0 +1,50 @@
+== checkpoint 8k prefill (5.2669 s): GPU kernel time 5004.6 ms
+    1384.05 ms  27.7 % x   245  void (anonymous namespace)::nvfp4_expert_kernel<2, 2, 4>(__nv_bfloat16 const*, int, int, u
+     882.57 ms  17.6 % x   245  void (anonymous namespace)::nvfp4_expert_kernel<1, 3, 4>(__nv_bfloat16 const*, int, int, u
+     524.87 ms  10.5 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false, false>(__nv_bflo
+     293.74 ms   5.9 % x  1270  _b16mm
+     280.54 ms   5.6 % x   429  _chunks
+     260.22 ms   5.2 % x   505  _hc_writeback
+     230.11 ms   4.6 % x   192  void (anonymous namespace)::qmmf_kernel<3, 64, 64, 1, 4, 4, false, false, true>(__nv_bfloa
+     201.40 ms   4.0 % x   490  _fp4mm
+     172.39 ms   3.4 % x   500  _hc_mix
+     155.73 ms   3.1 % x   500  _hc_normed
+     136.37 ms   2.7 % x   216  void (anonymous namespace)::chain_kernel<float, 128, 32>(float const*, float const*, __nv_
+     117.32 ms   2.3 % x   970  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native:
+      73.56 ms   1.5 % x   180  void (anonymous namespace)::front_kernel<16, 48>(__nv_bfloat16 const*, long long const*, i
+      55.74 ms   1.1 % x   216  void (anonymous namespace)::back_kernel<16, 48>(__nv_bfloat16 const*, __nv_bfloat16 const*
+      44.05 ms   0.9 % x   429  _merge
+      23.22 ms   0.5 % x   429  _scores
+      22.69 ms   0.5 % x   245  _router
+      18.07 ms   0.4 % x    65  _attn_gate
+      15.46 ms   0.3 % x    65  _attn_prep
+      14.08 ms   0.3 % x   429  _select
+      12.18 ms   0.2 % x    49  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, false, false>(__nv_bflo
+      10.97 ms   0.2 % x   490  void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, 
+       7.41 ms   0.1 % x   490  void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl<at::native::direct
+       7.27 ms   0.1 % x   490  void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at
+       6.42 ms   0.1 % x   245  _topk_rows
+       5.64 ms   0.1 % x   245  void at::native::vectorized_elementwise_kernel<4, at::native::exp_kernel_cuda(at::TensorIt
+       5.49 ms   0.1 % x   245  void at::native::vectorized_elementwise_kernel<4, at::native::neg_kernel_cuda(at::TensorIt
+       5.27 ms   0.1 % x   245  void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<float>
+       5.00 ms   0.1 % x    48  void (anonymous namespace)::qmmf_kernel<3, 16, 64, 1, 4, 4, false, true, false>(__nv_bfloa
+       4.61 ms   0.1 % x   105  Memcpy DtoD (Device -> Device)
+       4.39 ms   0.1 % x   245  void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::Tenso
+       3.21 ms   0.1 % x     5  void (anonymous namespace)::prefill_kernel<32, 128, 128, 2, 4, 3, false>(__nv_bfloat16 con
+       3.13 ms   0.1 % x     5  _ple_conv
+       2.64 ms   0.1 % x     5  _ple_gate
+       2.39 ms   0.0 % x   500  _hc_act
+       1.90 ms   0.0 % x   196  (anonymous namespace)::plan_offsets(int, int, int, int*, int*, int*)
+       1.80 ms   0.0 % x    10  _rmsnorm
+       1.71 ms   0.0 % x     5  _add_streams
+       1.13 ms   0.0 % x     1  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::arr
+       1.02 ms   0.0 % x    10  _embed
+       0.96 ms   0.0 % x    20  Memcpy HtoD (Pinned -> Device)
+       0.74 ms   0.0 % x   196  (anonymous namespace)::plan_rank(int const*, int, int, int*, int*)
+       0.58 ms   0.0 % x   209  _reduce
+       0.55 ms   0.0 % x   196  (anonymous namespace)::plan_scatter(int const*, int, int, int const*, int const*, int*)
+       0.48 ms   0.0 % x   222  _shift_windows
+       0.43 ms   0.0 % x     5  _ple_embed_bf16
+       0.42 ms   0.0 % x   442  void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array
+       0.37 ms   0.0 % x    65  _pool
+       0.18 ms   0.0 % x   180  void at::native::vectorized_elementwise_kernel<2, at::native::FillFunctor<long>, std::arra

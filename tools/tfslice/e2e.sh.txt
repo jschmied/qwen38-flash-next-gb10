@@ -1,0 +1,11 @@
+#!/bin/bash
+R=/opt/llm/runners/results/tfslice; mkdir -p $R; L=/opt/llm/runners/tfreview; PY=/opt/llm/runtime/tf-venv/bin/python
+M=/opt/llm/models/qwen38-flash-next-mtpfp4; SRC=/home/jschmied/git/tf-slices/src
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4 TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-slices
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+for rep in a b c; do for arm in off:1000000000 on:256; do
+  n=${arm%%:*}; memok
+  TF_FUSED_SLICE_ROWS=${arm#*:} timeout 3600 $PY $L/prefill_ab260.py $SRC $M s$n-$rep >> $R/e2e.txt 2> $R/e2e-$n-$rep.err
+  echo "$(date +%T) $n-$rep rc=$? $(grep "\"s$n-$rep\"" $R/e2e.txt | grep -o '"tokens": [0-9]*\|"prefill_s": [0-9.]*\|"hash": "[0-9a-f]*"' | tr '\n' ' ')" >> $R/chain.txt
+done; done
+echo "== SLICE E2E DONE ==" >> $R/chain.txt

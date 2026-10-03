@@ -1,0 +1,20 @@
+#!/bin/bash
+# (1) #242 on 0.6.3: fused prompt slices on/off (TF_QMMF_FUSED_ROWS), mtpfp4, 8K/32K. (2) #250 calibrated branch on EXL3 3.05.
+R=/opt/llm/runners/results/tfreview; L=/opt/llm/runners/tfreview; PY=/opt/llm/runtime/tf-venv/bin/python; G=/home/jschmied/git
+export HOME=/root PYTHONUNBUFFERED=1 MAX_JOBS=4
+memok(){ until [ $(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo) -ge 100 ]; do sleep 10; done; }
+M=/opt/llm/models/qwen38-flash-next-mtpfp4
+for rep in a b; do for arm in off:1000000000 on:256; do
+  n=${arm%%:*}; memok
+  TF_QMMF_FUSED_ROWS=${arm#*:} TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-063 timeout 3600 $PY $L/prefill_ab260.py $G/tf-main063/src $M q$n-$rep >> $R/q063.txt 2> $R/q063-$n-$rep.err
+  echo "$(date +%T) q063 $n-$rep rc=$? $(grep "\"q$n-$rep\"" $R/q063.txt | grep -o '"tokens": [0-9]*\|"prefill_s": [0-9.]*\|"hash": "[0-9a-f]*"' | tr '\n' ' ')" >> $R/issues0603-chain.txt
+done; done
+M=/opt/llm/models/qwen38-flash-next-exl3-3.05bpw
+for rep in a b; do for set in code prose; do
+  for arm in "A|6|0.7|" "G|8|0|0.06" "H|8|0|0.15"; do
+    IFS='|' read name d c k <<< "$arm"; memok
+    env PROMPT_SET=$set MTP_DEPTH=$d MTP_CONF=$c ${k:+MTP_COST=$k} TORCH_EXTENSIONS_DIR=/opt/llm/.cache-tf/ext-pr250cal timeout 1800 $PY $L/host_probe_cost.py $G/tf-pr250cal/src $M S1 512 > $R/cal-$set-$name-$rep.log 2>&1
+    echo "$(date +%T) cal $set $name $rep rc=$? $(grep '^ARM ' $R/cal-$set-$name-$rep.log | grep -o '"ms_tok_per_stream": [0-9.]*\|"drafted": [0-9]*\|"accepted": [0-9]*\|"hashes": \[[^]]*\]' | tr '\n' ' ')" >> $R/issues0603-chain.txt
+  done
+done; done
+echo "== ISSUES0603 DONE ==" >> $R/issues0603-chain.txt

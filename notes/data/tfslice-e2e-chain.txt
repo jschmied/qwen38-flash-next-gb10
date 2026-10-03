@@ -1,0 +1,7 @@
+09:37:34 off-a rc=0 "tokens": 8202 "prefill_s": 5.755 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.975 "hash": "44d33ab594f8" 
+09:39:36 on-a rc=0 "tokens": 8202 "prefill_s": 5.069 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 20.319 "hash": "44d33ab594f8" 
+09:41:40 off-b rc=0 "tokens": 8202 "prefill_s": 5.703 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 22.837 "hash": "44d33ab594f8" 
+09:43:41 on-b rc=0 "tokens": 8202 "prefill_s": 5.198 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 20.818 "hash": "44d33ab594f8" 
+09:45:45 off-c rc=0 "tokens": 8202 "prefill_s": 5.808 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 23.38 "hash": "44d33ab594f8" 
+09:47:46 on-c rc=0 "tokens": 8202 "prefill_s": 5.147 "hash": "93f5ec6aecc9" "tokens": 32779 "prefill_s": 20.637 "hash": "44d33ab594f8" 
+== SLICE E2E DONE ==
