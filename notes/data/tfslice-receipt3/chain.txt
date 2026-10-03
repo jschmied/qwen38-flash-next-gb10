@@ -1,0 +1,5 @@
+16:23:42 1 B done prompt pieces 2048 rows
+16:35:30 2 T done prompt pieces 2048 rows
+16:41:43 3 T done prompt pieces 2048 rows
+16:47:54 4 B done prompt pieces 2048 rows
+== RECEIPT3 DONE ==

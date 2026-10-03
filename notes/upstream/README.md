@@ -1663,3 +1663,6 @@ wait on one ~100 GB pull, and they share one serve.
   (+7…+15 %, decode −0.4…−0.7 % by bench_openai, kernel GPU time level) — https://github.com/ashhart/TensorFold/pull/304 .
   Receipts per CONTRIBUTING (prefill_cold / bench_openai / bench_concurrent --alone --serial, 0 unequal), drafts
   `tf-pr-prompt-slices.md`, `tf-pr-nvfp4-prompt-experts.md`. AI-attribution checklist box left unticked with a note.
+- **TensorFold PR #318** (2026-10-03 ~17:00, user: "post the three as one"): stacked on #304 — bf16 HC fused
+  write-back + norm, gate|up split warps, 128×128 lane-matmul prompt tiles; prefill_cold +1…+8 % vs #304 at default
+  pieces, decode level, 0 unequal — https://github.com/ashhart/TensorFold/pull/318 (draft `tf-pr-prompt-three.md`).

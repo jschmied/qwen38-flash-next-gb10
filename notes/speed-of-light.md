@@ -3996,3 +3996,10 @@ Receipt hypothesis (mtpfp4, `serve --parallel 4 --context 131072`, v0.6.3 / A / 
 - **Combined e2e** (`data/tfslice-nx-chain.txt`; A+B vs A+B+HC+split+tiles, 8,192 pieces, 2 rounds, hashes equal):
   8K 4.075/4.068 → 3.892/3.939 (−3.2…−4.5 %), 32K 15.758/15.905 → 15.236/15.368 (−3.3 %). Against v0.6.3:
   8K 5.70–5.81 → 3.89–3.94 s (−32…−33 %), 32K 22.84–23.38 → 15.24–15.37 s (−33…−35 %). vLLM 8K 2.80 s.
+- **PR #318 receipt** (`data/tfslice-receipt3/`, #304 vs #304 + three, default 2,048 pieces): prefill_cold 2K…64K
+  #304 1,572/1,620/1,630/1,561/1,520 and 1,560/1,590/1,610/1,537/1,470; this 1,609/1,664/1,652/1,636/1,590 and
+  1,608/1,649/1,664/1,556/1,548 (+1…+8 %); greedy decode level; bench_concurrent 0 unequal. Opened **#318**.
+- **TF 0.6.4 released** (2026-10-03): #201 (gather before the copy wait), #248, #254, #268 landed; #252 not yet.
+  #303 / #304 / #318 branches merge cleanly onto 0.6.4. #300 (jayleaton): new shared CUDA serving core (lane
+  decoder, page pool, tiered prompt cache incl. disk, drafting policies incl. all-depths ExpectedRate, row graphs),
+  no family uses it yet; first user = DS-V4.1-Flash family (#299, two Sparks). Its GPU test was not run (no GPU).
