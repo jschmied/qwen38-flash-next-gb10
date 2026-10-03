@@ -3796,3 +3796,34 @@ decode unchanged.
   tile choice by N (keep `linear_kernel` for N ≥ 10240 at ≤ 32 rows). Both small; the big buckets remain routed
   experts (grouped_kernel 2.94 s at M4, 6.56 s at 8K on 0.6.2 without #212), `_f16_mm` 0.73 s, `qmm_kernel` 0.26 s
   and `tree_kernel` 0.26 s at M4.
+
+### 5br. Open-issues check 2026-10-03: #242 "level" on the maintainer's boxes, #250 calibrated rerun
+
+- 0.6.3 shipped #242 (credited). Maintainer: cold prompt ladder level within 1 % on their Spark (Flash Next NVFP4)
+  and RTX PRO 6000 (27B NVFP4); asks for our setup. Code reading on 0.6.3: only `Fp8BlockLinear.prefill` (128×128
+  block FP8) sends prompt rows through the lane matmul `_matmul` that #242 changed; `Fp4Linear`/`Fp8Linear`/
+  `Mx8Linear` (scales in range) prefill through `_prompt`. local-inference-lab's dense layers are MXFP8 (config: 48 ×
+  gate/up/down, 36 × in_proj_*, 12 × q/k/v/o/index all MXFP8), nvidia 27B NVFP4 is FP8 + NVFP4 — both untouched, so
+  level is expected there. Our `mtpfp4` is NVFP4 experts + block-FP8 dense: the case that gains. Hypothesis for the
+  0.6.3 A/B (`TF_QMMF_FUSED_ROWS=1e9` off vs default on, mtpfp4, prefill_ab 8K/32K, 2 rounds): −4…−8 % with fused
+  on, hashes equal.
+- #250: grearjake calibrated the chain product (`e6ade5e`, per-depth EMA of kept / head product, greedy and sampled
+  apart); on 4.05 the calibrated 8/0/0.06 is 0.980 of defaults, the cut stays ahead; asks for our 3.05 code arm on the
+  branch. Hypothesis (host_probe S1 512, code/prose, 2 rounds; A defaults, G 8/0/0.06 calibrated, H 8/0/0.15
+  calibrated): G code −4…+1 % vs A (calibration standing in for the hand-set 0.15), G prose −3…+1 %; H ≤ G on prose.
+- **#242 on 0.6.3 result** (`data/tfreview/issues0603-chain.txt`, `q063.txt`): mtpfp4, fused off / on — 8K 6.01 /
+  5.80 s and 6.04 / 5.76 s (−3.4 / −4.6 %), 32K 24.07 / 23.25 and 24.19 / 23.12 s (−3.4 / −4.4 %); hashes equal.
+  Slightly under the −4…−8 % range (0.6.3's other prompt work shrinks the block-FP8 share); the gain is real and
+  limited to block-FP8 dense layers, as the code reading said.
+- **#250 calibrated result** (`e6ade5e`, EXL3 3.05, one process per arm, calibration starts fresh each process):
+
+  | arm | code a / b ms/token (drafted / kept) | prose a / b |
+  |---|---|---|
+  | A defaults 6 / 0.70 | 12.12 / 12.18 (502 / 367) | 18.57 / 18.55 (449 / 248) |
+  | G 8 / 0 + 0.06 calibrated | 12.67 / 12.41 (714–718 / 391) +2.0…+4.5 % | 18.95 / 18.98 (623 / 268) +2.1…+2.3 % |
+  | H 8 / 0 + 0.15 calibrated | **11.67 / 11.71** (530–540 / 378–380) −3.7…−3.9 % | 18.55 / 18.44 (437–443 / 244–247) 0…−0.6 % |
+
+  Uncalibrated (§5bp): G +6.5 % / +10 %, H −3.9 % / +0.9 %. Calibration halves G's loss but does not reach the
+  hand-set 0.15; with it, H is no worse than the defaults on either set (−3.8 % code). Out of the G hypothesis range on
+  code (+2…+4.5 vs −4…+1): within 512 tokens the per-depth EMA has too few rounds to pull the product down to the
+  kept rate; a longer-lived server may land nearer H. Hashes equal throughout.

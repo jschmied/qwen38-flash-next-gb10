@@ -1,0 +1,26 @@
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 103.34 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] building CUDA extension tensorfold_nvfp4_v3 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_experts_v7 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qmm_v5 (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_qwen4_exp_gdn_io (first start after an install or update; later starts reuse it)
+[tensorfold] building CUDA extension tensorfold_gdn_v2 (first start after an install or update; later starts reuse it)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read in 12.5s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 22.0s
+{"label": "qoff-a", "tokens": 8202, "prefill_s": 6.01, "wall_s": 7.076, "calls": {"fold": 0, "wq": 0}, "hash": "93f5ec6aecc9"}
+{"label": "qoff-a", "tokens": 32779, "prefill_s": 24.07, "wall_s": 25.38, "calls": {"fold": 0, "wq": 0}, "hash": "44d33ab594f8"}
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 102.07 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read in 12.0s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.3s
+{"label": "qon-a", "tokens": 8202, "prefill_s": 5.804, "wall_s": 6.94, "calls": {"fold": 0, "wq": 0}, "hash": "93f5ec6aecc9"}
+{"label": "qon-a", "tokens": 32779, "prefill_s": 23.246, "wall_s": 24.566, "calls": {"fold": 0, "wq": 0}, "hash": "44d33ab594f8"}
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 103.28 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read in 11.8s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.3s
+{"label": "qoff-b", "tokens": 8202, "prefill_s": 6.041, "wall_s": 7.18, "calls": {"fold": 0, "wq": 0}, "hash": "93f5ec6aecc9"}
+{"label": "qoff-b", "tokens": 32779, "prefill_s": 24.187, "wall_s": 25.504, "calls": {"fold": 0, "wq": 0}, "hash": "44d33ab594f8"}
+[tensorfold] CUDA rank 0 startup estimate 80.08 GiB within 103.16 GiB; native 262144, allocated prompt/reply window 40960, cache slots 40967
+[tensorfold] the 47.7 GiB of mapped tables do not fit beside the weights and caches: lookups will page them from disk, which slows prompts (free memory to keep them resident)
+[tensorfold] Flash Next on CUDA: 1 to 6 MTP drafts a round, a chain stops before a later draft under 70%; 40960-token prompt/reply window; 40967-token cache; n-gram tables read in 11.8s; 21 decode graphs captured; idle prompt pieces 2048 rows; prompt kernels warmed in 1.3s
+{"label": "qon-b", "tokens": 8202, "prefill_s": 5.764, "wall_s": 6.837, "calls": {"fold": 0, "wq": 0}, "hash": "93f5ec6aecc9"}
+{"label": "qon-b", "tokens": 32779, "prefill_s": 23.117, "wall_s": 24.428, "calls": {"fold": 0, "wq": 0}, "hash": "44d33ab594f8"}
