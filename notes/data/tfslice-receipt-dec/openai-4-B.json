@@ -1,0 +1,66 @@
+[
+ {
+  "label": "B-4",
+  "prompt": "fibonacci-raw",
+  "temperature": 1.0,
+  "tokens": 64,
+  "decode_tps_median": 50.08251770465927,
+  "decode_tps_all": [
+   57.94,
+   38.06,
+   50.08,
+   51.47,
+   48.87
+  ],
+  "ttft_s_median": 0.05181438592262566,
+  "sample": "\n\n<think>\n\n</think>\n\nHere is a simple and efficient Python function to compute the Fibonacci sequence, followed by a detailed explanation.\n\n### The Code\n\n```pyt"
+ },
+ {
+  "label": "B-4",
+  "prompt": "gpu-chat-no-think",
+  "temperature": 1.0,
+  "tokens": 64,
+  "decode_tps_median": 43.70473215632479,
+  "decode_tps_all": [
+   43.7,
+   36.21,
+   46.03,
+   47.28,
+   33.66
+  ],
+  "ttft_s_median": 0.051688209059648216,
+  "sample": "### Plain English Explanation: How a GPU Accelerates Matrix Multiplication\n\nTo understand how a GPU helps with matrix multiplication, we first need to look at w"
+ },
+ {
+  "label": "B-4",
+  "prompt": "fibonacci-raw",
+  "temperature": 0.0,
+  "tokens": 64,
+  "decode_tps_median": 54.79297528713224,
+  "decode_tps_all": [
+   54.79,
+   54.82,
+   54.8,
+   54.43,
+   54.54
+  ],
+  "ttft_s_median": 0.0512899529421702,
+  "sample": "\n\n<think>\n\n</think>\n\nHere is a concise Python function to compute the Fibonacci sequence, followed by a detailed explanation.\n\n### The Code\n\n```python\ndef fibon"
+ },
+ {
+  "label": "B-4",
+  "prompt": "gpu-chat-no-think",
+  "temperature": 0.0,
+  "tokens": 64,
+  "decode_tps_median": 44.82993651535036,
+  "decode_tps_all": [
+   44.83,
+   44.81,
+   44.88,
+   44.96,
+   44.81
+  ],
+  "ttft_s_median": 0.0518729449249804,
+  "sample": "### How Matrix Multiplication Uses a GPU (In Plain English)\n\nImagine you have two large grids of numbers (matrices) that you need to multiply together. The resu"
+ }
+]

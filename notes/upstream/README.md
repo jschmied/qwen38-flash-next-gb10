@@ -1657,3 +1657,9 @@ wait on one ~100 GB pull, and they share one serve.
   `e6ade5e` on 3.05: 0.06 +2…+4.5 % code / +2.2 % prose, 0.15 −3.8 % / 0…−0.6 %; stop pays only with a per-checkpoint C —
   https://github.com/ashhart/TensorFold/pull/250#issuecomment-5966715748 . Not answered: mrpmorris' all-depths proposal
   on #250 (07:13), addressed to the PR author.
+- **TensorFold PRs #303 / #304** (2026-10-03 ~14:05, user: "put out pr, otherwise others work on it, check other pr
+  before"): #303 prompt rows of `_b16mm` / `_fp4mm` add K slices in one program + column-first grid (prefill_cold
+  +11…+18 %, decode level) — https://github.com/ashhart/TensorFold/pull/303 ; #304 staged NVFP4 prompt-expert kernel
+  (+7…+15 %, decode −0.4…−0.7 % by bench_openai, kernel GPU time level) — https://github.com/ashhart/TensorFold/pull/304 .
+  Receipts per CONTRIBUTING (prefill_cold / bench_openai / bench_concurrent --alone --serial, 0 unequal), drafts
+  `tf-pr-prompt-slices.md`, `tf-pr-nvfp4-prompt-experts.md`. AI-attribution checklist box left unticked with a note.

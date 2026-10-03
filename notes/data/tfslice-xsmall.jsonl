@@ -1,0 +1,9 @@
+{"rows": 1, "rt1_ms": 0.119, "rt4_ms": 0.127, "equal": true}
+{"rows": 4, "rt1_ms": 0.541, "rt4_ms": 0.542, "equal": true}
+{"rows": 8, "rt1_ms": 0.923, "rt4_ms": 0.922, "equal": true}
+{"rows": 16, "rt1_ms": 1.697, "rt4_ms": 1.656, "equal": true}
+{"rows": 32, "rt1_ms": 2.941, "rt4_ms": 2.928, "equal": true}
+{"rows": 64, "rt1_ms": 4.311, "rt4_ms": 4.335, "equal": true}
+{"rows": 128, "rt1_ms": 5.617, "rt4_ms": 5.615, "equal": true}
+{"rows": 256, "rt1_ms": 6.094, "rt4_ms": 6.05, "equal": true}
+{"rows": 512, "rt1_ms": 6.505, "rt4_ms": 6.317, "equal": true}

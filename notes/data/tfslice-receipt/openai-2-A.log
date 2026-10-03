@@ -1,0 +1,4 @@
+{"label": "A-2", "prompt": "fibonacci-raw", "temperature": 1.0, "decode_tps_median": 50.41007596524304, "decode_tps_all": [56.85, 37.66, 50.41, 50.86, 48.84], "ttft_s_median": 0.05300936591811478}
+{"label": "A-2", "prompt": "gpu-chat-no-think", "temperature": 1.0, "decode_tps_median": 43.558522331516706, "decode_tps_all": [43.56, 36.37, 45.87, 47.17, 33.67], "ttft_s_median": 0.05202743294648826}
+{"label": "A-2", "prompt": "fibonacci-raw", "temperature": 0.0, "decode_tps_median": 54.60131523895337, "decode_tps_all": [54.8, 54.6, 54.73, 54.24, 54.4], "ttft_s_median": 0.050886781071312726}
+{"label": "A-2", "prompt": "gpu-chat-no-think", "temperature": 0.0, "decode_tps_median": 44.591462067575755, "decode_tps_all": [44.51, 44.63, 44.69, 42.52, 44.59], "ttft_s_median": 0.053089064080268145}

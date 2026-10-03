@@ -3939,3 +3939,26 @@ bit-equal to the split path (tests: fused == split per shape, rows alone == in a
   **8,192 pieces 4.114 / 15.95, 4.106 / 15.89**; 16,384 pieces 4.046 / 15.78, 4.051 / 15.84. Startup estimate 80.08 GiB
   at 4,096 and 8,192, 83.77 GiB at 16,384. Against v0.6.3 at its default (8K 5.70–5.81, 32K 22.84–23.38 s): **−28…−30 %
   at 8K, −30…−32 % at 32K** with 8,192 pieces. vLLM on this box: 8K TTFT 2.80 s.
+
+### 5bu. PR receipts (user: "put out pr, otherwise others work on it, check other pr before, then 1 and 2")
+
+Open PRs checked (2026-10-03 ~11:00): none touches fused K slices, the bf16/NVFP4 matmul grid, or a staged NVFP4
+expert kernel; overlaps are file-level only (#211 ours: `cuda/nvfp4/experts.py`; #208: `cuda/nvfp4/linear.py`;
+#292: `cuda/experts.py`, not touched). CONTRIBUTING (new in 0.6.3): one change a PR, one-line comments/docstrings,
+receipt = `prefill_cold.py` + `bench_openai.py` + `bench_concurrent.py --alone --serial`, no AI attribution lines
+(conflicts with our standing rule; kept ours, flagged to the user). Split: PR A `flashnext-prompt-slices` `9d6e314`
+(fused K slices + grid order; 74 NVFP4 CUDA tests passed, sbench bit-equal to v0.6.3), PR B
+`flashnext-nvfp4-prompt-experts` `8d1a75b` (staged experts; 69 passed, xbench bit-equal, 7.64 / 19.6 ms per layer).
+Receipt hypothesis (mtpfp4, `serve --parallel 4 --context 131072`, v0.6.3 / A / B / B / A / v0.6.3): prompt tok/s A
++8…+12 % and B +10…+14 % at 8K–64K (less at 2K); decode level ±2 %; 0 unequal replies.
+- **Receipts and PRs** (`data/tfslice-receipt/`, `data/tfslice-receipt-dec/`, `data/tfslice-v063-split.txt`,
+  `data/tfslice-prA-fused.txt`): prefill_cold tok/s 2K…64K — v0.6.3 1,400/1,434/1,456/1,419/1,385 and
+  1,382/1,412/1,423/1,326/1,281; A 1,561/1,615/1,620/1,613/1,535 and 1,569/1,613/1,619/1,519/1,536; B
+  1,541/1,590/1,614/1,582/1,483 and 1,542/1,583/1,560/1,507/1,476 — A +11…+18 %, B +7…+15 % (hypothesis +8…+12 / +10…+14:
+  in range, A above at the edges). bench_concurrent 0 unequal everywhere. Decode greedy: A level; B 54.0/44.1 and
+  53.7/44.1 vs 54.4–54.6/44.6–44.7 in session 1, 54.8/45.0 and 54.8/44.8 vs 55.1/45.1 and 55.0/45.1 in the decode-only
+  session; in-process decode GPU time level (3,627.5 vs 3,631.1 ms / 256 tokens, same kernels and counts); host_probe
+  S1 tile 16 vs 64 noisy (+2.7 % then level / +1.7 %) — B carries a `TF_NVFP4_STAGED_ROWS` 64 floor (same bits; the
+  staged kernel is level with the decode kernel at 1–512 rows anyway, `data/tfslice-xsmall.jsonl`). Opened **#303**
+  (A) and **#304** (B). Process slip: one v0.6.3 kernel bench ran during a receipt server's load; discarded and
+  re-measured on an idle GPU (the receipt bench had not started).

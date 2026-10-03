@@ -1,0 +1,16 @@
+{"length": 1024, "rep": 0, "tokens": 1024}
+{"length": 2048, "rep": 0, "tokens": 2048}
+{"length": 2048, "rep": 1, "tokens": 2048}
+{"length": 2048, "rep": 2, "tokens": 2048}
+{"length": 8192, "rep": 0, "tokens": 8192}
+{"length": 8192, "rep": 1, "tokens": 8192}
+{"length": 8192, "rep": 2, "tokens": 8192}
+{"length": 16384, "rep": 0, "tokens": 16382}
+{"length": 16384, "rep": 1, "tokens": 16383}
+{"length": 16384, "rep": 2, "tokens": 16384}
+{"length": 32768, "rep": 0, "tokens": 32768}
+{"length": 32768, "rep": 1, "tokens": 32768}
+{"length": 32768, "rep": 2, "tokens": 32768}
+{"length": 65536, "rep": 0, "tokens": 65536}
+{"length": 65536, "rep": 1, "tokens": 65535}
+{"length": 65536, "rep": 2, "tokens": 65536}

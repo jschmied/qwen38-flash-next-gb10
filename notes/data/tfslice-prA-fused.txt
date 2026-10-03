@@ -1,0 +1,15 @@
+b16-324-10240-1-2048 eq True True A fused 0.266
+b16-324-10240-1-8192 eq True True A fused 1.018
+b16-640-2560-0-2048 eq True True A fused 0.107
+b16-640-2560-0-8192 eq True True A fused 0.361
+b16-96-2560-0-2048 eq True True A fused 0.031
+b16-96-2560-0-8192 eq True True A fused 0.217
+b16-2560-2560-0-2048 eq True True A fused 0.361
+b16-2560-2560-0-8192 eq True True A fused 1.339
+b16-2560-6144-0-2048 eq True True A fused 1.208
+b16-2560-6144-0-8192 eq True True A fused 4.707
+fp4-2560-640-0-2048 eq True True A fused 0.354
+fp4-2560-640-0-8192 eq True True A fused 1.412
+fp4-2560-640-1-2048 eq True True A fused 0.38
+fp4-2560-640-1-8192 eq True True A fused 1.543
+ALL_EQUAL
