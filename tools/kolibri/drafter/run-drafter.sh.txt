@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Kolibri-1 EAGLE-style drafter: data from SWE trajectories, 3 epochs online, then acceptance on held-out own turns.
+# Run only after the SWE generation is done: it stops the Kolibri server (the GPU is needed) and restarts it at the end.
+set -uo pipefail
+T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+D=/home/jschmied/kolibri-drafter
+PY=/opt/llm/runtime/tf-venv/bin/python
+export PYTHONPATH=/home/jschmied/git/tf-kolibri/src
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+log "fetch trajectories (the Kolibri run's included)"
+rm -rf $D/traj && mkdir -p $D/traj
+ssh -i /home/jschmied/.ssh/id_ed25519 -o BatchMode=yes root@10.0.0.8 'cd /root && tar cf - $(find gen-* -name "*.traj.json")' | tar xf - -C $D/traj
+$PY $T/data_swe.py /opt/llm/models/kolibri-1 $D/traj $D/swe
+log "train"
+$PY $T/train.py /opt/llm/models/kolibri-1 $D/swe $D/out --epochs 3 --hold 4 --log 50 > $D/train.log 2>&1
+log "train rc=$?"
+$PY $T/accept.py /opt/llm/models/kolibri-1 $D/swe $D/out/drafter.pt --names $D/out/held_out.json > $D/accept.log 2>&1
+log "accept rc=$? $(tail -1 $D/accept.log)"
