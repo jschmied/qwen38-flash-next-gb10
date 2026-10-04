@@ -12,7 +12,7 @@ rm -rf $D/traj && mkdir -p $D/traj
 ssh -i /home/jschmied/.ssh/id_ed25519 -o BatchMode=yes root@10.0.0.8 'cd /root && tar cf - $(find gen-* -name "*.traj.json")' | tar xf - -C $D/traj
 $PY $T/data_swe.py /opt/llm/models/kolibri-1 $D/traj $D/swe
 log "train"
-$PY $T/train.py /opt/llm/models/kolibri-1 $D/swe $D/out --epochs 3 --hold 4 --log 50 > $D/train.log 2>&1
+$PY $T/train.py /opt/llm/models/kolibri-1 $D/swe $D/out --epochs 3 --hold 3 --log 50 > $D/train.log 2>&1
 log "train rc=$?"
 $PY $T/accept.py /opt/llm/models/kolibri-1 $D/swe $D/out/drafter.pt --names $D/out/held_out.json > $D/accept.log 2>&1
 log "accept rc=$? $(tail -1 $D/accept.log)"

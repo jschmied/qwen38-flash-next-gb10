@@ -106,6 +106,9 @@ def main() -> None:
     model = Model(w, longest + 64, 1)
     cfg = DraftConfig(hidden=w.config.hidden)
     dr = Drafter(cfg).cuda()
+    with torch.no_grad():                                 # the target's states carry its final norm's scale (~43)
+        dr.out_norm.w.copy_(w.norm.float())
+    unit = float(w.norm.float().pow(2).mean().sqrt())     # L1 in units of that scale, beside the cross-entropy
     print(f"drafter: {params(dr) / 1e6:.1f}M trainable; {len(train)} conversations "
           f"({sum(len(t) for _, t in train) / 1e6:.2f}M tokens), {len(hold)} held out; {steps} steps", flush=True)
     opt = torch.optim.AdamW(dr.parameters(), lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
@@ -129,7 +132,7 @@ def main() -> None:
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     pred, _ = dr(feats[None], emb[None], pos)
                 pred = pred[0]
-                l1 = F.smooth_l1_loss(pred.float(), want.float())
+                l1 = F.smooth_l1_loss(pred.float() / unit, want.float() / unit)
                 ce = head_ce(pred, w.head, label)
                 loss = l1 + a.ce * ce
                 opt.zero_grad(set_to_none=True)
@@ -141,8 +144,8 @@ def main() -> None:
                 with torch.no_grad():
                     k = min(256, pred.shape[0])
                     acc = ((pred[-k:].to(torch.bfloat16) @ w.head.T).argmax(-1) == label[-k:]).float().mean()
-                log["l1"] += float(l1)
-                log["ce"] += float(ce)
+                log["l1"] += float(l1.detach())
+                log["ce"] += float(ce.detach())
                 log["acc"] += float(acc)
                 log["n"] += 1
                 if step % a.log == 0 or step == steps:
