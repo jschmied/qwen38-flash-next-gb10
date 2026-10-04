@@ -23,6 +23,11 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
       3. FP8 KV cache at unit scale for both sliding rings and full layers; attention kernels read e4m3.
       4. Measure: prefill_cold 2k-64k, bench_openai, bench_concurrent --alone --serial (exactness within the mode),
          and quality against bf16 (KL / top-1 over held-out text, plus the SWE slice) before proposing.
+- [ ] **Decode efficiency (no weight change):** 0xBakeer's engine decodes Kolibri at 72-74 % of the GB10 byte ceiling
+      (80.4 tok/s at 2.44 GB/token, lane-accumulator one-row kernels, PDL, L2 prefetch); ours runs ~56 % (40.5 tok/s at
+      3.8 GB/token). The efficiency half of that gap is ours to take: same bytes, faster kernels (FP8 lane matmul and
+      grouped experts at M=1, fewer launches / CUDA graphs, PDL). Details from their code: see the drafter plan's field
+      section once the code review is in.
 - [ ] Learned drafter: run 6 (training from serving recordings) decides; gate in the drafter plan.
 - [ ] Serving costs: Kolibri verify time at 1-4 rows, drafter step with a 32k FP8 head slice.
 
