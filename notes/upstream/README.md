@@ -1689,3 +1689,7 @@ wait on one ~100 GB pull, and they share one serve.
   the ROUND vote; asked to re-author my commits to the GitHub noreply address; follow-ups announced as separate PRs
   (cancelled, stops first). Draft `tf300-reply-noreply.md`.
   https://github.com/ashhart/TensorFold/pull/300#issuecomment-5979503586
+- **vLLM #58863: XPU pointer-table fix + reply** (2026-10-04, user: "ok, do"): TSUMUGI-XE reported two XPU blockers;
+  adopted fix 1 as `a77830311b` (`recoverssm_ptr_table`: int64 table keeps the uint64 bit pattern, GDN + PLE sites,
+  co-author TSUMUGI-XE; 74 GDN+PLE tests pass on GB10); XPU dispatch and PP>1 left for their follow-up.
+  Draft `58863-xpu-reply.md`. https://github.com/vllm-project/vllm/pull/58863#issuecomment-5981600919
