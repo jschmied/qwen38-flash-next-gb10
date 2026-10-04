@@ -209,6 +209,27 @@ checkpoint was saved (clean by construction), `eval_rec.py --after`:
   SWE 3).
 - Verdict as agreed: checkpoints vs run 3 on recordings after each save, >= 5 % on non-django SWE, chat and German.
 
+## Run 9 (started 2026-10-04 23:05): scale via GLM-5.2 text through Kolibri's prefill (user: "do what you need")
+
+- Why: NVIDIA's DFlash recipe (NeMo AutoModel) trains on Open-PerfectBlend prompts with target-regenerated responses,
+  ~1.36M prompts; our self-generation gives ~10M tokens a day, ~1/500 of that. Kolibri's SFT teachers include GLM-5.2
+  (tech report p53), and `mgoin/open-perfectblend-glm5.2-regen` (rev 003f54db, 1.42M conversations with reasoning,
+  15.7 GB) is GLM-5.2's regeneration of all of Open-PerfectBlend. Prefill is ~10x cheaper per token than generating.
+- Data: 5 of 32 shards (0, 9, 18, 26, 28; 2.75 GB, sha256 5/5 vs HF lfs.oid; `~/kolibri-drafter/glm/SOURCE.json`),
+  `data_glm.py`: Kolibri's template with `preserve_thinking` (GLM writes `reasoning</think>answer`), default effort high
+  (= serving's system preamble), whole conversations <= 16,384 tokens, shards round-robin: 14,265 conversations, 45.0M
+  tokens. No German in PerfectBlend.
+- Training (`run9.sh`, unit `fx-kolibri-drafter-run9`, `train9.log`, `out9/`): `train_mt.py` from run 3 (warm start onto
+  taps 44/47/49, fuse identity on 49 — added to train_mt), 3-step rollouts, L1 + 0.1 CE (as run 3), lr 2e-4 constant,
+  one pass, 29,673 steps at ~1,500 tok/s: ~8.3 h. Checkpoints kept every 500 steps (`fx-kolibri-keepckpt`).
+- Window: Kolibri server, chat generation, run 8 and the x86 Multilingual run stopped 22:50 (ML105 had 12 minutes, 0
+  finished; its resume keeps finished instances).
+- After (`after9.sh`, unit `fx-kolibri-after9`): every 10th kept checkpoint + final vs run 3 on recordings run 9 never saw
+  (fresh non-django SWE after 20:58, chat after 20:58, German chat), then the recording server, chat (2 mixed + 1 German
+  worker) and ML105 (-w3) come back. Phase B (fine-tune the best run-9 checkpoint on Kolibri's own recordings incl.
+  German) is decided on those numbers.
+- Python-10 (Verified) score: 3/10 resolved, 5 completed (5 empty patches) — triage pending.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1

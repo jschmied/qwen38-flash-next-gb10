@@ -198,11 +198,21 @@ def main() -> None:
         a.epochs = 1
     windows_per = [max(1, (len(t) - 2 + a.window - 1) // a.window) for _, t in train]
     steps = a.epochs * sum(windows_per)
-    longest = max(len(t) for _, t in train)
+    longest = max(len(t) for _, t in train + hold)
     w = load(a.model_dir)
     model = Model(w, longest + 64, 1)
     if a.init:
-        dr = load_drafter(torch.load(a.init, map_location="cuda"), a.layers or None).cuda()
+        old = load_drafter(torch.load(a.init, map_location="cuda"), a.layers or None)
+        if old.cfg.taps == len(TAPS):
+            dr = old.cuda()
+        else:                                         # a drafter on fewer taps: the fuse passes the last one (the head's state)
+            dr = Drafter(DraftConfig(**{**old.cfg.__dict__, "taps": len(TAPS)}))
+            missing, unexpected = dr.load_state_dict(old.state_dict(), strict=False)
+            assert not unexpected and all(m.startswith("fuse") for m in missing), missing
+            with torch.no_grad():
+                dr.fuse.weight.zero_()
+                dr.fuse.weight[:, -w.config.hidden:] = torch.eye(w.config.hidden)
+            dr = dr.cuda()
     else:
         dr = Drafter(DraftConfig(hidden=w.config.hidden, layers=a.layers or 1, ffn=a.ffn, taps=len(TAPS))).cuda()
     cfg = dr.cfg

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Root. After run 9: score its checkpoints vs run 3 on recordings run 9 never trained on (all of rec/live), split
+# SWE non-django / chat / German; then bring back the recording server, chat generation (3 streams) and ML105 (-w3).
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+until grep -q "train rc=" $D/train9.log; do sleep 120; done
+log "run 9 ended: $(grep 'train rc=' $D/train9.log)"
+sleep 90   # keepckpt copies the last save
+C=$(ls $D/out9/drafter-step*.pt | sort -V | awk "NR%10==0"; ls $D/out9/drafter.pt)
+E(){ runuser -u jschmied -- bash -c "ulimit -n 1048576 2>/dev/null || ulimit -n \$(ulimit -Hn); PYTHONPATH=$SRC $PY $T/eval_rec.py /opt/llm/models/kolibri-1 --data $D/rec/live $* --ckpt $D/drafter-ttt-2500.pt $(echo $C)" 2>&1 | grep -v Warning; }
+log "SWE non-django (after 20:58)"; E --after "'2026-10-04 20:58'" --contains "'returncode|interact with a computer shell'" --excludes django
+log "chat (after 20:58)"; E --after "'2026-10-04 20:58'" --excludes "'returncode|interact with a computer shell'"
+log "German chat (all)"; E --contains "' und | nicht | ist '" --excludes "'returncode|interact with a computer shell'"
+log "restoring serving"
+systemd-run --unit=fx-kolibri-serve --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied \
+  -E TENSORFOLD_KOLIBRI_RECORD=$D/rec/live -E TENSORFOLD_KOLIBRI_RECORD_TAPS=44,47,49 \
+  $PY -c "import sys; from tensorfold.cli import main; sys.argv=['tensorfold','serve','/opt/llm/models/kolibri-1','--name','kolibri-1','--host','127.0.0.1','--port','8093','--parallel','6','--context','131072']; sys.exit(main())"
+for i in $(seq 120); do curl -s -m 3 http://127.0.0.1:8093/v1/models | grep -q kolibri-1 && break; sleep 5; done
+log "server: $(curl -s -m 3 http://127.0.0.1:8093/v1/models | head -c 80)"
+C2=$D/chat; U=http://127.0.0.1:8093/v1/chat/completions
+systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $U $D/own_chat.jsonl $C2/HuggingFaceH4__ultrachat_200k__train_sft-00000-of-00003-a3ecf92756993583.parquet $C2/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C2/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json $C2/bigcode__self-oss-instruct-sc2-exec-filter-50k__train-00000-of-00001.parquet --workers 2 --hours 12 --skip $D/own_chat_de.jsonl >> $D/genchat.log 2>&1"
+systemd-run --unit=fx-kolibri-genchat-de --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $U $D/own_chat_de.jsonl $C2/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C2/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json --workers 1 --hours 12 --skip $D/own_chat.jsonl >> $D/genchat-de.log 2>&1"
+ssh -n -i /home/jschmied/.ssh/id_ed25519 -o BatchMode=yes -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8 \
+  'systemd-run --unit=kolibri-swe-ml105 --collect bash -c "bash /root/fullrun-kolibri-ml105.sh >> /root/fullrun-kolibri-ml105.log 2>&1"' && log "ML105 resumed on x86"
+log "== AFTER9 DONE =="

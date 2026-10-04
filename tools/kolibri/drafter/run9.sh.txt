@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Run 9: run 3 + GLM-5.2's regeneration of Open-PerfectBlend through Kolibri's prefill (taps 44/47/49, 3-step rollouts),
+# one pass, constant LR (no plateau stop). Held-out check: run 3's three SWE conversations (debug only).
+while systemctl is-active -q fx-glm-prep; do sleep 30; done
+grep -q '"tokens"' /home/jschmied/kolibri-drafter/glm/prep.log || { echo "prep failed: $(tail -3 /home/jschmied/kolibri-drafter/glm/prep.log)"; exit 1; }
+echo "prep: $(tail -1 /home/jschmied/kolibri-drafter/glm/prep.log)"
+export PYTHONPATH=/home/jschmied/git/tf-kolibri/src
+/opt/llm/runtime/tf-venv/bin/python /home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter/train_mt.py /opt/llm/models/kolibri-1 /home/jschmied/kolibri-drafter/swe /home/jschmied/kolibri-drafter/out9 --extra /home/jschmied/kolibri-drafter/glm/glm --swe-passes 0 \
+  --hold 3 --init /home/jschmied/kolibri-drafter/drafter-ttt-2500.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 1000 --plateau -1 --log 50 --save 500
+echo "train rc=$?"
