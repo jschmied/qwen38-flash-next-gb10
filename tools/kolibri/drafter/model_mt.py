@@ -1,5 +1,6 @@
-"""An EAGLE-style drafter for Kolibri-1: the target's normed state plus the next token's embedding in, the following
-state out, read by the target's own (frozen) head. ``layers`` decoder layers (RoPE, causal) after one fc.
+"""A multi-layer-feature drafter for Kolibri-1 (EAGLE-3 style): ``taps`` target layers' states, fused to one, plus the
+next token's embedding in; the following state out, read by the target's own (frozen) head. Later chain steps read
+the drafter's own output in place of the fused target states. ``layers`` decoder layers (RoPE, causal) after one fc.
 
 About 58M parameters a layer plus a 13M fc at D = 2560. A grown layer starts as an identity (zero output projections).
 """
@@ -23,6 +24,7 @@ class DraftConfig:
     eps: float = 1e-6
     theta: float = 10000.0
     layers: int = 1
+    taps: int = 1
 
 
 class RMSNorm(nn.Module):
@@ -78,6 +80,7 @@ class Drafter(nn.Module):
         d = cfg.hidden
         self.cfg = cfg
         self.fc = nn.Linear(2 * d, d, bias=False)
+        self.fuse = nn.Linear(cfg.taps * d, d, bias=False) if cfg.taps > 1 else None
         self.blocks = nn.ModuleList(Block(cfg) for _ in range(cfg.layers))
         self.out_norm = RMSNorm(d, cfg.eps)
         for m in self.modules():
@@ -92,7 +95,7 @@ class Drafter(nn.Module):
 
         if past is not None and feats.shape[1] > 1:
             raise ValueError("with a cache, one position a call")
-        z = self.fc(torch.cat([emb, feats], -1))
+        z = self.fc(torch.cat([emb, self.fused(feats)], -1))
         kvs = []
         for i, blk in enumerate(self.blocks):
             q, k, v = blk.qkv(z, pos)
@@ -102,6 +105,11 @@ class Drafter(nn.Module):
             z = blk.finish(z, F.scaled_dot_product_attention(q, k, v, is_causal=past is None))
         return self.out_norm(z), kvs
 
+    def fused(self, feats: torch.Tensor) -> torch.Tensor:
+        """Target states [..., taps * D] fused to [..., D]; the drafter's own states [..., D] pass as they are."""
+
+        return self.fuse(feats) if self.fuse is not None and feats.shape[-1] != self.cfg.hidden else feats
+
     def rollout(self, feats: torch.Tensor, embs: list[torch.Tensor]) -> list[torch.Tensor]:
         """Training-time test: step j of every chain at once; chain t's step j reads its step j-1 output.
 
@@ -109,6 +117,7 @@ class Drafter(nn.Module):
         Chain t's step j sits at position t + j and attends to the target-fed rows <= t and to chain t's own steps."""
 
         t = feats.shape[0]
+        feats = self.fused(feats)
         rows = torch.arange(t, device=feats.device)
         first = rows[None, :] <= rows[:, None]                       # target-fed rows <= t
         own = torch.eye(t, dtype=torch.bool, device=feats.device)     # chain t's own earlier steps

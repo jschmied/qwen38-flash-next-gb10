@@ -18,8 +18,8 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).parent))
-from model import load as load_drafter  # noqa: E402
-from train import conversations  # noqa: E402
+from model_mt import load as load_drafter  # noqa: E402
+from train_mt import TAPS, conversations  # noqa: E402
 
 CONTEXT = 1024           # drafter positions a chain attends to (teacher-forced before the start)
 
@@ -59,6 +59,7 @@ def main() -> None:
     w = load(a.model_dir)
     model = Model(w, max(len(t) for _, t in convs) + a.steps + 64, 1)
     ck = torch.load(a.drafter, map_location="cuda")
+    TAPS[:] = ck.get("taps", TAPS)
     dr = load_drafter(ck).cuda().to(torch.bfloat16).eval()
     head, embed = w.head, w.embed
     matched = []                                  # per round: drafts that matched, out of depth
@@ -68,19 +69,19 @@ def main() -> None:
         feats, done = [], 0
         for s in starts:
             for p in range(done, s, 8192):            # the conversation's prompt rows up to this turn
-                feats.append(model.forward([Chain(0, p, ids[p:min(s, p + 8192)].tolist())], prompt=True,
-                                           features=True))
+                _, st = model.forward([Chain(0, p, ids[p:min(s, p + 8192)].tolist())], prompt=True,
+                                      features=True, taps=TAPS)
+                feats.append(torch.cat(st, -1))
             done = s
             prev = torch.cat(feats)[-CONTEXT:] if feats else None
             # greedy path from s: the target's states and tokens (decode rows, as serving makes them)
-            x0 = model.forward([Chain(0, s - 1, [int(ids[s - 1])])], prompt=False, features=True)
+            x, st = model.forward([Chain(0, s - 1, [int(ids[s - 1])])], prompt=False, features=True, taps=TAPS)
             path, pf = [], []
-            x = x0
             for i in range(a.steps):
                 t = int(shared.router(x, head).argmax(-1)[0])
                 path.append(t)
-                pf.append(x)
-                x = model.forward([Chain(0, s + i, [t])], prompt=False, features=True)
+                pf.append(torch.cat(st, -1))
+                x, st = model.forward([Chain(0, s + i, [t])], prompt=False, features=True, taps=TAPS)
             pf = torch.cat(pf)                          # pf[i]: the state that chose path[i]
             # drafter context: teacher-forced over the prompt rows before the turn, then the path
             ctx_f = torch.cat([prev[:-1], pf]) if prev is not None and len(prev) > 1 else pf

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Kolibri drafter, EAGLE-3 style: 3 target layers (12, 25, 49) fused, 4 layers with MLP 8192, 3-step rollouts, from
+# scratch on SWE + chat; stop on held-out chain plateau, then greedy acceptance on the same held-out conversations.
+set -uo pipefail
+T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+D=/home/jschmied/kolibri-drafter
+export PYTHONPATH=/home/jschmied/git/tf-kolibri/src
+/opt/llm/runtime/tf-venv/bin/python $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out5 --extra $D/chat --swe-passes 1 \
+  --layers 4 --ffn 8192 --taps 12,25,49 --hold 3 --lr 3e-4 --eval 250 --log 50 --rollout 3 > $D/train5.log 2>&1
+echo "train rc=$?"
+/opt/llm/runtime/tf-venv/bin/python $T/accept_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out5/drafter.pt --names $D/out5/held_out.json > $D/accept5.log 2>&1
+echo "accept rc=$? $(tail -1 $D/accept5.log)"

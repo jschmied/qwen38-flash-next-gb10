@@ -21,24 +21,30 @@ import torch
 import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).parent))
-from model import DraftConfig, Drafter, params  # noqa: E402
-from model import load as load_drafter  # noqa: E402
+from model_mt import DraftConfig, Drafter, params  # noqa: E402
+from model_mt import load as load_drafter  # noqa: E402
 
 HEAD_CHUNK = 512        # rows a head matmul takes at a time (128k-vocab logits)
 
 
+TAPS: list[int] = [12, 25, 49]   # Kolibri-1's layers whose outputs the drafter reads (49: the head's own state)
+
+
 def target_pass(model, seq: list[int], chunk: int = 8192):
-    """(states [T, D] bf16, the target's argmax [T] int64) for one whole sequence from position 0, in chunks."""
+    """(states [T, D], the tapped layers' states [T, taps * D], the target's argmax [T]) for one sequence, in chunks."""
 
     from tensorfold.cuda import moe as shared
     from tensorfold.families.kolibri1.cuda.forward import Chain
 
-    xs = [model.forward([Chain(0, a, seq[a:a + chunk])], prompt=True, features=True)
-          for a in range(0, len(seq), chunk)]
-    x = torch.cat(xs)
+    xs, ts = [], []
+    for a in range(0, len(seq), chunk):
+        x, states = model.forward([Chain(0, a, seq[a:a + chunk])], prompt=True, features=True, taps=TAPS)
+        xs.append(x)
+        ts.append(torch.cat(states, -1))
+    x, taps = torch.cat(xs), torch.cat(ts)
     picks = torch.cat([shared.router(x[i:i + HEAD_CHUNK].contiguous(), model.w.head).argmax(-1)
                        for i in range(0, x.shape[0], HEAD_CHUNK)])
-    return x, picks
+    return x, taps, picks
 
 
 def conversations(prefix: str):
@@ -78,7 +84,7 @@ def step_inputs(x: torch.Tensor, seq: torch.Tensor, picks: torch.Tensor, embed: 
     return feats, emb, x[1:-1], picks[1:-1]
 
 
-def chain_batch(x, seq, picks, embed, s0: int, window: int, steps: int):
+def chain_batch(x, taps, seq, picks, embed, s0: int, window: int, steps: int):
     """Chains t in [s0, s0 + window) with all ``steps`` targets: feats, the step inputs, target states and choices."""
 
     t1 = min(s0 + window, x.shape[0] - steps)
@@ -88,7 +94,7 @@ def chain_batch(x, seq, picks, embed, s0: int, window: int, steps: int):
     embs = [embed[seq[rows + 1 + j]] for j in range(steps)]
     wants = [x[rows + 1 + j] for j in range(steps)]
     labels = [picks[rows + 1 + j] for j in range(steps)]
-    return x[rows], embs, wants, labels, rows
+    return taps[rows], embs, wants, labels, rows
 
 
 def assistant_mask(ids: np.ndarray, start_id: int, header: list[int], end_id: int) -> np.ndarray:
@@ -122,9 +128,9 @@ class HeldOut:
             ids = np.asarray(toks, dtype=np.int64)
             seq = torch.from_numpy(ids).cuda()
             with torch.no_grad():
-                x, picks = target_pass(model, ids.tolist())
+                x, taps, picks = target_pass(model, ids.tolist())
             mask = torch.from_numpy(assistant_mask(ids, start, header, end)).cuda()
-            self.items.append((x, seq, picks, mask))
+            self.items.append((x, taps, seq, picks, mask))
 
     @torch.no_grad()
     def score(self, dr, embed, head) -> dict:
@@ -132,9 +138,9 @@ class HeldOut:
 
         n, accepted = 0, 0.0
         hits = [0] * self.steps
-        for x, seq, picks, mask in self.items:
+        for x, taps, seq, picks, mask in self.items:
             for s0 in range(0, x.shape[0], self.window):
-                b = chain_batch(x, seq, picks, embed, s0, self.window, self.steps)
+                b = chain_batch(x, taps, seq, picks, embed, s0, self.window, self.steps)
                 if b is None:
                     continue
                 feats, embs, _, labels, rows = b
@@ -173,9 +179,12 @@ def main() -> None:
     ap.add_argument("--eval", type=int, default=250, help="steps between held-out checks (0: none)")
     ap.add_argument("--rollout", type=int, default=1, help="draft steps trained per chain (training-time test)")
     ap.add_argument("--layers", type=int, default=0, help="grow the --init drafter to this many layers (0: keep)")
+    ap.add_argument("--ffn", type=int, default=4096)
+    ap.add_argument("--taps", default=",".join(map(str, TAPS)), help="target layers the drafter reads")
     ap.add_argument("--plateau", type=float, default=0.005, help="held-out gain over 3 checks that still counts")
     ap.add_argument("--decay", type=float, default=0.1, help="decay phase, as a share of the steps before it")
     a = ap.parse_args()
+    TAPS[:] = [int(v) for v in a.taps.split(",")]
 
     from tensorfold.families.kolibri1.cuda.forward import Model
     from tensorfold.families.kolibri1.cuda.weights import load
@@ -195,7 +204,7 @@ def main() -> None:
     if a.init:
         dr = load_drafter(torch.load(a.init, map_location="cuda"), a.layers or None).cuda()
     else:
-        dr = Drafter(DraftConfig(hidden=w.config.hidden, layers=a.layers or 1)).cuda()
+        dr = Drafter(DraftConfig(hidden=w.config.hidden, layers=a.layers or 1, ffn=a.ffn, taps=len(TAPS))).cuda()
     cfg = dr.cfg
     if not a.init:
         with torch.no_grad():                             # the target's states carry its final norm's scale (~43)
@@ -243,10 +252,10 @@ def main() -> None:
             name, toks = train[ci]
             seq = torch.from_numpy(np.asarray(toks, dtype=np.int64)).cuda()
             with torch.no_grad():
-                x, picks = target_pass(model, seq.tolist())
+                x, taps, picks = target_pass(model, seq.tolist())
             seen += len(toks)
             for s0 in range(0, x.shape[0], a.window):
-                batch = chain_batch(x, seq, picks, w.embed, s0, a.window, a.rollout)
+                batch = chain_batch(x, taps, seq, picks, w.embed, s0, a.window, a.rollout)
                 if batch is None:
                     continue
                 feats, embs, wants, labels, _ = batch
@@ -283,8 +292,8 @@ def main() -> None:
                                       "h": round(dt / 3600, 2)}), flush=True)
                     log = {"l1": 0.0, "ce": 0.0, "acc": 0.0, "n": 0}
                 if step % a.save == 0 or step == steps:
-                    torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "tokens": seen},
-                               out / "drafter.pt")
+                    torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "tokens": seen,
+                                "taps": TAPS}, out / "drafter.pt")
                 if held is not None and step % a.eval == 0 and check(step):
                     stop = True
                     break
@@ -292,7 +301,8 @@ def main() -> None:
                 break
         if stop:
             break
-    torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "tokens": seen}, out / "drafter.pt")
+    torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "tokens": seen, "taps": TAPS},
+               out / "drafter.pt")
     if held is not None:
         print(json.dumps({"final": held.score(dr.eval(), w.embed, w.head), "step": step}), flush=True)
 
