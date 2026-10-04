@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Keep a step-tagged copy of every checkpoint train_rec.py writes to out7/drafter.pt (it overwrites the file).
+O=/home/jschmied/kolibri-drafter/out7; last=0
+while true; do
+  m=$(stat -c %Y $O/drafter.pt 2>/dev/null || echo 0)
+  if [ "$m" != "$last" ] && [ $(( $(date +%s) - m )) -gt 30 ]; then   # written and settled
+    s=$(/opt/llm/runtime/tf-venv/bin/python -c "import torch;print(torch.load('$O/drafter.pt',map_location='cpu')['step'])" 2>/dev/null)
+    [ -n "$s" ] && [ ! -e $O/drafter-step$s.pt ] && cp -p $O/drafter.pt $O/drafter-step$s.pt && echo "[$(date +%H:%M)] kept step $s (saved $(date -d @$m +%H:%M))"
+    last=$m
+  fi
+  sleep 60
+done

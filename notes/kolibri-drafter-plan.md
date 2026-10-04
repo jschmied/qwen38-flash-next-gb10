@@ -159,6 +159,30 @@ Switch fired 18:01, all checks passed (held-out 36,000 rows, 5,397 assistant cha
   clean of run 7's earlier training. Chat generation split into one mixed worker (`own_chat.jsonl`) and one German-only
   worker (`fx-kolibri-genchat-de`, `own_chat_de.jsonl`, the two German sets), still two streams beside SWE's four.
 
+## CORRECTION 2026-10-04 21:50: run 7 does not generalise; its SWE held-out gain is django
+
+Supersedes "rising, unlike run 6" above as a verdict. Fixed checkpoints scored on recordings finished AFTER the
+checkpoint was saved (clean by construction), `eval_rec.py --after`:
+
+| fresh data (after 20:58, step-2000 save) | run 3 | run 7 step 2000 |
+|---|---|---|
+| SWE, non-django repos (138,692 chains) | 0.980 | 0.974 |
+| chat (50,139 chains) | 0.665 | 0.677 (step-1 0.456 vs 0.453: noise) |
+| SWE held-out (prefill, 3 django instances) | 1.265 | 1.382 |
+
+- The SWE held-out is three django instances; the training recordings include the Python-10 slice's four django
+  instances. Its +9 % is repo/content overlap, not a general gain. No fresh django turns exist to confirm directly
+  (django instances finished before 20:58).
+- SWE acceptance varies with content: run 3 scored 1.188 on the 19:24-19:55 SWE turns (early Python-10, incl. django)
+  and 0.98 on later non-django turns. The decode-vs-prefill tap verdict stands (same content, both paths ~1.2-1.27).
+- Consequences: the greedy gate on the same 3 django conversations (`accept_mt.py`) would be inflated the same way — not
+  worth stopping the SWE run for. Decision metric from now: each kept checkpoint vs run 3 on recordings after its save
+  time, split non-django SWE / chat / German (`fx-kolibri-keepckpt` keeps `out7/drafter-step<N>.pt` with the save time
+  as mtime). The django held-out and the live held-out are debugging numbers only.
+- Reading: ~1M recorded generated rows (a few hours) do not move the drafter on unseen data. Same scale where TandemLLM's
+  drafter stalled (6.6M tokens); published drafters use ~100x more. Overnight data (Multilingual-105, German chat) is
+  the test of whether more data generalises; a lower LR is a cheap side test, not the fix.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
