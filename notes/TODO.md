@@ -14,8 +14,9 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
       activations and a bf16 cache (W8A16, more precise than its training). Expected: prompt matmuls on the FP8 tensor
       path (~2x the bf16 rate) -> most of the prefill gap to vLLM (vLLM serves exactly this math), and half the KV bytes
       (full layers dominate long-context traffic, p15). Steps:
-      1. Opt-in only (`--precision checkpoint` style, as #211); default stays exact bf16. TF CONTRIBUTING: a precision
-         mode a checkpoint format defines is a separate conversation -> open a TF issue with numbers before a PR.
+      1. Built straight into our Kolibri family (user 2026-10-04: "tensorfold did not yet merge, we can change what we
+         like") — no TF issue first; it ships with #328's family. Opt-in (`--precision checkpoint` style, as #211) until
+         the quality numbers below are in; then decide the default.
       2. Kernels: 1 x 128 per-token-group FP8 activation quant fused into the glue (add_rms / qkv), block-FP8 x FP8 GEMM
          for prompt rows (TF has FP8 GEMMs for Flash Next's FP8 layers; check reuse), FP8 expert kernel variant
          (activations e4m3 per 128 inputs: the 128 x 128 weight block and the activation group line up).
