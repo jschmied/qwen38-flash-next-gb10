@@ -8,7 +8,7 @@ PY=/opt/llm/runtime/tf-venv/bin/python
 SRC=/home/jschmied/git/tf-kolibri/src
 log(){ echo "[$(date +%H:%M:%S)] $*"; }
 log "waiting for the SWE generation to finish on x86"
-until ssh -n -i /home/jschmied/.ssh/id_ed25519 -o BatchMode=yes root@10.0.0.8 'grep -q "GEN rc=" /root/fullrun-kolibri-py-resume.log'; do sleep 120; done
+until ssh -n -i /home/jschmied/.ssh/id_ed25519 -o BatchMode=yes -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8 'grep -q "GEN rc=" /root/fullrun-kolibri-py-resume.log'; do sleep 120; done
 log "SWE generation done; stopping the server"
 systemctl stop fx-kolibri-serve
 for i in $(seq 120); do systemctl is-active -q fx-kolibri-serve || break; sleep 1; done
