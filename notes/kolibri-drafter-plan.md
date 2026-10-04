@@ -182,6 +182,14 @@ checkpoint was saved (clean by construction), `eval_rec.py --after`:
 - Reading: ~1M recorded generated rows (a few hours) do not move the drafter on unseen data. Same scale where TandemLLM's
   drafter stalled (6.6M tokens); published drafters use ~100x more. Overnight data (Multilingual-105, German chat) is
   the test of whether more data generalises; a lower LR is a cheap side test, not the fix.
+- Gate from now (agreed 2026-10-04 22:00): a checkpoint beats run 3 only with >= 5 % relative gain, consistently on
+  several fresh slices (non-django SWE, chat, German), each scored on recordings after the checkpoint's save time.
+  Clean general baseline: ~0.98 accepted per round on fresh non-django SWE, ~0.67 on chat (sampled path at temp 0.6,
+  scored against Kolibri's top-1) — not the django-inflated 1.27-1.38 or the old ~65 % step-1 figure.
+- Limit: later SWE turns carry no repo name (the reused prefix with the task is not re-recorded), so per-repo splits of
+  fresh SWE are only possible by timing, as tonight's non-django one.
+- Parked idea, separate from the general drafter: per-repo / per-session adaptation. Run 7 adapted to django fast, and an
+  agent stays in one repo for hours; an online fine-tune per session could pay in serving.
 
 ## Plan
 
