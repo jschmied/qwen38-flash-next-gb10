@@ -43,6 +43,26 @@ Findings:
 - Decode 80.4 tok/s at 1k (NVFP4 requant, 2.44 GB/token, 72-74 % of the byte ceiling; lane-accumulator kernels, PDL,
   L2 prefetch) against our 40.5 (FP8 as released, 3.8 GB/token, ~56 %): the kernel-efficiency part is an engine lever.
 
+Engine review (code read 2026-10-04, commit 4d17bd82; ranked by expected gain, all engine-side, all row-invariant):
+1. PDL on every decode kernel, and each kernel prefetches its own weight rows into L2 (`prefetch.global.L2`, up to 8 KB
+   a row) before `gdc_wait`. MoE order router -> shared expert -> routed experts, so the routed kernel already knows its
+   expert id and prefetches that expert before its wait (`kernels.py:88-105, 711-731`). Timing only, no bit change.
+2. One-row matmuls: 4-32 output rows a program, BK=512, ~200-1,900 programs, no `tl.dot`, no split-K (tried, dropped).
+   Their FP8 GEMV gains nothing from lane accumulators (`kernels.py:563`): for our FP8 the lever is the shape, not lanes.
+3. ~13 kernels a layer, one CUDA graph per token: q/k norm + RoPE + cache write in one kernel, split decode attention +
+   combine, `r + rms(y)w1 -> rms(r')w2` fused with the 6 routed partials + shared expert, SwiGLU inside the shared down
+   projection, BF16 router GEMV, one top-6 kernel. 39.4 -> 70.8 tok/s for this step (mixed with an attention requant).
+4. Verify twins bit-equal to decode: one program per row in decode's order, rows adjacent so tiles hit L2; MoE pairs
+   counting-sorted by expert; draft k/v in a side buffer until commit. Load-time `selfcheck()` (12 tokens as chain and
+   tree, spec off on any differing bit) — copy it.
+5. Expert-union ramp for R verify rows: 1, 1.2, 1.53, 2.06, 2.88, 4.04x one token's bytes at R = 1..32; their measured
+   verify cost is worse than that model (7.7x at 32 rows against 4.04x).
+6. Drafter: `--tap-norm` (fold per-channel tap RMS into `fc`) and a decode-vs-trainer tap check (`kd_tapcheck.py`).
+   For us: run 6 trains on decode-path recordings (kind 1) but the held-out set is prompt-path rows; check that our
+   tap bits match between the two paths before reading run 6's held-out number as serving acceptance.
+Not for us: their NVFP4 weights, e2m1 tricks, prefill (2,170 tok/s, slower than ours), their NVFP4-tuned verify prices.
+Details and file:line list: subagent report, kept in the session transcript; clone at the session scratchpad.
+
 ## Layer probe (2026-10-04 15:30)
 
 Ridge probe from each layer's output at t to Kolibri's final state choosing token t + k, top-1 through Kolibri's head,

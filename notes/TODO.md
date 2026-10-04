@@ -26,8 +26,10 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 - [ ] **Decode efficiency (no weight change):** 0xBakeer's engine decodes Kolibri at 72-74 % of the GB10 byte ceiling
       (80.4 tok/s at 2.44 GB/token, lane-accumulator one-row kernels, PDL, L2 prefetch); ours runs ~56 % (40.5 tok/s at
       3.8 GB/token). The efficiency half of that gap is ours to take: same bytes, faster kernels (FP8 lane matmul and
-      grouped experts at M=1, fewer launches / CUDA graphs, PDL). Details from their code: see the drafter plan's field
-      section once the code review is in.
+      grouped experts at M=1, fewer launches / CUDA graphs, PDL). Order from their code (drafter plan, field section):
+      (1) PDL + own-weight L2 prefetch before the wait, routed experts prefetched once the router is final; (2) small-BN
+      one-row FP8 GEMV shape; (3) fused glue to ~13 kernels a layer under one graph; (4) verify twins + load-time
+      selfcheck when the drafter goes in. First step: a per-kernel decode trace to see where our 44 % goes.
 - [ ] Learned drafter: run 6 (training from serving recordings) decides; gate in the drafter plan.
 - [ ] Serving costs: Kolibri verify time at 1-4 rows, drafter step with a 32k FP8 head slice.
 
