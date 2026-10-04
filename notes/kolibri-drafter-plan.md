@@ -118,6 +118,10 @@ Switch fired 18:01, all checks passed (held-out 36,000 rows, 5,397 assistant cha
 - Run 3 on chat decode-path rows: 0.60 accepted, against 1.265 on SWE prompt-path rows. Domain or tap path (TandemLLM
   saw 5 % decode-vs-prefill tap difference) — open; fresh-conversation test (run 3 vs run 6 on conversations recorded
   after the stop, `eval_rec.py --after`) separates memorising from domain.
+- Fresh-conversation test (12 chat conversations recorded after the stop, 16,021 chains): run 3 0.645, run 6 0.611.
+  Run 6 learned nothing that generalises: pure memorising. The chat-vs-SWE gap (0.64 vs 1.265) stays open: domain or
+  tap path. A SWE run served with recording on settles it: run 3 on fresh SWE decode-path rows near 1.2 = tap path
+  fine (chat is just harder to draft); near 0.6 = decode taps differ from prefill taps.
 - SWE run (x86, 30 instances, Kolibri on TF): 25 completed, 20 resolved.
 - Fix before any rerun: cap passes (train only while rows seen < ~2x unique generated rows, else wait), an
   in-distribution held-out (every 10th recorded conversation), and enough recordings first (genchat runs until ~06:00).
