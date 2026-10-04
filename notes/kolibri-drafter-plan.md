@@ -107,6 +107,21 @@ rounds (`accept_mt.py`, needs a short server stop). From 0.950 (run 3) to >= 1.1
 integration; ~1.25 closes the gap to the text path; <= 1.0: stop tuning the network, keep it as a fallback behind copy
 drafting and look at trees or block drafting.
 
+## Run 6 result (2026-10-04 19:20): memorised, stopped
+
+Switch fired 18:01, all checks passed (held-out 36,000 rows, 5,397 assistant chains); training ran 18:03-19:17.
+- Held-out (SWE, prompt path) fell every eval from step 250: 1.265 (step 0 = run 3) -> 1.146 -> 1.000 (2000)
+  -> 0.817 (6250). Training soft CE 3.26 -> ~0.7.
+- Cause, measured: data starvation. Recording gave 88k rows in 1.2 h (54 chat conversations, 2 generation workers);
+  training read 7.3M rows in that time, ~83 passes. On those seen conversations run 6 scores 2.28 accepted
+  (step-1 86 %) against run 3's 0.60: memorised.
+- Run 3 on chat decode-path rows: 0.60 accepted, against 1.265 on SWE prompt-path rows. Domain or tap path (TandemLLM
+  saw 5 % decode-vs-prefill tap difference) — open; fresh-conversation test (run 3 vs run 6 on conversations recorded
+  after the stop, `eval_rec.py --after`) separates memorising from domain.
+- SWE run (x86, 30 instances, Kolibri on TF): 25 completed, 20 resolved.
+- Fix before any rerun: cap passes (train only while rows seen < ~2x unique generated rows, else wait), an
+  in-distribution held-out (every 10th recorded conversation), and enough recordings first (genchat runs until ~06:00).
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1

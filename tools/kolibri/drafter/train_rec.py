@@ -14,6 +14,7 @@ import argparse
 import json
 import sys
 import time
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -141,6 +142,9 @@ def main() -> None:
     ap.add_argument("--save", type=int, default=500)
     ap.add_argument("--log", type=int, default=50)
     ap.add_argument("--hours", type=float, default=24.0, help="stop after this long (passes repeat with new data)")
+    ap.add_argument("--passes", type=float, default=2.0,
+                    help="train only while generated rows seen < this many times the recorded ones, else wait")
+    ap.add_argument("--live-held", type=int, default=10, help="every Nth recorded conversation is held out (0: none)")
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -172,10 +176,18 @@ def main() -> None:
     print(json.dumps({"step": 0, "held_out": held_score(dr, held, embed, head, a.rollout, a.window, dims)}), flush=True)
     dr.train()
     rng = np.random.default_rng(0)
-    t0, step, seen, log = time.perf_counter(), 0, 0, {"l1": 0.0, "ce": 0.0, "n": 0}
+    t0, step, seen, seen_gen, log = time.perf_counter(), 0, 0, 0, {"l1": 0.0, "ce": 0.0, "n": 0}
+    live_held = lambda r: a.live_held > 0 and zlib.crc32(Path(r["name"]).name.encode()) % a.live_held == 0
     stop_at = t0 + a.hours * 3600
     while time.perf_counter() < stop_at:
-        runs = recordings(a.data)
+        everything = recordings(a.data)
+        runs = [r for r in everything if not live_held(r)]
+        held_live = [r for r in everything if live_held(r)]
+        budget = a.passes * sum(int(r["kind"].sum()) for r in runs)
+        if runs and seen_gen >= budget:                     # every recorded row seen --passes times: wait for more
+            print(json.dumps({"waiting": "pass cap", "seen_gen": seen_gen, "budget": int(budget)}), flush=True)
+            time.sleep(300)
+            continue
         if not runs:
             print("waiting for recordings", flush=True)
             time.sleep(300)
@@ -209,6 +221,7 @@ def main() -> None:
                 opt.step()
                 step += 1
                 seen += feats.shape[0]
+                seen_gen += int(gen[0].sum())
                 log["l1"] += float(l1.detach())
                 log["ce"] += float(ce.detach())
                 log["n"] += 1
@@ -222,12 +235,18 @@ def main() -> None:
                     dr.eval()
                     print(json.dumps({"step": step, "held_out": held_score(dr, held, embed, head, a.rollout, a.window,
                                                                            dims)}), flush=True)
+                    if held_live:
+                        print(json.dumps({"step": step, "held_live": held_score(dr, held_live, embed, head, a.rollout,
+                                                                                a.window, dims),
+                                          "live_runs": len(held_live)}), flush=True)
                     dr.train()
                 if step % a.save == 0:
                     torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "rows": seen,
                                 "taps": taps}, out / "drafter.pt")
-                if time.perf_counter() >= stop_at:
+                if time.perf_counter() >= stop_at or seen_gen >= budget:
                     break
+            if time.perf_counter() >= stop_at or seen_gen >= budget:
+                break
         if step == before:                                  # nothing generated recorded yet: wait for more
             print("no generated rows to train on yet", flush=True)
             time.sleep(300)
