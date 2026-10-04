@@ -2,7 +2,7 @@
 
 Kolibri-1 (Aleph Alpha, 78B MoE, 3.5B active, FP8) ships no MTP head and no draft model exists for it. We serve it on
 our TensorFold family `kolibri1` (PR #328) with copy drafting from the context. This note tracks the learned drafter.
-Last updated 2026-10-04 15:40.
+Last updated 2026-10-04 15:40 (tonight section 15:40).
 
 ## Where things stand
 
@@ -46,6 +46,20 @@ on held-out assistant tokens (`tools/kolibri/drafter/probe.py`, `notes/data/koli
 
 Information about later tokens sits in the late layers (44-48), not the middle; three layers add only 1.5-2 points
 over the final state. Inputs are not the main limit either: data is. Taps for a warm-started try: 44/47/49 or 34/44/49.
+
+## Tonight (2026-10-04): own data, then training from serving recordings
+
+- Server `fx-kolibri-serve`: 6 streams, 131k context. Generating Kolibri's own data: the SWE Verified-30 run resumed on
+  x86 (`/root/fullrun-kolibri-py-resume.sh`, 22 instances left) and chat answers to first user turns from the four
+  downloaded sets (`fx-kolibri-genchat`, `tools/kolibri/drafter/gen_chat.py` -> `~/kolibri-drafter/own_chat.jsonl`).
+- Recording (TF branch `kolibri1-record`, local, f94e0f2): `TENSORFOLD_KOLIBRI_RECORD=<dir>` makes the server write each
+  kept row's token, layers 44/47/49 and Kolibri's top-32 log-probs (~15 KB a token, pauses below 25 GB free disk).
+  Replies are unchanged (tested); prompt rows equal the prefill's states bit for bit; rejected drafts never recorded.
+- `fx-kolibri-switch` (root) waits for the SWE generation to finish, then: records the held-out set offline
+  (`record_heldout.py` -> `~/kolibri-drafter/rec/heldout`), restarts the server with recording on (`rec/live`) and
+  starts `train_rec.py` beside it (`fx-kolibri-drafter-rec` -> `out6/`, `train6.log`): no Kolibri copy, soft CE to
+  the top-32 + head-state L1, 3-step rollouts, warm start from run 3 (fuse passes layer 49 through: step 0 reproduces
+  run 3 exactly), held-out check every 250 steps. Logs: `~/kolibri-drafter/switch.log`.
 
 ## Plan
 
