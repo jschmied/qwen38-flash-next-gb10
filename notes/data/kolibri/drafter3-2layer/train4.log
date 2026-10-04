@@ -1,0 +1,37 @@
+[tensorfold] kolibri1: 10/50 layers in 9s
+[tensorfold] kolibri1: 20/50 layers in 16s
+[tensorfold] kolibri1: 30/50 layers in 24s
+[tensorfold] kolibri1: 40/50 layers in 32s
+[tensorfold] kolibri1: 50/50 layers in 39s
+drafter: 128.5M trainable; 19735 conversations (46.68M tokens), 3 held out; 22891 steps
+{"epoch": 0, "step": 50, "tokens": 102400, "tok_s": 1346, "l1": 0.1918, "ce": 2.907, "top1": 0.573, "lr": 0.00015, "h": 0.02}
+{"epoch": 0, "step": 100, "tokens": 204800, "tok_s": 1356, "l1": 0.1932, "ce": 2.851, "top1": 0.574, "lr": 0.0003, "h": 0.04}
+{"epoch": 0, "step": 150, "tokens": 306657, "tok_s": 1367, "l1": 0.2037, "ce": 2.948, "top1": 0.572, "lr": 0.0003, "h": 0.06}
+{"epoch": 0, "step": 200, "tokens": 416595, "tok_s": 1391, "l1": 0.2049, "ce": 2.871, "top1": 0.582, "lr": 0.0003, "h": 0.08}
+{"epoch": 0, "step": 250, "tokens": 508755, "tok_s": 1374, "l1": 0.201, "ce": 3.024, "top1": 0.553, "lr": 0.0003, "h": 0.1}
+{"step": 250, "held_out": {"accepted": 1.1958, "top1_steps": [0.6476, 0.4393, 0.3607], "chains": 40748}, "decaying": false}
+{"epoch": 0, "step": 300, "tokens": 611155, "tok_s": 1332, "l1": 0.1984, "ce": 3.011, "top1": 0.535, "lr": 0.0003, "h": 0.13}
+{"epoch": 0, "step": 350, "tokens": 731379, "tok_s": 1358, "l1": 0.2099, "ce": 2.92, "top1": 0.571, "lr": 0.0003, "h": 0.15}
+{"epoch": 0, "step": 400, "tokens": 815347, "tok_s": 1343, "l1": 0.2062, "ce": 3.094, "top1": 0.563, "lr": 0.0003, "h": 0.17}
+{"epoch": 0, "step": 450, "tokens": 941410, "tok_s": 1370, "l1": 0.2055, "ce": 2.956, "top1": 0.568, "lr": 0.0003, "h": 0.19}
+{"epoch": 0, "step": 500, "tokens": 1019234, "tok_s": 1353, "l1": 0.2073, "ce": 2.968, "top1": 0.554, "lr": 0.0003, "h": 0.21}
+{"step": 500, "held_out": {"accepted": 1.2288, "top1_steps": [0.6448, 0.4653, 0.3781], "chains": 40748}, "decaying": false}
+{"epoch": 0, "step": 550, "tokens": 1121634, "tok_s": 1330, "l1": 0.1977, "ce": 2.938, "top1": 0.544, "lr": 0.0003, "h": 0.23}
+{"epoch": 0, "step": 600, "tokens": 1222775, "tok_s": 1334, "l1": 0.1982, "ce": 2.859, "top1": 0.549, "lr": 0.0003, "h": 0.25}
+{"epoch": 0, "step": 650, "tokens": 1323603, "tok_s": 1337, "l1": 0.201, "ce": 2.863, "top1": 0.578, "lr": 0.0003, "h": 0.27}
+{"epoch": 0, "step": 700, "tokens": 1426003, "tok_s": 1339, "l1": 0.1968, "ce": 2.887, "top1": 0.543, "lr": 0.0003, "h": 0.3}
+{"epoch": 0, "step": 750, "tokens": 1527099, "tok_s": 1342, "l1": 0.2008, "ce": 2.782, "top1": 0.575, "lr": 0.0003, "h": 0.32}
+{"step": 750, "held_out": {"accepted": 1.2524, "top1_steps": [0.6476, 0.477, 0.4144], "chains": 40748}, "decaying": false}
+{"epoch": 0, "step": 800, "tokens": 1629499, "tok_s": 1329, "l1": 0.1946, "ce": 2.935, "top1": 0.555, "lr": 0.0003, "h": 0.34}
+{"epoch": 0, "step": 850, "tokens": 1731899, "tok_s": 1331, "l1": 0.1895, "ce": 2.74, "top1": 0.563, "lr": 0.0003, "h": 0.36}
+{"epoch": 0, "step": 900, "tokens": 1833599, "tok_s": 1334, "l1": 0.2012, "ce": 2.914, "top1": 0.585, "lr": 0.0003, "h": 0.38}
+{"epoch": 0, "step": 950, "tokens": 1934678, "tok_s": 1337, "l1": 0.2126, "ce": 2.852, "top1": 0.593, "lr": 0.0003, "h": 0.4}
+{"epoch": 0, "step": 1000, "tokens": 2037078, "tok_s": 1339, "l1": 0.194, "ce": 2.821, "top1": 0.557, "lr": 0.0003, "h": 0.42}
+{"step": 1000, "held_out": {"accepted": 1.2232, "top1_steps": [0.6384, 0.469, 0.3949], "chains": 40748}, "decaying": false}
+{"epoch": 0, "step": 1050, "tokens": 2139478, "tok_s": 1327, "l1": 0.1937, "ce": 2.77, "top1": 0.558, "lr": 0.0003, "h": 0.45}
+{"epoch": 0, "step": 1100, "tokens": 2241878, "tok_s": 1327, "l1": 0.196, "ce": 2.802, "top1": 0.584, "lr": 0.0003, "h": 0.47}
+{"epoch": 0, "step": 1150, "tokens": 2344278, "tok_s": 1329, "l1": 0.1952, "ce": 2.865, "top1": 0.559, "lr": 0.0003, "h": 0.49}
+{"epoch": 0, "step": 1200, "tokens": 2446130, "tok_s": 1329, "l1": 0.1936, "ce": 2.701, "top1": 0.589, "lr": 0.0003, "h": 0.51}
+{"epoch": 0, "step": 1250, "tokens": 2548530, "tok_s": 1331, "l1": 0.194, "ce": 2.761, "top1": 0.565, "lr": 0.0003, "h": 0.53}
+{"step": 1250, "held_out": {"accepted": 1.2406, "top1_steps": [0.6456, 0.4708, 0.4041], "chains": 40748}, "decaying": false}
+{"epoch": 0, "step": 1300, "tokens": 2650930, "tok_s": 1323, "l1": 0.1929, "ce": 2.788, "top1": 0.555, "lr": 0.0003, "h": 0.56}

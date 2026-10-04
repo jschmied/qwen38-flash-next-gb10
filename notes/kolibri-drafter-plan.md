@@ -2,7 +2,7 @@
 
 Kolibri-1 (Aleph Alpha, 78B MoE, 3.5B active, FP8) ships no MTP head and no draft model exists for it. We serve it on
 our TensorFold family `kolibri1` (PR #328) with copy drafting from the context. This note tracks the learned drafter.
-Last updated 2026-10-04 14:50.
+Last updated 2026-10-04 15:40.
 
 ## Where things stand
 
@@ -18,7 +18,7 @@ Held out: the last 3 of Kolibri's own SWE trajectories (40,748 assistant tokens)
 | 2 | same, continued | + chat, 3.6M tokens | 65.4 % | — | 0.58 / 0.805 / 0.889 |
 | 3 | same, 3-step rollouts (EAGLE-3 training-time test) | SWE + chat | 64.8 % | 1.267 | 0.576 / 0.836 / 0.950 |
 | 4 | 2 layers, grown from run 3 | SWE + chat | 64.6 % | 1.241 | stopped at step 1,250: no gain |
-| 5 | 4 layers, MLP 8192, 389M, taps 12/25/49, from scratch | SWE + chat | 53.2 % (step 2,000) | 0.962 | running, catching up |
+| 5 | 4 layers, MLP 8192, 389M, taps 12/25/49, from scratch | SWE + chat | 54.5 % (step 2,500) | 0.956 | stopped at step 2,500: behind run 3 at half its data |
 
 Findings:
 - First-guess agreement stops at about 65 % whatever the size (runs 2-4): depth is not the limit.
@@ -27,6 +27,25 @@ Findings:
 - Greedy path (58 %) is below the text path (65 %): the drafter learned mostly other models' text.
 - Estimated value of run 3 in serving, depth 2 with a 32k draft-head slice: about +25 % single-stream decode (verify
   cost per row not yet measured). Copy drafting gives +13 % (chat) to +31 % (greedy code).
+
+## Layer probe (2026-10-04 15:30)
+
+Ridge probe from each layer's output at t to Kolibri's final state choosing token t + k, top-1 through Kolibri's head,
+on held-out assistant tokens (`tools/kolibri/drafter/probe.py`, `notes/data/kolibri/probe/probe.log`):
+
+| Layer(s) | k=1 | k=2 | k=3 |
+|---|---:|---:|---:|
+| 9 | 41.5 | 28.4 | 24.0 |
+| 24 | 38.0 | 26.3 | 22.2 |
+| 44 | 83.0 | 35.2 | 25.8 |
+| 47 (best single) | 93.6 | 36.5 | 26.9 |
+| 49 (final) | 99.5 | 35.1 | 25.7 |
+| 34+44+49 (best set, k=2) | 99.6 | 37.0 | 26.7 |
+| 9+24+49 (best set, k=3) | 99.6 | 35.8 | 27.3 |
+| 12+25+49 (run 5) | 99.6 | 35.6 | 26.3 |
+
+Information about later tokens sits in the late layers (44-48), not the middle; three layers add only 1.5-2 points
+over the final state. Inputs are not the main limit either: data is. Taps for a warm-started try: 44/47/49 or 34/44/49.
 
 ## Plan
 
