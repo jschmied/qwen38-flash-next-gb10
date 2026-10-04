@@ -45,12 +45,14 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--max-tokens", type=int, default=3000)
     ap.add_argument("--hours", type=float, default=12.0)
+    ap.add_argument("--skip", nargs="*", default=[], help="other OUT files whose prompts count as done")
     a = ap.parse_args()
     out = Path(a.out)
     done = set()
-    if out.exists():
-        for line in out.read_text().splitlines():
-            done.add(json.loads(line)["prompt_sha"])
+    for f in [out, *map(Path, a.skip)]:
+        if f.exists():
+            for line in f.read_text().splitlines():
+                done.add(json.loads(line)["prompt_sha"])
     feed = prompts(a.sources)
     lock = threading.Lock()
     stop_at = time.time() + a.hours * 3600

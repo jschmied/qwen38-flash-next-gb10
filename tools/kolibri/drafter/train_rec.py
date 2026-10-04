@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import re
 import time
 import zlib
 from pathlib import Path
@@ -20,12 +21,18 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn.functional as F
+from tokenizers import Tokenizer
 
 sys.path.insert(0, str(Path(__file__).parent))
 from model_mt import DraftConfig, Drafter, params  # noqa: E402
 from model_mt import load as load_drafter  # noqa: E402
 
 HEAD_CHUNK = 512
+
+
+DE_WORDS = set("der die das und ist nicht ein eine ich sie es zu mit auf für von den dem sich auch wird werden kann "
+               "oder wie wenn sind bei aus".split())
+EN_WORDS = set("the and is not a an i you it to with on for of that this are be can or how if at from by as was".split())
 
 
 def head_weights(model_dir: str):
@@ -145,6 +152,11 @@ def main() -> None:
     ap.add_argument("--passes", type=float, default=2.0,
                     help="train only while generated rows seen < this many times the recorded ones, else wait")
     ap.add_argument("--live-held", type=int, default=10, help="every Nth recorded conversation is held out (0: none)")
+    ap.add_argument("--de-held", type=int, default=4, help="every Nth German recorded conversation is held out (0: none)")
+    ap.add_argument("--de-after", default="", help="German held-out only from recordings finished after 'YYYY-MM-DD HH:MM' "
+                    "(earlier ones may have been trained on by the run being resumed)")
+    ap.add_argument("--seen-gen", type=int, default=-1,
+                    help="generated rows already trained (resume); default: the --init checkpoint's count, else 0")
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -160,9 +172,10 @@ def main() -> None:
         dr = Drafter(DraftConfig(**{**old.cfg.__dict__, "taps": len(taps)}))
         missing, unexpected = dr.load_state_dict(old.state_dict(), strict=False)
         assert not unexpected and all(m.startswith("fuse") or m.startswith("blocks.") for m in missing), missing
-        with torch.no_grad():
-            dr.fuse.weight.zero_()
-            dr.fuse.weight[:, -dims:] = torch.eye(dims)
+        if old.cfg.taps != len(taps):                # a resume of a run on these taps keeps its trained fuse
+            with torch.no_grad():
+                dr.fuse.weight.zero_()
+                dr.fuse.weight[:, -dims:] = torch.eye(dims)
         cfg = dr.cfg
     else:
         dr = Drafter(cfg)
@@ -177,18 +190,41 @@ def main() -> None:
     dr.train()
     rng = np.random.default_rng(0)
     t0, step, seen, seen_gen, log = time.perf_counter(), 0, 0, 0, {"l1": 0.0, "ce": 0.0, "n": 0}
-    live_held = lambda r: a.live_held > 0 and zlib.crc32(Path(r["name"]).name.encode()) % a.live_held == 0
-    start_live = [r for r in recordings(a.data) if live_held(r)]
-    if start_live:                                      # the start point on the in-distribution held-out
-        dr.eval()
-        print(json.dumps({"step": 0, "held_live": held_score(dr, start_live, embed, head, a.rollout, a.window, dims),
-                          "live_runs": len(start_live)}), flush=True)
-        dr.train()
+    if a.init and ck.get("taps") == taps:
+        step = int(ck.get("step", 0))
+        seen_gen = int(ck.get("seen_gen", 0))
+    if a.seen_gen >= 0:
+        seen_gen = a.seen_gen
+    crc = lambda r: zlib.crc32(Path(r["name"]).name.encode())
+    tok = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
+    lang: dict[str, bool] = {}
+
+    def german(r) -> bool:                              # decided once per recording from its first 2,000 tokens
+        if r["name"] not in lang:
+            words = re.findall(r"[a-zäöüß]+", tok.decode([int(t) for t in r["tok"][:2000]]).lower())
+            de, en = sum(w in DE_WORDS for w in words), sum(w in EN_WORDS for w in words)
+            lang[r["name"]] = de > 1.2 * en and de >= 10
+        return lang[r["name"]]
+
+    live_held = lambda r: a.live_held > 0 and crc(r) % a.live_held == 0
+    de_after = time.mktime(time.strptime(a.de_after, "%Y-%m-%d %H:%M")) if a.de_after else 0.0
+    de_held = lambda r: (a.de_held > 0 and not live_held(r) and crc(r) // 7 % a.de_held == 0
+                         and Path(r["name"] + ".json").stat().st_mtime > de_after and german(r))
+    start = recordings(a.data)
+    sets = {"held_live": [r for r in start if live_held(r)], "held_de": [r for r in start if de_held(r)]}
+    dr.eval()
+    for k, rs in sets.items():                          # the start point on the in-distribution held-outs
+        if rs:
+            print(json.dumps({"step": step, k: held_score(dr, rs, embed, head, a.rollout, a.window, dims),
+                              "runs": len(rs)}), flush=True)
+    dr.train()
+    print(json.dumps({"resume_step": step, "seen_gen": seen_gen}), flush=True)
     stop_at = t0 + a.hours * 3600
     while time.perf_counter() < stop_at:
         everything = recordings(a.data)
-        runs = [r for r in everything if not live_held(r)]
+        runs = [r for r in everything if not live_held(r) and not de_held(r)]
         held_live = [r for r in everything if live_held(r)]
+        held_de = [r for r in everything if de_held(r)]
         budget = a.passes * sum(int(r["kind"].sum()) for r in runs)
         if runs and seen_gen >= budget:                     # every recorded row seen --passes times: wait for more
             print(json.dumps({"waiting": "pass cap", "seen_gen": seen_gen, "budget": int(budget)}), flush=True)
@@ -241,14 +277,14 @@ def main() -> None:
                     dr.eval()
                     print(json.dumps({"step": step, "held_out": held_score(dr, held, embed, head, a.rollout, a.window,
                                                                            dims)}), flush=True)
-                    if held_live:
-                        print(json.dumps({"step": step, "held_live": held_score(dr, held_live, embed, head, a.rollout,
-                                                                                a.window, dims),
-                                          "live_runs": len(held_live)}), flush=True)
+                    for k, rs in (("held_live", held_live), ("held_de", held_de)):
+                        if rs:
+                            print(json.dumps({"step": step, k: held_score(dr, rs, embed, head, a.rollout, a.window,
+                                                                          dims), "runs": len(rs)}), flush=True)
                     dr.train()
                 if step % a.save == 0:
                     torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "rows": seen,
-                                "taps": taps}, out / "drafter.pt")
+                                "seen_gen": seen_gen, "taps": taps}, out / "drafter.pt")
                 if time.perf_counter() >= stop_at or seen_gen >= budget:
                     break
             if time.perf_counter() >= stop_at or seen_gen >= budget:
@@ -256,7 +292,8 @@ def main() -> None:
         if step == before:                                  # nothing generated recorded yet: wait for more
             print("no generated rows to train on yet", flush=True)
             time.sleep(300)
-    torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "rows": seen, "taps": taps},
+    torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "rows": seen, "seen_gen": seen_gen,
+                "taps": taps},
                out / "drafter.pt")
 
 

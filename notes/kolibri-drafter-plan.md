@@ -151,6 +151,13 @@ Switch fired 18:01, all checks passed (held-out 36,000 rows, 5,397 assistant cha
   `recsync.py` (unit `fx-kolibri-recsync`, log `~/kolibri-drafter/recsync.log`) mirrors ~/kolibri-drafter to
   PBS `/mnt/bulk/gb10/kolibri-drafter` every 15 min; below 60 GB free it removes the oldest recordings whose every file
   matches PBS by sha256 (never the live held-out or rec/heldout).
+- German (user 2026-10-04 21:00: "yes" to a German held-out + more German): Kolibri answers German prompts in German
+  (103/123) and mostly reasons in German (94/123); German was 12.6 % of recorded generated rows (57 of 1,042 requests).
+  Training resumed from run 7 step 2000 (`--init out7/drafter-step2000.pt --seen-gen 1055317`: the pass cap keeps
+  counting; the fuse is kept when taps match) as `fx-kolibri-drafter-rec7b` -> `train7b.log`, with `--de-held 4
+  --de-after <restart>`: every 4th German request recorded after the restart is held out (`held_de`), so the number is
+  clean of run 7's earlier training. Chat generation split into one mixed worker (`own_chat.jsonl`) and one German-only
+  worker (`fx-kolibri-genchat-de`, `own_chat_de.jsonl`, the two German sets), still two streams beside SWE's four.
 
 ## Plan
 
