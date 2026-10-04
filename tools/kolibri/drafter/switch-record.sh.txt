@@ -1,42 +1,54 @@
 #!/usr/bin/env bash
 # Runs as root. At the natural break (the SWE run's generation on x86 has finished): record the held-out set once,
 # restart Kolibri's server with recording on, and start drafter training from the recordings beside it.
-# Any failed step before training leaves the server running WITHOUT recording and ends with ABORT.
+# Any failed step before training stops whatever server runs and starts the plain one (no recording); ends with ABORT.
 set -uo pipefail
 D=/home/jschmied/kolibri-drafter
 T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
 PY=/opt/llm/runtime/tf-venv/bin/python
 SRC=/home/jschmied/git/tf-kolibri/src
+UNIT=fx-kolibri-serve
 SSH=(ssh -n -i /home/jschmied/.ssh/id_ed25519 -o BatchMode=yes -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8)
 log(){ echo "[$(date +%H:%M:%S)] $*"; }
-serve(){  # serve [extra -E args...]: start the Kolibri server and wait until it serves; 1 if it never does
-  systemd-run --unit=fx-kolibri-serve --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied "$@" \
+jr(){ journalctl _SYSTEMD_INVOCATION_ID="$(systemctl show -p InvocationID --value $UNIT)" --no-pager; }   # this run's lines only
+stop_server(){
+  systemctl stop $UNIT 2>/dev/null || true
+  for i in $(seq 120); do systemctl is-active -q $UNIT || return 0; sleep 1; done
+  return 1
+}
+serve(){  # serve [extra -E args...]: start the server and wait until THIS invocation serves; 1 if it never does
+  systemd-run --unit=$UNIT --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied "$@" \
     $PY -c "import sys; from tensorfold.cli import main; sys.argv=['tensorfold','serve','/opt/llm/models/kolibri-1','--name','kolibri-1','--host','127.0.0.1','--port','8093','--parallel','6','--context','131072']; sys.exit(main())" || return 1
   for i in $(seq 120); do
-    journalctl -u fx-kolibri-serve --no-pager --since "-5min" | grep -q "serving " && return 0
-    systemctl is-active -q fx-kolibri-serve || return 1
+    jr | grep -q "serving " && return 0
+    systemctl is-active -q $UNIT || return 1
     sleep 5
   done
   return 1
 }
-abort(){ log "ABORT: $*"; systemctl is-active -q fx-kolibri-serve || { serve && log "server back up WITHOUT recording" || log "server did NOT come back"; }; exit 1; }
+abort(){
+  log "ABORT: $*"
+  stop_server || log "the server did not stop"
+  serve && log "plain server back up (no recording)" || log "plain server did NOT come back"
+  exit 1
+}
 
 log "waiting for the SWE generation to finish on x86"
 until "${SSH[@]}" 'grep -q "GEN rc=" /root/fullrun-kolibri-py-resume.log'; do sleep 120; done
 log "SWE generation done; stopping the server"
-systemctl stop fx-kolibri-serve
-for i in $(seq 120); do systemctl is-active -q fx-kolibri-serve || break; sleep 1; done
-systemctl is-active -q fx-kolibri-serve && abort "the server did not stop"
+stop_server || abort "the server did not stop"
 log "recording the held-out set"
 rm -rf $D/rec/heldout
+if [ -e $D/rec/live ]; then mv $D/rec/live $D/rec/live.old-$(date +%Y%m%d-%H%M%S); fi   # nothing stale may train
+runuser -u jschmied -- mkdir -p $D/rec/live
 runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied $PY $T/record_heldout.py /opt/llm/models/kolibri-1 $D/swe \
   $D/out3/held_out.json $D/rec/heldout --taps 44,47,49 > $D/record-heldout.log 2>&1 || abort "record_heldout.py failed (rc=$?)"
 runuser -u jschmied -- $PY $T/check_heldout.py $D/rec/heldout $D/swe $D/out3/held_out.json 12000 || abort "held-out recording incomplete"
 log "held-out recording complete"
 log "restarting the server with recording on"
 serve -E TENSORFOLD_KOLIBRI_RECORD=$D/rec/live -E TENSORFOLD_KOLIBRI_RECORD_TAPS=44,47,49 || abort "the recording server did not start"
-journalctl -u fx-kolibri-serve --no-pager --since "-5min" | grep -q "recording layers" || abort "the server is up but not recording"
-log "server: $(journalctl -u fx-kolibri-serve --no-pager --since '-5min' | grep -E 'recording|serving' | tail -2 | tr '\n' ' ' | cut -c1-240)"
+jr | grep -q "recording layers" || abort "the server is up but not recording"
+log "server: $(jr | grep -E 'recording|serving' | tail -2 | sed 's/.*\]: //' | tr '\n' ' ' | cut -c1-240)"
 log "starting training from recordings"
 systemd-run --unit=fx-kolibri-drafter-rec --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied \
   bash -c "$PY $T/train_rec.py /opt/llm/models/kolibri-1 $D/out6 --data $D/rec/live --held $D/rec/heldout --init $D/drafter-ttt-2500.pt --layers 1 --rollout 3 --eval 250 > $D/train6.log 2>&1" \

@@ -49,11 +49,12 @@ def recordings(dirs: list[str]) -> list[dict]:
         for meta in sorted(Path(d).rglob("*.json")):
             info = json.loads(meta.read_text())
             base, n, k = str(meta)[:-5], info["rows"], info["k"]
+            if not Path(base + ".kind").exists():           # without kinds, prompt rows would train as Kolibri's
+                raise ValueError(f"recording has no row kinds (an older recorder's): {base}")
             width = len(info["taps"]) * info["dims"]
             runs.append({"name": base, "n": n, "taps": info["taps"],
                          "tok": np.memmap(base + ".tok", dtype=np.int32, mode="r", shape=(n,)),
-                         "kind": (np.memmap(base + ".kind", dtype=np.uint8, mode="r", shape=(n,))
-                                  if Path(base + ".kind").exists() else np.ones(n, dtype=np.uint8)),
+                         "kind": np.memmap(base + ".kind", dtype=np.uint8, mode="r", shape=(n,)),
                          "st": np.memmap(base + ".st", dtype=np.int16, mode="r", shape=(n, width)),
                          "tki": np.memmap(base + ".tki", dtype=np.int32, mode="r", shape=(n, k)),
                          "tkl": np.memmap(base + ".tkl", dtype=np.int16, mode="r", shape=(n, k))})
