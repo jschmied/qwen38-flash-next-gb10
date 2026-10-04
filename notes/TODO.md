@@ -6,6 +6,25 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 
 ## Current (2026-09-28) — read this first; the sections below are older
 
+**Kolibri-1 on TensorFold** (family `kolibri1`, PR #328; drafter work in `notes/kolibri-drafter-plan.md`, report notes in
+`notes/kolibri-tech-report-notes.md`):
+- [ ] **FP8 "checkpoint math" mode** (user 2026-10-04: "write the fp8 option to todo"). Kolibri was RL-trained FP8-aware:
+      E4M3 weights in 128 x 128 blocks, **dynamic activation quantisation in 1 x 128 groups**, Q/K/V rounded to FP8 with
+      **unit scales** (FP8 KV cache, no calibration; QK-norm keeps |Q/K/V| < 448) — tech report p74, p180. We run bf16
+      activations and a bf16 cache (W8A16, more precise than its training). Expected: prompt matmuls on the FP8 tensor
+      path (~2x the bf16 rate) -> most of the prefill gap to vLLM (vLLM serves exactly this math), and half the KV bytes
+      (full layers dominate long-context traffic, p15). Steps:
+      1. Opt-in only (`--precision checkpoint` style, as #211); default stays exact bf16. TF CONTRIBUTING: a precision
+         mode a checkpoint format defines is a separate conversation -> open a TF issue with numbers before a PR.
+      2. Kernels: 1 x 128 per-token-group FP8 activation quant fused into the glue (add_rms / qkv), block-FP8 x FP8 GEMM
+         for prompt rows (TF has FP8 GEMMs for Flash Next's FP8 layers; check reuse), FP8 expert kernel variant
+         (activations e4m3 per 128 inputs: the 128 x 128 weight block and the activation group line up).
+      3. FP8 KV cache at unit scale for both sliding rings and full layers; attention kernels read e4m3.
+      4. Measure: prefill_cold 2k-64k, bench_openai, bench_concurrent --alone --serial (exactness within the mode),
+         and quality against bf16 (KL / top-1 over held-out text, plus the SWE slice) before proposing.
+- [ ] Learned drafter: run 6 (training from serving recordings) decides; gate in the drafter plan.
+- [ ] Serving costs: Kolibri verify time at 1-4 rows, drafter step with a 32k FP8 head slice.
+
 **TensorFold work (user 2026-10-01: "write this in todo and start work")** — list and evidence in
 `notes/tensorfold-opportunities.md`; tf-venv on 0.6.0 (`~/git/tensorfold` branch `v060`, used by the live tf060
 test: develop in a separate worktree, never switch that checkout while a server runs). Baseline = the tf060 run
