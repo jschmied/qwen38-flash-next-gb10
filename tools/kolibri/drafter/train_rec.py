@@ -149,8 +149,9 @@ def main() -> None:
     ap.add_argument("--save", type=int, default=500)
     ap.add_argument("--log", type=int, default=50)
     ap.add_argument("--hours", type=float, default=24.0, help="stop after this long (passes repeat with new data)")
-    ap.add_argument("--passes", type=float, default=2.0,
-                    help="train only while generated rows seen < this many times the recorded ones, else wait")
+    ap.add_argument("--passes", type=int, default=2, help="times each chat recording is trained on")
+    ap.add_argument("--passes-swe", type=int, default=1,
+                    help="times each SWE-agent recording is trained on (a dozen tasks gave 2/3 of the rows: spread it)")
     ap.add_argument("--live-held", type=int, default=10, help="every Nth recorded conversation is held out (0: none)")
     ap.add_argument("--de-held", type=int, default=4, help="every Nth German recorded conversation is held out (0: none)")
     ap.add_argument("--de-after", default="", help="German held-out only from recordings finished after 'YYYY-MM-DD HH:MM' "
@@ -198,6 +199,16 @@ def main() -> None:
     crc = lambda r: zlib.crc32(Path(r["name"]).name.encode())
     tok = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
     lang: dict[str, bool] = {}
+    agent: dict[str, bool] = {}
+    uses: dict[str, int] = dict(ck.get("uses", {})) if a.init and ck.get("taps") == taps else {}
+
+    def swe(r) -> bool:                                 # an SWE-agent turn: its rows carry the shell protocol
+        if r["name"] not in agent:
+            text = tok.decode([int(t) for t in r["tok"][:2000]])
+            agent[r["name"]] = "returncode" in text or "interact with a computer shell" in text
+        return agent[r["name"]]
+
+    cap = lambda r: a.passes_swe if swe(r) else a.passes
 
     def german(r) -> bool:                              # decided once per recording from its first 2,000 tokens
         if r["name"] not in lang:
@@ -225,9 +236,9 @@ def main() -> None:
         runs = [r for r in everything if not live_held(r) and not de_held(r)]
         held_live = [r for r in everything if live_held(r)]
         held_de = [r for r in everything if de_held(r)]
-        budget = a.passes * sum(int(r["kind"].sum()) for r in runs)
-        if runs and seen_gen >= budget:                     # every recorded row seen --passes times: wait for more
-            print(json.dumps({"waiting": "pass cap", "seen_gen": seen_gen, "budget": int(budget)}), flush=True)
+        todo = [r for r in runs if uses.get(Path(r["name"]).name, 0) < cap(r)]
+        if runs and not todo:                               # every recording used its passes: wait for more
+            print(json.dumps({"waiting": "pass cap", "seen_gen": seen_gen, "runs": len(runs)}), flush=True)
             time.sleep(300)
             continue
         if not runs:
@@ -235,8 +246,11 @@ def main() -> None:
             time.sleep(300)
             continue
         before = step
-        for ri in rng.permutation(len(runs)):
-            run = runs[ri]
+        mix = {"swe": sum(int(r["kind"].sum()) for r in todo if swe(r)),
+               "chat": sum(int(r["kind"].sum()) for r in todo if not swe(r))}
+        print(json.dumps({"pass": len(todo), "generated_rows": mix}), flush=True)
+        for ri in rng.permutation(len(todo)):
+            run = todo[ri]
             for s0 in range(0, run["n"], a.window):
                 b = window(run, s0, a.window, a.rollout, dims)
                 if b is None:
@@ -284,16 +298,17 @@ def main() -> None:
                     dr.train()
                 if step % a.save == 0:
                     torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "rows": seen,
-                                "seen_gen": seen_gen, "taps": taps}, out / "drafter.pt")
-                if time.perf_counter() >= stop_at or seen_gen >= budget:
+                                "seen_gen": seen_gen, "uses": uses, "taps": taps}, out / "drafter.pt")
+                if time.perf_counter() >= stop_at:
                     break
-            if time.perf_counter() >= stop_at or seen_gen >= budget:
+            if time.perf_counter() >= stop_at:
                 break
+            uses[Path(run["name"]).name] = uses.get(Path(run["name"]).name, 0) + 1
         if step == before:                                  # nothing generated recorded yet: wait for more
             print("no generated rows to train on yet", flush=True)
             time.sleep(300)
     torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "rows": seen, "seen_gen": seen_gen,
-                "taps": taps},
+                "uses": uses, "taps": taps},
                out / "drafter.pt")
 
 

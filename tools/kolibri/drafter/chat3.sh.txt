@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Root, GB10: once x86 runs ml105 with 3 agent workers, give chat the freed stream (mixed worker 1 -> 2).
+SSH=(ssh -n -i /home/jschmied/.ssh/id_ed25519 -o BatchMode=yes -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8)
+until "${SSH[@]}" 'grep -q "ml105 started with -w3" /root/switch-ml105.log'; do sleep 60; done
+systemctl stop fx-kolibri-genchat
+C=/home/jschmied/kolibri-drafter/chat
+systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "/home/jschmied/kolibri-drafter/prep-venv/bin/python /home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter/gen_chat.py http://127.0.0.1:8093/v1/chat/completions /home/jschmied/kolibri-drafter/own_chat.jsonl $C/HuggingFaceH4__ultrachat_200k__train_sft-00000-of-00003-a3ecf92756993583.parquet $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json $C/bigcode__self-oss-instruct-sc2-exec-filter-50k__train-00000-of-00001.parquet --workers 2 --hours 8 --skip /home/jschmied/kolibri-drafter/own_chat_de.jsonl >> /home/jschmied/kolibri-drafter/genchat.log 2>&1"
+echo "[$(date +%H:%M)] chat mixed worker -> 2"

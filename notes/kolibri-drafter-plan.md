@@ -191,6 +191,24 @@ checkpoint was saved (clean by construction), `eval_rec.py --after`:
 - Parked idea, separate from the general drafter: per-repo / per-session adaptation. Run 7 adapted to django fast, and an
   agent stays in one repo for hours; an online fine-tune per session could pay in serving.
 
+## Run 8 (started 2026-10-04 22:15): from run 3, spread data (user: "yes, do we need a new start?")
+
+- Why: run 7's rows were 65 % SWE from ~10-15 tasks (516k rows, ~35-50k per task) vs 35 % chat from 182 conversations
+  (~1.5k each): the drafter learned a few repos deeply (django), nothing general.
+- Architecture re-checked, unchanged: 1 layer (2 layers no gain, 4 slower; one layer does not even generalise yet),
+  hidden 2560 / 20x128 heads (= Kolibri, shared head) / FFN 4096, taps 44/47/49 + token embedding (layer probe), depth 3
+  (MoE verify cost), soft CE top-32 + head-state L1.
+- New start from run 3 (run 7 = run 3 + django). Per-recording pass limits replace the global cap: SWE-agent requests
+  once (`--passes-swe 1`), chat twice (`--passes 2`), counted per recording and kept across resumes (`uses` in the
+  checkpoint). First pass: 467k SWE + 240k chat generated rows. `fx-kolibri-drafter-rec8` -> `out8/`, `train8.log`;
+  `fx-kolibri-keepckpt` keeps `out8/drafter-step<N>.pt`.
+- Start points (run 3): SWE django held-out 1.265, live 0.951, German held-out 0.494 (13 requests, 13,795 chains; all
+  German recordings are clean for run 8, it starts from run 3).
+- Streams: when x86 scores Python-10, `switch-ml105.sh` (x86) holds the old runner and starts Multilingual-105 with 3
+  agent workers (`fullrun-kolibri-ml105.sh`); `chat3.sh` (GB10) then raises the mixed chat worker to 2 (chat 3 streams,
+  SWE 3).
+- Verdict as agreed: checkpoints vs run 3 on recordings after each save, >= 5 % on non-django SWE, chat and German.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
