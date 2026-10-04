@@ -141,6 +141,16 @@ Switch fired 18:01, all checks passed (held-out 36,000 rows, 5,397 assistant cha
 - Run 7: from run 3, `--passes 2 --live-held 10`, LimitNOFILE raised (each request is a recording of 5 memmaps; the
   default 1,024 descriptors crashed the first start). Step 0: SWE held-out 1.265, live held-out (58 requests, chat + SWE)
   0.966. Gate: live held-out above 0.966 without the SWE held-out falling below ~1.2.
+- Run 7 trajectory: SWE held-out 1.265 -> 1.313 (250) -> 1.331 (500) -> 1.283 (750) -> 1.369 (1000): rising, unlike
+  run 6. Live held-out 0.966 -> 1.459 (250) -> 1.519 (1000): too fast to be learning — the split is per request, and an
+  SWE conversation's turns repeat each other, so held-out turns resemble trained turns. Upper bound only; the SWE
+  held-out is the gate. The pass cap binds (training waits for recordings).
+- Disk (2026-10-04 evening): freed qwen38-27b-fp8 (archived, re-verified), superseded venvs v030 + plepr (patches kept in
+  /opt/llm/runners/venv-relics/), archived + freed exl3-3.05bpw and mtpfp4-plebf16 (`/opt/llm/runners/archmore.sh`).
+- Recordings are backed up, not deleted (user: "better backup training data, if we need another run"):
+  `recsync.py` (unit `fx-kolibri-recsync`, log `~/kolibri-drafter/recsync.log`) mirrors ~/kolibri-drafter to
+  PBS `/mnt/bulk/gb10/kolibri-drafter` every 15 min; below 60 GB free it removes the oldest recordings whose every file
+  matches PBS by sha256 (never the live held-out or rec/heldout).
 
 ## Plan
 
