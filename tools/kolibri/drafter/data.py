@@ -88,7 +88,12 @@ def main() -> None:
                     buf = buf[a.seq:]
                     total += a.seq
             its = [x for x in its if x is not None]
-    print(json.dumps({"tokens": total, "sequences": total // a.seq, "seq": a.seq,
+    out_prefix = a.out[:-4] if a.out.endswith(".bin") else a.out
+    n = total // a.seq
+    Path(out_prefix + ".idx.json").write_text(json.dumps({"offsets": [i * a.seq for i in range(n + 1)],
+                                                          "meta": [{"source": f"chat/{i}", "tokens": a.seq}
+                                                                   for i in range(n)]}))
+    print(json.dumps({"tokens": total, "sequences": n, "seq": a.seq,
                       "conversations": dict(zip(a.sources, counts))}))
 
 

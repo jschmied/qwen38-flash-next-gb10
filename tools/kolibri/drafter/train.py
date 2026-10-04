@@ -77,6 +77,59 @@ def step_inputs(x: torch.Tensor, seq: torch.Tensor, picks: torch.Tensor, embed: 
     return feats, emb, x[1:-1], picks[1:-1]
 
 
+def assistant_mask(ids: np.ndarray, start_id: int, header: list[int], end_id: int) -> np.ndarray:
+    """True on tokens inside assistant turns (after '<|im_start|>assistant\\n', through '<|im_end|>')."""
+
+    mask, inside, n = np.zeros(len(ids), dtype=bool), False, len(header)
+    i = 0
+    while i < len(ids):
+        if ids[i] == start_id and list(ids[i + 1:i + 1 + n]) == header:
+            inside, i = True, i + 1 + n
+            continue
+        if inside:
+            mask[i] = True
+            if ids[i] == end_id:
+                inside = False
+        i += 1
+    return mask
+
+
+class HeldOut:
+    """The held-out conversations' target states, computed once; ``score`` is the drafter's step-1 top-1 there."""
+
+    def __init__(self, model, convs, model_dir: str, window: int) -> None:
+        from tokenizers import Tokenizer
+
+        tok = Tokenizer.from_file(str(Path(model_dir) / "tokenizer.json"))
+        start, end = tok.token_to_id("<|im_start|>"), tok.token_to_id("<|im_end|>")
+        header = tok.encode("assistant\n", add_special_tokens=False).ids
+        self.items, self.window = [], window
+        for _, toks in convs:
+            ids = np.asarray(toks, dtype=np.int64)
+            seq = torch.from_numpy(ids).cuda()
+            with torch.no_grad():
+                x, picks = target_pass(model, ids.tolist())
+            mask = torch.from_numpy(assistant_mask(ids, start, header, end)[2:]).cuda()   # the token label t predicts
+            self.items.append((x, seq, picks, mask))
+
+    @torch.no_grad()
+    def score(self, dr, embed, head) -> dict:
+        hit_a = n_a = hit = n = 0
+        for x, seq, picks, mask in self.items:
+            feats, emb, _, label = step_inputs(x, seq, picks, embed)
+            for s0 in range(0, feats.shape[0], self.window):
+                sl = slice(s0, s0 + self.window)
+                with torch.autocast("cuda", dtype=torch.bfloat16):
+                    pred, _ = dr(feats[sl][None], emb[sl][None], torch.arange(feats[sl].shape[0], device="cuda"))
+                got = torch.cat([(pred[0][i:i + HEAD_CHUNK].to(torch.bfloat16) @ head.T).argmax(-1)
+                                 for i in range(0, pred.shape[1], HEAD_CHUNK)])
+                ok, m = got == label[sl], mask[sl]
+                hit, n = hit + int(ok.sum()), n + ok.numel()
+                hit_a, n_a = hit_a + int((ok & m).sum()), n_a + int(m.sum())
+        return {"top1_assistant": round(hit_a / max(1, n_a), 4), "top1_all": round(hit / max(1, n), 4),
+                "assistant_tokens": n_a}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("model_dir")
@@ -90,6 +143,12 @@ def main() -> None:
     ap.add_argument("--noise", type=float, default=0.0, help="uniform feature noise, +-noise")
     ap.add_argument("--log", type=int, default=50)
     ap.add_argument("--save", type=int, default=500)
+    ap.add_argument("--extra", action="append", default=[], help="more PREFIXes trained on (never held out)")
+    ap.add_argument("--swe-passes", type=int, default=0, help="with --extra: passes over PREFIX beside one of them")
+    ap.add_argument("--init", default="", help="a drafter.pt to continue from")
+    ap.add_argument("--eval", type=int, default=250, help="steps between held-out checks (0: none)")
+    ap.add_argument("--plateau", type=float, default=0.005, help="held-out gain over 3 checks that still counts")
+    ap.add_argument("--decay", type=float, default=0.1, help="decay phase, as a share of the steps before it")
     a = ap.parse_args()
 
     from tensorfold.families.kolibri1.cuda.forward import Model
@@ -99,6 +158,9 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     train, hold = held_out(conversations(a.prefix), a.hold)
     (out / "held_out.json").write_text(json.dumps([name for name, _ in hold]))
+    if a.extra:                     # fresh text once, the first PREFIX ``swe_passes`` times, one shuffled stream
+        train = train * a.swe_passes + [c for p in a.extra for c in conversations(p)]
+        a.epochs = 1
     windows_per = [max(1, (len(t) - 2 + a.window - 1) // a.window) for _, t in train]
     steps = a.epochs * sum(windows_per)
     longest = max(len(t) for _, t in train)
@@ -106,13 +168,47 @@ def main() -> None:
     model = Model(w, longest + 64, 1)
     cfg = DraftConfig(hidden=w.config.hidden)
     dr = Drafter(cfg).cuda()
-    with torch.no_grad():                                 # the target's states carry its final norm's scale (~43)
-        dr.out_norm.w.copy_(w.norm.float())
+    if a.init:
+        dr.load_state_dict(torch.load(a.init, map_location="cuda")["state"])
+    else:
+        with torch.no_grad():                             # the target's states carry its final norm's scale (~43)
+            dr.out_norm.w.copy_(w.norm.float())
     unit = float(w.norm.float().pow(2).mean().sqrt())     # L1 in units of that scale, beside the cross-entropy
     print(f"drafter: {params(dr) / 1e6:.1f}M trainable; {len(train)} conversations "
           f"({sum(len(t) for _, t in train) / 1e6:.2f}M tokens), {len(hold)} held out; {steps} steps", flush=True)
     opt = torch.optim.AdamW(dr.parameters(), lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
-    sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / 100) * max(0.05, 1 - s / steps))
+    held = HeldOut(model, hold, a.model_dir, a.window) if a.eval and hold else None
+    history, decay_at, decay_len = [], None, 0
+
+    def lr_at(s: int) -> float:                     # warmup, constant, then a linear decay once held-out plateaus
+        f = min(1.0, (s + 1) / 100)
+        if decay_at is not None:
+            f *= max(0.05, 1 - (s - decay_at) / max(1, decay_len))
+        return a.lr * f
+
+    def check(s: int) -> bool:
+        """A held-out check; True when training should stop (the decay phase has run out)."""
+
+        nonlocal decay_at, decay_len
+        dr.eval()
+        r = held.score(dr, w.embed, w.head)
+        dr.train()
+        history.append(r["top1_assistant"])
+        print(json.dumps({"step": s, "held_out": r, "decaying": decay_at is not None}), flush=True)
+        if decay_at is None and len(history) >= 4 and max(history[-3:]) - history[-4] < a.plateau:
+            decay_at, decay_len = s, max(300, int(a.decay * s))
+            print(json.dumps({"step": s, "plateau": history[-4:], "decay_steps": decay_len}), flush=True)
+        return decay_at is not None and s >= decay_at + decay_len
+
+    class _Sched:
+        def step(self):
+            pass
+
+        def get_last_lr(self):
+            return [opt.param_groups[0]["lr"]]
+
+    sched = _Sched()
+    stop = False
     rng = np.random.default_rng(0)
     t0, seen, step, log = time.perf_counter(), 0, 0, {"l1": 0.0, "ce": 0.0, "acc": 0.0, "n": 0}
     for epoch in range(a.epochs):
@@ -135,6 +231,8 @@ def main() -> None:
                 l1 = F.smooth_l1_loss(pred.float() / unit, want.float() / unit)
                 ce = head_ce(pred, w.head, label)
                 loss = l1 + a.ce * ce
+                for g in opt.param_groups:
+                    g["lr"] = lr_at(step)
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(dr.parameters(), 0.5)
@@ -158,6 +256,16 @@ def main() -> None:
                 if step % a.save == 0 or step == steps:
                     torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "tokens": seen},
                                out / "drafter.pt")
+                if held is not None and step % a.eval == 0 and check(step):
+                    stop = True
+                    break
+            if stop:
+                break
+        if stop:
+            break
+    torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "tokens": seen}, out / "drafter.pt")
+    if held is not None:
+        print(json.dumps({"final": held.score(dr.eval(), w.embed, w.head), "step": step}), flush=True)
 
 
 if __name__ == "__main__":
