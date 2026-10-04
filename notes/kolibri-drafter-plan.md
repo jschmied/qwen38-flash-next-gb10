@@ -126,6 +126,22 @@ Switch fired 18:01, all checks passed (held-out 36,000 rows, 5,397 assistant cha
 - Fix before any rerun: cap passes (train only while rows seen < ~2x unique generated rows, else wait), an
   in-distribution held-out (every 10th recorded conversation), and enough recordings first (genchat runs until ~06:00).
 
+## Run 7 (started 2026-10-04 19:55): pass cap 2, live held-out, SWE + chat recordings
+
+- Tap path settled: run 3 on SWE decode-path recordings (404 requests, 132,013 chains, the new SWE run) accepts
+  1.188 (step-1 0.681) against 1.265 (step-1 0.637) on the SWE prefill-path held-out. Decode taps are fine; chat's
+  0.64 is the domain (chat at T=1 is harder to draft).
+- More SWE data: x86 runs every instance whose image is cached and Kolibri has not run (`/root/fullrun-kolibri-more.sh`,
+  unit `kolibri-swe-more`): Verified python-10, then Multilingual-105; temp 0.6 overlay (same as every SWE score).
+- SWE score so far (Verified-30, same overlay and harness as the Qwen runs): Kolibri 20/30; Flash-Next 24-28 (mostly
+  27); Qwen3.6-35B NVIDIA 19 (23 after infra reruns), Unsloth 17. Kolibri's empties: 3 hit our 131,072 server context
+  (113-162 steps), 1 step limit, 1 repeated format error.
+- Recording rate with SWE + chat: 5.5 GB per 20 min (16.5 GB/h), 125k generated rows per 20 min (1/3 of rows; prompt rows
+  are the rest). 77 GB free at 19:44: the recorder's 25 GB floor is reached in ~3 h.
+- Run 7: from run 3, `--passes 2 --live-held 10`, LimitNOFILE raised (each request is a recording of 5 memmaps; the
+  default 1,024 descriptors crashed the first start). Step 0: SWE held-out 1.265, live held-out (58 requests, chat + SWE)
+  0.966. Gate: live held-out above 0.966 without the SWE held-out falling below ~1.2.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1

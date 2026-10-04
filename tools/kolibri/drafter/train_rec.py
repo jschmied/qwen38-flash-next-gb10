@@ -178,6 +178,12 @@ def main() -> None:
     rng = np.random.default_rng(0)
     t0, step, seen, seen_gen, log = time.perf_counter(), 0, 0, 0, {"l1": 0.0, "ce": 0.0, "n": 0}
     live_held = lambda r: a.live_held > 0 and zlib.crc32(Path(r["name"]).name.encode()) % a.live_held == 0
+    start_live = [r for r in recordings(a.data) if live_held(r)]
+    if start_live:                                      # the start point on the in-distribution held-out
+        dr.eval()
+        print(json.dumps({"step": 0, "held_live": held_score(dr, start_live, embed, head, a.rollout, a.window, dims),
+                          "live_runs": len(start_live)}), flush=True)
+        dr.train()
     stop_at = t0 + a.hours * 3600
     while time.perf_counter() < stop_at:
         everything = recordings(a.data)

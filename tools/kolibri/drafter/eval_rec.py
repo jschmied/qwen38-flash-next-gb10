@@ -1,6 +1,7 @@
 """Score drafter checkpoints on recordings, optionally only those finished after a time (unseen by a training run).
 
-    python eval_rec.py MODEL_DIR --data DIR [--after 'YYYY-MM-DD HH:MM'] --ckpt A.pt [B.pt ...] [--layers 1]
+    python eval_rec.py MODEL_DIR --data DIR [--after 'YYYY-MM-DD HH:MM'] [--contains TEXT] [--excludes TEXT]
+        --ckpt A.pt [B.pt ...] [--layers 1]
 
 A checkpoint with a different tap count (run 3: one tap) is loaded the way train_rec.py warm-starts it: the fuse passes
 the last tap (the head's state) through.
@@ -41,6 +42,8 @@ def main() -> None:
     ap.add_argument("model_dir")
     ap.add_argument("--data", nargs="+", required=True)
     ap.add_argument("--after", default="")
+    ap.add_argument("--contains", default="", help="only conversations whose first 2,000 tokens contain this text (a|b: either)")
+    ap.add_argument("--excludes", default="", help="only conversations whose first 2,000 tokens lack this text (a|b: all of them)")
     ap.add_argument("--ckpt", nargs="+", required=True)
     ap.add_argument("--layers", type=int, default=1)
     ap.add_argument("--rollout", type=int, default=3)
@@ -50,6 +53,13 @@ def main() -> None:
     if a.after:
         t = time.mktime(time.strptime(a.after, "%Y-%m-%d %H:%M"))
         runs = [r for r in runs if Path(r["name"] + ".json").stat().st_mtime > t]
+    if a.contains or a.excludes:
+        from tokenizers import Tokenizer
+        tok = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
+        text = {r["name"]: tok.decode([int(t) for t in r["tok"][:2000]]) for r in runs}
+        has = lambda name, alts: any(x in text[name] for x in alts.split("|"))
+        runs = [r for r in runs if (not a.contains or has(r["name"], a.contains))
+                and (not a.excludes or not has(r["name"], a.excludes))]
     if not runs:
         raise SystemExit("no recordings match")
     embed, head = head_weights(a.model_dir)
