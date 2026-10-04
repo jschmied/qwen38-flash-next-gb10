@@ -28,6 +28,21 @@ Findings:
 - Estimated value of run 3 in serving, depth 2 with a 32k draft-head slice: about +25 % single-stream decode (verify
   cost per row not yet measured). Copy drafting gives +13 % (chat) to +31 % (greedy code).
 
+## Field: 0xBakeer's TandemLLM Kolibri branch (stopped 2026-10-04)
+
+`github.com/0xBakeer/TandemLLM`, branch `kolibri-experimental`, `docs/kolibri.md` (archived, not maintained):
+- Block drafter (DSpark-style, 5 layers, 452M, taps from 5 layers) from scratch on 7,136 of Kolibri's own answers
+  (6.6M tokens, one pass): 1.47 tokens a round at chain 3 on held-out answers (gate 2.0). If 1.47 includes the target's
+  token, that is 0.47 accepted drafts against our 0.95 (greedy depth 3) — different held-out sets, not a measured
+  comparison.
+- Their measured decode-vs-prefill tap difference: 5 % relative RMS at layer 49 (our recordings use decode states).
+  Tap scales differ widely (row RMS 0.53 after layer 1, 28 after layer 49, one channel 805).
+- Verify cost per row on one GB10 (their NVFP4 engine, 1k context): 1 row 12.5 ms, 2: 16.5, 4: 23.2, 8: 35.0,
+  16: 57.9, 32: 101.9 — each row brings its own experts; short chains (2-3) are the optimum.
+- Lookup drafting with StairCut: 3.3x on edits/copies, 1.04-1.11x on code/chat with tools, 0.97-0.99x on prose/German.
+- Decode 80.4 tok/s at 1k (NVFP4 requant, 2.44 GB/token, 72-74 % of the byte ceiling; lane-accumulator kernels, PDL,
+  L2 prefetch) against our 40.5 (FP8 as released, 3.8 GB/token, ~56 %): the kernel-efficiency part is an engine lever.
+
 ## Layer probe (2026-10-04 15:30)
 
 Ridge probe from each layer's output at t to Kolibri's final state choosing token t + k, top-1 through Kolibri's head,
