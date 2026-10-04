@@ -67,6 +67,11 @@ over the final state. Inputs are not the main limit either: data is. Taps for a 
   the top-32 + head-state L1, 3-step rollouts, warm start from run 3 (fuse passes layer 49 through: step 0 reproduces
   run 3 exactly), held-out check every 250 steps. Logs: `~/kolibri-drafter/switch.log`.
 
+Decision gate for run 6 (training on Kolibri's own recorded traffic): greedy acceptance at depth 3 on the same 3,249
+rounds (`accept_mt.py`, needs a short server stop). From 0.950 (run 3) to >= 1.15: go to serving costs and engine
+integration; ~1.25 closes the gap to the text path; <= 1.0: stop tuning the network, keep it as a fallback behind copy
+drafting and look at trees or block drafting.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
