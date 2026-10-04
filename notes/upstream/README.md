@@ -1685,3 +1685,7 @@ wait on one ~100 GB pull, and they share one serve.
 - **TensorFold PR #328** (2026-10-03, same go): Kolibri 1 CUDA family (FP8 grouped experts, sliding rings,
   --parallel exact to solo), on #327. Receipt in `notes/data/kolibri/`. Draft `tf-pr-kolibri1-cuda.md`.
   https://github.com/ashhart/TensorFold/pull/328
+- **TensorFold PR #300 reply** (2026-10-04, user: "ok, noreply address"): thanks for taking 13/18; agreed on dropping
+  the ROUND vote; asked to re-author my commits to the GitHub noreply address; follow-ups announced as separate PRs
+  (cancelled, stops first). Draft `tf300-reply-noreply.md`.
+  https://github.com/ashhart/TensorFold/pull/300#issuecomment-5979503586
