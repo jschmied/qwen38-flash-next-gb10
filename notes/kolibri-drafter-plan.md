@@ -55,7 +55,13 @@ over the final state. Inputs are not the main limit either: data is. Taps for a 
 - Recording (TF branch `kolibri1-record`, local, f94e0f2): `TENSORFOLD_KOLIBRI_RECORD=<dir>` makes the server write each
   kept row's token, layers 44/47/49 and Kolibri's top-32 log-probs (~15 KB a token, pauses below 25 GB free disk).
   Replies are unchanged (tested); prompt rows equal the prefill's states bit for bit; rejected drafts never recorded.
-- `fx-kolibri-switch` (root) waits for the SWE generation to finish, then: records the held-out set offline
+- TensorFold code for this (taps, recorder, row kinds): branch `jschmied/TensorFold:kolibri1-record` (88abeb0), on top of
+  PR #328's branch; not part of the PR.
+- Rows carry a kind (1: Kolibri generated it; held-out: the assistant mask). Training and the held-out check use only
+  chains whose drafted tokens are kind 1 — the same assistant-only counting as run 3's 1.267 (an external review caught
+  that the first version counted every row).
+- `fx-kolibri-switch` (root) waits for the SWE generation to finish, then (aborting to a normal, non-recording server if
+  the held-out recording fails `check_heldout.py` or the recording server does not come up): records the held-out set offline
   (`record_heldout.py` -> `~/kolibri-drafter/rec/heldout`), restarts the server with recording on (`rec/live`) and
   starts `train_rec.py` beside it (`fx-kolibri-drafter-rec` -> `out6/`, `train6.log`): no Kolibri copy, soft CE to
   the top-32 + head-state L1, 3-step rollouts, warm start from run 3 (fuse passes layer 49 through: step 0 reproduces

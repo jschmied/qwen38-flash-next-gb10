@@ -10,14 +10,17 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).parent))
-from train import conversations  # noqa: E402
+from train import assistant_mask, conversations  # noqa: E402
 
 
 @torch.no_grad()
 def main() -> None:
+    from tokenizers import Tokenizer
+
     from tensorfold.families.kolibri1.cuda.forward import Chain, Model
     from tensorfold.families.kolibri1.cuda.record import Recorder
     from tensorfold.families.kolibri1.cuda.weights import load
@@ -36,14 +39,19 @@ def main() -> None:
     model = Model(w, a.max + 64, 1)
     model.record_taps = tuple(taps)
     rec = Recorder(a.out, taps, k=32, floor_gb=0)
+    tok = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
+    start, end = tok.token_to_id("<|im_start|>"), tok.token_to_id("<|im_end|>")
+    header = tok.encode("assistant\n", add_special_tokens=False).ids
     for sid, (name, toks) in enumerate(c for c in conversations(a.prefix) if c[0] in names):
         ids = [int(t) for t in toks[:a.max]]
+        kinds = assistant_mask(np.asarray(ids), start, header, end).astype(np.uint8)   # 1: Kolibri wrote it
         for p in range(0, len(ids), 8192):
             model.forward([Chain(0, p, ids[p:p + 8192])], prompt=True)
             final, states = model.last
-            rec.add(sid, range(p, p + len(ids[p:p + 8192])), ids[p:p + 8192], states, final, w.head)
+            rec.add(sid, range(p, p + len(ids[p:p + 8192])), ids[p:p + 8192], states, final, w.head,
+                    kinds=kinds[p:p + 8192].tolist())
         rec.finish(sid, source=name)
-        print(f"{name}: {len(ids)} rows", flush=True)
+        print(f"{name}: {len(ids)} rows, {int(kinds.sum())} written by Kolibri", flush=True)
 
 
 if __name__ == "__main__":

@@ -52,6 +52,8 @@ def recordings(dirs: list[str]) -> list[dict]:
             width = len(info["taps"]) * info["dims"]
             runs.append({"name": base, "n": n, "taps": info["taps"],
                          "tok": np.memmap(base + ".tok", dtype=np.int32, mode="r", shape=(n,)),
+                         "kind": (np.memmap(base + ".kind", dtype=np.uint8, mode="r", shape=(n,))
+                                  if Path(base + ".kind").exists() else np.ones(n, dtype=np.uint8)),
                          "st": np.memmap(base + ".st", dtype=np.int16, mode="r", shape=(n, width)),
                          "tki": np.memmap(base + ".tki", dtype=np.int32, mode="r", shape=(n, k)),
                          "tkl": np.memmap(base + ".tkl", dtype=np.int16, mode="r", shape=(n, k))})
@@ -59,7 +61,8 @@ def recordings(dirs: list[str]) -> list[dict]:
 
 
 def window(run: dict, s0: int, size: int, steps: int, dims: int):
-    """Chains t in [s0, s0 + size) with all targets: tapped states, step tokens, head states, top-k ids and probs."""
+    """Chains t in [s0, s0 + size) with all targets: tapped states, step tokens, head states, top-k ids and probs,
+    and per step whether its drafted token (t + 2 + j) is one Kolibri generated."""
 
     t1 = min(s0 + size, run["n"] - steps - 1)
     if t1 <= s0:
@@ -69,29 +72,34 @@ def window(run: dict, s0: int, size: int, steps: int, dims: int):
     tok = torch.from_numpy(np.array(run["tok"][s0:hi], dtype=np.int64)).cuda()
     tki = torch.from_numpy(np.array(run["tki"][s0:hi], dtype=np.int64)).cuda()
     tkp = torch.from_numpy(np.array(run["tkl"][s0:hi])).cuda().view(torch.float16).float().softmax(-1)
+    kind = torch.from_numpy(np.array(run["kind"][s0:hi + 1], dtype=np.bool_)).cuda()
     n = t1 - s0
     head_state = st[:, -dims:]                         # the last tap is the head's own state
     return (st[:n], [tok[1 + j:1 + j + n] for j in range(steps)], [head_state[1 + j:1 + j + n] for j in range(steps)],
-            [tki[1 + j:1 + j + n] for j in range(steps)], [tkp[1 + j:1 + j + n] for j in range(steps)])
+            [tki[1 + j:1 + j + n] for j in range(steps)], [tkp[1 + j:1 + j + n] for j in range(steps)],
+            [kind[2 + j:2 + j + n] for j in range(steps)])
 
 
-def soft_ce(pred: torch.Tensor, head: torch.Tensor, ids: torch.Tensor, probs: torch.Tensor) -> torch.Tensor:
-    """Mean over rows of -sum_k p_k log q(id_k), q the drafter's full-vocabulary softmax (row chunks, checkpointed)."""
+def soft_ce(pred: torch.Tensor, head: torch.Tensor, ids: torch.Tensor, probs: torch.Tensor,
+            rows: torch.Tensor) -> torch.Tensor:
+    """Mean over ``rows`` of -sum_k p_k log q(id_k), q the drafter's full-vocabulary softmax (chunks, checkpointed)."""
 
     from torch.utils.checkpoint import checkpoint
 
-    def part(p, i, w):
+    def part(p, i, w, m):
         logq = (p.to(torch.bfloat16) @ head.T).float().log_softmax(-1)
-        return -(logq.gather(1, i) * w).sum()
+        return -((logq.gather(1, i) * w).sum(-1) * m).sum()
 
+    keep = rows.float()
     total = sum(checkpoint(part, pred[r:r + HEAD_CHUNK], ids[r:r + HEAD_CHUNK], probs[r:r + HEAD_CHUNK],
-                           use_reentrant=False) for r in range(0, pred.shape[0], HEAD_CHUNK))
-    return total / pred.shape[0]
+                           keep[r:r + HEAD_CHUNK], use_reentrant=False) for r in range(0, pred.shape[0], HEAD_CHUNK))
+    return total / keep.sum().clamp_min(1)
 
 
 @torch.no_grad()
 def held_score(dr, runs, embed, head, steps: int, size: int, dims: int) -> dict:
-    """Per-step top-1 against Kolibri's choice, and mean drafts accepted in a row, over every row of ``runs``."""
+    """Per-step top-1 against Kolibri's choice and mean drafts accepted in a row, over chains drafting a token Kolibri
+    generated (the assistant's, in a recorded conversation)."""
 
     n, accepted, hits = 0, 0.0, [0] * steps
     for run in runs:
@@ -99,19 +107,20 @@ def held_score(dr, runs, embed, head, steps: int, size: int, dims: int) -> dict:
             b = window(run, s0, size, steps, dims)
             if b is None:
                 continue
-            feats, toks, _, ids, _ = b
+            feats, toks, _, ids, _, gen = b
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 outs = dr.rollout(feats, [embed[t] for t in toks])
-            ok_run = torch.ones(feats.shape[0], dtype=torch.bool, device=feats.device)
+            ok_run = gen[0].clone()
             for j, o in enumerate(outs):
                 got = torch.cat([(o[i:i + HEAD_CHUNK].to(torch.bfloat16) @ head.T).argmax(-1)
                                  for i in range(0, o.shape[0], HEAD_CHUNK)])
-                ok = got == ids[j][:, 0]
+                ok = (got == ids[j][:, 0]) & gen[0]
                 hits[j] += int(ok.sum())
                 ok_run &= ok
                 accepted += float(ok_run.sum())
-            n += feats.shape[0]
-    return {"accepted": round(accepted / max(1, n), 4), "top1_steps": [round(h / max(1, n), 4) for h in hits], "rows": n}
+            n += int(gen[0].sum())
+    return {"accepted": round(accepted / max(1, n), 4), "top1_steps": [round(h / max(1, n), 4) for h in hits],
+            "chains": n}
 
 
 def main() -> None:
@@ -170,22 +179,28 @@ def main() -> None:
             print("waiting for recordings", flush=True)
             time.sleep(300)
             continue
+        before = step
         for ri in rng.permutation(len(runs)):
             run = runs[ri]
             for s0 in range(0, run["n"], a.window):
                 b = window(run, s0, a.window, a.rollout, dims)
                 if b is None:
                     continue
-                feats, toks, wants, ids, probs = b
+                feats, toks, wants, ids, probs, gen = b
+                if not bool(gen[0].any()):                 # no generated token to draft in this window
+                    continue
                 lr = a.lr * min(1.0, (step + 1) / 100)
                 for g in opt.param_groups:
                     g["lr"] = lr
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     outs = dr.rollout(feats, [embed[t] for t in toks])
                 weights = [0.8 ** j for j in range(len(outs))]
-                l1 = sum(wt * F.smooth_l1_loss(o.float() / unit, want.float() / unit)
-                         for wt, o, want in zip(weights, outs, wants)) / sum(weights)
-                ce = sum(wt * soft_ce(o, head, i, p) for wt, o, i, p in zip(weights, outs, ids, probs)) / sum(weights)
+                rows_l1 = [F.smooth_l1_loss(o.float() / unit, want.float() / unit, reduction="none").mean(-1)
+                           for o, want in zip(outs, wants)]
+                l1 = sum(wt * (r * g).sum() / g.sum().clamp_min(1)
+                         for wt, r, g in zip(weights, rows_l1, gen)) / sum(weights)
+                ce = sum(wt * soft_ce(o, head, i, p, g)
+                         for wt, o, i, p, g in zip(weights, outs, ids, probs, gen)) / sum(weights)
                 loss = a.l1 * l1 + ce
                 opt.zero_grad(set_to_none=True)
                 loss.backward()
@@ -212,6 +227,9 @@ def main() -> None:
                                 "taps": taps}, out / "drafter.pt")
                 if time.perf_counter() >= stop_at:
                     break
+        if step == before:                                  # nothing generated recorded yet: wait for more
+            print("no generated rows to train on yet", flush=True)
+            time.sleep(300)
     torch.save({"config": cfg.__dict__, "state": dr.state_dict(), "step": step, "rows": seen, "taps": taps},
                out / "drafter.pt")
 
