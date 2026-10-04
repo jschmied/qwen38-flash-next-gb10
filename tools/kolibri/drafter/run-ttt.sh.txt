@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Kolibri drafter, training-time test: 3-step self-rollouts from the run-1 checkpoint; stop on held-out chain plateau.
+set -uo pipefail
+T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+D=/home/jschmied/kolibri-drafter
+export PYTHONPATH=/home/jschmied/git/tf-kolibri/src
+/opt/llm/runtime/tf-venv/bin/python $T/train.py /opt/llm/models/kolibri-1 $D/swe $D/out3 --extra $D/chat --swe-passes 1 \
+  --init $D/drafter-chat-1750.pt --hold 3 --lr 2e-4 --eval 250 --log 50 --rollout 3 > $D/train3.log 2>&1
+echo "train rc=$?"
+/opt/llm/runtime/tf-venv/bin/python $T/accept.py /opt/llm/models/kolibri-1 $D/swe $D/out3/drafter.pt --names $D/out3/held_out.json > $D/accept3.log 2>&1
+echo "accept rc=$? $(tail -1 $D/accept3.log)"

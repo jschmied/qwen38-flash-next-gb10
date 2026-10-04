@@ -85,5 +85,34 @@ class Drafter(nn.Module):
         return self.out_norm(z), (k, v)
 
 
+    def rollout(self, feats: torch.Tensor, embs: list[torch.Tensor]) -> list[torch.Tensor]:
+        """Training-time test: step j (0-based) of every chain at once; chain t's step j reads its step j-1 output.
+
+        feats [T, D] the target's states; embs[j] [T, D] the embedding of the token after step j's position.
+        Chain t's step j sits at position t + j and attends to the target-fed rows <= t and to chain t's own steps."""
+
+        t, d = feats.shape
+        h, hd = self.cfg.heads, self.cfg.head_dim
+        rows = torch.arange(t, device=feats.device)
+        ks, vs, outs, f = [], [], [], feats
+        for j, emb in enumerate(embs):
+            z = self.fc(torch.cat([emb, f], -1))[None]
+            a = self.n1(z)
+            pos = rows + j
+            q = rope(self.q(a).view(1, t, h, hd).transpose(1, 2), pos, self.cfg.theta)
+            ks.append(rope(self.k(a).view(1, t, h, hd).transpose(1, 2), pos, self.cfg.theta))
+            vs.append(self.v(a).view(1, t, h, hd).transpose(1, 2))
+            first = rows[None, :] <= rows[:, None]                       # target-fed rows <= t
+            own = torch.eye(t, dtype=torch.bool, device=feats.device)     # chain t's own earlier steps
+            mask = torch.cat([first] + [own] * j, 1)
+            att = F.scaled_dot_product_attention(q, torch.cat(ks, 2), torch.cat(vs, 2), attn_mask=mask)
+            z = z + self.o(att.transpose(1, 2).reshape(1, t, h * hd))
+            m = self.n2(z)
+            z = z + self.down(F.silu(self.gate(m)) * self.up(m))
+            f = self.out_norm(z)[0]
+            outs.append(f)
+        return outs
+
+
 def params(m: nn.Module) -> int:
     return sum(p.numel() for p in m.parameters() if p.requires_grad)

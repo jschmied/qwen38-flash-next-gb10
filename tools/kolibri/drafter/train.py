@@ -77,6 +77,19 @@ def step_inputs(x: torch.Tensor, seq: torch.Tensor, picks: torch.Tensor, embed: 
     return feats, emb, x[1:-1], picks[1:-1]
 
 
+def chain_batch(x, seq, picks, embed, s0: int, window: int, steps: int):
+    """Chains t in [s0, s0 + window) with all ``steps`` targets: feats, the step inputs, target states and choices."""
+
+    t1 = min(s0 + window, x.shape[0] - steps)
+    if t1 <= s0:
+        return None
+    rows = torch.arange(s0, t1, device=x.device)
+    embs = [embed[seq[rows + 1 + j]] for j in range(steps)]
+    wants = [x[rows + 1 + j] for j in range(steps)]
+    labels = [picks[rows + 1 + j] for j in range(steps)]
+    return x[rows], embs, wants, labels, rows
+
+
 def assistant_mask(ids: np.ndarray, start_id: int, header: list[int], end_id: int) -> np.ndarray:
     """True on tokens inside assistant turns (after '<|im_start|>assistant\\n', through '<|im_end|>')."""
 
@@ -97,37 +110,47 @@ def assistant_mask(ids: np.ndarray, start_id: int, header: list[int], end_id: in
 class HeldOut:
     """The held-out conversations' target states, computed once; ``score`` is the drafter's step-1 top-1 there."""
 
-    def __init__(self, model, convs, model_dir: str, window: int) -> None:
+    def __init__(self, model, convs, model_dir: str, window: int, steps: int = 1) -> None:
         from tokenizers import Tokenizer
 
         tok = Tokenizer.from_file(str(Path(model_dir) / "tokenizer.json"))
         start, end = tok.token_to_id("<|im_start|>"), tok.token_to_id("<|im_end|>")
         header = tok.encode("assistant\n", add_special_tokens=False).ids
-        self.items, self.window = [], window
+        self.items, self.window, self.steps = [], window, steps
         for _, toks in convs:
             ids = np.asarray(toks, dtype=np.int64)
             seq = torch.from_numpy(ids).cuda()
             with torch.no_grad():
                 x, picks = target_pass(model, ids.tolist())
-            mask = torch.from_numpy(assistant_mask(ids, start, header, end)[2:]).cuda()   # the token label t predicts
+            mask = torch.from_numpy(assistant_mask(ids, start, header, end)).cuda()
             self.items.append((x, seq, picks, mask))
 
     @torch.no_grad()
     def score(self, dr, embed, head) -> dict:
-        hit_a = n_a = hit = n = 0
+        """Per-step top-1 on chains whose first drafted token is the assistant's, and mean drafts accepted in a row."""
+
+        n, accepted = 0, 0.0
+        hits = [0] * self.steps
         for x, seq, picks, mask in self.items:
-            feats, emb, _, label = step_inputs(x, seq, picks, embed)
-            for s0 in range(0, feats.shape[0], self.window):
-                sl = slice(s0, s0 + self.window)
+            for s0 in range(0, x.shape[0], self.window):
+                b = chain_batch(x, seq, picks, embed, s0, self.window, self.steps)
+                if b is None:
+                    continue
+                feats, embs, _, labels, rows = b
                 with torch.autocast("cuda", dtype=torch.bfloat16):
-                    pred, _ = dr(feats[sl][None], emb[sl][None], torch.arange(feats[sl].shape[0], device="cuda"))
-                got = torch.cat([(pred[0][i:i + HEAD_CHUNK].to(torch.bfloat16) @ head.T).argmax(-1)
-                                 for i in range(0, pred.shape[1], HEAD_CHUNK)])
-                ok, m = got == label[sl], mask[sl]
-                hit, n = hit + int(ok.sum()), n + ok.numel()
-                hit_a, n_a = hit_a + int((ok & m).sum()), n_a + int(m.sum())
-        return {"top1_assistant": round(hit_a / max(1, n_a), 4), "top1_all": round(hit / max(1, n), 4),
-                "assistant_tokens": n_a}
+                    outs = dr.rollout(feats, embs)
+                keep = mask[(rows + 2).clamp(max=mask.shape[0] - 1)]   # chain t drafts the token at t + 2 first
+                run = torch.ones_like(keep)
+                for j, (o, lab) in enumerate(zip(outs, labels)):
+                    got = torch.cat([(o[i:i + HEAD_CHUNK].to(torch.bfloat16) @ head.T).argmax(-1)
+                                     for i in range(0, o.shape[0], HEAD_CHUNK)])
+                    ok = (got == lab) & keep
+                    hits[j] += int(ok.sum())
+                    run = run & ok
+                    accepted += float(run.sum())
+                n += int(keep.sum())
+        return {"accepted": round(accepted / max(1, n), 4), "top1_steps": [round(h / max(1, n), 4) for h in hits],
+                "chains": n}
 
 
 def main() -> None:
@@ -147,6 +170,7 @@ def main() -> None:
     ap.add_argument("--swe-passes", type=int, default=0, help="with --extra: passes over PREFIX beside one of them")
     ap.add_argument("--init", default="", help="a drafter.pt to continue from")
     ap.add_argument("--eval", type=int, default=250, help="steps between held-out checks (0: none)")
+    ap.add_argument("--rollout", type=int, default=1, help="draft steps trained per chain (training-time test)")
     ap.add_argument("--plateau", type=float, default=0.005, help="held-out gain over 3 checks that still counts")
     ap.add_argument("--decay", type=float, default=0.1, help="decay phase, as a share of the steps before it")
     a = ap.parse_args()
@@ -177,7 +201,7 @@ def main() -> None:
     print(f"drafter: {params(dr) / 1e6:.1f}M trainable; {len(train)} conversations "
           f"({sum(len(t) for _, t in train) / 1e6:.2f}M tokens), {len(hold)} held out; {steps} steps", flush=True)
     opt = torch.optim.AdamW(dr.parameters(), lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
-    held = HeldOut(model, hold, a.model_dir, a.window) if a.eval and hold else None
+    held = HeldOut(model, hold, a.model_dir, a.window, max(1, a.rollout)) if a.eval and hold else None
     history, decay_at, decay_len = [], None, 0
 
     def lr_at(s: int) -> float:                     # warmup, constant, then a linear decay once held-out plateaus
@@ -193,7 +217,7 @@ def main() -> None:
         dr.eval()
         r = held.score(dr, w.embed, w.head)
         dr.train()
-        history.append(r["top1_assistant"])
+        history.append(r["accepted"])
         print(json.dumps({"step": s, "held_out": r, "decaying": decay_at is not None}), flush=True)
         if decay_at is None and len(history) >= 4 and max(history[-3:]) - history[-4] < a.plateau:
             decay_at, decay_len = s, max(300, int(a.decay * s))
@@ -217,19 +241,21 @@ def main() -> None:
             seq = torch.from_numpy(np.asarray(toks, dtype=np.int64)).cuda()
             with torch.no_grad():
                 x, picks = target_pass(model, seq.tolist())
-            feats_all, emb_all, want_all, label_all = step_inputs(x, seq, picks, w.embed)
             seen += len(toks)
-            for s0 in range(0, feats_all.shape[0], a.window):
-                sl = slice(s0, s0 + a.window)
-                feats, emb, want, label = feats_all[sl], emb_all[sl], want_all[sl], label_all[sl]
+            for s0 in range(0, x.shape[0], a.window):
+                batch = chain_batch(x, seq, picks, w.embed, s0, a.window, a.rollout)
+                if batch is None:
+                    continue
+                feats, embs, wants, labels, _ = batch
                 if a.noise:
                     feats = feats + ((torch.rand(feats.shape, device=feats.device) * 2 - 1) * a.noise).to(feats.dtype)
-                pos = torch.arange(feats.shape[0], device="cuda")
                 with torch.autocast("cuda", dtype=torch.bfloat16):
-                    pred, _ = dr(feats[None], emb[None], pos)
-                pred = pred[0]
-                l1 = F.smooth_l1_loss(pred.float() / unit, want.float() / unit)
-                ce = head_ce(pred, w.head, label)
+                    outs = dr.rollout(feats, embs)
+                weights = [0.8 ** j for j in range(len(outs))]
+                l1 = sum(wt * F.smooth_l1_loss(o.float() / unit, want.float() / unit)
+                         for wt, o, want in zip(weights, outs, wants)) / sum(weights)
+                ce = sum(wt * head_ce(o, w.head, lab) for wt, o, lab in zip(weights, outs, labels)) / sum(weights)
+                pred, label = outs[0], labels[0]
                 loss = l1 + a.ce * ce
                 for g in opt.param_groups:
                     g["lr"] = lr_at(step)

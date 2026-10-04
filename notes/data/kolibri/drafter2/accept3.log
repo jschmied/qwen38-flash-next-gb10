@@ -1,0 +1,9 @@
+[tensorfold] kolibri1: 10/50 layers in 8s
+[tensorfold] kolibri1: 20/50 layers in 16s
+[tensorfold] kolibri1: 30/50 layers in 24s
+[tensorfold] kolibri1: 40/50 layers in 31s
+[tensorfold] kolibri1: 50/50 layers in 39s
+gen-py-kolibri/django__django-13551/django__django-13551.traj.json: 20 turns, 1140 rounds so far
+gen-py-kolibri/django__django-13590/django__django-13590.traj.json: 20 turns, 2280 rounds so far
+gen-py-kolibri/django__django-13821/django__django-13821.traj.json: 17 turns, 3249 rounds so far
+{"rounds": 3249, "accepted_at_depth": {"1": 0.576, "2": 0.836, "3": 0.95, "4": 1.003, "5": 1.035, "6": 1.06}, "step_acceptance": [0.576, 0.45, 0.439, 0.465, 0.616, 0.755]}
