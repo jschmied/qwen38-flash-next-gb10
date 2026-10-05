@@ -8,6 +8,12 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 
 **Kolibri-1 on TensorFold** (family `kolibri1`, PR #328; drafter work in `notes/kolibri-drafter-plan.md`, report notes in
 `notes/kolibri-tech-report-notes.md`):
+- [ ] **FP8 "checkpoint math" mode — now with a measured target (2026-10-05):** GroveMinting/kolibri-1-solo-dgx-spark-eugr
+      (vLLM 0.29.0 + Aleph Alpha plugin 1.0.0, FP8 checkpoint, FP8 KV, TP1, 1 seq, util 0.82, same GB10) prefills
+      2k 5,807 / 8k 6,715 / 32k 5,653 / 64k 4,494 / 131k 3,134 / 262k 1,946 tok/s vs ours 2,963 / 4,187 / 3,465 / 2,790
+      (1.6-2.0x behind); its decode is 35.5-36.1 tok/s vs ours 47.6-53.1 (we lead 1.4x). The prefill gap is the
+      vendor's FP8 activation path (W8A8, 1x128 groups — what Kolibri was RL-trained with); agentic speed is TTFT-bound,
+      so this is worth as much as the drafter for SWE loops. FP8 KV halves cache memory (more context / streams).
 - [ ] **FP8 "checkpoint math" mode** (user 2026-10-04: "write the fp8 option to todo"). Kolibri was RL-trained FP8-aware:
       E4M3 weights in 128 x 128 blocks, **dynamic activation quantisation in 1 x 128 groups**, Q/K/V rounded to FP8 with
       **unit scales** (FP8 KV cache, no calibration; QK-norm keeps |Q/K/V| < 448) — tech report p74, p180. We run bf16
