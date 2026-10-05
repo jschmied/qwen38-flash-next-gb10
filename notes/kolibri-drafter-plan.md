@@ -258,6 +258,18 @@ Fresh recordings run 9 never saw (`after9.log`; same chains for every checkpoint
 - Run 9 curves (fresh slices still rising at 45M tokens; training-stream top-1 flattening 0.677 -> 0.671 over the
   last 5k steps) say new data beats more passes. Next window: run 11 = run 9 final + glm2, then the same fresh check.
 
+## German (2026-10-05 08:20, user: "is there enough german text? schedule like you need")
+
+- Not enough Kolibri-written German: 143 recorded German requests, 184k generated rows (15.4 % of recordings) vs 45M GLM
+  tokens. Chat generation shifted to German: German worker 1 -> 2, mixed 2 -> 1 (SWE keeps 3 streams).
+- German text through the prefill path: `data_text.py` (any data.py shape, `SOURCE:SKIP`, Kolibri template at effort
+  none: these answers have no reasoning) -> `glm/de`: sharegpt-deutsch from row 2,000 + alpaca-gpt4-de from row
+  10,000 (gen_chat walks the same files from the start, so Kolibri's own German prompts and the German held-out stay
+  out): 44,068 conversations, 12.8M tokens (sharegpt 4.6M, alpaca 8.2M). With glm2 (60M): German ~18 % of run 11.
+- Tonight (22:00, timer): server down; `tools/kolibri/verifycost.py` (decode-path forward with 1/2/3/4/6 rows at
+  1k/8k/32k context on real text; draft head full vocab vs 32k slice); run 11 = glm2 + de through prefill (~13 h);
+  fresh scoring; restore. Start checkpoint (run 9 final or run 10) from run 10's fresh check.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
