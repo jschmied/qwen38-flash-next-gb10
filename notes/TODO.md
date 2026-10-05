@@ -6,6 +6,15 @@ Cleaned 2026-09-24. Everything closed, superseded or historical moved verbatim t
 
 ## Current (2026-09-28) — read this first; the sections below are older
 
+**vLLM upstream follow-ups (parked 2026-10-05, user: "later, keep as todo")**
+- [ ] #58439 / jschmied/vllm#4 (waych): commit 1 (`MADV_WILLNEED` before faulting decode-sized rows) duplicates our #58835;
+      commit 2 (`prefetch_ahead=False` for the checkpoint-mapped backend: start each PLE lookup at its own layer, since
+      this backend runs it on the current stream) is new; they report +16-25 % tok/s on GB10 with MTP, outputs unchanged.
+      Plan: reply (thanks, overlap with #58835, take commit 2 on top of #58835 keeping authorship), then measure on the GB10
+      (Flash-Next with/without commit 2, 2 starts each) once the Kolibri training window is free. Reply needs the user's go.
+- [ ] #53670 (our issue): new data points (Qwen3.5-0.8B: 399/1,136 replays zero hit; Flash-Next FP8 block 3,200 on 2xH200:
+      48-63 % hit default vs 85-88 % with `--prefix-match-unit 64 --enable-mamba-shared-prefix-checkpoint`) — no action.
+
 **Kolibri-1 on TensorFold** (family `kolibri1`, PR #328; drafter work in `notes/kolibri-drafter-plan.md`, report notes in
 `notes/kolibri-tech-report-notes.md`):
 - [ ] **FP8 "checkpoint math" mode — now with a measured target (2026-10-05):** GroveMinting/kolibri-1-solo-dgx-spark-eugr
