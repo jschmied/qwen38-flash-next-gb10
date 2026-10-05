@@ -248,6 +248,16 @@ Fresh recordings run 9 never saw (`after9.log`; same chains for every checkpoint
   (unit `fx-kolibri-drafter-rec10`, `train10.log`, `out10/`, checkpoints kept). Judged the same way: kept checkpoints vs
   run 9 final on recordings after each save; it must lift German without giving back SWE/chat.
 
+## Next data (2026-10-05 08:10)
+
+- All 32 shards of `mgoin/open-perfectblend-glm5.2-regen` (rev 003f54db) on disk, sha256 32/32 vs HF lfs.oid
+  (`~/kolibri-drafter/glm/SOURCE.json`). Shards 0-26 are `open-perfectblend` (math/code/chat/IF mix), 27 mixed, 28-31
+  `ultrachat` (long multi-turn).
+- `glm2` = shards 1-8 + 29 (same 4:1-ish mix as run 9's, no overlap): 21,483 conversations, 60.0M tokens (~11 h of
+  training at ~1,500 tok/s). Unused: 10-17, 19-25, 27, 30, 31.
+- Run 9 curves (fresh slices still rising at 45M tokens; training-stream top-1 flattening 0.677 -> 0.671 over the
+  last 5k steps) say new data beats more passes. Next window: run 11 = run 9 final + glm2, then the same fresh check.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
