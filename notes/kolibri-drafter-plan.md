@@ -341,6 +341,21 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## Engine integration (2026-10-05 evening, user: "yes put drafter into engine")
+
+- TensorFold branch `jschmied/TensorFold:kolibri1-drafter` (on kolibri1-record): 82b9e0c `cuda/drafter.py` +
+  decoder/engine wiring, e72b31f perf (preallocated entry buffer, fused qkv / gate-up, one host sync a chain).
+  `TENSORFOLD_KOLIBRI_DRAFTER=<train_mt checkpoint>`, `_DRAFTER_VOCAB=<32k json>`, `_DRAFTER_DEPTH` (2),
+  `_DRAFTER_STREAMS` (all). Copy drafts first; on a miss the learned chain computed at the end of the previous round;
+  kept rows (and the prompt's last 2,048 rows) enter the drafter from the layers the engine taps anyway.
+- Tests (tiny Kolibri): the chain equals an fp32 port of the training rollout (cos > 0.999, same first draft); replies
+  with learned drafts equal serial (greedy and sampled, two streams together). Existing kolibri1 tests 16/16.
+- `tools/kolibri/drafter/specbench.py`: copy vs learned depth 1/2/3 on prompts nobody trained on (5 SWE trajectories
+  finished 14:46-15:13, last 8 chat / German), greedy and served sampling, identical-reply check, c=4 arm. Tiny dry run:
+  0 mismatches; per-round drafter cost unmeasurable while run 11 holds the GPU at 95 % (11.8 / 16.5 / 20.8 ms at depth
+  1/2/3 contended; bytes say ~2.5 ms at depth 2 idle). Runs idle between run 11 and run 12 (`run12b.sh`) ->
+  `specbench-run11.log`.
+
 ## Verify cost MEASURED (2026-10-05 15:26) — roadmap gate 2 passed
 
 `tools/kolibri/verifycost.py` on TensorFold kolibri1 (FP8, decode path, real SWE text), raw `notes/data/kolibri/verifycost-1005.log`:
