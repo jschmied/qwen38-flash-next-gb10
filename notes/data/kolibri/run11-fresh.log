@@ -1,0 +1,40 @@
+[15:25:18] test-pool guard: test instances started: 0 
+[15:25:18] window: stopping x86 ML105
+Failed to stop fx-kolibri-drafter-rec10.service: Unit fx-kolibri-drafter-rec10.service not loaded.
+[15:25:21] start checkpoint: /home/jschmied/kolibri-drafter/drafter-run10-ab.pt
+[15:25:21] verify cost
+[15:26:33] verify cost: {"result": {"1024": {"1": {"ms": 21.36, "x_one_row": 1.0}, "2": {"ms": 24.65, "x_one_row": 1.154}, "3": {"ms": 27.09, "x_one_row": 1.268}, "4": {"ms": 29.65, "x_one_row": 1.388}, "6": {"ms": 36.7, "x_one_row": 1.718}}, "8192": {"1": {"ms": 22.15, "x_one_row": 1.0}, "2": {"ms": 25.04, "x_one_row": 1.131}, "3": {"ms": 27.87, "x_one_row": 1.258}, "4": {"ms": 30.39, "x_one_row": 1.372}, "6": {"ms": 35
+Running as unit: fx-kolibri-keepckpt.service; invocation ID: 2b5a8123dbec487e869205c43f4335ca
+[15:26:33] run 11 training
+[01:11:48] train rc=0
+[01:13:18] fresh SWE
+658 runs, 857206 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run10-window.pt", "vocab": 32768, "accepted": 1.4864, "top1_steps": [0.7197, 0.5856, 0.5279], "chains": 229977}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step7500.pt", "vocab": 32768, "accepted": 1.4277, "top1_steps": [0.722, 0.5701, 0.4766], "chains": 229977}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step15000.pt", "vocab": 32768, "accepted": 1.4199, "top1_steps": [0.7218, 0.5662, 0.4922], "chains": 229977}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step22500.pt", "vocab": 32768, "accepted": 1.3649, "top1_steps": [0.7096, 0.5551, 0.4706], "chains": 229977}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step30000.pt", "vocab": 32768, "accepted": 1.3665, "top1_steps": [0.7064, 0.5592, 0.4813], "chains": 229977}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step37500.pt", "vocab": 32768, "accepted": 1.3339, "top1_steps": [0.7033, 0.5468, 0.4677], "chains": 229977}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step45000.pt", "vocab": 32768, "accepted": 1.3426, "top1_steps": [0.7102, 0.5478, 0.4665], "chains": 229977}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter.pt", "vocab": 32768, "accepted": 1.3832, "top1_steps": [0.714, 0.5659, 0.4842], "chains": 229977}
+[01:16:58] fresh chat
+23 runs, 48415 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run10-window.pt", "vocab": 32768, "accepted": 1.1664, "top1_steps": [0.6226, 0.514, 0.4593], "chains": 38240}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step7500.pt", "vocab": 32768, "accepted": 1.1593, "top1_steps": [0.6197, 0.5141, 0.4616], "chains": 38240}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step15000.pt", "vocab": 32768, "accepted": 1.1853, "top1_steps": [0.627, 0.5262, 0.4724], "chains": 38240}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step22500.pt", "vocab": 32768, "accepted": 1.202, "top1_steps": [0.6307, 0.5289, 0.4828], "chains": 38240}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step30000.pt", "vocab": 32768, "accepted": 1.219, "top1_steps": [0.6328, 0.5376, 0.4875], "chains": 38240}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step37500.pt", "vocab": 32768, "accepted": 1.2242, "top1_steps": [0.6356, 0.5426, 0.4918], "chains": 38240}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step45000.pt", "vocab": 32768, "accepted": 1.2321, "top1_steps": [0.6362, 0.5428, 0.4954], "chains": 38240}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter.pt", "vocab": 32768, "accepted": 1.2299, "top1_steps": [0.637, 0.5434, 0.4949], "chains": 38240}
+[01:17:18] fresh German
+49 runs, 69074 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run10-window.pt", "vocab": 32768, "accepted": 0.8297, "top1_steps": [0.4795, 0.3863, 0.3401], "chains": 65832}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step7500.pt", "vocab": 32768, "accepted": 0.8508, "top1_steps": [0.4866, 0.3985, 0.3565], "chains": 65832}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step15000.pt", "vocab": 32768, "accepted": 0.8907, "top1_steps": [0.5027, 0.4203, 0.3767], "chains": 65832}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step22500.pt", "vocab": 32768, "accepted": 0.9101, "top1_steps": [0.5096, 0.4287, 0.3866], "chains": 65832}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step30000.pt", "vocab": 32768, "accepted": 0.9217, "top1_steps": [0.5136, 0.433, 0.3906], "chains": 65832}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step37500.pt", "vocab": 32768, "accepted": 0.9365, "top1_steps": [0.5194, 0.44, 0.3968], "chains": 65832}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter-step45000.pt", "vocab": 32768, "accepted": 0.953, "top1_steps": [0.5245, 0.4492, 0.4065], "chains": 65832}
+{"ckpt": "/home/jschmied/kolibri-drafter/out11/drafter.pt", "vocab": 32768, "accepted": 0.9454, "top1_steps": [0.5213, 0.447, 0.403], "chains": 65832}
+[01:17:42] == RUN11 DONE ==

@@ -341,6 +341,28 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## ENGINE MEASURED (2026-10-06 01:42): roadmap gate 4 passed — ~1.23-1.26x at c=1, identical replies
+
+`specbench.py`, run 11 final in TensorFold kolibri1-drafter (e72b31f), 32k slice, GPU idle, c=1, 256 tokens a prompt,
+prompts nobody trained on (10 SWE turns from 5 ML105 trajectories finished 14:46-15:13, 13k-46k tokens; last 8 chat,
+last 8 German); raw `notes/data/kolibri/specbench-run11.log`. Decode speed vs copy drafting alone:
+
+| | SWE | chat | German | equal-weight mean |
+|---|---|---|---|---|
+| greedy d1 | 1.232x | 1.296x | 1.228x | 1.252x |
+| greedy d2 | 1.218x | 1.338x | 1.221x | 1.259x |
+| greedy d3 | 1.130x | 1.273x | 1.147x | 1.183x |
+| served d1 | 1.263x | 1.255x | 1.163x | 1.227x |
+| served d2 | 1.224x | 1.283x | 1.111x | 1.206x |
+| served d3 | 1.142x | 1.197x | 1.012x | 1.117x |
+
+- Copy-only 42.6-49.0 tok/s, learned 48-64 tok/s; learned drafts kept 55-63 % (d1), 39-49 % (d2), 24-39 % (d3).
+  0 mismatches in every cell (greedy and served sampling). c=4 chat+German together: 110.0 -> 109.6 tok/s (neutral).
+- Default: depth 1 (1.23x as served); d2 only pays on chat. Below the speed model's ~1.33x: sampled acceptance and the
+  drafter's Python/launch overhead; next speed lever = CUDA graph / fused drafter step.
+- Run 11 final fresh (vs run 10, after 09:55, 32k): SWE 1.486 -> 1.383 (axios-biased slice), chat 1.166 -> 1.230
+  (+5.5 %), German 0.830 -> 0.945 (+13.9 %); raw `notes/data/kolibri/run11-fresh.log`. Run 12 started 01:42.
+
 ## Run 11 mid-run check (2026-10-05 22:10): chat/German up, SWE down on an overlap-biased slice
 
 Kept checkpoints vs run 10 (start), recordings after 09:55 (clean for run 11), 32k as served:
