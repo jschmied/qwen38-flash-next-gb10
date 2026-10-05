@@ -341,6 +341,23 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## Run 11 mid-run check (2026-10-05 22:10): chat/German up, SWE down on an overlap-biased slice
+
+Kept checkpoints vs run 10 (start), recordings after 09:55 (clean for run 11), 32k as served:
+
+| fresh slice | run 10 | run 11 @15M | @30M | @45M |
+|---|---|---|---|---|
+| SWE (229,977 chains) | 1.486 | 1.430 | 1.392 | 1.367 (-8 %) |
+| chat non-German (38,240) | 1.166 | 1.169 | 1.200 | 1.219 (+4.5 %) |
+| German (65,832) | 0.830 | 0.866 | 0.892 | 0.922 (+11 %) |
+
+- The fresh SWE slice is axios + babel (ML105 after 14:27); run 10 trained until 09:54 on Kolibri's own recordings of
+  earlier axios instances (4731, 5085, 5316 finished 08:58-09:31 local): run 10's SWE baseline is repo-biased (the django
+  pattern). SWE dev scoring needs a repo-disjoint slice (repos absent from every checkpoint's training); the test pool has
+  that property but stays reserved. If SWE still falls on a clean slice: mix SWE agent text back in (recordings once, or
+  the Python-30 trajectories through prefill).
+- Equal-weight mean ~+2.5 %, below the 5 % gate but rising; the in-training held-out (django) fell 1.51 -> 1.26.
+
 ## Engine integration (2026-10-05 evening, user: "yes put drafter into engine")
 
 - TensorFold branch `jschmied/TensorFold:kolibri1-drafter` (on kolibri1-record): 82b9e0c `cuda/drafter.py` +
