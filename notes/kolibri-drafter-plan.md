@@ -300,6 +300,17 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
 - Recorded once, at the end: server with `TENSORFOLD_KOLIBRI_RECORD=rec/test` (no trainer or dev check reads it), then
   one scoring of the final candidate vs run 3 / run 9.
 
+## Surveys (2026-10-05): `notes/kolibri-drafter-survey.md`
+
+- Shape: 1 layer, dense, late multi-tap is normal (DeepSeek's own post-hoc DSpark for V4.1: last 3 layers via 3d->d).
+  Outlier: FFN 1.6x hidden vs 4-6.4x in EAGLE-3 drafters for MoE targets. Acceptance gap: peers 2.8-3.6 accept length
+  at depth 3 (incl. bonus) vs ours 2.13 SWE / 1.76 chat (metrics/sampling differ; approximate).
+- Training stories: regenerated / same-family cross-distilled data + a little self data; 3-4 epochs max; dense beats MoE
+  drafters; data scaling far from saturated at our 45M (Meta ~96B, Together 20M->50M worth ~+10 % speedup); 5 taps >
+  3; longer rollouts help code/math; LK loss lifted DeepSeek MTP 3.2 -> 4.8; gains shrink with concurrency.
+- Lever order for us: more GLM data (run 11 -> ~118M) -> FFN ~10240 -> 5 taps -> longer SWE rollouts + LK loss for the
+  own-data fine-tune; evaluate per language/domain at deployed concurrency.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
