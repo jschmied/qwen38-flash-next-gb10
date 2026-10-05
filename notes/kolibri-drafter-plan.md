@@ -230,6 +230,24 @@ checkpoint was saved (clean by construction), `eval_rec.py --after`:
   German) is decided on those numbers.
 - Python-10 (Verified) score: 3/10 resolved, 5 completed (5 empty patches) — triage pending.
 
+## Run 9 RESULT (2026-10-05 07:00): GLM-5.2 text at scale generalises — gate passed on SWE and chat
+
+Fresh recordings run 9 never saw (`after9.log`; same chains for every checkpoint):
+
+| fresh slice | run 3 | step 5000 | 15000 | 25000 | final 29,669 | gain |
+|---|---|---|---|---|---|---|
+| SWE non-django after 20:58 (218,608 chains) | 0.993 | 0.904 | 0.992 | 1.072 | 1.132 | +14.0 % |
+| chat after 20:58 (185,147) | 0.601 | 0.603 | 0.691 | 0.735 | 0.763 | +26.9 % |
+| German chat, all (178,754) | 0.502 | 0.423 | 0.468 | 0.498 | 0.509 | +1.4 % |
+
+- Rising to the last checkpoint on SWE and chat, no plateau: 5 of 32 shards used; more GLM data is the next lever.
+- German flat (PerfectBlend has none): phase B on Kolibri's own German recordings.
+- The in-process SWE held-out (3 django conversations, train_mt's metric) fell 1.10 (step 1000) -> ~0.9: run 3's
+  django skill fades; irrelevant to the fresh-slice verdict.
+- Phase B started 07:15 as run 10: `train_rec.py --init drafter-run9-final.pt --lr 1e-4 --passes 2 --passes-swe 1`
+  (unit `fx-kolibri-drafter-rec10`, `train10.log`, `out10/`, checkpoints kept). Judged the same way: kept checkpoints vs
+  run 9 final on recordings after each save; it must lift German without giving back SWE/chat.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
