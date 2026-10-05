@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. vllm-project/vllm#54912 reply to @stecasta (2026-10-05).
+POSTED 2026-10-05 19:47 (https://github.com/vllm-project/vllm/pull/54912#issuecomment-5999973986). vllm-project/vllm#54912 reply to @stecasta.
 Thanks, especially for checking the rejection path on a GB10 and for tracking down why the block-size alignment never takes effect.
 
 - **Rebased** onto main. There are now 3 commits: the two original ones and the nit. The only conflict was the test's import, after main moved `Qwen4ExpConfig` to transformers. `qsa_cache.py` merged cleanly with #58961.

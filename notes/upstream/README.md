@@ -1693,3 +1693,8 @@ wait on one ~100 GB pull, and they share one serve.
   adopted fix 1 as `a77830311b` (`recoverssm_ptr_table`: int64 table keeps the uint64 bit pattern, GDN + PLE sites,
   co-author TSUMUGI-XE; 74 GDN+PLE tests pass on GB10); XPU dispatch and PP>1 left for their follow-up.
   Draft `58863-xpu-reply.md`. https://github.com/vllm-project/vllm/pull/58863#issuecomment-5981600919
+- **vLLM #54912: rebased + review nit + reply** (2026-10-05, user: "ok"): stecasta verified the rejection path on GB10
+  (k=5/7/8, 41 prompts) and showed block-size alignment is never read; asked for a rebase. Rebased onto main as 3
+  commits (548a9904, 35ada711, 40c6e3b7: widening log moved into qsa_ring_capacity), force-pushed with lease; PR
+  MERGEABLE. Tests: test_config 15/15, test_qsa_reference 73/74 (1 env failure, same on main). Draft
+  `54912-rebase-reply.md`. https://github.com/vllm-project/vllm/pull/54912#issuecomment-5999973986
