@@ -341,6 +341,32 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## Verify cost MEASURED (2026-10-05 15:26) — roadmap gate 2 passed
+
+`tools/kolibri/verifycost.py` on TensorFold kolibri1 (FP8, decode path, real SWE text), raw `notes/data/kolibri/verifycost-1005.log`:
+
+| rows | 1k ctx | 8k | 32k | TandemLLM NVFP4 (for scale) |
+|---|---|---|---|---|
+| 1 | 21.36 ms | 22.15 ms | 25.12 ms | 12.5 ms |
+| 2 | 1.154x | 1.131x | 1.175x | 1.32x |
+| 3 | 1.268x | 1.258x | 1.283x | - |
+| 4 | 1.388x | 1.372x | 1.405x | 1.86x |
+| 6 | 1.718x | 1.615x | 1.703x | - |
+
+Draft head per step: full vocab 3.62 ms, 32k slice 0.92 ms. Our slower single row (FP8, ~56 % of the byte ceiling)
+makes extra rows relatively cheap.
+Speed model, recipe C acceptance (32k scoring, chained acceptance split with equal per-step conditional rate), draft
+step ~1.6 ms (head 0.92 + 90M layer read ~0.66), c=1, greedy: depth 1 SWE 1.37x / chat 1.33x / German 1.18x (mean
+1.29x); depth 2 1.44 / 1.40 / 1.16 (mean 1.33x); depth 3 1.38 / 1.35 / 1.09 (1.27x). With 2x the draft cost, depth 2
+mean ~1.22x. Gate (>= 1.15x on the equal-weight mix) passed -> engine integration is worth building. Open: sampled
+acceptance (temp 0.6-1.0) is below top-1 match; concurrency unmeasured.
+
+## Training focus (2026-10-05 15:25, user: "stop swe and concentrate on training")
+
+x86 ML105 (15/90 done), chat generation and the server stopped; 22:00 timer cancelled; run 11 started 15:26
+(`run11b.sh`: recipe C from run 10, glm2 + de4k, no restore after). Scored on recordings after 2026-10-05 09:55 (run 10's
+last training): clean for run 11. Next: glm3 batch converted meanwhile, run 12 right after if run 11 improves.
+
 ## Loss A/B RESULT (2026-10-05 14:27): KL wins -> recipe C (KL + 0.1 L1, 32k slice)
 
 Arms from run 9 final, same 10M tokens (glm2 + de4k), scored on recordings clean for run 9 (after 2026-10-04 20:58);

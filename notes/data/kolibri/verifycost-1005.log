@@ -1,0 +1,22 @@
+[tensorfold] kolibri1: 10/50 layers in 9s
+[tensorfold] kolibri1: 20/50 layers in 16s
+[tensorfold] kolibri1: 30/50 layers in 24s
+[tensorfold] kolibri1: 40/50 layers in 32s
+[tensorfold] kolibri1: 50/50 layers in 40s
+{"context": 1024, "rows": 1, "ms": 21.36, "x_one_row": 1.0}
+{"context": 1024, "rows": 2, "ms": 24.65, "x_one_row": 1.154}
+{"context": 1024, "rows": 3, "ms": 27.09, "x_one_row": 1.268}
+{"context": 1024, "rows": 4, "ms": 29.65, "x_one_row": 1.388}
+{"context": 1024, "rows": 6, "ms": 36.7, "x_one_row": 1.718}
+{"context": 8192, "rows": 1, "ms": 22.15, "x_one_row": 1.0}
+{"context": 8192, "rows": 2, "ms": 25.04, "x_one_row": 1.131}
+{"context": 8192, "rows": 3, "ms": 27.87, "x_one_row": 1.258}
+{"context": 8192, "rows": 4, "ms": 30.39, "x_one_row": 1.372}
+{"context": 8192, "rows": 6, "ms": 35.78, "x_one_row": 1.615}
+{"context": 32768, "rows": 1, "ms": 25.12, "x_one_row": 1.0}
+{"context": 32768, "rows": 2, "ms": 29.5, "x_one_row": 1.175}
+{"context": 32768, "rows": 3, "ms": 32.22, "x_one_row": 1.283}
+{"context": 32768, "rows": 4, "ms": 35.29, "x_one_row": 1.405}
+{"context": 32768, "rows": 6, "ms": 42.77, "x_one_row": 1.703}
+{"full_vocab": 3.621, "slice_32k": 0.923}
+{"result": {"1024": {"1": {"ms": 21.36, "x_one_row": 1.0}, "2": {"ms": 24.65, "x_one_row": 1.154}, "3": {"ms": 27.09, "x_one_row": 1.268}, "4": {"ms": 29.65, "x_one_row": 1.388}, "6": {"ms": 36.7, "x_one_row": 1.718}}, "8192": {"1": {"ms": 22.15, "x_one_row": 1.0}, "2": {"ms": 25.04, "x_one_row": 1.131}, "3": {"ms": 27.87, "x_one_row": 1.258}, "4": {"ms": 30.39, "x_one_row": 1.372}, "6": {"ms": 35.78, "x_one_row": 1.615}}, "32768": {"1": {"ms": 25.12, "x_one_row": 1.0}, "2": {"ms": 29.5, "x_one_row": 1.175}, "3": {"ms": 32.22, "x_one_row": 1.283}, "4": {"ms": 35.29, "x_one_row": 1.405}, "6": {"ms": 42.77, "x_one_row": 1.703}}, "draft_head_ms": {"full_vocab": 3.621, "slice_32k": 0.923}}}

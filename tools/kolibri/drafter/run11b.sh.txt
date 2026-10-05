@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run11 (the watchdog's "window" phase). Training focus (user 15:30): no restore after.
+# Window: stop x86 ML105, chat, run 10 and the server; verify-cost measurement; run 11 = run 10's newest checkpoint +
+# glm2 (60M GLM tokens) + de4k (12.8M German tokens), recipe C from the loss A/B (KL + 0.1 L1, 32k slice) through Kolibri's prefill; restore everything; then score run 11's
+# kept checkpoints vs its start on recordings made after the restore (clean by construction).
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src
+X86=(ssh -n -o BatchMode=yes -o ConnectTimeout=10 -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8)
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+
+log "test-pool guard: $("${X86[@]}" 'n=0; for i in $(cat /root/set-kolibri-test.txt); do [ -e /root/gen-kolibri-ml105/$i ] && n=$((n+1)) && echo "STARTED $i"; done; echo "test instances started: $n"' | tr '\n' ' ')"
+log "window: stopping x86 ML105"
+"${X86[@]}" 'systemctl stop kolibri-swe-ml105; docker ps -q --filter name=minisweagent | xargs -r docker rm -f >/dev/null; echo "[$(date +%H:%M:%S)] STOPPED for drafter window (resume keeps finished instances)" >> /root/fullrun-kolibri-ml105.log' \
+  || log "x86 stop failed (continuing)"
+systemctl stop fx-kolibri-genchat fx-kolibri-genchat-de fx-kolibri-drafter-rec10
+systemctl stop fx-kolibri-serve
+for i in $(seq 120); do systemctl is-active -q fx-kolibri-serve || break; sleep 2; done
+systemctl is-active -q fx-kolibri-serve && { log "ABORT: server did not stop"; exit 1; }
+sync; echo 1 > /proc/sys/vm/drop_caches
+INIT=$D/drafter-run10-ab.pt                         # run 10's newest checkpoint, saved when the A/B window opened
+cp -p "$INIT" $D/drafter-run10-window.pt
+log "start checkpoint: $INIT"
+
+log "verify cost"
+U timeout 1800 $PY $T/../verifycost.py /opt/llm/models/kolibri-1 $D/swe > $D/verifycost.log 2>&1 || log "verifycost rc=$? (continuing)"
+log "verify cost: $(grep '"result"' $D/verifycost.log | cut -c1-400)"
+
+systemctl stop fx-kolibri-keepckpt
+systemd-run --unit=fx-kolibri-keepckpt --collect --uid=jschmied bash -c "bash $D/keepckpt.sh $D/out11 >> $D/keepckpt.log 2>&1"
+log "run 11 training"
+U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out11 --extra $D/glm/glm2 --extra $D/glm/de4k --swe-passes 0 \
+  --hold 3 --init $D/drafter-run10-window.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 2000 --plateau -1 --loss kll1 --l1w 0.1 --draft-vocab $D/draft_vocab_32k.json \
+  --log 50 --save 500 > $D/train11.log 2>&1
+log "train rc=$?"
+sleep 90
+
+RESTORED="2026-10-05 09:55"                      # recordings after run 10's last training: clean for run 11
+CK="$D/drafter-run10-window.pt $(ls $D/out11/drafter-step*.pt | sort -V | awk 'NR%15==0' | tr '\n' ' ') $D/out11/drafter.pt"
+E(){ U bash -c "ulimit -n 1048576 2>/dev/null || ulimit -n \$(ulimit -Hn); $PY $T/eval_rec.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '$RESTORED' $1 --draft-vocab $D/draft_vocab_32k.json --ckpt $CK" 2>&1 | grep -v Warning; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+log "== RUN11 DONE =="
