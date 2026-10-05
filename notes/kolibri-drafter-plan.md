@@ -286,6 +286,20 @@ Run 10 step 30000 (saved 07:16) vs run 9 final, recordings after 07:17:
   appends `ALERTS` (units down for the phase, server health, new log errors, stalled training, disk/memory, x86 ML105);
   a 30-min heartbeat in the session reads it and fixes what it flags.
 
+## Final test pool (reserved 2026-10-05 08:50; never trained on, never looked at until a final candidate)
+
+The fresh slices have chosen between runs 9/10/11, so they are development data now. Untouched test pool:
+- SWE: 9 whole repos (no sibling instances anywhere in training: the django lesson), 15 instances, 9 languages —
+  jq (C) x2, laravel (PHP) x2, three.js (JS) x2, nlohmann/json (C++), prometheus (Go) x2, rxjava (Java), rubocop
+  (Ruby) x2, bat (Rust) x2, valkey (C). x86 `/root/set-kolibri-test.txt`; removed from `set-kolibri-ml105.txt` (90
+  left; original kept as `set-kolibri-ml105.orig.txt`). All sit at run-order index >= 55, beyond what ML105 reaches
+  before tonight's stop; `run11.sh` logs a guard (any test instance started -> named in run11.log).
+- German: sharegpt-deutsch rows 1,500-1,999 and alpaca-gpt4-de rows 8,000-9,999 (gen_chat walks from row 0 and is at
+  ~200; data_text used 2,000+ / 10,000+). gen_chat reaches 1,500 in ~2 days at the current rate: cap it before then.
+- Chat: ultrachat_200k shard 0 rows 60,000+ (gen_chat at ~350).
+- Recorded once, at the end: server with `TENSORFOLD_KOLIBRI_RECORD=rec/test` (no trainer or dev check reads it), then
+  one scoring of the final candidate vs run 3 / run 9.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1

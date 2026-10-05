@@ -10,6 +10,7 @@ X86=(ssh -n -o BatchMode=yes -o ConnectTimeout=10 -i /home/jschmied/.ssh/id_ed25
 log(){ echo "[$(date +%H:%M:%S)] $*"; }
 U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
 
+log "test-pool guard: $("${X86[@]}" 'n=0; for i in $(cat /root/set-kolibri-test.txt); do [ -e /root/gen-kolibri-ml105/$i ] && n=$((n+1)) && echo "STARTED $i"; done; echo "test instances started: $n"' | tr '\n' ' ')"
 log "window: stopping x86 ML105"
 "${X86[@]}" 'systemctl stop kolibri-swe-ml105; docker ps -q --filter name=minisweagent | xargs -r docker rm -f >/dev/null; echo "[$(date +%H:%M:%S)] STOPPED for drafter window (resume keeps finished instances)" >> /root/fullrun-kolibri-ml105.log' \
   || log "x86 stop failed (continuing)"
