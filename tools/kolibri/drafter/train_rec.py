@@ -106,7 +106,7 @@ def soft_ce(pred: torch.Tensor, head: torch.Tensor, ids: torch.Tensor, probs: to
 
 
 @torch.no_grad()
-def held_score(dr, runs, embed, head, steps: int, size: int, dims: int) -> dict:
+def held_score(dr, runs, embed, head, steps: int, size: int, dims: int, vocab=None) -> dict:
     """Per-step top-1 against Kolibri's choice and mean drafts accepted in a row, over chains drafting a token Kolibri
     generated (the assistant's, in a recorded conversation)."""
 
@@ -123,6 +123,8 @@ def held_score(dr, runs, embed, head, steps: int, size: int, dims: int) -> dict:
             for j, o in enumerate(outs):
                 got = torch.cat([(o[i:i + HEAD_CHUNK].to(torch.bfloat16) @ head.T).argmax(-1)
                                  for i in range(0, o.shape[0], HEAD_CHUNK)])
+                if vocab is not None:                       # head is the drafter's slice: back to token ids
+                    got = vocab[got]
                 ok = (got == ids[j][:, 0]) & gen[0]
                 hits[j] += int(ok.sum())
                 ok_run &= ok

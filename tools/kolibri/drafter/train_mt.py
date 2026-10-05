@@ -189,6 +189,12 @@ def main() -> None:
     ap.add_argument("--taps", default=",".join(map(str, TAPS)), help="target layers the drafter reads")
     ap.add_argument("--plateau", type=float, default=0.005, help="held-out gain over 3 checks that still counts")
     ap.add_argument("--decay", type=float, default=0.1, help="decay phase, as a share of the steps before it")
+    ap.add_argument("--loss", choices=("l1ce", "kl", "kll1"), default="l1ce",
+                    help="l1ce: L1 to the next state + --ce x CE on Kolibri's choice (EAGLE-1); kl: KL to Kolibri's "
+                         "distribution only (EAGLE-3); kll1: KL + --l1w x L1")
+    ap.add_argument("--l1w", type=float, default=1.0, help="weight of the state L1 (l1ce, kll1)")
+    ap.add_argument("--draft-vocab", default="", help="JSON token ids: losses (and top-1) over this slice only")
+    ap.add_argument("--max-tokens", type=int, default=0, help="stop after this many training tokens (0: all)")
     ap.add_argument("--plain-ce", action="store_true",
                     help="cross-entropy without chunked recompute (same loss, ~30 %% faster step, ~5 GB more memory)")
     a = ap.parse_args()
@@ -232,6 +238,19 @@ def main() -> None:
           f"({sum(len(t) for _, t in train) / 1e6:.2f}M tokens), {len(hold)} held out; {steps} steps", flush=True)
     opt = torch.optim.AdamW(dr.parameters(), lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
     held = HeldOut(model, hold, a.model_dir, a.window, max(1, a.rollout)) if a.eval and hold else None
+    if a.draft_vocab:                               # the drafter's vocabulary slice: losses over it, out-of-slice CE ignored
+        vocab = torch.tensor(json.loads(Path(a.draft_vocab).read_text()), device="cuda")
+        head = w.head[vocab].contiguous()
+        remap = torch.full((w.head.shape[0],), -100, dtype=torch.long, device="cuda")
+        remap[vocab] = torch.arange(len(vocab), device="cuda")
+        a.plain_ce = True                           # head_ce has no ignore_index
+    else:
+        vocab, head, remap = None, w.head, None
+
+    def kl(pred, want):                             # KL(Kolibri || drafter) over the slice, Kolibri's own head on its state
+        logp = F.log_softmax((want.to(torch.bfloat16) @ head.T).float(), -1)
+        logq = F.log_softmax((pred.to(torch.bfloat16) @ head.T).float(), -1)
+        return (logp.exp() * (logp - logq)).sum(-1).mean()
     history, decay_at, decay_len = [], None, 0
 
     def lr_at(s: int) -> float:                     # warmup, constant, then a linear decay once held-out plateaus
@@ -272,6 +291,9 @@ def main() -> None:
             with torch.no_grad():
                 x, taps, picks = target_pass(model, seq.tolist())
             seen += len(toks)
+            if a.max_tokens and seen > a.max_tokens:
+                stop = True
+                break
             for s0 in range(0, x.shape[0], a.window):
                 batch = chain_batch(x, taps, seq, picks, w.embed, s0, a.window, a.rollout)
                 if batch is None:
@@ -284,10 +306,16 @@ def main() -> None:
                 weights = [0.8 ** j for j in range(len(outs))]
                 l1 = sum(wt * F.smooth_l1_loss(o.float() / unit, want.float() / unit)
                          for wt, o, want in zip(weights, outs, wants)) / sum(weights)
-                ce_of = plain_ce if a.plain_ce else head_ce
-                ce = sum(wt * ce_of(o, w.head, lab) for wt, o, lab in zip(weights, outs, labels)) / sum(weights)
+                if remap is not None:
+                    labels = [remap[lab] for lab in labels]
+                if a.loss == "l1ce":
+                    ce_of = plain_ce if a.plain_ce else head_ce
+                    ce = sum(wt * ce_of(o, head, lab) for wt, o, lab in zip(weights, outs, labels)) / sum(weights)
+                    loss = a.l1w * l1 + a.ce * ce
+                else:
+                    ce = sum(wt * kl(o, want) for wt, o, want in zip(weights, outs, wants)) / sum(weights)
+                    loss = ce + (a.l1w * l1 if a.loss == "kll1" else 0.0)
                 pred, label = outs[0], labels[0]
-                loss = l1 + a.ce * ce
                 for g in opt.param_groups:
                     g["lr"] = lr_at(step)
                 opt.zero_grad(set_to_none=True)
@@ -298,7 +326,7 @@ def main() -> None:
                 step += 1
                 with torch.no_grad():
                     k = min(256, pred.shape[0])
-                    acc = ((pred[-k:].to(torch.bfloat16) @ w.head.T).argmax(-1) == label[-k:]).float().mean()
+                    acc = ((pred[-k:].to(torch.bfloat16) @ head.T).argmax(-1) == label[-k:]).float().mean()
                 log["l1"] += float(l1.detach())
                 log["ce"] += float(ce.detach())
                 log["acc"] += float(acc)

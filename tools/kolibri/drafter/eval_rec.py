@@ -48,6 +48,7 @@ def main() -> None:
     ap.add_argument("--layers", type=int, default=1)
     ap.add_argument("--rollout", type=int, default=3)
     ap.add_argument("--window", type=int, default=2048)
+    ap.add_argument("--draft-vocab", default="", help="JSON token ids: the drafter proposes only these (as served)")
     a = ap.parse_args()
     runs = recordings(a.data)
     if a.after:
@@ -65,9 +66,14 @@ def main() -> None:
     embed, head = head_weights(a.model_dir)
     dims, taps = embed.shape[1], len(runs[0]["taps"])
     print(f"{len(runs)} runs, {sum(r['n'] for r in runs)} rows", flush=True)
+    vocab = None
+    if a.draft_vocab:
+        vocab = torch.tensor(json.loads(Path(a.draft_vocab).read_text()), device=head.device)
+        head = head[vocab].contiguous()
     for path in a.ckpt:
         dr = drafter(path, a.layers, taps, dims)
-        print(json.dumps({"ckpt": path, **held_score(dr, runs, embed, head, a.rollout, a.window, dims)}), flush=True)
+        print(json.dumps({"ckpt": path, "vocab": len(vocab) if vocab is not None else "full",
+                          **held_score(dr, runs, embed, head, a.rollout, a.window, dims, vocab)}), flush=True)
 
 
 if __name__ == "__main__":

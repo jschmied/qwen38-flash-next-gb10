@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run11 (the watchdog's "window" phase). Loss/vocab A/B from run 9 final, each arm on
+# the same first 10M tokens of the run-11 stream (glm2 + de4k, same shuffle), then fresh scoring on the slices clean
+# for run 9 (recordings after 2026-10-04 20:58), then serving restored. Arms:
+#   A l1ce full vocab (current recipe) | B kl 32k | C kl + 0.1 L1 32k | D l1ce 32k
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+X86=(ssh -n -o BatchMode=yes -o ConnectTimeout=10 -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8)
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+
+restore(){
+  log "restoring serving"
+  systemd-run --unit=fx-kolibri-serve --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied \
+    -E TENSORFOLD_KOLIBRI_RECORD=$D/rec/live -E TENSORFOLD_KOLIBRI_RECORD_TAPS=44,47,49 \
+    $PY -c "import sys; from tensorfold.cli import main; sys.argv=['tensorfold','serve','/opt/llm/models/kolibri-1','--name','kolibri-1','--host','127.0.0.1','--port','8093','--parallel','6','--context','131072']; sys.exit(main())"
+  for i in $(seq 120); do curl -s -m 3 http://127.0.0.1:8093/v1/models | grep -q kolibri-1 && break; sleep 5; done
+  log "server: $(curl -s -m 3 http://127.0.0.1:8093/v1/models | head -c 60)"
+  C=$D/chat; URL=http://127.0.0.1:8093/v1/chat/completions
+  systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $URL $D/own_chat.jsonl $C/HuggingFaceH4__ultrachat_200k__train_sft-00000-of-00003-a3ecf92756993583.parquet $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json $C/bigcode__self-oss-instruct-sc2-exec-filter-50k__train-00000-of-00001.parquet --workers 1 --hours 14 --skip $D/own_chat_de.jsonl >> $D/genchat.log 2>&1"
+  systemd-run --unit=fx-kolibri-genchat-de --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $URL $D/own_chat_de.jsonl $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json --workers 2 --hours 14 --skip $D/own_chat.jsonl >> $D/genchat-de.log 2>&1"
+  "${X86[@]}" 'systemd-run --unit=kolibri-swe-ml105 --collect bash -c "bash /root/fullrun-kolibri-ml105.sh >> /root/fullrun-kolibri-ml105.log 2>&1"' && log "ML105 resumed" || log "ML105 resume FAILED"
+}
+log "window: stopping x86 ML105, chat, run 10, server"
+"${X86[@]}" 'systemctl stop kolibri-swe-ml105; docker ps -q --filter name=minisweagent | xargs -r docker rm -f >/dev/null; echo "[$(date +%H:%M:%S)] STOPPED for drafter A/B window" >> /root/fullrun-kolibri-ml105.log' || log "x86 stop failed"
+systemctl stop fx-kolibri-genchat fx-kolibri-genchat-de fx-kolibri-drafter-rec10
+systemctl stop fx-kolibri-serve
+for i in $(seq 120); do systemctl is-active -q fx-kolibri-serve || break; sleep 2; done
+systemctl is-active -q fx-kolibri-serve && { log "ABORT: server did not stop"; exit 1; }
+cp -p $(ls $D/out10/drafter-step*.pt | sort -V | tail -1) $D/drafter-run10-ab.pt
+sync; echo 1 > /proc/sys/vm/drop_caches
+
+arm(){  # arm NAME ARGS...
+  local n=$1; shift
+  log "arm $n: $*"
+  U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/ab/$n --extra $D/glm/glm2 --extra $D/glm/de4k --swe-passes 0 \
+    --hold 3 --init $D/drafter-run9-final.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 0 --plateau -1 --log 50 \
+    --save 100000 --plain-ce --max-tokens 10000000 "$@" > $D/ab/$n.log 2>&1
+  log "arm $n rc=$? last: $(grep '"tok_s"' $D/ab/$n.log | tail -1 | cut -c1-200)"
+}
+mkdir -p $D/ab; chown jschmied: $D/ab
+for sm in "B --loss kl --draft-vocab $V" "C --loss kll1 --l1w 0.1 --draft-vocab $V" "D --loss l1ce --draft-vocab $V"; do
+  set -- $sm; n=$1; shift
+  U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/ab/smoke-$n --extra $D/glm/glm2 --extra $D/glm/de4k \
+    --swe-passes 0 --hold 3 --init $D/drafter-run9-final.pt --taps 44,47,49 --rollout 3 --eval 0 --plateau -1 --log 5 \
+    --save 100000 --plain-ce --max-tokens 30000 "$@" > $D/ab/smoke-$n.log 2>&1 \
+    || { log "ABORT: smoke $n failed: $(grep -E 'Error|error' $D/ab/smoke-$n.log | tail -2)"; restore; exit 1; }
+  log "smoke $n ok: $(grep '"tok_s"' $D/ab/smoke-$n.log | tail -1 | cut -c1-160)"
+done
+arm A --loss l1ce
+arm B --loss kl --draft-vocab $V
+arm C --loss kll1 --l1w 0.1 --draft-vocab $V
+arm D --loss l1ce --draft-vocab $V
+
+E(){ U bash -c "ulimit -n 1048576 2>/dev/null || ulimit -n \$(ulimit -Hn); $PY $T/eval_rec.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-04 20:58' $1 $2 --ckpt $D/drafter-run9-final.pt $D/ab/A/drafter.pt $D/ab/B/drafter.pt $D/ab/C/drafter.pt $D/ab/D/drafter.pt" 2>&1 | grep -v Warning; }
+for vv in "" "--draft-vocab $V"; do
+  log "== scoring ${vv:-full vocab}"
+  log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django" "$vv"
+  log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '" "$vv"
+  log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'" "$vv"
+done
+
+restore
+log "== AB DONE =="

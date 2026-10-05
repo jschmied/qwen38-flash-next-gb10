@@ -323,6 +323,24 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
 - Further levers: overlap Kolibri prefill with the drafter step (streams), torch.compile the drafter, FP8 head logits,
   sparse anchor positions (only once the drafter side dominates).
 
+## Loss / vocab A/B (window from 2026-10-05 09:54; user: "try aggressive optimizations first")
+
+- Finding: train_mt used EAGLE-1's loss (state L1 + 0.1 CE on Kolibri's top token); EAGLE-3 credits dropping the
+  state regression (token-level loss) for its data scaling. New `train_mt.py` options: `--loss l1ce|kl|kll1`,
+  `--l1w`, `--draft-vocab` (losses over the slice; out-of-slice CE ignored), `--max-tokens`. `eval_rec.py
+  --draft-vocab` scores the drafter as served (argmax inside the slice, mapped back to token ids).
+- Draft vocab: top 32,768 tokens by frequency over Kolibri's own generated rows (before 2026-10-04 20:58, so the fresh
+  slices stay out) + glm/glm2/de4k text: `~/kolibri-drafter/draft_vocab_32k.json`. Coverage of fresh Kolibri output
+  (1.13M tokens): 16k 90.2 %, 24k 92.8 %, 32k 94.7 %, 48k 96.8 %.
+- Arms from run 9 final, the same first 10M tokens of glm2 + de4k (same shuffle), lr 2e-4: A l1ce full vocab
+  (control), B kl 32k (EAGLE-3), C kl + 0.1 L1 32k. (D l1ce 32k dropped on the user's call: only a diagnostic,
+  expected worse.) Smoke speed: 32k arms ~2,100 tok/s. Scored full and 32k on the slices clean for run 9 (after
+  2026-10-04 20:58). Runner `abrun2.sh` (unit `fx-kolibri-drafter-run11`, log `abrun2.log`); restores serving after.
+- The 22:00 run-11 timer is cancelled; run 11 restarts with the winning recipe.
+- DFlash/DSpark: plausible (z-lab's block-4 drafter for Qwen3.5-35B-A3B, a similar 3B-active MoE, reports accept length
+  3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
+  6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
