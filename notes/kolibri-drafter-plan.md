@@ -270,6 +270,22 @@ Fresh recordings run 9 never saw (`after9.log`; same chains for every checkpoint
   1k/8k/32k context on real text; draft head full vocab vs 32k slice); run 11 = glm2 + de through prefill (~13 h);
   fresh scoring; restore. Start checkpoint (run 9 final or run 10) from run 10's fresh check.
 
+## Run 10 RESULT (2026-10-05 08:21): phase B passes on all three fresh slices
+
+Run 10 step 30000 (saved 07:16) vs run 9 final, recordings after 07:17:
+
+| fresh slice | run 9 final | run 10 step 30000 | gain |
+|---|---|---|---|
+| SWE (100,029 chains) | 0.968 | 1.216 | +25.6 % (partly inflated: 3 ML105 instances in flight at 07:16 had their first turns trained) |
+| chat, non-German (103,188) | 1.128 | 1.211 | +7.4 % (single-turn: clean) |
+| German (34,346) | 0.745 | 0.847 | +13.8 % (single-turn: clean) |
+
+- Run 11 (22:00 timer, `run11.sh` as unit `fx-kolibri-drafter-run11`, log `run11.log`) starts from run 10's newest kept
+  checkpoint (`drafter-run10-window.pt`); verify cost first; scored after the restore on recordings made after it.
+- Watchdog: `watchdog.sh` (root unit `fx-kolibri-watchdog`, every 5 min) writes `~/kolibri-drafter/STATUS` and
+  appends `ALERTS` (units down for the phase, server health, new log errors, stalled training, disk/memory, x86 ML105);
+  a 30-min heartbeat in the session reads it and fixes what it flags.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1

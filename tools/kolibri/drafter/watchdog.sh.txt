@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Kolibri drafter watchdog (root): every 5 min, write STATUS (state) and append ALERTS (errors) for the heartbeat.
+# Never decides what to run; never kills anything. Phase: "window" while fx-kolibri-drafter-run11 runs, else "serving".
+D=/home/jschmied/kolibri-drafter; ST=$D/STATUS; AL=$D/ALERTS
+SSH=(ssh -n -o BatchMode=yes -o ConnectTimeout=10 -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8)
+declare -A SIZE
+alert(){ echo "[$(date '+%m-%d %H:%M')] $*" >> $AL; }
+grown(){ local f=$1 n; n=$(stat -c %s "$f" 2>/dev/null || echo 0); local o=${SIZE[$f]:-0}; SIZE[$f]=$n; [ "$n" != "$o" ]; }
+declare -A LAST_ERR
+newerr(){  # newerr FILE: ERR = error lines added since the last look (no subshell: LAST_ERR must persist)
+  ERR=""; local f=$1 n; [ -f "$f" ] || return 0; n=$(wc -l < "$f"); local o=${LAST_ERR[$f]:-$n}; LAST_ERR[$f]=$n
+  [ "$n" -gt "$o" ] && ERR=$(tail -n +$((o + 1)) "$f" | grep -E "Traceback|Error|error:|FAILED|ABORT|Killed|out of memory" | grep -v Warning | tail -3)
+  return 0
+}
+stale=0
+while true; do
+  now=$(date '+%m-%d %H:%M')
+  if systemctl is-active -q fx-kolibri-drafter-run11; then phase=window; want="fx-kolibri-drafter-run11 fx-kolibri-keepckpt fx-kolibri-recsync"
+  else phase=serving; want="fx-kolibri-serve fx-kolibri-genchat fx-kolibri-genchat-de fx-kolibri-recsync fx-kolibri-keepckpt"; fi
+  down=""; for u in $want; do systemctl is-active -q $u || down="$down $u"; done
+  [ -n "$down" ] && alert "$phase: not active:$down"
+  health=-
+  if [ $phase = serving ]; then
+    curl -s -m 5 http://127.0.0.1:8093/v1/models | grep -q kolibri-1 && health=ok || { health=DOWN; alert "server not answering on 8093"; }
+  fi
+  for f in $D/train10.log $D/train11.log $D/genchat.log $D/genchat-de.log $D/recsync.log $D/run11.log; do
+    newerr $f; [ -n "$ERR" ] && alert "$(basename $f): $(echo "$ERR" | tr '\n' ' ' | cut -c1-300)"
+  done
+  tr=$( [ $phase = window ] && echo $D/train11.log || echo $D/train10.log )
+  if grown $tr; then stale=0; else stale=$((stale + 1)); fi
+  last=$(grep -E '"step"' $tr 2>/dev/null | tail -1 | cut -c1-160)
+  waiting=$(tail -1 $tr 2>/dev/null | grep -c waiting)
+  [ $stale -ge 6 ] && [ "$waiting" = 0 ] && alert "$(basename $tr) has not grown for 30 min"
+  freegb=$(df -BG --output=avail / | tail -1 | tr -dc 0-9); memgb=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo)
+  [ "$freegb" -lt 40 ] && alert "disk low: ${freegb} GB free"
+  [ "$memgb" -lt 6 ] && alert "memory low: ${memgb} GB available"
+  x86=$("${SSH[@]}" 'a=$(systemctl is-active kolibri-swe-ml105); n=$(python3 -c "import json;print(len(json.load(open(\"/root/gen-kolibri-ml105/preds.json\"))))" 2>/dev/null || echo 0); echo "$a preds=$n"' 2>/dev/null || echo unreachable)
+  [ $phase = serving ] && ! echo "$x86" | grep -q '^active' && alert "x86 ML105 not running: $x86"
+  { echo "time $now  phase $phase  server $health  disk ${freegb}G  mem ${memgb}G"
+    echo "units down:${down:- none}"
+    echo "training: $(basename $tr) $last$( [ "$waiting" = 1 ] && echo ' (waiting for data)')"
+    echo "x86 ML105: $x86"
+    echo "recordings: $(find $D/rec/live -name '*.json' | wc -l)  chat: $(wc -l < $D/own_chat.jsonl) mixed, $(wc -l < $D/own_chat_de.jsonl) German"
+    echo "alerts (last 3):"; tail -3 $AL 2>/dev/null || true
+  } > $ST.tmp && mv $ST.tmp $ST
+  sleep 300
+done
