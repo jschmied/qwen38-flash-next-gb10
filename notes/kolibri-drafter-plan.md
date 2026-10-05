@@ -341,6 +341,29 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## ROADMAP to a usable drafter (2026-10-05 14:30)
+
+"Usable" = the learned drafter runs in TensorFold's kolibri1 engine, outputs identical with it on/off, measurably
+faster on the mixed workload. **Weighting (user 14:35): Kolibri is weak at coding (SWE 20/30), so SWE counts no more
+than text: SWE, chat and German weigh equally in every gate.**
+
+1. Recipe (today): loss A/B (KL wins on full-vocab scoring); gate = B or C beats A on the mean of SWE/chat/German, also
+   with 32k-slice scoring. Then fixed: KL (+0.1 L1), 32k vocab, 3 taps, 1 layer.
+2. Speed possible (tonight, first minutes of the window): verifycost.py (1/2/3/4/6 rows at 1k/8k/32k; draft head
+   full vs 32k) -> speed model (1 + accepted) / (verify + draft cost) per depth, on the equal-weight mix. Gate: >= 1.15x
+   predicted at some depth; else the drafter stays a fallback behind copy drafting and decode kernels (TandemLLM's PDL /
+   prefetch / fusion) become the lever.
+3. Acceptance (nights 1-2): run 11 (recipe C from run 10, glm2 + de4k, ~73M tokens); own-recordings fine-tune with KL;
+   next GLM batch if still rising; optional arm E (DFlash block 4). Gate per step: >= +5 % on the mean of the three
+   fresh slices, no slice down. Final: once on the untouched test pool.
+4. Engine (days 2-3): drafter forward in kolibri1 (fuse 44/47/49, own KV per stream, 32k head), copy drafts first,
+   learned chain on a miss at the depth the speed model picks, existing multi-row verify, drafter KV refreshed from real
+   target states; tests: identical outputs (greedy/sampled, solo/concurrent), engine drafter == Python reference, depth
+   -> 0 at high concurrency. Gate: mean of SWE/chat/German >= 1.15x at c=1, none < 1.0x, no loss at c=6.
+5. Ship (days 4-5): TensorFold PR (separate from #328); drafter weights on HF only with the user's go; afterwards
+   periodic fine-tunes from recordings, retrain on Kolibri weight/template changes.
+- Streams from tonight's restore: SWE 2 (`/root/fullrun-kolibri-ml105-w2.sh`), chat mixed 2 + German 2.
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1
