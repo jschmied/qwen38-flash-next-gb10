@@ -311,6 +311,18 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
 - Lever order for us: more GLM data (run 11 -> ~118M) -> FFN ~10240 -> 5 taps -> longer SWE rollouts + LK loss for the
   own-data fine-tune; evaluate per language/domain at deployed concurrency.
 
+## Training speed (2026-10-05 09:50)
+
+- German batch was 44,068 conversations, median 186 tokens (92 % < 512): one Kolibri prefill + one step each, ~7 h
+  instead of ~2.4 h. Packed to `glm/de4k` (3,713 sequences <= 4,096 tokens, same 12.8M tokens; conversations end to
+  end, as data.py did for run 2's chat); run 11 uses it.
+- Drafter-side step (2,048 rows x 3 steps, real head, GPU shared with the server so absolute ms inflated):
+  full vocab chunked+recompute CE (current) 1,234 ms; full vocab plain CE 854 (1.4x); 32k vocab chunked 502 (2.5x);
+  32k plain 446 (2.8x). `train_mt.py --plain-ce` (same loss: 16.416101 vs 16.416103, gradients bit-equal) is on for
+  run 11. 32k draft vocab (frequency-selected, out-of-vocab rows L1-only) changes the loss: A/B in a later window.
+- Further levers: overlap Kolibri prefill with the drafter step (streams), torch.compile the drafter, FP8 head logits,
+  sparse anchor positions (only once the drafter side dominates).
+
 ## Plan
 
 Decision gate for run 5 (around 16:30-17:00, about 10M tokens seen): keep the multi-layer design if held-out step 1

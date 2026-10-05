@@ -30,8 +30,8 @@ log "verify cost: $(grep '"result"' $D/verifycost.log | cut -c1-400)"
 systemctl stop fx-kolibri-keepckpt
 systemd-run --unit=fx-kolibri-keepckpt --collect --uid=jschmied bash -c "bash $D/keepckpt.sh $D/out11 >> $D/keepckpt.log 2>&1"
 log "run 11 training"
-U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out11 --extra $D/glm/glm2 --extra $D/glm/de --swe-passes 0 \
-  --hold 3 --init $D/drafter-run10-window.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 2000 --plateau -1 \
+U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out11 --extra $D/glm/glm2 --extra $D/glm/de4k --swe-passes 0 \
+  --hold 3 --init $D/drafter-run10-window.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 2000 --plateau -1 --plain-ce \
   --log 50 --save 500 > $D/train11.log 2>&1
 log "train rc=$?"
 sleep 90

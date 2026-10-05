@@ -64,6 +64,12 @@ def held_out(convs, hold: int, mark: str = "kolibri"):
     return [c for i, c in enumerate(convs) if i not in out], [c for i, c in enumerate(convs) if i in out]
 
 
+def plain_ce(pred: torch.Tensor, head: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """head_ce's loss in one matmul (logits kept for the backward instead of recomputed)."""
+
+    return F.cross_entropy((pred.to(torch.bfloat16) @ head.T).float(), labels)
+
+
 def head_ce(pred: torch.Tensor, head: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     """Mean cross-entropy of head(pred) against labels, the vocabulary in row chunks (checkpointed)."""
 
@@ -183,6 +189,8 @@ def main() -> None:
     ap.add_argument("--taps", default=",".join(map(str, TAPS)), help="target layers the drafter reads")
     ap.add_argument("--plateau", type=float, default=0.005, help="held-out gain over 3 checks that still counts")
     ap.add_argument("--decay", type=float, default=0.1, help="decay phase, as a share of the steps before it")
+    ap.add_argument("--plain-ce", action="store_true",
+                    help="cross-entropy without chunked recompute (same loss, ~30 %% faster step, ~5 GB more memory)")
     a = ap.parse_args()
     TAPS[:] = [int(v) for v in a.taps.split(",")]
 
@@ -276,7 +284,8 @@ def main() -> None:
                 weights = [0.8 ** j for j in range(len(outs))]
                 l1 = sum(wt * F.smooth_l1_loss(o.float() / unit, want.float() / unit)
                          for wt, o, want in zip(weights, outs, wants)) / sum(weights)
-                ce = sum(wt * head_ce(o, w.head, lab) for wt, o, lab in zip(weights, outs, labels)) / sum(weights)
+                ce_of = plain_ce if a.plain_ce else head_ce
+                ce = sum(wt * ce_of(o, w.head, lab) for wt, o, lab in zip(weights, outs, labels)) / sum(weights)
                 pred, label = outs[0], labels[0]
                 loss = l1 + a.ce * ce
                 for g in opt.param_groups:
