@@ -365,7 +365,11 @@ acceptance (temp 0.6-1.0) is below top-1 match; concurrency unmeasured.
 
 x86 ML105 (15/90 done), chat generation and the server stopped; 22:00 timer cancelled; run 11 started 15:26
 (`run11b.sh`: recipe C from run 10, glm2 + de4k, no restore after). Scored on recordings after 2026-10-05 09:55 (run 10's
-last training): clean for run 11. Next: glm3 batch converted meanwhile, run 12 right after if run 11 improves.
+last training): clean for run 11. Run 11: 25,196 conversations, 72.9M tokens, 48,248 steps at ~2,086 tok/s (ends
+~01:15). `glm3` converted (shards 10-17 + 30: 25,479 conversations, 70.0M tokens). Run 12 chained (`run12.sh`, unit
+`fx-kolibri-drafter-run12`): waits for run 11's scoring, then run 11 final + glm3 with recipe C (~9.5 h), scored with
+run 10 and run 11 on the same clean recordings; server stays down. Watchdog now treats any `fx-kolibri-drafter-run1*`
+unit as the window phase.
 
 ## Loss A/B RESULT (2026-10-05 14:27): KL wins -> recipe C (KL + 0.1 L1, 32k slice)
 

@@ -15,7 +15,7 @@ newerr(){  # newerr FILE: ERR = error lines added since the last look (no subshe
 stale=0
 while true; do
   now=$(date '+%m-%d %H:%M')
-  if systemctl is-active -q fx-kolibri-drafter-run11; then phase=window; want="fx-kolibri-drafter-run11 fx-kolibri-keepckpt fx-kolibri-recsync"
+  if systemctl list-units --no-legend --state=active "fx-kolibri-drafter-run1*" | grep -q .; then phase=window; want="fx-kolibri-keepckpt fx-kolibri-recsync"
   else phase=serving; want="fx-kolibri-serve fx-kolibri-genchat fx-kolibri-genchat-de fx-kolibri-recsync fx-kolibri-keepckpt"; fi
   down=""; for u in $want; do systemctl is-active -q $u || down="$down $u"; done
   [ -n "$down" ] && alert "$phase: not active:$down"
@@ -26,7 +26,7 @@ while true; do
   for f in $D/train10.log $D/train11.log $D/genchat.log $D/genchat-de.log $D/recsync.log $D/run11.log; do
     newerr $f; [ -n "$ERR" ] && alert "$(basename $f): $(echo "$ERR" | tr '\n' ' ' | cut -c1-300)"
   done
-  if [ $phase = window ]; then tr=$(ls -t $D/train11.log $D/ab/*.log 2>/dev/null | head -1); else tr=$(ls -t $D/train1[0-9].log 2>/dev/null | head -1); fi
+  if [ $phase = window ]; then tr=$(ls -t $D/train1[1-9].log $D/ab/*.log 2>/dev/null | head -1); else tr=$(ls -t $D/train1[0-9].log 2>/dev/null | head -1); fi
   [ -n "$tr" ] || tr=$D/train10.log
   if grown $tr; then stale=0; else stale=$((stale + 1)); fi
   last=$(grep -E '"step"' $tr 2>/dev/null | tail -1 | cut -c1-160)
