@@ -341,6 +341,26 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## Loss A/B RESULT (2026-10-05 14:27): KL wins -> recipe C (KL + 0.1 L1, 32k slice)
+
+Arms from run 9 final, same 10M tokens (glm2 + de4k), scored on recordings clean for run 9 (after 2026-10-04 20:58);
+raw log `notes/data/kolibri/abrun2-loss-ab.log`. Accepted per round of 3:
+
+| slice (chains) | scoring | run 9 | A l1ce full | B kl 32k | C kl+0.1 L1 32k |
+|---|---|---|---|---|---|
+| SWE (644,916) | full | 1.159 | 1.211 | 1.266 | 1.272 |
+| SWE | 32k (as served) | 1.125 | 1.167 | 1.225 | 1.232 |
+| chat non-German (275,920) | full | 1.138 | 1.171 | 1.199 | 1.207 |
+| chat | 32k | 1.114 | 1.143 | 1.168 | 1.176 |
+| German (223,253) | full | 0.533 | 0.759 | 0.791 | 0.797 |
+| German | 32k | 0.517 | 0.720 | 0.751 | 0.755 |
+
+- KL (EAGLE-3) gains ~2x the current loss per token on SWE and chat (32k: SWE +9.5 % vs +3.8 %, chat +5.6 % vs +2.6 %)
+  and trains 17 % faster (2,114-2,122 vs 1,813 tok/s). C >= B everywhere (small). German +39-46 % for all arms: the
+  packed German text.
+- 32k slice costs ~3 % vs unrestricted drafting (94.7 % coverage); 48k (96.8 %) is a later option.
+- Run 11 (22:00 timer) uses recipe C from run 10's newest checkpoint; restore with SWE 2 workers, chat 2 + German 2.
+
 ## ROADMAP to a usable drafter (2026-10-05 14:30)
 
 "Usable" = the learned drafter runs in TensorFold's kolibri1 engine, outputs identical with it on/off, measurably

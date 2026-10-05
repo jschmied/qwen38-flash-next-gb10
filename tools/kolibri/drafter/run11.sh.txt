@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Root, started 22:00 by a timer as unit fx-kolibri-drafter-run11 (the watchdog's "window" phase).
 # Window: stop x86 ML105, chat, run 10 and the server; verify-cost measurement; run 11 = run 10's newest checkpoint +
-# glm2 (60M GLM tokens) + de (12.8M German tokens) through Kolibri's prefill; restore everything; then score run 11's
+# glm2 (60M GLM tokens) + de4k (12.8M German tokens), recipe C from the loss A/B (KL + 0.1 L1, 32k slice) through Kolibri's prefill; restore everything; then score run 11's
 # kept checkpoints vs its start on recordings made after the restore (clean by construction).
 set -uo pipefail
 D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
@@ -19,7 +19,7 @@ systemctl stop fx-kolibri-serve
 for i in $(seq 120); do systemctl is-active -q fx-kolibri-serve || break; sleep 2; done
 systemctl is-active -q fx-kolibri-serve && { log "ABORT: server did not stop"; exit 1; }
 sync; echo 1 > /proc/sys/vm/drop_caches
-INIT=$(ls $D/out10/drafter-step*.pt | sort -V | tail -1)
+INIT=$D/drafter-run10-ab.pt                         # run 10's newest checkpoint, saved when the A/B window opened
 cp -p "$INIT" $D/drafter-run10-window.pt
 log "start checkpoint: $INIT"
 
@@ -31,7 +31,7 @@ systemctl stop fx-kolibri-keepckpt
 systemd-run --unit=fx-kolibri-keepckpt --collect --uid=jschmied bash -c "bash $D/keepckpt.sh $D/out11 >> $D/keepckpt.log 2>&1"
 log "run 11 training"
 U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out11 --extra $D/glm/glm2 --extra $D/glm/de4k --swe-passes 0 \
-  --hold 3 --init $D/drafter-run10-window.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 2000 --plateau -1 --plain-ce \
+  --hold 3 --init $D/drafter-run10-window.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 2000 --plateau -1 --loss kll1 --l1w 0.1 --draft-vocab $D/draft_vocab_32k.json \
   --log 50 --save 500 > $D/train11.log 2>&1
 log "train rc=$?"
 sleep 90
@@ -44,14 +44,14 @@ for i in $(seq 120); do curl -s -m 3 http://127.0.0.1:8093/v1/models | grep -q k
 log "server: $(curl -s -m 3 http://127.0.0.1:8093/v1/models | head -c 60)"
 RESTORED=$(date '+%Y-%m-%d %H:%M')
 C=$D/chat; URL=http://127.0.0.1:8093/v1/chat/completions
-systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $URL $D/own_chat.jsonl $C/HuggingFaceH4__ultrachat_200k__train_sft-00000-of-00003-a3ecf92756993583.parquet $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json $C/bigcode__self-oss-instruct-sc2-exec-filter-50k__train-00000-of-00001.parquet --workers 1 --hours 14 --skip $D/own_chat_de.jsonl >> $D/genchat.log 2>&1"
+systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $URL $D/own_chat.jsonl $C/HuggingFaceH4__ultrachat_200k__train_sft-00000-of-00003-a3ecf92756993583.parquet $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json $C/bigcode__self-oss-instruct-sc2-exec-filter-50k__train-00000-of-00001.parquet --workers 2 --hours 14 --skip $D/own_chat_de.jsonl >> $D/genchat.log 2>&1"
 systemd-run --unit=fx-kolibri-genchat-de --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $URL $D/own_chat_de.jsonl $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json --workers 2 --hours 14 --skip $D/own_chat.jsonl >> $D/genchat-de.log 2>&1"
-"${X86[@]}" 'systemd-run --unit=kolibri-swe-ml105 --collect bash -c "bash /root/fullrun-kolibri-ml105.sh >> /root/fullrun-kolibri-ml105.log 2>&1"' && log "ML105 resumed" || log "ML105 resume FAILED"
+"${X86[@]}" 'systemd-run --unit=kolibri-swe-ml105 --collect bash -c "bash /root/fullrun-kolibri-ml105-w2.sh >> /root/fullrun-kolibri-ml105.log 2>&1"' && log "ML105 resumed" || log "ML105 resume FAILED"
 
 log "waiting for 250 recordings after $RESTORED"
 until [ $(find $D/rec/live -name '*.json' -newermt "$RESTORED" | wc -l) -ge 250 ]; do sleep 120; done
 CK="$D/drafter-run10-window.pt $(ls $D/out11/drafter-step*.pt | sort -V | awk 'NR%15==0' | tr '\n' ' ') $D/out11/drafter.pt"
-E(){ U bash -c "ulimit -n 1048576 2>/dev/null || ulimit -n \$(ulimit -Hn); $PY $T/eval_rec.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '$RESTORED' $1 --ckpt $CK" 2>&1 | grep -v Warning; }
+E(){ U bash -c "ulimit -n 1048576 2>/dev/null || ulimit -n \$(ulimit -Hn); $PY $T/eval_rec.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '$RESTORED' $1 --draft-vocab $D/draft_vocab_32k.json --ckpt $CK" 2>&1 | grep -v Warning; }
 log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
 log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
 log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"

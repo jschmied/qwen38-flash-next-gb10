@@ -1,0 +1,53 @@
+[09:57:31] window (services already stopped by the first start)
+[09:57:31] arm A: --loss l1ce
+[11:30:16] arm A rc=0 last: {"epoch": 0, "step": 6600, "tokens": 9986305, "tok_s": 1813, "l1": 0.2032, "ce": 1.949, "top1": 0.664, "lr": 0.0002, "h": 1.53}
+[11:30:16] arm B: --loss kl --draft-vocab /home/jschmied/kolibri-drafter/draft_vocab_32k.json
+[12:49:37] arm B rc=0 last: {"epoch": 0, "step": 6600, "tokens": 9986305, "tok_s": 2122, "l1": 0.2969, "ce": 1.437, "top1": 0.671, "lr": 0.0002, "h": 1.31}
+[12:49:37] arm C: --loss kll1 --l1w 0.1 --draft-vocab /home/jschmied/kolibri-drafter/draft_vocab_32k.json
+[14:09:22] arm C rc=0 last: {"epoch": 0, "step": 6600, "tokens": 9986305, "tok_s": 2114, "l1": 0.2888, "ce": 1.426, "top1": 0.673, "lr": 0.0002, "h": 1.31}
+[14:09:22] == scoring full vocab
+[14:09:22] fresh SWE
+1204 runs, 2201348 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run9-final.pt", "vocab": "full", "accepted": 1.1592, "top1_steps": [0.6647, 0.4824, 0.3921], "chains": 644916}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/A/drafter.pt", "vocab": "full", "accepted": 1.2106, "top1_steps": [0.679, 0.5037, 0.4133], "chains": 644916}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/B/drafter.pt", "vocab": "full", "accepted": 1.2656, "top1_steps": [0.7028, 0.5098, 0.4095], "chains": 644916}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/C/drafter.pt", "vocab": "full", "accepted": 1.2717, "top1_steps": [0.7034, 0.513, 0.4131], "chains": 644916}
+[14:17:49] fresh chat
+161 runs, 477745 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run9-final.pt", "vocab": "full", "accepted": 1.1378, "top1_steps": [0.6255, 0.4904, 0.4306], "chains": 275920}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/A/drafter.pt", "vocab": "full", "accepted": 1.1705, "top1_steps": [0.6336, 0.5073, 0.4437], "chains": 275920}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/B/drafter.pt", "vocab": "full", "accepted": 1.1989, "top1_steps": [0.647, 0.5081, 0.4364], "chains": 275920}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/C/drafter.pt", "vocab": "full", "accepted": 1.207, "top1_steps": [0.648, 0.5113, 0.4459], "chains": 275920}
+[14:19:42] fresh German
+172 runs, 234085 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run9-final.pt", "vocab": "full", "accepted": 0.5333, "top1_steps": [0.3159, 0.2638, 0.2392], "chains": 223253}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/A/drafter.pt", "vocab": "full", "accepted": 0.7587, "top1_steps": [0.4525, 0.3704, 0.3328], "chains": 223253}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/B/drafter.pt", "vocab": "full", "accepted": 0.7913, "top1_steps": [0.4693, 0.375, 0.3302], "chains": 223253}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/C/drafter.pt", "vocab": "full", "accepted": 0.7968, "top1_steps": [0.4712, 0.3771, 0.3332], "chains": 223253}
+[14:20:42] == scoring --draft-vocab /home/jschmied/kolibri-drafter/draft_vocab_32k.json
+[14:20:42] fresh SWE
+1204 runs, 2201348 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run9-final.pt", "vocab": 32768, "accepted": 1.1246, "top1_steps": [0.6499, 0.4761, 0.3875], "chains": 644916}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/A/drafter.pt", "vocab": 32768, "accepted": 1.1671, "top1_steps": [0.6635, 0.4944, 0.4057], "chains": 644916}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/B/drafter.pt", "vocab": 32768, "accepted": 1.2253, "top1_steps": [0.6873, 0.5025, 0.4032], "chains": 644916}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/C/drafter.pt", "vocab": 32768, "accepted": 1.2315, "top1_steps": [0.6874, 0.5054, 0.4076], "chains": 644916}
+[14:25:16] fresh chat
+161 runs, 477745 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run9-final.pt", "vocab": 32768, "accepted": 1.1138, "top1_steps": [0.6152, 0.4849, 0.426], "chains": 275920}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/A/drafter.pt", "vocab": 32768, "accepted": 1.143, "top1_steps": [0.6223, 0.5005, 0.4383], "chains": 275920}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/B/drafter.pt", "vocab": 32768, "accepted": 1.1678, "top1_steps": [0.6347, 0.501, 0.4305], "chains": 275920}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/C/drafter.pt", "vocab": 32768, "accepted": 1.1762, "top1_steps": [0.6355, 0.5044, 0.4398], "chains": 275920}
+[14:26:20] fresh German
+172 runs, 234085 rows
+{"ckpt": "/home/jschmied/kolibri-drafter/drafter-run9-final.pt", "vocab": 32768, "accepted": 0.5167, "top1_steps": [0.3075, 0.2606, 0.2369], "chains": 223253}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/A/drafter.pt", "vocab": 32768, "accepted": 0.7195, "top1_steps": [0.4336, 0.3611, 0.3263], "chains": 223253}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/B/drafter.pt", "vocab": 32768, "accepted": 0.7505, "top1_steps": [0.4504, 0.3651, 0.3236], "chains": 223253}
+{"ckpt": "/home/jschmied/kolibri-drafter/ab/C/drafter.pt", "vocab": 32768, "accepted": 0.7551, "top1_steps": [0.4518, 0.3676, 0.3267], "chains": 223253}
+[14:26:54] restoring serving
+Running as unit: fx-kolibri-serve.service; invocation ID: c340e93866594603ad1595176a6f87b7
+[14:27:40] server: {"object": "list", "data": [{"id": "kolibri-1", "object": "m
+Running as unit: fx-kolibri-genchat.service; invocation ID: 01e54bac1c8b480b96610331a7b42c3a
+Running as unit: fx-kolibri-genchat-de.service; invocation ID: 46f007102b97439b840dbe42bb13ec09
+Running as unit: kolibri-swe-ml105.service; invocation ID: 391c9c5a4cdd40ba8c42b41ced02bd08
+[14:27:40] ML105 resumed
+[14:27:40] == AB DONE ==
