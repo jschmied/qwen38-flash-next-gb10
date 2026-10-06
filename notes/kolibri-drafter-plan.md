@@ -341,6 +341,14 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## Run 12 stopped, run 12c instead (2026-10-06 05:40)
+
+Run 12 (run 11 final + glm3, no German) vs run 11 final, recordings after 09:55, 32k: SWE 1.383 -> 1.329 / 1.349
+(13M / 26M tokens), chat 1.230 -> 1.238 / 1.231, German 0.945 -> 0.825 / 0.773 (-18 %): without German in the mix the
+drafter forgets German fast and gains nothing elsewhere. Stopped at 26M. Run 12c (`run12c.sh`, same unit name,
+`train12c.log`, `out12c/`): run 11 final + glm3 + de4k (second pass of the German text), recipe C. Rule from this: every
+GLM batch carries ~15-20 % German.
+
 ## ENGINE MEASURED (2026-10-06 01:42): roadmap gate 4 passed — ~1.23-1.26x at c=1, identical replies
 
 `specbench.py`, run 11 final in TensorFold kolibri1-drafter (e72b31f), 32k slice, GPU idle, c=1, 256 tokens a prompt,

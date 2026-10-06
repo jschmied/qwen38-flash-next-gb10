@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run12 (watchdog "window"). Run 12c = run 11 final + glm3 (70M GLM) + de4k (12.8M German,
+# its second pass), recipe C. Run 12 without German lost German 0.945 -> 0.773 in 26M tokens (stopped 05:25).
+# Scored vs run 11 final on recordings after 2026-10-05 09:55 (clean for both). Server stays down.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+systemctl stop fx-kolibri-keepckpt
+systemd-run --unit=fx-kolibri-keepckpt --collect --uid=jschmied bash -c "bash $D/keepckpt.sh $D/out12c >> $D/keepckpt.log 2>&1"
+log "run 12c training"
+U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out12c --extra $D/glm/glm3 --extra $D/glm/de4k --swe-passes 0 \
+  --hold 3 --init $D/drafter-run11-final.pt --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 4000 --plateau -1 --loss kll1 \
+  --l1w 0.1 --draft-vocab $V --log 50 --save 500 > $D/train12c.log 2>&1
+log "train rc=$?"
+sleep 90
+CK="$D/drafter-run11-final.pt $(ls $D/out12c/drafter-step*.pt | sort -V | awk 'NR%20==0' | tr '\n' ' ') $D/out12c/drafter.pt"
+E(){ U bash -c "ulimit -n 1048576 2>/dev/null || ulimit -n \$(ulimit -Hn); $PY $T/eval_rec.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep -v Warning; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+log "== RUN12C DONE =="
