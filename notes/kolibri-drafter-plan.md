@@ -626,3 +626,6 @@ same move shifts it by 1.12). Init from arm A with the chain reloaded: chat posi
 **recsync again:** the A/B's resume files pushed disk under 45 GB and the 21:35 prune freed 10 GB of the TRAINING
 recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 453 from PBS (rsync, 2026-10-05
 08:48-09:36), prune threshold now 30 GB; resume files of finished arms deleted.
+- 15b step 2,500 (7.0M tokens): fresh accepted_3 SWE 1.199 / chat 0.912 / German 0.729 (arm A 1.109 / 0.808 /
+  0.655); chat top-1 0.637 (frozen) / 0.265 / 0.156 / 0.105, back above arm A's later positions. Run 11 chain still
+  ahead (1.38 / 1.23 / 0.95). Recordings nearly used up at this point (41 windows left).
