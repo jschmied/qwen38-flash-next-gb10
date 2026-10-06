@@ -58,8 +58,9 @@ def remote_sha(paths: list[str]) -> dict[str, str]:
     return out
 
 
-def prune(target_gb: float, live_held: int) -> None:
+def prune(target_gb: float, live_held: int, keep_after: float) -> None:
     runs = sorted((m for m in (ROOT / "rec/live").rglob("*.json")), key=lambda m: m.stat().st_mtime)
+    runs = [m for m in runs if m.stat().st_mtime <= keep_after]   # the fresh scoring set stays local
     freed = 0.0
     for meta in runs:
         if freed / 1e9 >= target_gb:
@@ -88,6 +89,7 @@ def main() -> None:
     ap.add_argument("--low-gb", type=float, default=60.0)
     ap.add_argument("--free-gb", type=float, default=40.0)
     ap.add_argument("--live-held", type=int, default=10)
+    ap.add_argument("--keep-after", default="2026-10-05 09:55", help="never prune recordings saved after this")
     a = ap.parse_args()
     subprocess.run(SSH + [f"mkdir -p {DEST}"], check=True)
     while True:
@@ -95,7 +97,7 @@ def main() -> None:
         ok = sync()
         log(f"sync {'ok' if ok else 'FAILED'} in {time.time() - t0:.0f} s; {free_gb():.0f} GB free")
         if ok and free_gb() < a.low_gb:
-            prune(a.free_gb, a.live_held)
+            prune(a.free_gb, a.live_held, time.mktime(time.strptime(a.keep_after, "%Y-%m-%d %H:%M")))
         time.sleep(max(60, a.every - (time.time() - t0)))
 
 

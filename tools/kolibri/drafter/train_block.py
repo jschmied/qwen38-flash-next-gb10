@@ -58,6 +58,9 @@ def main() -> None:
     ap.add_argument("--max-tokens", type=int, default=0)
     ap.add_argument("--init", default="")
     ap.add_argument("--decay", default="0.8", help="position weights decay^j; 'a:b:N' eases from a to b over N tokens")
+    ap.add_argument("--assistant-only", action="store_true", help="anchors whose first draft (t+2) is the assistant's")
+    ap.add_argument("--onpolicy", action="store_true",
+                    help="weight position j by Kolibri's probability of the data's tokens t+2..t+1+j (its own path)")
     ap.add_argument("--skip-tokens", type=int, default=0, help="skip the stream's first N tokens (a resumed run)")
     ap.add_argument("--log", type=int, default=50)
     ap.add_argument("--save", type=int, default=500)
@@ -70,6 +73,13 @@ def main() -> None:
     model = Model(w, max(len(t) for _, t in convs) + 64, 1)
     vocab = torch.tensor(json.loads(Path(a.draft_vocab).read_text()), device="cuda")
     head = w.head[vocab].contiguous()
+    slot = torch.full((w.head.shape[0],), -1, dtype=torch.long, device="cuda")   # full id -> draft-vocab column
+    slot[vocab] = torch.arange(len(vocab), device="cuda")
+    if a.assistant_only:
+        from tokenizers import Tokenizer
+        tk = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
+        marks = (tk.token_to_id("<|im_start|>"), tk.encode("assistant\n", add_special_tokens=False).ids,
+                 tk.token_to_id("<|im_end|>"))
     cfg = BlockConfig(hidden=w.config.hidden, layers=a.layers, ffn=a.ffn, taps=len(train_mt.TAPS), block=a.block)
     dr = (load(torch.load(a.init, map_location="cuda")) if a.init else BlockDrafter(cfg)).cuda()
     cfg = dr.cfg
@@ -93,6 +103,7 @@ def main() -> None:
         if a.max_tokens and seen > a.max_tokens:
             break
         seq = torch.from_numpy(np.asarray(toks, dtype=np.int64)).cuda()
+        amask = train_mt.assistant_mask(np.asarray(toks), marks[0], marks[1], marks[2]) if a.assistant_only else None
         with torch.no_grad():
             x, taps, _ = train_mt.target_pass(model, seq.tolist())
         seen += len(toks)
@@ -103,6 +114,10 @@ def main() -> None:
             if last < s0:
                 continue
             cand = np.arange(s0, last + 1)
+            if amask is not None:
+                cand = cand[amask[cand + 2]]
+                if not len(cand):
+                    continue
             pick = np.sort(rng.choice(cand, size=min(a.anchors, len(cand)), replace=False))
             anchors = torch.from_numpy(pick).cuda()
             j = torch.arange(cfg.block, device="cuda")
@@ -119,8 +134,14 @@ def main() -> None:
                 states = dr(taps[s0:s1], w.embed[seq[anchors + 1]], anchors - s0)
             logq = F.log_softmax((states.reshape(-1, states.shape[-1]).to(torch.bfloat16) @ head.T).float(), -1)
             kl = (logp.exp() * (logp - logq)).sum(-1).view(len(pick), cfg.block)
+            with torch.no_grad():                         # P(Kolibri's own path = the data's tokens t+2..t+1+j)
+                nxt = slot[seq[tgt_rows[:, :-1] + 1]]       # data token after row t+1+i, i < block-1
+                lp = logp.view(len(pick), cfg.block, -1)[:, :-1].gather(-1, nxt.clamp(min=0)[..., None])[..., 0]
+                lp = torch.where(nxt >= 0, lp, torch.full_like(lp, -1e9))
+                path = torch.cat([torch.ones_like(lp[:, :1]), lp.cumsum(-1).exp()], 1)       # [A, block]
             weights = (d0 + (d1 - d0) * min(1.0, seen / span)) ** jj
-            loss = (kl * weights).sum(-1).mean() / weights.sum()
+            m = weights * (path if a.onpolicy else torch.ones_like(path))
+            loss = (kl * m).sum() / m.sum()
             opt.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(dr.parameters(), 0.5)
@@ -130,11 +151,13 @@ def main() -> None:
                 log["top1"] += float((logq.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)
                                       == logp.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)).float().mean())
             log["kl"] += float(loss.detach())
+            log["path"] = log.get("path", 0) + path.mean(0)
             log["n"] += 1
             if step % a.log == 0:
                 k, dt = log["n"], time.perf_counter() - t0
                 print(json.dumps({"step": step, "tokens": seen, "tok_s": round((seen - skipped) / dt), "kl": round(log["kl"] / k, 4),
                                   "top1": round(log["top1"] / k, 3),
+                                  "path": [round(float(v), 3) for v in log["path"] / k],
                                   "decay": round(float(weights[1]), 3), "lr": f"{opt.param_groups[0]['lr']:.2e}", "h": round(dt / 3600, 2)}), flush=True)
                 log = {"kl": 0.0, "top1": 0.0, "n": 0}
             if step % a.save == 0:

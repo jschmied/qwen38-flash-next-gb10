@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run14 (watchdog "window"). Run 14c = run 14b resumed from its step 2,500 (3.77M tokens skipped), position weights decay^j easing 0.4 -> 0.8 over 30M tokens (user: position 1 first), lr 6e-4 cosine to 6e-5 over the 214M stream (user: aggressive early, smooth later). Run 14b was the first BLOCK drafter (model_block.py, DFlash
+# style: block 4, KV injection of taps 44/47/49 into 4 layers x 2560, FFN 6144, 372M), from scratch, KL over the 32k
+# draft vocab weighted 0.8^j, 512 anchors per 2,048-row window, lr 4e-4 constant after 500 warmup.
+# Data, one shuffled stream: glm + glm2 + glm3 (175M GLM regen) + de4k x3 (38.5M German) = 213M tokens, German 18 %.
+# Hypothesis: position 0 reaches the chain drafter's step-1 top-1 (fresh SWE ~0.71, chat ~0.64, German ~0.52) within
+# ~40M tokens; positions 1-3 stay above the chain's (no compounding of its own errors), so accepted_3 lands at or above
+# run 11 final (1.38 / 1.23 / 0.95) by the end, and accepted_4 adds 0.1-0.2. Out of range (pos 0 < 0.5 on chat at
+# 40M) = a bug in the indexing or the mask, not a capacity verdict.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+systemctl stop fx-kolibri-keepckpt
+mkdir -p $D/out14c; chown jschmied: $D/out14c
+systemd-run --unit=fx-kolibri-keepckpt --collect --uid=jschmied bash -c "bash $D/keepckpt.sh $D/out14c >> $D/keepckpt.log 2>&1"
+log "run 14c block training (resumed)"
+U $PY $T/train_block.py /opt/llm/models/kolibri-1 $D/out14c --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+  $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 2500 --init $D/out14b/drafter-step2500.pt --skip-tokens 3773102 --decay 0.4:0.8:30000000 --lr 6e-4 --lr-end 6e-5 --warmup 300 > $D/train14c.log 2>&1
+log "train rc=$?"
+log "== RUN14C DONE =="

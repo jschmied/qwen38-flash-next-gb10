@@ -558,3 +558,27 @@ real distribution. No prefill is needed, so this stage runs much faster than pre
 a `train_rec`-style loop over `model_block` (todo). Rules carried over: pass caps per recording (run 6 memorised
 88k rows), 15–20 % German, the reserved test pool left untouched, and scoring only on recordings made after the
 checkpoint was saved.
+
+**Run 14b → 14c → 14d (2026-10-06 afternoon).**
+- 14b had no output-norm init (Kolibri's final norm scales states by ~43; train_mt copies it, train_block did not):
+  KL stuck at ~8.4 after 5M tokens. Fixed and restarted 15:25.
+- 14c (user): position weights decay^j easing 0.4 → 0.8 over 30M tokens (position 1 first), lr 6e-4 cosine to 6e-5
+  over the 214M stream; resumed from 14b step 2,500 with the stream's first 3.77M tokens skipped (same order).
+- 14d (user: check the later positions' conditional target): the target at row t+1+j is conditioned on the data's tokens
+  t+2..t+1+j, but a draft at j only counts when Kolibri's own path took them. Kolibri's probability of GLM's prefix
+  per position: 1 / 0.71 / 0.54 / 0.43 (in-training mean); on its own replies the greedy path holds for
+  1 / 0.93 / 0.87 / 0.82 of anchors. 14d weights position j by that path probability (`--onpolicy`) and anchors only
+  where t+2 is the assistant's (`--assistant-only`, as train_mt and the eval count). Resumed from 14c step 2,500.
+- `test_block.py` (CPU): no leak from rows after the anchor, blocks isolated, solo == batched.
+
+Fresh scoring (after 2026-10-05 09:55; accepted of 3, position-1 top-1):
+
+| checkpoint | tokens | SWE | chat | German |
+|---|---:|---|---|---|
+| 14b step 2,500 | 3.8M | 0.22 / 0.20 | 0.35 / 0.27 | 0.28 / 0.21 |
+| 14c step 2,500 | 7.5M | 0.27 / 0.23 | 0.41 / 0.31 | 0.34 / 0.25 |
+| run 11 final (chain) | 73M | 1.38 | 1.23 | 0.95 |
+
+recsync's prune (target 40 GB free, but only 34 GB of recordings left) began deleting the fresh scoring set at 17:00;
+stopped after 65 old recordings (all PBS-verified). recsync now never prunes recordings after the scoring cut-off
+(`--keep-after`), prunes below 45 GB and frees 10 GB at most.
