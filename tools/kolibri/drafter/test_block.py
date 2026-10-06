@@ -40,3 +40,38 @@ def test_no_leak_and_isolation():
 if __name__ == "__main__":
     test_no_leak_and_isolation()
     print("ok")
+
+
+def test_chain_init_matches_chain_first_draft():
+    """A block drafter built from a chain drafter computes, at position 0, exactly the chain's first draft."""
+
+    from model_block import from_chain
+    from model_mt import DraftConfig, Drafter
+
+    torch.manual_seed(1)
+    ccfg = DraftConfig(hidden=64, heads=4, head_dim=16, ffn=96, layers=1, taps=3)
+    chain = Drafter(ccfg).double()
+    for p in chain.parameters():
+        torch.nn.init.normal_(p, std=0.2)
+    dr = from_chain({"state": chain.state_dict()},
+                    BlockConfig(hidden=64, heads=4, head_dim=16, ffn=128, layers=3, taps=3, block=4)).double()
+    for layer in dr.layers[1:]:                                # identity at init: o/down zero
+        assert not layer.o.weight.any() and not layer.down.weight.any()
+    T = 40
+    feats = torch.randn(T, 3 * 64, dtype=torch.float64)
+    nxt = torch.randn(T, 64, dtype=torch.float64)           # embedding of the token after each row
+    first = chain.rollout(feats, [nxt])[0]                    # chain step 1 at every row
+    anchors = torch.tensor([3, 17, 30, 35])
+    out = dr(feats, nxt[anchors], anchors, nxt=nxt)
+    assert torch.allclose(out[:, 0], first[anchors], atol=1e-6)  # rope runs in fp32, float((out[:, 0] - first[anchors]).abs().max())
+    # and the later rows still cannot see rows past the anchor
+    f2 = feats.clone()
+    f2[18:] += 1
+    n2 = nxt.clone()
+    n2[18:] += 1
+    assert torch.allclose(dr(f2, nxt[anchors], anchors, nxt=n2)[1], out[1])
+
+
+if __name__ == "__main__":
+    test_chain_init_matches_chain_first_draft()
+    print("chain ok")

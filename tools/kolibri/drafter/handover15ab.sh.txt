@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Root: wait for run 15's step-2,500 checkpoint (kept by keepckpt), stop run 15, run the loss A/B.
+D=/home/jschmied/kolibri-drafter
+until [ -e $D/out15/drafter-step2500.pt ]; do sleep 30; done
+sleep 20
+echo "[$(date +%H:%M:%S)] step 2500 kept; stopping run 15"
+systemctl stop fx-kolibri-drafter-run15
+bash $D/run15ab.sh > $D/run15ab.log 2>&1
+echo "[$(date +%H:%M:%S)] A/B finished rc=$?"

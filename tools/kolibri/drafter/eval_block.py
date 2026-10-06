@@ -48,7 +48,8 @@ def score(dr, runs, embed, head, vocab) -> dict:
             for c in range(0, len(rows), CHUNK):
                 anchors = torch.from_numpy(rows[c:c + CHUNK] - s0).cuda()
                 with torch.autocast("cuda", dtype=torch.bfloat16):
-                    st = dr(feats, embed[tok[anchors + 1]], anchors)
+                    nxt = embed[torch.cat([tok[1:], tok[-1:]])] if dr.cfg.chain_ctx else None
+                    st = dr(feats, embed[tok[anchors + 1]], anchors, nxt=nxt)
                 got = vocab[(st.reshape(-1, st.shape[-1]).to(torch.bfloat16) @ head.T).argmax(-1)].view(len(anchors), b)
                 want = top1[anchors[:, None] + 1 + torch.arange(b, device="cuda")[None]]
                 ok = (got == want) & gen[anchors[:, None] + 2 + torch.arange(b, device="cuda")[None]]

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run15ab (watchdog "window"). Loss A/B from run 15 step 2,500, each arm 1,500 steps on
+# the same data from the same point (weights only, fresh AdamW in every arm, so the arms are equal):
+#   A kl      : KL x 0.8^j x path (run 15's loss, the control)
+#   B kl-auf  : KL while the drafter's own drafts 1..j-1 match Kolibri's argmax (accept-until-fail), x path
+#   C ce-acc  : CE on Kolibri's argmax, position j weighted by d E[accepted] / d a_j from running rates, x path
+# Hypothesis: B and C raise positions 2-4 over A (A over-suppresses the suffix: ~1/.57/.35/.22); a difference under
+# ~0.01 accepted_3 on chat is a tie. Scored on the fresh slices (after 2026-10-05 09:55), SWE / chat / German.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+INIT=$D/out15/drafter-step2500.pt
+SKIP=$($PY -c "import torch;print(torch.load('$INIT',map_location='cpu')['tokens'])")
+log "init $INIT, skip $SKIP"
+for arm in A:kl B:kl-auf C:ce-acc; do
+  n=${arm%%:*}; loss=${arm#*:}; O=$D/out15ab-$n
+  mkdir -p $O; chown jschmied: $O
+  log "arm $n ($loss)"
+  U $PY $T/train_block.py /opt/llm/models/kolibri-1 $O --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+    $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 1500 --init $INIT --skip-tokens $SKIP \
+    --rec $D/rec/live --rec-share 0.3 --rec-passes-swe 2 --rec-passes 3 --anchors 1024 --onpolicy --assistant-only \
+    --decay 0.8 --lr 4e-4 --lr-end 4e-5 --warmup 100 --loss $loss --max-tokens $((SKIP + 1500000)) > $D/train15ab-$n.log 2>&1
+  log "arm $n rc=$?"
+done
+CK="$INIT $D/out15ab-A/drafter.pt $D/out15ab-B/drafter.pt $D/out15ab-C/drafter.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+log "== RUN15AB DONE =="

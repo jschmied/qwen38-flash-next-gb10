@@ -23,7 +23,7 @@ import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).parent))
 import train_mt  # noqa: E402
-from model_block import BlockConfig, BlockDrafter, load  # noqa: E402
+from model_block import BlockConfig, BlockDrafter, from_chain, load  # noqa: E402
 from model_mt import params  # noqa: E402
 
 
@@ -101,6 +101,7 @@ def main() -> None:
     ap.add_argument("--lr-span", type=int, default=0, help="tokens the cosine spans (0: the whole stream)")
     ap.add_argument("--max-tokens", type=int, default=0)
     ap.add_argument("--init", default="")
+    ap.add_argument("--from-chain", default="", help="a chain drafter (train_mt/train_rec) as position 0 (chain_ctx)")
     ap.add_argument("--decay", default="0.8", help="position weights decay^j; 'a:b:N' eases from a to b over N tokens")
     ap.add_argument("--assistant-only", action="store_true", help="anchors whose first draft (t+2) is the assistant's")
     ap.add_argument("--onpolicy", action="store_true",
@@ -111,6 +112,11 @@ def main() -> None:
     ap.add_argument("--rec-share", type=float, default=0.3, help="share of steps from recordings while they last")
     ap.add_argument("--rec-passes", type=int, default=2, help="uses of each chat recording window")
     ap.add_argument("--rec-passes-swe", type=int, default=1, help="uses of each SWE recording window")
+    ap.add_argument("--loss", default="kl", choices=["kl", "kl-auf", "ce-acc"],
+                    help="kl: KL x decay^j (x path); kl-auf: KL while the drafter's own drafts still match Kolibri's "
+                         "(accept-until-fail); ce-acc: CE on Kolibri's argmax, position j weighted by d E[accepted] / d a_j")
+    ap.add_argument("--accum", type=int, default=1, help="windows per optimizer step")
+    ap.add_argument("--resume", default="", help="resume.pt: weights, optimizer, step, data position, rng")
     ap.add_argument("--log", type=int, default=50)
     ap.add_argument("--save", type=int, default=500)
     a = ap.parse_args()
@@ -130,27 +136,55 @@ def main() -> None:
         marks = (tk.token_to_id("<|im_start|>"), tk.encode("assistant\n", add_special_tokens=False).ids,
                  tk.token_to_id("<|im_end|>"))
     cfg = BlockConfig(hidden=w.config.hidden, layers=a.layers, ffn=a.ffn, taps=len(train_mt.TAPS), block=a.block)
-    dr = (load(torch.load(a.init, map_location="cuda")) if a.init else BlockDrafter(cfg)).cuda()
+    if a.init:
+        dr = load(torch.load(a.init, map_location="cuda"))
+    elif a.from_chain:
+        dr = from_chain(torch.load(a.from_chain, map_location="cpu"), cfg)
+    else:
+        dr = BlockDrafter(cfg)
+    dr = dr.cuda()
     cfg = dr.cfg
-    if not a.init:
+    if not a.init and not a.from_chain:
         with torch.no_grad():                             # the target's states carry its final norm's scale (~43)
             dr.out_norm.w.copy_(w.norm.float())
     opt = torch.optim.AdamW(dr.parameters(), lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
+    res = torch.load(a.resume, map_location="cuda", weights_only=False) if a.resume else None
+    if res:
+        dr.load_state_dict(res["state"])
+        opt.load_state_dict(res["opt"])
+        a.skip_tokens = res["seen"]
     print(f"block drafter: {params(dr) / 1e6:.1f}M trainable, block {cfg.block}, {cfg.layers} layers, taps "
           f"{train_mt.TAPS}; {len(convs)} conversations ({sum(len(t) for _, t in convs) / 1e6:.2f}M tokens)", flush=True)
     d0, d1, span = (float(v) for v in a.decay.split(":")) if ":" in a.decay else (float(a.decay),) * 2 + (1.0,)
     jj = torch.arange(cfg.block, device="cuda", dtype=torch.float32)
     rng, rrng = np.random.default_rng(0), np.random.default_rng(1)
+    acc_ema = torch.full((cfg.block,), 0.5, device="cuda")       # each position's match rate given the earlier ones
     t0, step, seen, rec_rows = time.perf_counter(), 0, 0, 0
     log = {"kl": 0.0, "top1": 0.0, "n": 0, "rec": 0}
     skipped, total = 0, sum(len(t) for _, t in convs)
     items = rec_windows(a, w.config.hidden) if a.rec else []
     rrng.shuffle(items)
+    perm = rng.permutation(len(convs))
+    if res:                                                       # the same stream, the same draws from here on
+        step = res["step"]
+        rng.bit_generator.state, rrng.bit_generator.state = res["rng"], res["rrng"]
+        by_name = {run["name"]: run for run, _ in items}
+        items = [(by_name[n], r0) for n, r0 in res["items"]]
+        acc_ema = res["acc_ema"].cuda()
+        print(f"resumed at step {step}, {res['seen']} tokens, {len(items)} recording windows left", flush=True)
+
+    def checkpoint() -> None:
+        save(dr, step, seen, out)
+        state = {"state": dr.state_dict(), "opt": opt.state_dict(), "step": step, "seen": seen,
+                 "rng": rng.bit_generator.state, "rrng": rrng.bit_generator.state, "acc_ema": acc_ema.cpu(),
+                 "items": [(run["name"], r0) for run, r0 in items], "credit": credit}
+        torch.save(state, out / "resume.pt.tmp")
+        (out / "resume.pt.tmp").rename(out / "resume.pt")
 
     def train(feats, xs, seq, cand, source: str) -> None:
         """One step on a window: feats [T, taps*D] tapped states, xs [T, D] the head's (normed) states, seq [T] tokens,
         cand the anchor rows (window-relative) to draw from."""
-        nonlocal step, log
+        nonlocal step, log, acc_ema
         g = rng if source == "glm" else rrng
         pick = np.sort(g.choice(cand, size=min(a.anchors, len(cand)), replace=False))
         anchors = torch.from_numpy(pick).cuda()
@@ -165,7 +199,8 @@ def main() -> None:
         for grp in opt.param_groups:
             grp["lr"] = lr * min(1.0, (step + 1) / a.warmup)
         with torch.autocast("cuda", dtype=torch.bfloat16):
-            states = dr(feats, w.embed[seq[anchors + 1]], anchors)
+            nxt = w.embed[torch.cat([seq[1:], seq[-1:]])] if cfg.chain_ctx else None
+            states = dr(feats, w.embed[seq[anchors + 1]], anchors, nxt=nxt)
         logq = F.log_softmax((states.reshape(-1, states.shape[-1]).to(torch.bfloat16) @ head.T).float(), -1)
         kl = (logp.exp() * (logp - logq)).sum(-1).view(len(pick), cfg.block)
         with torch.no_grad():                                      # P(Kolibri's own path = the data's t+2..t+1+j)
@@ -174,13 +209,33 @@ def main() -> None:
             lp = torch.where(nxt >= 0, lp, torch.full_like(lp, -1e9))
             path = torch.cat([torch.ones_like(lp[:, :1]), lp.cumsum(-1).exp()], 1)
         weights = (d0 + (d1 - d0) * min(1.0, seen / span)) ** jj
-        m = weights * (path if a.onpolicy else torch.ones_like(path))
-        loss = (kl * m).sum() / m.sum()
-        opt.zero_grad(set_to_none=True)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(dr.parameters(), 0.5)
-        opt.step()
+        valid = path if a.onpolicy else torch.ones_like(path)
+        with torch.no_grad():
+            want = logp.view(len(pick), cfg.block, -1).argmax(-1)
+            hit = (logq.view(len(pick), cfg.block, -1).argmax(-1) == want).float()          # [A, block]
+            alive = torch.cat([torch.ones_like(hit[:, :1]), hit[:, :-1].cumprod(-1)], 1)  # drafts before j all matched
+            cond = (hit * alive).sum(0) / alive.sum(0).clamp_min(1)
+            acc_ema = 0.98 * acc_ema + 0.02 * cond
+        if a.loss == "kl":
+            m = weights * valid
+            per = kl
+        elif a.loss == "kl-auf":
+            m = alive * valid
+            per = kl
+        else:
+            r = acc_ema.clamp(1e-3, 1.0)
+            pre = torch.cat([torch.ones(1, device="cuda"), r[:-1].cumprod(0)])            # prod_{i<j} a_i
+            tail = torch.stack([1 + r.new_zeros(()) + sum((r[j + 1:k + 1].prod() for k in range(j + 1, cfg.block)),
+                                                          r.new_zeros(())) for j in range(cfg.block)])
+            m = (pre * tail)[None] * valid                                                 # d E[accepted] / d a_j
+            per = -logq.view(len(pick), cfg.block, -1).gather(-1, want[..., None])[..., 0]
+        loss = (per * m).sum() / m.sum().clamp_min(1e-6)
+        (loss / a.accum).backward()
         step += 1
+        if step % a.accum == 0:
+            torch.nn.utils.clip_grad_norm_(dr.parameters(), 0.5)
+            opt.step()
+            opt.zero_grad(set_to_none=True)
         with torch.no_grad():
             log["top1"] += float((logq.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)
                                   == logp.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)).float().mean())
@@ -193,14 +248,15 @@ def main() -> None:
             print(json.dumps({"step": step, "tokens": seen, "tok_s": round((seen - skipped) / dt),
                               "kl": round(log["kl"] / k, 4), "top1": round(log["top1"] / k, 3),
                               "path": [round(float(v), 3) for v in log["path"] / k], "rec": log["rec"],
+                              "acc": [round(float(v), 3) for v in acc_ema],
                               "rec_rows": rec_rows, "rec_left": len(items), "decay": round(float(weights[1]), 3),
                               "lr": f"{opt.param_groups[0]['lr']:.2e}", "h": round(dt / 3600, 2)}), flush=True)
             log = {"kl": 0.0, "top1": 0.0, "n": 0, "rec": 0}
         if step % a.save == 0:
-            save(dr, step, seen, out)
+            checkpoint()
 
-    credit = 0.0
-    for ci in rng.permutation(len(convs)):
+    credit = res["credit"] if res else 0.0
+    for ci in perm:
         name, toks = convs[ci]
         if skipped < a.skip_tokens:                       # same seed, same order: the resumed run's first tokens
             skipped += len(toks)
@@ -233,7 +289,7 @@ def main() -> None:
                 if b is not None:
                     rec_rows += b[0].shape[0]
                     train(*b, "rec")
-    save(dr, step, seen, out)
+    checkpoint()
     print(json.dumps({"done": step, "tokens": seen}), flush=True)
 
 

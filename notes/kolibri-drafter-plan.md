@@ -591,3 +591,23 @@ stopped after 65 old recordings (all PBS-verified). recsync now never prunes rec
   state through Kolibri's final norm and head (= Kolibri's top-1 on 98.9 % of rows checked), so recordings train on
   the same full 32k KL as GLM, without a prefill. 1,024 anchors per window instead of 512: about 12-15 % slower
   (about 1,140 vs 1,300 tok/s with recordings in) for twice the training rows per prefill.
+
+## Run 15 — block drafter built on run 11 (2026-10-06 19:45)
+
+Diagnosis: the block's position 1 does the chain's step-1 job but was learning it from scratch on GLM text.
+`model_block` `chain_ctx` + `from_chain`: context rows are the chain drafter's rows `fc(cat(embed(token r+1),
+fuse(taps r)))`, block row 0 is the anchor's own row, rows 1-3 read a mask plus the anchor's fused state, causal inside
+the block (row 0 sees exactly what the chain sees); fuse/fc/layer 0/out_norm copied from run 11 final (FFN padded with
+zero-output columns), layers 1-3 identity at start. `test_block.py`: position 0 == chain step 1 (fp64, 5.5e-8: rope
+runs in fp32; a 1 % change in one copied weight is caught). Untrained on fresh chat: accepted_3 0.667, top-1
+0.637 / 0.047 / 0.029 / 0.018, above 14b-14e at 23M tokens (0.54). 14e stopped (its checkpoints kept).
+
+German share while recordings are mixed: recordings are 8.1 % German (0.14M of 1.77M rows with passes), so about
+15.0 % overall while they last (~5,500 steps), 18 % after. Watch the German slice; stratify if it drops.
+
+Loss A/B (`run15ab.sh.txt`, auto-started when run 15 keeps step 2,500): from run 15 step 2,500, 1.5M GLM tokens each,
+same data, fresh AdamW in every arm: A KL x 0.8^j x path (control), B KL accept-until-fail (supervise j while the
+drafter's own drafts 1..j-1 match Kolibri's argmax) x path, C CE on Kolibri's argmax with position weights
+d E[accepted] / d a_j from running rates (my approximation of D-PACE's idea; checked against a numeric derivative).
+Not plain CE on data tokens: the data is GLM's text, not Kolibri's. train_block now also saves `resume.pt` (weights,
+AdamW, step, data position, rng, recording windows left) for real resumes, and `--accum` for larger effective batches.

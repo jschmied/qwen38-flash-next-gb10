@@ -29,6 +29,7 @@ class BlockConfig:
     block: int = 4
     eps: float = 1e-6
     theta: float = 10000.0
+    chain_ctx: bool = False   # context rows as the chain drafter's: fc(cat(embed(token r+1), fuse(taps r))); row 0 = that row
 
 
 class Layer(nn.Module):
@@ -68,6 +69,8 @@ class BlockDrafter(nn.Module):
         self.fuse = nn.Linear(cfg.taps * d, d, bias=False)
         self.mask = nn.Parameter(torch.zeros(d))
         self.inp = nn.Linear(d, d, bias=False)
+        if cfg.chain_ctx:
+            self.fc = nn.Linear(2 * d, d, bias=False)
         self.layers = nn.ModuleList(Layer(cfg) for _ in range(cfg.layers))
         self.out_norm = RMSNorm(d, cfg.eps)
         for m in self.modules():
@@ -78,24 +81,63 @@ class BlockDrafter(nn.Module):
             nn.init.zeros_(layer.down.weight)
         nn.init.normal_(self.mask, std=0.02)
 
-    def forward(self, feats: torch.Tensor, first: torch.Tensor, anchors: torch.Tensor) -> torch.Tensor:
+    def forward(self, feats: torch.Tensor, first: torch.Tensor, anchors: torch.Tensor,
+                nxt: torch.Tensor | None = None) -> torch.Tensor:
         """feats [T, taps*D] Kolibri's tapped states of a window's rows; first [A, D] the embedding of the token after each
-        anchor row; anchors [A] row indices (context rows <= anchor). Returns [A, block, D] states for the head."""
+        anchor row; anchors [A] row indices (context rows <= anchor). Returns [A, block, D] states for the head.
+        chain_ctx: nxt [T, D] the embedding of the token after every row (known for rows <= any anchor)."""
 
         cfg, dev = self.cfg, feats.device
         t, a, b = feats.shape[0], anchors.shape[0], cfg.block
-        ctx = self.fuse(feats)
         rows = torch.arange(t, device=dev)
-        inp = torch.cat([first[:, None], self.mask.to(first.dtype).expand(a, b - 1, -1)], 1)   # [A, B, D]
-        z = self.inp(inp).reshape(a * b, -1)
-        pos = (anchors[:, None] + 1 + torch.arange(b, device=dev)[None]).reshape(-1)
         owner = torch.arange(a, device=dev).repeat_interleave(b)                      # each query's block
+        jb = torch.arange(b, device=dev).repeat(a)                                     # each query's place in its block
         see_ctx = rows[None, :] <= anchors[owner][:, None]                              # [Q, T]
-        see_blk = owner[:, None] == owner[None, :]                                      # [Q, Q]: own block, both ways
+        if cfg.chain_ctx:
+            # the chain drafter's rows: row r reads Kolibri's state at r and the token after it; block row 0 IS the
+            # anchor's row (so at chain init it computes the chain's first draft), rows 1.. read a mask and the anchor
+            fused = self.fuse(feats)
+            ctx = self.fc(torch.cat([nxt, fused], -1))
+            rest = self.fc(torch.cat([self.mask.to(fused.dtype).expand(a, -1), fused[anchors]], -1))
+            z = torch.cat([ctx[anchors][:, None], rest[:, None].expand(a, b - 1, -1)], 1).reshape(a * b, -1)
+            pos = (anchors[:, None] + torch.arange(b, device=dev)[None]).reshape(-1)  # the chain's positions t + j
+            # row 0 is already a context key; rows 1.. causal within the block
+            see_blk = (owner[:, None] == owner[None, :]) & (jb[None, :] >= 1) & (jb[None, :] <= jb[:, None])
+        else:
+            ctx = self.fuse(feats)
+            inp = torch.cat([first[:, None], self.mask.to(first.dtype).expand(a, b - 1, -1)], 1)   # [A, B, D]
+            z = self.inp(inp).reshape(a * b, -1)
+            pos = (anchors[:, None] + 1 + torch.arange(b, device=dev)[None]).reshape(-1)
+            see_blk = owner[:, None] == owner[None, :]                                  # [Q, Q]: own block, both ways
         mask = torch.cat([see_ctx, see_blk], 1)
         for layer in self.layers:
             z = layer(z, pos, ctx, rows, mask)
         return self.out_norm(z).view(a, b, -1)
+
+
+def from_chain(chain: dict, cfg: BlockConfig) -> BlockDrafter:
+    """A chain_ctx block drafter whose position 0 is the chain drafter (model_mt, one layer): fuse, fc, layer 0's
+    norms/attention/FFN (the FFN padded with zero-output columns) and the output norm copied; context keys/values use
+    the chain's k/v; layers 1.. start as identity (their o/down are zero)."""
+
+    st = chain["state"]
+    cfg.chain_ctx = True
+    dr = BlockDrafter(cfg)
+    f = st["blocks.0.gate.weight"].shape[0] if "blocks.0.gate.weight" in st else st["gate.weight"].shape[0]
+    g = lambda n: st.get("blocks.0." + n, st.get(n))  # noqa: E731
+    with torch.no_grad():
+        dr.fuse.weight.copy_(st["fuse.weight"])
+        dr.fc.weight.copy_(st["fc.weight"])
+        dr.out_norm.w.copy_(st["out_norm.w"])
+        l0 = dr.layers[0]
+        l0.n1.w.copy_(g("n1.w")); l0.nc.w.copy_(g("n1.w")); l0.n2.w.copy_(g("n2.w"))  # noqa: E702
+        for name in ("q", "k", "v", "o"):
+            getattr(l0, name).weight.copy_(g(name + ".weight"))
+        l0.ck.weight.copy_(g("k.weight")); l0.cv.weight.copy_(g("v.weight"))  # noqa: E702
+        l0.gate.weight[:f].copy_(g("gate.weight")); l0.up.weight[:f].copy_(g("up.weight"))  # noqa: E702
+        l0.down.weight.zero_()
+        l0.down.weight[:, :f].copy_(g("down.weight"))
+    return dr
 
 
 def load(ck: dict) -> BlockDrafter:
