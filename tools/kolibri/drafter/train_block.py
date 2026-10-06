@@ -23,7 +23,7 @@ import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).parent))
 import train_mt  # noqa: E402
-from model_block import BlockConfig, BlockDrafter, from_chain, load  # noqa: E402
+from model_block import BlockConfig, BlockDrafter, chain_params, from_chain, load  # noqa: E402
 from model_mt import params  # noqa: E402
 
 
@@ -102,6 +102,9 @@ def main() -> None:
     ap.add_argument("--max-tokens", type=int, default=0)
     ap.add_argument("--init", default="")
     ap.add_argument("--from-chain", default="", help="a chain drafter (train_mt/train_rec) as position 0 (chain_ctx)")
+    ap.add_argument("--row0-chain", action="store_true",
+                    help="position 0 IS the chain drafter: its path (fuse, fc, layer 0, out_norm) reloaded from "
+                         "--from-chain and frozen; layers 1.. and the mask train for positions 1..")
     ap.add_argument("--decay", default="0.8", help="position weights decay^j; 'a:b:N' eases from a to b over N tokens")
     ap.add_argument("--assistant-only", action="store_true", help="anchors whose first draft (t+2) is the assistant's")
     ap.add_argument("--onpolicy", action="store_true",
@@ -138,7 +141,11 @@ def main() -> None:
     cfg = BlockConfig(hidden=w.config.hidden, layers=a.layers, ffn=a.ffn, taps=len(train_mt.TAPS), block=a.block)
     if a.init:
         dr = load(torch.load(a.init, map_location="cuda"))
+        if a.row0_chain and a.from_chain:                   # put the exact chain back over the loaded weights
+            dr.cfg.row0_chain = True
+            dr = from_chain(torch.load(a.from_chain, map_location="cpu"), dr.cfg, onto=dr.cpu())
     elif a.from_chain:
+        cfg.row0_chain = a.row0_chain
         dr = from_chain(torch.load(a.from_chain, map_location="cpu"), cfg)
     else:
         dr = BlockDrafter(cfg)
@@ -147,7 +154,11 @@ def main() -> None:
     if not a.init and not a.from_chain:
         with torch.no_grad():                             # the target's states carry its final norm's scale (~43)
             dr.out_norm.w.copy_(w.norm.float())
-    opt = torch.optim.AdamW(dr.parameters(), lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
+    if cfg.row0_chain:
+        for p in chain_params(dr):
+            p.requires_grad_(False)
+    trainable = [p for p in dr.parameters() if p.requires_grad]
+    opt = torch.optim.AdamW(trainable, lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
     res = torch.load(a.resume, map_location="cuda", weights_only=False) if a.resume else None
     if res:
         dr.load_state_dict(res["state"])
@@ -229,11 +240,13 @@ def main() -> None:
                                                           r.new_zeros(())) for j in range(cfg.block)])
             m = (pre * tail)[None] * valid                                                 # d E[accepted] / d a_j
             per = -logq.view(len(pick), cfg.block, -1).gather(-1, want[..., None])[..., 0]
+        if cfg.row0_chain:
+            m = torch.cat([torch.zeros_like(m[..., :1]), m[..., 1:]], -1)   # position 0 is frozen: no weight
         loss = (per * m).sum() / m.sum().clamp_min(1e-6)
         (loss / a.accum).backward()
         step += 1
         if step % a.accum == 0:
-            torch.nn.utils.clip_grad_norm_(dr.parameters(), 0.5)
+            torch.nn.utils.clip_grad_norm_(trainable, 0.5)
             opt.step()
             opt.zero_grad(set_to_none=True)
         with torch.no_grad():

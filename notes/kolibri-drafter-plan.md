@@ -611,3 +611,18 @@ drafter's own drafts 1..j-1 match Kolibri's argmax) x path, C CE on Kolibri's ar
 d E[accepted] / d a_j from running rates (my approximation of D-PACE's idea; checked against a numeric derivative).
 Not plain CE on data tokens: the data is GLM's text, not Kolibri's. train_block now also saves `resume.pt` (weights,
 AdamW, step, data position, rng, recording windows left) for real resumes, and `--accum` for larger effective batches.
+
+**Loss A/B result (21:32): a tie.** Fresh accepted_3 SWE / chat / German from run 15 step 2,500 (1.095 / 0.786 / 0.645):
+A KL 1.109 / 0.808 / 0.655, B accept-until-fail 1.120 / 0.808 / 0.653, C acceptance-weighted CE 1.124 / 0.802 / 0.641
+(`notes/data/kolibri/run15ab.log`). All within +-0.015: KL stays.
+**Run 15 wore position 1 down:** chat position 1 0.637 (= run 11) at start -> 0.570 at step 2,500 (SWE 0.665, German
+0.478), out of the >= 0.60 range; positions 2-4 learned (chat 0.67 -> 0.79 accepted_3), but through the layers position
+1 shares. Still below run 11 on every slice (1.38 / 1.23 / 0.95).
+**Run 15b (22:00): position 1 frozen as run 11.** `row0_chain`: block row 0's output is taken after layer 0; fuse, fc,
+layer 0 and out_norm reloaded from run 11 and frozen; layers 1-3 and the mask train positions 2-4 only (position 1 out
+of the loss). `test_block.py`: position 0 stays equal to the chain however layers 1.. move (without row0_chain the
+same move shifts it by 1.12). Init from arm A with the chain reloaded: chat position 1 0.6366 exactly, positions 2-4
+0.079 / 0.069 / 0.049 (they re-adapt to the restored layer 0). Recordings passes SWE 1, chat 2 (windows replay).
+**recsync again:** the A/B's resume files pushed disk under 45 GB and the 21:35 prune freed 10 GB of the TRAINING
+recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 453 from PBS (rsync, 2026-10-05
+08:48-09:36), prune threshold now 30 GB; resume files of finished arms deleted.

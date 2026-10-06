@@ -75,3 +75,35 @@ def test_chain_init_matches_chain_first_draft():
 if __name__ == "__main__":
     test_chain_init_matches_chain_first_draft()
     print("chain ok")
+
+
+def test_row0_chain_stays_exact_when_later_layers_train():
+    """row0_chain: position 0 is the chain drafter whatever layers 1.. and the mask become."""
+
+    from model_block import chain_params, from_chain
+    from model_mt import DraftConfig, Drafter
+
+    torch.manual_seed(2)
+    chain = Drafter(DraftConfig(hidden=64, heads=4, head_dim=16, ffn=96, layers=1, taps=3)).double()
+    for p in chain.parameters():
+        torch.nn.init.normal_(p, std=0.2)
+    cfg = BlockConfig(hidden=64, heads=4, head_dim=16, ffn=128, layers=3, taps=3, block=4, row0_chain=True)
+    dr = from_chain({"state": chain.state_dict()}, cfg).double()
+    frozen = {id(p) for p in chain_params(dr)}
+    with torch.no_grad():                                       # "training" moves everything else
+        for p in dr.parameters():
+            if id(p) not in frozen:
+                p.add_(torch.randn_like(p) * 0.3)
+    T = 40
+    feats = torch.randn(T, 3 * 64, dtype=torch.float64)
+    nxt = torch.randn(T, 64, dtype=torch.float64)
+    anchors = torch.tensor([3, 17, 30, 35])
+    out = dr(feats, nxt[anchors], anchors, nxt=nxt)
+    first = chain.rollout(feats, [nxt])[0]
+    assert torch.allclose(out[:, 0], first[anchors], atol=1e-6), float((out[:, 0] - first[anchors]).abs().max())
+    assert not torch.allclose(out[:, 1], dr.out_norm(torch.zeros(4, 64, dtype=torch.float64) + 1))  # rows 1.. are live
+
+
+if __name__ == "__main__":
+    test_row0_chain_stays_exact_when_later_layers_train()
+    print("row0 ok")

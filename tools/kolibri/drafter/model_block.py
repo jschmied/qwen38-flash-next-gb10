@@ -30,6 +30,7 @@ class BlockConfig:
     eps: float = 1e-6
     theta: float = 10000.0
     chain_ctx: bool = False   # context rows as the chain drafter's: fc(cat(embed(token r+1), fuse(taps r))); row 0 = that row
+    row0_chain: bool = False  # chain_ctx: block row 0's output is taken after layer 0 (the chain drafter, kept exact)
 
 
 class Layer(nn.Module):
@@ -110,19 +111,31 @@ class BlockDrafter(nn.Module):
             pos = (anchors[:, None] + 1 + torch.arange(b, device=dev)[None]).reshape(-1)
             see_blk = owner[:, None] == owner[None, :]                                  # [Q, Q]: own block, both ways
         mask = torch.cat([see_ctx, see_blk], 1)
-        for layer in self.layers:
+        first_row = None
+        for i, layer in enumerate(self.layers):
             z = layer(z, pos, ctx, rows, mask)
-        return self.out_norm(z).view(a, b, -1)
+            if i == 0 and cfg.chain_ctx and cfg.row0_chain:
+                first_row = z.view(a, b, -1)[:, 0]               # rows 1.. never attend to row 0 (it is a context key)
+        out = self.out_norm(z).view(a, b, -1)
+        if first_row is not None:
+            out = torch.cat([self.out_norm(first_row)[:, None], out[:, 1:]], 1)
+        return out
 
 
-def from_chain(chain: dict, cfg: BlockConfig) -> BlockDrafter:
+def chain_params(dr: BlockDrafter) -> list:
+    """The parameters that make up position 0's chain path (frozen under row0_chain)."""
+
+    return [*dr.fuse.parameters(), *dr.fc.parameters(), *dr.layers[0].parameters(), *dr.out_norm.parameters()]
+
+
+def from_chain(chain: dict, cfg: BlockConfig, onto: BlockDrafter | None = None) -> BlockDrafter:
     """A chain_ctx block drafter whose position 0 is the chain drafter (model_mt, one layer): fuse, fc, layer 0's
     norms/attention/FFN (the FFN padded with zero-output columns) and the output norm copied; context keys/values use
     the chain's k/v; layers 1.. start as identity (their o/down are zero)."""
 
     st = chain["state"]
     cfg.chain_ctx = True
-    dr = BlockDrafter(cfg)
+    dr = onto if onto is not None else BlockDrafter(cfg)
     f = st["blocks.0.gate.weight"].shape[0] if "blocks.0.gate.weight" in st else st["gate.weight"].shape[0]
     g = lambda n: st.get("blocks.0." + n, st.get(n))  # noqa: E731
     with torch.no_grad():
