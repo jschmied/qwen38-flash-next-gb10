@@ -551,3 +551,10 @@ chain at depth 3; `accepted_4` is the block's own).
 Hypothesis: position 0 reaches the chain's step-1 top-1 (~0.71 / 0.64 / 0.52) within ~40M tokens; later positions do
 not compound their own errors, so `accepted_3` ends at or above run 11 and `accepted_4` adds 0.1–0.2. Position 0 below
 0.5 on chat at 40M tokens means a bug (indexing or mask), not a capacity verdict.
+
+**Last stage for any drafter: fine-tune on real serving recordings** (user, 2026-10-06). After the GLM pretraining,
+the recordings (`rec/live`: Kolibri's own prompts and replies with taps 44/47/49 already stored) give the drafter the
+real distribution. No prefill is needed, so this stage runs much faster than pretraining. For the block drafter it needs
+a `train_rec`-style loop over `model_block` (todo). Rules carried over: pass caps per recording (run 6 memorised
+88k rows), 15–20 % German, the reserved test pool left untouched, and scoring only on recordings made after the
+checkpoint was saved.
