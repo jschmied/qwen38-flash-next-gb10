@@ -11,10 +11,11 @@ This PR adds the interface in the lane core only. No family changes; Nemotron's 
 ## What changes
 
 - `backend.zig`: `Features` and an optional `Backend.features(s, taps, start, count)`, the tapped states of cache rows
-  the target still holds: the prompt rows its pass computed (from `s.cached`) and the last verify's rows. The contract:
-  packed rows in the drafter's `taps` order, `space` (host, or a device pointer on `device`, which the drafter must run
-  on), `dtype`, `ready` (0: the producing work is complete, else the backend's completion handle, e.g. a CUDA event),
-  valid until the target's next prefill, verify, keep or release of that stream. Null by default (`error.NoFeatures`).
+  the target still holds: the prompt rows its pass computed (from `s.cached`) until the first verify, then the last
+  verify's rows, and after a keep the rows it retained (a single-stream round keeps before it drafts), until the next
+  verify, prefill or release. Packed rows in the drafter's `taps` order, `space` (host, or a device pointer on `device`,
+  which the drafter must run on), `dtype`, and `ready`, a tagged fence (`none`, `cuda_event`, `metal_event`). Null by
+  default (`error.NoFeatures`).
 - `drafter.zig` (new): `Drafter` vtable `taps`, `facts`, `open`, `absorb`, `hold`, `held`, `release`. Every call takes a
   round's streams together (`[]Absorb`, `[]Hold`, one `held` readback), so a GPU drafter runs them as one batch.
   `Facts` carries the drafter's own depth, step cost, prior, plain guard and batching.
@@ -22,14 +23,22 @@ This PR adds the interface in the lane core only. No family changes; Nemotron's 
   - A stream with drafts off never reaches the drafter: `"draft": false` on the wrapped backend is the target alone.
   - Prefill absorbs the prompt rows the pass computed; each round absorbs the kept rows, then holds drafts; held drafts
     reach the target as host tokens.
-  - A prompt restored whole has no row to read: the drafter still holds drafts after the pending token.
-  - Lifecycle: the wrapper tracks the streams it opened; a failure after the target's prompt pass releases target and
-    drafter there (the core releases only a cancelled pass, and then the drafter was never opened).
+  - The drafter is only asked to draft once it has the row before its pending token. A prompt restored whole has none:
+    that one round takes fillers (the pending token repeated, which the target rejects), and the drafter starts after
+    the first verify.
+  - Lifecycle: the wrapper tracks the streams it opened (the slot is reserved before `open`); a failure after the
+    target's prompt pass releases target and drafter there (the core releases only a cancelled pass, and then the
+    drafter was never opened).
+  - A steady round allocates nothing: the per-round lists are kept.
   - `facts()` takes the depth rule's step cost, prior, plain guard and batching from the drafter, not the target.
   - Chains only: trees and early speculation stay with heads built into a family.
 - `fake.zig`: the fake target exposes `features` (a row's state is its token).
 
-## Tests (`drafted_test.zig`, host only, on the fake target)
+## Tests (`drafted_test.zig`, host only)
+
+All drafted runs go through a strict test target: the fake with its own state snapshot, holding exactly what `Features`
+promises (a keep overwrites the rows it drops) and refusing anything else. The fake drafter refuses to draft without
+the row before its pending token.
 
 - Drafted rounds equal one-token rounds: greedy, sampled, and two streams sharing rounds (and those reach the drafter as
   one hold of both streams, at most one readback a verify).
@@ -42,7 +51,8 @@ This PR adds the interface in the lane core only. No family changes; Nemotron's 
   each released once, the drafter only if it was opened.
 - The drafter's facts reach the depth rule in place of the target's.
 
-Removing the drafts-off bypass, the cleanup or the whole-restore check each fails its test. `zig build test` passes on
+Removing the drafts-off bypass, the cleanup, the whole-restore check or the fillers each fails its test; reading the
+verify's rows shifted by one fails three tests on the strict target (`RowsNotHeld`). `zig build test` passes on
 zig-flashnext 7742ddd (GB10, Zig 0.17.0).
 
 ## Not in this PR
@@ -51,8 +61,8 @@ zig-flashnext 7742ddd (GB10, Zig 0.17.0).
   drafter behind it; a registry hook so an entry can load a drafter belongs with it.
 - The depth rule prices drafts linearly (`step_ms x drafts`); a block drafter (DFlash) costs one pass for any depth, so
   a cost-by-depth table in `depth.zig` should come with the first measured block drafter.
-- The drafter's own state is not part of prompt reuse: after a restored prefix it drafts without those rows (the target
-  still verifies every draft, so only speed is affected).
+- The drafter's own state is not part of prompt reuse: after a restored prefix it drafts without those rows, and after
+  a whole restore it starts one round late. Keeping the last tapped row with a kept prompt state would close that.
 
 ## Questions
 
