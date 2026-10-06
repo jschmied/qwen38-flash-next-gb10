@@ -16,6 +16,9 @@ This PR adds the interface in the lane core only. No family changes; Nemotron's 
   verify, prefill or release. Packed rows in the drafter's `taps` order, `space` (host, or a device pointer on `device`,
   which the drafter must run on), `dtype`, and `ready`, a tagged fence (`none`, `cuda_event`, `metal_event`). Null by
   default (`error.NoFeatures`).
+- `backend.zig`: optional `Backend.prepare_features(taps)`: the target learns the drafter's layers once, before any
+  forward (`Drafted.init` calls it), and keeps those layers' states and no others; `features()` must ask for that set.
+  A target without the hook is built with its taps.
 - `drafter.zig` (new): `Drafter` vtable `taps`, `facts`, `open`, `absorb`, `hold`, `held`, `release`. Every call takes a
   round's streams together (`[]Absorb`, `[]Hold`, one `held` readback), so a GPU drafter runs them as one batch.
   `Facts` carries the drafter's own depth, step cost, prior, plain guard and batching.
@@ -25,7 +28,7 @@ This PR adds the interface in the lane core only. No family changes; Nemotron's 
     reach the target as host tokens.
   - The drafter is only asked to draft once it has the row before its pending token. A prompt restored whole has none:
     that one round takes fillers (the pending token repeated, which the target rejects), and the drafter starts after
-    the first verify.
+    the first verify. A new draft request clears unused fillers (a copy round can take the filler round's place).
   - Lifecycle: the wrapper tracks the streams it opened (the slot is reserved before `open`); a failure after the
     target's prompt pass releases target and drafter there (the core releases only a cancelled pass, and then the
     drafter was never opened).
@@ -50,8 +53,11 @@ the row before its pending token.
 - Injected failures (drafter open, absorb, a target without features, a cancelled prompt pass): target and drafter are
   each released once, the drafter only if it was opened.
 - The drafter's facts reach the depth rule in place of the target's.
+- A whole restore, then a copy round instead of the filler round, then the first real hold: the verify reads the
+  drafter, not stale fillers. The strict target refuses an unprepared or different tap set.
 
-Removing the drafts-off bypass, the cleanup, the whole-restore check or the fillers each fails its test; reading the
+Removing the drafts-off bypass, the cleanup, the whole-restore check, the fillers, the filler reset or the tap
+preparation each fails its test; reading the
 verify's rows shifted by one fails three tests on the strict target (`RowsNotHeld`). `zig build test` passes on
 zig-flashnext 7742ddd (GB10, Zig 0.17.0).
 
@@ -61,6 +67,9 @@ zig-flashnext 7742ddd (GB10, Zig 0.17.0).
   drafter behind it; a registry hook so an entry can load a drafter belongs with it.
 - The depth rule prices drafts linearly (`step_ms x drafts`); a block drafter (DFlash) costs one pass for any depth, so
   a cost-by-depth table in `depth.zig` should come with the first measured block drafter.
+- Long prompts: the contract has the target hold every tapped prompt row the pass computed until the drafter absorbs
+  them (3 taps x 4096 x bf16 at 128K tokens is about 3 GiB). Streaming prefill chunks into `absorb` should come with a
+  CUDA adapter that needs it.
 - The drafter's own state is not part of prompt reuse: after a restored prefix it drafts without those rows, and after
   a whole restore it starts one round late. Keeping the last tapped row with a kept prompt state would close that.
 
