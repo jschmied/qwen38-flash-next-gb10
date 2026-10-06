@@ -1698,7 +1698,7 @@ wait on one ~100 GB pull, and they share one serve.
   commits (548a9904, 35ada711, 40c6e3b7: widening log moved into qsa_ring_capacity), force-pushed with lease; PR
   MERGEABLE. Tests: test_config 15/15, test_qsa_reference 73/74 (1 env failure, same on main). Draft
   `54912-rebase-reply.md`. https://github.com/vllm-project/vllm/pull/54912#issuecomment-5999973986
-- **HF: josch15366/Kolibri-1-EAGLE3-drafter (PRIVATE)** (2026-10-06, user: "License: Apache2 with data note 11 final now"):
+- **HF: josch15366/Kolibri-1-EAGLE3-drafter (PUBLIC since 2026-10-06 ~07:55, user: "looks good, publish")** (2026-10-06, user: "License: Apache2 with data note 11 final now"):
   run 11 final as a release dir (model.safetensors bf16/fp32-norms sha256 5f1f38bf..., config.json, draft_vocab.json,
   README model card with results, recipe, data + licences incl. the alpaca-gpt4_de note). Commit 6430e5dc. Verified:
   release dir loads to the same chain as the training checkpoint (TF edd6aea adds the directory loader). Public only on
