@@ -629,3 +629,5 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
 - 15b step 2,500 (7.0M tokens): fresh accepted_3 SWE 1.199 / chat 0.912 / German 0.729 (arm A 1.109 / 0.808 /
   0.655); chat top-1 0.637 (frozen) / 0.265 / 0.156 / 0.105, back above arm A's later positions. Run 11 chain still
   ahead (1.38 / 1.23 / 0.95). Recordings nearly used up at this point (41 windows left).
+- 15b step 5,000 (≈9.5M tokens, GLM only after the recordings ran out): 1.217 / 0.941 / 0.749 (+0.02-0.03 per 2,500
+  steps); chat 0.637 / 0.290 / 0.175 / 0.113.
