@@ -631,3 +631,5 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   ahead (1.38 / 1.23 / 0.95). Recordings nearly used up at this point (41 windows left).
 - 15b step 5,000 (≈9.5M tokens, GLM only after the recordings ran out): 1.217 / 0.941 / 0.749 (+0.02-0.03 per 2,500
   steps); chat 0.637 / 0.290 / 0.175 / 0.113.
+- 15b step 7,500 (≈14M tokens): 1.207 / 0.966 / 0.770. SWE dips (-0.01) since the recordings ran out (SWE agent text
+  only came from them); chat and German keep rising +0.02 per 2,500 steps.
