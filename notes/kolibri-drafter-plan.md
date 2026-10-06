@@ -536,3 +536,18 @@ Not on the list: changing Kolibri's weights; verification always stays exact.
 - Results: `notes/data/kolibri/drafter1..3*/`; chart: https://claude.ai/artifact/MatxNcPBMPav889MRx2CpS
 - TensorFold hooks (branch `kolibri1-cuda`): `forward(features=True)` pushed in #328; `taps=[...]` committed locally
   (f217fd3), not pushed.
+
+## Run 14b — first block drafter (2026-10-06 14:40)
+
+The chain drafter plateaued (run 11 / 12c / 13w at ~1.35 / 1.25 / 0.95, width null), so the next step is structural:
+a DFlash-style block drafter (`tools/kolibri/drafter/model_block.py`). One pass drafts 4 tokens: the known token after
+the anchor plus 3 mask embeddings; every one of its 4 layers (2560, FFN 6144, 372M) attends to the anchor's context
+through keys/values projected from the fused taps 44/47/49, and to its own block bidirectionally. Trained from scratch
+(`train_block.py`) on Kolibri's prefill: KL over the 32k draft vocab, weights 0.8^j, 512 anchors per 2,048-row window.
+Data: glm + glm2 + glm3 + de4k ×3 = 213M tokens, 18 % German, at ~1,750 tok/s (≈34 h for all; checkpoints every 2,500
+steps, bf16). Scored with `eval_block.py` on the same fresh recordings as run 11 (`accepted_3` is comparable with the
+chain at depth 3; `accepted_4` is the block's own).
+
+Hypothesis: position 0 reaches the chain's step-1 top-1 (~0.71 / 0.64 / 0.52) within ~40M tokens; later positions do
+not compound their own errors, so `accepted_3` ends at or above run 11 and `accepted_4` adds 0.1–0.2. Position 0 below
+0.5 on chat at 40M tokens means a bug (indexing or mask), not a capacity verdict.
