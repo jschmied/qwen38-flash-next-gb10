@@ -633,3 +633,5 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   steps); chat 0.637 / 0.290 / 0.175 / 0.113.
 - 15b step 7,500 (≈14M tokens): 1.207 / 0.966 / 0.770. SWE dips (-0.01) since the recordings ran out (SWE agent text
   only came from them); chat and German keep rising +0.02 per 2,500 steps.
+- 15b step 12,500 (≈22M tokens): 1.203 / 0.998 / 0.786; chat 0.637 / 0.334 / 0.204 / 0.133. Chat and German +0.03 /
+  +0.02 per 5,000 steps; SWE flat without agent text.
