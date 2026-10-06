@@ -1710,3 +1710,8 @@ wait on one ~100 GB pull, and they share one serve.
   statx on Linux. Builds + host tests pass on GB10, `capabilities` reports cuda/nvidia-sm121/nemotron_h; end-to-end
   serving + exactness receipts NOT yet (need kernel capture + checkpoint). Draft `tf-zig-cuda-native-rfc.md`.
   https://github.com/ashhart/TensorFold/pull/443
+  **Accepted in shape (2026-10-06, ashhart):** our commit is the base of their Zig CUDA serving branch, under our name,
+  running on GB10 and RTX PRO 6000. Registry kept as designed (native/cuda.zig beside native/metal.zig, one adapter per
+  family). They add --device/--segments, memory facts with fail-closed admission, the #291 next-chunk cancel, /metrics,
+  exactness receipts vs "draft": false and the Python CUDA engine. statx in server/auth.zig gets its own review. #443
+  closes when it lands, with credit. No reply posted (needs a go).
