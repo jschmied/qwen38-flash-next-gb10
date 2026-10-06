@@ -582,3 +582,12 @@ Fresh scoring (after 2026-10-05 09:55; accepted of 3, position-1 top-1):
 recsync's prune (target 40 GB free, but only 34 GB of recordings left) began deleting the fresh scoring set at 17:00;
 stopped after 65 old recordings (all PBS-verified). recsync now never prunes recordings after the scoring cut-off
 (`--keep-after`), prunes below 45 GB and frees 10 GB at most.
+- 14d fresh scoring (accepted of 3 SWE / chat / German; chat position 1): 11.3M 0.30 / 0.48 / 0.39, 0.35; 15.0M
+  0.35 / 0.52 / 0.41, 0.37; 18.8M 0.37 / 0.54 / 0.43, 0.39. In training on GLM text position 1 is at 0.47-0.49: about
+  0.1 of the gap is GLM vs Kolibri's own replies.
+- 14e (user: yes, mix the recordings in now; tune as needed): resumed from 14d step 10,000 (22.6M tokens). Recordings
+  mixed at 30 % of steps while they last: saved before 2026-10-05 09:55 (the scoring set stays out), not the live
+  held-out, SWE 2 passes, chat 3 = 1,567 windows, 1.39M SWE + 0.38M chat rows. Teacher from the recorded layer-49
+  state through Kolibri's final norm and head (= Kolibri's top-1 on 98.9 % of rows checked), so recordings train on
+  the same full 32k KL as GLM, without a prefill. 1,024 anchors per window instead of 512: about 12-15 % slower
+  (about 1,140 vs 1,300 tok/s with recordings in) for twice the training rows per prefill.

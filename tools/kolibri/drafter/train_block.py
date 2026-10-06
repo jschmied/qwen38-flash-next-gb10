@@ -36,6 +36,50 @@ def save(dr: BlockDrafter, step: int, seen: int, out: Path) -> None:
     (out / "drafter.pt.tmp").rename(out / "drafter.pt")
 
 
+def rec_windows(a, dims: int) -> list:
+    """(run, first row) for every window of the training recordings: saved before --rec-before, not the live held-out
+    (train_rec.py's every-10th), each window repeated by its passes (SWE agent sessions fewer: they repeat repos)."""
+
+    import zlib
+
+    from tokenizers import Tokenizer
+    from train_rec import recordings
+
+    cut = time.mktime(time.strptime(a.rec_before, "%Y-%m-%d %H:%M"))
+    tk = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
+    items, rows = [], {"swe": 0, "chat": 0}
+    for run in recordings(a.rec):
+        if Path(run["name"] + ".json").stat().st_mtime > cut or zlib.crc32(Path(run["name"]).name.encode()) % 10 == 0:
+            continue
+        if run["taps"] != train_mt.TAPS or run["st"].shape[1] != len(train_mt.TAPS) * dims:
+            continue
+        text = tk.decode([int(t) for t in run["tok"][:2000]])
+        kind = "swe" if "returncode" in text or "interact with a computer shell" in text else "chat"
+        passes = a.rec_passes_swe if kind == "swe" else a.rec_passes
+        for r0 in range(0, run["n"], a.window):
+            items += [(run, r0)] * passes
+        rows[kind] += run["n"] * passes
+    print(f"recordings: {len(items)} windows, rows with passes {rows}", flush=True)
+    return items
+
+
+def rec_batch(run: dict, r0: int, window: int, block: int, norm: torch.Tensor, dims: int):
+    """A recording window as train() takes it: tapped states, the head's normed states (the last tap is layer 49, the
+    head's input: final norm and head give Kolibri's top-1 on 98.9 % of rows), tokens, anchors whose t+2 Kolibri wrote."""
+
+    r1 = min(r0 + window, run["n"])
+    if r1 - r0 < block + 3:
+        return None
+    feats = torch.from_numpy(np.array(run["st"][r0:r1])).cuda().view(torch.bfloat16)
+    h = feats[:, -dims:].float()
+    xs = (h * torch.rsqrt(h.pow(2).mean(-1, keepdim=True) + 1e-6) * norm.float()).to(torch.bfloat16)
+    seq = torch.from_numpy(np.array(run["tok"][r0:r1], dtype=np.int64)).cuda()
+    kind = np.asarray(run["kind"][r0:r1], dtype=np.bool_)
+    cand = np.arange(0, r1 - r0 - 1 - block)
+    cand = cand[kind[cand + 2]]
+    return (feats, xs, seq, cand) if len(cand) else None
+
+
 def main() -> None:
     from tensorfold.families.kolibri1.cuda.forward import Model
     from tensorfold.families.kolibri1.cuda.weights import load as load_kolibri
@@ -62,6 +106,11 @@ def main() -> None:
     ap.add_argument("--onpolicy", action="store_true",
                     help="weight position j by Kolibri's probability of the data's tokens t+2..t+1+j (its own path)")
     ap.add_argument("--skip-tokens", type=int, default=0, help="skip the stream's first N tokens (a resumed run)")
+    ap.add_argument("--rec", nargs="*", default=[], help="recording dirs (train_rec.py's format) mixed into the stream")
+    ap.add_argument("--rec-before", default="2026-10-05 09:55", help="only recordings saved before this (after: scoring)")
+    ap.add_argument("--rec-share", type=float, default=0.3, help="share of steps from recordings while they last")
+    ap.add_argument("--rec-passes", type=int, default=2, help="uses of each chat recording window")
+    ap.add_argument("--rec-passes-swe", type=int, default=1, help="uses of each SWE recording window")
     ap.add_argument("--log", type=int, default=50)
     ap.add_argument("--save", type=int, default=500)
     a = ap.parse_args()
@@ -91,9 +140,66 @@ def main() -> None:
           f"{train_mt.TAPS}; {len(convs)} conversations ({sum(len(t) for _, t in convs) / 1e6:.2f}M tokens)", flush=True)
     d0, d1, span = (float(v) for v in a.decay.split(":")) if ":" in a.decay else (float(a.decay),) * 2 + (1.0,)
     jj = torch.arange(cfg.block, device="cuda", dtype=torch.float32)
-    rng = np.random.default_rng(0)
-    t0, step, seen, log = time.perf_counter(), 0, 0, {"kl": 0.0, "top1": 0.0, "n": 0}
+    rng, rrng = np.random.default_rng(0), np.random.default_rng(1)
+    t0, step, seen, rec_rows = time.perf_counter(), 0, 0, 0
+    log = {"kl": 0.0, "top1": 0.0, "n": 0, "rec": 0}
     skipped, total = 0, sum(len(t) for _, t in convs)
+    items = rec_windows(a, w.config.hidden) if a.rec else []
+    rrng.shuffle(items)
+
+    def train(feats, xs, seq, cand, source: str) -> None:
+        """One step on a window: feats [T, taps*D] tapped states, xs [T, D] the head's (normed) states, seq [T] tokens,
+        cand the anchor rows (window-relative) to draw from."""
+        nonlocal step, log
+        g = rng if source == "glm" else rrng
+        pick = np.sort(g.choice(cand, size=min(a.anchors, len(cand)), replace=False))
+        anchors = torch.from_numpy(pick).cuda()
+        j = torch.arange(cfg.block, device="cuda")
+        tgt_rows = anchors[:, None] + 1 + j[None]                  # Kolibri's state whose head guesses draft j
+        with torch.no_grad():
+            logp = F.log_softmax((xs[tgt_rows].reshape(-1, xs.shape[1]).to(torch.bfloat16) @ head.T).float(), -1)
+        lr = a.lr
+        if a.lr_end:
+            frac = min(1.0, seen / (a.lr_span or total))
+            lr = a.lr_end + (a.lr - a.lr_end) * 0.5 * (1 + math.cos(math.pi * frac))
+        for grp in opt.param_groups:
+            grp["lr"] = lr * min(1.0, (step + 1) / a.warmup)
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            states = dr(feats, w.embed[seq[anchors + 1]], anchors)
+        logq = F.log_softmax((states.reshape(-1, states.shape[-1]).to(torch.bfloat16) @ head.T).float(), -1)
+        kl = (logp.exp() * (logp - logq)).sum(-1).view(len(pick), cfg.block)
+        with torch.no_grad():                                      # P(Kolibri's own path = the data's t+2..t+1+j)
+            nxt = slot[seq[tgt_rows[:, :-1] + 1]]
+            lp = logp.view(len(pick), cfg.block, -1)[:, :-1].gather(-1, nxt.clamp(min=0)[..., None])[..., 0]
+            lp = torch.where(nxt >= 0, lp, torch.full_like(lp, -1e9))
+            path = torch.cat([torch.ones_like(lp[:, :1]), lp.cumsum(-1).exp()], 1)
+        weights = (d0 + (d1 - d0) * min(1.0, seen / span)) ** jj
+        m = weights * (path if a.onpolicy else torch.ones_like(path))
+        loss = (kl * m).sum() / m.sum()
+        opt.zero_grad(set_to_none=True)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(dr.parameters(), 0.5)
+        opt.step()
+        step += 1
+        with torch.no_grad():
+            log["top1"] += float((logq.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)
+                                  == logp.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)).float().mean())
+        log["kl"] += float(loss.detach())
+        log["path"] = log.get("path", 0) + path.mean(0)
+        log["n"] += 1
+        log["rec"] += source == "rec"
+        if step % a.log == 0:
+            k, dt = log["n"], time.perf_counter() - t0
+            print(json.dumps({"step": step, "tokens": seen, "tok_s": round((seen - skipped) / dt),
+                              "kl": round(log["kl"] / k, 4), "top1": round(log["top1"] / k, 3),
+                              "path": [round(float(v), 3) for v in log["path"] / k], "rec": log["rec"],
+                              "rec_rows": rec_rows, "rec_left": len(items), "decay": round(float(weights[1]), 3),
+                              "lr": f"{opt.param_groups[0]['lr']:.2e}", "h": round(dt / 3600, 2)}), flush=True)
+            log = {"kl": 0.0, "top1": 0.0, "n": 0, "rec": 0}
+        if step % a.save == 0:
+            save(dr, step, seen, out)
+
+    credit = 0.0
     for ci in rng.permutation(len(convs)):
         name, toks = convs[ci]
         if skipped < a.skip_tokens:                       # same seed, same order: the resumed run's first tokens
@@ -118,50 +224,15 @@ def main() -> None:
                 cand = cand[amask[cand + 2]]
                 if not len(cand):
                     continue
-            pick = np.sort(rng.choice(cand, size=min(a.anchors, len(cand)), replace=False))
-            anchors = torch.from_numpy(pick).cuda()
-            j = torch.arange(cfg.block, device="cuda")
-            tgt_rows = anchors[:, None] + 1 + j[None]              # Kolibri's state whose head guesses draft j
-            with torch.no_grad():
-                logp = F.log_softmax((x[tgt_rows].reshape(-1, x.shape[1]).to(torch.bfloat16) @ head.T).float(), -1)
-            lr = a.lr
-            if a.lr_end:
-                frac = min(1.0, seen / (a.lr_span or total))
-                lr = a.lr_end + (a.lr - a.lr_end) * 0.5 * (1 + math.cos(math.pi * frac))
-            for g in opt.param_groups:
-                g["lr"] = lr * min(1.0, (step + 1) / a.warmup)
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                states = dr(taps[s0:s1], w.embed[seq[anchors + 1]], anchors - s0)
-            logq = F.log_softmax((states.reshape(-1, states.shape[-1]).to(torch.bfloat16) @ head.T).float(), -1)
-            kl = (logp.exp() * (logp - logq)).sum(-1).view(len(pick), cfg.block)
-            with torch.no_grad():                         # P(Kolibri's own path = the data's tokens t+2..t+1+j)
-                nxt = slot[seq[tgt_rows[:, :-1] + 1]]       # data token after row t+1+i, i < block-1
-                lp = logp.view(len(pick), cfg.block, -1)[:, :-1].gather(-1, nxt.clamp(min=0)[..., None])[..., 0]
-                lp = torch.where(nxt >= 0, lp, torch.full_like(lp, -1e9))
-                path = torch.cat([torch.ones_like(lp[:, :1]), lp.cumsum(-1).exp()], 1)       # [A, block]
-            weights = (d0 + (d1 - d0) * min(1.0, seen / span)) ** jj
-            m = weights * (path if a.onpolicy else torch.ones_like(path))
-            loss = (kl * m).sum() / m.sum()
-            opt.zero_grad(set_to_none=True)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(dr.parameters(), 0.5)
-            opt.step()
-            step += 1
-            with torch.no_grad():
-                log["top1"] += float((logq.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)
-                                      == logp.view(len(pick), cfg.block, -1)[:, 0].argmax(-1)).float().mean())
-            log["kl"] += float(loss.detach())
-            log["path"] = log.get("path", 0) + path.mean(0)
-            log["n"] += 1
-            if step % a.log == 0:
-                k, dt = log["n"], time.perf_counter() - t0
-                print(json.dumps({"step": step, "tokens": seen, "tok_s": round((seen - skipped) / dt), "kl": round(log["kl"] / k, 4),
-                                  "top1": round(log["top1"] / k, 3),
-                                  "path": [round(float(v), 3) for v in log["path"] / k],
-                                  "decay": round(float(weights[1]), 3), "lr": f"{opt.param_groups[0]['lr']:.2e}", "h": round(dt / 3600, 2)}), flush=True)
-                log = {"kl": 0.0, "top1": 0.0, "n": 0}
-            if step % a.save == 0:
-                save(dr, step, seen, out)
+            train(taps[s0:s1], x[s0:s1], seq[s0:s1], cand - s0, "glm")
+            credit += a.rec_share / (1 - a.rec_share) if items else 0.0
+            while credit >= 1 and items:                  # Kolibri's own replies, interleaved at --rec-share of steps
+                credit -= 1
+                run, r0 = items.pop()
+                b = rec_batch(run, r0, a.window, cfg.block, w.norm, w.config.hidden)
+                if b is not None:
+                    rec_rows += b[0].shape[0]
+                    train(*b, "rec")
     save(dr, step, seen, out)
     print(json.dumps({"done": step, "tokens": seen}), flush=True)
 
