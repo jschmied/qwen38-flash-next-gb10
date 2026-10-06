@@ -341,6 +341,18 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## DIRECTION (2026-10-06, user: "we concentrate on our own training and wait for zig engine")
+
+TensorFold's Python engine is frozen (ashhart on #211, 2026-10-06): no Python PR merges, the native Zig engine
+(`zig-preview`) is the future; Zig CUDA serves only Nemotron from the command line so far.
+- Engine work on our fork stops: fused drafter step, adaptive depth, FP8 prefill, decode kernels, the drafter PR. The
+  fork (`kolibri1-drafter`) stays as our measuring instrument (spec bench) and our own serving.
+- Focus: drafter training. Data scaling with ~15-20 % German in every batch (run 12c, then glm4 ...), SWE kept by a
+  share of agent text + a repo-disjoint SWE dev slice, later wider FFN / 48k vocab.
+- Block drafter (arm E) gains weight: Zig already has one-pass drafting (`--block-lanes`) waiting for trained rows; a
+  Kolibri block drafter would drop in once Kolibri runs on Zig.
+- x86 SWE run stays paused.
+
 ## Run 12 stopped, run 12c instead (2026-10-06 05:40)
 
 Run 12 (run 11 final + glm3, no German) vs run 11 final, recordings after 09:55, 32k: SWE 1.383 -> 1.329 / 1.349
