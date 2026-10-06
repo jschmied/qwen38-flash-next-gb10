@@ -1721,6 +1721,10 @@ wait on one ~100 GB pull, and they share one serve.
   tok/s vs ~95 no-drafts; 4 at once 34-47 vs 23.6 each; Zig 9.75-9.91 ms/token serial vs Python 9.92-10.03. Gap found:
   a plain `zig build native` (no -Dnvcc) builds a binary with no kernels that fails at the first launch. Not run: long
   prompts, cancel, sampling, 16 prompts, two Sparks.
+  **MERGED 2026-10-06 18:42Z** into `zig-flashnext` as our own commit 59e77e8f4 (merge 7742ddd3b). ashhart: "the
+  registry is the right shape, and it has held up. We built a dozen commits on your commit unchanged, and a lone-stream
+  driver, graph capture per draw mode and shared rounds all fit without changing it"; their extensions follow later
+  with credit on the parts touching our files.
 - **TensorFold #444 (not ours; Yuepixel, 2026-10-06): our #283 ring ported onto v0.6.5 by a user.** Yuepixel runs
   Qwen3.8-Flash-Next EXL3 3.05bpw on v0.6.5 + #212 rebased + a prompt-lookup drafter combined with MTP (byte-exact
   receipts), and at 17:33Z folded in our closed PR #283 (two-chunk ring by width, gate|up < 4 bits) as patch 0007,
