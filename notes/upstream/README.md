@@ -1703,3 +1703,10 @@ wait on one ~100 GB pull, and they share one serve.
   README model card with results, recipe, data + licences incl. the alpaca-gpt4_de note). Commit 6430e5dc. Verified:
   release dir loads to the same chain as the training checkpoint (TF edd6aea adds the directory loader). Public only on
   the user's go. Card copy: `notes/kolibri-drafter-model-card.md`.
+- **TensorFold #443 (draft, RFC): zig cuda native server + CUDA family registry** (2026-10-06, user: "do the PR as RFC"):
+  branch `jschmied/TensorFold:zig-cuda-native` (59e77e8, base zig-flashnext 88c424e). Generic `zig/src/native/cuda.zig`
+  (device, lane round loop, LaneHost, context made current on the lane thread), Nemotron as first registry entry
+  (`families/nemotron/cuda_native.zig`), `zig build native` on Linux, core takes the tokenizer as a module, `auth.zig`
+  statx on Linux. Builds + host tests pass on GB10, `capabilities` reports cuda/nvidia-sm121/nemotron_h; end-to-end
+  serving + exactness receipts NOT yet (need kernel capture + checkpoint). Draft `tf-zig-cuda-native-rfc.md`.
+  https://github.com/ashhart/TensorFold/pull/443
