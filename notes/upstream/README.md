@@ -1721,3 +1721,9 @@ wait on one ~100 GB pull, and they share one serve.
   tok/s vs ~95 no-drafts; 4 at once 34-47 vs 23.6 each; Zig 9.75-9.91 ms/token serial vs Python 9.92-10.03. Gap found:
   a plain `zig build native` (no -Dnvcc) builds a binary with no kernels that fails at the first launch. Not run: long
   prompts, cancel, sampling, 16 prompts, two Sparks.
+- **TensorFold #444 (not ours; Yuepixel, 2026-10-06): our #283 ring ported onto v0.6.5 by a user.** Yuepixel runs
+  Qwen3.8-Flash-Next EXL3 3.05bpw on v0.6.5 + #212 rebased + a prompt-lookup drafter combined with MTP (byte-exact
+  receipts), and at 17:33Z folded in our closed PR #283 (two-chunk ring by width, gate|up < 4 bits) as patch 0007,
+  credited "design by @jschmied": cold prefill 1385-1549 -> 1696-1777 t/s (+13-15 %), 256k needle TTFT 199 -> 168 s,
+  token_sha unchanged on 7 fixtures, #212's 15 CUDA prompt tests pass. Independent confirmation of #283's gain on the
+  same box class. Repo: github.com/Yuepixel/tensorfold-qwen38-exl3-lookup. No reply posted.
