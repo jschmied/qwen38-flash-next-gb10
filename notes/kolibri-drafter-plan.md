@@ -341,6 +341,21 @@ The fresh slices have chosen between runs 9/10/11, so they are development data 
   3.1-3.6) but 5-9x our params per token on a compute-bound box, and TandemLLM's 5-layer Kolibri drafter failed at
   6.6M tokens. Candidate arm E (block 4, 3-5 layers, 5 taps, from scratch) after this A/B.
 
+## Width A/B: no effect -> capacity is not the limit (2026-10-06 14:20)
+
+Run 13w = run 11 final with FFN grown 4096 -> 10240 (loss-free, 90.4M -> 137.6M) on run 12c's exact data and order;
+run 12c is the narrow control. Fresh (after 09:55, 32k), 13w vs 12c at equal steps:
+
+| step (tokens) | SWE | chat | German |
+|---|---|---|---|
+| 4,000 (6M) | 1.354 vs 1.327 (+2.0 %) | 1.229 vs 1.235 (-0.5 %) | 0.948 vs 0.950 |
+| 8,000 (12M) | 1.330 vs 1.345 (-1.1 %) | 1.239 vs 1.237 | 0.948 vs 0.943 |
+| 16,500 (25M) | 1.355 vs 1.371 (-1.2 %) | 1.248 vs 1.247 | 0.950 vs 0.947 |
+
+All within noise, per step too. Stopped at step ~17,400 (user: "stop, then block drafter"). The 1-layer chain drafter is
+not capacity-limited (dense or a layer-49 MoE copy would not help); run 12c's data-scaling also flattened (+1 % over 33M).
+Next: block drafter (DFlash-style, parallel block, target features injected into every layer).
+
 ## DIRECTION (2026-10-06, user: "we concentrate on our own training and wait for zig engine")
 
 TensorFold's Python engine is frozen (ashhart on #211, 2026-10-06): no Python PR merges, the native Zig engine

@@ -47,6 +47,24 @@ def target_pass(model, seq: list[int], chunk: int = 8192):
     return x, taps, picks
 
 
+def grow_ffn(old: Drafter, width: int) -> Drafter:
+    """The drafter with each block's FFN widened to ``width``: old units copied, new ones with zero output weights, so the
+    function is unchanged at start; the new input rows keep Drafter's fresh init."""
+
+    new = Drafter(DraftConfig(**{**old.cfg.__dict__, "ffn": width})).to(next(old.parameters()).device)
+    keep = {k: v for k, v in old.state_dict().items() if not k.endswith(("gate.weight", "up.weight", "down.weight"))}
+    missing, unexpected = new.load_state_dict(keep, strict=False)
+    assert not unexpected and all(m.endswith(("gate.weight", "up.weight", "down.weight")) for m in missing), missing
+    f = old.cfg.ffn
+    with torch.no_grad():
+        for a, b in zip(old.blocks, new.blocks):
+            b.gate.weight[:f].copy_(a.gate.weight)
+            b.up.weight[:f].copy_(a.up.weight)
+            b.down.weight.zero_()
+            b.down.weight[:, :f].copy_(a.down.weight)
+    return new
+
+
 def conversations(prefix: str):
     """[(name, token array)] from data_swe.py's PREFIX.bin and PREFIX.idx.json."""
 
@@ -195,6 +213,7 @@ def main() -> None:
     ap.add_argument("--l1w", type=float, default=1.0, help="weight of the state L1 (l1ce, kll1)")
     ap.add_argument("--draft-vocab", default="", help="JSON token ids: losses (and top-1) over this slice only")
     ap.add_argument("--max-tokens", type=int, default=0, help="stop after this many training tokens (0: all)")
+    ap.add_argument("--grow-ffn", type=int, default=0, help="widen the --init drafter's FFN to this width, loss-free")
     ap.add_argument("--plain-ce", action="store_true",
                     help="cross-entropy without chunked recompute (same loss, ~30 %% faster step, ~5 GB more memory)")
     a = ap.parse_args()
@@ -229,6 +248,9 @@ def main() -> None:
             dr = dr.cuda()
     else:
         dr = Drafter(DraftConfig(hidden=w.config.hidden, layers=a.layers or 1, ffn=a.ffn, taps=len(TAPS))).cuda()
+    if a.init and a.grow_ffn > dr.cfg.ffn:
+        dr = grow_ffn(dr, a.grow_ffn).cuda()
+        print(f"FFN grown to {a.grow_ffn}: {params(dr) / 1e6:.1f}M trainable", flush=True)
     cfg = dr.cfg
     if not a.init:
         with torch.no_grad():                             # the target's states carry its final norm's scale (~43)
