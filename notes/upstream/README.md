@@ -1715,3 +1715,9 @@ wait on one ~100 GB pull, and they share one serve.
   family). They add --device/--segments, memory facts with fail-closed admission, the #291 next-chunk cancel, /metrics,
   exactness receipts vs "draft": false and the Python CUDA engine. statx in server/auth.zig gets its own review. #443
   closes when it lands, with credit. No reply posted (needs a go).
+  **Third-party receipts (2026-10-06 14:22Z, BHCC2025, issuecomment-6018344798):** #443 at 59e77e8 on a GB10 with
+  Nemotron 3.5 Lightning 30B-A3B MLX-4bit: server exactness drafted == --no-drafts and concurrent == alone, 4/4 in all
+  four cells; gate.py Zig serial == Python serial 4/4, Zig drafted == Python serial 4/4. Speed alone drafted 117-156
+  tok/s vs ~95 no-drafts; 4 at once 34-47 vs 23.6 each; Zig 9.75-9.91 ms/token serial vs Python 9.92-10.03. Gap found:
+  a plain `zig build native` (no -Dnvcc) builds a binary with no kernels that fails at the first launch. Not run: long
+  prompts, cancel, sampling, 16 prompts, two Sparks.
