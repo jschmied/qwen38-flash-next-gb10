@@ -1731,3 +1731,10 @@ wait on one ~100 GB pull, and they share one serve.
   credited "design by @jschmied": cold prefill 1385-1549 -> 1696-1777 t/s (+13-15 %), 256k needle TTFT 199 -> 168 s,
   token_sha unchanged on 7 fixtures, #212's 15 CUDA prompt tests pass. Independent confirmation of #283's gain on the
   same box class. Repo: github.com/Yuepixel/tensorfold-qwen38-exl3-lookup. No reply posted.
+- **TensorFold #455 (draft PR): lanes — an external drafter behind any target backend** (2026-10-06 ~21:05, user: "yes
+  post", drafter interface PR): `jschmied/TensorFold:zig-drafter-interface` (d3fe93f + 1ee1b17 on zig-flashnext
+  7742ddd = #443 merged). `Backend.features` (optional), `lanes/drafter.zig` vtable, `lanes/drafted.zig` (target +
+  drafter = one Backend), fake target features, `drafted_test.zig` (drafted == one-token greedy/sampled/shared; drafts
+  land far above chance, a one-row shift fails both; restored prompt via prompt reuse). References #312 (Laguna DFlash)
+  and our HF drafter. Two design questions (features vs inside verify; host-token copy vs device path). Draft
+  `notes/upstream/tf-zig-drafter-interface.md`. https://github.com/ashhart/TensorFold/pull/455
