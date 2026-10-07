@@ -733,3 +733,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   core safetensors reads F8_E4M3 (ada7ea3); `names.zig` maps the released checkpoint's 116,303 tensors, none left
   over (d9579da); `pack.zig` packs layer 0 byte-identical to weights.load (8a7965b; oracle kolibri_layer.py).
   Receipt `notes/data/kolibri/nvfp4-experts-layer0-receipt.txt`, runner `gpupause4.sh.txt`.
+- 19:48 run 16d stopped at its step 12,500 save (resume.pt) for generation batch 3 (user: "do generation batch"):
+  `gen3.sh.txt`, chat 2 + German 2 workers for 12 h into rec/train2, SWE ML105 on x86. Before it, the Zig device
+  loader (`kolibri1-weights` ca43e63, weights.zig) read layer 0's 15 device arrays back equal to weights.load's
+  (`notes/data/kolibri/kolibri-device-layer0-receipt.txt`).

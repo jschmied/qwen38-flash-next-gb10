@@ -1,0 +1,12 @@
+[19:48:12] step 12500 kept, resume.pt 19:46:28; stopping 16d
+PASS kolibri1 weights: layer 0's 15 device arrays equal weights.load's (385 experts, qkv [7168, 2560])
+exit 0
+[19:48:19] starting generation batch 3
+Running as unit: fx-kolibri-serve.service; invocation ID: a5927b2d5eef4f14a691561076d392b8
+[19:49:09] server: {"object": "list", "data": [{"id": "kolibri-1", "object": "model", "owned_by": "
+Running as unit: fx-kolibri-genchat.service; invocation ID: 1e8dd8e682874fc39b490f3d21ef7681
+Running as unit: fx-kolibri-genchat-de.service; invocation ID: f8910475115d4a9488cdf47a4886f82f
+Running as unit: kolibri-swe-ml105.service; invocation ID: 4da96c5b260f45c5877aab7a6d3696a9
+[19:49:10] ML105 resumed on x86
+[19:49:10] == GEN3 STARTED ==
+== GPU PAUSE DONE ==

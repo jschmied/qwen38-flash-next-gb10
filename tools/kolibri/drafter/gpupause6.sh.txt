@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Root. At run 16d's step 12,500 save: stop it, Kolibri 1's device weights (layer 0) against weights.load, then start
+# generation batch 3 (gen3.sh) instead of resuming; resume.pt continues 16d later.
+D=/home/jschmied/kolibri-drafter; Z=/home/jschmied/git/tf-kolibri-zig
+U(){ runuser -u jschmied -- env HOME=/home/jschmied "$@"; }
+until [ -e $D/out16c/drafter-step12500.pt ]; do sleep 30; done
+sleep 30
+echo "[$(date +%H:%M:%S)] step 12500 kept, resume.pt $(stat -c %y $D/out16c/resume.pt | cut -c12-19); stopping 16d"
+systemctl stop fx-kolibri-drafter-run16d
+while systemctl is-active -q fx-kolibri-drafter-run16d; do sleep 5; done
+U timeout 900 $Z/zig-out/bin/tf-cuda-test kolibri-layer0 /opt/llm/models/kolibri-1 $D/kolfx/layer0; echo "exit $?"
+echo "[$(date +%H:%M:%S)] starting generation batch 3"
+bash $D/gen3.sh
+echo "== GPU PAUSE DONE =="
