@@ -21,7 +21,8 @@ This PR adds the interface in the lane core only. No family changes; Nemotron's 
   A target without the hook is built with its taps.
 - `drafter.zig` (new): `Drafter` vtable `taps`, `facts`, `open`, `absorb`, `hold`, `held`, `release`. Every call takes a
   round's streams together (`[]Absorb`, `[]Hold`, one `held` readback), so a GPU drafter runs them as one batch.
-  `Facts` carries the drafter's own depth, step cost, prior, plain guard and batching.
+  `Facts` carries the drafter's own depth, step cost, prior, plain guard, batching and per-stream device bytes
+  (`Drafted.streamBytes(target)` sums them for the native server's memory admission).
 - `drafted.zig` (new): `Drafted`, a target backend plus a drafter as one `Backend`, so the round loop is unchanged.
   - A stream with drafts off never reaches the drafter: `"draft": false` on the wrapped backend is the target alone.
   - Prefill absorbs the prompt rows the pass computed; each round absorbs the kept rows, then holds drafts; held drafts

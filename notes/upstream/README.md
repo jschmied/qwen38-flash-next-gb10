@@ -1747,3 +1747,4 @@ wait on one ~100 GB pull, and they share one serve.
   streams, shared rounds; native/cuda.zig +348 lines), auth.zig statx kept. Contributors list includes @jschmied.
   #455 rebased onto 041d14a (fake.zig moved upstream), plus 8941933: comments within 120 columns (lean_check now also
   checks width). `direct_io` test fails on plain upstream too on this box (O_DIRECT on the build filesystem), not ours.
+  2026-10-07 ~15:10: added Drafter.Facts.stream_bytes + Drafted.streamBytes (drafter memory in the 1.0 server's admission), commit on the PR branch; PR body updated, no comment.
