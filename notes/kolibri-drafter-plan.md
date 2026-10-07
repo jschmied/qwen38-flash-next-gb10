@@ -741,3 +741,6 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   15 GB free. User "yes": local rec/old (27 GB), out15b, out16b deleted after all 11,609 files matched PBS by sha256
   (`/mnt/bulk/gb10/kolibri-drafter`; recsync's rsync has no --delete). 87 GB free. **Restore rec/old from PBS before
   run 16d resumes** (its --rec-all reads it; `restore_old.sh.txt`).
+- 20:55 batch 3's server started with --parallel 6 (gen2.sh never got batch 2's 07:40 fix): 7 clients on 6 slots,
+  prompt-cache hits 135 of 2.82M tokens in 40 min, ~90k-token prefills per SWE turn. Restarted with --parallel 8:
+  4.00M of 4.22M prompt tokens cached (95 %) over the next 8 min; gen2/gen3 runners now say 8.

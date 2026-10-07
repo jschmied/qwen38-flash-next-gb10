@@ -10,7 +10,7 @@ log(){ echo "[$(date +%H:%M:%S)] $*"; }
 mkdir -p $D/rec/train2; chown jschmied: $D/rec/train2
 systemd-run --unit=fx-kolibri-serve --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied \
   -E TENSORFOLD_KOLIBRI_RECORD=$D/rec/train2 -E TENSORFOLD_KOLIBRI_RECORD_TAPS=44,47,49 \
-  $PY -c "import sys; from tensorfold.cli import main; sys.argv=['tensorfold','serve','/opt/llm/models/kolibri-1','--name','kolibri-1','--host','127.0.0.1','--port','8093','--parallel','6','--context','131072']; sys.exit(main())"
+  $PY -c "import sys; from tensorfold.cli import main; sys.argv=['tensorfold','serve','/opt/llm/models/kolibri-1','--name','kolibri-1','--host','127.0.0.1','--port','8093','--parallel','8','--context','131072']; sys.exit(main())"
 for i in $(seq 1 90); do curl -s -m 3 http://127.0.0.1:8093/v1/models | grep -q kolibri && break; sleep 10; done
 log "server: $(curl -s -m 3 http://127.0.0.1:8093/v1/models | head -c 80)"
 systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $U $D/own_chat.jsonl $C/HuggingFaceH4__ultrachat_200k__train_sft-00000-of-00003-a3ecf92756993583.parquet $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json $C/bigcode__self-oss-instruct-sc2-exec-filter-50k__train-00000-of-00001.parquet --workers 2 --hours 12 --max-rows 1400 --skip $D/own_chat_de.jsonl >> $D/genchat.log 2>&1"
