@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Root. At run 16d's step 7,500 save: stop it, run the Zig FP8 experts oracle test, resume 16d from resume.pt.
+D=/home/jschmied/kolibri-drafter; Z=/home/jschmied/git/tf-fp8x; PY=/opt/llm/runtime/tf-venv/bin/python
+U(){ runuser -u jschmied -- env PYTHONPATH=/home/jschmied/git/tf-kolibri/src HOME=/home/jschmied "$@"; }
+until [ -e $D/out16c/drafter-step7500.pt ]; do sleep 30; done
+sleep 30
+echo "[$(date +%H:%M:%S)] step 7500 kept, resume.pt $(stat -c %y $D/out16c/resume.pt | cut -c12-19); stopping 16d"
+systemctl stop fx-kolibri-drafter-run16d
+while systemctl is-active -q fx-kolibri-drafter-run16d; do sleep 5; done
+out=$D/fp8fx/experts-e33
+U timeout 1800 $PY $Z/zig/tests/cuda/oracle/fp8_experts.py $out 2>&1 | grep -v Warning
+U timeout 600 $Z/zig-out/bin/tf-cuda-test fp8-experts $out; echo "exit $?"
+echo "[$(date +%H:%M:%S)] tests done; resuming 16d"
+systemd-run --unit=fx-kolibri-drafter-run16d --collect -E HOME=/root bash -c "bash $D/run16d.sh >> $D/run16d.log 2>&1"
+echo "== GPU PAUSE DONE =="

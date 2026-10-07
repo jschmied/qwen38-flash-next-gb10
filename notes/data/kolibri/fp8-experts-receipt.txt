@@ -1,0 +1,11 @@
+[18:37:31] step 7500 kept, resume.pt 18:35:27; stopping 16d
+PASS fp8 experts: 33 x [512, 2560] gate-up, down and scales packed as make() packs them
+PASS fp8 experts: 1 rows x 7 slots (decode, 7 items) plan, gate-up and down equal Python's bytes
+PASS fp8 experts: 3 rows x 7 slots (decode, 14 items) plan, gate-up and down equal Python's bytes
+PASS fp8 experts: 300 rows x 7 slots (prompt, 40 items) plan, gate-up and down equal Python's bytes
+exit 0
+[18:37:37] tests done; resuming 16d
+Running as unit: fx-kolibri-drafter-run16d.service; invocation ID: 0aa70ca6ba6a4d02bda6cd66fb115047
+== GPU PAUSE DONE ==
+
+[exited with code 0]

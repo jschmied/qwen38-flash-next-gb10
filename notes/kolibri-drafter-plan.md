@@ -721,3 +721,9 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   prompt GEMM 17/300/1000, [5120, 6144] and [12288, 5120]), all byte-identical to the Python kernels
   (`notes/data/kolibri/qmmf-nvfp4-receipt.txt`). Training resumed whole as 16d from step 2,500.
 - 16c step 2,500 (≈48.9M): 1.463 / 1.092 / 0.858; 16d step 5,000 (≈51M): 1.468 / 1.095 / 0.864 (accepted_4 1.660 / 1.163 / 0.915). Slow gains; balanced recordings 6,822 windows left.
+- FP8 experts (PR 2 of #481's plan): branch `jschmied/TensorFold:cuda-fp8-experts` (6ab43be, stacked on #482, not
+  posted). `grouped.zig` = experts.route's plan (one block to 1,024 pairs, else rank / offsets / scatter);
+  `fp8_experts.cu` = fp8/experts.cu's device code, six instances; `fp8_experts.zig` = packing, kernel and grid as the
+  Python host. 18:37 GPU pause at 16d step 7,500 (6 s): packing + plan + gate-up + down byte-identical for decode 1 / 3
+  rows and prompt 300 rows (2,100 pairs, wide plan), E 33, [512, 2560] (`notes/data/kolibri/fp8-experts-receipt.txt`,
+  runner `gpupause2.sh.txt`). Training resumed from resume.pt.
