@@ -670,3 +670,9 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   of generated rows are covered as first drafts. If disk still falls under 45 GB, generation stops early (run 16
   starts on its own).
 - 06:55 disk: still ~13 GB/h (SWE 7x the disk of chat per reply token). out11 (34 GB, run 11 step checkpoints) deleted after a sha256 match against PBS (99 files; its final == drafter-run11-final.pt, kept); rectrim keep 1,024 -> 512 for new recordings.
+- 07:40 prompt-cache misses on SWE turns: our `decoder._resume` resumes from a FREE slot that kept the prompt, else
+  the oldest; 7 clients (3 SWE agents + 2 chat + 2 German) on 6 slots kept the queue full, so a chat request took the
+  slot an agent kept while it ran a tool (related symptom: TensorFold #459, Python Flash Next, no fix there). Chat and
+  German down to 1 worker each: 2 of the next 6 SWE turns hit (72K of 74K cached, ~2K rows recorded); the misses
+  were 109-111K prompts. Server restarted with --parallel 8 (8 x 131072, 25.4 GiB of caches, 14 GB available after;
+  3.2 GiB a slot, 10 would leave ~7 GB), ML105 stopped around the restart and resumed.
