@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run16b (watchdog "window"). Run 16b = run 16 with every Kolibri recording that fits, balanced (user: "use for training what fits and balance carefully"): rec/live pre-cutoff + rec/train2 + rec/old (the 1,656 restored, trimmed), 40 % of steps, by class SWE 0.5 / English chat 0.3 / German 0.2 (passes SWE 1, chat 3, German 3), recordings stopping when a class runs out; overall German ~19 %, SWE ~20 % of steps. Run 16 = run 15c step 27,500 (position 0 = run 11's chain,
+# frozen) + a DSpark-style predecessor head (rank 256, 2.0M, identity at start: position j>=1 corrected by the token
+# before it; trained on Kolibri's argmax there, scored sequentially on the drafter's own previous draft), and Kolibri's
+# own recordings at 30 %: rec/live before 2026-10-05 09:55 plus all of rec/train2 (generation batch 2).
+# Waits for gen2's chat/German workers to finish (--hours 8), then stops the server and ML105 (x86) first.
+# Hypothesis: positions 2-4 rise above 15c's 0.36 / 0.23 / 0.15 (chat) because each now knows its predecessor;
+# chat accepted_3 above 15c's 1.04 by step 2,500. Identity head scores exactly 15c (checked: chat 1.0384).
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+while systemctl is-active -q fx-kolibri-genchat || systemctl is-active -q fx-kolibri-genchat-de || systemctl is-active -q fx-kolibri-restore; do sleep 120; done
+grep -q "RESTORE DONE" $D/restore_old.log || log "WARNING: restore did not finish: $(tail -1 $D/restore_old.log)"
+log "generation batch 2 done: $(find $D/rec/train2 -name '*.json' | wc -l) recordings"
+ssh -n -o BatchMode=yes -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8 \
+  'systemctl stop kolibri-swe-ml105; echo "[$(date +%H:%M:%S)] STOPPED for drafter run 16" >> /root/fullrun-kolibri-ml105.log'
+systemctl stop fx-kolibri-serve; sleep 60
+systemctl stop fx-kolibri-keepckpt
+mkdir -p $D/out16b; chown jschmied: $D/out16b
+systemd-run --unit=fx-kolibri-keepckpt --collect --uid=jschmied bash -c "bash $D/keepckpt.sh $D/out16b >> $D/keepckpt.log 2>&1"
+log "run 16: predecessor head + Kolibri recordings"
+U $PY $T/train_block.py /opt/llm/models/kolibri-1 $D/out16b --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+  $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 2500 --init $D/out15b/drafter-step27500.pt --pred-rank 256 \
+  --skip-tokens 43496902 --rec $D/rec/live --rec-all $D/rec/train2 $D/rec/old --rec-share 0.4 --rec-mix swe=0.5,chat=0.3,de=0.2 --rec-cap swe=1,chat=3,de=3 \
+  --anchors 1024 --onpolicy --assistant-only --decay 0.8 --lr 4e-4 --lr-end 4e-5 --warmup 300 > $D/train16b.log 2>&1
+log "train rc=$?"
+log "== RUN16B DONE =="

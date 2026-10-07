@@ -47,7 +47,10 @@ def rec_windows(a, dims: int) -> list:
 
     cut = time.mktime(time.strptime(a.rec_before, "%Y-%m-%d %H:%M"))
     tk = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
-    items, rows = [], {"swe": 0, "chat": 0}
+    import re
+
+    caps = dict((k, int(v)) for k, v in (x.split("=") for x in a.rec_cap.split(","))) if a.rec_cap else {}
+    items, rows = [], {"swe": 0, "chat": 0, "de": 0}
     whole = {str(Path(d).resolve()) for d in a.rec_all}
     for run in recordings(list(a.rec) + list(a.rec_all)):
         in_whole = any(str(Path(run["name"]).resolve()).startswith(w + "/") for w in whole)
@@ -58,17 +61,43 @@ def rec_windows(a, dims: int) -> list:
             continue
         text = tk.decode([int(t) for t in run["tok"][:2000]])
         kind = "swe" if "returncode" in text or "interact with a computer shell" in text else "chat"
-        passes = a.rec_passes_swe if kind == "swe" else a.rec_passes
+        if kind == "chat":                                  # train_rec.py's German test
+            words = re.findall(r"[a-zäöüß]+", text.lower())
+            de = sum(x in ("und", "nicht", "ist", "der", "die", "das", "ich", "sie") for x in words)
+            en = sum(x in ("and", "not", "is", "the", "you", "that") for x in words)
+            kind = "de" if de > 1.2 * en and de >= 10 else "chat"
+        passes = caps.get(kind, a.rec_passes_swe if kind == "swe" else a.rec_passes)
         # windows that end at the last generated row and step back from there, so every reply gets the most context
         gen = np.flatnonzero(np.asarray(run["kind"]))
         r1 = run["n"]                                   # the last window ends at the recording's end
         while len(gen) and r1 > gen[0]:
             r0 = max(0, r1 - a.window)
-            items += [(run, r0)] * passes
+            items += [(run, r0, kind)] * passes
             r1 = r0
         rows[kind] += run["n"] * passes
-    print(f"recordings: {len(items)} windows, rows with passes {rows}", flush=True)
+    print(f"recordings: {len(items)} windows ({ {k: sum(1 for i in items if i[2] == k) for k in rows} }), "
+          f"rows with passes {rows}", flush=True)
     return items
+
+
+def pick(items: list, mix: dict, done: dict) -> tuple:
+    """Pop the next recording window: from the class furthest below its share in `mix`, else the last of the shuffled
+    list; `done` counts windows taken by class. With a mix, None once any of its classes has run out (the rest would
+    skew the balance), and the caller stops taking recordings."""
+
+    left = {c for _, _, c in items if mix.get(c, 0) > 0} if mix else set()
+    if mix and left != {c for c, v in mix.items() if v > 0}:
+        return None
+    if left:
+        total = sum(done.values()) + 1
+        norm = sum(mix[c] for c in left)
+        want = max(sorted(left), key=lambda c: mix[c] / norm * total - done.get(c, 0))
+        i = max(i for i, it in enumerate(items) if it[2] == want)
+    else:
+        i = len(items) - 1
+    run, r0, c = items.pop(i)
+    done[c] = done.get(c, 0) + 1
+    return run, r0, c
 
 
 def rec_batch(run: dict, r0: int, window: int, block: int, norm: torch.Tensor, dims: int):
@@ -125,6 +154,8 @@ def main() -> None:
     ap.add_argument("--rec-share", type=float, default=0.3, help="share of steps from recordings while they last")
     ap.add_argument("--rec-passes", type=int, default=2, help="uses of each chat recording window")
     ap.add_argument("--rec-passes-swe", type=int, default=1, help="uses of each SWE recording window")
+    ap.add_argument("--rec-mix", default="", help="recording steps by class, e.g. swe=0.5,chat=0.3,de=0.2 (empty: as drawn)")
+    ap.add_argument("--rec-cap", default="", help="passes by class, e.g. swe=1,chat=3,de=3 (overrides --rec-passes*)")
     ap.add_argument("--rec-refresh", action="store_true", help="on --resume: a fresh recording pass, not the saved rest")
     ap.add_argument("--loss", default="kl", choices=["kl", "kl-auf", "ce-acc"],
                     help="kl: KL x decay^j (x path); kl-auf: KL while the drafter's own drafts still match Kolibri's "
@@ -191,8 +222,8 @@ def main() -> None:
         step = res["step"]
         rng.bit_generator.state, rrng.bit_generator.state = res["rng"], res["rrng"]
         if not a.rec_refresh:
-            by_name = {run["name"]: run for run, _ in items}
-            items = [(by_name[n], r0) for n, r0 in res["items"]]
+            by_name = {run["name"]: run for run, _, _ in items}
+            items = [(by_name[n], r0, *(c or ["chat"])) for n, r0, *c in res["items"]]
         acc_ema = res["acc_ema"].cuda()
         print(f"resumed at step {step}, {res['seen']} tokens, {len(items)} recording windows left", flush=True)
 
@@ -200,7 +231,7 @@ def main() -> None:
         save(dr, step, seen, out)
         state = {"state": dr.state_dict(), "opt": opt.state_dict(), "step": step, "seen": seen,
                  "rng": rng.bit_generator.state, "rrng": rrng.bit_generator.state, "acc_ema": acc_ema.cpu(),
-                 "items": [(run["name"], r0) for run, r0 in items], "credit": credit}
+                 "items": [(run["name"], r0, c) for run, r0, c in items], "credit": credit, "rec_done": rec_done}
         torch.save(state, out / "resume.pt.tmp")
         (out / "resume.pt.tmp").rename(out / "resume.pt")
 
@@ -280,13 +311,22 @@ def main() -> None:
                               "kl": round(log["kl"] / k, 4), "top1": round(log["top1"] / k, 3),
                               "path": [round(float(v), 3) for v in log["path"] / k], "rec": log["rec"],
                               "acc": [round(float(v), 3) for v in acc_ema],
-                              "rec_rows": rec_rows, "rec_left": len(items), "decay": round(float(weights[1]), 3),
+                              "rec_rows": rec_rows, "rec_left": len(items), "rec_done": rec_done, "decay": round(float(weights[1]), 3),
                               "lr": f"{opt.param_groups[0]['lr']:.2e}", "h": round(dt / 3600, 2)}), flush=True)
             log = {"kl": 0.0, "top1": 0.0, "n": 0, "rec": 0}
         if step % a.save == 0:
             checkpoint()
 
     credit = res["credit"] if res and not a.rec_refresh else 0.0
+    mix = dict((k, float(v)) for k, v in (x.split("=") for x in a.rec_mix.split(","))) if a.rec_mix else {}
+    rec_done = dict(res.get("rec_done", {})) if res and not a.rec_refresh else {}
+
+    def take():
+        got = pick(items, mix, rec_done)
+        if got is None:                                   # a mixed class ran out: no more recording steps
+            items.clear()
+            return None
+        return got[0], got[1]
     for ci in perm:
         name, toks = convs[ci]
         if skipped < a.skip_tokens:                       # same seed, same order: the resumed run's first tokens
@@ -315,7 +355,10 @@ def main() -> None:
             credit += a.rec_share / (1 - a.rec_share) if items else 0.0
             while credit >= 1 and items:                  # Kolibri's own replies, interleaved at --rec-share of steps
                 credit -= 1
-                run, r0 = items.pop()
+                got = take()
+                if got is None:
+                    break
+                run, r0 = got
                 b = rec_batch(run, r0, a.window, cfg.block, w.norm, w.config.hidden)
                 if b is not None:
                     rec_rows += b[0].shape[0]

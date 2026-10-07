@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Restore the 1,656 pre-cutoff recordings pruned locally on 2026-10-06 into rec/old (training data for run 16; never
+# rec/live, whose post-cutoff part is the scoring set), 400 at a time, trimming each chunk to what training reads
+# (rectrim --keep 512) before the next. Stops if free disk falls under 50 GB.
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+RSH="ssh -o BatchMode=yes -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts"
+for f in $D/restore/old_*.txt; do
+  free=$(df -BG --output=avail /home | tail -1 | tr -dc 0-9)
+  [ "$free" -lt 50 ] && { echo "[$(date +%H:%M)] stop: ${free} GB free"; exit 1; }
+  rsync -a --files-from=$f -e "$RSH" root@10.0.0.70:/mnt/bulk/gb10/kolibri-drafter/rec/live/ $D/rec/old/ || { echo "rsync failed $f"; exit 1; }
+  /opt/llm/runtime/tf-venv/bin/python $T/rectrim.py $D/rec/old --keep 512
+  echo "[$(date +%H:%M)] $(basename $f) done: $(find $D/rec/old -name '*.json' | wc -l) recordings, $(du -sh $D/rec/old | cut -f1), $(df -h --output=avail /home | tail -1) free"
+done
+echo "== RESTORE DONE =="

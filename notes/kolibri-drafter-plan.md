@@ -676,3 +676,12 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   German down to 1 worker each: 2 of the next 6 SWE turns hit (72K of 74K cached, ~2K rows recorded); the misses
   were 109-111K prompts. Server restarted with --parallel 8 (8 x 131072, 25.4 GiB of caches, 14 GB available after;
   3.2 GiB a slot, 10 would leave ~7 GB), ML105 stopped around the restart and resumed.
+- 08:20 (user: "use for training what fits and balance carefully"): PBS holds 1,656 pre-cutoff recordings pruned
+  locally on 10-06 and unused since (3.0M rows, 1.19M generated = 3.5x the 0.34M in use; 1,324 SWE-size, recorded
+  10-04 18:04 - 10-05 08:48). Restored into `rec/old` (never rec/live: the trimmer must not touch the scoring set),
+  400 at a time, each chunk trimmed to keep 512 (`restore_old.sh.txt`); first chunk 400 recordings = 7.7 GB.
+- Balanced recordings (`train_block.pick`, `--rec-mix`, `--rec-cap`): class by text (SWE / German by train_rec's
+  word test / English chat), steps drawn from the class furthest below its share, recordings stop when a mixed class
+  runs out (simulated: 0.500 / 0.299 / 0.201 to the end). Run 16b (replaces queued 16, `run16b.sh.txt`): recordings
+  40 % of steps, SWE 0.5 / chat 0.3 / German 0.2, passes SWE 1 / chat 3 / German 3 -> overall German ~19 %, SWE ~20 %
+  of steps; waits for generation and the restore.
