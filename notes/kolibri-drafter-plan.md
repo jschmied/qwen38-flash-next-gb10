@@ -662,3 +662,10 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   recordings selected).
 - Run 16 (`run16.sh.txt`) waits for the generation workers (8 h), stops server and ML105, then trains from 15c 27,500
   with the head and recordings at 30 %.
+- 06:20 disk: rec/train2 grew 11 GB in 16 min. SWE agent turns miss the prompt cache in this server session (cached
+  0), so every step re-records its whole conversation (12-24K rows, ~150 MB); SWE was 10.8 of 11.4 GB. `rectrim.py`
+  (loop, finished recordings only, .tmp + rename) keeps 1,024 rows before the first generated row and everything after
+  (checked byte-exact on a copy: 16,455 -> 2,555 rows at keep 2,048, all generated rows kept, loads normally).
+  Recording windows now end at the recording's end and step back (`rec_windows`), so a reply gets its context; 99.5 %
+  of generated rows are covered as first drafts. If disk still falls under 45 GB, generation stops early (run 16
+  starts on its own).

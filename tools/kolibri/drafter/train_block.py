@@ -59,8 +59,13 @@ def rec_windows(a, dims: int) -> list:
         text = tk.decode([int(t) for t in run["tok"][:2000]])
         kind = "swe" if "returncode" in text or "interact with a computer shell" in text else "chat"
         passes = a.rec_passes_swe if kind == "swe" else a.rec_passes
-        for r0 in range(0, run["n"], a.window):
+        # windows that end at the last generated row and step back from there, so every reply gets the most context
+        gen = np.flatnonzero(np.asarray(run["kind"]))
+        r1 = run["n"]                                   # the last window ends at the recording's end
+        while len(gen) and r1 > gen[0]:
+            r0 = max(0, r1 - a.window)
             items += [(run, r0)] * passes
+            r1 = r0
         rows[kind] += run["n"] * passes
     print(f"recordings: {len(items)} windows, rows with passes {rows}", flush=True)
     return items
