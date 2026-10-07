@@ -1742,3 +1742,8 @@ wait on one ~100 GB pull, and they share one serve.
   are the gate; `features` on the backend and host tokens confirmed. To land under our name: every comment one line
   (lean_check found 30 runs), files <600 lines (more tests in a second file), one header line that deinit releases no
   stream. Done in a419512 (rebased on 7ae6df7; lean_check clean for our files, zig fmt clean, 77/77 tests). Short reply posted 2026-10-07 ~09:55 (user: "short reply").
+- **TensorFold 1.0.0 / 1.0.1 (2026-10-07 ~12:00Z): the native Zig engine becomes `main`.** Our #443 commit is in main;
+  ashhart's CUDA serving on our registry landed (bb41530: keyed sampler, device memory, served graphs, lone drafted
+  streams, shared rounds; native/cuda.zig +348 lines), auth.zig statx kept. Contributors list includes @jschmied.
+  #455 rebased onto 041d14a (fake.zig moved upstream), plus 8941933: comments within 120 columns (lean_check now also
+  checks width). `direct_io` test fails on plain upstream too on this box (O_DIRECT on the build filesystem), not ours.
