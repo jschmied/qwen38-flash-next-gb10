@@ -646,3 +646,6 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   Caveat: the fresh SWE slice is repo-biased (axios) and may share repos with the pre-cutoff recordings; a
   repo-disjoint slice is still open.
 - 15c step 22,500 (≈36M tokens): 1.291 / 1.031 / 0.812 (accepted_4 1.410 / 1.077 / 0.849); SWE holds, chat/German +0.01.
+- 15c steps 25,000 / 27,500 (≈40M / 44M tokens): SWE 1.304 / 1.300, chat 1.032 / 1.038, German 0.816 / 0.816.
+  **Plateau**: chat +0.006, German flat, SWE holding after the recordings ran out (~25,800). Block (accepted_3) vs run
+  11 chain: SWE 1.30 vs 1.38, chat 1.04 vs 1.23, German 0.82 vs 0.95; with all 4 drafts SWE 1.42 vs 1.38.
