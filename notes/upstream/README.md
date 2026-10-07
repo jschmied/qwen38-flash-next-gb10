@@ -1738,3 +1738,8 @@ wait on one ~100 GB pull, and they share one serve.
   land far above chance, a one-row shift fails both; restored prompt via prompt reuse). References #312 (Laguna DFlash)
   and our HF drafter. Two design questions (features vs inside verify; host-token copy vs device path). Draft
   `notes/upstream/tf-zig-drafter-interface.md`. https://github.com/ashhart/TensorFold/pull/455
+  **ashhart on #455 (2026-10-07 07:26Z):** the right split; drafts-off-never-reaching-the-drafter kept; our host tests
+  are the gate; `features` on the backend and host tokens confirmed. To land under our name: every comment one line
+  (lean_check found 30 runs), files <600 lines (more tests in a second file), one header line that deinit releases no
+  stream. Done in a419512 (rebased on 7ae6df7; lean_check clean for our files, zig fmt clean, 77/77 tests). No reply
+  posted yet (needs a go).
