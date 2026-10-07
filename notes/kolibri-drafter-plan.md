@@ -669,3 +669,4 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   Recording windows now end at the recording's end and step back (`rec_windows`), so a reply gets its context; 99.5 %
   of generated rows are covered as first drafts. If disk still falls under 45 GB, generation stops early (run 16
   starts on its own).
+- 06:55 disk: still ~13 GB/h (SWE 7x the disk of chat per reply token). out11 (34 GB, run 11 step checkpoints) deleted after a sha256 match against PBS (99 files; its final == drafter-run11-final.pt, kept); rectrim keep 1,024 -> 512 for new recordings.
