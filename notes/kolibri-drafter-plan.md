@@ -692,3 +692,14 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   3,559 recordings; 16b's pool 9,080 windows (SWE 4,211 / chat 3,612 / German 1,257), mix holding at 0.5/0.3/0.2.
 - LR / cool-down A/B (`run16ab.sh.txt`, 14:53) from 16b step 2,500: A 4e-4 cosine (control), B 2e-4, C 8e-4, D
   cool-down 4e-4 -> 0 over 1,700 steps; 1.5M GLM tokens + recordings each. 16b's resume.pt kept as resume-step2500.pt.
+
+## Kolibri-1 on the Zig engine (started 2026-10-07, user: "start like this, first without drafter")
+Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1.0.1 041d14a).
+- 5b6fe4c `families/kolibri1/config.zig`: config.json read and refused as the Python engine does; host tests (a
+  broken shape check fails them).
+- FP8 is general infrastructure (block FP8 128 x 128 is the official FP8 format; Flash Next's NVFP4 exports carry
+  FP8_PB_WO layers too) and Zig CUDA has none: build it model-free first. Our Python FP8 kernels are plain CUDA, so the
+  Zig path is the same device code: `zig/kernels/cuda/fp8_lane.cu` = qmmf.cu lines 14-298 without comments/ATen,
+  FP8G instances BM 16/32/64 x cluster, fused, reduce (all 8 build for sm_121a). Next: Zig launcher with the Python
+  host's choices (split_k by shape, bucket 16/32/64, fused from 256 rows, cluster slices on sm_90+), the
+  `_fragment_order` repack, a GPU test against bytes captured from the Python kernel; then fp8/experts.cu.
