@@ -649,3 +649,16 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
 - 15c steps 25,000 / 27,500 (≈40M / 44M tokens): SWE 1.304 / 1.300, chat 1.032 / 1.038, German 0.816 / 0.816.
   **Plateau**: chat +0.006, German flat, SWE holding after the recordings ran out (~25,800). Block (accepted_3) vs run
   11 chain: SWE 1.30 vs 1.38, chat 1.04 vs 1.23, German 0.82 vs 0.95; with all 4 drafts SWE 1.42 vs 1.38.
+
+## Generation batch 2 + run 16 (2026-10-07 06:00, user: "yes and predecessor")
+- Training paused at 15c step 27,500 (resume.pt kept). Recording server -> `rec/train2` (not rec/live: the scoring set
+  stays fixed), chat 2 + German 2 workers (`gen_chat --max-rows 1400`: never reads the test-pool rows), SWE ML105 on
+  x86 (-w3). `gen2.sh.txt`.
+- Predecessor head (DSpark-style): `model_block.predecessor`, rank 256 (2.0M), identity at start; position j>=1's
+  state + U silu(A h + B embed(token before)); trained on Kolibri's argmax as the predecessor (the accepted path),
+  scored sequentially on the drafter's own previous draft. Identity check: 15c step 27,500 + head = chat 1.0384,
+  exactly 15c.
+- `--rec-all DIR`: recording dirs used whole (rec/train2), next to rec/live's pre-cutoff ones (checked: 0 scoring
+  recordings selected).
+- Run 16 (`run16.sh.txt`) waits for the generation workers (8 h), stops server and ML105, then trains from 15c 27,500
+  with the head and recordings at 30 %.

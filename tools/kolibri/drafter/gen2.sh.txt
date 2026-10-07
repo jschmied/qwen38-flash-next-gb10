@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Root. Kolibri-own data, batch 2 (2026-10-07, user: "yes" to pausing training for generation). Training 15c is
+# stopped (its resume.pt at step 27,500 continues it later). The recording server writes to rec/train2, NOT rec/live:
+# rec/live after 2026-10-05 09:55 stays the fixed scoring set. Streams: chat 2 (ultrachat / sharegpt-de / alpaca-de /
+# self-oss code, round-robin), German 2, SWE ML105 on x86 (-w3, test instances excluded by its set). gen_chat reads at
+# most 1,400 rows per source (the test pool starts at sharegpt-deutsch 1,500 / alpaca-de 8,000 / ultrachat 60,000).
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; C=$D/chat; U=http://127.0.0.1:8093/v1/chat/completions
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+systemctl stop fx-kolibri-drafter-run15c
+mkdir -p $D/rec/train2; chown jschmied: $D/rec/train2
+systemd-run --unit=fx-kolibri-serve --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied \
+  -E TENSORFOLD_KOLIBRI_RECORD=$D/rec/train2 -E TENSORFOLD_KOLIBRI_RECORD_TAPS=44,47,49 \
+  $PY -c "import sys; from tensorfold.cli import main; sys.argv=['tensorfold','serve','/opt/llm/models/kolibri-1','--name','kolibri-1','--host','127.0.0.1','--port','8093','--parallel','6','--context','131072']; sys.exit(main())"
+for i in $(seq 1 90); do curl -s -m 3 http://127.0.0.1:8093/v1/models | grep -q kolibri && break; sleep 10; done
+log "server: $(curl -s -m 3 http://127.0.0.1:8093/v1/models | head -c 80)"
+systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $U $D/own_chat.jsonl $C/HuggingFaceH4__ultrachat_200k__train_sft-00000-of-00003-a3ecf92756993583.parquet $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json $C/bigcode__self-oss-instruct-sc2-exec-filter-50k__train-00000-of-00001.parquet --workers 2 --hours 8 --max-rows 1400 --skip $D/own_chat_de.jsonl >> $D/genchat.log 2>&1"
+systemd-run --unit=fx-kolibri-genchat-de --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $U $D/own_chat_de.jsonl $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json --workers 2 --hours 8 --max-rows 1400 --skip $D/own_chat.jsonl >> $D/genchat-de.log 2>&1"
+ssh -n -o BatchMode=yes -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8 \
+  'systemd-run --unit=kolibri-swe-ml105 --collect bash -c "bash /root/fullrun-kolibri-ml105.sh >> /root/fullrun-kolibri-ml105.log 2>&1"' && log "ML105 resumed on x86"
+log "== GEN2 STARTED =="

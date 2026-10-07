@@ -22,7 +22,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).parent))
-from model_block import load  # noqa: E402
+from model_block import load, predecessor  # noqa: E402
 from train_rec import head_weights, recordings  # noqa: E402
 
 WINDOW = 2048
@@ -50,7 +50,15 @@ def score(dr, runs, embed, head, vocab) -> dict:
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     nxt = embed[torch.cat([tok[1:], tok[-1:]])] if dr.cfg.chain_ctx else None
                     st = dr(feats, embed[tok[anchors + 1]], anchors, nxt=nxt)
-                got = vocab[(st.reshape(-1, st.shape[-1]).to(torch.bfloat16) @ head.T).argmax(-1)].view(len(anchors), b)
+                if dr.cfg.pred_rank:                                # one position at a time: each reads its predecessor
+                    cols = [(st[:, 0].to(torch.bfloat16) @ head.T).argmax(-1)]
+                    for j in range(1, b):
+                        with torch.autocast("cuda", dtype=torch.bfloat16):
+                            sj = predecessor(dr, st[:, j], embed[vocab[cols[-1]]])
+                        cols.append((sj.to(torch.bfloat16) @ head.T).argmax(-1))
+                    got = vocab[torch.stack(cols, 1)]
+                else:
+                    got = vocab[(st.reshape(-1, st.shape[-1]).to(torch.bfloat16) @ head.T).argmax(-1)].view(len(anchors), b)
                 want = top1[anchors[:, None] + 1 + torch.arange(b, device="cuda")[None]]
                 ok = (got == want) & gen[anchors[:, None] + 2 + torch.arange(b, device="cuda")[None]]
                 chain = ok.long().cumprod(-1)

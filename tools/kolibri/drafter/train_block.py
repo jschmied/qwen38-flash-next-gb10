@@ -23,7 +23,7 @@ import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).parent))
 import train_mt  # noqa: E402
-from model_block import BlockConfig, BlockDrafter, chain_params, from_chain, load  # noqa: E402
+from model_block import BlockConfig, BlockDrafter, chain_params, from_chain, load, predecessor  # noqa: E402
 from model_mt import params  # noqa: E402
 
 
@@ -48,8 +48,11 @@ def rec_windows(a, dims: int) -> list:
     cut = time.mktime(time.strptime(a.rec_before, "%Y-%m-%d %H:%M"))
     tk = Tokenizer.from_file(str(Path(a.model_dir) / "tokenizer.json"))
     items, rows = [], {"swe": 0, "chat": 0}
-    for run in recordings(a.rec):
-        if Path(run["name"] + ".json").stat().st_mtime > cut or zlib.crc32(Path(run["name"]).name.encode()) % 10 == 0:
+    whole = {str(Path(d).resolve()) for d in a.rec_all}
+    for run in recordings(list(a.rec) + list(a.rec_all)):
+        in_whole = any(str(Path(run["name"]).resolve()).startswith(w + "/") for w in whole)
+        if (not in_whole and Path(run["name"] + ".json").stat().st_mtime > cut) \
+                or zlib.crc32(Path(run["name"]).name.encode()) % 10 == 0:
             continue
         if run["taps"] != train_mt.TAPS or run["st"].shape[1] != len(train_mt.TAPS) * dims:
             continue
@@ -102,6 +105,7 @@ def main() -> None:
     ap.add_argument("--max-tokens", type=int, default=0)
     ap.add_argument("--init", default="")
     ap.add_argument("--from-chain", default="", help="a chain drafter (train_mt/train_rec) as position 0 (chain_ctx)")
+    ap.add_argument("--pred-rank", type=int, default=0, help="add a predecessor head of this rank (identity at start)")
     ap.add_argument("--row0-chain", action="store_true",
                     help="position 0 IS the chain drafter: its path (fuse, fc, layer 0, out_norm) reloaded from "
                          "--from-chain and frozen; layers 1.. and the mask train for positions 1..")
@@ -112,6 +116,7 @@ def main() -> None:
     ap.add_argument("--skip-tokens", type=int, default=0, help="skip the stream's first N tokens (a resumed run)")
     ap.add_argument("--rec", nargs="*", default=[], help="recording dirs (train_rec.py's format) mixed into the stream")
     ap.add_argument("--rec-before", default="2026-10-05 09:55", help="only recordings saved before this (after: scoring)")
+    ap.add_argument("--rec-all", nargs="*", default=[], help="recording dirs used whole (none of them is scoring data)")
     ap.add_argument("--rec-share", type=float, default=0.3, help="share of steps from recordings while they last")
     ap.add_argument("--rec-passes", type=int, default=2, help="uses of each chat recording window")
     ap.add_argument("--rec-passes-swe", type=int, default=1, help="uses of each SWE recording window")
@@ -141,7 +146,7 @@ def main() -> None:
                  tk.token_to_id("<|im_end|>"))
     cfg = BlockConfig(hidden=w.config.hidden, layers=a.layers, ffn=a.ffn, taps=len(train_mt.TAPS), block=a.block)
     if a.init:
-        dr = load(torch.load(a.init, map_location="cuda"))
+        dr = load(torch.load(a.init, map_location="cuda"), pred_rank=a.pred_rank)
         if a.row0_chain and a.from_chain:                   # put the exact chain back over the loaded weights
             dr.cfg.row0_chain = True
             dr = from_chain(torch.load(a.from_chain, map_location="cpu"), dr.cfg, onto=dr.cpu())
@@ -174,7 +179,7 @@ def main() -> None:
     t0, step, seen, rec_rows = time.perf_counter(), 0, 0, 0
     log = {"kl": 0.0, "top1": 0.0, "n": 0, "rec": 0}
     skipped, total = 0, sum(len(t) for _, t in convs)
-    items = rec_windows(a, w.config.hidden) if a.rec else []
+    items = rec_windows(a, w.config.hidden) if a.rec or a.rec_all else []
     rrng.shuffle(items)
     perm = rng.permutation(len(convs))
     if res:                                                       # the same stream, the same draws from here on
@@ -214,6 +219,12 @@ def main() -> None:
         with torch.autocast("cuda", dtype=torch.bfloat16):
             nxt = w.embed[torch.cat([seq[1:], seq[-1:]])] if cfg.chain_ctx else None
             states = dr(feats, w.embed[seq[anchors + 1]], anchors, nxt=nxt)
+        if cfg.pred_rank:                                          # each position reads Kolibri's token before it
+            with torch.no_grad():
+                prev = w.embed[vocab[logp.view(len(pick), cfg.block, -1)[:, :-1].argmax(-1)]]
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                fixed = predecessor(dr, states[:, 1:].reshape(-1, states.shape[-1]), prev.reshape(-1, prev.shape[-1]))
+            states = torch.cat([states[:, :1], fixed.view(len(pick), cfg.block - 1, -1)], 1)
         logq = F.log_softmax((states.reshape(-1, states.shape[-1]).to(torch.bfloat16) @ head.T).float(), -1)
         kl = (logp.exp() * (logp - logq)).sum(-1).view(len(pick), cfg.block)
         with torch.no_grad():                                      # P(Kolibri's own path = the data's t+2..t+1+j)

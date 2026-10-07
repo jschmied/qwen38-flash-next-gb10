@@ -22,19 +22,25 @@ sys.path.insert(0, str(Path(__file__).parent))
 from data import messages, rows  # noqa: E402
 
 
-def prompts(sources: list[str], max_chars: int = 12000):
+def prompts(sources: list[str], max_chars: int = 12000, max_rows: int = 0):
+    """First user turns, round-robin over the sources; each source stops after its first `max_rows` rows (0: all), so
+    the reserved test rows (sharegpt-deutsch 1,500+, alpaca-gpt4-de 8,000+, ultrachat 60,000+) are never read."""
+
     its = [rows(Path(p)) for p in sources]
+    read = [0] * len(its)
     while its:
         for i, it in list(enumerate(its)):
-            r = next(it, None)
+            r = next(it, None) if it is not None and (not max_rows or read[i] < max_rows) else None
             if r is None:
                 its[i] = None
                 continue
+            read[i] += 1
             msgs = messages(r)
             first = next((m for m in msgs or [] if m["role"] == "user"), None)
             if first and 0 < len(first["content"]) <= max_chars:
                 yield first["content"]
-        its = [x for x in its if x is not None]
+        if all(x is None for x in its):
+            return
 
 
 def main() -> None:
@@ -46,6 +52,7 @@ def main() -> None:
     ap.add_argument("--max-tokens", type=int, default=3000)
     ap.add_argument("--hours", type=float, default=12.0)
     ap.add_argument("--skip", nargs="*", default=[], help="other OUT files whose prompts count as done")
+    ap.add_argument("--max-rows", type=int, default=1400, help="rows read per source at most (test pool beyond)")
     a = ap.parse_args()
     out = Path(a.out)
     done = set()
@@ -53,7 +60,7 @@ def main() -> None:
         if f.exists():
             for line in f.read_text().splitlines():
                 done.add(json.loads(line)["prompt_sha"])
-    feed = prompts(a.sources)
+    feed = prompts(a.sources, max_rows=a.max_rows)
     lock = threading.Lock()
     stop_at = time.time() + a.hours * 3600
     stats = {"done": 0, "tokens": 0, "errors": 0}

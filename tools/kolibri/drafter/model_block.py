@@ -31,6 +31,7 @@ class BlockConfig:
     theta: float = 10000.0
     chain_ctx: bool = False   # context rows as the chain drafter's: fc(cat(embed(token r+1), fuse(taps r))); row 0 = that row
     row0_chain: bool = False  # chain_ctx: block row 0's output is taken after layer 0 (the chain drafter, kept exact)
+    pred_rank: int = 0        # >0: a predecessor head (DSpark-style): position j>=1 corrected by the token drafted at j-1
 
 
 class Layer(nn.Module):
@@ -72,6 +73,10 @@ class BlockDrafter(nn.Module):
         self.inp = nn.Linear(d, d, bias=False)
         if cfg.chain_ctx:
             self.fc = nn.Linear(2 * d, d, bias=False)
+        if cfg.pred_rank:
+            self.pred_h = nn.Linear(d, cfg.pred_rank, bias=False)
+            self.pred_e = nn.Linear(d, cfg.pred_rank, bias=False)
+            self.pred_out = nn.Linear(cfg.pred_rank, d, bias=False)
         self.layers = nn.ModuleList(Layer(cfg) for _ in range(cfg.layers))
         self.out_norm = RMSNorm(d, cfg.eps)
         for m in self.modules():
@@ -80,6 +85,8 @@ class BlockDrafter(nn.Module):
         for layer in self.layers:
             nn.init.zeros_(layer.o.weight)
             nn.init.zeros_(layer.down.weight)
+        if cfg.pred_rank:
+            nn.init.zeros_(self.pred_out.weight)                 # identity at start
         nn.init.normal_(self.mask, std=0.02)
 
     def forward(self, feats: torch.Tensor, first: torch.Tensor, anchors: torch.Tensor,
@@ -122,6 +129,12 @@ class BlockDrafter(nn.Module):
         return out
 
 
+def predecessor(dr: BlockDrafter, state: torch.Tensor, prev: torch.Tensor) -> torch.Tensor:
+    """A position's state [N, D] corrected by the embedding of the token drafted just before it [N, D] (low rank)."""
+
+    return state + dr.pred_out(F.silu(dr.pred_h(state) + dr.pred_e(prev)))
+
+
 def chain_params(dr: BlockDrafter) -> list:
     """The parameters that make up position 0's chain path (frozen under row0_chain)."""
 
@@ -153,7 +166,15 @@ def from_chain(chain: dict, cfg: BlockConfig, onto: BlockDrafter | None = None) 
     return dr
 
 
-def load(ck: dict) -> BlockDrafter:
-    dr = BlockDrafter(BlockConfig(**ck["config"]))
-    dr.load_state_dict(ck["state"])
+def load(ck: dict, pred_rank: int = 0) -> BlockDrafter:
+    """A drafter from a checkpoint; pred_rank adds a fresh (identity) predecessor head to one saved without."""
+
+    cfg = BlockConfig(**ck["config"])
+    grow = pred_rank and not cfg.pred_rank
+    if grow:
+        cfg.pred_rank = pred_rank
+    dr = BlockDrafter(cfg)
+    missing, unexpected = dr.load_state_dict(ck["state"], strict=not grow)
+    if unexpected or any(not m.startswith("pred_") for m in missing):
+        raise ValueError(f"checkpoint does not fit: missing {missing[:4]}, unexpected {unexpected[:4]}")
     return dr
