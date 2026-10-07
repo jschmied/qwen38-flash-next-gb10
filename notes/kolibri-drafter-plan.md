@@ -640,3 +640,4 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
 - 15c (02:55): first FULL resume (resume.pt: weights, AdamW, step, data position, rng, acceptance EMA) of 15b at
   17,500, continuing at lr 3.83e-4 without a re-warmup, recordings back at 10 % of steps for one more pass
   (`--rec-refresh`, SWE 1 / chat 1, 736 windows ≈ 7,000 GLM steps).
+- 2026-10-07 03:25 disk at 40 GB: deleted out12 + out13w (33 GB, superseded chain runs) after a sha256 match against PBS (41 + 37 files identical), and the redundant resume-step17500.pt copy.
