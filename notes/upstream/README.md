@@ -1756,3 +1756,7 @@ wait on one ~100 GB pull, and they share one serve.
   12/12 PASS on GB10 (o [2560, 6144] and qkv [7168, 2560] at 1/3/17/40/300 rows: repack == `_fragment_order` /
   `from_rows`, outputs == the Python kernel's bf16 bytes; every launched path), on the branch's own build.
   https://github.com/ashhart/TensorFold/pull/482
+- **TensorFold #486 (PR): core: the direct_io test's reference read goes through the page cache** (2026-10-07 ~19:00,
+  user: "yes, post direct-io"): the test's buffered reference was opened O_DIRECT where the FS allows it (ext4 on
+  NVMe), so its unaligned 1-byte pread failed (EINVAL, `expected 1, found -1`) on every build on our GB10; passes
+  where O_DIRECT is refused. Test-only, 3 lines; 17/17 steps after. https://github.com/ashhart/TensorFold/pull/486
