@@ -136,6 +136,7 @@ def main() -> None:
     ap.add_argument("--warmup", type=int, default=500)
     ap.add_argument("--lr-end", type=float, default=0.0, help="cosine from --lr down to this by tokens seen (0: constant)")
     ap.add_argument("--lr-span", type=int, default=0, help="tokens the cosine spans (0: the whole stream)")
+    ap.add_argument("--cooldown", type=int, default=0, help="steps over which lr falls linearly to 0 from its value at start")
     ap.add_argument("--max-tokens", type=int, default=0)
     ap.add_argument("--init", default="")
     ap.add_argument("--from-chain", default="", help="a chain drafter (train_mt/train_rec) as position 0 (chain_ctx)")
@@ -212,6 +213,7 @@ def main() -> None:
     jj = torch.arange(cfg.block, device="cuda", dtype=torch.float32)
     rng, rrng = np.random.default_rng(0), np.random.default_rng(1)
     acc_ema = torch.full((cfg.block,), 0.5, device="cuda")       # each position's match rate given the earlier ones
+    cool_from: dict = {}                                         # --cooldown: the step and lr it started from
     t0, step, seen, rec_rows = time.perf_counter(), 0, 0, 0
     log = {"kl": 0.0, "top1": 0.0, "n": 0, "rec": 0}
     skipped, total = 0, sum(len(t) for _, t in convs)
@@ -250,6 +252,9 @@ def main() -> None:
         if a.lr_end:
             frac = min(1.0, seen / (a.lr_span or total))
             lr = a.lr_end + (a.lr - a.lr_end) * 0.5 * (1 + math.cos(math.pi * frac))
+        if a.cooldown:                                           # a branch that anneals: linear to 0 from its start
+            start, lr0 = cool_from.setdefault("at", (step, lr))
+            lr = lr0 * max(0.0, 1 - (step - start) / a.cooldown)
         for grp in opt.param_groups:
             grp["lr"] = lr * min(1.0, (step + 1) / a.warmup)
         with torch.autocast("cuda", dtype=torch.bfloat16):
