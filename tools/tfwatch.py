@@ -16,8 +16,9 @@ from pathlib import Path
 REPO = "ashhart/TensorFold"
 
 
-def gh(path: str):
-    out = subprocess.run(["gh", "api", "--paginate", path], check=True, capture_output=True, text=True).stdout
+def gh(path: str, paginate: bool = True):
+    args = ["gh", "api", "--paginate", path] if paginate else ["gh", "api", path]
+    out = subprocess.run(args, check=True, capture_output=True, text=True).stdout
     # --paginate concatenates JSON arrays as "][", objects one after another
     return json.loads("[" + out.replace("][", ",").strip()[1:-1] + "]") if out.lstrip().startswith("[") else json.loads(out)
 
@@ -41,7 +42,7 @@ def main() -> None:
     for name in sorted(set(heads) & set(old)):
         if heads[name] == old[name]:
             continue
-        cmp = gh(f"repos/{REPO}/compare/{old[name]}...{heads[name]}")
+        cmp = gh(f"repos/{REPO}/compare/{old[name]}...{heads[name]}", paginate=False)   # one object (250 commits max)
         note = " (force-pushed)" if cmp.get("status") in ("diverged", "behind") else ""
         print(f"== {name}: {old[name][:9]} -> {heads[name][:9]}, {cmp.get('ahead_by', '?')} new{note}")
         for c in cmp.get("commits", [])[-30:]:
