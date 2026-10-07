@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Root. Generation batch 3 writes ~8 GB/h and recsync can free only old rec/live: below 15 GB free, stop the
+# generators (chat, German, ML105 on x86) so the disk never fills; the server and the recordings so far stay.
+D=/home/jschmied/kolibri-drafter
+while true; do
+  free=$(df -BG --output=avail /home | tail -1 | tr -dc 0-9)
+  if [ "$free" -lt 15 ]; then
+    echo "[$(date +%H:%M:%S)] ${free} GB free: stopping the generators"
+    systemctl stop fx-kolibri-genchat fx-kolibri-genchat-de
+    ssh -n -o BatchMode=yes -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8 'systemctl stop kolibri-swe-ml105'
+    echo "[$(date +%H:%M:%S)] [$(date '+%m-%d %H:%M')] disk guard stopped generation at ${free} GB" >> $D/ALERTS
+    exit 0
+  fi
+  sleep 120
+done

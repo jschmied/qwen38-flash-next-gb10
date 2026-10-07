@@ -737,3 +737,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   `gen3.sh.txt`, chat 2 + German 2 workers for 12 h into rec/train2, SWE ML105 on x86. Before it, the Zig device
   loader (`kolibri1-weights` ca43e63, weights.zig) read layer 0's 15 device arrays back equal to weights.load's
   (`notes/data/kolibri/kolibri-device-layer0-receipt.txt`).
+- 20:35 disk for batch 3 (~8 GB/h; recsync frees only old rec/live): `diskguard.sh.txt` stops the generators below
+  15 GB free. User "yes": local rec/old (27 GB), out15b, out16b deleted after all 11,609 files matched PBS by sha256
+  (`/mnt/bulk/gb10/kolibri-drafter`; recsync's rsync has no --delete). 87 GB free. **Restore rec/old from PBS before
+  run 16d resumes** (its --rec-all reads it; `restore_old.sh.txt`).
