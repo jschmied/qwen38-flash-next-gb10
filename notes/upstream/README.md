@@ -1741,5 +1741,4 @@ wait on one ~100 GB pull, and they share one serve.
   **ashhart on #455 (2026-10-07 07:26Z):** the right split; drafts-off-never-reaching-the-drafter kept; our host tests
   are the gate; `features` on the backend and host tokens confirmed. To land under our name: every comment one line
   (lean_check found 30 runs), files <600 lines (more tests in a second file), one header line that deinit releases no
-  stream. Done in a419512 (rebased on 7ae6df7; lean_check clean for our files, zig fmt clean, 77/77 tests). No reply
-  posted yet (needs a go).
+  stream. Done in a419512 (rebased on 7ae6df7; lean_check clean for our files, zig fmt clean, 77/77 tests). Short reply posted 2026-10-07 ~09:55 (user: "short reply").
