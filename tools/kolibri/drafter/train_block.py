@@ -115,6 +115,7 @@ def main() -> None:
     ap.add_argument("--rec-share", type=float, default=0.3, help="share of steps from recordings while they last")
     ap.add_argument("--rec-passes", type=int, default=2, help="uses of each chat recording window")
     ap.add_argument("--rec-passes-swe", type=int, default=1, help="uses of each SWE recording window")
+    ap.add_argument("--rec-refresh", action="store_true", help="on --resume: a fresh recording pass, not the saved rest")
     ap.add_argument("--loss", default="kl", choices=["kl", "kl-auf", "ce-acc"],
                     help="kl: KL x decay^j (x path); kl-auf: KL while the drafter's own drafts still match Kolibri's "
                          "(accept-until-fail); ce-acc: CE on Kolibri's argmax, position j weighted by d E[accepted] / d a_j")
@@ -179,8 +180,9 @@ def main() -> None:
     if res:                                                       # the same stream, the same draws from here on
         step = res["step"]
         rng.bit_generator.state, rrng.bit_generator.state = res["rng"], res["rrng"]
-        by_name = {run["name"]: run for run, _ in items}
-        items = [(by_name[n], r0) for n, r0 in res["items"]]
+        if not a.rec_refresh:
+            by_name = {run["name"]: run for run, _ in items}
+            items = [(by_name[n], r0) for n, r0 in res["items"]]
         acc_ema = res["acc_ema"].cuda()
         print(f"resumed at step {step}, {res['seen']} tokens, {len(items)} recording windows left", flush=True)
 
@@ -268,7 +270,7 @@ def main() -> None:
         if step % a.save == 0:
             checkpoint()
 
-    credit = res["credit"] if res else 0.0
+    credit = res["credit"] if res and not a.rec_refresh else 0.0
     for ci in perm:
         name, toks = convs[ci]
         if skipped < a.skip_tokens:                       # same seed, same order: the resumed run's first tokens

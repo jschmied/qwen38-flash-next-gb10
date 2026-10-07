@@ -635,3 +635,8 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   only came from them); chat and German keep rising +0.02 per 2,500 steps.
 - 15b step 12,500 (≈22M tokens): 1.203 / 0.998 / 0.786; chat 0.637 / 0.334 / 0.204 / 0.133. Chat and German +0.03 /
   +0.02 per 5,000 steps; SWE flat without agent text.
+- 15b step 17,500 (≈29M tokens): 1.176 / 1.017 / 0.799. **SWE falling** (1.217 at 5,000 -> 1.203 -> 1.176): the GLM
+  text has no agent sessions. Chat 0.637 / 0.347 / 0.214 / 0.139.
+- 15c (02:55): first FULL resume (resume.pt: weights, AdamW, step, data position, rng, acceptance EMA) of 15b at
+  17,500, continuing at lr 3.83e-4 without a re-warmup, recordings back at 10 % of steps for one more pass
+  (`--rec-refresh`, SWE 1 / chat 1, 736 windows ≈ 7,000 GLM steps).
