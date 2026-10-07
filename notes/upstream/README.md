@@ -1748,3 +1748,11 @@ wait on one ~100 GB pull, and they share one serve.
   #455 rebased onto 041d14a (fake.zig moved upstream), plus 8941933: comments within 120 columns (lean_check now also
   checks width). `direct_io` test fails on plain upstream too on this box (O_DIRECT on the build filesystem), not ours.
   2026-10-07 ~15:10: added Drafter.Facts.stream_bytes + Drafted.streamBytes (drafter memory in the 1.0 server's admission), commit on the PR branch; PR body updated, no comment.
+- **TensorFold #481 (issue): "Zig CUDA: Kolibri-1 (kolibri1), block-FP8"** (2026-10-07 ~17:00, user: "ok" to issue +
+  PR 1 together once PR 1's receipt was in): claims the port, five-PR plan (FP8 projections, FP8 experts, family CLI,
+  served, drafter behind #455). https://github.com/ashhart/TensorFold/issues/481
+- **TensorFold #482 (PR): cuda: block-FP8 projections on the Python lane matmul's FP8G kernels** (same go): branch
+  `jschmied:cuda-fp8-lane` 36549fe on main 041d14a, 8 files ~650 lines, model-free. Receipt: `tf-cuda-test fp8-lane`
+  12/12 PASS on GB10 (o [2560, 6144] and qkv [7168, 2560] at 1/3/17/40/300 rows: repack == `_fragment_order` /
+  `from_rows`, outputs == the Python kernel's bf16 bytes; every launched path), on the branch's own build.
+  https://github.com/ashhart/TensorFold/pull/482

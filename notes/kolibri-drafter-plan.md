@@ -703,3 +703,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   FP8G instances BM 16/32/64 x cluster, fused, reduce (all 8 build for sm_121a). Next: Zig launcher with the Python
   host's choices (split_k by shape, bucket 16/32/64, fused from 256 rows, cluster slices on sm_90+), the
   `_fragment_order` repack, a GPU test against bytes captured from the Python kernel; then fp8/experts.cu.
+- **LR / cool-down A/B (16:29, `notes/data/kolibri/run16ab.log`)**, fresh accepted_3 SWE / chat / German from 16b step
+  2,500 (1.430 / 1.064 / 0.839): A 4e-4 1.442 / 1.067 / 0.848; B 2e-4 1.452 / 1.080 / 0.854; C 8e-4 1.393 / 1.051 /
+  0.832; D cool-down to 0 1.463 / 1.082 / 0.856. Higher lr hurts, lower helps a little, the cool-down adds ~0.02 (under
+  the 0.05 bar: the plateau is data/capacity, not lr noise). Run 16c (16:55): from arm B, 2e-4 cosine to 2e-5; a
+  cool-down saved for the very end.
+- Zig FP8 lane: GPU oracle 12/12 byte-identical (`notes/data/kolibri/fp8-lane-receipt.txt`); posted as TF #482 with
+  claim issue #481.

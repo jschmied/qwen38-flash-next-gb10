@@ -1,4 +1,4 @@
-DRAFT — user's go 2026-10-07 ("ok": issue 0 + PR 1 together, once PR 1's GPU receipt is in). ashhart/TensorFold issue.
+POSTED 2026-10-07 as ashhart/TensorFold#481.
 Title: Zig CUDA: Kolibri-1 (kolibri1), block-FP8
 
 This work is underway; please don't start a second Zig port of this family.

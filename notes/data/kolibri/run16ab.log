@@ -1,0 +1,28 @@
+[14:53:36] init /home/jschmied/kolibri-drafter/out16b/drafter-step2500.pt skip 45794184
+[14:53:36] arm A (--lr 4e-4 --lr-end 4e-5)
+[15:16:08] arm A rc=0
+[15:16:08] arm B (--lr 2e-4 --lr-end 2e-5)
+[15:38:32] arm B rc=0
+[15:38:32] arm C (--lr 8e-4 --lr-end 8e-5)
+[16:00:53] arm C rc=0
+[16:00:54] arm D (--lr 4e-4 --lr-end 4e-5 --cooldown 1700)
+[16:23:18] arm D rc=0
+[16:23:18] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16b/drafter-step2500.pt", "accepted_3": 1.4302, "accepted_4": 1.5988, "top1_steps": [0.7135, 0.5469, 0.3826, 0.2807], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-A/drafter.pt", "accepted_3": 1.4422, "accepted_4": 1.6203, "top1_steps": [0.7135, 0.5469, 0.3906, 0.2817], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-B/drafter.pt", "accepted_3": 1.4524, "accepted_4": 1.6396, "top1_steps": [0.7135, 0.5541, 0.3968, 0.2945], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-C/drafter.pt", "accepted_3": 1.3932, "accepted_4": 1.5552, "top1_steps": [0.7135, 0.5168, 0.3615, 0.262], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-D/drafter.pt", "accepted_3": 1.4628, "accepted_4": 1.6483, "top1_steps": [0.7135, 0.5624, 0.4014, 0.2927], "chains": 229055}
+[16:26:55] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16b/drafter-step2500.pt", "accepted_3": 1.0643, "accepted_4": 1.1201, "top1_steps": [0.6366, 0.37, 0.2296, 0.1439], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-A/drafter.pt", "accepted_3": 1.0668, "accepted_4": 1.124, "top1_steps": [0.6366, 0.3697, 0.2265, 0.1429], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-B/drafter.pt", "accepted_3": 1.0804, "accepted_4": 1.1415, "top1_steps": [0.6366, 0.3779, 0.2348, 0.1481], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-C/drafter.pt", "accepted_3": 1.0511, "accepted_4": 1.1038, "top1_steps": [0.6366, 0.3594, 0.2126, 0.1321], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-D/drafter.pt", "accepted_3": 1.0819, "accepted_4": 1.1438, "top1_steps": [0.6366, 0.3771, 0.2374, 0.1485], "chains": 38167}
+[16:27:45] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16b/drafter-step2500.pt", "accepted_3": 0.8392, "accepted_4": 0.8844, "top1_steps": [0.5212, 0.3047, 0.1845, 0.1248], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-A/drafter.pt", "accepted_3": 0.8475, "accepted_4": 0.8951, "top1_steps": [0.5212, 0.306, 0.1868, 0.1246], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-B/drafter.pt", "accepted_3": 0.8537, "accepted_4": 0.9028, "top1_steps": [0.5212, 0.3106, 0.1916, 0.1266], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-C/drafter.pt", "accepted_3": 0.8324, "accepted_4": 0.876, "top1_steps": [0.5212, 0.2934, 0.1747, 0.1166], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16ab-D/drafter.pt", "accepted_3": 0.8556, "accepted_4": 0.9056, "top1_steps": [0.5212, 0.3101, 0.1932, 0.1278], "chains": 65728}
+[16:28:55] == RUN16AB DONE ==

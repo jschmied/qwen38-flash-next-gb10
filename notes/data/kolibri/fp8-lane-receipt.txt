@@ -1,0 +1,12 @@
+PASS fp8 repack: [2560, 6144] codes and scale tiles equal the Python layout
+PASS fp8 lane: 1 rows x [2560, 6144] equal Python's bytes (tile 16, 8 slices, fused false, cluster true)
+PASS fp8 lane: 3 rows x [2560, 6144] equal Python's bytes (tile 16, 8 slices, fused false, cluster true)
+PASS fp8 lane: 17 rows x [2560, 6144] equal Python's bytes (tile 32, 8 slices, fused false, cluster true)
+PASS fp8 lane: 40 rows x [2560, 6144] equal Python's bytes (tile 64, 8 slices, fused false, cluster true)
+PASS fp8 lane: 300 rows x [2560, 6144] equal Python's bytes (tile 64, 8 slices, fused true, cluster false)
+PASS fp8 repack: [7168, 2560] codes and scale tiles equal the Python layout
+PASS fp8 lane: 1 rows x [7168, 2560] equal Python's bytes (tile 16, 2 slices, fused false, cluster true)
+PASS fp8 lane: 3 rows x [7168, 2560] equal Python's bytes (tile 16, 2 slices, fused false, cluster true)
+PASS fp8 lane: 17 rows x [7168, 2560] equal Python's bytes (tile 32, 2 slices, fused false, cluster true)
+PASS fp8 lane: 40 rows x [7168, 2560] equal Python's bytes (tile 64, 2 slices, fused false, cluster true)
+PASS fp8 lane: 300 rows x [7168, 2560] equal Python's bytes (tile 64, 2 slices, fused true, cluster false)
