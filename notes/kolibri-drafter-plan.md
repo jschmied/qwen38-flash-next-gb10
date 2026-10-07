@@ -720,3 +720,4 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
 - 17:25 GPU pause (23 s): FP8 on the renamed qmmf.cu 12/12 PASS again, NVFP4 18/18 PASS (repack + lane 1/3/17/40/300 +
   prompt GEMM 17/300/1000, [5120, 6144] and [12288, 5120]), all byte-identical to the Python kernels
   (`notes/data/kolibri/qmmf-nvfp4-receipt.txt`). Training resumed whole as 16d from step 2,500.
+- 16c step 2,500 (≈48.9M): 1.463 / 1.092 / 0.858; 16d step 5,000 (≈51M): 1.468 / 1.095 / 0.864 (accepted_4 1.660 / 1.163 / 0.915). Slow gains; balanced recordings 6,822 windows left.
