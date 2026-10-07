@@ -645,3 +645,4 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   accepted_4 1.411, above run 11's depth-3 1.38), chat 1.020, German 0.804; SWE top-1 0.714 / 0.465 / 0.317 / 0.229.
   Caveat: the fresh SWE slice is repo-biased (axios) and may share repos with the pre-cutoff recordings; a
   repo-disjoint slice is still open.
+- 15c step 22,500 (≈36M tokens): 1.291 / 1.031 / 0.812 (accepted_4 1.410 / 1.077 / 0.849); SWE holds, chat/German +0.01.
