@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# The Zig block-FP8 projection against the Python lane matmul, on the GPU while no training runs: oracle, then Zig.
+set -uo pipefail
+Z=/home/jschmied/git/tf-kolibri-zig; F=/home/jschmied/kolibri-drafter/fp8fx
+PY=/opt/llm/runtime/tf-venv/bin/python
+while systemctl is-active -q fx-kolibri-drafter-run16ab; do sleep 60; done
+for s in "2560 6144" "7168 2560"; do
+  set -- $s; out=$F/n$1-k$2
+  PYTHONPATH=/home/jschmied/git/tf-kolibri/src $PY $Z/zig/tests/cuda/oracle/fp8_lane.py $out --n $1 --k $2 2>&1 | grep -v Warning
+  $Z/zig-out/bin/tf-cuda-test fp8-lane $out
+done
+echo "== FP8 TEST DONE =="
