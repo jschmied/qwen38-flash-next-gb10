@@ -686,3 +686,9 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   40 % of steps, SWE 0.5 / chat 0.3 / German 0.2, passes SWE 1 / chat 3 / German 3 -> overall German ~19 %, SWE ~20 %
   of steps; waits for generation and the restore.
 - 08:50 disk for generation (rec/train2 ~11 GB/h with 8 slots): out9 + out12c (38 GB, chain runs; finals kept as drafter-run9-final.pt) and the 32 GLM parquet shards (15 GB; the packed .bin/.idx stay) deleted after sha256 matches against PBS.
+- **Run 16b step 2,500 (14:45; predecessor head + all recordings, balanced): SWE 1.430 / chat 1.064 / German 0.839**
+  (accepted_4 1.599 / 1.120 / 0.884) vs 15c 1.300 / 1.038 / 0.816. **First slice where the block beats run 11's chain
+  (SWE 1.38).** SWE top-1 0.714 / 0.547 / 0.383 / 0.281 (position 2 +0.07). Generation batch 2 ended at 14:05 with
+  3,559 recordings; 16b's pool 9,080 windows (SWE 4,211 / chat 3,612 / German 1,257), mix holding at 0.5/0.3/0.2.
+- LR / cool-down A/B (`run16ab.sh.txt`, 14:53) from 16b step 2,500: A 4e-4 cosine (control), B 2e-4, C 8e-4, D
+  cool-down 4e-4 -> 0 over 1,700 steps; 1.5M GLM tokens + recordings each. 16b's resume.pt kept as resume-step2500.pt.
