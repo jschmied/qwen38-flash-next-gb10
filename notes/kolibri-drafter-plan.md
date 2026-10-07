@@ -641,3 +641,7 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   17,500, continuing at lr 3.83e-4 without a re-warmup, recordings back at 10 % of steps for one more pass
   (`--rec-refresh`, SWE 1 / chat 1, 736 windows ≈ 7,000 GLM steps).
 - 2026-10-07 03:25 disk at 40 GB: deleted out12 + out13w (33 GB, superseded chain runs) after a sha256 match against PBS (41 + 37 files identical), and the redundant resume-step17500.pt copy.
+- 15c step 20,000 (≈33M tokens, 2,500 steps after the recordings came back at 10 %): **SWE 1.290** (from 1.176;
+  accepted_4 1.411, above run 11's depth-3 1.38), chat 1.020, German 0.804; SWE top-1 0.714 / 0.465 / 0.317 / 0.229.
+  Caveat: the fresh SWE slice is repo-biased (axios) and may share repos with the pre-cutoff recordings; a
+  repo-disjoint slice is still open.
