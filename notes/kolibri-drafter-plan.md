@@ -685,3 +685,4 @@ recordings (pre-cutoff; the scoring set is protected): 864 -> 411. Restored the 
   runs out (simulated: 0.500 / 0.299 / 0.201 to the end). Run 16b (replaces queued 16, `run16b.sh.txt`): recordings
   40 % of steps, SWE 0.5 / chat 0.3 / German 0.2, passes SWE 1 / chat 3 / German 3 -> overall German ~19 %, SWE ~20 %
   of steps; waits for generation and the restore.
+- 08:50 disk for generation (rec/train2 ~11 GB/h with 8 slots): out9 + out12c (38 GB, chain runs; finals kept as drafter-run9-final.pt) and the 32 GLM parquet shards (15 GB; the packed .bin/.idx stay) deleted after sha256 matches against PBS.
