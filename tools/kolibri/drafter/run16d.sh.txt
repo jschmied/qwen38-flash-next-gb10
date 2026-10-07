@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run16d (watchdog "window"). Run 16d = run 16c resumed whole (resume.pt) after a GPU pause for the Zig FP8/NVFP4 oracle tests. Run 16c = 16b continued from LR A/B arm B (2e-4, 1.5M GLM
+# tokens past 16b step 2,500). A/B (fresh accepted_3 SWE/chat/German): A 4e-4 1.442/1.067/0.848, B 2e-4 1.452/1.080/
+# 0.854, C 8e-4 1.393/1.051/0.832, D cool-down 1.463/1.082/0.856: lower lr helps a little, higher hurts, a cool-down
+# adds ~0.02 (under the 0.05 bar: the plateau is data/capacity, not lr noise). So: peak 2e-4 cosine to 2e-5, and a
+# cool-down at the very end. Same balanced recordings (40 %, SWE/chat/German 0.5/0.3/0.2), predecessor head.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+true
+true
+true
+log "run 16d: run 16c resumed"
+U $PY $T/train_block.py /opt/llm/models/kolibri-1 $D/out16c --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+  $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 2500 --init $D/out16c/drafter.pt --resume $D/out16c/resume.pt \
+  --rec $D/rec/live --rec-all $D/rec/train2 $D/rec/old --rec-share 0.4 --rec-mix swe=0.5,chat=0.3,de=0.2 \
+  --rec-cap swe=1,chat=3,de=3 --anchors 1024 --onpolicy --assistant-only --decay 0.8 --lr 2e-4 --lr-end 2e-5 \
+  --warmup 100 > $D/train16d.log 2>&1
+log "train rc=$?"
+log "== RUN16D DONE =="

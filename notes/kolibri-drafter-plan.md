@@ -710,3 +710,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   cool-down saved for the very end.
 - Zig FP8 lane: GPU oracle 12/12 byte-identical (`notes/data/kolibri/fp8-lane-receipt.txt`); posted as TF #482 with
   claim issue #481.
+- NVFP4 (user: "nvfp4 will be used for sure"): branch `jschmied/TensorFold:cuda-nvfp4` (bf8d716, stacked on #482's
+  36549fe, not posted). `qmmf.cu` replaces fp8_lane.cu (same qmmf.cu device code, FP4 instances beside FP8G),
+  `prompt16.cu` = nvfp4/prompt.cu's FP4 tile-4 prompt GEMM; `qmmf.zig` = the lane matmul for both modes, `fp8.zig` /
+  `nvfp4.zig` = the repacks (qmm.pack words + Fp4Linear scale tiles); `tf-cuda-test nvfp4` checks repack, lane rows
+  (1/3/17/40/300) and prompt rows (17/300/1000) against Python bytes. Host tests pass; GPU oracle queued for a pause at
+  run 16c step 2,500 (`gpupause.sh.txt`), then the run resumes whole as 16d. EXL3: not now (no Zig reader; ashhart
+  plans to take Yuepixel's #444 diff when an EXL3 backend exists).
