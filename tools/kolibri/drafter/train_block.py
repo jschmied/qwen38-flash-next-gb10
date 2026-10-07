@@ -141,6 +141,11 @@ def main() -> None:
     ap.add_argument("--init", default="")
     ap.add_argument("--from-chain", default="", help="a chain drafter (train_mt/train_rec) as position 0 (chain_ctx)")
     ap.add_argument("--pred-rank", type=int, default=0, help="add a predecessor head of this rank (identity at start)")
+    ap.add_argument("--pred-src", choices=("argmax", "data"), default="argmax",
+                    help="the predecessor token: Kolibri's argmax at j-1, or the data's token there (what the target "
+                         "at j is conditioned on; differs only on sampled rows)")
+    ap.add_argument("--spine-rank", type=int, default=0,
+                    help="add adjacent injection (DSpine) of this rank before layers 1.. (identity at start)")
     ap.add_argument("--row0-chain", action="store_true",
                     help="position 0 IS the chain drafter: its path (fuse, fc, layer 0, out_norm) reloaded from "
                          "--from-chain and frozen; layers 1.. and the mask train for positions 1..")
@@ -183,7 +188,7 @@ def main() -> None:
                  tk.token_to_id("<|im_end|>"))
     cfg = BlockConfig(hidden=w.config.hidden, layers=a.layers, ffn=a.ffn, taps=len(train_mt.TAPS), block=a.block)
     if a.init:
-        dr = load(torch.load(a.init, map_location="cuda"), pred_rank=a.pred_rank)
+        dr = load(torch.load(a.init, map_location="cuda"), pred_rank=a.pred_rank, spine_rank=a.spine_rank)
         if a.row0_chain and a.from_chain:                   # put the exact chain back over the loaded weights
             dr.cfg.row0_chain = True
             dr = from_chain(torch.load(a.from_chain, map_location="cpu"), dr.cfg, onto=dr.cpu())
@@ -262,7 +267,10 @@ def main() -> None:
             states = dr(feats, w.embed[seq[anchors + 1]], anchors, nxt=nxt)
         if cfg.pred_rank:                                          # each position reads Kolibri's token before it
             with torch.no_grad():
-                prev = w.embed[vocab[logp.view(len(pick), cfg.block, -1)[:, :-1].argmax(-1)]]
+                if a.pred_src == "data":                           # token t+1+j: the one the target at j follows
+                    prev = w.embed[seq[tgt_rows[:, :-1] + 1]]
+                else:
+                    prev = w.embed[vocab[logp.view(len(pick), cfg.block, -1)[:, :-1].argmax(-1)]]
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 fixed = predecessor(dr, states[:, 1:].reshape(-1, states.shape[-1]), prev.reshape(-1, prev.shape[-1]))
             states = torch.cat([states[:, :1], fixed.view(len(pick), cfg.block - 1, -1)], 1)

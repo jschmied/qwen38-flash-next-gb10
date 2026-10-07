@@ -744,3 +744,26 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
 - 20:55 batch 3's server started with --parallel 6 (gen2.sh never got batch 2's 07:40 fix): 7 clients on 6 slots,
   prompt-cache hits 135 of 2.82M tokens in 40 min, ~90k-token prefills per SWE turn. Restarted with --parallel 8:
   4.00M of 4.22M prompt tokens cached (95 %) over the next 8 min; gen2/gen3 runners now say 8.
+
+## External review 2026-10-07 23:00: verdict and the morning rule
+
+- Checked: DSpine (arXiv 2609.36173, 2026-09-28: gated adjacent injection at every drafter layer, Qwen3-8B mean
+  acceptance length 3.77 -> 4.82 vs DFlash, +23.3 % SGLang throughput) and PCTree (arXiv 2608.02123, 2026-08-03: trees
+  from a DSpark predecessor head without retraining, +3.1..29.5 %) exist as cited. Loss tuning stays closed (KL / AUF /
+  CE tied).
+- Correction to the review's "teacher -> self predecessor schedule": under greedy acceptance a drafted predecessor is
+  accepted only if it equals Kolibri's argmax, so on every surviving prefix the self and the teacher (argmax)
+  predecessor are the same token; the schedule changes nothing measurable at greedy. The real inconsistency is
+  elsewhere: the target at j is Kolibri's distribution after the DATA token at j-1 (recordings are sampled), but the
+  head is told the argmax. `train_block --pred-src data` feeds the data token (differs only on sampled rows).
+- Built (CPU tests 4/4): `model_block` `spine_rank` = DSpine-style low-rank adjacent injection before layers 1..
+  (row j >= 1 reads row j-1's state, RMSNorm -> A -> silu -> U, U zero so a loaded drafter keeps its function
+  exactly; row 0 untouched, so row0_chain stays exact); `train_block --spine-rank`, `load(..., spine_rank=)`.
+- Morning (`morning16.sh.txt`): when batch 3's generators end, stop the server and ML105, score 16d saves 5,000 /
+  7,500 / 10,000 / 12,500 on the fixed slices. Hypothesis: 12,500 vs 5,000 +0.00..+0.03 on chat and German.
+  Rule: >= +0.02 on both -> resume with recordings moved to chat/German (review: swe 0.3 / chat 0.4 / de 0.3; the
+  German pool at cap 3 then runs out first, batch 3 adds to it); else A/B from 12,500: control, --spine-rank 256,
+  --pred-src data. rec/old (27 GB, on PBS) is restored only for training, and only if the disk allows (its restore
+  stops below 50 GB free).
+- Later: PCTree-style verify trees fit the GB10 (3 rows 1.26x, 4 rows 1.37x one row's cost at 8k); needs tree-masked
+  verify in the Zig server, which is chain-only today.

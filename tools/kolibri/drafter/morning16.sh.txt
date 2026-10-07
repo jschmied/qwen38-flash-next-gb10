@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Root. When batch 3's chat and German generators end (12 h, or the disk guard): stop the recording server and ML105,
+# then score run 16d's saves 5,000 / 7,500 / 10,000 / 12,500 on the fixed slices (rec/live after 2026-10-05 09:55).
+# Hypothesis: 12,500 vs 5,000 within +0.00..+0.03 on chat and German (plateau); >= +0.02 on both -> resume with the mix
+# moved to chat/German, else A/B spine / pred-src data from 12,500.
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+while systemctl is-active -q fx-kolibri-genchat || systemctl is-active -q fx-kolibri-genchat-de; do sleep 60; done
+log "generators ended: chat $(wc -l < $D/own_chat.jsonl), German $(wc -l < $D/own_chat_de.jsonl), $(df -h --output=avail /home | tail -1) free"
+ssh -n -o BatchMode=yes -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts root@10.0.0.8 'systemctl stop kolibri-swe-ml105'
+systemctl stop fx-kolibri-serve; while systemctl is-active -q fx-kolibri-serve; do sleep 5; done
+log "server and ML105 stopped; recordings in train2: $(find $D/rec/train2 -name '*.json' | wc -l)"
+sleep 360   # rectrim's next pass trims the last recordings
+CK="$D/out16c/drafter-step5000.pt $D/out16c/drafter-step7500.pt $D/out16c/drafter-step10000.pt $D/out16c/drafter-step12500.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+log "== MORNING16 DONE =="

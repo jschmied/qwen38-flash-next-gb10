@@ -2,7 +2,7 @@
 
 import torch
 
-from model_block import BlockConfig, BlockDrafter
+from model_block import BlockConfig, BlockDrafter, load
 
 
 def test_no_leak_and_isolation():
@@ -37,8 +37,35 @@ def test_no_leak_and_isolation():
     assert torch.allclose(solo[0], out[1])
 
 
+def test_spine_starts_as_identity_and_reads_only_its_predecessor():
+    torch.manual_seed(1)
+    cfg = BlockConfig(hidden=64, heads=4, head_dim=16, ffn=128, layers=3, taps=3, block=4)
+    base = BlockDrafter(cfg).double()
+    for p in base.parameters():
+        torch.nn.init.normal_(p, std=0.2)
+    ck = {"config": dict(cfg.__dict__), "state": base.state_dict()}
+    dr = load(ck, spine_rank=8).double()
+    T = 32
+    feats = torch.randn(T, 3 * 64, dtype=torch.float64)
+    first = torch.randn(3, 64, dtype=torch.float64)
+    anchors = torch.tensor([5, 12, 20])
+    out = dr(feats, first, anchors)
+    assert torch.allclose(out, base(feats, first, anchors))  # zero-initialised: the loaded drafter's function, exactly
+    for u in dr.spine_u:
+        torch.nn.init.normal_(u.weight, std=0.2)
+    out2 = dr(feats, first, anchors)
+    assert not torch.allclose(out2[:, 1:], out[:, 1:])         # rows 1.. read their predecessors now
+    f2 = feats.clone()
+    f2[13:] += torch.randn_like(f2[13:])                       # still no leak from rows after an anchor
+    out3 = dr(f2, first, anchors)
+    assert torch.allclose(out3[1], out2[1]) and torch.allclose(out3[0], out2[0])
+    solo = dr(feats, first[1:2], anchors[1:2])                 # nor across blocks
+    assert torch.allclose(solo[0], out2[1])
+
+
 if __name__ == "__main__":
     test_no_leak_and_isolation()
+    test_spine_starts_as_identity_and_reads_only_its_predecessor()
     print("ok")
 
 

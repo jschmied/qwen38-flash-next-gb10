@@ -32,6 +32,7 @@ class BlockConfig:
     chain_ctx: bool = False   # context rows as the chain drafter's: fc(cat(embed(token r+1), fuse(taps r))); row 0 = that row
     row0_chain: bool = False  # chain_ctx: block row 0's output is taken after layer 0 (the chain drafter, kept exact)
     pred_rank: int = 0        # >0: a predecessor head (DSpark-style): position j>=1 corrected by the token drafted at j-1
+    spine_rank: int = 0       # >0: before layers 1.., each block row j>=1 reads row j-1's state (DSpine), zero at start
 
 
 class Layer(nn.Module):
@@ -78,6 +79,10 @@ class BlockDrafter(nn.Module):
             self.pred_e = nn.Linear(d, cfg.pred_rank, bias=False)
             self.pred_out = nn.Linear(cfg.pred_rank, d, bias=False)
         self.layers = nn.ModuleList(Layer(cfg) for _ in range(cfg.layers))
+        if cfg.spine_rank:                                       # one adjacent injection before each layer after the first
+            self.spine_n = nn.ModuleList(RMSNorm(d, cfg.eps) for _ in range(cfg.layers - 1))
+            self.spine_a = nn.ModuleList(nn.Linear(d, cfg.spine_rank, bias=False) for _ in range(cfg.layers - 1))
+            self.spine_u = nn.ModuleList(nn.Linear(cfg.spine_rank, d, bias=False) for _ in range(cfg.layers - 1))
         self.out_norm = RMSNorm(d, cfg.eps)
         for m in self.modules():
             if isinstance(m, nn.Linear):
@@ -87,6 +92,9 @@ class BlockDrafter(nn.Module):
             nn.init.zeros_(layer.down.weight)
         if cfg.pred_rank:
             nn.init.zeros_(self.pred_out.weight)                 # identity at start
+        if cfg.spine_rank:
+            for u in self.spine_u:
+                nn.init.zeros_(u.weight)                         # identity at start: a loaded drafter keeps its function
         nn.init.normal_(self.mask, std=0.02)
 
     def forward(self, feats: torch.Tensor, first: torch.Tensor, anchors: torch.Tensor,
@@ -120,6 +128,11 @@ class BlockDrafter(nn.Module):
         mask = torch.cat([see_ctx, see_blk], 1)
         first_row = None
         for i, layer in enumerate(self.layers):
+            if i and cfg.spine_rank:                             # row j >= 1 adds a low-rank read of row j-1, same layer
+                zz = z.view(a, b, -1)
+                k = i - 1
+                inj = self.spine_u[k](F.silu(self.spine_a[k](self.spine_n[k](zz[:, :-1]))))
+                z = torch.cat([zz[:, :1], zz[:, 1:] + inj], 1).reshape(a * b, -1)
             z = layer(z, pos, ctx, rows, mask)
             if i == 0 and cfg.chain_ctx and cfg.row0_chain:
                 first_row = z.view(a, b, -1)[:, 0]               # rows 1.. never attend to row 0 (it is a context key)
@@ -166,15 +179,20 @@ def from_chain(chain: dict, cfg: BlockConfig, onto: BlockDrafter | None = None) 
     return dr
 
 
-def load(ck: dict, pred_rank: int = 0) -> BlockDrafter:
-    """A drafter from a checkpoint; pred_rank adds a fresh (identity) predecessor head to one saved without."""
+def load(ck: dict, pred_rank: int = 0, spine_rank: int = 0) -> BlockDrafter:
+    """A drafter from a checkpoint; pred_rank / spine_rank add a fresh (identity) predecessor head / adjacent injection
+    to one saved without."""
 
     cfg = BlockConfig(**ck["config"])
-    grow = pred_rank and not cfg.pred_rank
-    if grow:
+    grown = []
+    if pred_rank and not cfg.pred_rank:
         cfg.pred_rank = pred_rank
+        grown.append("pred_")
+    if spine_rank and not cfg.spine_rank:
+        cfg.spine_rank = spine_rank
+        grown.append("spine_")
     dr = BlockDrafter(cfg)
-    missing, unexpected = dr.load_state_dict(ck["state"], strict=not grow)
-    if unexpected or any(not m.startswith("pred_") for m in missing):
+    missing, unexpected = dr.load_state_dict(ck["state"], strict=not grown)
+    if unexpected or any(not m.startswith(tuple(grown or ["-"])) for m in missing):
         raise ValueError(f"checkpoint does not fit: missing {missing[:4]}, unexpected {unexpected[:4]}")
     return dr
