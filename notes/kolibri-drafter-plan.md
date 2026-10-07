@@ -717,3 +717,6 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   (1/3/17/40/300) and prompt rows (17/300/1000) against Python bytes. Host tests pass; GPU oracle queued for a pause at
   run 16c step 2,500 (`gpupause.sh.txt`), then the run resumes whole as 16d. EXL3: not now (no Zig reader; ashhart
   plans to take Yuepixel's #444 diff when an EXL3 backend exists).
+- 17:25 GPU pause (23 s): FP8 on the renamed qmmf.cu 12/12 PASS again, NVFP4 18/18 PASS (repack + lane 1/3/17/40/300 +
+  prompt GEMM 17/300/1000, [5120, 6144] and [12288, 5120]), all byte-identical to the Python kernels
+  (`notes/data/kolibri/qmmf-nvfp4-receipt.txt`). Training resumed whole as 16d from step 2,500.
