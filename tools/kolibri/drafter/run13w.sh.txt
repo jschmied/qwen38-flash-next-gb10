@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run13. Run 13w = run 11 final with its FFN grown 4096 -> 10240 (loss-free), on run 12c's
+# exact data and order (glm3 + de4k, same shuffle) through ~34M tokens; then scored against run 12c's checkpoints at the
+# same steps (12c = the narrow control). Recordings after 2026-10-05 09:55, 32k as served.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+systemctl stop fx-kolibri-keepckpt
+systemd-run --unit=fx-kolibri-keepckpt --collect --uid=jschmied bash -c "bash $D/keepckpt.sh $D/out13w >> $D/keepckpt.log 2>&1"
+log "run 13w training"
+U $PY $T/train_mt.py /opt/llm/models/kolibri-1 $D/swe $D/out13w --extra $D/glm/glm3 --extra $D/glm/de4k --swe-passes 0 \
+  --hold 3 --init $D/drafter-run11-final.pt --grow-ffn 10240 --taps 44,47,49 --rollout 3 --lr 2e-4 --eval 4000 \
+  --plateau -1 --loss kll1 --l1w 0.1 --draft-vocab $V --log 50 --save 500 --max-tokens 34500000 > $D/train13w.log 2>&1
+log "train rc=$?"
+sleep 90
+for st in 8000 16500 22000; do
+  [ -e $D/out13w/drafter-step$st.pt ] || continue
+  for sl in swe chat de; do
+    case $sl in
+      swe) A="--contains 'returncode|interact with a computer shell' --excludes django";;
+      chat) A="--excludes 'returncode|interact with a computer shell| und | nicht | ist '";;
+      de) A="--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'";;
+    esac
+    log "step $st $sl"
+    U bash -c "ulimit -n 1048576 2>/dev/null || ulimit -n \$(ulimit -Hn); $PY $T/eval_rec.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $A --draft-vocab $V --ckpt $D/out12c/drafter-step$st.pt $D/out13w/drafter-step$st.pt" 2>&1 | grep accepted
+  done
+done
+log "== RUN13W DONE =="

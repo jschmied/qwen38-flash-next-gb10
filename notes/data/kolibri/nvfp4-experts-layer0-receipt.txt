@@ -1,0 +1,29 @@
+[19:12:29] step 10000 kept, resume.pt 19:11:15; stopping 16d
+PASS nvfp4 experts: 33 x [512, 2560] gate-up, down and scales packed as make() packs them
+PASS nvfp4 experts: 1 rows x 7 slots (decode, 7 items) plan, gate-up and down equal Python's bytes
+PASS nvfp4 experts: 3 rows x 7 slots (decode, 16 items) plan, gate-up and down equal Python's bytes
+PASS nvfp4 experts: 300 rows x 7 slots (prompt, 148 items) plan, gate-up and down equal Python's bytes
+nvfp4-experts exit 0
+[tensorfold] kolibri1: 1/1 layers in 2s
+qkv_w8 (18350080,) torch.uint8
+qkv_bs (112, 40, 256) torch.uint8
+o_w8 (15728640,) torch.uint8
+o_bs (40, 96, 256) torch.uint8
+up (385, 16, 80, 2, 32, 2, 4) torch.int32
+down (385, 80, 16, 1, 32, 2, 4) torch.int32
+up_scale (385, 2, 4, 20) torch.float32
+down_scale (385, 1, 20, 4) torch.float32
+input_norm (2560,) torch.float32
+q_norm (128,) torch.float32
+k_norm (128,) torch.float32
+post_attn_norm (2560,) torch.float32
+pre_moe_norm (2560,) torch.float32
+router (384, 2560) torch.bfloat16
+bias (384,) torch.float32
+[19:12:49] GPU part done; resuming 16d, then the host comparison
+Running as unit: fx-kolibri-drafter-run16d.service; invocation ID: 10434a6ae6e6423690254f66dde3f3e8
+error: 'direct_io.test.direct reads return the same bytes as buffered reads' failed:
+                       return error.TestExpectedEqual;
+Build Summary: 17/19 steps succeeded (1 failed); 11/12 tests passed (1 failed)
+== GPU PAUSE DONE ==
+host rerun (19:2x): kolibri1 module 7 pass (7 total) 20s MaxRSS:4G, TF_KOLIBRI_DIR + TF_KOLIBRI_LAYER0 set (pack.zig layer 0 == weights.load)

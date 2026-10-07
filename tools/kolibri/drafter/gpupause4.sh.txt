@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Root. At run 16d's step 10,000 save: stop it, NVFP4 experts oracle + Zig test, dump weights.load's layer 0,
+# resume 16d, then compare kolibri1/pack.zig on the host.
+D=/home/jschmied/kolibri-drafter; Z=/home/jschmied/git/tf-kolibri-zig; N=/home/jschmied/git/tf-nvfp4x
+PY=/opt/llm/runtime/tf-venv/bin/python; M=/opt/llm/models/kolibri-1; F=$D/kolfx/layer0
+U(){ runuser -u jschmied -- env PYTHONPATH=/home/jschmied/git/tf-kolibri/src HOME=/home/jschmied \
+  PATH=/home/jschmied/opt/zig-aarch64-linux-0.17.0:/usr/local/cuda/bin:/usr/bin:/bin "$@"; }
+until [ -e $D/out16c/drafter-step10000.pt ]; do sleep 30; done
+sleep 30
+echo "[$(date +%H:%M:%S)] step 10000 kept, resume.pt $(stat -c %y $D/out16c/resume.pt | cut -c12-19); stopping 16d"
+systemctl stop fx-kolibri-drafter-run16d
+while systemctl is-active -q fx-kolibri-drafter-run16d; do sleep 5; done
+out=$D/fp8fx/nvfp4-experts-e33
+U timeout 1800 $PY $N/zig/tests/cuda/oracle/nvfp4_experts.py $out 2>&1 | grep -v Warning
+U timeout 600 $N/zig-out/bin/tf-cuda-test nvfp4-experts $out; echo "nvfp4-experts exit $?"
+U timeout 1800 $PY $Z/zig/tests/cuda/oracle/kolibri_layer.py $M $F 2>&1 | grep -v Warning
+echo "[$(date +%H:%M:%S)] GPU part done; resuming 16d, then the host comparison"
+systemd-run --unit=fx-kolibri-drafter-run16d --collect -E HOME=/root bash -c "bash $D/run16d.sh >> $D/run16d.log 2>&1"
+cd $Z && U env TF_KOLIBRI_DIR=$M TF_KOLIBRI_LAYER0=$F timeout 3600 nice zig build test --summary all 2>&1 | grep -E "pack|names|error|passed|skip"
+echo "== GPU PAUSE DONE =="

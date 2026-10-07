@@ -727,3 +727,9 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   Python host. 18:37 GPU pause at 16d step 7,500 (6 s): packing + plan + gate-up + down byte-identical for decode 1 / 3
   rows and prompt 300 rows (2,100 pairs, wide plan), E 33, [512, 2560] (`notes/data/kolibri/fp8-experts-receipt.txt`,
   runner `gpupause2.sh.txt`). Training resumed from resume.pt.
+- 19:12 GPU pause at 16d step 10,000: NVFP4 experts (`jschmied/TensorFold:cuda-nvfp4-experts`, cd4ee05, stacked on
+  cuda-fp8-experts; nvfp4/experts.cu's three decode instances, prompt items of 16) 4/4 byte-identical, E 33 [512,
+  2560], decode 1 / 3 rows and prompt 300 rows. Kolibri host side (`kolibri1-weights`, stacked on cuda-fp8-experts):
+  core safetensors reads F8_E4M3 (ada7ea3); `names.zig` maps the released checkpoint's 116,303 tensors, none left
+  over (d9579da); `pack.zig` packs layer 0 byte-identical to weights.load (8a7965b; oracle kolibri_layer.py).
+  Receipt `notes/data/kolibri/nvfp4-experts-layer0-receipt.txt`, runner `gpupause4.sh.txt`.
