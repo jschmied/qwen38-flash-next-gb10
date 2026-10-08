@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Root. At run 16g's step 17,500 save: stop 16g, score 16g's 15,000 / 17,500 (17,500 includes ~1,000 text-only steps),
+# then start run 16h (second recording pass) and its checkpoint keeper.
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+until [ -e $D/out16g/drafter-step17500.pt ]; do sleep 30; done
+sleep 30
+log "16g step 17500 kept; stopping 16g"
+systemctl stop fx-kolibri-drafter-run16g fx-kolibri-keepckpt16g; while systemctl is-active -q fx-kolibri-drafter-run16g; do sleep 5; done
+CK="$D/out16g/drafter-step12500.pt $D/out16g/drafter-step15000.pt $D/out16g/drafter-step17500.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"\|Error'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+rm -f $D/out16g/resume.pt
+systemd-run --unit=fx-kolibri-drafter-run16h --collect -E HOME=/root bash -c "bash $D/run16h.sh >> $D/run16h.log 2>&1"
+systemd-run --unit=fx-kolibri-keepckpt16h --collect -E HOME=/root bash -c "bash $D/keepckpt.sh $D/out16h >> $D/keepckpt16h.log 2>&1"
+log "run 16h started; $(df -h --output=avail /home | tail -1) free"
+log "== SWITCH16H DONE =="

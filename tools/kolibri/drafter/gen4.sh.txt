@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Root. Kolibri-own data, batch 4 (2026-10-08 evening, user: "yes, generate as needed"): German only, the class that
+# caps the recording phase (~2,000 windows at share 0.3; SWE 5,575 and chat 5,541 have room). Recording server as
+# batch 3 (--parallel 8, rec/train2), 6 German workers: sharegpt-deutsch rows < 1,400 (test pool from 1,500) and
+# alpaca-gpt4-de rows < 7,900 (test pool from 8,000; batches 2-3 read only the first 1,400). 12 h; no SWE.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; C=$D/chat; U=http://127.0.0.1:8093/v1/chat/completions
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+systemd-run --unit=fx-kolibri-serve --collect --uid=jschmied -E PYTHONPATH=$SRC -E HOME=/home/jschmied \
+  -E TENSORFOLD_KOLIBRI_RECORD=$D/rec/train2 -E TENSORFOLD_KOLIBRI_RECORD_TAPS=44,47,49 \
+  $PY -c "import sys; from tensorfold.cli import main; sys.argv=['tensorfold','serve','/opt/llm/models/kolibri-1','--name','kolibri-1','--host','127.0.0.1','--port','8093','--parallel','8','--context','131072']; sys.exit(main())"
+for i in $(seq 1 90); do curl -s -m 3 http://127.0.0.1:8093/v1/models | grep -q kolibri && break; sleep 10; done
+log "server: $(curl -s -m 3 http://127.0.0.1:8093/v1/models | head -c 80)"
+ALL="$D/own_chat.jsonl $D/own_chat_de.jsonl $D/own_chat_de4a.jsonl $D/own_chat_de4b.jsonl"
+systemd-run --unit=fx-kolibri-genchat --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $U $D/own_chat_de4a.jsonl $C/FreedomIntelligence__sharegpt-deutsch__sharegpt-deutsch.json --workers 2 --hours 12 --max-rows 1400 --skip $ALL >> $D/genchat.log 2>&1"
+systemd-run --unit=fx-kolibri-genchat-de --collect --uid=jschmied -E HOME=/home/jschmied bash -c "$D/prep-venv/bin/python $T/gen_chat.py $U $D/own_chat_de4b.jsonl $C/mayflowergmbh__alpaca-gpt4_de__alpaca_gpt4_data_de.json --workers 4 --hours 12 --max-rows 7900 --skip $ALL >> $D/genchat-de.log 2>&1"
+log "== GEN4 STARTED =="

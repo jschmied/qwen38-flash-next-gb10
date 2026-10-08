@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run16h (watchdog "window"). Run 16h = run 16g from its step 17,500 with a second pass
+# over the recordings: 16g used every German window by step 16,500 and then trained text-only (the trainer stops
+# recordings for all classes once one class runs out). Same recipe: spine 256, position 0 at 0.1 x lr weight 2,
+# recordings 40 % at swe 0.3 / chat 0.4 / de 0.3, fresh AdamW from the save.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+O=$D/out16h; mkdir -p $O; chown jschmied: $O
+INIT=$D/out16g/drafter-step17500.pt
+if [ -e $O/resume.pt ]; then R="--init $O/drafter.pt --resume $O/resume.pt"; log "run 16g resumed"
+else SKIP=$($PY -c "import torch;print(torch.load('$INIT',map_location='cpu')['tokens'])"); R="--init $INIT --skip-tokens $SKIP"; log "run 16g from 16f step 5000 + spine, skip $SKIP"; fi
+U $PY $T/train_block.py /opt/llm/models/kolibri-1 $O --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+  $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 2500 $R \
+  --rec $D/rec/live --rec-all $D/rec/train2 --rec-share 0.4 --rec-mix swe=0.3,chat=0.4,de=0.3 \
+  --rec-cap swe=1,chat=3,de=3 --anchors 1024 --onpolicy --assistant-only --decay 0.8 --warmup 100 \
+  --lr 2e-4 --lr-end 2e-5 --train-row0 0.1 --pos1-weight 2 --spine-rank 256 >> $D/train16h.log 2>&1
+log "train rc=$?"
+log "== RUN16F DONE =="

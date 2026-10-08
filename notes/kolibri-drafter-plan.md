@@ -804,3 +804,12 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   / 1.141 / 0.916; 16g 5,000 1.683 / 1.178 / 0.957; 10,000 1.696 / 1.191 / 0.967; **12,500 1.710 / 1.200 / 0.973**
   (1.964 / 1.284 / 1.038). Position 1 0.800 / 0.673 / 0.576. **German now above run 11's chain (0.945)**, chat
   0.03 under it (1.23), SWE +0.33. Still rising (+0.013 / +0.009 / +0.006 per 2,500 steps). 16g resumed 14:16.
+- 15:20 16g's recordings ran out at step 16,500 (German's 1,977 windows first; the trainer then drops recordings for
+  every class) and it trained text-only after. Armed: at 16g step 17,500 score 12,500 / 15,000 / 17,500, then run 16h
+  = second recording pass from 17,500 (`switch16h.sh.txt`, `run16h.sh.txt`).
+- Generation cannot run beside training on the GB10 (two copies of the 77 GB target do not fit in 128 GB); they
+  alternate. German caps the recording phase (~2,000 windows at share 0.3; SWE 5,575 and chat 5,541 have room), so
+  batch 4 (`gen4.sh.txt`, user: "yes, generate as needed") is German only: 6 workers, sharegpt-deutsch < 1,400 and
+  alpaca-gpt4-de < 7,900 (rows 1,400-7,900 never read: clean of the scoring set, whose prompts sit in own_chat*.jsonl
+  and are skipped, of the test pool 1,500+ / 8,000+, and of de4k 2,000+ / 10,000+). Starts at 16h's step 12,500
+  save (~19:00, `switchgen4.sh.txt`), 12 h.
