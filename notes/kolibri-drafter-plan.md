@@ -786,3 +786,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   0.876 (1.721 / 1.187 / 0.932). **All tie** (S, P within +-0.002 of K): hypothesis (>= +0.03) rejected at this
   budget. The spine did train but stayed small (U Frobenius ~5.1 per layer vs layer 1's o 175). K over 12,500: SWE
   +0.017, chat +0.003, German +0.005 - the chat/German mix shift alone moves little in 1,621 steps.
+- **Arm U WINS** (09:46, `notes/data/kolibri/run16u.log`): position 0's chain path unfrozen at 0.1 x lr, weight 2,
+  same 1,621 steps as K. accepted_3 SWE / chat / German: K 1.504 / 1.112 / 0.876 -> **U 1.618 / 1.141 / 0.916**
+  (accepted_4 1.851 / 1.216 / 0.974); position 1 top-1 0.714 -> 0.764 / 0.637 -> 0.651 / 0.521 -> 0.547, positions
+  2-4 also up. The freeze was the cap: run 15 lost position 1 at full lr with the rest; at 0.1 x lr in its own group it
+  learns the new data. U now beats run 11's chain on SWE (1.38) and closes on German (0.945); chat still under (1.23).
+- 09:50 run 16f (`run16f.sh.txt`): arm U continued over the GLM set, same recipe, saves every 2,500
+  (`fx-kolibri-keepckpt16f`). Next A/B candidates from a 16f save: row0 lr 0.3 x; pos1 weight 4.

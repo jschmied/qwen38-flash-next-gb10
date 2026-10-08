@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run16f (watchdog "window"). Run 16f = arm U continued: position 0's chain path trains
+# at 0.1 x lr with loss weight 2 (U over K after 1,621 steps: SWE +0.114, chat +0.028, German +0.039; position 1
+# 0.714 -> 0.764 / 0.637 -> 0.651 / 0.521 -> 0.547), recordings 40 % at swe 0.3 / chat 0.4 / de 0.3 (batch 3 in
+# rec/train2), lr 2e-4 cosine to 2e-5 over the GLM set, saves every 2,500 steps (keepckpt16f keeps them).
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+O=$D/out16f; mkdir -p $O; chown jschmied: $O
+INIT=$D/out16e-U/drafter.pt
+if [ -e $O/resume.pt ]; then R="--init $O/drafter.pt --resume $O/resume.pt"; log "run 16f resumed"
+else SKIP=$($PY -c "import torch;print(torch.load('$INIT',map_location='cpu')['tokens'])"); R="--init $INIT --skip-tokens $SKIP"; log "run 16f from arm U, skip $SKIP"; fi
+U $PY $T/train_block.py /opt/llm/models/kolibri-1 $O --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+  $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 2500 $R \
+  --rec $D/rec/live --rec-all $D/rec/train2 --rec-share 0.4 --rec-mix swe=0.3,chat=0.4,de=0.3 \
+  --rec-cap swe=1,chat=3,de=3 --anchors 1024 --onpolicy --assistant-only --decay 0.8 --warmup 100 \
+  --lr 2e-4 --lr-end 2e-5 --train-row0 0.1 --pos1-weight 2 >> $D/train16f.log 2>&1
+log "train rc=$?"
+log "== RUN16F DONE =="

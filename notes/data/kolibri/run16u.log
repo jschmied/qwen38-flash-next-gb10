@@ -1,0 +1,15 @@
+[09:18:52] arm U from /home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt skip 58747758
+[09:43:17] arm U rc=0
+[09:43:17] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 1.4869, "accepted_4": 1.6901, "top1_steps": [0.7135, 0.5658, 0.4154, 0.3133], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-K/drafter.pt", "accepted_3": 1.5038, "accepted_4": 1.7195, "top1_steps": [0.7135, 0.5667, 0.425, 0.3186], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-U/drafter.pt", "accepted_3": 1.6177, "accepted_4": 1.8513, "top1_steps": [0.764, 0.5785, 0.429, 0.3168], "chains": 229055}
+[09:45:30] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 1.1093, "accepted_4": 1.1816, "top1_steps": [0.6366, 0.39, 0.245, 0.1571], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-K/drafter.pt", "accepted_3": 1.1124, "accepted_4": 1.185, "top1_steps": [0.6366, 0.3915, 0.2469, 0.1584], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-U/drafter.pt", "accepted_3": 1.1408, "accepted_4": 1.2163, "top1_steps": [0.6513, 0.3959, 0.2511, 0.1611], "chains": 38167}
+[09:46:02] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 0.8719, "accepted_4": 0.9265, "top1_steps": [0.5212, 0.3158, 0.1978, 0.1296], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-K/drafter.pt", "accepted_3": 0.8764, "accepted_4": 0.9325, "top1_steps": [0.5212, 0.3186, 0.2002, 0.1308], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-U/drafter.pt", "accepted_3": 0.9155, "accepted_4": 0.9737, "top1_steps": [0.5468, 0.324, 0.2023, 0.1331], "chains": 65728}
+[09:46:46] == RUN16U DONE ==
