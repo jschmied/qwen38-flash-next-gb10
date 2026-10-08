@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Root. Batch 4 writes ~6 GB/h; the recorder stops below 25 GB free. Below 27 GB: stop the German generators and the
+# server, let rectrim pass once, start round 3 (run16i.sh) and its checkpoint keeper. Also when batch 4 ends on time.
+D=/home/jschmied/kolibri-drafter
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+while true; do
+  free=$(df -BG --output=avail /home | tail -1 | tr -dc 0-9)
+  [ "$free" -lt 27 ] && { log "${free} GB free: ending batch 4"; break; }
+  systemctl is-active -q fx-kolibri-genchat || systemctl is-active -q fx-kolibri-genchat-de || { log "batch 4 ended"; break; }
+  sleep 60
+done
+systemctl stop fx-kolibri-genchat fx-kolibri-genchat-de fx-kolibri-serve
+while systemctl is-active -q fx-kolibri-serve; do sleep 5; done
+log "German conversations: $(cat $D/own_chat_de4a.jsonl $D/own_chat_de4b.jsonl | wc -l); recordings $(find $D/rec/train2 -name '*.json' | wc -l)"
+sleep 360
+systemd-run --unit=fx-kolibri-drafter-run16i --collect -E HOME=/root bash -c "bash $D/run16i.sh >> $D/run16i.log 2>&1"
+systemd-run --unit=fx-kolibri-keepckpt16i --collect -E HOME=/root bash -c "bash $D/keepckpt.sh $D/out16i >> $D/keepckpt16i.log 2>&1"
+log "run 16i started; $(df -h --output=avail /home | tail -1) free"
+log "== FLOORSWITCH DONE =="

@@ -847,3 +847,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   the first user turn; every recorded answer is Kolibri's own. Only de4k (prefill text, sharegpt 2,000+ / alpaca
   10,000+) feeds third-party answers (ChatGPT / translated GPT-4) as context, Kolibri's distribution the target.
   -> Release under Apache-2.0 with an attribution list; batch 4 on alpaca-de prompts is fine.
+- 19:20 batch 4 runs ~250 German conversations/h (batch 3: ~40) and ~6 GB/h of recordings; the recorder stops below
+  25 GB. Dropped 16h steps 2,500-10,000, 16g 12,500/15,000 and out16c after PBS sha256 match (45 GB free).
+  `floorswitch.sh.txt`: below 27 GB (or when batch 4 ends) stop generation and start round 3 = run 16i
+  (`run16i.sh.txt`: from 16h step 12,500, 64k draft vocab, all recordings incl. batch 4). Its log line still says
+  "16g" (copied text); paths are 16i.
