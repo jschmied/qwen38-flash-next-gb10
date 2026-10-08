@@ -852,3 +852,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   `floorswitch.sh.txt`: below 27 GB (or when batch 4 ends) stop generation and start round 3 = run 16i
   (`run16i.sh.txt`: from 16h step 12,500, 64k draft vocab, all recordings incl. batch 4). Its log line still says
   "16g" (copied text); paths are 16i.
+- 19:59 (user: "backup and remove"): /opt/llm/models/qwen38-flash-next-mtpfp4-plebf16 (102 GB, no hardlinks) synced to
+  PBS /mnt/bulk/gb10/models, 12/12 files sha256-matched, deleted locally; sums in
+  /opt/llm/runners/SHA256SUMS-qwen38-flash-next-mtpfp4-plebf16.txt. fp8head kept (prod checkpoint; 120 GB of it
+  hardlinked, ~12 GB would free). 137 GB free: batch 4 runs the night, floorswitch then starts run 16i at its end.

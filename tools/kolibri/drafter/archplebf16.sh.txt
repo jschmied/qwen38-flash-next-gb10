@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Root. User: "backup and remove". Sync qwen38-flash-next-mtpfp4-plebf16 to PBS, sha256 every file on both sides,
+# delete the local copy only if every file matches (frees ~102 GB; none of its files is hardlinked elsewhere).
+set -uo pipefail
+M=/opt/llm/models; N=qwen38-flash-next-mtpfp4-plebf16; R=/mnt/bulk/gb10/models
+K="-o BatchMode=yes -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts"
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+rsync -aH --partial -e "ssh $K" $M/$N/ root@10.0.0.70:$R/$N/ || { log "rsync FAILED"; exit 1; }
+log "synced"
+L=$(cd $M && find $N -type f -print0 | sort -z | xargs -0 sha256sum)
+Rm=$(ssh -n $K root@10.0.0.70 "cd $R && find $N -type f -print0 | sort -z | xargs -0 sha256sum")
+nl=$(echo "$L" | wc -l); miss=$(comm -23 <(echo "$L" | sort) <(echo "$Rm" | sort) | wc -l)
+log "$nl local files, $miss not matched on PBS"
+if [ "$miss" = 0 ] && [ "$nl" -gt 0 ]; then
+  echo "$L" > /opt/llm/runners/SHA256SUMS-$N.txt
+  rm -rf $M/$N && log "deleted $M/$N; $(df -h --output=avail /home | tail -1) free"
+else log "KEPT $N"; fi
+log "== ARCHPLEBF16 DONE =="
