@@ -813,3 +813,6 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   alpaca-gpt4-de < 7,900 (rows 1,400-7,900 never read: clean of the scoring set, whose prompts sit in own_chat*.jsonl
   and are skipped, of the test pool 1,500+ / 8,000+, and of de4k 2,000+ / 10,000+). Starts at 16h's step 12,500
   save (~19:00, `switchgen4.sh.txt`), 12 h.
+- Drafter for generation? No: the Python server's drafter slot loads only chain (train_mt) checkpoints, so not the
+  block drafter, and at c=4 run 11's chain was neutral (110.0 -> 109.6 tok/s, 2026-10-06); batch 4 runs more streams.
+  Instead batch 4 got 8 workers (3 sharegpt-de + 5 alpaca-de), one per server slot (edited before it started).
