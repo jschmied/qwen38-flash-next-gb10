@@ -826,3 +826,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   `draft_vocab_48k.json` (the 32k in order, then on-policy tokens; counts `top1_counts_train2.npy`). The head is
   Kolibri's frozen lm_head, so a wider slice needs no retraining to be scored: `switchgen4b.sh.txt` scores 16g 17,500
   and 16h 12,500 with 32k and 48k at the switch to batch 4 (~19:00). Draft head cost 32k 0.92 ms -> ~1.4 ms est.
+- Vocab for 99 % held-out top-1 (order: the 32k, then train2 counts): SWE 52k, chat 76k, German 91k, pooled 68k,
+  classes equal 78k; 95 % at 33k / 30k / 44k. Long sparse tail: the held-out itself reaches 99 % with 1.6k (SWE) /
+  3.8k (chat) / 8.4k (German) distinct tokens, but many never occur in train2's 6.03M rows - more German data
+  shrinks the needed vocab. Head cost ~linear in rows (32k 0.92 ms, full 3.62 ms). `draft_vocab_64k.json` = every
+  token seen in train2 (60,614) added to tonight's scoring (`switchgen4c.sh.txt`: 32k / 48k / 64k).

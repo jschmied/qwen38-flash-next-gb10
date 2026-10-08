@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Root. At run 16h's step 12,500 save: stop 16h; score 16g 17,500 and 16h 12,500 with the 32k and the 48k draft vocab
+# Root. At run 16h's step 12,500 save: stop 16h; score 16g 17,500 and 16h 12,500 with the 32k, 48k and 64k (every token seen in train2, 60,614) draft vocab
 # (48k = the 32k + Kolibri's most frequent on-policy top-1 tokens from rec/train2; held-out top-1 coverage German 0.896
 # -> 0.958, SWE 0.944 -> 0.989, chat 0.970 -> 0.982); then start generation batch 4 (gen4.sh).
 D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
@@ -11,11 +11,11 @@ sleep 30
 log "16h step 12500 kept; stopping 16h"
 systemctl stop fx-kolibri-drafter-run16h fx-kolibri-keepckpt16h; while systemctl is-active -q fx-kolibri-drafter-run16h; do sleep 5; done
 CK="$D/out16g/drafter-step17500.pt $D/out16h/drafter-step12500.pt"
-for V in $D/draft_vocab_32k.json $D/draft_vocab_48k.json; do
+for V in $D/draft_vocab_32k.json $D/draft_vocab_48k.json $D/draft_vocab_64k.json; do
   E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"\|Error'; }
   log "vocab $(basename $V): fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
   log "vocab $(basename $V): fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
   log "vocab $(basename $V): fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
 done
 bash $D/gen4.sh
-log "== SWITCHGEN4B DONE =="
+log "== SWITCHGEN4C DONE =="
