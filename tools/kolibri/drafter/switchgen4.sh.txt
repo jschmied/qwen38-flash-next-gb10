@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-# Root. At run 16h's step 12,500 save (before German runs out again): stop 16h, start generation batch 4 (gen4.sh).
-D=/home/jschmied/kolibri-drafter
-until [ -e $D/out16h/drafter-step12500.pt ]; do sleep 60; done
-sleep 30
-echo "[$(date +%H:%M:%S)] 16h step 12500 kept; stopping 16h"
-systemctl stop fx-kolibri-drafter-run16h fx-kolibri-keepckpt16h; while systemctl is-active -q fx-kolibri-drafter-run16h; do sleep 5; done
-bash $D/gen4.sh
-echo "== SWITCHGEN4 DONE =="

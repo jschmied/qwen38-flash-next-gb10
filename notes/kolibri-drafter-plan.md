@@ -819,3 +819,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
 - 15:37 16g scores (`notes/data/kolibri/score16g-17500.log`), accepted_3: 15,000 1.704 / 1.203 / 0.977; **17,500
   1.716 / 1.205 / 0.980** (accepted_4 1.972 / 1.291 / 1.046). The ~1,000 text-only steps did not hurt; gains are
   now small (+0.006 / +0.005 / +0.007 over 5,000 steps). 16h (second recording pass) started 15:40.
+- **Draft vocab is a cap** (16:30): held-out top-1 inside the 32k slice: chat 0.970, SWE 0.944, **German 0.896** -
+  a German chain of 4 is draftable at most ~0.64 of the time. Candidates by Kolibri's own top-1 counts over rec/train2
+  (6.03M generated rows): train2 top 32k 0.957 / 0.979 / 0.933 (chat/SWE/German); current + train2 to 40k 0.977 /
+  0.983 / 0.940; **to 48k 0.982 / 0.989 / 0.958**; to all seen (60,614) 0.987 / 0.993 / 0.975. Written:
+  `draft_vocab_48k.json` (the 32k in order, then on-policy tokens; counts `top1_counts_train2.npy`). The head is
+  Kolibri's frozen lm_head, so a wider slice needs no retraining to be scored: `switchgen4b.sh.txt` scores 16g 17,500
+  and 16h 12,500 with 32k and 48k at the switch to batch 4 (~19:00). Draft head cost 32k 0.92 ms -> ~1.4 ms est.
