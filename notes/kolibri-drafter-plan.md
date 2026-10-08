@@ -800,3 +800,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   sha256-verified on PBS, 0 mismatches, kept locally. 23 superseded runs/checkpoints deleted only after every file
   matched PBS (out16c steps <12,500 + resume, out16e-S/P, out16ab-*, out14*, out15, out10, out8, out7, out5, ab,
   drafter-mt4-2500.pt). 17 -> 50 GB free.
+- 14:12 score of run 16g (`notes/data/kolibri/score16g.log`), accepted_3 SWE / chat / German (accepted_4): arm U 1.618
+  / 1.141 / 0.916; 16g 5,000 1.683 / 1.178 / 0.957; 10,000 1.696 / 1.191 / 0.967; **12,500 1.710 / 1.200 / 0.973**
+  (1.964 / 1.284 / 1.038). Position 1 0.800 / 0.673 / 0.576. **German now above run 11's chain (0.945)**, chat
+  0.03 under it (1.23), SWE +0.33. Still rising (+0.013 / +0.009 / +0.006 per 2,500 steps). 16g resumed 14:16.
