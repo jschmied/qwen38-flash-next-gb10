@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Root. At run 16f's step 5,000 save: stop 16f, drop its resume.pt (16g restarts from the save with the spine added),
+# start run 16g and its checkpoint keeper.
+D=/home/jschmied/kolibri-drafter
+until [ -e $D/out16f/drafter-step5000.pt ]; do sleep 30; done
+sleep 20
+echo "[$(date +%H:%M:%S)] 16f step 5000 kept; stopping 16f"
+systemctl stop fx-kolibri-drafter-run16f fx-kolibri-keepckpt16f
+while systemctl is-active -q fx-kolibri-drafter-run16f; do sleep 5; done
+rm -f $D/out16f/resume.pt
+systemd-run --unit=fx-kolibri-drafter-run16g --collect -E HOME=/root bash -c "bash $D/run16g.sh >> $D/run16g.log 2>&1"
+systemd-run --unit=fx-kolibri-keepckpt16g --collect -E HOME=/root bash -c "bash $D/keepckpt.sh $D/out16g >> $D/keepckpt16g.log 2>&1"
+echo "[$(date +%H:%M:%S)] run 16g started; $(df -h --output=avail /home | tail -1) free"

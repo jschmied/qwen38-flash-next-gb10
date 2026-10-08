@@ -1,0 +1,32 @@
+[10:53:05] synced
+[10:53:05] protect own_chat.jsonl: 1 files, 0 not matched on PBS
+[10:53:05] protect own_chat_de.jsonl: 1 files, 0 not matched on PBS
+[10:53:05] protect genchat.log: 1 files, 0 not matched on PBS
+[10:53:05] protect genchat-de.log: 1 files, 0 not matched on PBS
+[10:53:08] protect chat: 7 files, 0 not matched on PBS
+[11:10:21] protect rec/train2: 58851 files, 0 not matched on PBS
+[11:10:25] dropped out16c/drafter-step2500.pt (verified)
+[11:10:28] dropped out16c/drafter-step5000.pt (verified)
+[11:10:32] dropped out16c/drafter-step7500.pt (verified)
+[11:10:36] dropped out16c/drafter-step10000.pt (verified)
+[11:10:51] dropped out16c/resume.pt (verified)
+[11:10:55] dropped out16c/drafter.pt (verified)
+[11:10:59] dropped out16e-S (verified)
+[11:11:03] dropped out16e-P (verified)
+[11:11:06] dropped out16ab-A (verified)
+[11:11:10] dropped out16ab-B (verified)
+[11:11:14] dropped out16ab-C (verified)
+[11:11:18] dropped out16ab-D (verified)
+[11:11:25] dropped out14b (verified)
+[11:11:32] dropped out14b-nonorm (verified)
+[11:11:39] dropped out14c (verified)
+[11:11:56] dropped out14d (verified)
+[11:12:03] dropped out15 (verified)
+[11:12:16] dropped out10 (verified)
+[11:12:23] dropped out8 (verified)
+[11:12:29] dropped out7 (verified)
+[11:12:37] dropped out5 (verified)
+[11:12:54] dropped ab (verified)
+[11:13:02] dropped drafter-mt4-2500.pt (verified)
+[11:13:02]   50G free
+[11:13:02] == BACKUPCLEAN DONE ==

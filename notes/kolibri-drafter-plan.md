@@ -793,3 +793,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   learns the new data. U now beats run 11's chain on SWE (1.38) and closes on German (0.945); chat still under (1.23).
 - 09:50 run 16f (`run16f.sh.txt`): arm U continued over the GLM set, same recipe, saves every 2,500
   (`fx-kolibri-keepckpt16f`). Next A/B candidates from a 16f save: row0 lr 0.3 x; pos1 weight 4.
+- 11:05 run 16g (`run16g.sh.txt`, user: "if dspine does not hurt but potentially helps, we should use it"): run 16f's
+  step 5,000 + --spine-rank 256 (zero at start), same U recipe; 391.3M trainable. 16f's resume.pt dropped.
+- 11:13 backup + cleanup (`backupclean.sh.txt`, log `notes/data/kolibri/backupclean-1008.log`, user: "protect generated
+  chats (backup first)"): own_chat*.jsonl, generator logs, chat/ sources and rec/train2 (58,851 files) synced and
+  sha256-verified on PBS, 0 mismatches, kept locally. 23 superseded runs/checkpoints deleted only after every file
+  matched PBS (out16c steps <12,500 + resume, out16e-S/P, out16ab-*, out14*, out15, out10, out8, out7, out5, ab,
+  drafter-mt4-2500.pt). 17 -> 50 GB free.
