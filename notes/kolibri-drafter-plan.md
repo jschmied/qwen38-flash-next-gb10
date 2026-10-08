@@ -839,3 +839,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   Round 2 gains on held-out (+0.016 / +0.012 / +0.010 at 32k): not memorisation -> round 3 after batch 4. The wider
   vocab alone, no retraining: 64k +0.075 / +0.014 / +0.037 (accepted_4 2.077 / 1.322 / 1.096). **All three slices now
   above run 11's chain (1.38 / 1.23 / 0.945).** Next training trains on the 64k slice. Batch 4 (German) started 18:58.
+- Licenses for a release (2026-10-08 19:30, user: "yes, check"; not legal advice): Kolibri-1 Apache-2.0. Prompt
+  sources: ultrachat_200k MIT, sharegpt-deutsch Apache-2.0, self-oss-instruct ODC-BY (attribution),
+  mayflowergmbh/alpaca-gpt4_de no tag = reformat of FreedomIntelligence/alpaca-gpt4-deutsch (Apache-2.0; content is a
+  German translation of GPT-4 alpaca answers). GLM text: mgoin/open-perfectblend-glm5.2-regen "other" = prompts of
+  mlabonne/open-perfectblend (Apache-2.0, its sources Apache/MIT) with answers by GLM-5.2 (MIT). gen_chat sends only
+  the first user turn; every recorded answer is Kolibri's own. Only de4k (prefill text, sharegpt 2,000+ / alpaca
+  10,000+) feeds third-party answers (ChatGPT / translated GPT-4) as context, Kolibri's distribution the target.
+  -> Release under Apache-2.0 with an attribution list; batch 4 on alpaca-de prompts is fine.
