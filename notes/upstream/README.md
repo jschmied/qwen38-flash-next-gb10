@@ -1760,3 +1760,4 @@ wait on one ~100 GB pull, and they share one serve.
   user: "yes, post direct-io"): the test's buffered reference was opened O_DIRECT where the FS allows it (ext4 on
   NVMe), so its unaligned 1-byte pread failed (EINVAL, `expected 1, found -1`) on every build on our GB10; passes
   where O_DIRECT is refused. Test-only, 3 lines; 17/17 steps after. https://github.com/ashhart/TensorFold/pull/486
+- 2026-10-08 ~11:00 TF #500 (BobClawblaw, direct_io test): comment "duplicate of #486", user go "comment in 500 as duplicate". https://github.com/ashhart/TensorFold/pull/500#issuecomment-6056275425
