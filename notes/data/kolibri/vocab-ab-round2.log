@@ -1,0 +1,34 @@
+[18:49:39] 16h step 12500 kept; stopping 16h
+[18:49:41] vocab draft_vocab_32k.json: fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.7162, "accepted_4": 1.9715, "top1_steps": [0.8016, 0.5946, 0.4415, 0.3335], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.7322, "accepted_4": 1.9969, "top1_steps": [0.806, 0.5981, 0.4456, 0.344], "chains": 229055}
+[18:51:18] vocab draft_vocab_32k.json: fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.2051, "accepted_4": 1.291, "top1_steps": [0.6751, 0.4167, 0.2669, 0.173], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.2174, "accepted_4": 1.3071, "top1_steps": [0.678, 0.4211, 0.2699, 0.1766], "chains": 38167}
+[18:51:41] vocab draft_vocab_32k.json: fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 0.9799, "accepted_4": 1.0461, "top1_steps": [0.5772, 0.3391, 0.2143, 0.1414], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 0.9895, "accepted_4": 1.057, "top1_steps": [0.5832, 0.339, 0.2155, 0.1427], "chains": 65728}
+[18:52:12] vocab draft_vocab_48k.json: fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.787, "accepted_4": 2.0489, "top1_steps": [0.8336, 0.611, 0.4538, 0.3443], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.8015, "accepted_4": 2.0712, "top1_steps": [0.8384, 0.6126, 0.4589, 0.3523], "chains": 229055}
+[18:53:44] vocab draft_vocab_48k.json: fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.2143, "accepted_4": 1.3013, "top1_steps": [0.6794, 0.4178, 0.267, 0.1733], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.2267, "accepted_4": 1.3177, "top1_steps": [0.6822, 0.4226, 0.2702, 0.1768], "chains": 38167}
+[18:54:07] vocab draft_vocab_48k.json: fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.0074, "accepted_4": 1.0752, "top1_steps": [0.5928, 0.3437, 0.2164, 0.1418], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.0179, "accepted_4": 1.0869, "top1_steps": [0.5994, 0.3433, 0.2176, 0.1435], "chains": 65728}
+[18:54:39] vocab draft_vocab_64k.json: fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.7927, "accepted_4": 2.0552, "top1_steps": [0.8367, 0.6115, 0.4542, 0.3446], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.8073, "accepted_4": 2.0774, "top1_steps": [0.8415, 0.6131, 0.4591, 0.3525], "chains": 229055}
+[18:56:14] vocab draft_vocab_64k.json: fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.219, "accepted_4": 1.3062, "top1_steps": [0.6821, 0.4181, 0.267, 0.1733], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.2312, "accepted_4": 1.3224, "top1_steps": [0.6848, 0.4227, 0.2703, 0.1768], "chains": 38167}
+[18:56:38] vocab draft_vocab_64k.json: fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16g/drafter-step17500.pt", "accepted_3": 1.0155, "accepted_4": 1.0836, "top1_steps": [0.5974, 0.3451, 0.2169, 0.1423], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.0262, "accepted_4": 1.0958, "top1_steps": [0.604, 0.3446, 0.2184, 0.1438], "chains": 65728}
+Running as unit: fx-kolibri-serve.service; invocation ID: db7d18c203fe4b6b861948bcc0bad994
+[18:58:00] server: {"object": "list", "data": [{"id": "kolibri-1", "object": "model", "owned_by": "
+Running as unit: fx-kolibri-genchat.service; invocation ID: 84451625fb0f4011b72da8cabf556415
+Running as unit: fx-kolibri-genchat-de.service; invocation ID: f16d4f0680594fd5add1fc14997adf31
+[18:58:00] == GEN4 STARTED ==
+[18:58:00] == SWITCHGEN4C DONE ==

@@ -831,3 +831,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   3.8k (chat) / 8.4k (German) distinct tokens, but many never occur in train2's 6.03M rows - more German data
   shrinks the needed vocab. Head cost ~linear in rows (32k 0.92 ms, full 3.62 ms). `draft_vocab_64k.json` = every
   token seen in train2 (60,614) added to tonight's scoring (`switchgen4c.sh.txt`: 32k / 48k / 64k).
+- 18:49 (`notes/data/kolibri/vocab-ab-round2.log`), accepted_3 SWE / chat / German:
+  | | 32k | 48k | 64k (60,614) |
+  |---|---|---|---|
+  | 16g 17,500 (round 1) | 1.716 / 1.205 / 0.980 | 1.787 / 1.214 / 1.007 | 1.793 / 1.219 / 1.016 |
+  | 16h 12,500 (round 2) | 1.732 / 1.217 / 0.990 | 1.802 / 1.227 / 1.018 | **1.807 / 1.231 / 1.026** |
+  Round 2 gains on held-out (+0.016 / +0.012 / +0.010 at 32k): not memorisation -> round 3 after batch 4. The wider
+  vocab alone, no retraining: 64k +0.075 / +0.014 / +0.037 (accepted_4 2.077 / 1.322 / 1.096). **All three slices now
+  above run 11's chain (1.38 / 1.23 / 0.945).** Next training trains on the 64k slice. Batch 4 (German) started 18:58.
