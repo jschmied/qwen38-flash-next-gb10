@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. TensorFold PR from jschmied:core-safetensors-fp8 into main (2026-10-08).
+POSTED 2026-10-08 as TF #517 (user: "post FP8 dtypes"). TensorFold PR from jschmied:core-safetensors-fp8 into main (2026-10-08).
 
 Title: core: safetensors reads the FP8 dtypes
 

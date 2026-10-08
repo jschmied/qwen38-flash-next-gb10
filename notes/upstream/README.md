@@ -1761,3 +1761,6 @@ wait on one ~100 GB pull, and they share one serve.
   NVMe), so its unaligned 1-byte pread failed (EINVAL, `expected 1, found -1`) on every build on our GB10; passes
   where O_DIRECT is refused. Test-only, 3 lines; 17/17 steps after. https://github.com/ashhart/TensorFold/pull/486
 - 2026-10-08 ~11:00 TF #500 (BobClawblaw, direct_io test): comment "duplicate of #486", user go "comment in 500 as duplicate". https://github.com/ashhart/TensorFold/pull/500#issuecomment-6056275425
+- **TensorFold #517 (PR): core: safetensors reads the FP8 dtypes** (2026-10-08 ~13:00, user: "post FP8 dtypes"): split out of the
+  Kolibri stack; F8_E4M3 / F8_E5M2 / F8_E8M0 in core/safetensors.zig as cluster/checkpoint.zig has them, test. Draft
+  `tf-safetensors-fp8-pr.md`. https://github.com/ashhart/TensorFold/pull/517
