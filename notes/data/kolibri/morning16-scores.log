@@ -1,0 +1,18 @@
+[07:53:07] generators ended: chat 923, German 912,   25G free
+[07:53:09] server and ML105 stopped; recordings in train2: 8397
+[07:59:09] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step5000.pt", "accepted_3": 1.4675, "accepted_4": 1.6598, "top1_steps": [0.7135, 0.5625, 0.4043, 0.2997], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step7500.pt", "accepted_3": 1.4876, "accepted_4": 1.6883, "top1_steps": [0.7135, 0.5726, 0.4161, 0.3088], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step10000.pt", "accepted_3": 1.4784, "accepted_4": 1.6755, "top1_steps": [0.7135, 0.5674, 0.4094, 0.303], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 1.4869, "accepted_4": 1.6901, "top1_steps": [0.7135, 0.5658, 0.4154, 0.3133], "chains": 229055}
+[08:02:07] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step5000.pt", "accepted_3": 1.0952, "accepted_4": 1.1631, "top1_steps": [0.6366, 0.3823, 0.2406, 0.1536], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step7500.pt", "accepted_3": 1.1013, "accepted_4": 1.1706, "top1_steps": [0.6366, 0.3853, 0.2416, 0.1535], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step10000.pt", "accepted_3": 1.1052, "accepted_4": 1.1758, "top1_steps": [0.6366, 0.389, 0.2453, 0.1572], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 1.1093, "accepted_4": 1.1816, "top1_steps": [0.6366, 0.39, 0.245, 0.1571], "chains": 38167}
+[08:02:48] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step5000.pt", "accepted_3": 0.8638, "accepted_4": 0.915, "top1_steps": [0.5212, 0.3137, 0.1946, 0.1284], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step7500.pt", "accepted_3": 0.8659, "accepted_4": 0.919, "top1_steps": [0.5212, 0.3132, 0.1963, 0.1283], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step10000.pt", "accepted_3": 0.8697, "accepted_4": 0.9231, "top1_steps": [0.5212, 0.3161, 0.1979, 0.1284], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 0.8719, "accepted_4": 0.9265, "top1_steps": [0.5212, 0.3158, 0.1978, 0.1296], "chains": 65728}
+[08:03:45] == MORNING16 DONE ==

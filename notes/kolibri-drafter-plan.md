@@ -767,3 +767,12 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   stops below 50 GB free).
 - Later: PCTree-style verify trees fit the GB10 (3 rows 1.26x, 4 rows 1.37x one row's cost at 8k); needs tree-masked
   verify in the Zig server, which is chain-only today.
+- 2026-10-08 07:53 batch 3 ended: chat 923 / German 912 conversations in the files (batch 3: +389 / +505), train2
+  8,397 recordings, 25 GB free (recorder floor reached ~06:45; recsync freed 10 GB of pre-cutoff rec/live at 05:00).
+- Morning score (`notes/data/kolibri/morning16-scores.log`), accepted_3 SWE / chat / German (accepted_4):
+  16d 5,000 1.468 / 1.095 / 0.864 (1.660 / 1.163 / 0.915); 7,500 1.488 / 1.101 / 0.866; 10,000 1.478 / 1.105 / 0.870;
+  12,500 **1.487 / 1.109 / 0.872** (1.690 / 1.182 / 0.927). Plateau as predicted (+0.019 / +0.014 / +0.008 over 7,500
+  steps); gains sit at positions 2-4, position 1 is the frozen chain. Rule -> structure A/B, not a resume.
+- 08:05 run 16e (`run16e.sh.txt`): from 12,500, fresh AdamW, 2e-4 -> 2e-5, 1.5M GLM tokens, recordings 40 % at swe
+  0.3 / chat 0.4 / de 0.3 (batch 3 included, rec/old not restored): K control, S --spine-rank 256, P --pred-src data.
+  Hypothesis: S or P >= +0.03 over K on chat or German; +-0.015 = tie.

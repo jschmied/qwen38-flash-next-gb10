@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run16e (watchdog "window"). Structure A/B from run 16d step 12,500 after the morning
+# score showed the plateau (5,000 -> 12,500: SWE +0.019, chat +0.014, German +0.008). Every arm: same weights, fresh
+# AdamW, lr 2e-4 cosine to 2e-5, 1.5M GLM tokens past 16d's, recordings at 40 % with the mix moved to chat/German
+# (swe 0.3 / chat 0.4 / de 0.3; batch 3 in rec/train2; rec/old is not restored: disk):
+#   K  control (the mix change alone)
+#   S  + DSpine-style adjacent injection, rank 256 (zero at start)
+#   P  + predecessor fed the data's token (--pred-src data)
+# Hypothesis: S or P beats K by >= 0.03 accepted_3 on chat or German; within +-0.015 is a tie. Scored on the fixed
+# slices after 2026-10-05 09:55, with 16d step 12,500 itself.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+INIT=$D/out16c/drafter-step12500.pt
+SKIP=$($PY -c "import torch;print(torch.load('$INIT',map_location='cpu')['tokens'])")
+log "init $INIT skip $SKIP"
+for arm in "K:" "S:--spine-rank 256" "P:--pred-src data"; do
+  n=${arm%%:*}; opts=${arm#*:}; O=$D/out16e-$n; mkdir -p $O; chown jschmied: $O
+  log "arm $n ($opts)"
+  U $PY $T/train_block.py /opt/llm/models/kolibri-1 $O --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+    $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 5000 --init $INIT --skip-tokens $SKIP \
+    --rec $D/rec/live --rec-all $D/rec/train2 --rec-share 0.4 --rec-mix swe=0.3,chat=0.4,de=0.3 \
+    --rec-cap swe=1,chat=3,de=3 --anchors 1024 --onpolicy --assistant-only --decay 0.8 --warmup 100 \
+    --lr 2e-4 --lr-end 2e-5 $opts --max-tokens $((SKIP + 1500000)) > $D/train16e-$n.log 2>&1
+  log "arm $n rc=$?"; rm -f $O/resume.pt
+done
+CK="$INIT $D/out16e-K/drafter.pt $D/out16e-S/drafter.pt $D/out16e-P/drafter.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+log "== RUN16E DONE =="
