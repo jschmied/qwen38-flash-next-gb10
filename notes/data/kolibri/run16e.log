@@ -1,0 +1,23 @@
+[08:05:16] init /home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt skip 58747758
+[08:05:16] arm K ()
+[08:28:04] arm K rc=0
+[08:28:04] arm S (--spine-rank 256)
+[08:51:10] arm S rc=0
+[08:51:10] arm P (--pred-src data)
+[09:13:44] arm P rc=0
+[09:13:44] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 1.4869, "accepted_4": 1.6901, "top1_steps": [0.7135, 0.5658, 0.4154, 0.3133], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-K/drafter.pt", "accepted_3": 1.5038, "accepted_4": 1.7195, "top1_steps": [0.7135, 0.5667, 0.425, 0.3186], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-S/drafter.pt", "accepted_3": 1.5056, "accepted_4": 1.724, "top1_steps": [0.7135, 0.5669, 0.4257, 0.3189], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-P/drafter.pt", "accepted_3": 1.5058, "accepted_4": 1.7214, "top1_steps": [0.7135, 0.5671, 0.424, 0.3173], "chains": 229055}
+[09:16:40] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 1.1093, "accepted_4": 1.1816, "top1_steps": [0.6366, 0.39, 0.245, 0.1571], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-K/drafter.pt", "accepted_3": 1.1124, "accepted_4": 1.185, "top1_steps": [0.6366, 0.3915, 0.2469, 0.1584], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-S/drafter.pt", "accepted_3": 1.1128, "accepted_4": 1.1854, "top1_steps": [0.6366, 0.3912, 0.2495, 0.1594], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-P/drafter.pt", "accepted_3": 1.1126, "accepted_4": 1.1866, "top1_steps": [0.6366, 0.389, 0.2463, 0.1591], "chains": 38167}
+[09:17:21] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16c/drafter-step12500.pt", "accepted_3": 0.8719, "accepted_4": 0.9265, "top1_steps": [0.5212, 0.3158, 0.1978, 0.1296], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-K/drafter.pt", "accepted_3": 0.8764, "accepted_4": 0.9325, "top1_steps": [0.5212, 0.3186, 0.2002, 0.1308], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-S/drafter.pt", "accepted_3": 0.8763, "accepted_4": 0.9318, "top1_steps": [0.5212, 0.3186, 0.2003, 0.1303], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16e-P/drafter.pt", "accepted_3": 0.876, "accepted_4": 0.932, "top1_steps": [0.5212, 0.3163, 0.1993, 0.1296], "chains": 65728}
+[09:18:18] == RUN16E DONE ==

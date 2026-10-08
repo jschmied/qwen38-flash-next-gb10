@@ -780,3 +780,9 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   trains position 0's chain path (fuse, fc, layer 0, out_norm) at 0.1 x lr in its own AdamW group, position 0 weighted
   2 (defaults keep the freeze, so 16e's S/P arms are unchanged). `run16u.sh.txt` via `q16u.sh.txt`; scored with
   12,500 and K. Hypothesis: position 1 top-1 +0.005 or more on chat/German, SWE not lower; else the freeze stays.
+- Run 16e (09:18, `notes/data/kolibri/run16e.log`), 1,621 steps an arm, accepted_3 SWE / chat / German (accepted_4):
+  12,500 1.487 / 1.109 / 0.872 (1.690 / 1.182 / 0.927); K control (mix 0.3/0.4/0.3, batch 3) 1.504 / 1.112 / 0.876
+  (1.720 / 1.185 / 0.933); S spine 256 1.506 / 1.113 / 0.876 (1.724 / 1.185 / 0.932); P pred-src data 1.506 / 1.113 /
+  0.876 (1.721 / 1.187 / 0.932). **All tie** (S, P within +-0.002 of K): hypothesis (>= +0.03) rejected at this
+  budget. The spine did train but stayed small (U Frobenius ~5.1 per layer vs layer 1's o 175). K over 12,500: SWE
+  +0.017, chat +0.003, German +0.005 - the chat/German mix shift alone moves little in 1,621 steps.
