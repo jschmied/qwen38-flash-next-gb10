@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Root. Starts arm U (run16u.sh) as fx-kolibri-drafter-run16u once run 16e has finished.
+D=/home/jschmied/kolibri-drafter
+while systemctl is-active -q fx-kolibri-drafter-run16e; do sleep 60; done
+grep -q "RUN16E DONE" $D/run16e.log || { echo "run 16e did not finish cleanly; arm U not started"; exit 1; }
+systemd-run --unit=fx-kolibri-drafter-run16u --collect -E HOME=/root bash -c "bash $D/run16u.sh > $D/run16u.log 2>&1"

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run16u. Arm U of the run 16e A/B (user "ok"): position 0's chain path unfrozen at
+# 0.1 x lr with loss weight 2 (run 15 wore it down when it trained at full lr with the rest). Same start, data and
+# schedule as K. Hypothesis: position 1 top-1 rises >= 0.005 on chat/German without falling on SWE; else it stays frozen.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_32k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+INIT=$D/out16c/drafter-step12500.pt
+SKIP=$($PY -c "import torch;print(torch.load('$INIT',map_location='cpu')['tokens'])")
+O=$D/out16e-U; mkdir -p $O; chown jschmied: $O
+log "arm U from $INIT skip $SKIP"
+U $PY $T/train_block.py /opt/llm/models/kolibri-1 $O --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+  $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 5000 --init $INIT --skip-tokens $SKIP \
+  --rec $D/rec/live --rec-all $D/rec/train2 --rec-share 0.4 --rec-mix swe=0.3,chat=0.4,de=0.3 \
+  --rec-cap swe=1,chat=3,de=3 --anchors 1024 --onpolicy --assistant-only --decay 0.8 --warmup 100 \
+  --lr 2e-4 --lr-end 2e-5 --train-row0 0.1 --pos1-weight 2 --max-tokens $((SKIP + 1500000)) > $D/train16e-U.log 2>&1
+log "arm U rc=$?"; rm -f $O/resume.pt
+CK="$INIT $D/out16e-K/drafter.pt $D/out16e-U/drafter.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+log "== RUN16U DONE =="

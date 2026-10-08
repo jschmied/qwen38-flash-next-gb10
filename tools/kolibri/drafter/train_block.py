@@ -144,6 +144,9 @@ def main() -> None:
     ap.add_argument("--pred-src", choices=("argmax", "data"), default="argmax",
                     help="the predecessor token: Kolibri's argmax at j-1, or the data's token there (what the target "
                          "at j is conditioned on; differs only on sampled rows)")
+    ap.add_argument("--train-row0", type=float, default=0.0,
+                    help="row0_chain: train position 0's chain path at this fraction of the lr (0: frozen)")
+    ap.add_argument("--pos1-weight", type=float, default=1.0, help="--train-row0: position 0's loss weight")
     ap.add_argument("--spine-rank", type=int, default=0,
                     help="add adjacent injection (DSpine) of this rank before layers 1.. (identity at start)")
     ap.add_argument("--row0-chain", action="store_true",
@@ -202,11 +205,15 @@ def main() -> None:
     if not a.init and not a.from_chain:
         with torch.no_grad():                             # the target's states carry its final norm's scale (~43)
             dr.out_norm.w.copy_(w.norm.float())
-    if cfg.row0_chain:
+    chain = {id(p) for p in chain_params(dr)} if cfg.row0_chain else set()
+    if cfg.row0_chain and not a.train_row0:
         for p in chain_params(dr):
             p.requires_grad_(False)
     trainable = [p for p in dr.parameters() if p.requires_grad]
-    opt = torch.optim.AdamW(trainable, lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
+    groups = [{"params": [p for p in trainable if id(p) not in chain], "scale": 1.0}]
+    if chain and a.train_row0:                            # the chain path learns slowly: run 15 wore it down at full lr
+        groups.append({"params": [p for p in trainable if id(p) in chain], "scale": a.train_row0})
+    opt = torch.optim.AdamW(groups, lr=a.lr, betas=(0.9, 0.95), weight_decay=0.0)
     res = torch.load(a.resume, map_location="cuda", weights_only=False) if a.resume else None
     if res:
         dr.load_state_dict(res["state"])
@@ -261,7 +268,7 @@ def main() -> None:
             start, lr0 = cool_from.setdefault("at", (step, lr))
             lr = lr0 * max(0.0, 1 - (step - start) / a.cooldown)
         for grp in opt.param_groups:
-            grp["lr"] = lr * min(1.0, (step + 1) / a.warmup)
+            grp["lr"] = lr * grp.get("scale", 1.0) * min(1.0, (step + 1) / a.warmup)
         with torch.autocast("cuda", dtype=torch.bfloat16):
             nxt = w.embed[torch.cat([seq[1:], seq[-1:]])] if cfg.chain_ctx else None
             states = dr(feats, w.embed[seq[anchors + 1]], anchors, nxt=nxt)
@@ -302,8 +309,9 @@ def main() -> None:
                                                           r.new_zeros(())) for j in range(cfg.block)])
             m = (pre * tail)[None] * valid                                                 # d E[accepted] / d a_j
             per = -logq.view(len(pick), cfg.block, -1).gather(-1, want[..., None])[..., 0]
-        if cfg.row0_chain:
-            m = torch.cat([torch.zeros_like(m[..., :1]), m[..., 1:]], -1)   # position 0 is frozen: no weight
+        if cfg.row0_chain:                                 # position 0: no weight when frozen, pos1_weight when it trains
+            w0 = a.pos1_weight if a.train_row0 else 0.0
+            m = torch.cat([m[..., :1] * w0, m[..., 1:]], -1)
         loss = (per * m).sum() / m.sum().clamp_min(1e-6)
         (loss / a.accum).backward()
         step += 1

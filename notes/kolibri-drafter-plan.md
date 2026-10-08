@@ -776,3 +776,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
 - 08:05 run 16e (`run16e.sh.txt`): from 12,500, fresh AdamW, 2e-4 -> 2e-5, 1.5M GLM tokens, recordings 40 % at swe
   0.3 / chat 0.4 / de 0.3 (batch 3 included, rec/old not restored): K control, S --spine-rank 256, P --pred-src data.
   Hypothesis: S or P >= +0.03 over K on chat or German; +-0.015 = tie.
+- Arm U queued behind 16e (user "ok" to unfreezing position 1): `train_block --train-row0 0.1 --pos1-weight 2`
+  trains position 0's chain path (fuse, fc, layer 0, out_norm) at 0.1 x lr in its own AdamW group, position 0 weighted
+  2 (defaults keep the freeze, so 16e's S/P arms are unchanged). `run16u.sh.txt` via `q16u.sh.txt`; scored with
+  12,500 and K. Hypothesis: position 1 top-1 +0.005 or more on chat/German, SWE not lower; else the freeze stays.
