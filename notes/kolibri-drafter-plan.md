@@ -816,3 +816,6 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
 - Drafter for generation? No: the Python server's drafter slot loads only chain (train_mt) checkpoints, so not the
   block drafter, and at c=4 run 11's chain was neutral (110.0 -> 109.6 tok/s, 2026-10-06); batch 4 runs more streams.
   Instead batch 4 got 8 workers (3 sharegpt-de + 5 alpaca-de), one per server slot (edited before it started).
+- 15:37 16g scores (`notes/data/kolibri/score16g-17500.log`), accepted_3: 15,000 1.704 / 1.203 / 0.977; **17,500
+  1.716 / 1.205 / 0.980** (accepted_4 1.972 / 1.291 / 1.046). The ~1,000 text-only steps did not hurt; gains are
+  now small (+0.006 / +0.005 / +0.007 over 5,000 steps). 16h (second recording pass) started 15:40.
