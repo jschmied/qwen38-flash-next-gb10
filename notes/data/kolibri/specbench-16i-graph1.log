@@ -1,0 +1,20 @@
+{"swe": [13492, 21725, 9906, 16157, 24720, 46471, 20228, 24721, 38522, 42755], "chat": [112, 131, 136, 652, 158, 61, 139, 65], "de": [85, 79, 63, 66, 68, 66, 64, 65]}
+[tensorfold] kolibri1: 10/50 layers in 9s
+[tensorfold] kolibri1: 20/50 layers in 17s
+[tensorfold] kolibri1: 30/50 layers in 24s
+[tensorfold] kolibri1: 40/50 layers in 32s
+[tensorfold] kolibri1: 50/50 layers in 40s
+{"mode": "greedy", "domain": "swe", "arm": "copy", "prompts": 10, "tok_s": 46.75, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "greedy", "domain": "swe", "arm": "learned-d2", "prompts": 10, "tok_s": 58.19, "learned_proposed": 852, "learned_kept": 490, "mismatches": 0}
+{"mode": "greedy", "domain": "chat", "arm": "copy", "prompts": 8, "tok_s": 47.7, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "greedy", "domain": "chat", "arm": "learned-d2", "prompts": 8, "tok_s": 55.16, "learned_proposed": 1967, "learned_kept": 970, "mismatches": 0}
+{"mode": "greedy", "domain": "de", "arm": "copy", "prompts": 8, "tok_s": 50.41, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "greedy", "domain": "de", "arm": "learned-d2", "prompts": 8, "tok_s": 62.36, "learned_proposed": 1750, "learned_kept": 977, "mismatches": 0}
+{"mode": "served", "domain": "swe", "arm": "copy", "prompts": 10, "tok_s": 42.17, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "served", "domain": "swe", "arm": "learned-d2", "prompts": 10, "tok_s": 57.3, "learned_proposed": 639, "learned_kept": 389, "mismatches": 0}
+{"mode": "served", "domain": "chat", "arm": "copy", "prompts": 8, "tok_s": 47.05, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "served", "domain": "chat", "arm": "learned-d2", "prompts": 8, "tok_s": 53.09, "learned_proposed": 1998, "learned_kept": 939, "mismatches": 0}
+{"mode": "served", "domain": "de", "arm": "copy", "prompts": 8, "tok_s": 46.85, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "served", "domain": "de", "arm": "learned-d2", "prompts": 8, "tok_s": 51.45, "learned_proposed": 2045, "learned_kept": 887, "mismatches": 0}
+{"mode": "greedy", "domain": "chat+de x4 together", "arm": "copy", "tok_s": 113.28, "learned_proposed": 0, "learned_kept": 0}
+{"mode": "greedy", "domain": "chat+de x4 together", "arm": "learned-d2", "tok_s": 93.46, "learned_proposed": 904, "learned_kept": 497}

@@ -892,3 +892,13 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   several host syncs. Fixes, in order: write block K/V into the preallocated cache rows and attend in place (no cat);
   CUDA-graph the block pass; batch the pass across streams; adaptive depth. Acceptance gains only pay once the pass is
   cheap — the release gate "faster than run 11 end to end" is not met yet.
+- 15:05 bench 16i 25,000 depth 2 after fix 1 (in-place cache rows) + fix 2 (fixed-shape pass), eager vs CUDA graph
+  (`specbench-16i-graph{0,1}.log`, 0 mismatches): greedy SWE / chat / German 57.6 / 54.7 / 61.8 eager, 58.2 / 55.2 / 62.4
+  graphed; served 56.8 / 53.3 / 51.0 and 57.3 / 53.1 / 51.5; c=4 91.2 / 93.5 vs copy 114. **Neither fix moved the
+  clock (<= +1-2 %)**: the context copy and the launches were not the cost. What is: bytes read per round. The block
+  pass reads ~0.78 GB of drafter weights (391M bf16) plus one 64k-row head slice per drafted position (64k x 2560 bf16
+  = 0.33 GB each, sequential because of the predecessor head): ~1.4 GB a round at depth 2, ~5 ms at GB10 bandwidth,
+  against ~0.35 GB for run 11 (one layer + one 32k head). The block keeps more tokens a round (chat 964 vs 738 of 2,048)
+  but each round costs more. At c=4 the decoder drafts stream by stream, so the reads repeat per stream (-17 %).
+  Levers: FP8 drafter weights and FP8 head slice (halves the bytes), one batched draft pass for all streams, adaptive
+  depth; the 32k slice for serving trades acceptance for 0.33 GB.
