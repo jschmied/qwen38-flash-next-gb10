@@ -869,3 +869,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
 - 10:30 `train_block --rec-drain` (+ `test_pick.py`): when a --rec-mix class runs out, the classes left keep sharing
   steps by their weights until all are empty (default unchanged: stop all recordings). For the next round.
   Scoring pause armed at 16i step 15,000 (`score16i15.sh.txt`: 16i 5,000 / 10,000 / 15,000, 64k vocab).
+- 11:00 serving the block drafter (release gate 1, code): `tensorfold/families/kolibri1/cuda/block_drafter.py` on our
+  fork's `kolibri1-drafter` branch; the engine picks it for train_block checkpoints (config has `block`), depth
+  defaults to the block. `tools/kolibri/drafter/test_block_serve.py`: equal to model_block + eval_block's
+  predecessor loop in float64 (same drafts, states within 1e-9), context added in parts. Still to do on the GPU:
+  specbench (identical replies, c=1 speed vs copies only and vs run 11).

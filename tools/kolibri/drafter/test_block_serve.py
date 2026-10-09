@@ -1,0 +1,50 @@
+"""The serving block drafter (tensorfold kolibri1 cuda/block_drafter.py) against model_block + eval_block's predecessor
+loop, in float64 on CPU: same states, same drafts, with context added in chunks as the decoder adds kept rows."""
+
+import json
+
+import torch
+
+from model_block import BlockConfig, BlockDrafter, load, predecessor
+
+
+def test_serving_pass_equals_the_training_model(tmp_path):
+    from tensorfold.families.kolibri1.cuda.block_drafter import BlockDrafter as Serve
+
+    torch.manual_seed(3)
+    d, V, T = 64, 50, 37
+    cfg = BlockConfig(hidden=d, heads=4, head_dim=16, ffn=96, layers=3, taps=3, block=4, chain_ctx=True,
+                      row0_chain=True, pred_rank=8)
+    base = BlockDrafter(cfg)
+    ck0 = {"config": dict(cfg.__dict__), "state": base.state_dict()}
+    dr = load(ck0, pred_rank=8, spine_rank=8).double()
+    for p in dr.parameters():                                     # zero-init parts too: every path carries signal
+        torch.nn.init.normal_(p, std=0.15)
+    ck = {"config": dict(dr.cfg.__dict__), "state": dr.state_dict(), "taps": [44, 47, 49]}
+    torch.save(ck, tmp_path / "d.pt")
+    vocab = list(range(0, V, 2)) + [1, 3]
+    (tmp_path / "v.json").write_text(json.dumps(vocab))
+    embed = torch.randn(V, d, dtype=torch.float64)
+    head = torch.randn(V, d, dtype=torch.float64)
+    feats = torch.randn(T, 3 * d, dtype=torch.float64)
+    tok = torch.randint(0, V, (T + 1,))
+
+    with torch.no_grad():                                         # reference: anchor T-1, rows 0..T-1 as context
+        st = dr(feats, embed[tok[1:][-1:]], torch.tensor([T - 1]), nxt=embed[tok[1:]])
+        vt = torch.tensor(vocab)
+        cols = [(st[:, 0] @ head[vt].T).argmax(-1)]
+        states = [st[:, 0]]
+        for j in range(1, cfg.block):
+            sj = predecessor(dr, st[:, j], embed[vt[cols[-1]]])
+            states.append(sj)
+            cols.append((sj @ head[vt].T).argmax(-1))
+        want = vt[torch.stack(cols, 1)][0].tolist()
+
+    sv = Serve(tmp_path / "d.pt", embed, head, vocab=tmp_path / "v.json", dtype=torch.float64)
+    taps = [feats[:, i * d:(i + 1) * d] for i in range(3)]
+    for lo, hi in ((0, 20), (20, T)):                             # kept rows arrive in parts
+        sv.add(0, list(range(lo, hi)), tok[1:][lo:hi].tolist(), [t[lo:hi] for t in taps])
+    got = sv.chain(0)
+    assert got == want, (got, want)
+    for a, b in zip(sv.states, states):
+        assert torch.allclose(a[0], b[0], atol=1e-9), float((a[0] - b[0]).abs().max())
