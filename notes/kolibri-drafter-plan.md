@@ -908,3 +908,4 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   `chain_many` drafts for all streams of a round in one pass (weights read once, attention per stream); the decoder
   collects the round's streams and calls it once. float64 test: equal to per-stream passes. GPU bench armed at 16i
   step 30,000 (`bench16i4.sh.txt`: fp8/fp8, nvfp4/fp8, nvfp4/nvfp4, depth 2, c=4 arm batched).
+- 16:15 user: "body should stay as fp8, only change head" -> bench re-armed as `bench16i5.sh.txt`: FP8 weights, head slice bf16 / fp8 / nvfp4 (replaces bench16i4).
