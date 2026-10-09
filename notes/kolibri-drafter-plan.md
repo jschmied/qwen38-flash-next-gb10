@@ -946,3 +946,18 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
     (`/mnt/bulk/gb10/models/nemotron-3.5-lightning-30b-a3b-mlx4`, user: "download to backup server") for the
     extraction's Nemotron equality test.
 - 21:00 TF #558 receipts armed (user: "do it at next pause"): `tf558.sh.txt` runs between endround3 and round 4 (`q16j2.sh.txt` replaces q16j): grouped-plan oracle on GPU; Nemotron 3.5 Lightning MLX-4bit (copied from PBS to /opt/llm/models/nemotron-3.5-lightning-mlx4) with the 1.0.2 release's sm121 kernel set, `tensorfold run` greedy and sampled (0.8 / 20 / 0.95, seed 7), 3 prompts (one >1,024 tokens: wide plan), on main 78ee0f4 (~/git/tf-main) and the PR branch (~/git/tf-plan).
+- **End of round 3** (21:17-21:35, `notes/data/kolibri/endround3.log`): 16i 30,000 / 35,000 / 40,000 / **45,000** =
+  1.888 / 1.898 / 1.901 / **1.908** SWE, 1.270 / 1.276 / 1.281 / **1.288** chat, 1.090 / 1.096 / 1.099 / **1.105** German
+  (accepted_4 2.229 / 1.395 / 1.192). Fork GPU tests 15/15 (block drafter: drafted replies == serial in bf16, fp8,
+  fp8 + nvfp4 head, 3 streams batched, greedy + sampled; chain drafter; forward). Fork pushed (8ea05aa).
+- **Release candidate rc45000** (`release/Kolibri-1-block-drafter-rc45000`, its own defaults, no env vars;
+  `specbench-rc45000.log`, 0 mismatches): greedy 64.3 / 61.6 / 69.3 tok/s, served 62.6 / 60.2 / 58.3, c=4 125.5;
+  copy only 46.6 / 48.1 / 50.6, 42.6 / 47.9 / 47.3, 113.9; run 11 57.7 / 61.5 / 66.5, 53.7 / 61.0 / 56.9, 115.1.
+  -> vs copy 1.38x / 1.28x / 1.37x greedy, 1.47x / 1.26x / 1.23x served; vs run 11 +11 % / +0 % / +4 % greedy,
+  +17 % / -1 % / +2 % served, +9 % at c=4. Chat now level with run 11 at greedy, everything else ahead.
+- TF #558 receipts (21:35, `notes/data/kolibri/tf558/`): grouped-plan 5/5 cases equal experts.route on GB10 (one
+  block and wide, tiles 16 / 64, up to 2,048 x 9 pairs over 385 experts). Nemotron 3.5 Lightning MLX-4bit @ d9d758fb,
+  1.0.2 sm121 kernel set, `tensorfold run`: main 78ee0f4 vs the PR branch, 3 prompts (11 / 20 / 1,090 tokens; the
+  long one prefills through the wide plan), greedy and sampled: all 6 reply hashes equal. One sampled run took 60 vs 61
+  rounds with the same reply (MTP's cost-based drafting).
+- Round 4 (run 16j, --rec-drain) started 21:37.

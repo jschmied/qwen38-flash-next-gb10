@@ -1,0 +1,37 @@
+[21:17:23] 16i step 45000 kept; stopping 16i (end of round 3)
+[21:17:25] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step30000.pt", "accepted_3": 1.8876, "accepted_4": 2.2008, "top1_steps": [0.8495, 0.6407, 0.4879, 0.3884], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step35000.pt", "accepted_3": 1.8982, "accepted_4": 2.2156, "top1_steps": [0.85, 0.6452, 0.4943, 0.3911], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step40000.pt", "accepted_3": 1.9008, "accepted_4": 2.2196, "top1_steps": [0.8507, 0.6443, 0.4977, 0.3907], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step45000.pt", "accepted_3": 1.9081, "accepted_4": 2.2287, "top1_steps": [0.8521, 0.6495, 0.4969, 0.3918], "chains": 229055}
+[21:20:43] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step30000.pt", "accepted_3": 1.2701, "accepted_4": 1.3718, "top1_steps": [0.693, 0.4377, 0.2874, 0.1911], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step35000.pt", "accepted_3": 1.2756, "accepted_4": 1.3796, "top1_steps": [0.6937, 0.4406, 0.2911, 0.1917], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step40000.pt", "accepted_3": 1.2807, "accepted_4": 1.3853, "top1_steps": [0.6946, 0.4416, 0.2927, 0.1939], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step45000.pt", "accepted_3": 1.2883, "accepted_4": 1.3947, "top1_steps": [0.6956, 0.4446, 0.2956, 0.196], "chains": 38167}
+[21:21:27] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step30000.pt", "accepted_3": 1.0901, "accepted_4": 1.1732, "top1_steps": [0.6184, 0.3766, 0.244, 0.1631], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step35000.pt", "accepted_3": 1.0955, "accepted_4": 1.1802, "top1_steps": [0.6192, 0.3792, 0.2458, 0.1657], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step40000.pt", "accepted_3": 1.0985, "accepted_4": 1.1836, "top1_steps": [0.6201, 0.3813, 0.2472, 0.1666], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step45000.pt", "accepted_3": 1.1054, "accepted_4": 1.192, "top1_steps": [0.6219, 0.3833, 0.2493, 0.168], "chains": 65728}
+[21:22:29] fork GPU tests
+...............                                                          [100%]
+15 passed in 4.80s
+[21:22:35] export + release-directory specbench (defaults)
+/home/jschmied/kolibri-drafter/release/Kolibri-1-block-drafter-rc45000: 391.3M parameters, vocab 60614
+[21:35:21] rc=0
+{"mode": "greedy", "domain": "swe", "arm": "copy", "prompts": 10, "tok_s": 46.62, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "greedy", "domain": "swe", "arm": "learned-d2", "prompts": 10, "tok_s": 64.34, "learned_proposed": 852, "learned_kept": 486, "mismatches": 0}
+{"mode": "greedy", "domain": "chat", "arm": "copy", "prompts": 8, "tok_s": 48.13, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "greedy", "domain": "chat", "arm": "learned-d2", "prompts": 8, "tok_s": 61.56, "learned_proposed": 1969, "learned_kept": 969, "mismatches": 0}
+{"mode": "greedy", "domain": "de", "arm": "copy", "prompts": 8, "tok_s": 50.57, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "greedy", "domain": "de", "arm": "learned-d2", "prompts": 8, "tok_s": 69.33, "learned_proposed": 1759, "learned_kept": 973, "mismatches": 0}
+{"mode": "served", "domain": "swe", "arm": "copy", "prompts": 10, "tok_s": 42.62, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "served", "domain": "swe", "arm": "learned-d2", "prompts": 10, "tok_s": 62.58, "learned_proposed": 650, "learned_kept": 383, "mismatches": 0}
+{"mode": "served", "domain": "chat", "arm": "copy", "prompts": 8, "tok_s": 47.87, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "served", "domain": "chat", "arm": "learned-d2", "prompts": 8, "tok_s": 60.19, "learned_proposed": 1994, "learned_kept": 941, "mismatches": 0}
+{"mode": "served", "domain": "de", "arm": "copy", "prompts": 8, "tok_s": 47.29, "learned_proposed": 0, "learned_kept": 0, "mismatches": 0}
+{"mode": "served", "domain": "de", "arm": "learned-d2", "prompts": 8, "tok_s": 58.25, "learned_proposed": 2027, "learned_kept": 896, "mismatches": 0}
+{"mode": "greedy", "domain": "chat+de x4 together", "arm": "copy", "tok_s": 113.91, "learned_proposed": 0, "learned_kept": 0}
+{"mode": "greedy", "domain": "chat+de x4 together", "arm": "learned-d2", "tok_s": 125.46, "learned_proposed": 898, "learned_kept": 500}
+[21:35:21] == ENDROUND3 DONE ==

@@ -1,0 +1,23 @@
+[21:35:30] grouped-plan oracle
+PASS grouped plan: 1 rows x 7 slots, 33 experts, tile 16 (one block, 7 items) equal experts.route's bytes
+PASS grouped plan: 3 rows x 7 slots, 33 experts, tile 16 (one block, 16 items) equal experts.route's bytes
+PASS grouped plan: 300 rows x 7 slots, 33 experts, tile 64 (wide, 49 items) equal experts.route's bytes
+PASS grouped plan: 512 rows x 7 slots, 385 experts, tile 16 (wide, 387 items) equal experts.route's bytes
+PASS grouped plan: 2048 rows x 9 slots, 385 experts, tile 64 (wide, 389 items) equal experts.route's bytes
+[21:35:32] grouped-plan rc=0
+0 11
+1 20
+2 1090
+[21:35:41] main p0 greedy rc=0
+[21:35:50] main p0 sampled rc=0
+[21:35:59] main p1 greedy rc=0
+[21:36:07] main p1 sampled rc=0
+[21:36:16] main p2 greedy rc=0
+[21:36:24] main p2 sampled rc=0
+[21:36:33] pr p0 greedy rc=0
+[21:36:42] pr p0 sampled rc=0
+[21:36:51] pr p1 greedy rc=0
+[21:37:00] pr p1 sampled rc=0
+[21:37:08] pr p2 greedy rc=0
+[21:37:16] pr p2 sampled rc=0
+[21:37:16] == TF558 DONE ==

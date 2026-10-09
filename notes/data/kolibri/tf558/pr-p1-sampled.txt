@@ -1,0 +1,2 @@
+up to 15 MTP drafts a round, each verified while it pays for its row (measured: 9.18/11.66/15.64/21.93/31.06 ms at 1/2/4/8/16 rows, 0.678 ms a draft)
+tokens 128 sha b8d9ce6085d8 prefill 0.0419s decode 0.8974s 7.066 ms/token rounds 61 accepted 66 segments 1
