@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# User 2026-10-09 "do it at next pause": TF #558's GPU receipts. (1) tf-cuda-test grouped-plan against experts.route
+# (python-0.6's experts.py, identical to the fork's); (2) Nemotron 3.5 Lightning MLX-4bit @ d9d758fb with the 1.0.2
+# release's sm121 kernel set: `tensorfold run` greedy and sampled on main (78ee0f4) and on the PR branch, three prompts,
+# one over 1,024 tokens (prefill takes the wide plan). Outputs kept for comparison.
+D=/home/jschmied/kolibri-drafter; OUT=$D/tf558; M=/opt/llm/models/nemotron-3.5-lightning-mlx4
+K=/home/jschmied/tf-release/tensorfold-1.0.2-linux-aarch64/share/tensorfold/cuda/sm121
+PY=/opt/llm/runtime/tf-venv/bin/python
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=/home/jschmied/git/tf-kolibri/src HOME=/home/jschmied "$@"; }
+mkdir -p $OUT; chown jschmied: $OUT
+log "grouped-plan oracle"
+U timeout 600 $PY /home/jschmied/git/tf-plan/zig/tests/cuda/oracle/grouped_plan.py $OUT/plan 2>&1 | grep -v Warning | tail -3
+U timeout 600 /home/jschmied/git/tf-plan/zig-out/bin/tf-cuda-test grouped-plan $OUT/plan; log "grouped-plan rc=$?"
+until [ -e $M/model-00004-of-00004.safetensors ] && ! systemctl is-active -q fx-copy-nemotron; do sleep 30; done
+U $PY - $M $OUT <<'PYEOF'
+import sys
+from tokenizers import Tokenizer
+tk = Tokenizer.from_file(sys.argv[1] + "/tokenizer.json")
+texts = ["Explain in three sentences why the sky is blue.",
+         "Write a Python function that returns the n-th Fibonacci number iteratively, with a docstring.",
+         " ".join(["The history of the printing press spans many centuries and continents."] * 90)
+         + " Summarise the paragraph above in one sentence."]
+for i, t in enumerate(texts):
+    ids = tk.encode(t).ids
+    open(f"{sys.argv[2]}/prompt{i}.ids", "w").write(",".join(map(str, ids)))
+    print(i, len(ids))
+PYEOF
+for name in main pr; do
+  B=/home/jschmied/git/tf-main/zig-out/bin/tensorfold; [ $name = pr ] && B=/home/jschmied/git/tf-plan/zig-out/bin/tensorfold
+  for i in 0 1 2; do
+    for mode in greedy sampled; do
+      S=""; [ $mode = sampled ] && S="--temperature 0.8 --top-k 20 --top-p 0.95 --seed 7"
+      U timeout 900 $B run $M --tokens $(cat $OUT/prompt$i.ids) --max-tokens 128 --kernels $K $S > $OUT/$name-p$i-$mode.txt 2>&1
+      log "$name p$i $mode rc=$?"
+    done
+  done
+done
+log "== TF558 DONE =="

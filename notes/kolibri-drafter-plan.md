@@ -945,3 +945,4 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   - Nemotron 3.5 Lightning MLX-4bit (TensorFold repo @ d9d758fb, 18.5 GB) downloading on PBS
     (`/mnt/bulk/gb10/models/nemotron-3.5-lightning-30b-a3b-mlx4`, user: "download to backup server") for the
     extraction's Nemotron equality test.
+- 21:00 TF #558 receipts armed (user: "do it at next pause"): `tf558.sh.txt` runs between endround3 and round 4 (`q16j2.sh.txt` replaces q16j): grouped-plan oracle on GPU; Nemotron 3.5 Lightning MLX-4bit (copied from PBS to /opt/llm/models/nemotron-3.5-lightning-mlx4) with the 1.0.2 release's sm121 kernel set, `tensorfold run` greedy and sampled (0.8 / 20 / 0.95, seed 7), 3 prompts (one >1,024 tokens: wide plan), on main 78ee0f4 (~/git/tf-main) and the PR branch (~/git/tf-plan).
