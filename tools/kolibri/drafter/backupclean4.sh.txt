@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Backup, verify, then clean (user: "do cleanup / backup as needed, protect generated chats (backup first)").
+# PROTECT: synced and sha256-verified on PBS, never deleted. DROP: superseded runs, deleted only when every file
+# matches PBS by sha256. Kept: run 11's chain, arms K/U, runs 16f/16g, out16c step 12,500.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; DEST=/mnt/bulk/gb10/kolibri-drafter
+K="-o BatchMode=yes -i /home/jschmied/.ssh/id_ed25519 -o UserKnownHostsFile=/home/jschmied/.ssh/known_hosts"
+SSH="ssh -n $K root@10.0.0.70"
+PROTECT=""
+DROP=" out16i/drafter-step2500.pt out16i/drafter-step5000.pt out16i/drafter-step7500.pt out16i/drafter-step10000.pt out16i/drafter-step12500.pt out16i/drafter-step15000.pt out16i/drafter-step17500.pt out16i/drafter-step20000.pt out16i/drafter-step22500.pt out16i/drafter-step25000.pt out16i/drafter-step27500.pt out16i/drafter-step30000.pt out16i/drafter-step32500.pt out16i/drafter-step35000.pt out16i/drafter-step37500.pt out16i/drafter-step40000.pt out16i/drafter-step42500.pt out16h out16g out16e-U release/Kolibri-1-block-drafter-rc30000"
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+cd $D
+for p in $PROTECT $DROP; do [ -e "$p" ] || continue
+  rsync -aR --partial -e "ssh $K" "./$p" root@10.0.0.70:$DEST/ || { log "rsync FAILED $p"; exit 1; }
+done
+log "synced"
+verify(){  # $1 path -> prints mismatch count
+  local l r; l=$(cd $D && find "$1" -type f -print0 | sort -z | xargs -0 sha256sum)
+  r=$($SSH "cd $DEST && find '$1' -type f -print0 | sort -z | xargs -0 sha256sum")
+  comm -23 <(echo "$l" | sort) <(echo "$r" | sort) | wc -l
+}
+for p in $PROTECT; do [ -e "$p" ] || continue
+  n=$(verify "$p"); log "protect $p: $(find $p -type f | wc -l) files, $n not matched on PBS"; done
+for p in $DROP; do [ -e "$p" ] || continue
+  n=$(verify "$p")
+  if [ "$n" = 0 ]; then rm -rf "$D/$p"; log "dropped $p (verified)"; else log "KEPT $p: $n files not matched"; fi
+done
+log "$(df -h --output=avail /home | tail -1) free"
+log "== BACKUPCLEAN4 DONE =="
