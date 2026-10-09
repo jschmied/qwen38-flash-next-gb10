@@ -877,3 +877,18 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
 - 11:16 16i scores (64k, `notes/data/kolibri/score16i-15000.log`): 5,000 1.851 / 1.243 / 1.056; 10,000 1.869 / 1.251 /
   1.063; **15,000 1.876 / 1.257 / 1.075** (accepted_4 2.188 / 1.356 / 1.154). Still rising, +0.025 / +0.015 / +0.019
   over 10,000 steps. Resumed 11:20.
+- **13:15 first end-to-end bench of the block drafter** (`notes/data/kolibri/specbench-16i.log`, `specbench-run11-bench2.log`;
+  untouched prompts bench2 + bench SWE, c=1, 256 tokens, 0 mismatches in every cell). Decode tok/s, copy-only -> drafter:
+  | | SWE greedy | chat greedy | German greedy | SWE served | chat served | German served | c=4 chat+de |
+  |---|---|---|---|---|---|---|---|
+  | copy only | 46.3 | 48.1 | 50.8 | 42.4 | 47.8 | 47.3 | 112.4 |
+  | 16i block d2 | 56.4 (1.22x) | 55.4 (1.15x) | 62.6 (1.23x) | 55.5 (1.31x) | 54.2 (1.13x) | 51.9 (1.10x) | 92.9 (0.83x) |
+  | 16i block d4 | 52.6 | 50.1 | 58.3 | 53.8 | 49.4 | 45.4 | - |
+  | run 11 chain d1 | 57.7 (1.23x) | 61.5 (1.28x) | 66.5 (1.30x) | 53.7 (1.26x) | 61.0 (1.27x) | 56.9 (1.20x) | 115.1 (d2) |
+  **The block drafter's better acceptance does not reach the clock in the Python server**: it beats run 11 only on SWE
+  served; d4 is slower than d2; at c=4 it costs 17 %. Cause, from the code: each pass `torch.cat`s every layer's cached
+  context K/V (up to 4,096 rows x 20 heads x 128, 4 layers, K and V: ~170 MB copied a round), reads ~0.8 GB of drafter
+  weights (391M params, 4 layers + spine + predecessor head) vs the 1-layer chain, and runs unfused eager ops with
+  several host syncs. Fixes, in order: write block K/V into the preallocated cache rows and attend in place (no cat);
+  CUDA-graph the block pass; batch the pass across streams; adaptive depth. Acceptance gains only pay once the pass is
+  cheap — the release gate "faster than run 11 end to end" is not met yet.
