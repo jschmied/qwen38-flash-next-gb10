@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Root. At run 16i's step 30,000 save: specbench the block drafter (depth 2) with FP8 weights and the head slice in bf16 / fp8 / nvfp4 (user: body stays fp8, only the head changes), the
-# c=4 arm now one batched draft pass a round; same untouched prompts; then resume 16i.
+# c=4 arm now one batched draft pass a round; same untouched prompts; then score 16i 20,000/25,000/30,000 and resume 16i.
 D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
 PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src
 log(){ echo "[$(date +%H:%M:%S)] $*"; }
@@ -18,6 +18,12 @@ for arm in fp8:bf16 fp8:fp8 fp8:nvfp4; do
     > $D/specbench-16i-$q-$h.log 2>&1; log "rc=$?"
   grep -i "error\|traceback" $D/specbench-16i-$q-$h.log | head -3
 done
+V=$D/draft_vocab_64k.json
+CK="$D/out16i/drafter-step20000.pt $D/out16i/drafter-step25000.pt $D/out16i/drafter-step30000.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"\|Error'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
 systemd-run --unit=fx-kolibri-drafter-run16i --collect -E HOME=/root bash -c "bash $D/run16i.sh >> $D/run16i.log 2>&1"
 log "16i resumed"
-log "== BENCH16I5 DONE =="
+log "== BENCH16I6 DONE =="
