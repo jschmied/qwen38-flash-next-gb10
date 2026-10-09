@@ -8,8 +8,17 @@ Every MoE port needs this plan: Kolibri's FP8 experts (#481), Flash Next's NVFP4
 
 Receipts so far: `zig build test` passes on GB10 (Linux aarch64), the CUDA kernels build for sm_121, and `lean_check` is clean for the touched files.
 
-Still to come before this leaves draft:
-- the `grouped-plan` oracle test on GB10;
-- Nemotron 3.5 Lightning greedy and sampled replies equal before and after this change on GB10, at the revision #542's receipt used.
+Receipts on GB10 (DGX Spark, sm_121, CUDA 13.0):
+
+- `tf-cuda-test grouped-plan`: members, items and counts equal `experts.route`'s bytes in all 5 cases: one-block plans at 1 and 3 rows, wide plans at 300 rows (tile 64), 512 rows over 385 experts (tile 16) and 2,048 x 9 pairs over 385 experts (tile 64).
+- Nemotron 3.5 Lightning (`TensorFold/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-MLX-4bit` @ `d9d758fb`, the 1.0.2 release's `sm121` kernel set), `tensorfold run`, `main` (`78ee0f4`) against this branch built the same way. Three prompts (11, 20 and 1,090 tokens; the long one's prefill takes the wide plan), greedy and sampled (temperature 0.8, top_k 20, top_p 0.95, seed 7). All six reply hashes are equal:
+
+  | prompt | greedy | sampled |
+  | --- | --- | --- |
+  | 11 tokens | `5923b40d570b` both | `e8332a360154` both |
+  | 20 tokens | `c5c4b6cb25f0` both | `b8d9ce6085d8` both |
+  | 1,090 tokens | `95bce61a71a7` both | `a6961a8c7589` both |
+
+  One sampled run took 60 rounds on this branch and 61 on `main`, with the same reply. MTP's draft length follows measured round costs, so the round count can differ between runs; the reply can't.
 
 If you'd rather keep the plan inside the families, say so and I'll close this.
