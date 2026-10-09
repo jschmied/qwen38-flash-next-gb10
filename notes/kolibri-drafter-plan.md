@@ -932,3 +932,16 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   rc45000, specbench the release dir with its own defaults. The test pool still has to be RECORDED (server with
   TENSORFOLD_KOLIBRI_RECORD=rec/test on the reserved prompts + 15 SWE test instances on x86) before it can be scored.
 - 18:30 user: "skip test pool score" — the release quotes the dev slices + specbench (labelled so). Round 4 queued: `run16j.sh.txt` from 16i 45,000, 64k vocab, `--rec-drain`, same recipe; `q16j.sh.txt` starts it when endround3 is done (~22:00).
+- 19:00-20:00 TF follow-ups (user: "yes, do 1..3 and the two review tests"):
+  - **SASS: all 33 ported kernels byte-identical to the Python builds** (`notes/data/kolibri/sass-compare-1009.txt`,
+    `tools/kolibri/sasscmp.py`): fp8_lane 8/8 (#482), qmmf FP8G+FP4 15/15, prompt16 1/1, NVFP4 experts 3/3, FP8
+    experts 6/6. Our namespace renames did not change SASS (BobClawblaw's copies changed two kernels).
+  - Routing-plan PR NOT opened as a new file: Nemotron already carries the same plan (`Plan`, `maxItems`, `Ops.plan`
+    in families/nemotron/cuda_kernels.zig); the clean form is extracting it to zig/src/cuda/grouped.zig with Nemotron
+    using it (bit-identical), which is #548's step 2 and touches ashhart's family -> ask on #548 first. NVFP4 experts
+    PR waits on it. (Oracle sources experts.py / nvfp4/experts.{py,cu} are identical on upstream python-0.6.)
+  - Reviews of #541/#542 skipped: both already carry GB10 receipts (#542 by its author, #541 by plotarmordev);
+    a third would only add to the queue.
+  - Nemotron 3.5 Lightning MLX-4bit (TensorFold repo @ d9d758fb, 18.5 GB) downloading on PBS
+    (`/mnt/bulk/gb10/models/nemotron-3.5-lightning-30b-a3b-mlx4`, user: "download to backup server") for the
+    extraction's Nemotron equality test.

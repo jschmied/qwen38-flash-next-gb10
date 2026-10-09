@@ -1,0 +1,6 @@
+SASS comparison, Zig-built fatbins vs the Python extension builds (cuobjdump -sass, sm_121, CUDA 13.0 V13.0.88), 2026-10-09; kernels keyed by name + template args, namespaces ignored
+fp8_lane (#482): 8/8 SASS-equal; zig-only 0
+qmmf (FP8G+FP4 lane): 15/15 SASS-equal; zig-only 0
+prompt16 (FP4 prompt GEMM): 1/1 SASS-equal; zig-only 0
+nvfp4 experts: 3/3 SASS-equal; zig-only 0
+fp8 experts: 6/6 SASS-equal; zig-only 0
