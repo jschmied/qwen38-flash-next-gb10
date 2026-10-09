@@ -862,3 +862,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   windows: chat 7.4k, de 5.6k of 10.3k used) - a later mix can lean to German/chat.
 - 07:05 run 16i (round 3) started: from 16h step 12,500, 64k vocab, skip 92,985,802. (Its log line says "16g from
   16f step 5000" - copied text; INIT and skip are 16h's.)
+- 08:29 run 16i step 5,000 (`notes/data/kolibri/score16i-5000.log`, 64k vocab both): 16h 12,500 1.807 / 1.231 / 1.026
+  -> **16i 5,000 1.851 / 1.243 / 1.056** (accepted_4 2.151 / 1.337 / 1.132). Training on the 64k slice + batch 4's
+  German: +0.043 / +0.012 / +0.030 in 5,000 steps; German positions 2-4 gain most (0.345 -> 0.363 at pos 2).
+  16i resumed 08:32.

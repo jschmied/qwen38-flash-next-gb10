@@ -1,0 +1,14 @@
+stat: der Aufruf von statx für '/home/jschmied/kolibri-drafter/out16g/resume.pt' ist fehlgeschlagen: Datei oder Verzeichnis nicht gefunden
+[08:29:46] 16i step 5000 kept, resume.pt ; stopping 16g
+[08:29:48] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.8073, "accepted_4": 2.0774, "top1_steps": [0.8415, 0.6131, 0.4591, 0.3525], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step5000.pt", "accepted_3": 1.8506, "accepted_4": 2.1514, "top1_steps": [0.8423, 0.6273, 0.4749, 0.376], "chains": 229055}
+[08:31:33] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.2312, "accepted_4": 1.3224, "top1_steps": [0.6848, 0.4227, 0.2703, 0.1768], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step5000.pt", "accepted_3": 1.2428, "accepted_4": 1.3372, "top1_steps": [0.6865, 0.4272, 0.2752, 0.1803], "chains": 38167}
+[08:31:57] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16h/drafter-step12500.pt", "accepted_3": 1.0262, "accepted_4": 1.0958, "top1_steps": [0.604, 0.3446, 0.2184, 0.1438], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step5000.pt", "accepted_3": 1.0564, "accepted_4": 1.1322, "top1_steps": [0.6079, 0.3634, 0.233, 0.1537], "chains": 65728}
+Running as unit: fx-kolibri-drafter-run16i.service; invocation ID: 09a5ee97648f409b8dc4eb4f45180fe5
+[08:32:30] 16i resumed
+[08:32:30] == SCORE16I DONE ==
