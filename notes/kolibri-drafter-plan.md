@@ -902,3 +902,9 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   but each round costs more. At c=4 the decoder drafts stream by stream, so the reads repeat per stream (-17 %).
   Levers: FP8 drafter weights and FP8 head slice (halves the bytes), one batched draft pass for all streams, adaptive
   depth; the 32k slice for serving trades acceptance for 0.33 GB.
+- 16:05 (user: "try fp8 and nvfp4 versions, try batch draft"): block_drafter.py (fork a4b3a84, local) quantizes its
+  projections at load (`TENSORFOLD_KOLIBRI_BLOCK_QUANT=fp8|nvfp4`, head slice `_BLOCK_HEAD`): fp8 = Fp8BlockLinear
+  from_rows (e4m3, fp32 scale per row and 64 inputs), nvfp4 = Fp4Linear via the experts quantizer (ModelOpt recipe).
+  `chain_many` drafts for all streams of a round in one pass (weights read once, attention per stream); the decoder
+  collects the round's streams and calls it once. float64 test: equal to per-stream passes. GPU bench armed at 16i
+  step 30,000 (`bench16i4.sh.txt`: fp8/fp8, nvfp4/fp8, nvfp4/nvfp4, depth 2, c=4 arm batched).
