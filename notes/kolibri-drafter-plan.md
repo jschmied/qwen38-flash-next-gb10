@@ -931,3 +931,4 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   one pass; greedy + sampled). `endround3.sh.txt` at 16i step 45,000 (~21:15): score 30-45k, fork GPU tests, export
   rc45000, specbench the release dir with its own defaults. The test pool still has to be RECORDED (server with
   TENSORFOLD_KOLIBRI_RECORD=rec/test on the reserved prompts + 15 SWE test instances on x86) before it can be scored.
+- 18:30 user: "skip test pool score" — the release quotes the dev slices + specbench (labelled so). Round 4 queued: `run16j.sh.txt` from 16i 45,000, 64k vocab, `--rec-drain`, same recipe; `q16j.sh.txt` starts it when endround3 is done (~22:00).

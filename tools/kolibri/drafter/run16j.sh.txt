@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Root, unit fx-kolibri-drafter-run16j (watchdog "window"). Run 16j = round 4 from 16i step 45,000, 64k vocab, with
+# --rec-drain (when one class runs out the others keep their shares, so every recording window is used). Same recipe:
+# spine 256, position 0 at 0.1 x lr weight 2, recordings 40 % at swe 0.3 / chat 0.4 / de 0.3, fresh AdamW.
+set -uo pipefail
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_64k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+O=$D/out16j; mkdir -p $O; chown jschmied: $O
+INIT=$D/out16i/drafter-step45000.pt
+if [ -e $O/resume.pt ]; then R="--init $O/drafter.pt --resume $O/resume.pt"; log "run 16j resumed"
+else SKIP=$($PY -c "import torch;print(torch.load('$INIT',map_location='cpu')['tokens'])"); R="--init $INIT --skip-tokens $SKIP"; log "run 16j from 16i step 45000, --rec-drain, skip $SKIP"; fi
+U $PY $T/train_block.py /opt/llm/models/kolibri-1 $O --data $D/glm/glm $D/glm/glm2 $D/glm/glm3 $D/glm/de4k \
+  $D/glm/de4k $D/glm/de4k --draft-vocab $V --log 50 --save 2500 $R \
+  --rec $D/rec/live --rec-all $D/rec/train2 --rec-share 0.4 --rec-mix swe=0.3,chat=0.4,de=0.3 \
+  --rec-cap swe=1,chat=3,de=3 --rec-drain --anchors 1024 --onpolicy --assistant-only --decay 0.8 --warmup 100 \
+  --lr 2e-4 --lr-end 2e-5 --train-row0 0.1 --pos1-weight 2 --spine-rank 256 >> $D/train16j.log 2>&1
+log "train rc=$?"
+log "== RUN16F DONE =="

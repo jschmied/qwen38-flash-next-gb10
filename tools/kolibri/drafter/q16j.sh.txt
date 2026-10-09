@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Root. Starts round 4 (run16j.sh) and its checkpoint keeper once the end-of-round-3 job is done (user: skip the test
+# pool score).
+D=/home/jschmied/kolibri-drafter
+until grep -q "ENDROUND3 DONE" $D/endround3.log 2>/dev/null; do sleep 60; done
+systemd-run --unit=fx-kolibri-drafter-run16j --collect -E HOME=/root bash -c "bash $D/run16j.sh >> $D/run16j.log 2>&1"
+systemd-run --unit=fx-kolibri-keepckpt16j --collect -E HOME=/root bash -c "bash $D/keepckpt.sh $D/out16j >> $D/keepckpt16j.log 2>&1"
+echo "[$(date +%H:%M:%S)] run 16j started"
