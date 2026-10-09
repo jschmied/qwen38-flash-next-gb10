@@ -80,13 +80,16 @@ def rec_windows(a, dims: int) -> list:
     return items
 
 
-def pick(items: list, mix: dict, done: dict) -> tuple:
+def pick(items: list, mix: dict, done: dict, drain: bool = False) -> tuple:
     """Pop the next recording window: from the class furthest below its share in `mix`, else the last of the shuffled
     list; `done` counts windows taken by class. With a mix, None once any of its classes has run out (the rest would
-    skew the balance), and the caller stops taking recordings."""
+    skew the balance), and the caller stops taking recordings; with `drain`, the classes left share the steps by their
+    mix weights until all have run out (text alone moved acceptance least)."""
 
     left = {c for _, _, c in items if mix.get(c, 0) > 0} if mix else set()
-    if mix and left != {c for c, v in mix.items() if v > 0}:
+    if mix and not left:
+        return None
+    if mix and left != {c for c, v in mix.items() if v > 0} and not drain:
         return None
     if left:
         total = sum(done.values()) + 1
@@ -163,6 +166,7 @@ def main() -> None:
     ap.add_argument("--rec-share", type=float, default=0.3, help="share of steps from recordings while they last")
     ap.add_argument("--rec-passes", type=int, default=2, help="uses of each chat recording window")
     ap.add_argument("--rec-passes-swe", type=int, default=1, help="uses of each SWE recording window")
+    ap.add_argument("--rec-drain", action="store_true", help="when a --rec-mix class runs out, keep the others")
     ap.add_argument("--rec-mix", default="", help="recording steps by class, e.g. swe=0.5,chat=0.3,de=0.2 (empty: as drawn)")
     ap.add_argument("--rec-cap", default="", help="passes by class, e.g. swe=1,chat=3,de=3 (overrides --rec-passes*)")
     ap.add_argument("--rec-refresh", action="store_true", help="on --resume: a fresh recording pass, not the saved rest")
@@ -343,7 +347,7 @@ def main() -> None:
     rec_done = dict(res.get("rec_done", {})) if res and not a.rec_refresh else {}
 
     def take():
-        got = pick(items, mix, rec_done)
+        got = pick(items, mix, rec_done, a.rec_drain)
         if got is None:                                   # a mixed class ran out: no more recording steps
             items.clear()
             return None

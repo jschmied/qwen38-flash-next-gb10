@@ -866,3 +866,6 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   -> **16i 5,000 1.851 / 1.243 / 1.056** (accepted_4 2.151 / 1.337 / 1.132). Training on the 64k slice + batch 4's
   German: +0.043 / +0.012 / +0.030 in 5,000 steps; German positions 2-4 gain most (0.345 -> 0.363 at pos 2).
   16i resumed 08:32.
+- 10:30 `train_block --rec-drain` (+ `test_pick.py`): when a --rec-mix class runs out, the classes left keep sharing
+  steps by their weights until all are empty (default unchanged: stop all recordings). For the next round.
+  Scoring pause armed at 16i step 15,000 (`score16i15.sh.txt`: 16i 5,000 / 10,000 / 15,000, 64k vocab).
