@@ -856,3 +856,9 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   PBS /mnt/bulk/gb10/models, 12/12 files sha256-matched, deleted locally; sums in
   /opt/llm/runners/SHA256SUMS-qwen38-flash-next-mtpfp4-plebf16.txt. fp8head kept (prod checkpoint; 120 GB of it
   hardlinked, ~12 GB would free). 137 GB free: batch 4 runs the night, floorswitch then starts run 16i at its end.
+- 2026-10-09 07:00 batch 4 ended on time: 3,386 German conversations (sharegpt-de pool <1,400 used up at 05:25 after
+  845; alpaca-de the rest), ~6 GB/h, 77 GB free at the end. Recording windows now swe 5,575 / chat 8,241 / **de
+  10,275** (was 1,977; some alpaca-de chats classify as chat). At 0.3 / 0.4 / 0.3 SWE now binds a pass (~18.6k
+  windows: chat 7.4k, de 5.6k of 10.3k used) - a later mix can lean to German/chat.
+- 07:05 run 16i (round 3) started: from 16h step 12,500, 64k vocab, skip 92,985,802. (Its log line says "16g from
+  16f step 5000" - copied text; INIT and skip are 16h's.)

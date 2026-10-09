@@ -1,0 +1,8 @@
+[06:59:48] batch 4 ended
+Failed to stop fx-kolibri-genchat.service: Unit fx-kolibri-genchat.service not loaded.
+Failed to stop fx-kolibri-genchat-de.service: Unit fx-kolibri-genchat-de.service not loaded.
+[06:59:51] German conversations: 3386; recordings 11783
+Running as unit: fx-kolibri-drafter-run16i.service; invocation ID: eb920612a9ae4003ab8c03a44d273511
+Running as unit: fx-kolibri-keepckpt16i.service; invocation ID: 76ccb749277a41c38d4fd90d46e5fbad
+[07:05:51] run 16i started;   77G free
+[07:05:51] == FLOORSWITCH DONE ==
