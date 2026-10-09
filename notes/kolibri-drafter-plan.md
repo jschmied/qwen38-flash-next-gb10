@@ -923,3 +923,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   vs run 11: SWE +10 % / +15 % served, German +4 % / +2 %, chat level (-0.5 % / -1 %), c=4 +8 %. Fork a4b3a84 pushed.
 - 16i scores at 30,000 (`bench16i6.log`): 20,000 1.883 / 1.261 / 1.082; 25,000 1.885 / 1.269 / 1.086; **30,000 1.888 /
   1.270 / 1.090** (accepted_4 2.201 / 1.372 / 1.173). Slowing: +0.012 / +0.013 / +0.015 over 15,000 steps.
+- 17:45 release prep (user "yes" to items 3-5): `export_block.py` writes run 11's release shape (model.safetensors bf16,
+  config.json with drafter config, taps, serving defaults depth 2 / fp8 / nvfp4, draft_vocab.json); the block drafter
+  loads release directories and uses those defaults on CUDA (fork 8ea05aa, local until the GPU test). CPU tests 9/9
+  incl. export round trip. rc30000 exported (391.3M, vocab 60,614). Fork GPU test added
+  (`tests/cuda/test_kolibri1_block_drafter.py`: drafted replies == serial; bf16, fp8, fp8+nvfp4 head; 3 streams in
+  one pass; greedy + sampled). `endround3.sh.txt` at 16i step 45,000 (~21:15): score 30-45k, fork GPU tests, export
+  rc45000, specbench the release dir with its own defaults. The test pool still has to be RECORDED (server with
+  TENSORFOLD_KOLIBRI_RECORD=rec/test on the reserved prompts + 15 SWE test instances on x86) before it can be scored.

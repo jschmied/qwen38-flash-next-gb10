@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Root. End of round 3 at run 16i's step 45,000 save: stop 16i; score 30,000-45,000 (64k, fixed dev slices); the
+# fork's GPU tests (block drafter: replies equal serial in bf16 / FP8 / FP8 + NVFP4 head, batched; chain drafter;
+# forward); export 45,000 as a release directory and specbench it with no env vars (the release's own defaults).
+# The GPU stays free afterwards for the night's job.
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_64k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+until [ -e $D/out16i/drafter-step45000.pt ]; do sleep 60; done
+sleep 30
+log "16i step 45000 kept; stopping 16i (end of round 3)"
+systemctl stop fx-kolibri-drafter-run16i fx-kolibri-keepckpt16i; while systemctl is-active -q fx-kolibri-drafter-run16i; do sleep 5; done
+CK="$D/out16i/drafter-step30000.pt $D/out16i/drafter-step35000.pt $D/out16i/drafter-step40000.pt $D/out16i/drafter-step45000.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"\|Error'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+log "fork GPU tests"
+U bash -c "cd /home/jschmied/git/tf-kolibri && timeout 3600 $PY -m pytest -q -p no:cacheprovider tests/cuda/test_kolibri1_block_drafter.py tests/cuda/test_kolibri1_drafter.py tests/cuda/test_kolibri1_forward.py" 2>&1 | tail -15
+log "export + release-directory specbench (defaults)"
+U $PY $T/export_block.py $D/out16i/drafter-step45000.pt $V $D/release/Kolibri-1-block-drafter-rc45000 2>&1 | tail -1
+B="--swe $D/bench --chat $D/bench2/bench_chat.jsonl --de $D/bench2/bench_de.jsonl --tokens 256 --n 8 --concurrent 4"
+U timeout 3600 $PY $T/specbench.py /opt/llm/models/kolibri-1 $D/release/Kolibri-1-block-drafter-rc45000 --depths 2 $B \
+  > $D/specbench-rc45000.log 2>&1; log "rc=$?"
+grep '"mode"' $D/specbench-rc45000.log
+log "== ENDROUND3 DONE =="
