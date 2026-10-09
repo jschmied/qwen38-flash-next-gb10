@@ -1,0 +1,22 @@
+[16:28:21] 16i step 30000 kept; stopping 16i
+[16:28:23] block 16i 30000 d2 weights=fp8 head=bf16
+[16:41:22] rc=0
+[16:41:23] block 16i 30000 d2 weights=fp8 head=fp8
+[16:54:00] rc=0
+[16:54:00] block 16i 30000 d2 weights=fp8 head=nvfp4
+[17:06:35] rc=0
+[17:06:35] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step20000.pt", "accepted_3": 1.8831, "accepted_4": 2.193, "top1_steps": [0.8476, 0.6409, 0.4871, 0.3893], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step25000.pt", "accepted_3": 1.8851, "accepted_4": 2.2012, "top1_steps": [0.8494, 0.6387, 0.4888, 0.3943], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step30000.pt", "accepted_3": 1.8876, "accepted_4": 2.2008, "top1_steps": [0.8495, 0.6407, 0.4879, 0.3884], "chains": 229055}
+[17:09:07] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step20000.pt", "accepted_3": 1.2609, "accepted_4": 1.3594, "top1_steps": [0.6898, 0.4352, 0.2821, 0.1861], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step25000.pt", "accepted_3": 1.2687, "accepted_4": 1.3695, "top1_steps": [0.6923, 0.4375, 0.2885, 0.1908], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step30000.pt", "accepted_3": 1.2701, "accepted_4": 1.3718, "top1_steps": [0.693, 0.4377, 0.2874, 0.1911], "chains": 38167}
+[17:09:41] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step20000.pt", "accepted_3": 1.082, "accepted_4": 1.1632, "top1_steps": [0.6153, 0.3736, 0.2405, 0.1593], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step25000.pt", "accepted_3": 1.0859, "accepted_4": 1.1678, "top1_steps": [0.6167, 0.3761, 0.244, 0.1624], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step30000.pt", "accepted_3": 1.0901, "accepted_4": 1.1732, "top1_steps": [0.6184, 0.3766, 0.244, 0.1631], "chains": 65728}
+Running as unit: fx-kolibri-drafter-run16i.service; invocation ID: 9992ba12e132482ba2e65c859a74ee0c
+[17:10:29] 16i resumed
+[17:10:29] == BENCH16I6 DONE ==

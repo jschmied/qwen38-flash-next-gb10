@@ -909,3 +909,17 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   collects the round's streams and calls it once. float64 test: equal to per-stream passes. GPU bench armed at 16i
   step 30,000 (`bench16i4.sh.txt`: fp8/fp8, nvfp4/fp8, nvfp4/nvfp4, depth 2, c=4 arm batched).
 - 16:15 user: "body should stay as fp8, only change head" -> bench re-armed as `bench16i5.sh.txt`: FP8 weights, head slice bf16 / fp8 / nvfp4 (replaces bench16i4).
+- **17:10 the block drafter is now faster than run 11** (16i 30,000, depth 2, FP8 body, batched draft pass; logs
+  `specbench-16i-fp8-{bf16,fp8,nvfp4}.log`, 0 mismatches everywhere). Decode tok/s:
+  | head slice | SWE | chat | German | SWE served | chat served | German served | c=4 |
+  |---|---|---|---|---|---|---|---|
+  | copy only | 46.6 | 48.0 | 50.8 | 42.5 | 47.9 | 47.3 | 114.0 |
+  | bf16 | 59.6 | 56.1 | 64.0 | 59.2 | 55.6 | 53.2 | 121.2 |
+  | fp8 | 63.1 | 60.2 | 68.0 | 62.4 | 59.3 | 56.6 | 123.6 |
+  | **nvfp4** | **63.2** | **61.2** | **68.9** | **62.0** | **60.5** | **57.9** | **124.5** |
+  | run 11 chain | 57.7 | 61.5 | 66.5 | 53.7 | 61.0 | 56.9 | 115.1 |
+  The head slice was the bytes that mattered: NVFP4 head keeps the same drafts (kept 960 vs 962 chat) at a quarter of
+  the bytes. vs copy only: 1.36x / 1.27x / 1.36x greedy, 1.46x / 1.26x / 1.23x served, +9 % at c=4 (was -17 %).
+  vs run 11: SWE +10 % / +15 % served, German +4 % / +2 %, chat level (-0.5 % / -1 %), c=4 +8 %. Fork a4b3a84 pushed.
+- 16i scores at 30,000 (`bench16i6.log`): 20,000 1.883 / 1.261 / 1.082; 25,000 1.885 / 1.269 / 1.086; **30,000 1.888 /
+  1.270 / 1.090** (accepted_4 2.201 / 1.372 / 1.173). Slowing: +0.012 / +0.013 / +0.015 over 15,000 steps.
