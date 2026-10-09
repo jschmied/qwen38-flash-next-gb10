@@ -1,0 +1,16 @@
+[11:16:47] 16i step 15000 kept; stopping 16i
+[11:16:49] fresh SWE
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step5000.pt", "accepted_3": 1.8506, "accepted_4": 2.1514, "top1_steps": [0.8423, 0.6273, 0.4749, 0.376], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step10000.pt", "accepted_3": 1.8685, "accepted_4": 2.174, "top1_steps": [0.8459, 0.634, 0.4817, 0.3826], "chains": 229055}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step15000.pt", "accepted_3": 1.8763, "accepted_4": 2.1881, "top1_steps": [0.8462, 0.6385, 0.4853, 0.3876], "chains": 229055}
+[11:19:21] fresh chat
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step5000.pt", "accepted_3": 1.2428, "accepted_4": 1.3372, "top1_steps": [0.6865, 0.4272, 0.2752, 0.1803], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step10000.pt", "accepted_3": 1.2513, "accepted_4": 1.3479, "top1_steps": [0.6879, 0.4308, 0.2807, 0.1839], "chains": 38167}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step15000.pt", "accepted_3": 1.2573, "accepted_4": 1.3562, "top1_steps": [0.6899, 0.432, 0.281, 0.1855], "chains": 38167}
+[11:19:55] fresh German
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step5000.pt", "accepted_3": 1.0564, "accepted_4": 1.1322, "top1_steps": [0.6079, 0.3634, 0.233, 0.1537], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step10000.pt", "accepted_3": 1.0633, "accepted_4": 1.1409, "top1_steps": [0.6108, 0.3655, 0.2345, 0.1576], "chains": 65728}
+{"ckpt": "/home/jschmied/kolibri-drafter/out16i/drafter-step15000.pt", "accepted_3": 1.0747, "accepted_4": 1.1541, "top1_steps": [0.6137, 0.3708, 0.2386, 0.1579], "chains": 65728}
+Running as unit: fx-kolibri-drafter-run16i.service; invocation ID: 17e6270866a8436b9a26bbd2cea8d4df
+[11:20:43] 16i resumed
+[11:20:43] == SCORE16I15 DONE ==

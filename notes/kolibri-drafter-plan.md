@@ -874,3 +874,6 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   defaults to the block. `tools/kolibri/drafter/test_block_serve.py`: equal to model_block + eval_block's
   predecessor loop in float64 (same drafts, states within 1e-9), context added in parts. Still to do on the GPU:
   specbench (identical replies, c=1 speed vs copies only and vs run 11).
+- 11:16 16i scores (64k, `notes/data/kolibri/score16i-15000.log`): 5,000 1.851 / 1.243 / 1.056; 10,000 1.869 / 1.251 /
+  1.063; **15,000 1.876 / 1.257 / 1.075** (accepted_4 2.188 / 1.356 / 1.154). Still rising, +0.025 / +0.015 / +0.019
+  over 10,000 steps. Resumed 11:20.
