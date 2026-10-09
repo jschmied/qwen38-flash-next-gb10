@@ -961,3 +961,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   long one prefills through the wide plan), greedy and sampled: all 6 reply hashes equal. One sampled run took 60 vs 61
   rounds with the same reply (MTP's cost-based drafting).
 - Round 4 (run 16j, --rec-drain) started 21:37.
+- **2026-10-09 22:xx PUBLISHED** (user: "upload what we have"): https://huggingface.co/josch15366/Kolibri-1-block-drafter
+  (public), commit 212bcdea, = rc45000 (16i step 45,000) + the reviewed card (`notes/model-card-kolibri-block-drafter.md`).
+  Verified after upload: model.safetensors lfs sha256 1edab730... and 3 small files' git blob sha1 equal the local files
+  (`notes/data/kolibri/rc45000-SHA256SUMS.txt`). One upload_folder commit, first attempt.
