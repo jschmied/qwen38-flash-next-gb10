@@ -98,7 +98,12 @@ def main() -> None:
     print(json.dumps({k: [len(p) for p in v] for k, v in P.items()}), flush=True)
     w = load(d)
     model = Model(w, a.max_prompt + a.tokens + 64, max(1, a.concurrent))
-    dr = Drafter(a.drafter, w.embed, w.head, vocab=a.vocab or None)
+    from tensorfold.families.kolibri1.cuda.block_drafter import BlockDrafter, is_block
+
+    if is_block(a.drafter):                              # a train_block.py checkpoint: one pass drafts a block
+        dr = BlockDrafter(a.drafter, w.embed, w.head, vocab=a.vocab or None)
+    else:
+        dr = Drafter(a.drafter, w.embed, w.head, vocab=a.vocab or None)
     arms = [("copy", None, 0)] + [(f"learned-d{k}", dr, int(k)) for k in a.depths.split(",")]
     served = {"swe": lambda i: Sampling(seed=i, temperature=0.6, top_k=20, top_p=0.95),
               "chat": lambda i: Sampling(seed=i, temperature=1.0, top_k=128, top_p=0.97),
