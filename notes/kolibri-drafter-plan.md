@@ -978,3 +978,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   the text-only tail at lr 2e-5 kept SWE flat-to-up and chat rising; German flat after 60k. Exported as
   release/Kolibri-1-block-drafter-16j (best by mean accepted_3); specbench beside rc45000 running.
   Disk: 16j 35k-75k except 60/65/70k to PBS (sha256) and dropped, 50 GB free.
+- Specbench (20:11, `specbench-end16j-*.log`, release defaults depth 2 / fp8 / nvfp4, same session, 0 mismatches):
+  rc45000 greedy 64.4 / 61.7 / 69.7, served 62.6 / 60.3 / 58.3, c=4 125.7; **16j** greedy 65.0 / 62.1 / 70.9, served
+  63.4 / 60.6 / 58.7, c=4 125.2 (copy arms 46.6-50.8 / 42.5-47.9 / 114.3-114.4, both sessions within 1 %).
+  16j vs rc45000: greedy +0.9 / +0.6 / +1.8 %, served +1.2 / +0.4 / +0.8 %, c=4 -0.4 %: the +2 % acceptance shows
+  up as ~+1 % speed, at the edge of run-to-run spread. Round 4 is the plateau of this recipe and data.
