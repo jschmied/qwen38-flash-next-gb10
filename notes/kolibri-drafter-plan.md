@@ -988,3 +988,18 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   (`notes/model-card-kolibri-block-drafter.md`); lfs sha256 + 3 blob sha1 verified (`notes/data/kolibri/16j-SHA256SUMS.txt`).
   Drafter training PAUSED: watchdog, keepckpt, recsync, rectrim stopped; Kolibri heartbeat cron deleted. Next drafter
   lever = new data (German alpaca-de rows left, a fresh chat pool clear of bench2's UltraChat rows), not more passes.
+
+## Kolibri-1 on the Zig CUDA engine: forward bit-exact (2026-10-10 21:30)
+- Branch `kolibri1-forward` on jschmied/TensorFold (a01cf65f), stacked on #605's head (aaa5579b): the four kolibri1
+  weights commits rebased (old copies of the FP8 lane/experts dropped for #482/#605), experts through
+  `experts.Fp8Experts`, plus `kolibri1/{tree,kernels,forward}.zig`, `kolibri_ops.cu` (embed gather) and
+  prefill_attention's `<128, 8, 4, 8>` instance (48 heads over 4: heads_a_block 4).
+- Triton kernels are the Python engine's own, captured: `tools/kolibri/zig/capture_kolibri.py` (Recorder from
+  tools/zig/triton_aot_manifest.py) -> manifest -> jit.json (JITFunction scan) -> `zig/tests/cuda/nemotron/aot_pack.py`
+  -> set (31 kernels: _router x10, tree attention _paths/_shared/_tail/_merge, _qkv, _rms, _add_rms, _sliding, _topk,
+  _combine). Set in ~/kolibri-drafter/kcap/set-sm121, aot.json in notes/data/kolibri/zigfwd/.
+- `tf-cuda-test kolibri-forward MODEL CAPTURE SET` replays the 24 captured forwards in order: **all 11 named calls'
+  fp32 logits byte-equal to Python** (prompt 17/300/2000, decode 1/2/3/4/16 streams, verify chains 2/3/4 rows),
+  first run. Host-side RoPE tables (f64 pow/cos -> f32) matched torch's.
+- Next: a wider capture (row counts the router/tree variants miss: BM 32/64/128 with div16 M, other W), then the
+  lanes.Backend (sampling, rounds, prompt chunks), then serving + speed; the norm/router pieces as #548 item-4 PRs.
