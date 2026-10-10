@@ -970,3 +970,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   1.302 / **1.303**, German 1.110 / 1.111 / 1.116 / **1.118** (accepted_4 2.239 / 1.416 / 1.208). vs rc45000 (1.908 /
   1.288 / 1.105): +0.004 / +0.015 / +0.013. SWE flat, chat/German still creeping (+0.01 over 25k steps). Not yet worth
   a new HF commit. Same pause: TF qlinear receipts (all green, see notes/upstream). 16j resumed 07:11.
+- **End of round 4 (run 16j, 19:40, step 76,083 = whole text stream; recordings ran out at ~60,250)**
+  (`notes/data/kolibri/end16j-scores.log`, 64k, dev slices), accepted_3 SWE / chat / German:
+  50k 1.926 / 1.309 / 1.125; 55k 1.930 / 1.311 / 1.129; 60k 1.933 / 1.312 / 1.131; 65k 1.933 / 1.314 / 1.130;
+  70k 1.933 / 1.316 / 1.130; **final 1.937 / 1.321 / 1.130** (accepted_4 2.268 / 1.438 / 1.223).
+  vs rc45000 1.908 / 1.288 / 1.105: +0.029 / +0.033 / +0.025. No SWE drop after the recordings ran out (15b's did):
+  the text-only tail at lr 2e-5 kept SWE flat-to-up and chat rising; German flat after 60k. Exported as
+  release/Kolibri-1-block-drafter-16j (best by mean accepted_3); specbench beside rc45000 running.
+  Disk: 16j 35k-75k except 60/65/70k to PBS (sha256) and dropped, 50 GB free.
