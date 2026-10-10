@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #548 comment (2026-10-10), coordination with #612/#613 (@BlivionIaG, #491).
+POSTED 2026-10-10 as TF #548 comment (user: "yes"). https://github.com/ashhart/TensorFold/issues/548#issuecomment-6101147252
 
 @BlivionIaG, #612 and #613 and our CUDA pieces are converging on the same layer from two sides, and I'd like them to fit together before either hardens:
 
