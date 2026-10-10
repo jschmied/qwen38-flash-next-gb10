@@ -983,3 +983,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   63.4 / 60.6 / 58.7, c=4 125.2 (copy arms 46.6-50.8 / 42.5-47.9 / 114.3-114.4, both sessions within 1 %).
   16j vs rc45000: greedy +0.9 / +0.6 / +1.8 %, served +1.2 / +0.4 / +0.8 %, c=4 -0.4 %: the +2 % acceptance shows
   up as ~+1 % speed, at the edge of run-to-run spread. Round 4 is the plateau of this recipe and data.
+- **2026-10-10 20:45 PUBLISHED 16j** (user: "do 2" = stop drafter training, ship 16j, GPU to TensorFold): HF
+  josch15366/Kolibri-1-block-drafter commit 4d6cf7be = 16j final (step 76,083) + card updated to its numbers
+  (`notes/model-card-kolibri-block-drafter.md`); lfs sha256 + 3 blob sha1 verified (`notes/data/kolibri/16j-SHA256SUMS.txt`).
+  Drafter training PAUSED: watchdog, keepckpt, recsync, rectrim stopped; Kolibri heartbeat cron deleted. Next drafter
+  lever = new data (German alpaca-de rows left, a fresh chat pool clear of bench2's UltraChat rows), not more passes.

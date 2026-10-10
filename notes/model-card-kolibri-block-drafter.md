@@ -39,26 +39,26 @@ Decode speed in tok/s:
 
 | | SWE agent turns | chat | German | 4 streams (chat + German) |
 |---|---|---|---|---|
-| copy drafting only | 46.6 | 48.1 | 50.6 | 113.9 |
+| copy drafting only | 46.6 | 47.6 | 50.8 | 114.3 |
 | run 11 chain drafter | 57.7 | 61.5 | 66.5 | 115.1 |
-| **this drafter, greedy** | **64.3 (1.38x)** | **61.6 (1.28x)** | **69.3 (1.37x)** | **125.5 (1.10x)** |
-| copy only, sampled as served | 42.6 | 47.9 | 47.3 | |
-| **this drafter, sampled as served** | **62.6 (1.47x)** | **60.2 (1.26x)** | **58.3 (1.23x)** | |
+| **this drafter, greedy** | **65.0 (1.40x)** | **62.1 (1.31x)** | **70.9 (1.40x)** | **125.2 (1.10x)** |
+| copy only, sampled as served | 42.5 | 47.8 | 47.2 | |
+| **this drafter, sampled as served** | **63.4 (1.49x)** | **60.6 (1.27x)** | **58.7 (1.24x)** | |
 
 Compared with run 11:
 
-- greedy: +11 % on SWE, chat level, +4 % on German;
-- sampled as served: +17 % on SWE, chat −1 %, German +2 %;
+- greedy: +13 % on SWE, chat +1 %, German +7 %;
+- sampled as served: +18 % on SWE, chat −1 %, German +3 %;
 - 4 streams: +9 % (run 11 was neutral there, and an earlier bf16 build of this drafter was −17 %).
 
 **Acceptance** on Kolibri's own served output that no checkpoint trained on, using the 64k draft vocabulary:
 
 | | SWE | chat | German |
 |---|---|---|---|
-| accepted per round of 3 drafts | 1.908 | 1.288 | 1.105 |
-| accepted per round of 4 drafts | 2.229 | 1.395 | 1.192 |
+| accepted per round of 3 drafts | 1.937 | 1.321 | 1.130 |
+| accepted per round of 4 drafts | 2.268 | 1.438 | 1.223 |
 | run 11, round of 3 | 1.38 | 1.23 | 0.95 |
-| position 1 / 2 / 3 / 4 agreement | 0.852 / 0.650 / 0.497 / 0.392 | 0.696 / 0.445 / 0.296 / 0.196 | 0.622 / 0.383 / 0.249 / 0.168 |
+| position 1 / 2 / 3 / 4 agreement | 0.855 / 0.661 / 0.508 / 0.401 | 0.700 / 0.462 / 0.309 / 0.208 | 0.628 / 0.394 / 0.260 / 0.175 |
 
 These are development slices: we selected checkpoints on them, and no separate test pool was scored. The SWE slice
 shares repositories with the training recordings, so treat its number as optimistic. The end-to-end prompts above
@@ -141,16 +141,17 @@ logged in
 | run 16b–d | + predecessor head; + Kolibri's own served output (recording batches 2–3) | 1.49 / 1.11 / 0.87 |
 | run 16u/f | position 1 unfrozen at 0.1 × learning rate, loss weight 2 | 1.62 / 1.14 / 0.92 |
 | run 16g/h | + spine (rank 256), all recordings | 1.73 / 1.22 / 0.99 (32k vocab) |
-| run 16i (this) | 64k draft vocabulary; German recording batch 4; 45,000 steps | 1.91 / 1.29 / 1.11 |
+| run 16i | 64k draft vocabulary; German recording batch 4; 45,000 steps (the first release, rc45000) | 1.91 / 1.29 / 1.11 |
+| run 16j (this) | from 16i: every recording window used once more, then the rest of the text stream; 76,083 steps | 1.94 / 1.32 / 1.13 |
 
-Settings for run 16i:
+Settings for runs 16i and 16j:
 
 - AdamW (0.9, 0.95), learning rate 2e-4 cosine to 2e-5, gradient clip 0.5;
 - windows of 2,048 positions; position weights 0.8^j;
 - loss: KL to Kolibri's distribution on the draft vocabulary;
 - batches are 40 % recordings (mix SWE 0.3 / chat 0.4 / German 0.3) and 60 % GLM-5.2 text.
 
-`training_tokens` in `config.json` is the position in the text stream across runs 15–16i; recording windows are not
+`training_tokens` in `config.json` is the position in the text stream across runs 15–16j; recording windows are not
 counted in it.
 
 What mattered, in order:
@@ -182,6 +183,6 @@ GPT-4 outputs, so check whether that matters for your use. This is not legal adv
 ## Limits
 
 - Measured on one GB10 only. Single stream, plus one 4-stream cell.
-- German drafts least well: position 1 agreement is 0.62, against 0.85 on SWE.
+- German drafts least well: position 1 agreement is 0.63, against 0.85 on SWE.
 - Needs an engine that exposes Kolibri's layer 44/47/49 states at decode (the TensorFold branch above).
 - No separate held-out test pool was scored; the acceptance numbers are development slices.
