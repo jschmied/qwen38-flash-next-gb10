@@ -965,3 +965,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   (public), commit 212bcdea, = rc45000 (16i step 45,000) + the reviewed card (`notes/model-card-kolibri-block-drafter.md`).
   Verified after upload: model.safetensors lfs sha256 1edab730... and 3 small files' git blob sha1 equal the local files
   (`notes/data/kolibri/rc45000-SHA256SUMS.txt`). One upload_folder commit, first attempt.
+- 2026-10-10 07:04-07:11 pause at 16j step 35,000 (`tfq1.sh.txt`, `notes/data/kolibri/tfq1/tfq1.log`): 16j scores
+  (64k, dev slices) 10,000 / 20,000 / 30,000 / **35,000** = SWE 1.913 / 1.909 / 1.912 / **1.912**, chat 1.293 / 1.300 /
+  1.302 / **1.303**, German 1.110 / 1.111 / 1.116 / **1.118** (accepted_4 2.239 / 1.416 / 1.208). vs rc45000 (1.908 /
+  1.288 / 1.105): +0.004 / +0.015 / +0.013. SWE flat, chat/German still creeping (+0.01 over 25k steps). Not yet worth
+  a new HF commit. Same pause: TF qlinear receipts (all green, see notes/upstream). 16j resumed 07:11.

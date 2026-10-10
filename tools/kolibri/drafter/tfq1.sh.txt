@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Root. At run 16j's step 35,000 save: stop 16j; score 16j 10,000 / 20,000 / 30,000 / 35,000 (64k, fixed dev slices);
+# TF qlinear receipts (cuda/qlinear.zig PR vs main 4ebf52a, one fatbin set): fp8-lane oracle direct and through the
+# dispatch, check-kernels (lane_gemv / qmm_group / split-K on Nemotron's weights) on both builds, and Nemotron replies
+# greedy + sampled on 3 prompts, main vs PR. Then 16j resumes from resume.pt.
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_64k.json
+M=/opt/llm/models/nemotron-3.5-lightning-mlx4; OUT=$D/tfq1; Q=/home/jschmied/git/tf-qlin
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+until [ -e $D/out16j/drafter-step35000.pt ]; do sleep 60; done
+sleep 30
+log "16j step 35000 kept; stopping 16j"
+systemctl stop fx-kolibri-drafter-run16j; while systemctl is-active -q fx-kolibri-drafter-run16j; do sleep 5; done
+CK="$D/out16j/drafter-step10000.pt $D/out16j/drafter-step20000.pt $D/out16j/drafter-step30000.pt $D/out16j/drafter-step35000.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"\|Error'; }
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+mkdir -p $OUT; chown jschmied: $OUT
+log "fp8-lane oracle + qlinear dispatch"
+U timeout 600 $PY $Q/zig/tests/cuda/oracle/fp8_lane.py $OUT/fp8 2>&1 | grep -v Warning | tail -2
+U timeout 600 /home/jschmied/tfbuild-tf-qlin/bin/tf-cuda-test fp8-lane $OUT/fp8; log "fp8-lane rc=$?"
+for name in main pr; do
+  B=/home/jschmied/tfbuild-tf-main/bin/tensorfold; [ $name = pr ] && B=/home/jschmied/tfbuild-tf-qlin/bin/tensorfold
+  log "$name check-kernels"
+  U timeout 1200 $B check-kernels $M > $OUT/$name-check-kernels.txt 2>&1; log "$name check-kernels rc=$?"; tail -3 $OUT/$name-check-kernels.txt
+  for i in 0 1 2; do
+    for mode in greedy sampled; do
+      S=""; [ $mode = sampled ] && S="--temperature 0.8 --top-k 20 --top-p 0.95 --seed 7"
+      U timeout 900 $B run $M --tokens $(cat $D/tf558/prompt$i.ids) --max-tokens 128 $S > $OUT/$name-p$i-$mode.txt 2>&1
+      log "$name p$i $mode rc=$? $(grep -o 'sha [0-9a-f]*' $OUT/$name-p$i-$mode.txt | tail -1)"
+    done
+  done
+done
+log "restarting 16j"
+systemd-run --unit=fx-kolibri-drafter-run16j --collect -E HOME=/root bash -c "bash $D/run16j.sh >> $D/run16j.log 2>&1"
+sleep 20; systemctl is-active fx-kolibri-drafter-run16j
+log "== TFQ1 DONE =="
