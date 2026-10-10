@@ -1,0 +1,21 @@
+PASS nvfp4 experts: 33 x [512, 2560] gate-up, down and scales packed as make() packs them
+PASS nvfp4 experts: 1 rows x 7 slots (decode, 7 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 3 rows x 7 slots (decode, 16 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 300 rows x 7 slots (decode form, bf16 sums; prompt refused, 148 items) plan, up and down via experts.Grouped equal Python's bytes
+nvfp4-experts nv-default rc=0
+PASS nvfp4 experts: 65 x [704, 4096] gate-up, down and scales packed as make() packs them
+PASS nvfp4 experts: 1 rows x 9 slots (decode, 9 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 3 rows x 9 slots (decode, 23 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 300 rows x 9 slots (decode form, bf16 sums; prompt refused, 199 items) plan, up and down via experts.Grouped equal Python's bytes
+nvfp4-experts nv-glm rc=0
+PASS fp8 experts: 33 x [512, 2560] gate-up, down and scales packed as make() packs them
+PASS fp8 experts: 1 rows x 7 slots (decode, 7 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS fp8 experts: 3 rows x 7 slots (decode, 14 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS fp8 experts: 300 rows x 7 slots (prompt, 40 items) plan, up and down via experts.Grouped equal Python's bytes
+fp8-experts rc=0
+p0 greedy sha 5923b40d570b
+p0 sampled sha d38725819372
+p1 greedy sha ead827be94f5
+p1 sampled sha bb8855c2f084
+p2 greedy sha 068276d3ec75
+p2 sampled sha a6961a8c7589
