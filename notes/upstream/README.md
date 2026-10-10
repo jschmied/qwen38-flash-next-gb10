@@ -1775,3 +1775,4 @@ wait on one ~100 GB pull, and they share one serve.
 - 21:55 TF #558 marked ready for review (user: "558, yes"). 21:52 backupclean4: 16i steps <45,000, out16g/h, out16e-U, rc30000 dropped after PBS match; 61 GB free.
 - 2026-10-09 HF: josch15366/Kolibri-1-block-drafter published (rc45000, public), commit 212bcdea. https://huggingface.co/josch15366/Kolibri-1-block-drafter
 - 2026-10-10 02:17 TF: ashhart merged #558 (shared expert plan) and #482 (block-FP8 lane projections); #455 (external drafter in lanes) merged 00:53.
+- 2026-10-10 TF #548 comment: claim the quantized-weight interface (qlinear.zig: affine4 + fp8g, then NVFP4, then grouped experts). Draft tf-548-claim-qweight.md. https://github.com/ashhart/TensorFold/issues/548#issuecomment-6093874349
