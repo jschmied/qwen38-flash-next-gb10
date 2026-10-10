@@ -1,0 +1,56 @@
+[13:16:34] waiting for 16j step 57500
+[13:25:04] 16j step 57500 kept; stopping 16j
+PASS nvfp4 repack: [5120, 6144] words and scale tiles equal the Python layout
+PASS nvfp4 lane: 1 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 3 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 17 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 40 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 300 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 17 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 300 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 1000 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+[13:25:10] nvfp4 nv-5120 rc=0
+PASS nvfp4 repack: [704, 2048] words and scale tiles equal the Python layout
+PASS nvfp4 lane: 1 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 3 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 17 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 40 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 300 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 17 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 300 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 1000 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+[13:25:10] nvfp4 nv-704 rc=0
+PASS fp8 repack: [2560, 6144] codes and scale tiles equal the Python layout
+PASS qlinear: 1 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 1 rows x [2560, 6144] equal Python's bytes (tile 16, 8 slices, fused false, cluster true)
+PASS qlinear: 3 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 3 rows x [2560, 6144] equal Python's bytes (tile 16, 8 slices, fused false, cluster true)
+PASS qlinear: 17 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 17 rows x [2560, 6144] equal Python's bytes (tile 32, 8 slices, fused false, cluster true)
+PASS qlinear: 40 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 40 rows x [2560, 6144] equal Python's bytes (tile 64, 8 slices, fused false, cluster true)
+PASS qlinear: 300 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 300 rows x [2560, 6144] equal Python's bytes (tile 64, 8 slices, fused true, cluster false)
+[13:25:10] fp8-lane rc=0
+[13:25:16] main check-kernels rc=0
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+[13:25:25] main p0 greedy rc=0 sha 5923b40d570b
+[13:25:31] main p0 sampled rc=0 sha d38725819372
+[13:25:36] main p1 greedy rc=0 sha ead827be94f5
+[13:25:40] main p1 sampled rc=0 sha bb8855c2f084
+[13:25:44] main p2 greedy rc=0 sha 068276d3ec75
+[13:25:49] main p2 sampled rc=0 sha a6961a8c7589
+[13:25:54] pr check-kernels rc=0
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+[13:26:03] pr p0 greedy rc=0 sha 5923b40d570b
+[13:26:08] pr p0 sampled rc=0 sha d38725819372
+[13:26:13] pr p1 greedy rc=0 sha ead827be94f5
+[13:26:17] pr p1 sampled rc=0 sha bb8855c2f084
+[13:26:22] pr p2 greedy rc=0 sha 068276d3ec75
+[13:26:26] pr p2 sampled rc=0 sha a6961a8c7589
+[13:26:26] restarting 16j
+Running as unit: fx-kolibri-drafter-run16j.service; invocation ID: 306c64a0c8f349f9a2bcdd4b8e382aec
+active
+[13:26:46] == TFQ2 DONE ==
