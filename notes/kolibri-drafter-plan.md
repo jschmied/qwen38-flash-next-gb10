@@ -1003,3 +1003,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   first run. Host-side RoPE tables (f64 pow/cos -> f32) matched torch's.
 - Next: a wider capture (row counts the router/tree variants miss: BM 32/64/128 with div16 M, other W), then the
   lanes.Backend (sampling, rounds, prompt chunks), then serving + speed; the norm/router pieces as #548 item-4 PRs.
+- 2026-10-10 22:30 milestone A1: `tf-cuda-test kolibri-generate` (prefill + one-row decode, host argmax over fp32):
+  128 greedy tokens on a 27-token chat prompt **identical to the Python engine's**; decode 48.4 tok/s Zig vs 46.0
+  Python (both eager, no graphs; Zig also downloads 512 KB of logits a token). Context must be a whole 1,024 (LEN
+  div16 variant only captured). Next A2: lanes.Backend (tf_draw on bf16-rounded logits = TF's cross-backend
+  sampler contract; greedy may differ from Python on near-ties), A3 native registration, then graphs.
