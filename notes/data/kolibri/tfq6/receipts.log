@@ -1,0 +1,78 @@
+== nx
+RESULT pairs in: largest difference 0.000e0 of the largest value 9.542e-1 (0.00e0)
+RESULT pairs out: largest difference 8.941e-7 of the largest value 6.813e0 (1.31e-7)
+RESULT adam: largest difference 0.000e0 of the largest value 9.995e-1 (0.00e0)
+PASS train: every kernel within 2.40e-6 of its f64 reference
+== tf-nq
+RESULT pairs in: largest difference 0.000e0 of the largest value 9.542e-1 (0.00e0)
+RESULT pairs out: largest difference 8.941e-7 of the largest value 6.813e0 (1.31e-7)
+RESULT adam: largest difference 0.000e0 of the largest value 9.995e-1 (0.00e0)
+PASS train: every kernel within 2.40e-6 of its f64 reference
+PASS fp8 experts: 33 x [512, 2560] gate-up, down and scales packed as make() packs them
+PASS fp8 experts: 1 rows x 7 slots (decode, 7 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS fp8 experts: 3 rows x 7 slots (decode, 14 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS fp8 experts: 300 rows x 7 slots (prompt, 40 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 33 x [512, 2560] gate-up, down and scales packed as make() packs them
+PASS nvfp4 experts: 1 rows x 7 slots (decode, 7 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 3 rows x 7 slots (decode, 16 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 300 rows x 7 slots (decode form, bf16 sums; prompt refused, 148 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 65 x [704, 4096] gate-up, down and scales packed as make() packs them
+PASS nvfp4 experts: 1 rows x 9 slots (decode, 9 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 3 rows x 9 slots (decode, 23 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 experts: 300 rows x 9 slots (decode form, bf16 sums; prompt refused, 199 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS nvfp4 repack: [5120, 6144] words and scale tiles equal the Python layout
+PASS nvfp4 lane: 1 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 3 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 17 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 40 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 300 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 17 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 300 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 1000 rows x [5120, 6144] equal Python's bytes, direct and via qlinear
+PASS nvfp4 repack: [704, 2048] words and scale tiles equal the Python layout
+PASS nvfp4 lane: 1 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 3 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 17 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 40 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 lane: 300 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 17 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 300 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS nvfp4 prompt: 1000 rows x [704, 2048] equal Python's bytes, direct and via qlinear
+PASS fp8 repack: [2560, 6144] codes and scale tiles equal the Python layout
+PASS qlinear: 1 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 1 rows x [2560, 6144] equal Python's bytes (tile 16, 8 slices, fused false, cluster true)
+PASS qlinear: 3 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 3 rows x [2560, 6144] equal Python's bytes (tile 16, 8 slices, fused false, cluster true)
+PASS qlinear: 17 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 17 rows x [2560, 6144] equal Python's bytes (tile 32, 8 slices, fused false, cluster true)
+PASS qlinear: 40 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 40 rows x [2560, 6144] equal Python's bytes (tile 64, 8 slices, fused false, cluster true)
+PASS qlinear: 300 rows through decode and prompt equal the lane matmul's bytes
+PASS fp8 lane: 300 rows x [2560, 6144] equal Python's bytes (tile 64, 8 slices, fused true, cluster false)
+== main
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+p0 greedy sha 5923b40d570b
+p0 sampled sha d38725819372
+p1 greedy sha ead827be94f5
+p1 sampled sha bb8855c2f084
+p2 greedy sha 068276d3ec75
+p2 sampled sha a6961a8c7589
+== nq
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+p0 greedy sha 5923b40d570b
+p0 sampled sha d38725819372
+p1 greedy sha ead827be94f5
+p1 sampled sha bb8855c2f084
+p2 greedy sha 068276d3ec75
+p2 sampled sha a6961a8c7589
+== nx
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+p0 greedy sha 5923b40d570b
+p0 sampled sha d38725819372
+p1 greedy sha ead827be94f5
+p1 sampled sha bb8855c2f084
+p2 greedy sha 068276d3ec75
+p2 sampled sha a6961a8c7589
