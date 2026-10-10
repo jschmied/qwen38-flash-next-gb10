@@ -1,0 +1,2 @@
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Root. End of run 16j (round 4): when train16j.log prints its "done" line (after line 1332), keep the final weights as
+# drafter-final.pt; score 16j 50,000 / 55,000 / 60,000 (recordings ran out at ~60,250) / 65,000 / 70,000 / final on the
+# fixed dev slices (64k vocab); export the best by mean accepted_3 as release/Kolibri-1-block-drafter-16j and specbench
+# it beside rc45000 (release defaults, depth 2), same session. The GPU stays free afterwards.
+D=/home/jschmied/kolibri-drafter; T=/home/jschmied/git/qwen38-flash-next-gb10/tools/kolibri/drafter
+PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src; V=$D/draft_vocab_64k.json
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+BASE=1332
+until tail -n +$((BASE + 1)) $D/train16j.log | grep -q '"done"'; do sleep 60; done
+while systemctl is-active -q fx-kolibri-drafter-run16j; do sleep 10; done
+cp $D/out16j/drafter.pt $D/out16j/drafter-final.pt; chown jschmied: $D/out16j/drafter-final.pt
+log "16j done: $(tail -n +$((BASE + 1)) $D/train16j.log | grep '"done"' | tail -1)"
+CK=""; for s in 50000 55000 60000 65000 70000; do [ -e $D/out16j/drafter-step$s.pt ] && CK="$CK $D/out16j/drafter-step$s.pt"; done
+CK="$CK $D/out16j/drafter-final.pt"
+E(){ U bash -c "ulimit -n \$(ulimit -Hn); $PY $T/eval_block.py /opt/llm/models/kolibri-1 --data $D/rec/live --after '2026-10-05 09:55' $1 --draft-vocab $V --ckpt $CK" 2>&1 | grep '"ckpt"\|Error' | tee -a $D/end16j-scores.jsonl; }
+: > $D/end16j-scores.jsonl
+log "fresh SWE";    E "--contains 'returncode|interact with a computer shell' --excludes django"
+log "fresh chat";   E "--excludes 'returncode|interact with a computer shell| und | nicht | ist '"
+log "fresh German"; E "--contains ' und | nicht | ist ' --excludes 'returncode|interact with a computer shell'"
+BEST=$($PY - $D/end16j-scores.jsonl <<'PY'
+import json, sys, collections
+s = collections.defaultdict(list)
+for line in open(sys.argv[1]):
+    if line.startswith("{"):
+        d = json.loads(line); s[d["ckpt"]].append(d["accepted_3"])
+full = {k: sum(v) / len(v) for k, v in s.items() if len(v) == 3}
+for k, v in sorted(full.items(), key=lambda kv: -kv[1]): print(f"# {v:.4f} {k}", file=sys.stderr)
+print(max(full, key=full.get))
+PY
+)
+log "best by mean accepted_3: $BEST"
+[ -n "$BEST" ] && [ -e "$BEST" ] || { log "no best checkpoint, stopping"; log "== END16J DONE =="; exit 1; }
+R=$D/release/Kolibri-1-block-drafter-16j; rm -rf $R
+U $PY $T/export_block.py $BEST $V $R 2>&1 | tail -1
+B="--swe $D/bench --chat $D/bench2/bench_chat.jsonl --de $D/bench2/bench_de.jsonl --tokens 256 --n 8 --concurrent 4"
+for rel in $D/release/Kolibri-1-block-drafter-rc45000 $R; do
+  n=$(basename $rel)
+  U timeout 3600 $PY $T/specbench.py /opt/llm/models/kolibri-1 $rel --depths 2 $B > $D/specbench-end16j-$n.log 2>&1; log "$n rc=$?"
+  grep '"mode"' $D/specbench-end16j-$n.log
+done
+log "== END16J DONE =="

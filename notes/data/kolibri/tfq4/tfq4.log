@@ -1,0 +1,29 @@
+[15:02:07] waiting for 16j step 65000
+[15:53:37] 16j step 65000 kept; stopping 16j
+PASS fp8 experts: 33 x [512, 2560] gate-up, down and scales packed as make() packs them
+PASS fp8 experts: 1 rows x 7 slots (decode, 7 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS fp8 experts: 3 rows x 7 slots (decode, 14 items) plan, up and down via experts.Grouped equal Python's bytes
+PASS fp8 experts: 300 rows x 7 slots (prompt, 40 items) plan, up and down via experts.Grouped equal Python's bytes
+[15:53:42] fp8-experts rc=0
+[15:53:47] main check-kernels rc=0
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+[15:53:51] main p0 greedy rc=0 sha 5923b40d570b
+[15:53:56] main p0 sampled rc=0 sha d38725819372
+[15:54:01] main p1 greedy rc=0 sha ead827be94f5
+[15:54:06] main p1 sampled rc=0 sha bb8855c2f084
+[15:54:10] main p2 greedy rc=0 sha 068276d3ec75
+[15:54:14] main p2 sampled rc=0 sha a6961a8c7589
+[15:54:19] pr check-kernels rc=0
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+[15:54:29] pr p0 greedy rc=0 sha 5923b40d570b
+[15:54:34] pr p0 sampled rc=0 sha d38725819372
+[15:54:39] pr p1 greedy rc=0 sha ead827be94f5
+[15:54:44] pr p1 sampled rc=0 sha bb8855c2f084
+[15:54:48] pr p2 greedy rc=0 sha 068276d3ec75
+[15:54:52] pr p2 sampled rc=0 sha a6961a8c7589
+[15:54:52] restarting 16j
+Running as unit: fx-kolibri-drafter-run16j.service; invocation ID: e06c433b1d3544a0997c4313918c6c88
+active
+[15:55:12] == TFQ4 DONE ==
