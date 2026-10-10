@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold new issue (2026-10-10), RFC. Revised after review: genericity limits stated, target adapter, recipe.
+POSTED 2026-10-10 as TF #620 (user: "ok"). https://github.com/ashhart/TensorFold/issues/620
 
 Title: RFC: learned drafters for any family: one block drafter in the core, a recorder, and a recipe
 
@@ -24,6 +24,8 @@ What we measured on Kolibri-1 (GB10, single stream, prompts never trained on), d
 |---|---|---|---|---|
 | block drafter, greedy | 1.38x | 1.28x | 1.37x | 1.10x |
 | sampled as served | 1.47x | 1.26x | 1.23x | |
+
+Published drafters can share the same interface too: #603's DFlash2 for the 27B is one, so the core drafter shouldn't be the only kind `lanes.Drafter` serves.
 
 That's one target. We'd suggest Nemotron as the second, as the test of whether this is generic: it's a Mamba hybrid, its multi-stream question doesn't arise, and its own MTP head gives a baseline to beat or lose to.
 
