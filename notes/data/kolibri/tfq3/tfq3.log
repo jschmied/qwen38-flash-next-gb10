@@ -1,0 +1,24 @@
+[14:31:17] waiting for 16j step 62500
+[14:59:47] 16j step 62500 kept; stopping 16j
+[14:59:55] main check-kernels rc=0
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+[15:00:04] main p0 greedy rc=0 sha 5923b40d570b
+[15:00:09] main p0 sampled rc=0 sha d38725819372
+[15:00:14] main p1 greedy rc=0 sha ead827be94f5
+[15:00:18] main p1 sampled rc=0 sha bb8855c2f084
+[15:00:23] main p2 greedy rc=0 sha 068276d3ec75
+[15:00:27] main p2 sampled rc=0 sha a6961a8c7589
+[15:00:32] pr check-kernels rc=0
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+[15:00:41] pr p0 greedy rc=0 sha 5923b40d570b
+[15:00:47] pr p0 sampled rc=0 sha d38725819372
+[15:00:52] pr p1 greedy rc=0 sha ead827be94f5
+[15:00:57] pr p1 sampled rc=0 sha bb8855c2f084
+[15:01:01] pr p2 greedy rc=0 sha 068276d3ec75
+[15:01:05] pr p2 sampled rc=0 sha a6961a8c7589
+[15:01:05] restarting 16j
+Running as unit: fx-kolibri-drafter-run16j.service; invocation ID: 0386457573eb4ca583c56cb2d00c2325
+active
+[15:01:25] == TFQ3 DONE ==

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Root. At run 16j next 2,500-step save: stop 16j; TF affine4-pack receipts (cuda-affine4-pack 0e0d32b2 vs main 2f8284e8):
+# check-kernels and Nemotron replies (3 prompts, greedy + sampled) on both builds. Then 16j resumes.
+D=/home/jschmied/kolibri-drafter; PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src
+M=/opt/llm/models/nemotron-3.5-lightning-mlx4; OUT=$D/tfq3; Q=/home/jschmied/git/tf-a4p
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+last=$(ls $D/out16j | grep -o 'step[0-9]*' | tr -dc '0-9\n' | sort -n | tail -1); next=$((last + 2500))
+log "waiting for 16j step $next"
+until [ -e $D/out16j/drafter-step$next.pt ]; do sleep 60; done
+sleep 30
+log "16j step $next kept; stopping 16j"
+systemctl stop fx-kolibri-drafter-run16j; while systemctl is-active -q fx-kolibri-drafter-run16j; do sleep 5; done
+mkdir -p $OUT; chown jschmied: $OUT
+for name in main pr; do
+  B=/home/jschmied/tfbuild-main-2f8/bin/tensorfold; [ $name = pr ] && B=/home/jschmied/tfbuild-a4p/bin/tensorfold
+  U timeout 1200 $B check-kernels $M > $OUT/$name-check-kernels.txt 2>&1; log "$name check-kernels rc=$?"; tail -2 $OUT/$name-check-kernels.txt
+  for i in 0 1 2; do
+    for mode in greedy sampled; do
+      S=""; [ $mode = sampled ] && S="--temperature 0.8 --top-k 20 --top-p 0.95 --seed 7"
+      U timeout 900 $B run $M --tokens $(cat $D/tf558/prompt$i.ids) --max-tokens 128 $S > $OUT/$name-p$i-$mode.txt 2>&1
+      log "$name p$i $mode rc=$? $(grep -o 'sha [0-9a-f]*' $OUT/$name-p$i-$mode.txt | tail -1)"
+    done
+  done
+done
+log "restarting 16j"
+systemd-run --unit=fx-kolibri-drafter-run16j --collect -E HOME=/root bash -c "bash $D/run16j.sh >> $D/run16j.log 2>&1"
+sleep 20; systemctl is-active fx-kolibri-drafter-run16j
+log "== TFQ3 DONE =="

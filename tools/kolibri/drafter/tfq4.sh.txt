@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Root. After tfq3, at run 16j's next 2,500-step save: stop 16j; TF experts receipts (cuda-experts e5d7d2af, stacked on
+# cuda-affine4-pack, vs main 2f8284e8): fp8-experts oracle through experts.Grouped (decode 1/3 rows, prompt 300 rows),
+# check-kernels (forked MoE: Nemotron's decode experts) and Nemotron replies (the 1,090-token prompt takes the prompt
+# experts), 3 prompts greedy + sampled, main vs branch. Then 16j resumes.
+D=/home/jschmied/kolibri-drafter; PY=/opt/llm/runtime/tf-venv/bin/python; SRC=/home/jschmied/git/tf-kolibri/src
+M=/opt/llm/models/nemotron-3.5-lightning-mlx4; OUT=$D/tfq4; Q=/home/jschmied/git/tf-exp
+log(){ echo "[$(date +%H:%M:%S)] $*"; }
+U(){ runuser -u jschmied -- env PYTHONPATH=$SRC HOME=/home/jschmied "$@"; }
+until grep -q "TFQ3 DONE" $D/tfq3.log 2>/dev/null; do sleep 60; done
+last=$(ls $D/out16j | grep -o 'step[0-9]*' | tr -dc '0-9\n' | sort -n | tail -1); next=$((last + 2500))
+log "waiting for 16j step $next"
+until [ -e $D/out16j/drafter-step$next.pt ]; do sleep 60; done
+sleep 30
+log "16j step $next kept; stopping 16j"
+systemctl stop fx-kolibri-drafter-run16j; while systemctl is-active -q fx-kolibri-drafter-run16j; do sleep 5; done
+mkdir -p $OUT; chown jschmied: $OUT
+U timeout 900 $PY $Q/zig/tests/cuda/oracle/fp8_experts.py $OUT/fp8x 2>&1 | grep -v Warning | tail -2
+U timeout 900 /home/jschmied/tfbuild-exp/bin/tf-cuda-test fp8-experts $OUT/fp8x; log "fp8-experts rc=$?"
+for name in main pr; do
+  B=/home/jschmied/tfbuild-main-2f8/bin/tensorfold; [ $name = pr ] && B=/home/jschmied/tfbuild-exp/bin/tensorfold
+  U timeout 1200 $B check-kernels $M > $OUT/$name-check-kernels.txt 2>&1; log "$name check-kernels rc=$?"; tail -2 $OUT/$name-check-kernels.txt
+  for i in 0 1 2; do
+    for mode in greedy sampled; do
+      S=""; [ $mode = sampled ] && S="--temperature 0.8 --top-k 20 --top-p 0.95 --seed 7"
+      U timeout 900 $B run $M --tokens $(cat $D/tf558/prompt$i.ids) --max-tokens 128 $S > $OUT/$name-p$i-$mode.txt 2>&1
+      log "$name p$i $mode rc=$? $(grep -o 'sha [0-9a-f]*' $OUT/$name-p$i-$mode.txt | tail -1)"
+    done
+  done
+done
+log "restarting 16j"
+systemd-run --unit=fx-kolibri-drafter-run16j --collect -E HOME=/root bash -c "bash $D/run16j.sh >> $D/run16j.log 2>&1"
+sleep 20; systemctl is-active fx-kolibri-drafter-run16j
+log "== TFQ4 DONE =="
