@@ -31,8 +31,7 @@ That's one target. We'd suggest Nemotron as the second, as the test of whether t
 
 Suggested order: (1), (2) and (5) first, since they're small and family-free; then (3) on the shared layers as they land; Kolibri first, then Nemotron.
 
-Questions for @ashhart:
+Question for @ashhart:
 - Is a learned drafter in the core something you want, or should only the `Drafter` interface be core, with drafters living outside the engine?
-- Should the release carry the embedding and head slice (self-contained, about 1 GB in bf16 for Kolibri), or should the backend expose its own as a weight view?
 
 We can take (1), (2) and (5) as small PRs, and (3) once #548's layer pieces are in.
