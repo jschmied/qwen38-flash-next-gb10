@@ -1,0 +1,19 @@
+PASS sample: 2880 draws equal the Metal rule's host references
+== main
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+p0 greedy sha 5923b40d570b
+p0 sampled sha d38725819372
+p1 greedy sha ead827be94f5
+p1 sampled sha bb8855c2f084
+p2 greedy sha 068276d3ec75
+p2 sampled sha a6961a8c7589
+== pr
+PASS lane_gemv: 1008 of 1008 projection cases byte-equal to its 16-row bytes and qmm_group; 976 split-K cases among them
+PASS forked MoE: 384 of 384 (layer, rows) cases byte-equal to the one-stream MoE
+p0 greedy sha 5923b40d570b
+p0 sampled sha d38725819372
+p1 greedy sha ead827be94f5
+p1 sampled sha bb8855c2f084
+p2 greedy sha 068276d3ec75
+p2 sampled sha a6961a8c7589

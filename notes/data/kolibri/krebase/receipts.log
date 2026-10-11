@@ -1,0 +1,16 @@
+== forward kcap
+PASS kolibri1 forward: 24 calls replayed, every named one's logits equal Python's bytes
+== forward kcap2
+PASS kolibri1 forward: 56 calls replayed, every named one's logits equal Python's bytes
+== forward kcap3
+FAIL kolibri1 forward: every captured call equals Python's logits
+FAIL kolibri-forward: TestFailed
+== kolibri-generate
+RESULT kolibri1 generate: 27 prompt tokens, 128 tokens greedy, 48.10 tok/s decode, hash 5d8aabb68fb7e19f
+== kolibri-graph
+RESULT kolibri1 generate (graph): 27 prompt tokens, 128 tokens greedy, 50.43 tok/s decode, hash 5d8aabb68fb7e19f
+== kolibri-lanes
+RESULT kolibri1 lanes greedy: plain 47.60 tok/s, drafted 52.05 tok/s, tokens equal true, hash 5d8aabb68fb7e19f
+RESULT kolibri1 lanes sampled: plain 48.52 tok/s, drafted 50.52 tok/s, tokens equal true, hash ec349d6fe8d7b40b
+RESULT kolibri1 lanes two streams: 88.49 tok/s together, equal to each alone true
+PASS kolibri1 lanes: drafted == plain (greedy, sampled), two streams == each alone, 128 tokens each
