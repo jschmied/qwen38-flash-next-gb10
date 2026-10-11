@@ -1024,3 +1024,9 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   ~273 GB/s; we run at ~67 % of it (lane ~75 %, experts ~73 % of their own floors). No allocations in the decode
   loop (the cuMemFree calls are teardown). => CUDA graphs can win at most ~6 % (the gaps); the head's bf16 read
   (~2.4 ms) is the largest single item but changing it = changing weights (engine-not-weights rule).
+- 2026-10-11 10:30 **CUDA graphs**: `Model.captureDecode(slot)` = one graph per one-row decode step (forward split into
+  host staging + kernel-only `launch`; padded tree plan = padded_host, so grids stay fixed and a replay only writes
+  token, position and the plan's stream row). Needed a third capture (`--wide` + long-context 1..3-row decodes:
+  `_shared` with W folded to 1 and an unaligned stream table) -> set of 38 kernels. Graph vs eager, greedy hashes
+  identical: 27-token prompt 51.06 vs 48.04 tok/s (+6.3 %, as the profile's 1.33 ms gaps predicted); 2,574-token
+  prompt 47.16 vs 45.86 (+2.8 %).

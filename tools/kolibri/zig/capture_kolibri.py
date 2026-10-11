@@ -87,6 +87,10 @@ def main() -> None:
             run(f"wdecode{streams}", chains, False)
             for s in range(streams):
                 pos[s] += 1
+        for width in (1, 1, 2, 3):                      # one stream past 512 keys: the tree's shared items, W small
+            long_slot = max(pos, key=pos.get)
+            run(f"wlong{width}", [Chain(long_slot, pos[long_slot], ids(width))], False, rows=list(range(width)))
+            pos[long_slot] += width
     rec.dump(out / "launches.json")
     (out / "calls.json").write_text(json.dumps({"context": a.context, "slots": 16, "calls": calls}, indent=1))
     print(json.dumps({"kernels": len(rec.kernels), "calls": len(calls)}))
