@@ -1030,3 +1030,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   `_shared` with W folded to 1 and an unaligned stream table) -> set of 38 kernels. Graph vs eager, greedy hashes
   identical: 27-token prompt 51.06 vs 48.04 tok/s (+6.3 %, as the profile's 1.33 ms gaps predicted); 2,574-token
   prompt 47.16 vs 45.86 (+2.8 %).
+- 2026-10-11 11:15 **A3: `tensorfold-native serve` serves Kolibri 1** (`kolibri1/native.zig` in native/cuda.zig's
+  registry; families without prompt-state copies serve with the cache off; set via TENSORFOLD_KOLIBRI_KERNELS,
+  streams via TENSORFOLD_KOLIBRI_STREAMS). Loads in 128 s, 2 streams at 8,192: a chat request (palindrome function,
+  thinking off) answers correctly; greedy `"draft": true` == `false` (same content hash), 47.5 tok/s, prefill 0.14 s.
+  The server's rounds run eager (the decode graph lives in Model.decode, not yet in the backend's queue path).
