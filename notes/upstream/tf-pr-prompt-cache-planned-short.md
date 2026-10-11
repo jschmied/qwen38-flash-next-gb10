@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold PR from jschmied:prompt-cache-planned-short (2026-10-11). Title: "prompt cache: planned families keep marks on prompts under min_prompt"
+POSTED 2026-10-11. ashhart/TensorFold PR from jschmied:prompt-cache-planned-short (2026-10-11). Title: "prompt cache: planned families keep marks on prompts under min_prompt"
 
 This generalises c79c4317b, from #584. There you said the `min_prompt` floor exists for families whose marks end a prompt call early, and that GLM, which keeps only at chunk starts its pass cuts anyway, gained nothing from it, so GLM's store now sets 0. The same holds for every planned family. `min_prompt` (4,096) exists because a mark can cost an extra prompt call. A planned family's marks fall on chunk starts its pass already makes, so for those families the extra call never happens, yet prompts under 4,096 tokens still keep nothing. This PR skips the threshold when `rules.planned` is set. Unplanned families keep it.
 
