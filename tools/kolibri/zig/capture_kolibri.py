@@ -19,6 +19,7 @@ def main() -> None:
     ap.add_argument("out")
     ap.add_argument("--tf", required=True, help="a TensorFold checkout with tools/zig/triton_aot_manifest.py")
     ap.add_argument("--context", type=int, default=8192)
+    ap.add_argument("--wide", action="store_true", help="every router tile and tree width, divisible by 16 and not")
     a = ap.parse_args()
     sys.path.insert(0, str(Path(a.tf) / "tools" / "zig"))
     from triton_aot_manifest import Recorder
@@ -72,6 +73,20 @@ def main() -> None:
         run(f"verify{width}", chains, False, rows=list(range(2 * width)))
         for s in (0, 1):
             pos[s] += width
+    if a.wide:                                         # every row count class the Zig forward can hit
+        for slot, n in zip(range(16), (16, 20, 32, 40, 48, 64, 72, 96, 100, 128, 160, 256, 300, 512, 600, 1024)):
+            run(f"wprompt{n}", [Chain(slot, pos[slot], ids(n))], True)
+            pos[slot] += n
+        for streams, width in ((8, 1), (16, 1), (2, 8), (4, 4), (2, 16), (4, 8), (3, 8), (4, 12), (8, 8), (16, 2), (5, 7), (16, 4)):
+            chains = [Chain(s, pos[s], ids(width)) for s in range(streams)]
+            run(f"wverify{streams}x{width}", chains, False, rows=list(range(streams * width)))
+            for s in range(streams):
+                pos[s] += width
+        for streams in (5, 8, 12, 16):
+            chains = [Chain(s, pos[s], ids(1)) for s in range(streams)]
+            run(f"wdecode{streams}", chains, False)
+            for s in range(streams):
+                pos[s] += 1
     rec.dump(out / "launches.json")
     (out / "calls.json").write_text(json.dumps({"context": a.context, "slots": 16, "calls": calls}, indent=1))
     print(json.dumps({"kernels": len(rec.kernels), "calls": len(calls)}))

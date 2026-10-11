@@ -1008,3 +1008,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   Python (both eager, no graphs; Zig also downloads 512 KB of logits a token). Context must be a whole 1,024 (LEN
   div16 variant only captured). Next A2: lanes.Backend (tf_draw on bf16-rounded logits = TF's cross-backend
   sampler contract; greedy may differ from Python on near-ties), A3 native registration, then graphs.
+- 2026-10-11 09:30 milestone A2: `kolibri1/backend.zig` = lanes.Backend (slot a stream, one forward a round over
+  every chain window, draws on the GPU: fp32 argmax for greedy (= torch's), bf16-rounded logits through
+  cuda/sample.zig's keyed draw for sampled; keep = positional cache length; no draft head). `tf-cuda-test
+  kolibri-lanes`: greedy and sampled drafted == plain (copy drafts), two streams together == each alone; greedy hash
+  5d8aabb68fb7e19f = the forward's/Python's. Rates (128 tokens, FixedClock depths): plain 48.5, copy-drafted 52.0
+  greedy / 50.6 sampled, two streams 88.8 total. Wider capture (`capture_kolibri.py --wide`, set
+  ~/kolibri-drafter/kset-sm121, 37 kernels): 56 forwards replayed byte-equal. Branch kolibri1-forward stacked on
+  #654 (cuda-sample). Next: A3 native registration, graphs, block drafter via #455; B native glue kernels.
