@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #548 comment (2026-10-11).
+POSTED 2026-10-11. ashhart/TensorFold #548 comment (2026-10-11).
 
 A proposal for the shared kernels: let every prompt scan write its recurrent state at a few requested rows, the way Flash Next's already does. A family could then keep a prompt-cache state anywhere without ending a chunk there.
 
