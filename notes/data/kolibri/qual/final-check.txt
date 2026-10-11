@@ -1,0 +1,9 @@
+final.f32: NLL mean 3.5863 (ppl 36.101), next-token top-1 35.52 %, rows 2047
+prompt tri a 51.07 tok/s decode
+prompt ours a 49.38 tok/s decode
+prompt tri b 50.64 tok/s decode
+prompt ours b 50.51 tok/s decode
+long tri a 48.61 tok/s decode
+long ours a 48.43 tok/s decode
+long tri b 48.52 tok/s decode
+long ours b 48.44 tok/s decode

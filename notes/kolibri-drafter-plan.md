@@ -1093,3 +1093,15 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   mutations caught (edge off by one 11x, merge drops a tile 29x). Decode A/B kolibri-graph 2 rounds: short prompt
   50.37/48.97 vs 50.61/50.11 (-1.6 %), long 47.58/48.41 vs 49.28/47.93 (-0.6 %, sign flips). Real-text quality:
   NLL 3.586, top-1 35.52 % = Triton reference (3.587, 35.52 %). Left: tree attention (+ _paths).
+- 2026-10-12 **Kernel 6/6: tree attention - Kolibri runs on our own CUDA only** (fork cuda-tree-attention
+  0a88d56a on cuda-window-attention; kolibri1-forward 18c6fec8). tf_tree_paths (parents -> root-first paths, the
+  `_paths` port), tf_tree_part (block: row, key head, absolute 2,048-key group; committed keys from the stream's cache,
+  then the row's path rows of kn/vn; tensor cores with the row's heads as one mma tile, warps folded in order),
+  tf_tree_merge (groups in order). Test `tree`: 3 streams (5 / 1,500 / 4,200 committed, trees of 9/33/17 rows),
+  float64 within tolerance (worst 0.441), one stream's rows alone = same bits; mutation (drop the last path key)
+  caught at 176x. The captured Triton set is gone: Kernels.load(ctx), no TENSORFOLD_KOLIBRI_KERNELS, test commands
+  lose their SET argument. Checks: generate/graph/lanes green (drafted == plain, two streams == alone); real-text
+  NLL 3.586, top-1 35.52 % = Triton reference; tensorfold-native serve without the env var answers, draft on == off.
+  Decode A/B vs the Triton build, kolibri-graph 2 rounds: long prompt 48.43/48.44 vs 48.61/48.52 (parity), short
+  49.38/50.51 vs 51.07/50.64 (-1.8 %; small-window decode, open). Not done: tree group count is context-sized
+  (ngroups = context/2048 + 1 blocks, empty ones exit), short-window decode tuning, PRs (need the user's go).
