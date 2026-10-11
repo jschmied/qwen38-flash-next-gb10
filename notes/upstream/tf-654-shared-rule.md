@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold PR #654 comment (2026-10-11).
+POSTED 2026-10-11. ashhart/TensorFold PR #654 comment (2026-10-11).
 
 One more piece I'd like to add here before review, if you agree. The sampler's rule (1/T, top_p, the near window of 20, ln(min_p), top_k, the seed) is currently built in three places:
 - `cuda/sample.zig`'s `rule()`, from this PR;

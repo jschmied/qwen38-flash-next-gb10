@@ -1,4 +1,4 @@
-DRAFT — needs the user's go. ashhart/TensorFold #548 comment (2026-10-11).
+POSTED 2026-10-11. ashhart/TensorFold #548 comment (2026-10-11).
 
 A small follow-up to #633 that also starts the format modules I proposed for `core/quant`. The float64 decoders for FP8 and NVFP4 currently exist in three places: `tests/cuda/quant_ref_tests.zig` (`e4m3`, `e2m1`), `tests/cuda/modelopt_tests.zig`, and `cli/cuda_precision.zig` (which also has `toE4m3`).
 
