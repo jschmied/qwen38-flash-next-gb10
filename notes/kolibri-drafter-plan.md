@@ -1041,3 +1041,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   54.9/54.8; two streams unchanged (88.2-89.1, rows > 1 stay eager). Hashes identical (5d8aabb68fb7e19f, ec349d6fe8d7b40b).
   TENSORFOLD_KOLIBRI_GRAPHS=0 runs eager. Branch also rebased on TF 1.0.6; Mac (M3 Pro) build check of main,
   cuda-sample and kolibri1-forward: all steps pass on macOS.
+- 2026-10-11 **TF prompt cache measured** (native CUDA, main e7c523eb, Nemotron 3.5 Lightning MLX-4bit, `--parallel 1`,
+  agent loop: 7.9k-token start, 12 turns of +~1.1k, data notes/data/tf-pcache, 2 starts an arm, identical to the ms):
+  cache on 0.23-0.51 s TTFT from turn 2 vs off 1.30 -> 3.21 s (turn 12: 0.486 vs 3.21, -85 %). Limit: Nemotron's
+  store is `planned` (grid = prefill_rows 2,048: its prompt kernels' bits depend on chunking), so it resumes only at
+  2,048 multiples: 20,799 resumed at 18,432 = 2,367 recomputed for ~1,045 new; TTFT saw-tooths 0.23 / 0.49. Resuming at
+  the history's end would put every turn near 0.23-0.27 s (~-38 % mean warm TTFT). Also min_prompt 4,096: shorter
+  conversations keep nothing. Kolibri on CUDA serves with no cache (no Snapshots yet).

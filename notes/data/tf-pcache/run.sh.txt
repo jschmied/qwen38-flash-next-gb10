@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# TensorFold native (CUDA, main e7c523eb) Nemotron 3.5 Lightning MLX-4bit: agent-loop TTFT, prompt cache on vs off.
+D=/home/jschmied/kolibri-drafter/pcache; B=/home/jschmied/tfbuild-pc/native/bin/tensorfold-native
+M=/opt/llm/models/nemotron-3.5-lightning-mlx4; P=8098
+for arm in on_a off_a on_b off_b; do
+  extra=""; [[ $arm == off* ]] && extra="--prompt-cache-gib 0"
+  $B serve $M --host 127.0.0.1 --port $P --name m --context 32768 --parallel 1 --no-update-check --no-thinking $extra > $D/serve-$arm.log 2>&1 &
+  pid=$!
+  for i in $(seq 1 120); do curl -s -m 2 http://127.0.0.1:$P/v1/models | grep -q '"m"' && break; kill -0 $pid 2>/dev/null || break; sleep 5; done
+  echo "== $arm $(grep -m1 -o 'loaded in [0-9.]*s' $D/serve-$arm.log)"
+  python3 $D/agentloop.py http://127.0.0.1:$P $arm 12 >> $D/results.jsonl 2>> $D/probe-err.log
+  kill $pid; wait $pid 2>/dev/null
+  sleep 10
+done
+echo "== PCACHE DONE"
