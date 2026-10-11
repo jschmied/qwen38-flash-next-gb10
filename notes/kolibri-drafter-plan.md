@@ -1068,3 +1068,17 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   min_prompt 0 with the grid 0.24 s (-38 %, turn 1 unchanged); min_prompt 0 without the grid 0.16 s (-59 %, turn 1
   +0.14 s). Replies equal in every arm. Fork branch prompt-cache-planned-short: planned families ignore min_prompt
   (their marks add no prompt call), core test + mutation check. Not a PR yet.
+- 2026-10-11/12 **Own CUDA glue kernels, 4 of 6 done** (fork branches stacked on TF main e7c523eb: cuda-norms a49d5e99,
+  cuda-moe-glue 67627967, cuda-dense-rows c53082b7, cuda-qk-rows; Kolibri on all of them, kolibri1-forward cef5a780).
+  Each: float64 reference in core/ (norms_ref, moe_ref, dense_ref, qk_ref), tf-cuda-test command (norms, moe-glue,
+  dense-rows, qk-rows: within tolerance, bits equal at 1/3/17/300 rows), a mutation that fails it. Speed: first
+  versions lost ~4 % decode (add_rms 11.5 us vs Triton 3.2 in-model: instruction fetch, `no_instruction` stalls from
+  unrolled 9-kind code; head 3.1 vs 2.64 ms: too few loads in flight). Fixed: 16-byte bf16 path (2.46 us median,
+  beats Triton), head K loop unroll 4 (202.6 vs 203.6 ms). Decode A/B kolibri-graph long prompt, 2 rounds:
+  ours 49.16 / 48.31 vs Triton 48.87 / 49.22 tok/s = parity. Quality (real-text teacher-forced 2,048 rows,
+  `kolibri-logits` + qual/cmp.py, nll.py): vs the Triton glue (= Python bytes) top-1 92.4 %, KL 0.047 mean, but each
+  1-ulp-level change alone gives the same (norms 0.059, topk weights' expf 0.048, dense 0.043; combine 0): Kolibri
+  amplifies last-bit changes through MoE routing flips (30-40 % of rows by layer 49). Against the text itself: NLL
+  3.579 vs 3.587, next-token top-1 35.12 vs 35.52 % = same quality. The random-id captures (kcap*) are useless for
+  top-1 (flat logits). An ncu replay on the full model OOM-killed the box (memory ncu-full-model-oom). Left:
+  sliding-window attention, tree attention.

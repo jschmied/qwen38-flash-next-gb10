@@ -1,0 +1,188 @@
+diff --git a/zig/src/families/kolibri1/forward.zig b/zig/src/families/kolibri1/forward.zig
+index df61eda3..440f34e7 100644
+--- a/zig/src/families/kolibri1/forward.zig
++++ b/zig/src/families/kolibri1/forward.zig
+@@ -37,6 +37,7 @@ pub const Model = struct {
+     cos: u64,
+     sin: u64,
+     origin: u64, // the bf16 base cache offsets are measured from (attention.base)
++    pick_log: u64 = 0, // EXPERIMENT: each layer's top-k picks copied here, [layers][pairs] i32
+     s: Scratch,
+     buffers: std.ArrayList(DeviceBuffer) = .empty,
+ 
+@@ -284,6 +285,7 @@ pub const Model = struct {
+             // moe.run: router logits, top-k + the shared slot, the plan, gate-up and down, the weighted sum
+             try o.router(m.s.x, c.hidden, L.router, m.s.logits_e, n, c.hidden, c.experts);
+             try o.topk(m.s.logits_e, L.bias, m.s.pick, m.s.wts, n, c.experts, c.top_k);
++            if (m.pick_log != 0) try m.d.check(m.d.api.cuMemcpyDtoDAsync_v2(m.pick_log + i * pairs * 4, m.s.pick, pairs * 4, s.handle), "cuMemcpyDtoDAsync");
+             try o.k.router.route(s, m.s.pick, pairs, count, tile, m.s.plan);
+             const up_in: experts.Rows = .{ .x = m.s.x, .stride = c.hidden, .slots = slots_e };
+             const down_in: experts.Rows = .{ .x = m.s.act, .stride = c.moe_width };
+diff --git a/zig/src/families/kolibri1/kernels.zig b/zig/src/families/kolibri1/kernels.zig
+index 864191ae..ec345351 100644
+--- a/zig/src/families/kolibri1/kernels.zig
++++ b/zig/src/families/kolibri1/kernels.zig
+@@ -24,6 +24,7 @@ pub const Kernels = struct {
+     argmax_fn: cuda.Function,
+     bf16_fn: cuda.Function,
+     draws: cuda.sample.Draws,
++    norms: cuda.norms.Norms,
+ 
+     /// The built-in modules plus the captured Triton set in `set_dir` (tools: capture_kolibri.py, aot_pack.py).
+     pub fn load(gpa: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, set_dir: []const u8) !Kernels {
+@@ -50,12 +51,15 @@ pub const Kernels = struct {
+         const sms: usize = @intCast(try ctx.attribute(.multiprocessor_count));
+         k.fp8x = try experts.Fp8Experts.load(d, sms);
+         errdefer k.fp8x.unload();
++        k.norms = try cuda.norms.Norms.load(d);
++        errdefer k.norms.unload();
+         k.set = try aot.Set.load(gpa, io, d, ctx.device, set_dir);
+         return k;
+     }
+ 
+     pub fn deinit(k: *Kernels) void {
+         k.set.deinit();
++        k.norms.unload();
+         k.fp8x.unload();
+         k.lane.unload();
+         for (&k.mods) |*m| m.unload();
+@@ -69,6 +73,7 @@ fn int(x: usize) i32 {
+ /// Launches on one stream, each the Python call it mirrors.
+ pub const Ops = struct {
+     k: *const Kernels,
++    triton_norms: bool = false, // EXPERIMENT: the captured Triton norms instead of cuda/norms
+     s: cuda.Stream,
+ 
+     fn triton(o: Ops, f: []const u8, grid: [3]usize, args: []const aot.Arg, consts: []const aot.Const) !void {
+@@ -105,12 +110,14 @@ pub const Ops = struct {
+ 
+     /// forward.rms (bf16 out): a program a row.
+     pub fn rms(o: Ops, x: u64, w: u64, out: u64, rows: usize, n: usize, eps: f32) !void {
+-        try o.triton("_rms", .{ rows, 1, 1 }, &.{ aot.ptr("X", "*fp32", x), aot.ptr("W", "*fp32", w), aot.ptr("OUT", "*bf16", out) }, &.{ aot.ci("N", @intCast(n)), aot.cf("EPS", eps), aot.ci("BLOCK", @intCast(std.math.ceilPowerOfTwo(usize, n) catch unreachable)), aot.ci("BF16", 1) });
++        if (o.triton_norms) return o.triton("_rms", .{ rows, 1, 1 }, &.{ aot.ptr("X", "*fp32", x), aot.ptr("W", "*fp32", w), aot.ptr("OUT", "*bf16", out) }, &.{ aot.ci("N", @intCast(n)), aot.cf("EPS", eps), aot.ci("BLOCK", @intCast(std.math.ceilPowerOfTwo(usize, n) catch unreachable)), aot.ci("BF16", 1) });
++        try o.k.norms.rms(o.s, x, .f32, w, out, .bf16, rows, n, eps);
+     }
+ 
+     /// glue.add_rms: res += rms(x) * w1 in place; out = bf16(rms(res) * w2).
+     pub fn addRms(o: Ops, x: u64, res: u64, w1: u64, w2: u64, out: u64, rows: usize, n: usize, eps: f32) !void {
+-        try o.triton("_add_rms", .{ rows, 1, 1 }, &.{ aot.ptr("X", "*bf16", x), aot.ptr("RES", "*fp32", res), aot.ptr("W1", "*fp32", w1), aot.ptr("W2", "*fp32", w2), aot.ptr("OUT", "*bf16", out) }, &.{ aot.ci("N", @intCast(n)), aot.cf("EPS", eps), aot.ci("BLOCK", @intCast(std.math.ceilPowerOfTwo(usize, n) catch unreachable)) });
++        if (o.triton_norms) return o.triton("_add_rms", .{ rows, 1, 1 }, &.{ aot.ptr("X", "*bf16", x), aot.ptr("RES", "*fp32", res), aot.ptr("W1", "*fp32", w1), aot.ptr("W2", "*fp32", w2), aot.ptr("OUT", "*bf16", out) }, &.{ aot.ci("N", @intCast(n)), aot.cf("EPS", eps), aot.ci("BLOCK", @intCast(std.math.ceilPowerOfTwo(usize, n) catch unreachable)) });
++        try o.k.norms.addRms(o.s, x, .bf16, res, w1, w2, out, .bf16, rows, n, eps);
+     }
+ 
+     pub const Qkv = struct { rows: u64, norms: u64, cos: u64, sin: u64, pos: u64, slots: u64, q: u64, k: u64, v: u64, kc: u64, vc: u64, len: usize };
+diff --git a/zig/tests/cuda/kolibri_tests.zig b/zig/tests/cuda/kolibri_tests.zig
+index ef73d4e1..6bbee2f3 100644
+--- a/zig/tests/cuda/kolibri_tests.zig
++++ b/zig/tests/cuda/kolibri_tests.zig
+@@ -311,3 +311,98 @@ pub fn lanesCheck(gpu: Gpu, model: []const u8, set: []const u8, ids_file: []cons
+     try check.expect(bad == 0, "kolibri1 lanes: drafted == plain and concurrent == solo", .{});
+     check.pass("kolibri1 lanes: drafted == plain (greedy, sampled), two streams == each alone, {d} tokens each", .{count});
+ }
++
++/// EXPERIMENT: one prompt pass with the captured Triton norms and one with cuda/norms: which top-k picks flip, where.
++pub fn picks(gpu: Gpu, model: []const u8, set: []const u8, ids_file: []const u8) !void {
++    const gpa = gpu.gpa;
++    const text = try std.Io.Dir.cwd().readFileAlloc(gpu.io, ids_file, gpa, .limited(1 << 26));
++    defer gpa.free(text);
++    var prompt: std.ArrayList(u32) = .empty;
++    defer prompt.deinit(gpa);
++    var it = std.mem.tokenizeAny(u8, text, ", \n");
++    while (it.next()) |t| try prompt.append(gpa, try std.fmt.parseInt(u32, t, 10));
++    const n = @min(prompt.items.len, 2048);
++    var w = try kolibri1.weights.load(gpa, gpu.io, gpu.d, model, null);
++    defer w.deinit();
++    var k = try kolibri1.kernels.Kernels.load(gpa, gpu.io, gpu.ctx, set);
++    defer k.deinit();
++    var stream = try cuda.Stream.init(gpu.d, false);
++    defer stream.deinit();
++    var m = try kolibri1.forward.Model.init(gpa, gpu.d, stream, &w, 4096, 1, 2048);
++    defer m.deinit();
++    const c = w.config;
++    const slots = c.top_k + 1;
++    const pairs = n * slots;
++    const vocab = c.vocab;
++    var logs: [2]cuda.DeviceBuffer = undefined;
++    var lgs: [2]cuda.DeviceBuffer = undefined;
++    for (0..2) |arm| {
++        logs[arm] = try cuda.DeviceBuffer.alloc(gpu.d, c.layers * pairs * 4);
++        lgs[arm] = try cuda.DeviceBuffer.alloc(gpu.d, vocab * 4);
++        m.pick_log = logs[arm].ptr;
++        const o: kolibri1.kernels.Ops = .{ .k = &k, .s = stream, .triton_norms = arm == 0 or std.c.getenv("TF_EXP_CONTROL") != null };
++        try m.forward(o, &.{.{ .slot = 0, .p0 = 0, .tokens = prompt.items[0..n] }}, true, null, lgs[arm].ptr); // the last row's logits
++    }
++    defer for (&logs, &lgs) |*a, *b| {
++        a.free();
++        b.free();
++    };
++    const pa = try back(gpu, logs[0].ptr, c.layers * pairs * 4);
++    defer gpa.free(pa);
++    const pb = try back(gpu, logs[1].ptr, c.layers * pairs * 4);
++    defer gpa.free(pb);
++    const ia = std.mem.bytesAsSlice(i32, @as([]align(1) u8, pa));
++    const ib = std.mem.bytesAsSlice(i32, @as([]align(1) u8, pb));
++    var first: ?usize = null;
++    var flipped_rows = try gpa.alloc(bool, n);
++    defer gpa.free(flipped_rows);
++    @memset(flipped_rows, false);
++    for (0..c.layers) |l| {
++        var rows_flipped: usize = 0;
++        for (0..n) |r| {
++            const a = ia[(l * n + r) * slots ..][0..slots];
++            const b = ib[(l * n + r) * slots ..][0..slots];
++            var equal = true;
++            for (a) |x| {
++                const found = for (b) |y| {
++                    if (y == x) break true;
++                } else false;
++                if (!found) equal = false;
++            }
++            if (!equal) {
++                rows_flipped += 1;
++                flipped_rows[r] = true;
++                if (first == null) first = l;
++            }
++        }
++        if (rows_flipped > 0) std.debug.print("RESULT layer {d}: {d} of {d} rows pick another expert set\n", .{ l, rows_flipped, n });
++    }
++    const la = try back(gpu, lgs[0].ptr, vocab * 4);
++    defer gpa.free(la);
++    const lb = try back(gpu, lgs[1].ptr, vocab * 4);
++    defer gpa.free(lb);
++    const fa = std.mem.bytesAsSlice(f32, @as([]align(1) u8, la));
++    const fb = std.mem.bytesAsSlice(f32, @as([]align(1) u8, lb));
++    var top1: usize = 0;
++    var flip_max: f32 = 0;
++    var calm_max: f32 = 0;
++    var calm: usize = 0;
++    for (n - 1..n) |r| {
++        const x = fa[0..vocab];
++        const y = fb[0..vocab];
++        var bx: usize = 0;
++        var by: usize = 0;
++        var most: f32 = 0;
++        for (x, y, 0..) |p, q, j| {
++            if (p > x[bx]) bx = j;
++            if (q > y[by]) by = j;
++            most = @max(most, @abs(p - q));
++        }
++        if (bx == by) top1 += 1;
++        if (flipped_rows[r]) flip_max = @max(flip_max, most) else {
++            calm_max = @max(calm_max, most);
++            calm += 1;
++        }
++    }
++    std.debug.print("RESULT {d} rows: first flip at layer {?d}; rows with a flip anywhere {d}; top-1 equal {d}/{d}; largest logit diff: rows without a flip {e} ({d} rows), rows with one {e}\n", .{ n, first, n - calm, top1, n, calm_max, calm, flip_max });
++}
+diff --git a/zig/tests/cuda/main.zig b/zig/tests/cuda/main.zig
+index 709aa029..2304fa90 100644
+--- a/zig/tests/cuda/main.zig
++++ b/zig/tests/cuda/main.zig
+@@ -119,6 +119,7 @@ fn run(gpu: check.Gpu, cmd: []const u8, rest: []const [:0]const u8) !void {
+     if (std.mem.eql(u8, cmd, "kolibri-forward")) return kolibri_tests.forward(gpu, try arg(rest, 0), try arg(rest, 1), try arg(rest, 2));
+     if (std.mem.eql(u8, cmd, "kolibri-generate")) return kolibri_tests.generate(gpu, try arg(rest, 0), try arg(rest, 1), try arg(rest, 2), try arg(rest, 3));
+     if (std.mem.eql(u8, cmd, "kolibri-graph")) return kolibri_tests.generateGraph(gpu, try arg(rest, 0), try arg(rest, 1), try arg(rest, 2), try arg(rest, 3));
++    if (std.mem.eql(u8, cmd, "kolibri-picks")) return kolibri_tests.picks(gpu, try arg(rest, 0), try arg(rest, 1), try arg(rest, 2));
+     if (std.mem.eql(u8, cmd, "kolibri-lanes")) return kolibri_tests.lanesCheck(gpu, try arg(rest, 0), try arg(rest, 1), try arg(rest, 2), try arg(rest, 3));
+     if (std.mem.eql(u8, cmd, "sample")) return sample_tests.draws(gpu);
+     if (std.mem.eql(u8, cmd, "glue")) return glue_tests.run(gpu);

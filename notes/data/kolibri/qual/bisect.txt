@@ -1,0 +1,4 @@
+ours=norms: rows 2048: top-1 equal 1884/2048 (91.99 %), KL mean 5.85e-02 p99 8.38e-01 max 1.23e+01, |dlogit| median 0.777 max 15.519
+ours=topk: rows 2048: top-1 equal 1901/2048 (92.82 %), KL mean 4.82e-02 p99 8.19e-01 max 1.14e+01, |dlogit| median 0.735 max 15.074
+ours=combine: rows 2048: top-1 equal 2048/2048 (100.00 %), KL mean 0.00e+00 p99 0.00e+00 max 0.00e+00, |dlogit| median 0.000 max 0.000
+ours=dense: rows 2048: top-1 equal 1891/2048 (92.33 %), KL mean 4.26e-02 p99 7.89e-01 max 1.06e+01, |dlogit| median 0.752 max 14.865

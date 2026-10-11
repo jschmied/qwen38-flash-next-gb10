@@ -1,0 +1,91 @@
+diff --git a/zig/src/families/kolibri1/kernels.zig b/zig/src/families/kolibri1/kernels.zig
+index 49815620..30cb2d55 100644
+--- a/zig/src/families/kolibri1/kernels.zig
++++ b/zig/src/families/kolibri1/kernels.zig
+@@ -27,6 +27,7 @@ pub const Kernels = struct {
+     norms: cuda.norms.Norms,
+     moe: cuda.moe_glue.MoeGlue,
+     dense: cuda.dense_rows.DenseRows,
++    qk: cuda.qk_rows.QkRows,
+ 
+     /// The built-in modules plus the captured Triton set in `set_dir` (tools: capture_kolibri.py, aot_pack.py).
+     pub fn load(gpa: std.mem.Allocator, io: std.Io, ctx: *const cuda.Context, set_dir: []const u8) !Kernels {
+@@ -59,6 +60,8 @@ pub const Kernels = struct {
+         errdefer k.moe.unload();
+         k.dense = try cuda.dense_rows.DenseRows.load(d);
+         errdefer k.dense.unload();
++        k.qk = try cuda.qk_rows.QkRows.load(d);
++        errdefer k.qk.unload();
+         k.set = try aot.Set.load(gpa, io, d, ctx.device, set_dir);
+         return k;
+     }
+@@ -68,6 +71,7 @@ pub const Kernels = struct {
+         k.norms.unload();
+         k.moe.unload();
+         k.dense.unload();
++        k.qk.unload();
+         k.fp8x.unload();
+         k.lane.unload();
+         for (&k.mods) |*m| m.unload();
+@@ -78,6 +82,12 @@ fn int(x: usize) i32 {
+     return @intCast(x);
+ }
+ 
++/// EXPERIMENT ONLY: TF_EXP_TRI lists the glue that runs on the captured Triton set (norms, topk, combine, dense).
++fn tri(name: []const u8) bool {
++    const v = std.c.getenv("TF_EXP_TRI") orelse return false;
++    return std.mem.indexOf(u8, std.mem.span(v), name) != null;
++}
++
+ /// Launches on one stream, each the Python call it mirrors.
+ pub const Ops = struct {
+     k: *const Kernels,
+@@ -117,11 +127,13 @@ pub const Ops = struct {
+ 
+     /// forward.rms (bf16 out): a program a row.
+     pub fn rms(o: Ops, x: u64, w: u64, out: u64, rows: usize, n: usize, eps: f32) !void {
++        if (tri("norms")) return o.triton("_rms", .{ rows, 1, 1 }, &.{ aot.ptr("X", "*fp32", x), aot.ptr("W", "*fp32", w), aot.ptr("OUT", "*bf16", out) }, &.{ aot.ci("N", @intCast(n)), aot.cf("EPS", eps), aot.ci("BLOCK", @intCast(std.math.ceilPowerOfTwo(usize, n) catch unreachable)), aot.ci("BF16", 1) });
+         try o.k.norms.rms(o.s, x, .f32, w, out, .bf16, rows, n, eps);
+     }
+ 
+     /// glue.add_rms: res += rms(x) * w1 in place; out = bf16(rms(res) * w2).
+     pub fn addRms(o: Ops, x: u64, res: u64, w1: u64, w2: u64, out: u64, rows: usize, n: usize, eps: f32) !void {
++        if (tri("norms")) return o.triton("_add_rms", .{ rows, 1, 1 }, &.{ aot.ptr("X", "*bf16", x), aot.ptr("RES", "*fp32", res), aot.ptr("W1", "*fp32", w1), aot.ptr("W2", "*fp32", w2), aot.ptr("OUT", "*bf16", out) }, &.{ aot.ci("N", @intCast(n)), aot.cf("EPS", eps), aot.ci("BLOCK", @intCast(std.math.ceilPowerOfTwo(usize, n) catch unreachable)) });
+         try o.k.norms.addRms(o.s, x, .bf16, res, w1, w2, out, .bf16, rows, n, eps);
+     }
+ 
+@@ -129,7 +141,8 @@ pub const Ops = struct {
+ 
+     /// glue.qkv: q/k norms, RoPE on sliding layers, k and v into the cache at pos % len.
+     pub fn qkv(o: Ops, a: Qkv, n: usize, h: usize, hk: usize, d: usize, eps: f32, rope: bool) !void {
+-        try o.triton("_qkv", .{ n, h + 2 * hk, 1 }, &.{ aot.ptr("QKV", "*bf16", a.rows), aot.ptr("NW", "*fp32", a.norms), aot.ptr("COS", "*fp32", a.cos), aot.ptr("SIN", "*fp32", a.sin), aot.ptr("POS", "*i32", a.pos), aot.ptr("SLOT", "*i32", a.slots), aot.ptr("Q", "*bf16", a.q), aot.ptr("KO", "*bf16", a.k), aot.ptr("VO", "*bf16", a.v), aot.ptr("KC", "*bf16", a.kc), aot.ptr("VC", "*bf16", a.vc), aot.int("LEN", int(a.len)) }, &.{ aot.ci("H", @intCast(h)), aot.ci("HK", @intCast(hk)), aot.ci("D", @intCast(d)), aot.cf("EPS", eps), aot.ci("ROPE", @intFromBool(rope)) });
++        const shape: cuda.qk_rows.Shape = .{ .norms = a.norms, .cos = if (rope) a.cos else null, .sin = if (rope) a.sin else null, .rot = if (rope) d else 0, .eps = eps };
++        try o.k.qk.rows(o.s, a.rows, .{ .h = h, .hk = hk, .dim = d }, shape, a.pos, a.slots, .{ .q = a.q, .k = a.k, .v = a.v, .kc = a.kc, .vc = a.vc, .len = a.len }, n);
+     }
+ 
+     /// attention.sliding: a program a (row, KV head) over the ring's last `window` keys.
+@@ -172,16 +185,24 @@ pub const Ops = struct {
+ 
+     /// cuda.moe.router: x [m, D] bf16 times rows [ne, D] bf16 -> [m, ne] fp32 (the MoE router and the head).
+     pub fn router(o: Ops, x: u64, x_stride: usize, rows: u64, out: u64, m: usize, d: usize, ne: usize) !void {
++        if (tri("dense") and ne <= 4096) { // the head (vocab wide) has no captured all-rows variant
++            const bm: usize = if (m <= 16) 16 else if (m <= 32) 32 else if (m <= 64) 64 else 128;
++            const be: usize = if (bm == 16) 32 else 64;
++            const bk: usize = if (bm == 16) 256 else 64;
++            return o.triton("_router", .{ (m + bm - 1) / bm, (ne + be - 1) / be, 1 }, &.{ aot.ptr("X", "*bf16", x), aot.ptr("W", "*bf16", rows), aot.ptr("OUT", "*fp32", out), aot.int("M", int(m)), aot.int("x_stride", int(x_stride)) }, &.{ aot.ci("D", @intCast(d)), aot.ci("NE", @intCast(ne)), aot.ci("BM", @intCast(bm)), aot.ci("BLOCK_E", @intCast(be)), aot.ci("BK", @intCast(bk)) });
++        }
+         try o.k.dense.rows(o.s, x, x_stride, rows, out, ne, m, ne, d);
+     }
+ 
+     /// moe._topk: each row's top-k experts by sigmoid + bias, weights, then the shared expert's slot.
+     pub fn topk(o: Ops, logits: u64, bias: u64, pick: u64, wts: u64, rows: usize, ne: usize, k: usize) !void {
++        if (tri("topk")) return o.triton("_topk", .{ rows, 1, 1 }, &.{ aot.ptr("L", "*fp32", logits), aot.ptr("BIAS", "*fp32", bias), aot.ptr("PICK", "*i32", pick), aot.ptr("WTS", "*fp32", wts) }, &.{ aot.ci("NE", @intCast(ne)), aot.ci("TOPK", @intCast(k)), aot.ci("SLOTS", @intCast(k + 1)), aot.ci("BLOCK", @intCast(std.math.ceilPowerOfTwo(usize, ne) catch unreachable)), aot.ci("SLOTP", @intCast(std.math.ceilPowerOfTwo(usize, k + 1) catch unreachable)) });
+         try o.k.moe.topk(o.s, logits, bias, .{ .experts = ne, .topk = k, .shared = true }, pick, wts, rows);
+     }
+ 
+     /// cuda.moe.combine: y [R, S, D] (fp32 decode, bf16 prompt) weighted by wts [R, S] -> [R, D] bf16.
+     pub fn combine(o: Ops, y: u64, y_bf16: bool, wts: u64, out: u64, rows: usize, s: usize, d: usize) !void {
++        if (tri("combine")) return o.triton("_combine", .{ rows, (d + 511) / 512, 1 }, &.{ aot.ptr("Y", if (y_bf16) "*bf16" else "*fp32", y), aot.ptr("W", "*fp32", wts), aot.ptr("OUT", "*bf16", out) }, &.{ aot.ci("S", @intCast(s)), aot.ci("D", @intCast(d)), aot.ci("BLOCK", 512) });
+         try o.k.moe.combine(o.s, y, if (y_bf16) .bf16 else .f32, wts, out, .bf16, rows, s, d);
+     }
+ };

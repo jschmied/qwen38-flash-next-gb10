@@ -1,0 +1,4 @@
+kz-tri a 48.87 tok/s decode
+kz a 49.16 tok/s decode
+kz-tri b 49.22 tok/s decode
+kz b 48.31 tok/s decode
