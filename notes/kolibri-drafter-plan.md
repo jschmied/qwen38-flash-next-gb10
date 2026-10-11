@@ -1035,3 +1035,9 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   streams via TENSORFOLD_KOLIBRI_STREAMS). Loads in 128 s, 2 streams at 8,192: a chat request (palindrome function,
   thinking off) answers correctly; greedy `"draft": true` == `false` (same content hash), 47.5 tok/s, prefill 0.14 s.
   The server's rounds run eager (the decode graph lives in Model.decode, not yet in the backend's queue path).
+- 2026-10-11 ~11:00 **Server rounds graphed** (kolibri1-forward 63de99f5): a lone row (queue, or verify with one row)
+  runs the slot's captured decode graph (captured at its first step). kolibri-lanes, two runs an arm, eager vs graph:
+  plain greedy 47.58/48.02 -> 50.23/50.13 tok/s (+5 %), sampled 48.29/48.79 -> 51.39/51.49, drafted 51.8/52.2 ->
+  54.9/54.8; two streams unchanged (88.2-89.1, rows > 1 stay eager). Hashes identical (5d8aabb68fb7e19f, ec349d6fe8d7b40b).
+  TENSORFOLD_KOLIBRI_GRAPHS=0 runs eager. Branch also rebased on TF 1.0.6; Mac (M3 Pro) build check of main,
+  cuda-sample and kolibri1-forward: all steps pass on macOS.
