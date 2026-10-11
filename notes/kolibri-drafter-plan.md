@@ -1058,3 +1058,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   (4 marks = extra chunk cuts + copies), 15 states / 4.4 GiB vs 9 / 2.6 GiB. Floor now = an extra chunk pass at the
   mark. Not tested: NVFP4 checkpoint, segments, --slide lessons, Metal. Universality: planned = Nemotron (CUDA +
   Metal) and GLM (Metal); Flash Next and Qwen 27B (Metal) already resume exactly; Kolibri/CUDA has no cache.
+- 2026-10-11 **Kolibri prompt reuse** (kolibri1-forward, slot prefix reuse): a freed slot keeps its tokens; the next
+  prompt picks the free slot with the longest common prefix (valid while the sliding ring still holds the window),
+  prefills only the rest. Agent loop (7.9k start, 12 turns +~1.1k, 2 starts an arm, data notes/data/kolibri/kpc): warm
+  TTFT mean 5.50 -> 0.60 s (-89 %), turn 12 7.64 -> 0.61 s; all 12 replies equal reuse-off in both starts. Also fixed:
+  per-request logits/rule device buffers were never freed (now two a slot).
