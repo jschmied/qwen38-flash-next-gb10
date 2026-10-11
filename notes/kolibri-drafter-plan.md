@@ -1063,3 +1063,8 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   prefills only the rest. Agent loop (7.9k start, 12 turns +~1.1k, 2 starts an arm, data notes/data/kolibri/kpc): warm
   TTFT mean 5.50 -> 0.60 s (-89 %), turn 12 7.64 -> 0.61 s; all 12 replies equal reuse-off in both starts. Also fixed:
   per-request logits/rule device buffers were never freed (now two a slot).
+- 2026-10-11 **TF prompt cache under 4,096 tokens** (Nemotron CUDA, short agent loop 1.2k -> 5.2k tokens, 2 starts an
+  arm, data notes/data/tf-pcache/results3.jsonl): warm TTFT mean, current 0.39 s (nothing kept below 4,096);
+  min_prompt 0 with the grid 0.24 s (-38 %, turn 1 unchanged); min_prompt 0 without the grid 0.16 s (-59 %, turn 1
+  +0.14 s). Replies equal in every arm. Fork branch prompt-cache-planned-short: planned families ignore min_prompt
+  (their marks add no prompt call), core test + mutation check. Not a PR yet.

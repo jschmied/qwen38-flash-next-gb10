@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Nemotron CUDA (main e7c523eb + experiment switches): a short agent loop (all prompts under 4,096), min_prompt 4096 vs 0.
+D=/home/jschmied/kolibri-drafter/pcache; B=/home/jschmied/tfbuild-pc/native/bin/tensorfold-native
+M=/opt/llm/models/nemotron-3.5-lightning-mlx4; P=8098
+until grep -q "KPC DONE" /home/jschmied/kolibri-drafter/kpc/run.log 2>/dev/null; do sleep 15; done
+for arm in base_a min0_a min0ng_a base_b min0_b min0ng_b; do
+  ev="X=1"; [[ $arm == min0_* ]] && ev="TF_EXP_MINPROMPT=0"; [[ $arm == min0ng* ]] && ev="TF_EXP_MINPROMPT=0 TF_EXP_NOGRID=1"
+  env $ev $B serve $M --host 127.0.0.1 --port $P --name m --context 32768 --parallel 1 --no-update-check --no-thinking > $D/serve3-$arm.log 2>&1 &
+  pid=$!
+  for i in $(seq 1 120); do curl -s -m 2 http://127.0.0.1:$P/v1/models | grep -q '"m"' && break; kill -0 $pid 2>/dev/null || break; sleep 5; done
+  echo "== $arm $(grep -m1 -o 'loaded in [0-9.]*s' $D/serve3-$arm.log)"
+  python3 $D/agentloop2.py http://127.0.0.1:$P $arm 12 3000 700 >> $D/results3.jsonl 2>> $D/probe-err.log
+  kill $pid; wait $pid 2>/dev/null
+  sleep 10
+done
+echo "== PCACHE3 DONE"
