@@ -1016,3 +1016,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   greedy / 50.6 sampled, two streams 88.8 total. Wider capture (`capture_kolibri.py --wide`, set
   ~/kolibri-drafter/kset-sm121, 37 kernels): 56 forwards replayed byte-equal. Branch kolibri1-forward stacked on
   #654 (cuda-sample). Next: A3 native registration, graphs, block drafter via #455; B native glue kernels.
+- 2026-10-11 09:05 **profile of the Zig decode** (nsys, kolibri-generate 128 tokens, `~/kolibri-drafter/kprof/gen.nsys-rep`):
+  20.9 ms/step (47.8 tok/s), **GPU busy 93.6 %**, 614 launches/step, kernel gaps 1.33 ms/step total (median 2 us).
+  By class (us/step, share): FP8 lane matmul qkv+o 8,322 (42.5 %), FP8 experts 6,901 (35.2 %), router + head 3,277
+  (16.7 %), add+rms 302, sliding attn 171, top-k 168, tree tail 132, qkv 131, expert plan 111, combine 55, rest < 20.
+  Bytes/token ~3.8 GB (projections 1.7, routed experts 1.4, bf16 head 0.66, routers 0.1) -> ~14 ms floor at
+  ~273 GB/s; we run at ~67 % of it (lane ~75 %, experts ~73 % of their own floors). No allocations in the decode
+  loop (the cuMemFree calls are teardown). => CUDA graphs can win at most ~6 % (the gaps); the head's bf16 read
+  (~2.4 ms) is the largest single item but changing it = changing weights (engine-not-weights rule).
