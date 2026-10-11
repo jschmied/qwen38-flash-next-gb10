@@ -1,0 +1,95 @@
+diff --git a/zig/src/families/nemotron/cuda_dump.zig b/zig/src/families/nemotron/cuda_dump.zig
+index e52eb062..477f4f2e 100644
+--- a/zig/src/families/nemotron/cuda_dump.zig
++++ b/zig/src/families/nemotron/cuda_dump.zig
+@@ -23,13 +23,16 @@ pub const Dump = struct {
+         var buf: [16]u8 = undefined;
+         const n = rows * hidden;
+         try d.write(ops, try std.fmt.bufPrint(&buf, "{d:0>3}_h", .{d.i}), h, n * 2);
+-        try d.write(ops, try std.fmt.bufPrint(&buf, "{d:0>3}_y", .{d.i}), y, n * 2);
+-        try d.write(ops, try std.fmt.bufPrint(&buf, "{d:0>3}_xs", .{d.i}), xs, n / 64 * 4);
++        if (std.c.getenv("TF_EXP_HONLY") == null) { // EXPERIMENT ONLY
++            try d.write(ops, try std.fmt.bufPrint(&buf, "{d:0>3}_y", .{d.i}), y, n * 2);
++            try d.write(ops, try std.fmt.bufPrint(&buf, "{d:0>3}_xs", .{d.i}), xs, n / 64 * 4);
++        }
+         d.i += 1;
+     }
+ 
+     /// Rows a projection reads in the block whose norm went last (the precision check's real activations).
+     pub fn input(d: *Dump, ops: kern.Ops, label: []const u8, ptr: u64, bytes: usize) !void {
++        if (std.c.getenv("TF_EXP_HONLY") != null) return; // EXPERIMENT ONLY
+         var buf: [32]u8 = undefined;
+         try d.write(ops, try std.fmt.bufPrint(&buf, "{d:0>3}_{s}", .{ d.i - 1, label }), ptr, bytes);
+     }
+diff --git a/zig/src/families/nemotron/cuda_engine.zig b/zig/src/families/nemotron/cuda_engine.zig
+index d80cf868..0955b97a 100644
+--- a/zig/src/families/nemotron/cuda_engine.zig
++++ b/zig/src/families/nemotron/cuda_engine.zig
+@@ -386,6 +386,15 @@ pub const Engine = struct {
+             if (Cancel.now(cancel)) return error.Cancelled;
+             try e.beforeChunk(cancel);
+             var end = grid.end(s, prompt.len, state.prefill_rows);
++            if (keep) |k| for (k.at) |m| if (m > s and m < end) {
++                end = m; // a kept state's mark ends its chunk (EXPERIMENT: off-grid marks)
++            };
++            if (s == 0) if (std.c.getenv("TF_EXP_CUT")) |v| { // EXPERIMENT ONLY: move the first cut
++                end = @min(prompt.len, std.fmt.parseInt(usize, std.mem.span(v), 10) catch end);
++            };
++            if (s > 0) if (std.c.getenv("TF_EXP_CUT")) |_| {
++                end = @min(prompt.len, s + state.prefill_rows);
++            };
+             // the decision row ends its chunk: the rows after it read the lessons it latched
+             if (e.decide != lesson_route.none and e.decide >= s and e.decide + 1 < end) end = @intCast(e.decide + 1);
+             const chunk = prompt[s..end];
+diff --git a/zig/src/families/nemotron/cuda_lanes.zig b/zig/src/families/nemotron/cuda_lanes.zig
+index be75c361..e16704e4 100644
+--- a/zig/src/families/nemotron/cuda_lanes.zig
++++ b/zig/src/families/nemotron/cuda_lanes.zig
+@@ -236,7 +236,7 @@ pub const Cuda = struct {
+         const keep: ?engine.Keep = if (s.reuse.marks.len == 0) null else .{ .at = s.reuse.marks, .ctx = s, .call = keptAt };
+         const first = try e.prefillFrom(ids, from, null, self.head, .{ .ptr = s, .check = cancelled }, keep);
+         // the head's first draft reads the prompt's last row (its hidden row waits where a window's would)
+-        const last = (ids.len - 1) % state.prefill_rows; // a resumed pass ends on the same grid
++        const last = grid.lastRow(from, ids.len, state.prefill_rows); // the last chunk may start off the grid
+         try e.ops().copy(e.b.hidden, e.b.p_hidden + last * @as(u64, e.c.hidden) * 2, e.c.hidden * 2);
+         _ = self.take(first);
+         if (s.logprobs) |k| {
+diff --git a/zig/src/families/nemotron/cuda_prompt_grid.zig b/zig/src/families/nemotron/cuda_prompt_grid.zig
+index 172e10f6..13842311 100644
+--- a/zig/src/families/nemotron/cuda_prompt_grid.zig
++++ b/zig/src/families/nemotron/cuda_prompt_grid.zig
+@@ -6,9 +6,20 @@ pub fn end(at: usize, len: usize, step: usize) usize {
+     return @min(len, at - at % step + step);
+ }
+ 
++/// EXPERIMENT ONLY: TF_EXP_NOGRID resumes and keeps anywhere (the prompt path's bits do not depend on its cuts).
++pub fn off() bool {
++    return std.c.getenv("TF_EXP_NOGRID") != null;
++}
++
+ /// A kept state a pass may start from: a grid point inside the prompt.
+ pub fn resumable(from: usize, len: usize, step: usize) bool {
+-    return from > 0 and from < len and from % step == 0;
++    return from > 0 and from < len and (off() or from % step == 0);
++}
++
++/// The row of the prompt's last token inside the last chunk of a pass from `from`.
++pub fn lastRow(from: usize, len: usize, step: usize) usize {
++    const start = @max(from, (len - 1) - (len - 1) % step);
++    return len - 1 - start;
+ }
+ 
+ test "a resumed or kept pass cuts the cache-off grid, and only grid points resume" {
+diff --git a/zig/src/native/cuda.zig b/zig/src/native/cuda.zig
+index ac76da05..71f449c3 100644
+--- a/zig/src/native/cuda.zig
++++ b/zig/src/native/cuda.zig
+@@ -447,7 +447,7 @@ fn openWith(comptime F: type, a: Allocator, gpa: Allocator, io: std.Io, o: api.O
+         const pc = api.prompt_cache;
+         const store = try gpa.create(pc.Store);
+         // states kept and resumed on the family's grid, where a cache-off pass cuts; the head reads one token on
+-        store.* = pc.Store.init(gpa, .{ .ptr = loaded.target, .vtable = &nemotron_snaps }, .{ .lookahead = 1, .planned = true, .grid = F.prompt_rows }, cache);
++        store.* = pc.Store.init(gpa, .{ .ptr = loaded.target, .vtable = &nemotron_snaps }, if (std.c.getenv("TF_EXP_NOGRID") != null) .{ .lookahead = 1 } else .{ .lookahead = 1, .planned = true, .grid = F.prompt_rows }, cache);
+         h.store = store;
+     }
+     errdefer if (h.store) |store| {

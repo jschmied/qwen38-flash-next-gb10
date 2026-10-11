@@ -1048,3 +1048,13 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   2,048 multiples: 20,799 resumed at 18,432 = 2,367 recomputed for ~1,045 new; TTFT saw-tooths 0.23 / 0.49. Resuming at
   the history's end would put every turn near 0.23-0.27 s (~-38 % mean warm TTFT). Also min_prompt 4,096: shorter
   conversations keep nothing. Kolibri on CUDA serves with no cache (no Snapshots yet).
+- 2026-10-11 **Nemotron CUDA prompt path is chunk-invariant; the 2,048 grid is not needed** (local experiment on main
+  e7c523eb, MLX-4bit). `tensorfold prefill` of a 5,000-token prompt with the first cut moved (chunks 1500/2048/1452,
+  7/2048/2048/897, 1000/2048/1952, 894/2048/2048/10) vs the grid (2048/2048/904): all 53 residual dumps and the logits
+  byte-equal. Then grid-free resume (TF_EXP_NOGRID, diff notes/data/tf-pcache/nogrid-experiment.diff: Rules without
+  planned/grid, off-grid resume allowed, chunks also end at keep marks, the head's last row computed for an off-grid
+  last chunk): resumes at the history's end (20,799 resumed at 19,748), all 12 replies equal cache-off in both starts;
+  warm TTFT mean 0.395 -> 0.306 s (-23 %), flat 0.24-0.35 instead of 0.23/0.49 saw-tooth. Cost: turn 1 1.14 -> 1.35 s
+  (4 marks = extra chunk cuts + copies), 15 states / 4.4 GiB vs 9 / 2.6 GiB. Floor now = an extra chunk pass at the
+  mark. Not tested: NVFP4 checkpoint, segments, --slide lessons, Metal. Universality: planned = Nemotron (CUDA +
+  Metal) and GLM (Metal); Flash Next and Qwen 27B (Metal) already resume exactly; Kolibri/CUDA has no cache.
