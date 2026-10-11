@@ -1,0 +1,8 @@
+prompt kz-tri a 50.61 tok/s decode
+prompt kz a 50.37 tok/s decode
+prompt kz-tri b 50.11 tok/s decode
+prompt kz b 48.97 tok/s decode
+long kz-tri a 49.28 tok/s decode
+long kz a 47.58 tok/s decode
+long kz-tri b 47.93 tok/s decode
+long kz b 48.41 tok/s decode

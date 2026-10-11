@@ -1082,3 +1082,14 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   3.579 vs 3.587, next-token top-1 35.12 vs 35.52 % = same quality. The random-id captures (kcap*) are useless for
   top-1 (flat logits). An ncu replay on the full model OOM-killed the box (memory ncu-full-model-oom). Left:
   sliding-window attention, tree attention.
+- 2026-10-12 **Kernel 5/6: sliding-window attention** (fork cuda-window-attention 99241888, on cuda-qk-rows;
+  Kolibri kolibri1-forward b05dbbc2). Prompt rows: prefill_attention's tensor-core kernel copied with a window
+  ((pos - win, pos]) and ring addressing (key p at row p % ring), first tile from the block's window start -
+  0.39 ms a call vs Triton ~0.9 ms. Decode rows: tensor cores at d 128 (a row's g <= 16 heads = one mma tile, 4 warps
+  over 32-key tiles, folded in warp order): 16.2 us vs Triton 16.3 at a full window; d != 128 falls back to a
+  key-tile split + merge. Path: scalar decode 63 us (32-way smem bank conflicts) -> transposed K 30+14 us ->
+  tensor cores 16 us; overlapping K/V staging made it slower (21.6), reverted. Test `window`: float64 reference
+  (core/attention_ref), bits at 1/3/17/64 rows, prompt bits of a shorter call and of a later chunk, ring wrap,
+  mutations caught (edge off by one 11x, merge drops a tile 29x). Decode A/B kolibri-graph 2 rounds: short prompt
+  50.37/48.97 vs 50.61/50.11 (-1.6 %), long 47.58/48.41 vs 49.28/47.93 (-0.6 %, sign flips). Real-text quality:
+  NLL 3.586, top-1 35.52 % = Triton reference (3.587, 35.52 %). Left: tree attention (+ _paths).
