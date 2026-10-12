@@ -14,7 +14,7 @@ Order (one topic each, the next only after the previous lands):
 1. POSTED as #736 (embed only moved; Nemotron norms kept). norms + embed_rows, with Nemotron moved onto them (same bits if the shared kernel keeps Nemotron's sum order;
    measure speed first). Smallest, has a consumer on main.
 2. act_rows + gdn_prep + qk_rows (strided/inv/bf16 norms): the 27B's per-row glue - lands with or after #608.
-3. tree_attention (d128/256, shared committed groups) + block_attention: the 27B's attention and drafter.
+3. POSTED as #746 (operator-only, ahead of #608). tree_attention (d128/256, shared committed groups) + block_attention: the 27B's attention and drafter.
 4. moe_glue, dense_rows, window_attention: with the Kolibri family.
 
 Evidence to carry (27B, our GB10): serial 2/4 replies equal 0.6.6, the other two differ at bf16 near-ties (top-2
