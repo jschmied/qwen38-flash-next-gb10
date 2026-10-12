@@ -1146,3 +1146,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   #608 Triton 38.2/98.8/57.8/74.2 tok/s, all MATCH Python; ours 40.2/99.2/67.5/80.7, code+long MATCH, story+facts
   differ at the bf16 near-ties but equal our own serial replies (drafted == serial holds). Teacher-forced 1,023
   rows real text: NLL 0.8058 vs Triton 0.8029, top-1 80.65 vs 81.13 %, KL mean 0.0012, argmax agree 99.12 %.
+- 2026-10-12 **Tree attention: shared committed groups, bit-identical** (cuda-qwen-glue, kolibri1-forward, q27-glue).
+  First try (separate path slot) broke drafted == plain on Kolibri: the committed/path split moved with the commit
+  point. Kept design: tree_group generalized from one row's heads to 16 (row, head) pairs; tf_tree_shared runs a
+  stream's FULL committed 2,048-key groups for 16 pairs from several rows (same tiles, 4-warp split, merge), the
+  row's own block does the boundary group + path. Every partial keeps its bits: Kolibri hash 593ecadc again, lanes
+  drafted == plain and two streams == alone (short and long prompt). 27B drafted long prompt, attention: Triton 49.0
+  ms, ours before 65.7, now 46.1 (shared 32.3 + per-row 11.4 + merge 2.3); replies unchanged.
