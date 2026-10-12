@@ -1117,3 +1117,15 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   stride). GPU time 1324.7 vs Triton 1326-1334 ms. Decode A/B kolibri-graph 3 rounds (data qual/ab-tune.txt):
   short 50.90/51.05/49.45 vs 50.73/50.60/49.25 (ours ahead every round, +0.5 %), long 49.54/48.23/49.72 vs
   49.05/49.14/49.10 (parity, sign flips).
+- 2026-10-12 **Generic CUDA glue for Qwen3.8-27B (prep for #608, fork cuda-qwen-glue on cuda-tree-attention)**.
+  #608 (philip-pentatonic, Qwen3.8-27B on CUDA, open) runs its glue from a captured Triton set (`_add_rmsnorm`,
+  `_attn_prep`, `_gdn_pre`, `_gated_norm`, `_gate_mul`, `_swiglu`, `_embed`, `_group_sums`, `_paths/_tail/_merge`,
+  `_shared`) plus qwen_ops.cu. Built the generic replacements, each with a float64 reference, a tf-cuda-test
+  command, bits at every row count and a caught mutation: norms add_rms_h (bf16 residual, bf16/fp32 weights, 64-value
+  group sums) and gated head norms (dv 64/128/256); act_rows (SwiGLU, output gate o*sigmoid(g) from [q | gate] rows,
+  group sums); embed_rows (MLX affine-4, bf16); qk_rows rowsFrom (strided q/k/v sources, 27B case dim 256 rotary 64);
+  gdn_prep (per-row conv window over kept + new rows, SiLU, q/k l2 norms, v, g, beta; d 64/128/256, <= 8 taps);
+  tree_attention at head dim 256 (16 keys a stage, q in shared memory, 230 regs no spill). Kolibri unchanged (hash
+  593ecadc, lanes equal). Not done: #608's `_shared` form (a stream's committed keys read once for all its draft
+  rows; ours reads them per row - matters at long context x wide trees), in-model A/B (needs #608 merged and 27B
+  weights). Nemotron's tf_nemo_embed / tf_nemo_add_rmsnorm duplicate embed_rows / add_rms_h (dedupe candidates).
