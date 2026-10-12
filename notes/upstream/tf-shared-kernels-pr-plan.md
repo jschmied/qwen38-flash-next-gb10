@@ -11,7 +11,7 @@ Consumers (the point of each PR):
 - Kolibri 1 (not upstream; fork kolibri1-forward): six modules.
 
 Order (one topic each, the next only after the previous lands):
-1. norms + embed_rows, with Nemotron moved onto them (same bits if the shared kernel keeps Nemotron's sum order;
+1. POSTED as #736 (embed only moved; Nemotron norms kept). norms + embed_rows, with Nemotron moved onto them (same bits if the shared kernel keeps Nemotron's sum order;
    measure speed first). Smallest, has a consumer on main.
 2. act_rows + gdn_prep + qk_rows (strided/inv/bf16 norms): the 27B's per-row glue - lands with or after #608.
 3. tree_attention (d128/256, shared committed groups) + block_attention: the 27B's attention and drafter.
