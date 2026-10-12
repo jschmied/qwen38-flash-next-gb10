@@ -1,0 +1,13 @@
+# Nemotron CUDA short agent loop (prompts < 4,096): main vs #721 vs #721 + min_prompt 0.
+D=/home/jschmied/kolibri-drafter/pcache; M=/opt/llm/models/nemotron-3.5-lightning-mlx4; P=8098
+for arm in main_a pr721_a min0_a main_b pr721_b min0_b; do
+  case $arm in main_*) B=/home/jschmied/tfbuild-pc/native/bin/tensorfold-native;; pr721_*) B=/home/jschmied/tfbuild-721/native/bin/tensorfold-native;; min0_*) B=/home/jschmied/tfbuild-721m/native/bin/tensorfold-native;; esac
+  $B serve $M --host 127.0.0.1 --port $P --name m --context 32768 --parallel 1 --no-update-check --no-thinking > $D/serve4-$arm.log 2>&1 &
+  pid=$!
+  for i in $(seq 1 120); do curl -s -m 2 http://127.0.0.1:$P/v1/models | grep -q '"m"' && break; kill -0 $pid 2>/dev/null || break; sleep 5; done
+  echo "== $arm"
+  python3 $D/agentloop2.py http://127.0.0.1:$P $arm 12 3000 700 >> $D/results4.jsonl 2>> $D/probe-err.log
+  kill $pid; wait $pid 2>/dev/null
+  sleep 10
+done
+echo "== PCACHE4 DONE"
