@@ -1153,3 +1153,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   row's own block does the boundary group + path. Every partial keeps its bits: Kolibri hash 593ecadc again, lanes
   drafted == plain and two streams == alone (short and long prompt). 27B drafted long prompt, attention: Triton 49.0
   ms, ours before 65.7, now 46.1 (shared 32.3 + per-row 11.4 + merge 2.3); replies unchanged.
+- 2026-10-12 **27B multi-stream on the shared glue** (data notes/data/q27). bench_concurrent --alone --serial at
+  1/4/16 streams, code/chat, T 0/1.0, --parallel 16 --context 32768, same box, back to back: every cell exact in
+  both builds. First run ours was -2..-10 % at 16 streams: tf_tree_shared's grid (rows x heads x slots x tiles,
+  ~786k blocks each holding 72 KB shared memory) cost 1 ms a call with nothing to do. Now a fixed grid walks
+  every (row, group), a stream's j-th row hosting its j-th pair tile; a row block takes at most 2 group slots.
+  Multi-run attention 615 -> 66 ms (Triton 172); 16 streams ours/Triton: code T0 386.7/387.1, chat T0 278.2/289.2,
+  code T1 395.2/386.9, chat T1 268.8/271.9; 4 streams ours ahead by 0-3 %. Kolibri hash 593ecadc unchanged.
+  Triton baseline needed the windows --sweep + multi captures too (missing _tail alignment variant otherwise).
