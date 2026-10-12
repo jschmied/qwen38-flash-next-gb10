@@ -1,0 +1,8 @@
+repo	branch	sha	reason
+jschmied/TensorFold	cuda-nvfp4	bf8d716cd5d7fbad4a66657476027b07c33f2a64	superseded by merged #595/#605/#629
+jschmied/TensorFold	cuda-nvfp4-experts	cd4ee054b6815c48b71178239aec1f57188390c7	superseded by merged #595/#605/#629
+jschmied/TensorFold	cuda-fp8-experts	6ab43beac674157660e6de77d0c0f5a7b4a2e16b	superseded by merged #595/#605/#629
+jschmied/TensorFold	kolibri1-weights	a01cf65f7fe917a2cb50a9f64c7f2e13b1fccf5e	earlier stage of kolibri1-forward
+jschmied/TensorFold	kolibri1-zig	8c59a280720470ede2549b086ddfa03bab1e8084	earlier stage of kolibri1-forward
+jschmied/vllm	review/gdn-recoverssm	7cb5c31468c53ada45449c4a56a84f94c8554286	review variant of merged #58863
+jschmied/vllm	review/gdn-recoverssm-upshape	4348665faa9dea0a45d43cf6ef10b88cd2dd4a48	review variant of merged #58863
