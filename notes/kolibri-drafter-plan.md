@@ -1129,3 +1129,13 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   593ecadc, lanes equal). Not done: #608's `_shared` form (a stream's committed keys read once for all its draft
   rows; ours reads them per row - matters at long context x wide trees), in-model A/B (needs #608 merged and 27B
   weights). Nemotron's tf_nemo_embed / tf_nemo_add_rmsnorm duplicate embed_rows / add_rms_h (dedupe candidates).
+- 2026-10-12 **Qwen3.8-27B (#608 engine) runs on our shared glue, Triton-free for the target** (fork q27-glue = pr608
+  + our modules copied + Tri rewired; drafter's _prep/_dconv/_block_attention still Triton). Checkpoint
+  TensorFold/Qwen3.8-27B-MLX-4bit @70ae7fac (~/models/qwen38-27b-mlx4, sha256 OK). Python 0.6.6 oracle (v0.6.6
+  worktree on PYTHONPATH, tf-venv torch 2.13 / triton 3.7.1): capture.py -> ~/q27/cap, serial 65.8 ms/token;
+  Triton set packed from it (15 kernels, ~/q27/kset). Baseline #608 + set: 4/4 replies MATCH Python. Ours (no set):
+  code + long (4722-token prompt) MATCH all 128 tokens; story + facts DIFFER at step 33, both at bf16 near-ties
+  (story top-2 17.0 vs 17.0 exact tie, facts 23.25 vs 23.125 one ulp) = rounding, not a bug; same speed (8.64 s /
+  128 tokens). qk_rows gained bf16 split norms + inv_freq RoPE (cuda-qwen-glue ee3309f7). Not bit-exact with Triton,
+  so #608's "exact against 0.6.6" bar needs the maintainer's call; next: teacher-forced NLL/top-1 on real text, the
+  drafter's three kernels, windows/multi exactness modes.
