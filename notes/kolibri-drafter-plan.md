@@ -1105,3 +1105,15 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   Decode A/B vs the Triton build, kolibri-graph 2 rounds: long prompt 48.43/48.44 vs 48.61/48.52 (parity), short
   49.38/50.51 vs 51.07/50.64 (-1.8 %; small-window decode, open). Not done: tree group count is context-sized
   (ngroups = context/2048 + 1 blocks, empty ones exit), short-window decode tuning, PRs (need the user's go).
+- 2026-10-12 **Loose ends tuned: short-window decode closed, tree grid context-free** (fork cuda-tree-attention
+  e.g. +4 commits on 0a88d56a; kolibri1-forward). In-model nsys, short prompt, per 64 tokens: window decode 7.06 ->
+  3.91 us a call (a 64-bit `% ring` on every 16-byte copy; one warp's fold written straight out; merge factors once
+  a head; full window 21 -> 10.5 us synthetic vs Triton 16.3); top-k 4.65 -> ~4.1 us (redux.sync argmax, sigmoids
+  after the picks); qk_rows 11.7 -> 9.5 ms (warp a head at dim 128, loads up front, no 64-bit modulo); combine
+  4.8 -> 3.8 ms (slot loads eight in flight). Tree part: at most 16 group slots striding over the groups (graph
+  grid no longer context-sized). All same bits: generate hash 593ecadc unchanged, lanes drafted == plain, two
+  streams == alone. Tests: new ring-straddling window case, warp qk no-norm case, tree one-slot and 262k-grid
+  bits; mutations caught (ring wrap, fast path, tie rule, qk wrap, rotation sign/partner, combine tail, group
+  stride). GPU time 1324.7 vs Triton 1326-1334 ms. Decode A/B kolibri-graph 3 rounds (data qual/ab-tune.txt):
+  short 50.90/51.05/49.45 vs 50.73/50.60/49.25 (ours ahead every round, +0.5 %), long 49.54/48.23/49.72 vs
+  49.05/49.14/49.10 (parity, sign flips).
