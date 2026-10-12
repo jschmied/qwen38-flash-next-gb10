@@ -1,0 +1,10 @@
+WIDTH 1: window graph 9.508 ms, chunk 13.657 ms
+WIDTH 2: window graph 11.654 ms, chunk 15.905 ms
+WIDTH 3: window graph 14.221 ms, chunk 18.008 ms
+WIDTH 4: window graph 15.926 ms, chunk 20.507 ms
+WIDTH 5: window graph 17.669 ms, chunk 21.681 ms
+WIDTH 6: window graph 19.077 ms, chunk 23.267 ms
+WIDTH 8: window graph 22.452 ms, chunk 26.305 ms
+WIDTH 10: window graph 25.707 ms, chunk 30.053 ms
+WIDTH 12: window graph 29.113 ms, chunk 32.398 ms
+WIDTH 16: window graph 33.366 ms, chunk 37.539 ms

@@ -1169,3 +1169,13 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   replies equal, greedy logprob rows 4/4, drafted == plain 42/42 both builds, 39/40 sampled replies distinct.
   Metal: Mac session asked (no downloads). #524 (heitke, GLM Metal sampling) has its own draw_rule copy - could
   fill from gpu_rule. core-quant-refs rebased on 1.0.8 (2175128a) and opened as #730.
+- 2026-10-12 **Tree drafts for Nemotron on CUDA: measured, NOT worth building** (data notes/data/tf-trees). Parity map
+  (1.0.8): CUDA serves Nemotron only; Metal has tree drafts for Nemotron's lone greedy stream, CUDA TreesNotBuilt.
+  tf-cuda-test tree-accept on 10 prompts (code/prose/chat/tool, 300 greedy tokens each, MTP chain + 3 level-1
+  runner-up branches, depth 8) replayed offline: equal node budget, chain vs best fixed tree shape: tokens/round
+  equal up to 5 nodes, +0.9/+2.7/+3.9 % at 6/7/8, +12 % at 15 (code even loses at 6-7). chunk-costs: window 9.5 ms
+  (1 row) -> 15.9 (4) -> 19.1 (6) -> 33.4 (16): every row ~1.5-2 ms (MoE experts per row). Model tok/s: best chain
+  172 (all, 4 rows) / 209 (code, 6) / 156 (prose, 4); best tree at its own best width = the same chain (+0 %).
+  Served logs show ~3.7 rows/round = the optimum already. Not covered: sampled, multi-stream (both favor chains more).
+  Also: #733 (CUDA refuses --drafter/--speed-up/--prompt-cache-over-cap) opened. tf-venv's .pth pointed at the
+  deleted vllm-venv-rssm (now -> ~/venvs/vllm-m58863, same torch/triton).

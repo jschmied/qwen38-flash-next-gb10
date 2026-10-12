@@ -1,0 +1,5 @@
+cd /home/jschmied/kolibri-drafter/treeacc
+B=/home/jschmied/tfbuild-mainref/bin/tf-cuda-test; M=/opt/llm/models/nemotron-3.5-lightning-mlx4
+for f in *.ids; do n=${f%.ids}; $B tree-accept $M $f 300 $n.json 2>&1 | grep -E "RESULT|error"; done
+$B chunk-costs $M code1.ids 1,2,3,4,5,6,8,10,12,16 > costs.txt 2>&1; tail -20 costs.txt
+echo "== TREEACC DONE"
