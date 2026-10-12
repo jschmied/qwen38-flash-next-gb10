@@ -1139,3 +1139,10 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   128 tokens). qk_rows gained bf16 split norms + inv_freq RoPE (cuda-qwen-glue ee3309f7). Not bit-exact with Triton,
   so #608's "exact against 0.6.6" bar needs the maintainer's call; next: teacher-forced NLL/top-1 on real text, the
   drafter's three kernels, windows/multi exactness modes.
+- 2026-10-12 **Qwen3.8-27B fully Triton-free (target + DFlash2 drafter)**, fork q27-glue (pr608 + shared modules;
+  cuda-qwen-glue b50252ab adds qk_rows output strides, act_rows dconv, block_attention). Drafter z-lab DFlash2
+  @50307d4c = PBS qwen38-27b-dflash2 (sha256 equal). Python 0.6.6 drafted capture (~/q27/capd) + packed set with the
+  drafter kernels (~/q27/kset2, jit info regenerated with the drafter modules loaded). Drafted, 128 tokens:
+  #608 Triton 38.2/98.8/57.8/74.2 tok/s, all MATCH Python; ours 40.2/99.2/67.5/80.7, code+long MATCH, story+facts
+  differ at the bf16 near-ties but equal our own serial replies (drafted == serial holds). Teacher-forced 1,023
+  rows real text: NLL 0.8058 vs Triton 0.8029, top-1 80.65 vs 81.13 %, KL mean 0.0012, argmax agree 99.12 %.
