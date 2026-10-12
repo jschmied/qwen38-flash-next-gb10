@@ -1161,3 +1161,11 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   Multi-run attention 615 -> 66 ms (Triton 172); 16 streams ours/Triton: code T0 386.7/387.1, chat T0 278.2/289.2,
   code T1 395.2/386.9, chat T1 268.8/271.9; 4 streams ours ahead by 0-3 %. Kolibri hash 593ecadc unchanged.
   Triton baseline needed the windows --sweep + multi captures too (missing _tail alignment variant otherwise).
+- 2026-10-12 **TF 1.0.8: #654, #669 merged (our commits), #670 implemented by ashhart with us as co-author** (incl.
+  in-chunk keeps and no floor for Nemotron). ashhart: "Yes to core/lanes/gpu_rule.zig, as a follow-up PR".
+  gpu-rule branch (fork 541a66a6 on 0efbd447): gpu_rule.Rule + rule(Sampling) + cfg()/seedHalves(); CUDA
+  sample.Rule.from(), host references, CUDA test, Metal forward.sample and nemotron_sample_check fill from it.
+  CUDA receipts (notes/data/tf-gpu-rule): tf-cuda-test sample 2,880/2,880; Nemotron grid main vs branch 84/84
+  replies equal, greedy logprob rows 4/4, drafted == plain 42/42 both builds, 39/40 sampled replies distinct.
+  Metal: Mac session asked (no downloads). #524 (heitke, GLM Metal sampling) has its own draw_rule copy - could
+  fill from gpu_rule. core-quant-refs rebased on 1.0.8 (2175128a) and opened as #730.
