@@ -1106,7 +1106,7 @@ Branch `jschmied/TensorFold:kolibri1-zig` (worktree ~/git/tf-kolibri-zig, from 1
   49.38/50.51 vs 51.07/50.64 (-1.8 %; small-window decode, open). Not done: tree group count is context-sized
   (ngroups = context/2048 + 1 blocks, empty ones exit), short-window decode tuning, PRs (need the user's go).
 - 2026-10-12 **Loose ends tuned: short-window decode closed, tree grid context-free** (fork cuda-tree-attention
-  e.g. +4 commits on 0a88d56a; kolibri1-forward). In-model nsys, short prompt, per 64 tokens: window decode 7.06 ->
+  25fcac8a, 4 commits on 0a88d56a; kolibri1-forward 3b0cb426). In-model nsys, short prompt, per 64 tokens: window decode 7.06 ->
   3.91 us a call (a 64-bit `% ring` on every 16-byte copy; one warp's fold written straight out; merge factors once
   a head; full window 21 -> 10.5 us synthetic vs Triton 16.3); top-k 4.65 -> ~4.1 us (redux.sync argmax, sigmoids
   after the picks); qk_rows 11.7 -> 9.5 ms (warp a head at dim 128, loads up front, no 64-bit modulo); combine
