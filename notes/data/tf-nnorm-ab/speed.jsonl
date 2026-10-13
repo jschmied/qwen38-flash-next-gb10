@@ -1,0 +1,4 @@
+{"arm": "A1", "p8k": {"s": 1.322, "prompt_tokens": 9621}, "p32k": {"s": 5.469, "prompt_tokens": 35263}, "decode0": {"s": 3.586, "tokens": 512, "tps": 142.77}, "decode1": {"s": 3.565, "tokens": 512, "tps": 143.6}}
+{"arm": "B1", "p8k": {"s": 1.303, "prompt_tokens": 9621}, "p32k": {"s": 5.397, "prompt_tokens": 35263}, "decode0": {"s": 3.488, "tokens": 512, "tps": 146.79}, "decode1": {"s": 3.463, "tokens": 512, "tps": 147.86}}
+{"arm": "B2", "p8k": {"s": 1.298, "prompt_tokens": 9622}, "p32k": {"s": 5.365, "prompt_tokens": 35263}, "decode0": {"s": 3.474, "tokens": 512, "tps": 147.37}, "decode1": {"s": 3.451, "tokens": 512, "tps": 148.34}}
+{"arm": "A2", "p8k": {"s": 1.311, "prompt_tokens": 9621}, "p32k": {"s": 5.367, "prompt_tokens": 35263}, "decode0": {"s": 3.571, "tokens": 512, "tps": 143.39}, "decode1": {"s": 3.548, "tokens": 512, "tps": 144.33}}
