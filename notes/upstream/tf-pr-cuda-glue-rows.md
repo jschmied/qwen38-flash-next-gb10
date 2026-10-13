@@ -65,3 +65,12 @@ its DFlash2 drafter's conv), and any CUDA family with GDN layers or gated attent
 - [x] New tests fail before the change, pass after it, and skip cleanly without their dependency.
 - [x] Comments and docstrings are one line. No measurements or history in the source.
 - [x] No personal data, machine names, internal hosts or local paths. No AI attribution lines.
+
+## 2026-10-13 decode block sizes (79134ede; #796 8fe038e3 for gated_rms)
+Bob's 5090 profile: small row kernels 0.6-1.8 us/call slower than Triton. GB10 decode (1 row) per call: ours vs
+Triton swiglu 2.66/2.11, gate 1.73/1.16, gated 1.95/1.32, gdn_prep 5.62/4.11, add_rms 3.63/2.92 (same shape).
+launch.rowThreads(rows, many, few): <= 16 rows take Triton's sizes (swiglu 128, gate 64, gdn_prep 64, gated 32).
+Result 2.59 / 1.67 / 1.78 / 5.45 us: only 3-9 %. Rest = arithmetic: swiglu microbench in a graph, exact
+__fdiv_rn + expf 1.16 us, __expf only 1.15, Triton-like __fdividef + __expf 0.86; __frcp_rn same bits as
+__fdiv_rn(1, x) on all 65,536 bf16 inputs but 1.21 us. qk_rows (block-wide reduction over 256 threads) not
+reshaped (bits). add_rms same shape: body. Remaining gap = exact division by choice.
