@@ -1,0 +1,8 @@
+loaded in 3.1s, weights 14.11 GiB
+docs: 1023 rows, NLL 0.8062 (ppl 2.239), top-1 80.74 %; reference NLL 0.8029, top-1 81.13 %; argmax agreement 99.02 %, KL mean 0.00099 max 0.1093, largest flip 0.250
+code: 1023 rows, NLL 1.0950 (ppl 2.989), top-1 76.64 %; reference NLL 1.0949, top-1 76.54 %; argmax agreement 99.61 %, KL mean 0.00052 max 0.0207, largest flip 0.125
+german: 1023 rows, NLL 2.1232 (ppl 8.358), top-1 54.74 %; reference NLL 2.1228, top-1 54.74 %; argmax agreement 98.92 %, KL mean 0.00064 max 0.0085, largest flip 0.125
+chat: 1023 rows, NLL 1.7628 (ppl 5.829), top-1 63.34 %; reference NLL 1.7632, top-1 63.54 %; argmax agreement 99.12 %, KL mean 0.00064 max 0.0212, largest flip 0.125
+all: 4092 rows, NLL 1.4468 (ppl 4.249), top-1 68.87 %; reference NLL 1.4460, top-1 68.99 %; argmax agreement 99.17 %, KL mean 0.00070 max 0.1093, largest flip 0.250
+gate: |dNLL| <= 0.01, argmax agreement >= 98.5 %, KL mean <= 0.005, no flip with a reference margin above 1: PASS
+rc=0

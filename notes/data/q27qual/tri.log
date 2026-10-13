@@ -1,0 +1,7 @@
+loaded in 3.1s, weights 14.11 GiB
+docs: 1023 rows, NLL 0.8029 (ppl 2.232), top-1 81.13 %
+code: 1023 rows, NLL 1.0949 (ppl 2.989), top-1 76.54 %
+german: 1023 rows, NLL 2.1228 (ppl 8.354), top-1 54.74 %
+chat: 1023 rows, NLL 1.7632 (ppl 5.831), top-1 63.54 %
+all: 4092 rows, NLL 1.4460 (ppl 4.246), top-1 68.99 %
+rc=0
