@@ -74,3 +74,8 @@ Result 2.59 / 1.67 / 1.78 / 5.45 us: only 3-9 %. Rest = arithmetic: swiglu micro
 __fdiv_rn + expf 1.16 us, __expf only 1.15, Triton-like __fdividef + __expf 0.86; __frcp_rn same bits as
 __fdiv_rn(1, x) on all 65,536 bf16 inputs but 1.21 us. qk_rows (block-wide reduction over 256 threads) not
 reshaped (bits). add_rms same shape: body. Remaining gap = exact division by choice.
+Loads-first (same bits, verified by 4,092 logit rows byte-identical against an IEEE-only build): add_rms_h (#796
+52b67e6f, also each warp folds the 8 warp sums itself, no broadcast, 1 sync) 2.25 -> 1.84 us isolated, in-model
+decode 3.63 -> 2.65 us (Triton 2.92); gdn_prep (#797 b172afed) 5.45 -> 4.86 (Triton 4.11). Fork q27-glue had drifted
+(no IEEE in qk_rows/gdn_prep, old norms): synced at bf3f16a2; gate vs Triton dNLL +0.0005, argmax 99.17 %, KL 0.00067,
+drafted == serial 4/4, long sha ac86a9dc67d5.
