@@ -87,3 +87,4 @@ cp.async stages, empty group at the tail keeps wait_group<ST-1> constant). GB10 
 204.7 ms (pipelined one-warp) vs Triton 244.3; shared 73.3 vs 81.5 us, part 20.4 vs 34.8. Bits: tokens, 4,092 logit
 rows, draft + multi shas/rounds/speed unchanged. Mutation: wrong ahead stage -> one-warp check fails (52,223 of 52,224
 words). 2 stages gave 209.7 ms. Fork q27-glue e040b562. Description updated.
+#608 rerun request for b7d1bdc0/e040b562 posted: https://github.com/ashhart/TensorFold/pull/608#issuecomment-6153486807

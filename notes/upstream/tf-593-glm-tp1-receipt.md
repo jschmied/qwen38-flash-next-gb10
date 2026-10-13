@@ -1,5 +1,7 @@
 # #593 reply draft: GLM-5.3-Flash EXL3 2.05 bpw at TP=1 on one GB10 (NOT posted)
 
+POSTED 2026-10-13 https://github.com/ashhart/TensorFold/issues/593#issuecomment-6153487173 (user: "yes" / "593 also").
+
 @BHCC2025, thanks. Receipt for `glm-exl3-wip` pinned at `5da1e007`, at TP=1 on one DGX Spark (GB10, sm_121, CUDA 13), turboderp's `GLM-5.3-Flash-exl3` at 2.05 bpw (79.4 GiB, every shard's sha256 checked):
 
 - `glm-shared-check <ckpt> dc.json 0 1 id`: PASS. 108 rows of 5 streams over 12 rounds (2 to 5 streams a forward, 1 to 4 rows each, greedy and sampled) equal their lone twins' logits, tokens and drafts byte for byte, and every state its twin's.
