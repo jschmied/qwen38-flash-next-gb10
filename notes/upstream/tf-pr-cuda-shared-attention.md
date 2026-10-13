@@ -76,3 +76,8 @@ per call: shared 96.6 -> 92.3 (4-warp) / 89.5 us (1-warp), part 32.0 -> 28.4 / 2
 byte-identical to the old build in both forms, draft 4 prompts and multi 8 streams same sha and rounds. Mutation: the
 merge dropping slice 3 -> 19x tolerance (dropping it only from the max is benign: same softmax). Fork q27-glue
 796099cc carries it (TF_TREE_SMS=0 forces four-warp blocks) for a 5090 rerun.
+Follow-up 1adfc970 (same day): the slice change had made the scratch 4x (16 streams x 16 rows x 32k: ~1.08 GB vs
+270 MB; machinegenie PR #3 shows 24 GB cards care). Now four-warp blocks combine in-block again (one partial a group),
+only one-warp blocks write slices into a fixed area (slice_items 256 items) and the merge takes `sliced`. Bits again
+identical in both forms (tokens, 4,092 logit rows, draft, multi). GB10 attention: four-warp 270.4 ms, one-warp
+253.7 ms (before 275.8, Triton 244.3). PR description updated; fork q27-glue now 017d0724.
