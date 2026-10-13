@@ -1,5 +1,7 @@
 # #608: mechanical quality gate (BobClawblaw's ask) - result + reply draft (NOT posted)
 
+POSTED 2026-10-13 https://github.com/ashhart/TensorFold/pull/608#issuecomment-6142335336 (user: "yes").
+
 2026-10-13. BobClawblaw on #608 (08:11): prefers C; make the quality check mechanical with fixed limits (NLL within
 0.005 of Triton, argmax >= 99 %, KL <= 0.002), offers an RTX 5090 (sm_120) rerun.
 
