@@ -81,3 +81,9 @@ Follow-up 1adfc970 (same day): the slice change had made the scratch 4x (16 stre
 only one-warp blocks write slices into a fixed area (slice_items 256 items) and the merge takes `sliced`. Bits again
 identical in both forms (tokens, 4,092 logit rows, draft, multi). GB10 attention: four-warp 270.4 ms, one-warp
 253.7 ms (before 275.8, Triton 244.3). PR description updated; fork q27-glue now 017d0724.
+Bob 5090 at 796099cc: slices only -0.01..0.02 s; gap is undrafted decode at 4.8k (71 vs 76 tok/s) -> latency, not
+blocks: each warp waited for every 16-key tile (no prefetch). b7d1bdc0: one-warp blocks fetch 2 tiles ahead (3
+cp.async stages, empty group at the tail keeps wait_group<ST-1> constant). GB10 attention: 270.3 (four-warp) /
+204.7 ms (pipelined one-warp) vs Triton 244.3; shared 73.3 vs 81.5 us, part 20.4 vs 34.8. Bits: tokens, 4,092 logit
+rows, draft + multi shas/rounds/speed unchanged. Mutation: wrong ahead stage -> one-warp check fails (52,223 of 52,224
+words). 2 stages gave 209.7 ms. Fork q27-glue e040b562. Description updated.
