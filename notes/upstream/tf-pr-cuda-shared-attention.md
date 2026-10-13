@@ -65,3 +65,14 @@ Registration lines in `build/cuda.zig`, `cuda/kernels.zig`, `cuda/root.zig` and 
 - [x] New tests fail before the change, pass after it, and skip cleanly without their dependency.
 - [x] Comments and docstrings are one line. No measurements or history in the source.
 - [x] No personal data, machine names, internal hosts or local paths. No AI attribution lines.
+
+## Update 2026-10-13: slices + SM-count blocks (commit dc54a0e5, pushed; description not yet updated)
+Cause of BobClawblaw's 5090 -4 % after a 4.7k prompt: serial decode's shared kernel ran 8 blocks (2 groups x 4 key
+heads), merge 4 blocks. Change: a group's 4 warp slices write their own partials (no in-block combine), the merge
+combines them in the same order (same bits) and runs a block per (row, key head, head); where the four-warp grid
+would leave SMs idle (TreeAttention.sms), each slice takes its own one-warp block. GB10, 27B long prompt 128 tokens,
+per call: shared 96.6 -> 92.3 (4-warp) / 89.5 us (1-warp), part 32.0 -> 28.4 / 27.3, merge 7.0 -> 4.7; attention total
+275.8 -> 255.2 / 247.2 ms (Triton 244.3). Same bits: tf-cuda-test tree (both forms byte-equal), nll 4,092 logit rows
+byte-identical to the old build in both forms, draft 4 prompts and multi 8 streams same sha and rounds. Mutation: the
+merge dropping slice 3 -> 19x tolerance (dropping it only from the max is benign: same softmax). Fork q27-glue
+796099cc carries it (TF_TREE_SMS=0 forces four-warp blocks) for a 5090 rerun.
