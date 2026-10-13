@@ -45,3 +45,10 @@ gate as an integration check (wrong weights, a skipped layer, a layout mix-up mo
 drifting is the per-kernel float64 bound with a mutation per kernel, plus drafted == serial and concurrent == alone.
 A second chip would be useful for exactly that: the 5090 run checks the kernel bounds on sm_120, where tiles and
 `ex2` differ.
+
+## qk-rows "worst 0.988" checked (2026-10-13): not fragile
+Instrumented every element above 0.8 of tolerance (2,164 of them, all five cases): every one equals bf16_rn(float64
+reference) - the kernel's output IS the correctly rounded value. The 0.988 is the bf16 output rounding alone at values
+just above a power of two (want 1.0039, half-ulp 2^-8 = the tolerance's |want| term). A wrong rounding there would need
+an fp32 error of ~0.4 % of a half-ulp (~1.5e-5 relative), ~100x fp32's; so a 5090 run cannot fail it by arithmetic
+noise, only by a real error. No change made. Gate code committed on fork q27-glue 882121f8 (pushed).
