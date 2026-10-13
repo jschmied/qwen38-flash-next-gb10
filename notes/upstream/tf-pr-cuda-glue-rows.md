@@ -1,5 +1,7 @@
 # TF PR draft: cuda act_rows + gdn_prep + qk_rows (shared, operator-only) - NOT posted
 
+POSTED 2026-10-13 as https://github.com/ashhart/TensorFold/pull/797 (user: "post all ready").
+
 Branch cuda-glue-rows (worktree ~/git/tf-glue), commit 28e8a6a1 on origin/main c36b536d (1.0.9). Not pushed yet.
 
 Title: cuda: SwiGLU, output gates, Gated DeltaNet inputs, QK norm and RoPE for every family, checked against float64

@@ -1,5 +1,7 @@
 # TF PR draft: Nemotron's add_rmsnorm onto the shared norms + norms fixes (ashhart's #736 notes) - NOT posted
 
+POSTED 2026-10-13 as https://github.com/ashhart/TensorFold/pull/796 (user: "post all ready").
+
 Branch cuda-nemotron-shared-norms (worktree ~/git/tf-nnorm), commits 140ae71e + 3e47fe5c on origin/main c36b536d. Not pushed.
 A/B data: /tmp/claude-1000/nab (grid2-*.json, speed.jsonl, rows-*.bin; copy to notes/data before /tmp is wiped).
 

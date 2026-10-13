@@ -1,5 +1,7 @@
 # TF PR draft: cuda window_attention + moe_glue + dense_rows (operator-only, stacked on #746) - NOT posted
 
+POSTED 2026-10-13 as https://github.com/ashhart/TensorFold/pull/798, stacked on #746 (user: "post all ready").
+
 Branch cuda-moe-dense-window (worktree ~/git/tf-kglue), commit 2710ae2d on #746's 4d596fe4. Not pushed.
 
 Title: cuda: sliding-window attention, sigmoid top-k routing and combine, dense rows for every family, checked against float64
