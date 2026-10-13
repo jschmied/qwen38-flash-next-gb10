@@ -66,7 +66,7 @@ Registration lines in `build/cuda.zig`, `cuda/kernels.zig`, `cuda/root.zig` and 
 - [x] Comments and docstrings are one line. No measurements or history in the source.
 - [x] No personal data, machine names, internal hosts or local paths. No AI attribution lines.
 
-## Update 2026-10-13: slices + SM-count blocks (commit dc54a0e5, pushed; description not yet updated)
+## Update 2026-10-13: slices + SM-count blocks (commit dc54a0e5, pushed; PR description updated; 5090 rerun asked on #608 issuecomment-6152077598)
 Cause of BobClawblaw's 5090 -4 % after a 4.7k prompt: serial decode's shared kernel ran 8 blocks (2 groups x 4 key
 heads), merge 4 blocks. Change: a group's 4 warp slices write their own partials (no in-block combine), the merge
 combines them in the same order (same bits) and runs a block per (row, key head, head); where the four-warp grid
