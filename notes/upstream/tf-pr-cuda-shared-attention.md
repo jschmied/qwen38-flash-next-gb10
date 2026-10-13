@@ -88,3 +88,10 @@ cp.async stages, empty group at the tail keeps wait_group<ST-1> constant). GB10 
 rows, draft + multi shas/rounds/speed unchanged. Mutation: wrong ahead stage -> one-warp check fails (52,223 of 52,224
 words). 2 stages gave 209.7 ms. Fork q27-glue e040b562. Description updated.
 #608 rerun request for b7d1bdc0/e040b562 posted: https://github.com/ashhart/TensorFold/pull/608#issuecomment-6153486807
+Bob 5090 nsys (e040b562): native shared 56.3 us vs Triton _shared 27.0 (Triton: 512-key chunks, 64-key tiles, 4 warps
+a program, ~144 warps at 4.7k vs our 32); part 21.3 vs _tail 29.3; merge 5.9 vs 3.4; attention 58 % of the 82.9 ms
+gap, rest = small row kernels 0.6-1.8 us/call slower (add_rms +14.8 ms, gdn_prep +11.0, swiglu +4.7, qk +2.3).
+01969f6d: SPAN 2048 -> 512 (4 slices each), partials compact by query heads (scratch ~Triton's), slice_items 1024,
+one-warp whenever sms > 0 and n*ng*hk <= 1024, 3 stages if the one-warp grid fits a wave else 2. New 27B bits:
+drafted == serial 4/4 both forms; gate vs Triton dNLL +0.0009, argmax 99.32 %, KL 0.00066 (better than 2048's);
+long diverges from Python at token 3 (near-tie). GB10 attention 209.1 (one-warp) / 217.5 (four-warp). Fork f0f3a0cd.
