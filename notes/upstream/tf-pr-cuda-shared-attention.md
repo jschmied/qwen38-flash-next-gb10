@@ -95,3 +95,7 @@ gap, rest = small row kernels 0.6-1.8 us/call slower (add_rms +14.8 ms, gdn_prep
 one-warp whenever sms > 0 and n*ng*hk <= 1024, 3 stages if the one-warp grid fits a wave else 2. New 27B bits:
 drafted == serial 4/4 both forms; gate vs Triton dNLL +0.0009, argmax 99.32 %, KL 0.00066 (better than 2048's);
 long diverges from Python at token 3 (near-tie). GB10 attention 209.1 (one-warp) / 217.5 (four-warp). Fork f0f3a0cd.
+
+2026-10-14 c817f13c: merge issues 16 partials' loads before folding (same order). Bits: nll 4,092 rows cmp-identical vs
+bf3f16a2 build, serial/drafted shas + rounds same. GB10 long: merge 10.03 -> 4.56 us/call, attention 209.1 -> 199.2 ms
+(Triton 244.3). Mutation (combine w<3) caught. #798 rebased 20e6de18, fork f6f900f2. POSTED #608 6161466318 (rerun ask).
