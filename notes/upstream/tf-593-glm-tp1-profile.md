@@ -1,4 +1,4 @@
-DRAFT (not posted) - #593 note to BHCC: GLM-5.3-Flash EXL3 2.05 at TP=1, where plain decode goes vs exllamav3
+POSTED 2026-10-14 #593 issuecomment-6163729754 (user "ok"); build disclosed as 5da1e007 (four tiles, older base), decode-check gone on 9a099a7c
 
 Method: nsys -t cuda (exllamav3 with --cuda-graph-trace=node), dc.json `code` prompt (2,998 ids), 8 vs 128 greedy
 tokens, per-token = (128 run - 8 run) / 120. TF = BHCC glm-exl3-wip (9a099a7c content) + mtp-shard loader patch,
