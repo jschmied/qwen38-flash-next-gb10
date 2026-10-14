@@ -1,0 +1,36 @@
+1 code M plain | tokens 256 sha e909f724982e prefill 0.0549s decode 2.4307s 9.532 ms/token rounds 255 accepted 0 segments 1 
+1 code M drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 9.18/11.78/15.38/21.40/30.46 ms at 1/2/4/8/16 rows, 0.712 ms a draft) tokens 256 sha e909f724982e prefill 0.0551s decode 1.4338s 5.623 ms/token rounds 66 accepted 189 segments 1 
+1 code N plain | tokens 256 sha e909f724982e prefill 0.0547s decode 2.3698s 9.293 ms/token rounds 255 accepted 0 segments 1 
+1 code N drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.99/11.51/15.16/21.23/30.35 ms at 1/2/4/8/16 rows, 0.695 ms a draft) tokens 256 sha e909f724982e prefill 0.0544s decode 1.4175s 5.559 ms/token rounds 67 accepted 188 segments 1 
+1 code T plain | tokens 256 sha 08d4622b7b08 prefill 0.0536s decode 2.3505s 9.218 ms/token rounds 255 accepted 0 segments 1 
+1 code T drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.89/11.56/15.32/21.52/30.59 ms at 1/2/4/8/16 rows, 0.699 ms a draft) tokens 256 sha 08d4622b7b08 prefill 0.0541s decode 1.4384s 5.641 ms/token rounds 76 accepted 179 segments 1 
+1 prose M plain | tokens 256 sha 679d44e27c28 prefill 0.0546s decode 2.4005s 9.414 ms/token rounds 255 accepted 0 segments 1 
+1 prose M drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 9.18/11.78/15.38/21.40/30.46 ms at 1/2/4/8/16 rows, 0.712 ms a draft) tokens 256 sha 679d44e27c28 prefill 0.0544s decode 1.7356s 6.806 ms/token rounds 109 accepted 146 segments 1 
+1 prose N plain | tokens 256 sha 679d44e27c28 prefill 0.0543s decode 2.3826s 9.344 ms/token rounds 255 accepted 0 segments 1 
+1 prose N drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.99/11.51/15.16/21.23/30.35 ms at 1/2/4/8/16 rows, 0.695 ms a draft) tokens 256 sha 679d44e27c28 prefill 0.0549s decode 1.7072s 6.695 ms/token rounds 110 accepted 145 segments 1 
+1 prose T plain | tokens 256 sha 7b57d5aceac7 prefill 0.0535s decode 2.3549s 9.235 ms/token rounds 255 accepted 0 segments 1 
+1 prose T drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.89/11.56/15.32/21.52/30.59 ms at 1/2/4/8/16 rows, 0.699 ms a draft) tokens 256 sha 7b57d5aceac7 prefill 0.0538s decode 1.6950s 6.647 ms/token rounds 105 accepted 150 segments 1 
+2 code M plain | tokens 256 sha e909f724982e prefill 0.0543s decode 2.4337s 9.544 ms/token rounds 255 accepted 0 segments 1 
+2 code M drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 9.18/11.78/15.38/21.40/30.46 ms at 1/2/4/8/16 rows, 0.712 ms a draft) tokens 256 sha e909f724982e prefill 0.0553s decode 1.4327s 5.619 ms/token rounds 66 accepted 189 segments 1 
+2 code N plain | tokens 256 sha e909f724982e prefill 0.0547s decode 2.3642s 9.271 ms/token rounds 255 accepted 0 segments 1 
+2 code N drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.99/11.51/15.16/21.23/30.35 ms at 1/2/4/8/16 rows, 0.695 ms a draft) tokens 256 sha e909f724982e prefill 0.0550s decode 1.4252s 5.589 ms/token rounds 67 accepted 188 segments 1 
+2 code T plain | tokens 256 sha 08d4622b7b08 prefill 0.0544s decode 2.3568s 9.242 ms/token rounds 255 accepted 0 segments 1 
+2 code T drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.89/11.56/15.32/21.52/30.59 ms at 1/2/4/8/16 rows, 0.699 ms a draft) tokens 256 sha 08d4622b7b08 prefill 0.0547s decode 1.4362s 5.632 ms/token rounds 76 accepted 179 segments 1 
+2 prose M plain | tokens 256 sha 679d44e27c28 prefill 0.0541s decode 2.4338s 9.544 ms/token rounds 255 accepted 0 segments 1 
+2 prose M drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 9.18/11.78/15.38/21.40/30.46 ms at 1/2/4/8/16 rows, 0.712 ms a draft) tokens 256 sha 679d44e27c28 prefill 0.0549s decode 1.7324s 6.794 ms/token rounds 109 accepted 146 segments 1 
+2 prose N plain | tokens 256 sha 679d44e27c28 prefill 0.0544s decode 2.3909s 9.376 ms/token rounds 255 accepted 0 segments 1 
+2 prose N drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.99/11.51/15.16/21.23/30.35 ms at 1/2/4/8/16 rows, 0.695 ms a draft) tokens 256 sha 679d44e27c28 prefill 0.0541s decode 1.7144s 6.723 ms/token rounds 110 accepted 145 segments 1 
+2 prose T plain | tokens 256 sha 7b57d5aceac7 prefill 0.0539s decode 2.3534s 9.229 ms/token rounds 255 accepted 0 segments 1 
+2 prose T drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.89/11.56/15.32/21.52/30.59 ms at 1/2/4/8/16 rows, 0.699 ms a draft) tokens 256 sha 7b57d5aceac7 prefill 0.0549s decode 1.7010s 6.671 ms/token rounds 105 accepted 150 segments 1 
+3 code M plain | tokens 256 sha e909f724982e prefill 0.0556s decode 2.4411s 9.573 ms/token rounds 255 accepted 0 segments 1 
+3 code M drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 9.18/11.78/15.38/21.40/30.46 ms at 1/2/4/8/16 rows, 0.712 ms a draft) tokens 256 sha e909f724982e prefill 0.0547s decode 1.4374s 5.637 ms/token rounds 66 accepted 189 segments 1 
+3 code N plain | tokens 256 sha e909f724982e prefill 0.0547s decode 2.3741s 9.310 ms/token rounds 255 accepted 0 segments 1 
+3 code N drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.99/11.51/15.16/21.23/30.35 ms at 1/2/4/8/16 rows, 0.695 ms a draft) tokens 256 sha e909f724982e prefill 0.0551s decode 1.4293s 5.605 ms/token rounds 67 accepted 188 segments 1 
+3 code T plain | tokens 256 sha 08d4622b7b08 prefill 0.0545s decode 2.3469s 9.203 ms/token rounds 255 accepted 0 segments 1 
+3 code T drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.89/11.56/15.32/21.52/30.59 ms at 1/2/4/8/16 rows, 0.699 ms a draft) tokens 256 sha 08d4622b7b08 prefill 0.0540s decode 1.4449s 5.666 ms/token rounds 76 accepted 179 segments 1 
+3 prose M plain | tokens 256 sha 679d44e27c28 prefill 0.0545s decode 2.4340s 9.545 ms/token rounds 255 accepted 0 segments 1 
+3 prose M drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 9.18/11.78/15.38/21.40/30.46 ms at 1/2/4/8/16 rows, 0.712 ms a draft) tokens 256 sha 679d44e27c28 prefill 0.0552s decode 1.7364s 6.809 ms/token rounds 109 accepted 146 segments 1 
+3 prose N plain | tokens 256 sha 679d44e27c28 prefill 0.0538s decode 2.3944s 9.390 ms/token rounds 255 accepted 0 segments 1 
+3 prose N drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.99/11.51/15.16/21.23/30.35 ms at 1/2/4/8/16 rows, 0.695 ms a draft) tokens 256 sha 679d44e27c28 prefill 0.0541s decode 1.7068s 6.693 ms/token rounds 110 accepted 145 segments 1 
+3 prose T plain | tokens 256 sha 7b57d5aceac7 prefill 0.0536s decode 2.3354s 9.158 ms/token rounds 255 accepted 0 segments 1 
+3 prose T drafted | up to 15 MTP drafts a round, each verified while it pays for its row (measured: 8.89/11.56/15.32/21.52/30.59 ms at 1/2/4/8/16 rows, 0.699 ms a draft) tokens 256 sha 7b57d5aceac7 prefill 0.0538s decode 1.6901s 6.628 ms/token rounds 105 accepted 150 segments 1 

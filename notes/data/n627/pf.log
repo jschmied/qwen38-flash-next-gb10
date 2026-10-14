@@ -1,0 +1,12 @@
+1 2048 M tokens 16 sha 1c9a79721a5b prefill 0.2700s decode 0.1480s 9.869 ms/token rounds 15 accepted 0 segments 1
+1 2048 N tokens 16 sha 1c9a79721a5b prefill 0.2704s decode 0.1456s 9.709 ms/token rounds 15 accepted 0 segments 1
+1 8192 M tokens 16 sha 728042d37c46 prefill 1.0404s decode 0.1514s 10.095 ms/token rounds 15 accepted 0 segments 1
+1 8192 N tokens 16 sha 728042d37c46 prefill 1.0390s decode 0.1486s 9.906 ms/token rounds 15 accepted 0 segments 1
+2 2048 M tokens 16 sha 1c9a79721a5b prefill 0.2708s decode 0.1501s 10.009 ms/token rounds 15 accepted 0 segments 1
+2 2048 N tokens 16 sha 1c9a79721a5b prefill 0.2702s decode 0.1464s 9.761 ms/token rounds 15 accepted 0 segments 1
+2 8192 M tokens 16 sha 728042d37c46 prefill 1.0406s decode 0.1499s 9.993 ms/token rounds 15 accepted 0 segments 1
+2 8192 N tokens 16 sha 728042d37c46 prefill 1.0428s decode 0.1483s 9.887 ms/token rounds 15 accepted 0 segments 1
+3 2048 M tokens 16 sha 1c9a79721a5b prefill 0.2709s decode 0.1480s 9.867 ms/token rounds 15 accepted 0 segments 1
+3 2048 N tokens 16 sha 1c9a79721a5b prefill 0.2705s decode 0.1460s 9.736 ms/token rounds 15 accepted 0 segments 1
+3 8192 M tokens 16 sha 728042d37c46 prefill 1.0448s decode 0.1502s 10.012 ms/token rounds 15 accepted 0 segments 1
+3 8192 N tokens 16 sha 728042d37c46 prefill 1.0418s decode 0.1465s 9.769 ms/token rounds 15 accepted 0 segments 1
