@@ -10,3 +10,5 @@ Lessons: ncu Duration useless for tiny kernels (cold caches + overhead) - use ns
 blind to add_moe_norm's ss order (mutation passes) - teacher-forced logits catch it (508/512).
 Left open (said so on #627): one-row attn_chunk (18.7 vs 11.6), attn_merge, group_rmsnorm. Router chain floor:
 448 dependent fma per (row, expert, slice) - bits forbid splitting; loads alone ~7.9 us under shared-expert contention.
+2026-10-14 13193951: glue test add_moe_norm + 2048 rows log-uniform 2^-8..2^8 (Rig.wides); reversed-ss mutation now
+fails (10 y + 10 xs); uniform inputs never showed it even at 2x4096 rows (sqrt+div absorb 1-ulp ss changes). PR body updated.
